@@ -82,7 +82,6 @@ deductive:\\
 \begin{Dedalus}
 p(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), S = \(\Tau\);
 \end{Dedalus}
-
 inductive:\\
 \begin{Dedalus}
 q(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), successor(\(\Tau\), S);
@@ -139,8 +138,8 @@ some natural syntactic ``sugar'' as follows:
 %predicate \\ $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots,
 %A_{n})@S$.
 %
-\item {\em Implicit time-suffixes in body predicates:} Since all body
-predicates of a well-formed rule have an existential variable $\Tau$ in the
+\item {\em Implicit time-suffixes in body predicates:} Since each body
+predicate of a well-formed rule has an existential variable $\Tau$ in its
 time suffix, we optionally omit the time suffix from body predicates and treat
 it as implicit.
 %%\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
@@ -150,7 +149,7 @@ it as implicit.
 may be either equal to $\Tau$, or equal to $\Tau$'s successor, we omit the time
 suffix from the head -- and its relevant constraints from the body -- and
 instead attach an identifier to all temporal rules, to indicate the change in
-timestep.  A temporal rule is of the form:
+timestep.  A temporal head predicate is of the form:
 
 \dedalus{r($A_1$,$A_2$,[...],$A_n$)@next}
 
@@ -181,8 +180,7 @@ deductive:\\
 \begin{Dedalus}
 p(A, B) \(\leftarrow\) e(A, B);
 \end{Dedalus}
-
-inductive:
+inductive:\\
 \begin{Dedalus}
 q(A, B)@next \(\leftarrow\) e(A, B);
 \end{Dedalus}

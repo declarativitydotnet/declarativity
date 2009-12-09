@@ -42,23 +42,24 @@ attributes, representing every possible interpretation, is itself finite.
 \wrm{show some examples before restricting to temporal safety!!  maybe even
 show that some unsafe programs have safe equivalents.}
 
-A \slang program containing only deductive rules is informally equivalent to a 
-Datalog program in which all predicates have no time suffix.  If all the rules in such
-a program are function-free and range-restricted, then clearly all evaluations will
-be safe.
+A \slang program containing only deductive rules is informally equivalent to a
+Datalog program in which all predicates have no time suffix.  If all the rules
+in such a program meet conditions 1 and 2 above, then clearly all
+evaluations will be safe.
 
 \begin{definition}
 A \slang rule is \emph{pointwise safe} if it is function-free and range-restricted.
 \end{definition}
 
-Inductive rules are not safe.  Consider the \dedalus{successor} relation described above.  According to our
+Inductive rules may be unsafe.  Consider the \dedalus{successor} relation described above.  According to our
 intuitive interpretation, this relation models the passage of time, in order to
 establish a temporal order among ground atoms. 
 
 The \dedalus{successor} relation complicates our discussion of safety, as it
-introduces the countably infinite set $\mathbb{Z}$ to our Herbrand Universe.
+introduces the countably infinite set $\mathbb{Z}$ to our
+%Herbrand
+universe of constants.
 Clearly, a naive interpretation of time can lead to unsafe programs:
-\wrm{BROKEN: Need to fix this Herbrand business -- it's not countably infinite.}
 
 %Consider the \dedalus{successor} relation described above.  According to our
 %intuitive interpretation, this relation models the passage of time, in order to
@@ -85,29 +86,31 @@ Clearly, a naive interpretation of time can lead to unsafe programs:
 
 
 \begin{example}
+\label{ex:tempsafe}
 %
-A temporally safe \slang instance.
+An unsafe \slang instance.
 
+r1:\\
 \begin{Dedalus}
-r1
 p_pos(A, B)@next \(\leftarrow\) p_pos(A, B), \(\lnot\)p_neg(A, B);
-  
-r2  
+\end{Dedalus}
+r2:\\
+\begin{Dedalus}
 p_pos(A, B)  \(\leftarrow\) p(A, B);
-  
-p(1, 2)@123;  
+
+p(1, 2)@123;
 \end{Dedalus}
 
 The single ground fact will, due to \dedalus{r1}, cause one deduction for each
 tuple in \dedalus{successor}.  Since \dedalus{successor} is infinite, the
-program is unsafe. 
+program is unsafe.  
 %
 \end{example}
 
 However, observe that each of these deductions produces a tuple that changes
-only in its time suffix.  We we find it useful to distinguish from unsafe
+only in its time suffix.  We find it useful to distinguish from unsafe
 programs those programs that, given a finite EDB, eventually derive only tuples
-that change in their time suffixes.  
+equivalent modulo their time suffixes. \wrm{$<$don't really get whats going on$>$}
 Consider a \emph{derivation tree} as defined by Levy et al~\cite{levy}.  
 \paa{he's halevy now.  should it be halevy et al?  or is that confusing?  I blame alon.}
 According to their definition,
@@ -119,6 +122,7 @@ $\phi$ from $V(g_1) \to V(g_2)$ such that $\phi(g_1) = g_2$.
 \paa{I may have made a mess of this.  derivation trees are probably more machinery than we need to describe, for
 the purposes of the definition of a 'stable inference', the 1-step deduction of an atom from another atom having the same
 name and the same values for all attributes but time}
+\wrm{I still don't know why we need to use derivation trees here.}
 %%\wrm{Define 'derivation'.  Joe sez: "Here I think you just need an appropriate reference for derivation trees, along with some simple intuition.  I believe the right ref is %%"Constraints and Redundancy in Datalog", Levy/Sagiv, PODS 92."}
 
 \begin{definition}
@@ -134,8 +138,7 @@ ie the single evaluation of a rule, and proceed from here with the definitions}
 \begin{definition}
 An \emph{inference} is the deduction of an atom from established atoms via the application of a rule.
 \end{definition}
-
-
+\wrm{what's a rule application?}
 
 \begin{definition}
 A \emph{stable inference} has a goal $\gamma'$ with time suffix $\Tau$ derived
@@ -145,7 +148,9 @@ $\gamma'$ only in its time suffix.
 \end{definition}
 
 In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
-minus $\Tau$.
+minus $\Tau$.\wrm{$<$/dont really get whats going on$>$}.
+
+\wrm{How about we delete everything above and just say this:}
 
 %%To distinguish between programs that 
 %%produce these infinite \emph{void inductions} and those that correspond 
@@ -157,14 +162,35 @@ minus $\Tau$.
 %%in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
 %%\end{definition}
 
-We call a \slang instance is \emph{quiescent} if after some time $\Tau$, all
-inferences are henceforth \wrm{bill to insert proof/argument that you get
-``henceforth'' from a single state where the program is quiescent} stable.
+We call a \slang instance is \emph{quiescent at time $T$} if the set of all 
+tuples true at time $T$ is equal to the set of all facts true at time $T-1$.
+
+\begin{observation}
+%
+A \slang instance quiescent at time $T$ will be quiescent until the next EDB
+fact is true at time $V$, i.e. for all $U \in \mathbb{Z}: V > U >= T$.  If no
+EDB facts are true after $T$, then the instance will be henceforth quiescent.
+%
+\end{observation}
+%
+\begin{proof}
+%
+A \slang program admits only pointwise and inductive rules, which derive new
+tuples at the same time as their ground tuples, or in the immediate next
+timestep.  Thus, the set of tuples true at time $T$ is completely determined by
+any tuples true at time $T-1$, and any EDB facts true at time $T$.  Observe
+that the integer value of the timestep does not influence the derivation.
+
+If the instance is quiescent at $T$, then given some set of atoms $\mathbb{A}$
+true at $T-1$, the program computes $\mathbb{A}$ at $T$.  Thus in the absence
+of EDB facts at $T+1$, it will again compute $\mathbb{A}$ at $T+1$.
+%
+\end{proof}
 
 \begin{definition}
 %
-A \slang instance with finite EDB is \emph{temporally safe} if it reaches
-quiescent state after a finite number of inferences.
+A \slang instance with finite EDB is \emph{temporally safe} if it quiescent at
+some time $T$ after which no EDB facts are true.
 %
 \end{definition}
 %%\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
@@ -206,11 +232,11 @@ may only be triggered finitely often.
 
 A \slang program is temporally safe if all its rules are temporally safe.
 Intuitively, a temporally safe program quiesces given a finite EDB, while a
-temporally unsafe program changes infinitely.  Note
-that the \slang program above is temporally safe because \emph{r1} corresponds
-to the second rule of the definition, and \emph{r2} corresponds to the first
-Atoms deduced by the inducive rule \emph{r1} differ from existing atoms only in
-their time suffix.
+temporally unsafe program changes infinitely.  Note that the \slang program in
+Example~\ref{ex:tempsafe} is temporally safe because \emph{r1} corresponds to
+the second rule of the definition, and \emph{r2} corresponds to the first Atoms
+deduced by the inducive rule \emph{r1} differ from existing atoms only in their
+time suffix.
 
 \begin{example}
 A \slang instance with a temporally unsafe deductive rule.
@@ -313,12 +339,14 @@ all variables are range-restricted, it entails infinite oscillation of the
 
 \subsection{EDB Preambles}
 
-\wrm{buggy text here, come up with motivation that doesn't involve implementation}
+A \slang instance's EDB may be arbitrarily large.  In this section we introduce
+the notion of a {\em preamble} -- a truncation of the EDB, and prove an
+equivalence between full evaluation of a preamble and incremental evaluation
+based on evaluation of an earlier preamble.
 %A \slang instance may receive arbitrarily many external input tuples over the
-%course of its execution, but should not wait
-%arbitrarily long before performing deductions.  In this section we introduce
-%the notion of EDB preambles, and prove an equivalence between two types of
-%evaluation.
+%course of its execution, but should not wait arbitrarily long before
+%performing deductions.  In this section we introduce the notion of EDB
+%preambles, and prove an equivalence between two types of evaluation.
 
 %In general, the EDB of a \slang instance may be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
 %as in a post-hoc evaluation.
@@ -327,8 +355,10 @@ all variables are range-restricted, it entails infinite oscillation of the
 A \emph{preamble} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
 \end{definition}
 
-If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each preamble is a superset of all 
-preambles with lower indices, we have the monotonicity property:
+If the EDB is finite, then it has a maximum timestamp $\top$, and
+$\alpha_{\top}$ = $\Gamma$.  \wrm{I don't think we use $\top$ anywhere else}
+Because each preamble is a superset of all preambles with lower indices, we
+have the monotonicity property:
 
 $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})$
 
@@ -336,7 +366,7 @@ $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \
 %rather than an inductive proof that every model in the series is minimal.  there is probably a very similar proof of the latter
 %that we could include in the next section after introducing minimal models, stratification etc}
 
-
+\wrm{todo: disuss replacing FP with some derivation tree thing}
 \begin{definition}
 %
 Let $F$ be the set of all finite subsets of possible atoms.  Let $P$ be the set
