@@ -200,6 +200,32 @@ in the previous timestep.  Thus, $P'$ is modularly stratified over time.
 \end{proof}
 
 
+\begin{example}
+A simple temporally stratifiable \slang program that is not syntactically stratifiable.
+
+\begin{Dedalus}
+r1
+p(A, B, T)@next \(\leftarrow\)
+  p(A, B, T),
+  \(\lnot\)p_neg(A, B, T);
+  
+r2
+p(A, B, T) \(\leftarrow\)
+  insert\_p(A, B, T);
+
+r3  
+p_neg(A, B, T) \(\leftarrow\)
+  p(A, B, T),
+  delete\_p(T);
+\end{Dedalus}
+
+In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are external events.
+This reasonable program is unstratifiable because $p \succ del\_p \land del\_p \succ p$.  But because the successor relation is constrained
+such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is modularly stratified on \emph{successor} 
+Informally, we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.
+\paa{need to make the text better, but this old example probably makes sense here}
+\end{example}
+
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.75\linewidth]{figures/dedalus_classes.pdf}
