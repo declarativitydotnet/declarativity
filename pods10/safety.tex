@@ -328,7 +328,7 @@ A \emph{preamble} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma
 \end{definition}
 
 If the EDB is finite, then it has a maximum timestamp $\top$, and $\alpha_{\top}$ = $\Gamma$.  Because each preamble is a superset of all 
-preamble with lower indices, we have the monotonicity property:
+preambles with lower indices, we have the monotonicity property:
 
 $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})$
 
@@ -339,7 +339,7 @@ $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \
 
 \begin{definition}
 %
-Let $F$ be the set of all finite subsets of possible facts.  Let $P$ be the set
+Let $F$ be the set of all finite subsets of possible atoms.  Let $P$ be the set
 of all finite subsets of possible rules.  Let $FP : P \times F \mapsto F$ be
 the function representing the \emph{fixpoint} computation carried out by a
 datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
@@ -372,12 +372,12 @@ $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
 
 {\bf Case 1:} $\exists A \in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) : A \not\in FP_p(\alpha_{i+1}).$
 
-This implies that $A$ is transitively dependent on facts in $\alpha_{i+1} \cup
-FP_p(\alpha_i)$.  However, if $A$ is transitively dependent only on facts in
+This implies that $A$ is transitively dependent on atoms in $\alpha_{i+1} \cup
+FP_p(\alpha_i)$.  However, if $A$ is transitively dependent only on atoms in
 $\alpha_{i+1}$, then $A$ would be in $FP_p(\alpha_{i+1})$.  Thus, $A$ must be
-transitively dependent on some facts in $FP_p(\alpha_{i})$.  But $\alpha_{i}
+transitively dependent on some atoms in $FP_p(\alpha_{i})$.  But $\alpha_{i}
 \subset \alpha_{i+1}$, so this implies that $A$ is transitively dependent on
-some fact in $\alpha_{i+1}$, which means $A \in FP_p(\alpha_{i+1})$.  This
+some atom in $\alpha_{i+1}$, which means $A \in FP_p(\alpha_{i+1})$.  This
 contradicts our assumption, thus no such $A$ may exist.
 
 {\bf Case 2:} $\exists A \in FP_p(\alpha_{i+1}) : A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)).$
@@ -385,7 +385,7 @@ contradicts our assumption, thus no such $A$ may exist.
 This implies that $A$ is transitively dependent on $\alpha_{i+1}$.  In order
 for $A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i))$, we need $A$ to depend
 negatively on an atom $B \in FP_p(\alpha_i)$.  But $B$ transitively depends on
-an fact $C \in \alpha_i$.  $C \in \alpha_{i+1}$ by definition (if $B$ is
+an atom $C \in \alpha_i$.  $C \in \alpha_{i+1}$ by definition (if $B$ is
 extensional, then $C=B$), so $B \in FP_p(\alpha_{i+1})$, so $a \not\in
 FP_p(\alpha_{i+1})$.  This contradicts our assumption, thus no such $A$ may
 exist.
