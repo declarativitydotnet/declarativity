@@ -44,7 +44,8 @@ rdeliver(Me, Sender, Message)@next  \(\leftarrow\)
 \end{Dedalus}
 
 The module \emph{broadcast\_reliable} makes use of the multicast primitive provided by \emph{broadcast\_simple}, and
-uses it to implement a basic reliable broadcast.  Simple broadcast is augmented in that if a node receives a message, it 
+uses it to implement a basic reliable broadcast using the canonical mechanism~\cite{mullender}. 
+Simple broadcast is augmented in that if a node receives a message, it 
 also multicasts it to every member \emph{before} delivering the message locally.  
 
 Implementing other disciplines like FIFO and atomic broadcast and consensus are similar exercises, requiring the use of
