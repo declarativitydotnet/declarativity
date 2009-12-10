@@ -1,5 +1,101 @@
-\section{Cost Model}
+\section{Evaluation}
 
+
+\subsection{EDB Preambles}
+
+A \slang instance's EDB may be arbitrarily large.  In this section we introduce
+the notion of a {\em preamble} -- a truncation of the EDB, and prove an
+equivalence between full evaluation of a preamble and incremental evaluation
+based on evaluation of an earlier preamble.
+%A \slang instance may receive arbitrarily many external input tuples over the
+%course of its execution, but should not wait arbitrarily long before
+%performing deductions.  In this section we introduce the notion of EDB
+%preambles, and prove an equivalence between two types of evaluation.
+
+%In general, the EDB of a \slang instance may be infinite, and may lead to unsafe evaluations even when \emph{successor} is derived from it
+%as in a post-hoc evaluation.
+
+\begin{definition}
+A \emph{preamble} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
+\end{definition}
+
+If the EDB is finite, then it has a maximum timestamp $\top$, and
+$\alpha_{\top}$ = $\Gamma$.  \wrm{I don't think we use $\top$ anywhere else}
+Because each preamble is a superset of all preambles with lower indices, we
+have the monotonicity property:
+
+$\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \alpha_{j})$
+
+%\paa{to your point, bill, I switched the lemma and proof below to one of IDB equivalence in the posthoc vs. continual interpretation
+%rather than an inductive proof that every model in the series is minimal.  there is probably a very similar proof of the latter
+%that we could include in the next section after introducing minimal models, stratification etc}
+
+\wrm{todo: disuss replacing FP with some derivation tree thing}
+\begin{definition}
+%
+Let $F$ be the set of all finite subsets of possible atoms.  Let $P$ be the set
+of all finite subsets of possible rules.  Let $FP : P \times F \mapsto F$ be
+the function representing the \emph{fixpoint} computation carried out by a
+datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
+%
+\end{definition}
+
+
+\begin{lemma}
+\label{lem:costmodel}
+%
+Let $i \in \mathbb{Z}$.  Then, $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) =
+FP_p(\alpha_{i+1})$.
+%
+\end{lemma}
+
+%%this could (with some work) lead to an inductive proof
+%%that an infinite model is minimal.  we could prove the (weaker?) property that
+%%the infinite series of models of increasing finite preambles of an EDB are all 
+%%minimal if one of them is.
+
+\begin{proof}
+
+%%Inductive step:
+
+%%if we assume that some program P and finite preamble $\alpha_n$ of a trace $\Gamma$ produce a minimal model, 
+%%then it follows that a preamble $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
+
+by contradiction. Assume $\exists i \in \mathbb{Z}$ such that:
+$FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
+
+{\bf Case 1:} $\exists A \in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) : A \not\in FP_p(\alpha_{i+1}).$
+
+This implies that $A$ is transitively dependent on atoms in $\alpha_{i+1} \cup
+FP_p(\alpha_i)$.  However, if $A$ is transitively dependent only on atoms in
+$\alpha_{i+1}$, then $A$ would be in $FP_p(\alpha_{i+1})$.  Thus, $A$ must be
+transitively dependent on some atoms in $FP_p(\alpha_{i})$.  But $\alpha_{i}
+\subset \alpha_{i+1}$, so this implies that $A$ is transitively dependent on
+some atom in $\alpha_{i+1}$, which means $A \in FP_p(\alpha_{i+1})$.  This
+contradicts our assumption, thus no such $A$ may exist.
+
+{\bf Case 2:} $\exists A \in FP_p(\alpha_{i+1}) : A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)).$
+
+This implies that $A$ is transitively dependent on $\alpha_{i+1}$.  In order
+for $A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i))$, we need $A$ to depend
+negatively on an atom $B \in FP_p(\alpha_i)$.  But $B$ transitively depends on
+an atom $C \in \alpha_i$.  $C \in \alpha_{i+1}$ by definition (if $B$ is
+extensional, then $C=B$), so $B \in FP_p(\alpha_{i+1})$, so $a \not\in
+FP_p(\alpha_{i+1})$.  This contradicts our assumption, thus no such $A$ may
+exist.
+%If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in $I_2$ that is not in $I_3$, or that is in
+%$I_3$ and not in $I_2$.  
+%Take the former case first.  This means there is an atom $A$ that is entailed by P given $FP(\alpha_{j} \cup FP(\alpha_{i}))$
+%but not entailed by P given $\alpha_{j}$, so it must be in $I_1$.   The only circumstances under which an atom in
+%$I_1$ would not occur in the IDB $FP(\alpha_{j})$ is if there is a fact $B$ in $\alpha_{j}$ 
+%corresponding to a negated subgoal in a rule $r$ in P upon which $A$ depends.  However, for this to occur, because a ground atom 
+%in $I_1$ cannot depend upon a ground atom from the ``future", that fact $B$ would need to have occurred at some time less than 
+%or equal to the to timestamp of atom $A$.  But this is not possible, because all timestamps in $\alpha_{j}$ that are not in any $\alpha_{k} | k<j$
+%are strictly higher than any timestamps in $\alpha_{k}$.  Hence the first case leads to contradiction.
+%As for the second case...
+\end{proof}
+
+\subsection{Cost Model}
 %%\newdef{definition}{Definition}
 Lemma~\ref{lem:costmodel} implies that we can trade computation cost for
 storage cost in evaluation of a \slang program. 
