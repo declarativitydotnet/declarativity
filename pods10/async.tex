@@ -21,14 +21,14 @@ networks that may delay, lose or reorder the results of logical deductions.
 We will consider only the class of \emph{exemplary} aggregate
 functions~\cite{tag} -- an exemplary aggregate function's codomain is a subset
 of its domain -- and the \emph{count} aggregate, which is expressible using
-arithmetic.  We allow an exemplary or count aggregate function $\rho$ to appear
+arithmetic.  We allow exemplary or count aggregate functions $\rho_1 - \rho_n$ to appear
 in the head of a deductive rule of the form:
 
 \dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
 \linebreak\dedalus{   \(q_1\)(\(A_1\), \(\ldots\), \(A_n\)), \(\ldots\), \(q_n\)(\(A_1\), \(\ldots\), \(A_n\));}
 
 These functions do not affect the expressivity of the language; we admit them
-tosimplify our discussion of ordering.  We note that the \emph{min} function,
+to simplify our discussion of ordering.  We note that the \emph{min} function,
 which we subsequently use, is expressible in Datalog using negation.
 
 \begin{example}
@@ -54,9 +54,9 @@ min_p(A, B) \(\leftarrow\) p(A, B), \(\lnot\)notmin_p(A, B);
 One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
 
 \begin{Dedalus}
-seq(Agent, X + 1)@next \(\leftarrow\) seq(Agent, X), event(Agent);
+seq(A, X + 1)@next \(\leftarrow\) seq(A, X), event(A);
   
-seq(Agent, X)@next \(\leftarrow\) seq(Agent, X), \(\lnot\) event(Agent);
+seq(A, X)@next \(\leftarrow\) seq(A, X), \(\lnot\) event(A);
 \end{Dedalus}
 
 We must admit arithmetic functions into our language to express such a
