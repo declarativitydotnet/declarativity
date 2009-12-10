@@ -4,8 +4,10 @@
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.75\linewidth]{figures/dedalus-time.pdf}
-  \label{fig:dedalus-time}
-  \caption{Time moves forward in three ways: across strata, to the next fixpoint, and to some future fixpoint.}
+  \label{fig:time}
+  %%\caption{Time moves forward in three ways: across strata, to the next fixpoint, and to some future fixpoint.}
+   \caption{Dedalus admits inferences whose consequents are visible immediately, in the next timestep, or at some unspecified timestep.}
+   
 \vspace{-8pt}
 \end{figure}
 
@@ -14,7 +16,8 @@ consider \lang, a superset of \slang that admits aggregate functions, simple
 arithmetic and the \emph{choice} construct.  These constructs will allow us to
 express programs that establish or enforce an ordering over inputs, and to
 reason about the inherent nondeterminism in communication over unreliable
-networks that may delay, lose or reorder the results of logical deductions.
+networks that may delay, lose or reorder the results of logical deductions 
+(see Figure~\ref{fig:time}).
 
 \subsection{Aggregate Functions}
 
