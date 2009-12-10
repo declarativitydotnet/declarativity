@@ -1,0 +1,147 @@
+
+\section{Two-Phase Commit}
+
+\subsection{Coordinator Protocol}
+\begin{Dedalus}
+\small
+peers(Commander, Peer)@next \(\leftarrow\)
+    peers(Commander, Peer),
+    \(\lnot\)peers_neg(Commander, Peer);
+
+peer_cnt(Commander, count<Peer>) \(\leftarrow\)
+  peers(Commander, Peer);
+
+vote(Commander, Xact, Peer, Vote)@next \(\leftarrow\)
+    vote(Commander, Xact, Peer, Vote),
+     \(\lnot\) vote_neg(Commander, Xact, Peer, Vote);
+
+yes_cnt(Commander, Xact, count<Peer>) \(\leftarrow\)
+  vote(Commander, Xact, Peer, Vote),
+  Vote == "yes";
+
+/* Prepare => Commit if unanimous */
+transaction(Commander, Xact, "commit")@next \(\leftarrow\)
+  peer_cnt(Commander, NumPeers),
+  yes_cnt(Commander, Xact, NumYes),
+  transaction(Commander, Xact, State),
+  NumPeers == NumYes, State == "prepare";
+
+/* Prepare => Abort if any "no" votes */
+transaction(Commander, Xact, "abort")@next \(\leftarrow\)
+  vote(Commander, Xact, _, Vote),
+  transaction(Commander, Xact, State),
+  Vote == "no", State == "prepare";
+
+/* All peers know transaction state */
+transaction(#Peer, Xact, State)@async \(\leftarrow\)
+  peers(#Commander, Peer),
+  transaction(#Commander, Xact, State);
+\end{Dedalus}
+
+
+
+\paa{notes}
+
+one thing I found myself puzzling over as I tried to write the agent protocol (next section) is what is means do 
+to force the log in our paradigm.  this synchronous write may boil down to inducing the log entry into the next, and responding
+to the coordinator only when we read it back.
+
+part of me doesn't feel right about this.  it should probably be an async write to myself, since it's an I/O and saying it's visible ``at the
+next instant" makes time stop for a long time.  then certainly, we want to ensure that it doesn't occur in the past (though it's irrelevant
+since the join will fail.)  in any case, this makes for an interesting discussion of side-effects but isn't exactly a sweet example of how we
+needed ``time" to pull this off.
+
+on the other hand, the way "transaction\_state" is updated is interesting; it's a primitive example of key constraint logic (the general case of 
+overlog style key constraints was in the old appendix and probably isn't worth bringing back).  but any example of maintaining a "state tuple" 
+for a state machine would do.  it occurs to me, actually, that this could be another subsection of the "state in logic" section; a simple pair of state 
+tuple update rules (exhibiting a similar but interestingly different behavior (update via key)):
+
+\begin{Dedalus}
+state(Agent, State)@next \(\leftarrow\)
+  state(Agent, State),
+  \(\lnot\) state\_change(Agent, _);
+
+state(Agent, NewState)@next \(\leftarrow\)
+  state_change(Agent, NewState),
+  // could get away without it under certain assumptions, but
+  choose((Agent), (NewState));
+\end{Dedalus}
+
+\subsection{Agent Protocol}
+
+\begin{Dedalus}
+\small
+// persist the log
+log(Peer, Xact, Entry)@next \(\leftarrow\)
+    log(Peer, Xact, Entry),
+    \(\lnot\) log\_neg(Peer, Xact, Entry);
+
+// 'key constraint' for ts.  persist the current state...
+transaction_state(Peer, Xact, Status)@next \(\leftarrow\)
+    transaction\_state(Peer, Xact, Status),
+    \(\lnot\) transaction(Peer, Xact, _);
+
+// ...unless there's a change
+transaction_state(Peer, Xact, Status)@next \(\leftarrow\)
+    transaction(Peer, Xact, Status);
+
+
+// force log if we're willing to prepare
+log(Peer, Xact, State)@next \(\leftarrow\)
+    transaction(Peer, Xact, State),
+    willing(Peer, Xact),
+    State = "Prepare";
+
+// force = believe it when you read it back in the next timestep.
+vote(Coordinator, Xact, Peer, 'yes')@async \(\leftarrow\)
+    log(Peer, Xact, Status),
+    transaction_state(Peer, Xact, Status),
+    coordinator(Coordinator),
+    Status = "Prepare";
+
+
+// for basic 2PC we don't need to differentiate between commit and abort.
+log(Peer, Xact, State)@next \(\leftarrow\)
+    transaction(Peer, Xact, State),
+    transaction_state(Peer, Xact, Status),
+    Status = "Prepare";
+
+
+ack(Coordinator, Xact, Peer)@async \(\leftarrow\)
+    transaction_state(Peer, Xact, Status),
+    coordinator(Coordinator),
+    log(Peer, Xact, Status);
+   
+   
+\end{Dedalus}   
+
+
+\section{Semaphores}
+
+\begin{Dedalus}
+\small
+// could wait a long time; the queue must 
+be persisted.
+want_p(User)@next \(\leftarrow\)
+    want_p(User),
+    notin want_p_neg(User);
+
+// min is not fair
+p(min<User>)\(\leftarrow\)
+    sem(X),
+    want_p(User),
+    X > 0;
+
+sem(X-1)@next \(\leftarrow\)
+    sem(X),
+    p(User);
+
+want_p_neg(User) \(\leftarrow\)
+    p(User);
+ 
+sem(X+1)@next \(\leftarrow\)
+    sem(X),
+    v(User);
+\end{Dedalus}
+
+
