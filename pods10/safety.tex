@@ -48,7 +48,13 @@ in such a program meet conditions 1 and 2 above, then clearly all
 evaluations will be safe.
 
 \begin{definition}
-A \slang rule is \emph{pointwise safe} if it is function-free and range-restricted.
+The \emph{deductive reduction} of a \slang program $P$ is the subset of $P$
+consisting of exactly those deductive rules in $P$.
+\end{definition}
+
+\begin{definition}
+A rule is \emph{pointwise safe} if it is deductive,  function-free and range-restricted.
+A \slang program is pointwise safe if its deductive reduction is pointwise safe.
 \end{definition}
 
 Inductive rules may be unsafe.  Consider the \dedalus{successor} relation described above.  According to our
@@ -110,47 +116,48 @@ program is unsafe.
 However, observe that each of these deductions produces a tuple that changes
 only in its time suffix.  We find it useful to distinguish from unsafe
 programs those programs that, given a finite EDB, eventually derive only tuples
-equivalent modulo their time suffixes. \wrm{$<$don't really get whats going on$>$}
-Consider a \emph{derivation tree} as defined by Levy et al~\cite{levy}.  
-\paa{he's halevy now.  should it be halevy et al?  or is that confusing?  I blame alon.}
-According to their definition,
-two goal nodes $g_1$ and $g_2$ are \emph{identical} if they have the same predicate symbol and, in each argument
-position, the same variables.  Two nodes are \emph{equivalent} if there exists a one-to-one mapping
-$\phi$ from $V(g_1) \to V(g_2)$ such that $\phi(g_1) = g_2$.
+that are equivalent modulo their time suffixes. 
+
+%%\wrm{$<$don't really get whats going on$>$}
+%%Consider a \emph{derivation tree} as defined by Levy et al~\cite{levy}.  
+%%\paa{he's halevy now.  should it be halevy et al?  or is that confusing?  I blame alon.}
+%%According to their definition,
+%%two goal nodes $g_1$ and $g_2$ are \emph{identical} if they have the same predicate symbol and, in each argument
+%%position, the same variables.  Two nodes are \emph{equivalent} if there exists a one-to-one mapping
+%%$\phi$ from $V(g_1) \to V(g_2)$ such that $\phi(g_1) = g_2$.
 
 
-\paa{I may have made a mess of this.  derivation trees are probably more machinery than we need to describe, for
-the purposes of the definition of a 'stable inference', the 1-step deduction of an atom from another atom having the same
-name and the same values for all attributes but time}
-\wrm{I still don't know why we need to use derivation trees here.}
+%%\paa{I may have made a mess of this.  derivation trees are probably more machinery than we need to describe, for
+%%the purposes of the definition of a 'stable inference', the 1-step deduction of an atom from another atom having the same
+%%name and the same values for all attributes but time}
+%%\wrm{I still don't know why we need to use derivation trees here.}
 %%\wrm{Define 'derivation'.  Joe sez: "Here I think you just need an appropriate reference for derivation trees, along with some simple intuition.  I believe the right ref is %%"Constraints and Redundancy in Datalog", Levy/Sagiv, PODS 92."}
 
-\begin{definition}
+%%\begin{definition}
+%%An \emph{inference} is a single step in a derivation, corresponding to a goal node, its child rule node, and the child goal
+%%nodes of this rule node.  
+%%\end{definition}
 
-An \emph{inference} is a single step in a derivation, corresponding to a goal node, its child rule node, and the child goal
-nodes of this rule node.  
-\end{definition}
+%%\paa{or... ditch all this stuff about derivations, define an 'inference' as a single deduction of an atom from established atoms;
+%%ie the single evaluation of a rule, and proceed from here with the definitions}
 
-\paa{or... ditch all this stuff about derivations, define an 'inference' as a single deduction of an atom from established atoms;
-ie the single evaluation of a rule, and proceed from here with the definitions}
+%%\textbf{alternate derivation-free definition:}
+%%\begin{definition}
+%%An \emph{inference} is the deduction of an atom from established atoms via the application of a rule.
+%%\end{definition}
+%%\wrm{what's a rule application?}
 
-\textbf{alternate derivation-free definition:}
-\begin{definition}
-An \emph{inference} is the deduction of an atom from established atoms via the application of a rule.
-\end{definition}
-\wrm{what's a rule application?}
-
-\begin{definition}
-A \emph{stable inference} has a goal $\gamma'$ with time suffix $\Tau$ derived
-from a child goal $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
-$\gamma'$ only in its time suffix.
+%%\begin{definition}
+%%A \emph{stable inference} has a goal $\gamma'$ with time suffix $\Tau$ derived
+%%from a child goal $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
+%%$\gamma'$ only in its time suffix.
 %
-\end{definition}
+%%\end{definition}
 
-In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
-minus $\Tau$.\wrm{$<$/dont really get whats going on$>$}.
+%%In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
+%%minus $\Tau$.\wrm{$<$/dont really get whats going on$>$}.
 
-\wrm{How about we delete everything above and just say this:}
+%%\wrm{How about we delete everything above and just say this:}
 
 %%To distinguish between programs that 
 %%produce these infinite \emph{void inductions} and those that correspond 
@@ -162,14 +169,22 @@ minus $\Tau$.\wrm{$<$/dont really get whats going on$>$}.
 %%in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
 %%\end{definition}
 
+\begin{definition}
+Two ground atoms $\gamma$ and $\gamma'$ are \emph{equivalent} if they have the same predicate symbol
+and the same assignment of constant to attributes for all attributes except the time suffix.
+\end{definition}
+
+In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
+minus $\Tau$.
+
 We call a \slang instance is \emph{quiescent at time $T$} if the set of all 
-tuples true at time $T$ is equal to the set of all facts true at time $T-1$.
+true atoms with time suffix $T$ is equivalent to the set of all true atoms with time suffix $T-1$.
 
 
-\paa{well, there are some problems with this.  first, facts are only in the EDB, you mean atom,
-second, this is never true because of the time suffix (unless you mean to have defined ``fact''
-precisely as $\pi_\xi(p)$ for any predicate p.)  what I was trying to do was define quiescence in terms
-of inference; a quiescent DB is one for which all inferences are stable.}
+%%\paa{well, there are some problems with this.  first, facts are only in the EDB, you mean atom,
+%%second, this is never true because of the time suffix (unless you mean to have defined ``fact''
+%%precisely as $\pi_\xi(p)$ for any predicate p.)  what I was trying to do was define quiescence in terms
+%%of inference; a quiescent DB is one for which all inferences are stable.}
 
 \begin{observation}
 %
