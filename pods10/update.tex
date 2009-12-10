@@ -3,6 +3,8 @@
 
 \subsection{EDB Preambles}
 
+\rcs{I've never seen someone use ``preamble'' to refer to this concept.  Why not call it a prefix?}
+
 A \slang instance's EDB may be arbitrarily large.  In this section we introduce
 the notion of a {\em preamble} -- a truncation of the EDB, and prove an
 equivalence between full evaluation of a preamble and incremental evaluation
@@ -19,7 +21,7 @@ based on evaluation of an earlier preamble.
 A \emph{preamble} $\alpha_{n}$ of an EDB $\Gamma$ is the set of facts in $\Gamma$ whose timestamp is less than or equal to $n$.
 \end{definition}
 
-If the EDB is finite, then it has a maximum timestamp $\top$, and
+If the EDB is finite, then it has a maximum timestamp $\top$, \rcs{is successor now part of the EDB? Otherwise, there is no max timestamp} and
 $\alpha_{\top}$ = $\Gamma$.  \wrm{I don't think we use $\top$ anywhere else}
 Because each preamble is a superset of all preambles with lower indices, we
 have the monotonicity property:
