@@ -1,5 +1,5 @@
 
-\subsection{Stratification in {\large{\bf\slang}}}
+\subsection{Stratification in {\large{\bf\slang}}\rcs{the last section is called ... and stratification in \slang...}}
 
 %%\paa{notes}
 
@@ -31,6 +31,8 @@ is a pure Datalog
 program.  Every pure Datalog program has a unique minimal model. 
 %
 \end{proof}
+
+\rcs{joe said this once. the \slang program has a unique, infinite minimal model.  As the flip flop example shows, this doesn't mean that it quiesces.  We should make the sleight of hand explicit.}
 
 %%\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
 
@@ -172,7 +174,7 @@ cycle must involve an inductive rule, as $P$ is temporally stratified.
 
 We convert our \slang program to a Datalog program $P'$ using the
 transformation from Section~\ref{sec:abbrvsyntax}, which does not introduce any
-additional cycles or negation.  Since the time suffix in the head of an
+additional cycles\rcs{except in the definition of successor} or negation.  Since the time suffix in the head of an
 inductive rule is strictly greater than the time suffix of its body, no atom
 may depend negatively on itself -- it may only depend negatively on atoms in
 the previous timestep.  Thus, $P'$ is modularly stratified over time, using the
