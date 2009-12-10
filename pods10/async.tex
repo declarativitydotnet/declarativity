@@ -19,7 +19,9 @@ reason about the inherent nondeterminism in communication over unreliable
 networks that may delay, lose or reorder the results of logical deductions 
 (see Figure~\ref{fig:time}).
 
-\subsection{Aggregate Functions}
+\subsection{New Constructs}
+
+\subsubsection{Aggregate Functions}
 
 We will consider only the class of \emph{exemplary} aggregate
 functions~\cite{tag} -- an exemplary aggregate function's codomain is a subset
@@ -52,18 +54,6 @@ min_p(A, B) \(\leftarrow\) p(A, B), \(\lnot\)notmin_p(A, B);
 \end{example}
 
 
-\subsection{Sequences}
-
-One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
-
-\begin{Dedalus}
-seq(A, X + 1)@next \(\leftarrow\) seq(A, X), event(A);
-  
-seq(A, X)@next \(\leftarrow\) seq(A, X), \(\lnot\) event(A);
-\end{Dedalus}
-
-We must admit arithmetic functions into our language to express such a
-sequence, but the pair of rules above remains temporally safe.
 
 
 %%\dedalus{r\_pos($A_1$, $A_2$, [...], $A_n$, }
@@ -74,7 +64,7 @@ sequence, but the pair of rules above remains temporally safe.
 
 
 
-\subsection{Choice}
+\subsubsection{Choice}
 
 We also admit the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
@@ -86,6 +76,9 @@ The choice construct is nondeterministic.  In a model-theoretic interpretation o
 must be one that has a multiplicity of stable models -- that is to say, an unstratifiable program.  Greco and Zaniolo define 
 choice in precisely this fashion: the choice construct is expanded into an unstratifiable rule clique, 
 and each possible choice is associated with a different model.
+
+\paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
+is stratifiable, locally stratifiable, etc}
 
 \subsection{Asynchronous Rules}
 
@@ -137,7 +130,41 @@ r(A, B)@async \(\leftarrow\)
   e(A, B);
 \end{Dedalus}
 
-\subsection{Queues}
+
+\subsection{Entanglement}
+
+Consider the asynchronous rule below:
+
+\begin{Dedalus}
+p(A, B, N)@async \(\leftarrow\)
+  q(A, B)@N;
+\end{Dedalus}
+
+Due to the async keywork in the rule head, the \emph{p} tuple will take some unspecified time suffix value.
+Note however that the time suffix $N$ of the rule body appears also in the \emph{p} tuple, capturing a 
+binding between the time value of the deduction and the time value of its consequence.  We call such a binding
+an \emph{entanglement}.   
+
+
+
+\subsection{Ordering and distribution in Logic}
+
+
+\subsubsection{Sequences}
+
+One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
+
+\begin{Dedalus}
+seq(A, X + 1)@next \(\leftarrow\) seq(A, X), event(A);
+  
+seq(A, X)@next \(\leftarrow\) seq(A, X), \(\lnot\) event(A);
+\end{Dedalus}
+
+We must admit arithmetic functions into our language to express such a
+sequence, but the pair of rules above remains temporally safe.
+
+
+\subsubsection{Queues}
 
 %%Consider a trace of events to a 
 Consider a predicate \dedalus{balance\_update} that represents updating the a
@@ -203,7 +230,7 @@ A queue establishes a mapping between the local clock and the ordering domain of
 advantage of the natural ordering enforced by stratification over time, to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
 
-\subsection{Lamport Clocks}
+\subsubsection{Lamport Clocks}
 
 Implementing a Lamport Clock~\cite{timeclocks} is a special case of a queueing discipline as defined above.
 Consider a predicate{m\_balance\_update} as defined above, but with an extra integer attribute that contains the logical transmission
@@ -255,5 +282,5 @@ over a medium that can delay or reorder them arbitrarily.  In order to make the 
 and remote clocks, it is necessary to reference the time suffix variable directly, rather than omitting it as we have done 
 in all other \lang examples.
 
-\subsection{Trace Entanglement}
+
 
