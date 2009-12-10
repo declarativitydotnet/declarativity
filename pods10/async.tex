@@ -76,7 +76,16 @@ sequence, but the pair of rules above remains temporally safe.
 
 \subsection{Choice}
 
-\wrm{Dave Maier says to define/give an example of choice.  Should we?}
+We also admit the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
+The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
+\emph{$X_1$} and \emph{$X_2$} are vectors of variables occuring also elsewhere in the body.  Such a subgoal
+enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing" a single assignment of values to the variables
+in \emph{$X_2$} for each distinct set of variables in \emph{$X_1$}.
+
+The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programs, a nondeterministic program 
+must be one that has a multiplicity of stable models -- that is to say, an unstratifiable program.  Greco and Zaniolo define 
+choice in precisely this fashion: the choice construct is expanded into an unstratifiable rule clique, 
+and each possible choice is associated with a different model.
 
 \subsection{Asynchronous Rules}
 
