@@ -19,16 +19,15 @@ reason about the inherent nondeterminism in communication over unreliable
 networks that may delay, lose or reorder the results of logical deductions. 
 %(see Figure~\ref{fig:time}).
 
-\subsection{{\bf \large \lang}: New Constructs}
+%%\subsection{{\bf \large \lang}: New Constructs}
 
-In this section we present the Datalog extensions missing from \slang that we will need in \lang to capture important properties of practical distributed systems.  These include aggregate functions to 
-capture ordering constraints, and---more importantly---the choice construct to capture nondeterminacy.
+\subsection{Choice}
+
+%%In this section we present the Datalog extensions missing from \slang that we will need in \lang to capture important properties of practical distributed systems.  These include aggregate functions to 
+%%capture ordering constraints, and---more importantly---the choice construct to capture nondeterminacy.
 
 
-
-
-
-\subsubsection{Choice}
+%%\subsubsection{Choice}
 A signature feature of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of non-determinism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where

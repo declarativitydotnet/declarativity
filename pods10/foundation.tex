@@ -3,12 +3,14 @@
 %%Datalog$\lnot$~\cite{ullmanbook} with aggregate function symbols akin to those
 %%of SQL (min, max, avg, stdev, count).  Henceforth, we will refer to this
 %%language as ``Datalog.'' 
-We take as our foundation the language Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with negated subgoals.  We will typically be interested in the
+We take as our foundation the language Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with negated subgoals.  We will be interested in the
 classes of statically stratifiable 
 %,locally stratifiable~\cite{prz} 
-and modularly stratifiable~\cite{modular} programs, which we review below.  For conciseness, when we refer to ``Datalog'' below our intent is to admit negation -- i.e., Datalog$\lnot$.  In the latter sections of the paper, we will also use
-the \dedalus{choice} construct~\cite{greedychoice, eventchoice} to model
-nondeterministic selection of an element from a set.  
+and modularly stratifiable~\cite{modular} programs, which we revisit below.  For conciseness, when we refer to ``Datalog'' below our intent is to admit negation -- i.e., Datalog$\lnot$.  
+
+%%In the latter sections of the paper, we will also use
+%%the \dedalus{choice} construct~\cite{greedychoice, eventchoice} to model
+%%nondeterministic selection of an element from a set.  
 %%\jmh{save the next sentence for later.  stay pure here.}
 %%In \dedalus, we will use this construct to
 %%model both the nondeterminism of message delay, and the semantics of key
@@ -21,7 +23,7 @@ constants---and a countably infinite universe of variable symbols $\Vars = A_1,
 A_2, \ldots$.
 %, and a distinguished variable $\Tau$.
 % which may take on the values of any constants.   
-We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended except that the fact \dedalus{successor(x,y)} is true \rcs{was: beyond the fact that \dedalus{successor(x,y)} holds} iff $y = x + 1$.
+We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended beyond \dedalus{successor(x,y)} is true \rcs{was: beyond the fact that \dedalus{successor(x,y)} holds} iff $y = x + 1$.
 %We consider the
 %standard strict total order $<$. We define the \dedalus{successor} relation,
 %where \dedalus{successor(i,j)} means that \dedalus{j} is the least element that
@@ -33,7 +35,7 @@ We will capture time in \slang via an infinite relation \dedalus{successor} isom
 
 %%$p(A_{1}, A_{2}, [...], A_{n})@S$
 \slang is a restricted sublanguage of Datalog.  Specifically, we restrict the
-admissible schemata and the form of rules.
+admissible schemata and the form of rules with the four constraints that follow.
 
 \noindent{\bf Schema: }We require that the final attribute of every \slang
 predicate range over the domain $\mathbb{Z}$.  In a typical
@@ -73,7 +75,7 @@ In Section~\ref{sec:async} when we consider \lang---a superset of \slang---we wi
 introduce a third kind of rule to capture asynchrony.
 
 \begin{example}
-Well-formed deductive and inductive rules.
+The following are examples of well-formed deductive and inductive rules, respectively.
 \\
 deductive:
 \begin{Dedalus}
@@ -101,8 +103,8 @@ predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
 Intuitively, this rule allows extensional facts to serve as ground for
 \dedalus{r\pos}, while enabling other rules to derive additioanl \dedalus{r\pos} facts.
 
-\dedalus{r\pos} may be reference in the body or head of any \slang rule.  
-\dedalus{r\nega} is a predicate that we will use later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
+The predicate \dedalus{r\pos} may be reference in the body or head of any \slang rule.  
+We will make use of the predicate \dedalus{r\nega} later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
 Like {r\pos}, the use of {r\nega} is the heads and bodies of rules is unrestricted.
 
 %%\jmh{I hate this -- can we nail it here?}
@@ -110,7 +112,7 @@ Like {r\pos}, the use of {r\nega} is the heads and bodies of rules is unrestrict
 \vspace{1.2em}
 \noindent{\bf Guarded EDB: }
 No well-formed \slang rule may involve any extensional predicate, except for a rule of the form above.
-
+\paa{need another sentence, but not sure what it should be...}
 
 \subsection{Abbreviated Syntax and Temporal Interpretation}
 
@@ -119,7 +121,7 @@ No well-formed \slang rule may involve any extensional predicate, except for a r
 We have been careful to define \slang as a syntactic subset of Datalog; this inclusion allows us to take advantage of Datalog's
 well-known semantics and the rich literature on the language.
 
-However \slang programs are intended to capture 
+\slang programs are intended to capture 
 %naturally
 temporal semantics.  For example, a fact with some constant $C$ in its time
 suffix can be thought of as a fact that is true ``at time $C$''.  
@@ -182,7 +184,8 @@ the body.
 %\wrm{the before stuff might be a bit to verbose and repetitive.}
 
 \begin{example}
-Sugared deductive and inductive rules.
+%%Sugared deductive and inductive rules.
+The following are ``sugared" versions of deductive and inductive rules:
 \\
 deductive:
 \begin{Dedalus}
