@@ -72,13 +72,13 @@ which we subsequently use, is expressible in Datalog using negation.
 
 We also admit the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
-\emph{$X_1$} and \emph{$X_2$} are vectors of variables occuring also elsewhere in the body.  Such a subgoal
+\emph{$X_1$} and \emph{$X_2$} are vectors whose constituent variables occur elsewhere in the body.  Such a subgoal
 enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing" a single assignment of values to the variables
 in \emph{$X_2$} for each variable in \emph{$X_1$}.
 
-The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programs, a nondeterministic program 
-must be one that has a multiplicity of stable models -- that is to say, an unstratifiable program.  Greco and Zaniolo define 
-choice in precisely this fashion: the choice construct is expanded into an unstratifiable rule clique, 
+The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
+must have a multiplicity of stable models -- that is it must be unstratifiable.  Greco and Zaniolo define 
+choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly connected component of rules, 
 and each possible choice is associated with a different model.
 
 \paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
@@ -87,25 +87,23 @@ is stratifiable, locally stratifiable, etc}
 
 \subsection{Distribution Model}
 
-A principal motivation for the specification of \lang is modeling and implementing distributed systems.
-To represent such a system we must consider a multiplicity of asynchronous agents evaluating local programs and
-communicating via messages.  As with previous distributed logic languages, we model messages as
+A principal motivation for \lang is modeling and implementing distributed systems.
+To represent such a system we must consider a multiplicity of agents evaluating local programs and
+asynchronously communicating via messages.  As with previous distributed logic languages, we model messages as
 tuples and their transmission as a special case of rule evaluation in which the body is evaluated at one
 agent and the head atom appears at another.  
 
-An agent clearly cannot evaluate rules whose body
-predicates exist at another agent, and hence these message rules are the only manner in which data
+We exclude agents from evaluating rules using non-local body atoms, as this computation necessarily involves communication
+not modeled by \lang.  Thus, these message rules are the only manner in which data
 elements derived from one agent's EDB may be visible in the IDB of another.  This restriction is 
 particularly significant to our interpretation of timestamps.  Although the \emph{successor} relation exists
-at each agent according to our definition, there is no reason to assume that a subset of that relation 
-relevant to computation at any particular agent will intersect the relevant subset at another.  In other words,
-if we consider the ``current local time" as a pointer to a particular row of successor, we must admit that in a 
-distributed system, each agent's pointer will likely point to a different row, and there is certainly no way for
-a given agent to know the value pointed to by another.
+at each agent according to our definition, there is no reason to assume that a subset of {\em successor} 
+relevant to computation at any particular agent will intersect a relevant subset at another.  In other words,
+if we consider the ``current local time" as a pointer to a particular row of successor, each agent's pointer will likely indicate a different row in a distributed system.
+\lang does not allow an agent to know the current time of another.
 
 It follows that a message rule as described above will deduce a head predicate whose timestamp is independent
-of the timestamps in the body predicates, and which cannot have been predicted by the agent at which the rule
-was evaluated.
+of the timestamps in the body predicates.
 
 \subsection{Asynchronous Rules}
 
@@ -119,8 +117,8 @@ if the
 %(Section~\ref{sec:syntaxrestrictions}).  in our discussion of \slang,
 %representing the time suffixes occuring respectively in the body and head of a
 %rule.
-relation between the head time suffix $S$ and the body time suffix $\Tau$ is
-unknown.  Furthermore, $S$, but not $\Tau$, may take on the special value
+relation between the head time suffix $\SDedalus$ and the body time suffix $\Tau$ is
+unknown.  Furthermore, $\SDedalus$, but not $\Tau$, may take on the special value
 $\perp$ which means ``never.''  Derivation at $\perp$ indicates that the
 deduction is ``lost,'' as time suffixes in rule bodies do not range over
 $\perp$.
@@ -133,21 +131,21 @@ predicate, which is defined using the following datalog rules:
 
 \begin{Dedalus}
 time(\(\perp\));
-time(S) \(\leftarrow\) successor(S, _);
+time($\SDedalus$) \(\leftarrow\) successor($\SDedalus$, _);
 \end{Dedalus}
 
 
 Each asynchronous rule has the following additional variables in its
-body: \dedalus{time(S), choose((\_), (S))}, where
+body: \dedalus{time($\SDedalus$), choose((\_), ($\SDedalus$))}, where
 $\SDedalus$ is the timestamp of the rule head.
 
 \begin{example}
 A well-formed asynchronous \lang rule:
 
 \begin{Dedalus}
-r(A, B, S) \(\leftarrow\) 
+r(A, B, $\SDedalus$) \(\leftarrow\) 
   e(A, B, \(\Tau\)),
-  time(S), choose((_)), (S));
+  time($\SDedalus$), choose((_)), ($\SDedalus$));
 \end{Dedalus}
 \end{example}
 
