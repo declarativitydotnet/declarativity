@@ -303,9 +303,12 @@ Note that these two rules produce only a single value of seq at each timestep, b
 
 
 \subsubsection{Queues}
+\jmh{Motivate me!}
 
+\jmh{Notice again -- no entanglement, no async.  Just aggs.  Could be in \slang if you would admit aggs into \slang (and why wouldn't you?)}
 %%Consider a trace of events to a 
-Consider a predicate \dedalus{priority\_queue} that represents a series of tasks to be performed in some predefined order.  Its attributes are a string representing a user, a job, and an integer
+
+\jmh{Can't we whittle this down to the bone?  Why are we dealing with user and job attributes?  Why not drop user?}Consider a predicate \dedalus{priority\_queue} that represents a series of tasks to be performed in some predefined order.  Its attributes are a string representing a user, a job, and an integer
 indicating the priority of the job in the queue:
 
 \begin{Dedalus}
@@ -331,37 +334,43 @@ admit sequences.  \jmh{Huh?  I don't see the last clause there.  Maybe say simpl
 In the program below, we define a table \dedalus{m\_priority\_queue} that
 serves as a queue to feed \dedalus{priority\_queue}.  The queue must persist
 across timesteps because it may take multiple timesteps to drain it.  At each
-fixpoint, for each value of \textbf{A}, a single tuple is projected into
+timestep, for each value of \textbf{A}, a single tuple is projected into
 \dedalus{priority\_queue} and deleted (atomic with the projection) from
 \dedalus{m\_priority\_queue}, changing the value of the aggregate calculated
 at the subsequent step:
 
 \begin{Dedalus}
-
+% persist m\_priority\_queue
 m\_priority\_queue(A, B, C)@next \(\leftarrow\)
   m\_priority\_queue(A, B, C),
   notin del\_m\_priority\_queue(A, B, C);
 
+% find the min priority
 omin(A, min<C>) \(\leftarrow\)
   m\_priority\_queue(A, _, C);
 
+% feed p in the next step 
+% with the items of min priority
 p(A, B, C)@next \(\leftarrow\)
   m\_priority\_queue(A, B, C),
   omin(A, C);
 
+% delete from the next step 
+% those items of min priority
 del\_m\_priority\_queue(A, B, C) \(\leftarrow\)
   m\_priority\_queue(A, B, C),
   omin(A, C);
 \end{Dedalus}
 
 Under such a queueing discipline, deductive rules that depend on
-\emph{priority\_queue} are constrained to consider only one tuple per fixpoint
+\emph{priority\_queue} are constrained to consider only min-priority tuples at each timestep
 per value of the variable \textbf{A}, thus implementing a per-user FIFO
 discipline.  To enforce a global FIFO ordering over \emph{priority\_queue}, we
 may redefine \emph{omin} and any dependent rules to exclude the \textbf{A}
 atttribute.
 
-A queue establishes a mapping between the local clock and the ordering domain of the input relation. By doing so, we are able to take
+\jmh{This paragraph is a bit of a mouthful.  And didn't we say this already?}
+A queue establishes a mapping between the local clock and the priority-ordering attribute of the input relation. By doing so, we are able to take
 advantage of the natural ordering enforced by stratification over time, to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
 
@@ -374,7 +383,7 @@ how to implement Lamport clocks~\cite{timeclocks} atop
 \dedalus{@async}, ensuring that the program observes a causal ordering
 of events.  Depending on the runtime environment, making use of
 \dedalus{@async} and explicitly maintaining Lamport clocks may be more
-or less natural than \dedalus{@later}.
+or less natural than \dedalus{@later}.  \jmh{Any plan of convincing me of the pros and cons of these?  I'd say they're the same, and you should toss out later?}
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
 rewriting it to:
@@ -389,16 +398,17 @@ p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
 we place the derived tuple in a new relation \dedalus{p\_wait} that
 stores any tuples that were ``sent into the past'' until the point in
 time at which they were derived.  Conceptually, this causes the system
-to evaluate a potentially large number of fixpoints (if N is
+to evaluate a potentially large number of timesteps (if N is
 significantly less than the timestamp of the system when the tuple
 arrives).  However, if the runtime is able to efficiently evaluate
 timesteps when the database is quiescent (by recognizing that the
-timesteps can be skipped), then instead of ``waiting'' by evaluating
+timesteps can be skipped, as is done in Algorithm~\ref{alg:tsn}), then instead of ``waiting'' by evaluating
 timesteps, it will simply increase its logical clock to match that of
 the sender.  In contrast, if the tuple is ``sent into the future,''
 then it is processed using the timestep that receives it.  This
 manipulation of timesteps and clock values is equivalent to
 conventional descriptions of Lamport clocks.
 
+\jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
 
 
