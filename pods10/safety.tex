@@ -247,8 +247,7 @@ Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
 an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
 predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$ depends on $p$), $p$ appears in
 no inductive rules.
-%%\rcs{does e depend on p, or is it the other way?  Does no inductive rules mean that $p$ is not persistent?}
-%
+
 \end{definition}
 
 %%A rule is temporally safe if:
@@ -266,7 +265,7 @@ or
 %
 \item It is an inductive rule that has at least one instantaneous predicate as a
 positive subgoal in the body.  Since the EDB is finite, this inductive rule
-may only be triggered finitely often. \rcs{Ok, so $e \succ p$ must mean that the depends-on is opposite the direction of the arrow, since $e$ is in a deductive rule.}
+may only be triggered finitely often.
 %
 \end{enumerate}
 
