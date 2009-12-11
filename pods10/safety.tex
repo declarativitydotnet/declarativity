@@ -109,15 +109,16 @@ The infinte \dedalus{successor} relation complicates our discussion of safety; c
 \label{ex:tempsafe}
 %
 An unsafe \slang instance?
-
-r1:\\
+\\
+r1:
 \begin{Dedalus}
 p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
 \end{Dedalus}
-r2:\\
+r2:
 \begin{Dedalus}
 p\pos(A, B)  \(\leftarrow\) p(A, B);
-
+\end{Dedalus}
+\begin{Dedalus}
 p(1, 2)@123;
 \end{Dedalus}
 

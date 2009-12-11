@@ -74,12 +74,13 @@ introduce a third kind of rule to capture asynchrony.
 
 \begin{example}
 Well-formed deductive and inductive rules.
-
-deductive:\\
+\\
+deductive:
 \begin{Dedalus}
 p(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), \(\SDedalus\) = \(\Tau\);
 \end{Dedalus}
-inductive:\\
+\\
+inductive:
 \begin{Dedalus}
 q(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), successor(\(\Tau\), \(\SDedalus\));
 \end{Dedalus}
@@ -175,12 +176,12 @@ the body.
 
 \begin{example}
 Sugared deductive and inductive rules.
-
-deductive:\\
+\\
+deductive:
 \begin{Dedalus}
 p(A, B) \(\leftarrow\) e(A, B);
 \end{Dedalus}
-inductive:\\
+inductive:
 \begin{Dedalus}
 q(A, B)@next \(\leftarrow\) e(A, B);
 \end{Dedalus}
