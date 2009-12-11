@@ -85,10 +85,10 @@ and each possible choice is associated with a different model.
 \paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
 is stratifiable, locally stratifiable, etc}
 
-
+\jmh{Where do we define \lang?  Here?  After async?}
 \subsection{Distribution Model}
 
-A principal motivation for \lang is modeling and implementing distributed systems.   Before we formally introduce issues from distributed computing, we give an intuitive overview of our approach.
+A principal motivation for \lang is to model and implement distributed systems.   Before we formally introduce our extensions for distributed computing, we give an intuitive overview of our approach.
 
 To represent a distributed system, we consider a multiplicity of agents, each evaluating its own local program, 
 asynchronously communicating with other agents via messages. 
@@ -103,11 +103,11 @@ elements derived from one agent's EDB may be visible in the IDB of another.
 
 This restriction is 
 particularly significant to our interpretation of timestamps.  Although the \emph{successor} relation exists
-at each agent according to our definition, the bindings from that relation to program variables---that is, the absolute ``times'' at which facts exist---may not be coordinated across agents.  Moreover, the natural asynchrony of distributed systems means that one agent should only be able to learn about  time values at another agent by receiving messages (with unknown delay) from that agent.  
+at each agent according to our definition, the bindings from that relation to program variables---that is, the absolute ``times'' at which facts exist---might not be coordinated across agents.  Moreover, the natural asynchrony of distributed systems means that one agent should only be able to learn about time values at another agent by receiving messages (with unknown delay) from that agent.  
 
 We will enforce this strong notion of asynchrony syntactically in 
 \lang.  To do so, the message rules described above will be required to  deduce a head predicate whose timestamp is independent
-of the timestamps in the body predicates.  We proceed to describe these {\em asynchronous} rules, 
+of the timestamps in the body predicates.  We proceed to describe these {\em asynchronous} rules, and then their use in a variety of distributed programs.
 
 \subsection{Asynchronous Rules}
 
