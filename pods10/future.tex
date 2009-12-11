@@ -1,30 +1,28 @@
 \section{Conclusion and Future Work}
-\lang is the result of our experience using languages such as
+Datalog has inspired a variety of recent applied work, which touts the benefits of declarative specifications for practical implementations.  Unfrotunately, Datalog's declarative semantics make no guarantees
+regarding the order in which derivations will occur; or rather, they derive all derivations in one atomic fixpoint computation.  This makes it difficult to associate natural ``side-effects'' like state update and message delivery with purely logical notions of deduction.
+
+
+\lang is the result of our experience using hybrid declarative/imperative languages such as
 Overlog~\cite{Loo2009-CACM} to implement a number of networking protocols
-and distributed systems\rcs{could cite; we do already, elsewhere...}.  Although our experience with those
-languages was largely positive, they were designed by layering
-operational semantics and imperative constructs atop Datalog.  While
-this provides us with powerful machinery when reasoning about local,
-atomic computations, it does not provide a clear
-path toward distributed program analysis, or even a way to reason
-about single-node programs that perform state updates.
+and distributed systems~\cite{boom-techr,Loo2009-CACM,Alvaro2009I-Do-Declare:-C,Chu:2007}.  Although our experience with those
+languages was largely positive, the combination of Datalog and imperative constructs hampered our development of program analyses, and even our understanding of the ``correct'' execution of single-node programs that performed state updates.
 
-By reducing time to another type of data over which logical deductions
-are performed, \lang allows us to express concepts such as asynchrony,
-side-effects and state update in terms of a purely deductive logic
-language.  Such concepts are traditionally difficult to express within
-logic languages; Datalog's declarative semantics make no guarantees
-regarding the order in which derivations will occur, making it
-difficult to associate side-effects with logical derivations.  
 
-At their core, state update and communicaton differ from logical
+By mapping time to another type of data over which logical deductions
+are performed, \lang allows us to express concepts such as asynchrony and state update in terms of a purely deductive logic
+language, achieving the goal of a declarative language without sacrificing critically expressive features for the distributed systems domain.
+
+\jmh{I think this paragraph says ``\lang handles state'', and the next says ``\lang handles asynchrony.''  Yes?  Let's say so than.}
+At their core, state update and communication differ from logical
 deductions only in terms of timing; \lang's notion of time allows us
-to easily express ordered operations in terms of logical deductions.
-In the local case, this allows us to express state update and side
-effects without giving up the clean semantics of Datalog; unlike
+to interleave operations and time in terms of logical deductions.
+In the local case, this allows us to express state update without giving up the clean semantics of Datalog; unlike
 Datalog extensions that use imperative constructs to provide such
 functionality, each \lang rule expresses a logical invariant that will
-hold over all program executions.  Our treatment of time in terms of
+hold over all program executions.  
+\jmh{next sentence is lost of me.}
+Our treatment of time in terms of
 logical constraints allows us to model issues such as causality (and
 ``clever'' systems that observe causality violations) in a flexible
 manner.
@@ -32,6 +30,7 @@ manner.
 However, interactions with external processes, and primitives such as
 asynchronous and unreliable communication introduce nondeterminism
 which \lang models with \dedalus{choose}.  
+
 Our hope is that modeling external process and events with a single
 primitive will greatly simplify program analysis techniques.  Rather
 than spending time and effort translating imperative code into sets of logical
