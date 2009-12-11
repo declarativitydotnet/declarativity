@@ -138,7 +138,7 @@ program is unsafe.
 However, observe that each of these deductions produces a tuple that changes
 only in its time suffix.  We find it useful to distinguish from unsafe
 programs those programs that, given a finite EDB, eventually derive only tuples
-that are equivalent modulo their time suffixes. 
+that are equivalent except in their time suffixes.
 
 %%\wrm{$<$don't really get whats going on$>$}
 %%Consider a \emph{derivation tree} as defined by Levy et al~\cite{levy}.  
@@ -192,15 +192,21 @@ that are equivalent modulo their time suffixes.
 %%\end{definition}
 
 \begin{definition}
-Two ground atoms $\gamma$ and $\gamma'$ are \emph{equivalent} if they have the same predicate symbol
-and the same assignment of constant to attributes for all attributes except the time suffix.
+%
+Two sets of ground atoms $\Gamma$ and $\Gamma'$ are \emph{equivalent modulo
+time} if each atom $\gamma \in \Gamma$ has a corresponding atom $\gamma' \in
+\Gamma'$ such that $\gamma$ and $\gamma'$ have the same predicate symbol, and
+the same assignment of constant to attributes for all attributes except the
+time suffix.
+%
 \end{definition}
 
 %%In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
 %%minus $\Tau$.\rcs{either define pi, write out ``projection'', or drop this paragraph}
 
-We say a \slang instance is \emph{quiescent at time $T$} if the set of all 
-atoms with time suffix $T$ is equivalent to the set of all atoms with time suffix $T-1$.
+We say a \slang instance is \emph{quiescent at time $T$} if the set of all
+atoms with time suffix $T$ is equivalent modulo time to the set of all atoms
+with time suffix $T-1$.
 %%\rcs{what is a true atom?  Why distinguish between true atoms and false atoms?  Surely the neg tuples will match as well.  If not, then the program has somehow not quiesced...}
 
 
@@ -234,8 +240,8 @@ of EDB facts at $T+1$, it will again compute $\mathbb{A}$ at $T+1$.
 
 \begin{definition}
 %
-A \slang instance with finite EDB is \emph{temporally safe} if it quiescent at
-some time $T$ after which no EDB facts are true.
+A \slang instance with finite EDB is \emph{temporally safe} if it is henceforth
+quiescent after some time $T$.
 %
 \end{definition}
 %%\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
@@ -245,27 +251,26 @@ some time $T$ after which no EDB facts are true.
 %
 Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
 an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
-predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$ depends on $p$), $p$ appears in
-no inductive rules.
+predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$
+depends on $p$), $p$ appears in no inductive rule.
 
 \end{definition}
 
 %%A rule is temporally safe if:
-We propose the following conservative test for temporal safety.  A rule is
-guaranteed to be temporally safe if:
+We propose the following conservative test for temporal safety.  A program is
+guaranteed to be temporally safe if every rule is either:
 
 \begin{enumerate}
 %
-\item It is instantaneously safe, or
+\item An instantaneously safe rule, or
 %
-\item It is an inductive rule in which the head predicate occurs also in the
+\item An inductive rule in which the head predicate occurs also in the
 body with the same variable bindings for all attributes save the time suffix,
 or
 %%occurs also in the body with the same assignment of variables and constants to attributes.
 %
-\item It is an inductive rule that has at least one instantaneous predicate as a
-positive subgoal in the body.  Since the EDB is finite, this inductive rule
-may only be triggered finitely often.
+\item An inductive rule that has at least one instantaneous predicate as a
+positive subgoal in the body.
 %
 \end{enumerate}
 
@@ -275,13 +280,29 @@ may only be triggered finitely often.
 %%not reference the infinite relation \emph{successor}.  instantaneously safe <=> safe in datalog) further, any instantaneously safe rule is temporally safe.  
 %%also, rules that are (2,3) are temporally safe.}
 
-A \slang program is temporally safe if all its rules are temporally safe.
-Intuitively, a temporally safe program terminates \rcs{ used to say quiesces, but temporally unsafe programs can quiesce a finite number of times} given a finite EDB, while a
-temporally unsafe program changes infinitely.  Note that the \slang program in
-Example~\ref{ex:tempsafe} is temporally safe because \emph{r1} corresponds to
-the second rule of the definition, and \emph{r2} corresponds to the first Atoms
-deduced by the inducive rule \emph{r1} differ from existing atoms only in their
-time suffix.
+While a temporally safe program is henceforth quiescent after some time $T$,
+a temporally unsafe program changes infiniely.  Note that
+the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
+\emph{r1} and \emph{r2} both satisfy the second condition above.
+
+\begin{lemma} 
+%
+A \slang instance with finite EDB where every rule satisfies conditions 1-3
+above is indeed temporally safe.
+%
+\end{lemma}
+%
+\begin{proof}
+%
+Assume the program is temporally unsafe.  That is, there exists no time $T$
+such that $\forall U >= T$, the set of all atoms with time suffix $U$ is
+equivalent modulo time to the set of all atoms with time suffix $T-1$.
+
+Since the EDB is finite, a rule that satisfies condition 3 above
+may only be triggered finitely often.  Thus, every rule $r$ of this kind has
+\wrm{DANGER: PROOF IN PROGRESS}
+%
+\end{proof}
 
 \begin{example}
 A \slang instance with a temporally unsafe deductive rule.\rcs{is this even a \slang instance?  Is it a datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
