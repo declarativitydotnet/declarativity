@@ -462,4 +462,77 @@ conventional descriptions of Lamport clocks.
 
 \jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
 
+\rcs{From wikipedia, all they're good for is documenting the happens-before relationship between N nodes (so I'm not going insane, which makes me happy)}
 
+Lamport clocks capture information about the partial order of events
+that occur in distributed systems; in particular, if an event $A$ has
+a timestamp that is less than that of event $B$, then we know that $A$
+does not depend on $B$.  Our Lamport clock implementation delays
+messages sent from higher timestamps in order to ensure this property
+holds even if \dedalus{@async} is able to send messages into the
+past.  Therefore, it reintroduces the monotonicity of time that \slang's
+stratificaion properties relied upon.
+
+Although \lang allows us to reason about arbitrary temporal systems,
+this admits a number of paradoxes and other phenomona that do not
+arise in most practical systems.  Therefore, we would like to restrict
+\lang in a way that prevents it from violating causality.  This will
+require three new restrictions.\rcs{dang it... some of the restrictions are in the lemma definition; others are in these two paragraphs.  There are more than three of them.}
+
+First, the program may not specify any facts with hard-coded
+timestamps, such as ``a(X)@123''; instead selection of appropriate
+logical clock values for such facts is left to the runtime
+environment.  Futhermore, we restrict \lang to ``eager'' evaluations
+that quiesce computation before processing the next incoming message.
+
+Finally, we assume that our Lamport clocks will have the usual
+semantics at runtime: a fact $A$ with a timestamp less than that of
+some fact $B$ cannot possibly depend upon $B$.  We will say that \lang
+programs with this final restriction run in {\em causal} environments.
+
+\begin{lemma}
+\lang programs running in causal environments (a) with the restrictions of
+Lemmas 1 and 2\rcs{XXX fix refs in source}, (b) \rcs{pete fill in the
+  magic words that say we get rid of choice}, and (c) that do not make use of entanglement are temporally
+stratifiable.\rcs{XXX make this match wording above}
+\begin{proof}
+Assume that the program has been rewritten
+so that it maintains a Lamport clock as in the example above.  It
+suffices to show that (1) (by the proof of Lemma 2) that the rewritten
+program's clock values are monotonically increasing and (2) evalution
+of the rewritten program is equivalent to the original program.
+
+1) By the properties of Lamport clocks, we know that any incoming
+message with a timestamp $B$ does not depend upon some other message
+$A$ with a greater timestamp.  The quiescence assumption \rcs{misuse
+  of word quiescence, plus I'm not convinced we need this assumption}, and avoidance of hardcoded timestamps ensures
+that the node increases the local logical clock at least the the
+greater of current logical clock, and the timestamp of the incoming
+message.
+
+Either way, increasing the logical clock bars schedules that generate
+facts the incoming tuple depends upon: the node did not derive any
+facts with timestamps between $A$ and $B$'s timestamps.  Therefore,
+the timesteps of the computations performed by (and induced by) each
+node are monotonically increasing, and therefore correspond to a
+partial ordering over the computation performed by the system, which
+must be indistinguishable from some total ordering.  This completes
+part 1 of the proof.
+
+2) Because the program does not make use of entangled values,
+it does not transfer such values between nodes.  Therefore, increasing
+the local logical clock is a purely local operation.  Similarly,
+increasing the value of the logical clock does not change any state
+visible to the program, and cannot change the effects or even the
+schedule of local computations.
+\end{proof}
+\end{lemma}
+
+This section introduced Lamport clocks for two reasons.  First, they
+are a well-known and familiar tool for building distributed systems.
+Second, they provide a powerful theoretical tool that we use to
+re-establish the monotonicity properties of \slang.  We provided two
+techniques that reintroduce monotonicity into the system.  The first
+rewrites the program to use Lamport clocks to achieve the desired
+properties.  The second introduces a number of restrictions on \lang
+programs and executions.
