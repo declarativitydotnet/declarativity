@@ -22,24 +22,23 @@ networks that may delay, lose or reorder the results of logical deductions.
 \subsection{\lang: New Constructs}
 
 In this section we present the Datalog extensions missing from \slang that we will need in \lang to capture important properties of practical distributed systems.  These include aggregate functions to 
-capture ordering constraints, and the choice construct to capture nondeterminacy.
+capture ordering constraints, and---more importantly---the choice construct to capture nondeterminacy.
 
 \subsubsection{Aggregate Functions}
-\jmh{why only exemplary?  let's just do any aggs and cite appropriately}
-We will consider only the class of \emph{exemplary} aggregate
-functions~\cite{tag} -- an exemplary aggregate function's codomain is a subset
-of its domain. 
-%%-- and the \emph{count} aggregate, which is expressible using arithmetic.  
-We allow exemplary %or count 
+Mumick and Shmueli observe correspondences in the expressivity of Datalog with stratified negation and stratified aggregation functions~\cite{mumickshmueli}.  Adding aggregation to our language does not affect its expressive power, but is useful for writing natural constructs for distributed computing including queues and ordering.  
+
+In \lang we will allow
 aggregate functions $\rho_1 - \rho_n$ to appear
 in the head of a deductive rule of the form:
 
 \dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
 \linebreak\dedalus{   \(q_1\)(\(A_1\), \(\ldots\), \(A_n\)), \(\ldots\), \(q_n\)(\(A_1\), \(\ldots\), \(A_n\));}
 
-These functions do not affect the expressivity of the language; we admit them
-to simplify our discussion of ordering.  It is easy to see that the \emph{min} function,
-which we subsequently use, is expressible in Datalog using negation.
+According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$ -- akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.
+
+% These functions do not affect the expressivity of the language; we admit them
+% to simplify our discussion of ordering.  It is easy to see that the \emph{min} function,
+% which we subsequently use, is expressible in Datalog using negation.
 
 %%\begin{example}
 %%The query below selects, for each distinct value of the first column of $p$, the minimum 
@@ -70,10 +69,10 @@ which we subsequently use, is expressible in Datalog using negation.
 
 
 \subsubsection{Choice}
+A signature feature of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of non-determinism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 
-We also admit the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
-\emph{$X_1$} and \emph{$X_2$} are vectors whose constituent variables occur elsewhere in the body.  Such a subgoal
+\emph{$X_1$} and \emph{$X_2$} are vectors whose constituent variables occur elsewhere in the body.  Following Greco and Zaniolo, such a subgoal
 enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing" a single assignment of values to the variables
 in \emph{$X_2$} for each variable in \emph{$X_1$}.
 
@@ -83,9 +82,8 @@ choice in precisely this fashion: the choice construct is expanded into an unstr
 and each possible choice is associated with a different model.
 
 \paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
-is stratifiable, locally stratifiable, etc}
+is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the previous paragraph, or rewrite it to simply say ``see the Italians if you want to understand more, but for our purposes assume a unique non-deterministic assignment that respects the FDs.  This allows us to have agreed-upon minimal models.''}
 
-\jmh{Where do we define \lang?  Here?  After async?}
 \subsection{Distribution Model}
 
 A principal motivation for \lang is to model and implement distributed systems.   Before we formally introduce our extensions for distributed computing, we give an intuitive overview of our approach.
@@ -122,10 +120,10 @@ if the
 %representing the time suffixes occuring respectively in the body and head of a
 %rule.
 relation between the head time suffix $\SDedalus$ and the body time suffix $\Tau$ is
-unknown.  Furthermore, $\SDedalus$, but not $\Tau$, may take on the special value
-$\perp$ which means ``never.''  Derivation at $\perp$ indicates that the
+unknown.  Furthermore, $\SDedalus$ (but not $\Tau$) may take on the special value
+$\top$ which means ``never.''  Derivation at $\top$ indicates that the
 deduction is ``lost,'' as time suffixes in rule bodies do not range over
-$\perp$.
+$\top$.
 
 We model network nondeterminism using the \dedalus{choice} construct to choose
 from a value in the special 
@@ -134,13 +132,15 @@ from a value in the special
 predicate, which is defined using the following datalog rules:
 
 \begin{Dedalus}
-time(\(\perp\));
+time(\(\top\));
 time(\(\SDedalus\)) \(\leftarrow\) successor(\(\SDedalus\), _);
 \end{Dedalus}
 
-Each asynchronous rule has the following additional predicates in its
-body: \dedalus{time($\SDedalus$), choose((\_), ($\SDedalus$))}, where
-$\SDedalus$ is the timestamp of the rule head.
+\noindent
+Each asynchronous rule with head predicate \dedalus{p($A_1, \ldots, A_n$)} has the following additional subgoals in its
+body: \dedalus{time($\SDedalus$), choose(($A_1, \ldots, A_n, \Tau$), ($\SDedalus$))}, where
+$\SDedalus$ is the timestamp of the rule head.  Note that our use of \dedalus{choose} incorporates all variables of each head predicate tuple, which allows a unique choice of $\SDedalus$ for each head tuple.
+
 
 \begin{example}
 A well-formed asynchronous \lang rule:
@@ -148,7 +148,7 @@ A well-formed asynchronous \lang rule:
 \begin{Dedalus}
 r(A, B, \(\SDedalus\)) \(\leftarrow\) 
   e(A, B, \(\Tau\)),
-  time(\(\SDedalus\)), choose((_)), (\(\SDedalus\)));
+  time(\(\SDedalus\)), choose((A, B, \(\Tau\))), (\(\SDedalus\)));
 \end{Dedalus}
 \end{example}
 
@@ -160,27 +160,30 @@ the additional body predicates.
 %%optionally referenced in the head.  
 The above example expressed using \dedalus{async} is:
 
+% asynchronous
+\begin{example}
+	A sugared asynchronous \lang rule:
+	
 \begin{Dedalus}
 r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
-
-Evaluation of an asynchronous rule may produce a tuple whose timestamp is less
-than $\Tau$, the timestamp of the rule's antecedents. 
-%%This violates our intuitive interpretation of timestamps capturing causal relations between 
-%%tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
-%%cannot possibly depend negatively on itself.
-This violates the monotonicity assumptions that underlie our proof of temporal
-stratification, and muddies our interpretation of timestamps as capturing
-causal relations between tuples.
+\end{example}
 
 
 \subsubsection{Later: Causally-Constrained Asynchrony}
+\jmh{What do we need here?  We need to resurrect safety and strat for \lang, not just for \slang.  Monotonic deductive reductions are always cool.  Non-monotonic ones need us to ``inject'' monotonicity via the time suffix.  We lost this with async (which is natural in distributed systems).  We regain it via the addition of rules to enforce monotonicity -- these are akin to Lamport clocks and have the nice property that they don't ``cheat'', they follow our rules on messaging and asynchrony.}
 
-Ultimately, whether a particular set of temporal semantics is desirable depends
-on the underlying application; for example, clever combinations of crash-prone
-databases running ``read uncommitted'' transactions and asynchronous event
-queues can easily suffer from grandfather paradoxes---traveling to the past to
-become one's own ancestor---and other temporal impossibilities.
+Nothing in our definition of asynchronous rules prevents tuples in the head of a rule from having a timestamp $\SDedalus$ that is less than $\Tau$, the timestamp
+in the rule's antecedents. This is a significant departure from \slang, since it
+%%This violates our intuitive interpretation of timestamps capturing causal relations between 
+%%tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
+%%cannot possibly depend negatively on itself.
+violates the monotonicity assumptions upon which we based our proof of temporal stratification.
+On an intuitive level, it may also trouble us that rules can derive head tuples that exist ``before'' the body tuples on which they are grounded; this violates intuitive notions of ``causality''.
+
+
+Ultimately, whether a particular set of temporal semantics is
+desirable depends on the underlying application.  For example, many simple distributed applications ``don't care'' about ordering of events, assuming that users can tolerate out-of-order semantics as long as things accumulate monotonically.  The standard example in recent years is in web discussion boards, where comments on articles may appear ``out of order'' on the board for some users: that is, a response to some comment may appear before the comment itself appears.  This typically happens because the discussion board is actually a distributed system with replication of the content across sites, and the transmission of replicated data does not observe a causal ordering.
 
 %%\rcs{move this, get rid of monotonic discussion?
 %%We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
@@ -191,23 +194,25 @@ become one's own ancestor---and other temporal impossibilities.
 %%message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
 %%}
 
-The distributed systems literature typically assumes a causal ordering of
-events across systems; Lamport clocks are a simple mechanism that records the
-partial ordering induced by network communication between the nodes.  With such
-approaches in mind, we introduce an alternative to \dedalus{@async} called
-\dedalus{@later} that induces a total ordering over all timestamps within a
-\lang program.  Instead of \dedalus{time}, we define \dedalus{after}:
+The distributed systems literature often requires a causal ordering
+of events across systems; Lamport clocks~\cite{lamportclock} are a simple mechanism go achieve this.  Lamport clocks
+record the partial ordering induced by network communication between
+the nodes.  With such approaches in mind, we introduce an alternative
+to \dedalus{@async} called \dedalus{@later} that induces a total
+ordering over all timestamps within a \lang program.  We define \dedalus{after} as the transitive closure of \dedalus{successor} including $\top$:
 
 \begin{Dedalus}
 after(S, T) \(\leftarrow\) successor(S, T);
 after(S, U) \(\leftarrow\) after(S, T), successor(T, U);
-after(S, \(\perp\)) \(\leftarrow\) successor(S, _);
+after(S, \(\top\)) \(\leftarrow\) successor(S, _);
 \end{Dedalus}
 
-Intuitively, \dedalus{after(S, T)} is true if T happens after S in the global
-ordering of events.  Each \dedalus{@later} rule has the following additional
-predicates in its body: \dedalus{after($\Tau$, S), choose(($\Tau$), (S))},
-where, as above, $\Tau$ is the timestamp associated with the rule body, and
+Intuitively, \dedalus{after(S, T)} is true if T happens after S in the
+global ordering of events.  Each rule \dedalus{p($A_1, \ldots, A_n$)@later} has the
+following additional variables in its body:
+\dedalus{after($\Tau$, S),} \\
+\dedalus{choose(($A_1, \ldots, A_n, \Tau$), (S))}, where, as
+above, $\Tau$ is the timestamp associated with the rule body, and
 \dedalus{S} is the timestamp of the rule head.
 
 Note that our addition of a global ordering does not expose a shared
@@ -241,7 +246,7 @@ relies on the fact that \dedalus{r(1)} stops being true before
 
 
 
-%\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \perp$. 
+%\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \top$. 
 %%\rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
 %%An asynchronous rule has the following
 %%subgoals in its body: \dedalus{time(S), successors($\Theta$, S), choose(($\Theta$), (S))}, where
@@ -276,8 +281,10 @@ reference the logical clock time of the deduction that produced one (or more) of
 to write the rule it was necessary to not sugar away the time suffix in the rule body.  Entanglements are only 
 permitted in asynchronous rules.
 
-\subsection{Distributed Programs}
+\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}
 
+\subsection{Distributed Programs}
+\jmh{This needs a formal definition of a Distributed Program as a bunch of programs with non-overlapping predicates, and then a bunch of comm rules between them.}
 A distributed \lang program consists of a set of predicates partitioned across a set of hosts.
 %%Consider two hosts $a$ and $b$ in \emph{H}, and two predicates $p$ and $q$ in \emph{P}.  Without loss of generality, 
 %%we call an async rule $r$ a \emph{communication rule} if $p$ is defined at $a$ and $q$ is defined at $b$, $p$ occurs in the  
