@@ -218,8 +218,8 @@ p_neg(A, B, T) \(\leftarrow\)
 
 In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are external events.
 This reasonable program is unstratifiable because $p \succ del\_p \land del\_p \succ p$.  But because the successor relation is constrained
-such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is modularly stratified on \emph{successor} 
-Informally, we have $p_{n+1} \succ del\_p_{n} \succ p_{n}$.
+such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is modularly stratified on \emph{successor}.
+Therefore, we have $p_{n} \not\succ^* del\_p_{n} \not\succ^* p_{n+1}$; informally, earlier values do not depend on later values.
 \paa{need to make the text better, but this old example probably makes sense here}
 \end{example}
 
