@@ -59,7 +59,7 @@ which we subsequently use, is expressible in Datalog using negation.
 
 
 
-%%\dedalus{r\_pos($A_1$, $A_2$, [...], $A_n$, }
+%%\dedalus{r\pos($A_1$, $A_2$, [...], $A_n$, }
 
 %%$\rho$($A_{n+1}$)}
 
@@ -135,9 +135,10 @@ time(S) \(\leftarrow\) S = \(\bot\)
 time(S) \(\leftarrow\) successor(_, S);
 \end{Dedalus}
 
+
 Each asynchronous rule has the following additional variables in its
 body: \dedalus{time(S), choose((\_), (S))}, where
-\dedalus{S} is the timestamp of the rule head.
+$\SDedalus$ is the timestamp of the rule head.
 
 \begin{example}
 A well-formed asynchronous \lang rule:

@@ -99,7 +99,7 @@ $choose((\_), (S))$
 
 \wrm{I don't get this, by underscore you mean a free variable, right?  Don't you need to bind the variable in r() to S?}
 
-The \emph{choice} construct~\cite{eventchoice, greedychoice} departs from stratified $\lnot$Datalog to capture the nondeterministic selection
+The \emph{choice} construct~\cite{eventchoice, greedychoice} departs from stratified Datalog$\lnot$ to capture the nondeterministic selection
 of set elements.  The \emph{choose} predicate above is shorthand for an unstratifiable subprogram for which as many stable models
 exist as (in this case) rows in the \emph{successor} table, and chooses one at random \wrm{choice is not necessarily random, right?  an evaluation engine could choose amont multiple stable models using some deterministic means.  but we model choice as nondeterministic.}.  Hence, any successor value is admissible, as is the
 special value \{-1, -1\}, which must be added to the \emph{successor} relation to represent an infinite delay.
