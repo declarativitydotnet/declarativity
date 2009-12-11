@@ -113,8 +113,11 @@ The infinte \dedalus{successor} relation complicates our discussion of safety; c
 An unsafe \slang instance?
 \\
 r1:
+%%\begin{Dedalus}
+%%p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
+%%\end{Dedalus}
 \begin{Dedalus}
-p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
+persist[p, 2]
 \end{Dedalus}
 r2:
 \begin{Dedalus}
@@ -123,6 +126,8 @@ p\pos(A, B)  \(\leftarrow\) p(A, B);
 \begin{Dedalus}
 p(1, 2)@123;
 \end{Dedalus}
+
+\paa{we shouldn't \emph{ever} need to write out r2, right?}
 
 The single ground fact will, due to \dedalus{r1}, cause one deduction for each
 tuple in \dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding datalog\rcs{what should we call this?}
@@ -191,11 +196,12 @@ Two ground atoms $\gamma$ and $\gamma'$ are \emph{equivalent} if they have the s
 and the same assignment of constant to attributes for all attributes except the time suffix.
 \end{definition}
 
-In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
-minus $\Tau$.\rcs{either define pi, write out ``projection'', or drop this paragraph}
+%%In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
+%%minus $\Tau$.\rcs{either define pi, write out ``projection'', or drop this paragraph}
 
 We say a \slang instance is \emph{quiescent at time $T$} if the set of all 
-true atoms with time suffix $T$ is equivalent to the set of all true atoms with time suffix $T-1$.\rcs{what is a true atom?  Why distinguish between true atoms and false atoms?  Surely the neg tuples will match as well.  If not, then the program has somehow not quiesced...}
+atoms with time suffix $T$ is equivalent to the set of all atoms with time suffix $T-1$.
+%%\rcs{what is a true atom?  Why distinguish between true atoms and false atoms?  Surely the neg tuples will match as well.  If not, then the program has somehow not quiesced...}
 
 
 %%\paa{well, there are some problems with this.  first, facts are only in the EDB, you mean atom,
