@@ -1,7 +1,9 @@
 \section{Safety and Stratification in \large \bf \slang}
+In the previous section we demonstrated that \slang can capture intuitive notions of persistence and mutability of state via a stylized use of Datalog.  However, the alert reader will notice that even the simplest of these Datalog programs are unusual, since they produce derivations for an infinite number of values of the time suffix.  In traditional Datalog this is cause for concern, but in the context of distributed systems and networks, the need for infinitely-running ``services'' or ``protocols'' is very common. In this section we take traditional notions of acceptable Datalog programs, and extend them in a way that admits sensible distributed services and protocols.
 
+\subsection{Temporal Safety}
 A Datalog program is safe if it admits a finite minimal model, and hence has
-a finite execution.  Safety in logic programming is traditionally achieved
+a finite execution.  Safety in Datalog is traditionally achieved
 through the following constraints:
 
 \begin{enumerate}
@@ -47,7 +49,7 @@ allows us to reason about the safety of \slang programs.
 %a model is an interpretation in which all heads are true when the body is true.  all models are finite.  the minimal model
 %is clearly finite.}
 
-\subsection{Temporal Safety}
+%\subsection{Temporal Safety}
 
 \wrm{show some examples before restricting to temporal safety!!  maybe even
 show that some unsafe programs have safe equivalents.}
