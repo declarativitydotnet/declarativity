@@ -94,7 +94,7 @@ University\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
 
 \begin{abstract} 
 %
-Recent programming language research has explored the use of Datalog-based
+Recent research has explored the use of Datalog-based
 languages for expressing a distributed system as a set of logical
 invariants~\cite{boom-techr,loo-sigmod06}.  Two properties of distributed
 systems proved hard to model in Datalog.  First, the state of any such system
@@ -109,22 +109,28 @@ think operationally.  We argue that the missing component from these previous
 languages is a notion of {\em time}.  In this paper we present {\bf \lang}, a
 foundation language for programming and reasoning about distributed systems.
 \lang reduces to a subset of Datalog~\cite{ullmanbook} with negation, aggregate
-functions and choice, and admits an explicit representation of time into the
-logic language.  Thus, \lang allows concepts such as persistence, updateable
-state, key constraints, and message delay and loss to be described in a purely
-declarative fashion.  This capability allows us to express distributed systems
-whose state evolves over time in a high-level language with an unambiguous,
-model-theoretic semantics.
+functions, successor and choice, and admits an explicit representation of time into the
+logic language.  
+%Thus, \lang allows concepts such as persistence, updateable state, key constraints, and message delay and loss to be described in a purely declarative fashion.  
+We show that \lang provides a declarative foundation for the two signature features of 
+distributed systems: mutable state, and asynchronous processing and communication.
+Given these two features, we address three important properties of programs in 
+a domain-specific manner: a notion of {\em safety} appropriate to non-terminating computations, 
+{\em stratified} monotonic reasoning with negation over time, and efficient evaluation
+over time via a simple execution strategy.  We also provide conservative syntactic checks
+for our temporal notions of safety and stratification.  Our experience implementing 
+full-featured systems in variants of Datalog suggests that \lang is well-suited to the specification of
+rich distributed services and protocols, and provides both cleaner semantics and richer tests of correctness.
 %\lang extends Datalog with a notion of time --- every \lang relation has an
 %integer attribute that intuitively represents when a given tuple is true.  We
 %propose a sugared syntax in which rule head annotations indicate whether
 %their conclusions hold at the same time as their premises, in the immediate
 %next timestep, or at some unknown timestep.
-We further introduce the notion of \emph{temporal stratification}, a
-syntactically checkable property of \lang programs similar to stratification,
-and show that the class of temporally stratifiable programs in \lang
-is a subset of the class of modularly stratified~\cite{ross-syntactic,modular}
-programs in Datalog.
+% We further introduce the notion of \emph{temporal stratification}, a
+% syntactically checkable property of \lang programs similar to stratification,
+% and show that the class of temporally stratifiable programs in \lang
+% is a subset of the class of modularly stratified~\cite{ross-syntactic,modular}
+% programs in Datalog.
 %
 \end{abstract}
 
