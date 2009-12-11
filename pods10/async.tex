@@ -322,7 +322,7 @@ Given this schema, we note that a program would likely want to process
 \dedalus{priority\_queue} events individually in a data-dependent order, in
 spite of their coincidence in logical time.  It is difficult to express general
 in-order tuple processing in Datalog, in part because the language does not
-admit sequences.
+admit sequences.  \jmh{Huh?  I don't see the last clause there.  Maybe say simply that Datalog is set-oriented, but what we want here is precisely to impose an ordering on the elements of the set, which seems unnatural.  There's maybe a connection to expressibility and aggregation or arithmetic or something, but let's not try to sort that out for now.}
 %above is really what we want to say, right? -wrm
 %has so
 %notion of order of evaluation (except the implicit ordering implied by
