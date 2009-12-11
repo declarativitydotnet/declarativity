@@ -21,7 +21,7 @@ constants---and a countably infinite universe of variable symbols $\Vars = A_1,
 A_2, \ldots$.
 %, and a distinguished variable $\Tau$.
 % which may take on the values of any constants.   
-We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended beyond the fact that \dedalus{successor(x,y)} holds iff $y = x + 1$.
+We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended except that the fact \dedalus{successor(x,y)} is true \rcs{was: beyond the fact that \dedalus{successor(x,y)} holds} iff $y = x + 1$.
 %We consider the
 %standard strict total order $<$. We define the \dedalus{successor} relation,
 %where \dedalus{successor(i,j)} means that \dedalus{j} is the least element that
@@ -56,7 +56,7 @@ corresponding predicate.
 %you want.  you're hinting at the reduction stuff below, but we can rewrite to
 %that.}
 In a well-formed \slang rule, every subgoal uses the same existential variable $\Tau$
-as its time suffix, and $\Tau$ must not be further restricted.  A well-formed
+as its time suffix.  A well-formed
 \slang rule must also have a time suffix $\SDedalus$ as its rightmost head attribute, which must be
 constrained in exactly one of the following two ways:
 \begin{enumerate}
@@ -91,8 +91,10 @@ For every extensional predicate \dedalus{r} in a \slang program $P$, we add to
 $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same schema
 as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
 
-\dedalus{r\pos($A_1$,$A_2$,[...],$A_n$,$\SDedalus$) \(\leftarrow\)
-r($A_1$,$A_2$,[...],$A_n$,$\Tau$), $S$=$\Tau$;}
+\begin{Dedalus}
+r\pos(A_1,A_2,[...],A_n,\(\SDedalus\)) \(\leftarrow\)
+   r(A_1,A_2,[...],A_n,\(\Tau\)), \(S\)=\(\Tau\);
+\end{Dedalus}
 
 That is, for every extensional predicate \dedalus{r} there is an intensional
 predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.

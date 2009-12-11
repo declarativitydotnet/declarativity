@@ -25,8 +25,11 @@
 \newcommand{\SDedalus}{\mathcal{S}}
 \newcommand{\Consts}{\mathcal{C}}
 \newcommand{\Vars}{\mathcal{A}}
-\newcommand{\pos}{\protect{$_{pos}$}}
-\newcommand{\nega}{\protect{$_{neg}$}}
+%\newcommand{\pos}{\protect{$_{pos}$}}
+%\newcommand{\nega}{\protect{$_{neg}$}}
+% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
+\newcommand{\pos}{\_pos}
+\newcommand{\nega}{\_neg}
 
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
@@ -120,7 +123,7 @@ model-theoretic semantics.
 We further introduce the notion of \emph{temporal stratification}, a
 syntactically checkable property of \lang programs similar to stratification,
 and show that the class of temporally stratifiable programs in \lang
-corresponds to the class of modularly stratified~\cite{ross-syntactic,modular}
+is a subset of the class of modularly stratified~\cite{ross-syntactic,modular}
 programs in Datalog.
 %
 \end{abstract}

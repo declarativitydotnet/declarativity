@@ -58,7 +58,7 @@ $\forall A_1, \ldots, A_n \in C : p$\pos$(A_1, \ldots, A_n) \to \Box p$\pos$(A_1
 
 This assertion states that for any constants $A_1, \ldots, A_n$ in the Herbrand
 Universe, $p$\pos$(A_1, \ldots, A_n)$ implies that henceforth, \linebreak
-$p$\pos$(A_1, \ldots, A_n)$ will be true.
+$p$\pos$(A_1, \ldots, A_n)$ will be true.\rcs{defined herbrand here?  this is the first use}
 
 %\wrm{is there a point to this formula?  can't we just say ``a simple persistence
 %rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
@@ -73,10 +73,11 @@ To model deletions and updates of a fact, it is necessary to break the induction
 in a simple persistence rule.  Adding a {\em p\nega} subgoal to the body of a
 simple persistence rule accomplishes this:
 
-$p$\pos$(A_1,A_2,[...],A_n)@next \leftarrow \\
-p$\pos$(A_1,A_2,[...],A_n), \\
-\lnot p$\nega$(A_1,A_2,[...],A_n);
-$
+\begin{Dedalus}
+p_pos(A_1,A_2,[...],A_n)@next \(\leftarrow\)
+  p_pos(A_1,A_2,[...],A_n),
+  \(\lnot\) p_neg(A_1,A_2,[...],A_n);
+\end{Dedalus}
 
 %%\begin{definition}
 %
@@ -126,8 +127,10 @@ and expands to an appropriately specified persistence rule.
 %
 For some time $\Tau$, an {\em update} is any pair of facts:
 
-\dedalus{p\nega($C_1$,$C_2$,[...],$C_n$)@$\Tau$} \linebreak
-\dedalus{p\pos($D_1$,$D_2$,[...],$D_n$)@$\Tau+1$}
+\begin{Dedalus}
+p\nega(\(C_1\),\(C_2\),[...],\(C_n\))@\(\Tau\) 
+p\pos(\(D_1\),\(D_2\),[...],\(D_n\))@\(\Tau+1\)
+\end{Dedalus}
 %
 %%\end{definition}
 
