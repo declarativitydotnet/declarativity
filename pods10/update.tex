@@ -27,13 +27,13 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
       \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & \hspace{1.5em} $P(A_1, \ldots, A_n)@T, \lnot P(A_1, \ldots, A_n)@T-1.$ \end{tabular}}
 			\STATE{\em // identify ``new'' facts that are ``to-be-deleted''}
       \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n)@T.$ \end{tabular}}
-			\STATE{\em // substitute $P\_store$ for $P$ in rule bodies}
-      \FORALL{rule $R$}
-         \IF{$P \in R.body$}
-            \STATE{replace $P$ with $P\_store$}
-         \ENDIF
+   \ENDFOR
+   \FORALL{rule $R$}
+      \FORALL{persistent predicate $P(A_1, \ldots, A_n)$ in $R$'s body}
+         \STATE{substitute $P\_store(A_1, \ldots, A_n)$ for $P(A_1, \ldots, A_N)$}
       \ENDFOR
    \ENDFOR
+   
    \STATE{\em // evaluate program}
    \FORALL{$t \in \mathbb{Z}$}
       \STATE{compute the fixpoint of the rewritten program}
