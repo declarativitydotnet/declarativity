@@ -6,17 +6,13 @@ Unfortunately, the direct application of traditional bottom-up Datalog execution
 \subsection{Temporal Evaluation Over Storage}
 The traditional description of semi-naive evaluation takes a recursive Datalog program, rewrites it to a non-recursive ``delta'' program, and executes that program in a loop bracketed by state modifications.  In that spirit, we present a strategy we call ``temporal evaluation'', which takes a \slang program, rewrites it to a Datalog program that refers to a single timestep, and executes that program in a loop---once per timestep---bracketed by state modifications.  
 
-
-%\subsection{Evaluation of Persistent Predicates}
-%%\newdef{definition}{Definition}
-
 \floatname{algorithm}{Algorithm}
 \renewcommand{\algorithmicforall}{\textbf{foreach}}
 \algsetup{indent=2em}
 \newcommand{\exec}{\ensuremath{\mbox{\sf execProgram}}}
 \newcommand{\add}{\ensuremath{\mbox{\sf addRule}}}
-%\newcommand{\ids}{\ensuremath{\mbox{\sf ids}}}
-\begin{algorithm}
+\newcommand{\ids}{\ensuremath{\mbox{\sf ids}}}
+\begin{algorithm}[t]
    \caption{Temporal Evaluation}\label{alg:tsn}
    \begin{algorithmic}
    \STATE{\em // rewrite program}
