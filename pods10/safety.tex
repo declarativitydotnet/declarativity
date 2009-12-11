@@ -212,8 +212,9 @@ atoms with time suffix $T$ is equivalent to the set of all atoms with time suffi
 \begin{observation}
 %
 A \slang instance quiescent at time $T$ will be quiescent until the next EDB
-fact is true at time $V$, i.e. for all $U \in \mathbb{Z}: V > U >= T$.  If no
-EDB facts are true after $T$, then the instance will be henceforth quiescent.\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
+fact exists at time $V$, i.e. for all $U \in \mathbb{Z}: V > U >= T$.  If no
+EDB facts exist after $T$, then the instance will be henceforth quiescent.
+%%\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
 %
 \end{observation}
 %
@@ -244,8 +245,9 @@ some time $T$ after which no EDB facts are true.
 %
 Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
 an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
-predicate} if for every predicate $p$ for which $e \succ^{*} p$, $p$ appears in
-no inductive rules.\rcs{does e depend on p, or is it the other way?  Does no inductive rules mean that $p$ is not persistent?}
+predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$ depends on $p$), $p$ appears in
+no inductive rules.
+%%\rcs{does e depend on p, or is it the other way?  Does no inductive rules mean that $p$ is not persistent?}
 %
 \end{definition}
 
