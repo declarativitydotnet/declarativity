@@ -236,19 +236,24 @@ an \emph{entanglement}.
 
 \subsection{Ordering and distribution in Logic}
 
-
 \subsubsection{Sequences}
 
-One may represent a database sequence -- an object that retains and increments a counter value -- with a pair of inductive rules.  One rule increments the current counter value when some condition is true, while the other persists the value of the sequence when the condition is false.  For example:
+One may represent a database sequence -- an object that retains and monotonically increases a counter value -- 
+with a pair of inductive rules.  One rule increments the current counter value when some condition is 
+true, while the other persists the value of the sequence when the condition is false.  We can capture the increase
+of the sequence value without using arithmetic, because the infinite series of \emph{successor} has the monotonicity
+property we require.  We need only to entangle the time suffix into the tuple:
 
 \begin{Dedalus}
-seq(A, X + 1)@next \(\leftarrow\) seq(A, X), event(A);
+seq(A, N)@next \(\leftarrow\) seq(A, _)@N, event(A)@N;
   
 seq(A, X)@next \(\leftarrow\) seq(A, X), \(\lnot\) event(A);
 \end{Dedalus}
 
-We must admit arithmetic functions into our language to express such a
-sequence, but the pair of rules above remains temporally safe.
+%%We must admit arithmetic functions into our language to express such a
+%%sequence, but the pair of rules above remains temporally safe.
+
+Clearly, to implement a sequence that increases consecutively without gaps would require using arithmetic.
 
 
 \subsubsection{Queues}
