@@ -126,11 +126,7 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \end{example}
 
-
-\subsubsection{Later: Causally-Constrained Asynchrony}
-
-
-\jmh{What do we need here?  We need to resurrect safety and strat for \lang, not just for \slang.  Monotonic deductive reductions are always cool.  Non-monotonic ones need us to ``inject'' monotonicity via the time suffix.  We lost this with async (which is natural in distributed systems).  We regain it via the addition of rules to enforce monotonicity -- these are akin to Lamport clocks and have the nice property that they don't ``cheat'', they follow our rules on messaging and asynchrony.}
+\jmh{What do we need here?  We need to resurrect safety and strat for \lang, not just for \slang.  Monotonic deductive reductions are always cool.  Non-monotonic ones need us to ``inject'' monotonicity via the time suffix.  We lost this with async (which is natural in distributed systems).  We regain it via the addition of rules to enforce monotonicity -- these are akin to Lamport clocks and have the nice property that they don't ``cheat'', they follow our rules on messaging and asynchrony.}\rcs{tried to address this w/ following rewrite...}
 
 Nothing in our definition of asynchronous rules prevents tuples in the
 head of a rule from having a timestamp $\SDedalus$ that is less than
@@ -139,138 +135,37 @@ departure from \slang, since it violates the monotonicity assumptions
 upon which we based our proof of temporal stratification.  On an
 intuitive level, it may also trouble us that rules can derive head
 tuples that exist ``before'' the body tuples on which they are
-grounded; this violates intuitive notions of ``causality.''  Consider
-the following program, which exihibits non-determinism in the face of
-executions that violate causality:
+grounded; this violates intuitive notions of ``causality,'' and admits
+the possibility of temporal paradoxes.
 
-\begin{Dedalus}
-r(1)@1;
-s(1)@2;
-p(X) \(\leftarrow\) q(X), r(X);
-q(X)@async \(\leftarrow\) s(X);
-\end{Dedalus}
+We see no reason to restrict \lang in order to rule out such issues,
+as doing so would simply reduce its expressiveness.  Recall, however,
+that our execution environment ensures/assumes \rcs{XXX} some sort of
+monotonicity property, and that with monotonicity of time, we get
+\rcs{foo}, monotonicity of rules we get \rcs{bar}, and with
+monotonicity of neither, we get unstratifiable Datalog
+programs. \rcs{everything after recall is up in the air...}
 
-Since \dedalus{s(1)} and therefore \dedalus{q(1)} are derived after
-\dedalus{r(1)} ceases to exist, it seems unreasonable that
-\dedalus{@async} leads to schedules where the join of \dedalus{q(1)}
-and \dedalus{r(1)} succeeds.
+If we assume that our executions obey some causal ordering, then we
+know there is some partial order over the rule derivations of the
+system, and therefore, there exists at least one total ordering of the
+execution that corresponds to the partial order.  Therefore, each
+execution of a \lang program (which may be non-determinstic due to
+\@async) is equivalent to the execution of some deterministic \slang
+program; causality constraints reintroduce the temporal straifiability
+that our definition of \lang gave up.
 
-Ideally, we would like \lang to have safety and stratifiablity
-propertes similar to those of \slang.  An examination of the proofs
-\rcs{which I have not performed, and am speculating about} reveals
-that the main deficiency in \lang's semantics are due to its
-abandonment of monotonically increasing timesteps.
+Similarly, if we disallow negation, but allow derivations to pass
+backwards in time, the resulting \lang program is still temporally
+stratifiable.  However, admitting both negation across timesteps and
+causality violations leads to an underlying Datalog program that is
+unstratifiable.
 
-The solution is simple; rather than define \dedalus{time}, we define a relation \dedalus{after}:
-
-\begin{Dedalus}
-after(S, T) \(\leftarrow\) successor(S, T);
-after(S, U) \(\leftarrow\) after(S, T), successor(T, U);
-after(S, \(\top\)) \(\leftarrow\) successor(S, _);
-\end{Dedalus}
-
-and, as above, we define the sugar \dedalus{@later}, which adds the
-following predicates to rule bodies:
-
-\begin{Dedalus}
-after(\(\Tau\), S),
-choose((\(A_1, \ldots, A_n, \Tau\)), (S))
-\end{Dedalus}
-
-We call the resulting language \lang$_{late}$
-
-
-\begin{lemma}
-Lemmas~\ref{lemma:no-neg-unique} and~\ref{lemma:temp-strat-uniq} apply
-to \lang$_{late}$ up to choice.
-\begin{proof}
-We need to show that, given an assignment of values by
-\dedalus{choose}, we have unique minimal models.  Here is a proof
-sketch.  The only timestamp related assumption made by
-Proofs~\ref{lemma:no-neg-unique} and~\ref{lemma:temp-strat-uniq} is
-that timestamps increase monotonically over time.  The definition of
-\dedalus{after} ensures that \dedalus{choose} selects such a value, in
-which case the proof holds, or $\top$, which leads to lost deductions,
-which cannot introduce cycles.
-\end{proof}
-\end{lemma}
-
-Thus, although \lang$_{late}$ is, by definition, non-deterministic, any given evaluation of a \lang$_{late}$ program has semantics analgous to \slang.
-
-This restores the monotonicity properties relied upon by
-Lemmas~\rcs{XXX???} which hold over \lang with \dedalus{@later}, but
-not with \dedalus{@async}.
-
-Ultimately, whether a particular set of temporal semantics is
-desirable depends on the underlying application.  For example, many simple distributed applications ``don't care'' about ordering of events, assuming that users can tolerate out-of-order semantics as long as things accumulate monotonically.  The standard example in recent years is in web discussion boards, where comments on articles may appear ``out of order'' on the board for some users: that is, a response to some comment may appear before the comment itself appears.  This typically happens because the discussion board is actually a distributed system with replication of the content across sites, and the transmission of replicated data does not observe a causal ordering.
-
-%%\rcs{move this, get rid of monotonic discussion?
-%%We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
-%%purely monotonic.  For such a program~\footnote{This holds also for the trivial cases of programs that ignore messages.}, 
-%%deductions ``into the past" present no difficulties.
-%%In fact, the ``eventual consistency" property of NDLog~\cite{loo-sigmod06} relies on the assumption that
-%%programs are negation-free and hence monotonic.  Any programs with non-monotonic rules that transitively depend on
-%%message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
-%%}
-
-The distributed systems literature often requires a causal ordering
-of events across systems; Lamport clocks~\cite{lamportclock} are a simple mechanism go achieve this.  Lamport clocks
-record the partial ordering induced by network communication between
-the nodes.  With such approaches in mind, we introduce an alternative
-to \dedalus{@async} called \dedalus{@later} that induces a total
-ordering over all timestamps within a \lang program.  We define \dedalus{after} as the transitive closure of \dedalus{successor} including $\top$:
-
-
-Intuitively, \dedalus{after(S, T)} is true if T happens after S in the
-global ordering of events.  Each rule \dedalus{p($A_1, \ldots, A_n$)@later} has the
-following additional variables in its body:
-\dedalus{after($\Tau$, S),} \\
-\dedalus{choose(($A_1, \ldots, A_n, \Tau$), (S))}, where, as
-above, $\Tau$ is the timestamp associated with the rule body, and
-\dedalus{S} is the timestamp of the rule head.
-
-Note that our addition of a global ordering does not expose a shared
-synchronized clock to \lang programs.  The nondeterminism associated with
-choice prevents programs from ensuring that operations are performed in
-lock-step.  Instead, the timestamps simply encode some logical clock that is
-equivalent to one that could be maintained by the application.  The difference
-is that, by constraining \dedalus{choose}, we can avoid reasoning about program
-traces that contain paradoxes such as causality loops.  In particular,
-deterministic instances such as:
-
-are non-deterministic if \dedalus{@later} is replaced with
-\dedalus{@async}.  
-\paa{the rest may stay but may also go}
-The non-determinism comes from \dedalus{@sync}'s
-\dedalus{choose} invocation.  However, the non-determinism also relies
-on the fact that the program is, in some sense, non-monotonic; it
-relies on the fact that \dedalus{r(1)} stops being true before
-\dedalus{q(1)} is derived.
-
-%%\rcs{Can we prove anything now?  It seems as though async rules are equivalent to \slang rules, as long as there is no aggregation or arithmetic.  The problem is that if %%choice derives a fact N steps in the future, we need to push the fact through N @next rules, and the number of such rules is variable.  If we admit arithmetic in the rewrite, %%%we can model async as a synchronous queue, but \slang doesn't have arithmetic...}
-%%\rcs{Here to end of section is dead text}
-
-
-
-
-
-%\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \top$. 
-%%\rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
-%%An asynchronous rule has the following
-%%subgoals in its body: \dedalus{time(S), successors($\Theta$, S), choose(($\Theta$), (S))}, where
-%%$\Theta$ is a vector containing all variables appearing in the rule body,
-%%including $\Tau$.  The choice subgoal expresses that the rule head may be
-%%derived at any value of \dedalus{time}.
-%time value that appears in the \dedalus{successor} relation.
-
-%%\rcs{old example:}
-
-%%\begin{Dedalus}
-%%asynchronous
-%%r(A, B, S) \(\leftarrow\)
-%%   e(A, B, \(\Tau\)), successor(_, S), choose((A, B), (S));
-%%\end{Dedalus}
-
+We note that non-causal schedulings are of practical importance;
+distributed systems built atop ureliable and asynchronous primitives
+could very well observe seemingly nonsensical orderings; one
+possibiity is that, due to caching or failure, comments begin to
+appear to arrive well before the blog post they are attached to.
 
 \subsubsection{Entanglement}
 
@@ -292,15 +187,11 @@ to write the rule it was necessary to not sugar away the time suffix in the rule
 
 \subsection{Lamport Clocks}
 
-Recall that \dedalus{@async} provides weaker semantics than
-\dedalus{@later}, and can even lead to program executions that violate
-causality.  In contrast, \dedalus{@later} builds a number of
-assumptions about time into the language model.  This section explains
-how to implement Lamport clocks~\cite{timeclocks} atop
-\dedalus{@async}, ensuring that the program observes a causal ordering
-of events.  Depending on the runtime environment, making use of
-\dedalus{@async} and explicitly maintaining Lamport clocks may be more
-or less natural than \dedalus{@later}.  \jmh{Any plan of convincing me of the pros and cons of these?  I'd say they're the same, and you should toss out later?}
+Recall that \lang allows program executions to violate causality.
+This section explains how to implement Lamport
+clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
+temporal monotonicity\rcs{term}, by reestablishing a causal order,
+despite derivations that may flow backwards through time.
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
 rewriting it to:
@@ -319,86 +210,24 @@ to evaluate a potentially large number of timesteps (if N is
 significantly less than the timestamp of the system when the tuple
 arrives).  However, if the runtime is able to efficiently evaluate
 timesteps when the database is quiescent (by recognizing that the
-timesteps can be skipped, as is done in Algorithm~\ref{alg:tsn}), then instead of ``waiting'' by evaluating
-timesteps, it will simply increase its logical clock to match that of
-the sender.  In contrast, if the tuple is ``sent into the future,''
-then it is processed using the timestep that receives it.  This
-manipulation of timesteps and clock values is equivalent to
-conventional descriptions of Lamport clocks.
+timesteps can be skipped, as is done in Algorithm~\ref{alg:tsn}), then
+instead of ``waiting'' by evaluating timesteps, it will simply
+increase its logical clock to match that of the sender.  In contrast,
+if the tuple is ``sent into the future,'' then it is processed using
+the timestep that receives it.
+
+This manipulation of timesteps and clock values is equivalent to
+conventional descriptions of Lamport clocks, except that our Lamport
+clock implementation also needs to events in order to avoid causality
+violations.  Therefore, it needs to temporarily store incoming tuples
+in the \dedalus{p\_wait} relation.
+
+Note that we gloss over one detail here; Lamport clocks rely
+upon a ``tie-breaking'' function to ensure that no two events have the
+same timestamp.  In practice, such a function could be implemented by
+appending a unique node identifier to each timestamp; this could be
+done automatically by the runtime, or by adding arithmetic expressions
+or other computations to the rewritten predicates.
 
 \jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
-
-\rcs{From wikipedia, all they're good for is documenting the happens-before relationship between N nodes (so I'm not going insane, which makes me happy)}
-
-Lamport clocks capture information about the partial order of events
-that occur in distributed systems; in particular, if an event $A$ has
-a timestamp that is less than that of event $B$, then we know that $A$
-does not depend on $B$.  Our Lamport clock implementation delays
-messages sent from higher timestamps in order to ensure this property
-holds even if \dedalus{@async} is able to send messages into the
-past.  Therefore, it reintroduces the monotonicity of time that \slang's
-stratificaion properties relied upon.
-
-Although \lang allows us to reason about arbitrary temporal systems,
-this admits a number of paradoxes and other phenomona that do not
-arise in most practical systems.  Therefore, we would like to restrict
-\lang in a way that prevents it from violating causality.  This will
-require three new restrictions.\rcs{dang it... some of the restrictions are in the lemma definition; others are in these two paragraphs.  There are more than three of them.}
-
-First, the program may not specify any facts with hard-coded
-timestamps, such as ``a(X)@123''; instead selection of appropriate
-logical clock values for such facts is left to the runtime
-environment.  Futhermore, we restrict \lang to ``eager'' evaluations
-that quiesce computation before processing the next incoming message.
-
-Finally, we assume that our Lamport clocks will have the usual
-semantics at runtime: a fact $A$ with a timestamp less than that of
-some fact $B$ cannot possibly depend upon $B$.  We will say that \lang
-programs with this final restriction run in {\em causal} environments.
-
-\begin{lemma}
-\lang programs running in causal environments (a) with the restrictions of
-Lemmas 1 and 2\rcs{XXX fix refs in source}, (b) \rcs{pete fill in the
-  magic words that say we get rid of choice}, and (c) that do not make use of entanglement are temporally
-stratifiable.\rcs{XXX make this match wording above}
-\begin{proof}
-Assume that the program has been rewritten
-so that it maintains a Lamport clock as in the example above.  It
-suffices to show that (1) (by the proof of Lemma 2) that the rewritten
-program's clock values are monotonically increasing and (2) evalution
-of the rewritten program is equivalent to the original program.
-
-1) By the properties of Lamport clocks, we know that any incoming
-message with a timestamp $B$ does not depend upon some other message
-$A$ with a greater timestamp.  The quiescence assumption \rcs{misuse
-  of word quiescence, plus I'm not convinced we need this assumption}, and avoidance of hardcoded timestamps ensures
-that the node increases the local logical clock at least the the
-greater of current logical clock, and the timestamp of the incoming
-message.
-
-Either way, increasing the logical clock bars schedules that generate
-facts the incoming tuple depends upon: the node did not derive any
-facts with timestamps between $A$ and $B$'s timestamps.  Therefore,
-the timesteps of the computations performed by (and induced by) each
-node are monotonically increasing, and therefore correspond to a
-partial ordering over the computation performed by the system, which
-must be indistinguishable from some total ordering.  This completes
-part 1 of the proof.
-
-2) Because the program does not make use of entangled values,
-it does not transfer such values between nodes.  Therefore, increasing
-the local logical clock is a purely local operation.  Similarly,
-increasing the value of the logical clock does not change any state
-visible to the program, and cannot change the effects or even the
-schedule of local computations.
-\end{proof}
-\end{lemma}
-
-This section introduced Lamport clocks for two reasons.  First, they
-are a well-known and familiar tool for building distributed systems.
-Second, they provide a powerful theoretical tool that we use to
-re-establish the monotonicity properties of \slang.  We provided two
-techniques that reintroduce monotonicity into the system.  The first
-rewrites the program to use Lamport clocks to achieve the desired
-properties.  The second introduces a number of restrictions on \lang
-programs and executions.
+\rcs{I'd like to do this, but don't have any good examples...}

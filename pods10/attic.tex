@@ -332,4 +332,140 @@ temporary storage and execution cost of:
 
 %%\subsubsection{perhaps we can admit queries over the past that are bounded and pre-stated, and do GC}
 
+\subsection{old async stuff}
+
+Consider
+the following program, which exihibits non-determinism in the face of
+executions that violate causality:
+
+\begin{Dedalus}
+r(1)@1;
+s(1)@2;
+p(X) \(\leftarrow\) q(X), r(X);
+q(X)@async \(\leftarrow\) s(X);
+\end{Dedalus}
+
+Since \dedalus{s(1)} and therefore \dedalus{q(1)} are derived after
+\dedalus{r(1)} ceases to exist, it seems unreasonable that
+\dedalus{@async} leads to schedules where the join of \dedalus{q(1)}
+and \dedalus{r(1)} succeeds.
+
+Ideally, we would like \lang to have safety and stratifiablity
+propertes similar to those of \slang.  An examination of the proofs
+\rcs{which I have not performed, and am speculating about} reveals
+that the main deficiency in \lang's semantics are due to its
+abandonment of monotonically increasing timesteps.
+
+The solution is simple; rather than define \dedalus{time}, we define a relation \dedalus{after}:
+
+\begin{Dedalus}
+after(S, T) \(\leftarrow\) successor(S, T);
+after(S, U) \(\leftarrow\) after(S, T), successor(T, U);
+after(S, \(\top\)) \(\leftarrow\) successor(S, _);
+\end{Dedalus}
+
+and, as above, we define the sugar \dedalus{@later}, which adds the
+following predicates to rule bodies:
+
+\begin{Dedalus}
+after(\(\Tau\), S),
+choose((\(A_1, \ldots, A_n, \Tau\)), (S))
+\end{Dedalus}
+
+We call the resulting language \lang$_{late}$
+
+
+\begin{lemma}
+Lemmas~\ref{lemma:no-neg-unique} and~\ref{lemma:temp-strat-uniq} apply
+to \lang$_{late}$ up to choice.
+\begin{proof}
+We need to show that, given an assignment of values by
+\dedalus{choose}, we have unique minimal models.  Here is a proof
+sketch.  The only timestamp related assumption made by
+Proofs~\ref{lemma:no-neg-unique} and~\ref{lemma:temp-strat-uniq} is
+that timestamps increase monotonically over time.  The definition of
+\dedalus{after} ensures that \dedalus{choose} selects such a value, in
+which case the proof holds, or $\top$, which leads to lost deductions,
+which cannot introduce cycles.
+\end{proof}
+\end{lemma}
+
+Thus, although \lang$_{late}$ is, by definition, non-deterministic, any given evaluation of a \lang$_{late}$ program has semantics analgous to \slang.
+
+This restores the monotonicity properties relied upon by
+Lemmas~\rcs{XXX???} which hold over \lang with \dedalus{@later}, but
+not with \dedalus{@async}.
+
+Ultimately, whether a particular set of temporal semantics is
+desirable depends on the underlying application.  For example, many simple distributed applications ``don't care'' about ordering of events, assuming that users can tolerate out-of-order semantics as long as things accumulate monotonically.  The standard example in recent years is in web discussion boards, where comments on articles may appear ``out of order'' on the board for some users: that is, a response to some comment may appear before the comment itself appears.  This typically happens because the discussion board is actually a distributed system with replication of the content across sites, and the transmission of replicated data does not observe a causal ordering.
+
+%%\rcs{move this, get rid of monotonic discussion?
+%%We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
+%%purely monotonic.  For such a program~\footnote{This holds also for the trivial cases of programs that ignore messages.}, 
+%%deductions ``into the past" present no difficulties.
+%%In fact, the ``eventual consistency" property of NDLog~\cite{loo-sigmod06} relies on the assumption that
+%%programs are negation-free and hence monotonic.  Any programs with non-monotonic rules that transitively depend on
+%%message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
+%%}
+
+The distributed systems literature often requires a causal ordering
+of events across systems; Lamport clocks~\cite{lamportclock} are a simple mechanism go achieve this.  Lamport clocks
+record the partial ordering induced by network communication between
+the nodes.  With such approaches in mind, we introduce an alternative
+to \dedalus{@async} called \dedalus{@later} that induces a total
+ordering over all timestamps within a \lang program.  We define \dedalus{after} as the transitive closure of \dedalus{successor} including $\top$:
+
+
+Intuitively, \dedalus{after(S, T)} is true if T happens after S in the
+global ordering of events.  Each rule \dedalus{p($A_1, \ldots, A_n$)@later} has the
+following additional variables in its body:
+\dedalus{after($\Tau$, S),} \\
+\dedalus{choose(($A_1, \ldots, A_n, \Tau$), (S))}, where, as
+above, $\Tau$ is the timestamp associated with the rule body, and
+\dedalus{S} is the timestamp of the rule head.
+
+Note that our addition of a global ordering does not expose a shared
+synchronized clock to \lang programs.  The nondeterminism associated with
+choice prevents programs from ensuring that operations are performed in
+lock-step.  Instead, the timestamps simply encode some logical clock that is
+equivalent to one that could be maintained by the application.  The difference
+is that, by constraining \dedalus{choose}, we can avoid reasoning about program
+traces that contain paradoxes such as causality loops.  In particular,
+deterministic instances such as:
+
+are non-deterministic if \dedalus{@later} is replaced with
+\dedalus{@async}.  
+\paa{the rest may stay but may also go}
+The non-determinism comes from \dedalus{@sync}'s
+\dedalus{choose} invocation.  However, the non-determinism also relies
+on the fact that the program is, in some sense, non-monotonic; it
+relies on the fact that \dedalus{r(1)} stops being true before
+\dedalus{q(1)} is derived.
+
+%%\rcs{Can we prove anything now?  It seems as though async rules are equivalent to \slang rules, as long as there is no aggregation or arithmetic.  The problem is that if %%choice derives a fact N steps in the future, we need to push the fact through N @next rules, and the number of such rules is variable.  If we admit arithmetic in the rewrite, %%%we can model async as a synchronous queue, but \slang doesn't have arithmetic...}
+%%\rcs{Here to end of section is dead text}
+
+
+
+
+
+%\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \top$. 
+%%\rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
+%%An asynchronous rule has the following
+%%subgoals in its body: \dedalus{time(S), successors($\Theta$, S), choose(($\Theta$), (S))}, where
+%%$\Theta$ is a vector containing all variables appearing in the rule body,
+%%including $\Tau$.  The choice subgoal expresses that the rule head may be
+%%derived at any value of \dedalus{time}.
+%time value that appears in the \dedalus{successor} relation.
+
+%%\rcs{old example:}
+
+%%\begin{Dedalus}
+%%asynchronous
+%%r(A, B, S) \(\leftarrow\)
+%%   e(A, B, \(\Tau\)), successor(_, S), choose((A, B), (S));
+%%\end{Dedalus}
+
+
+
 
