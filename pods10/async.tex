@@ -19,9 +19,9 @@ reason about the inherent nondeterminism in communication over unreliable
 networks that may delay, lose or reorder the results of logical deductions. 
 %(see Figure~\ref{fig:time}).
 
-\subsection{New Constructs}
+\subsection{\lang: New Constructs}
 
-In this section we relax our restrictions on \slang by admitting aggregate functions to 
+In this section we present the Datalog extensions missing from \slang that we will need in \lang to capture important properties of practical distributed systems.  These include aggregate functions to 
 capture ordering constraints, and the choice construct to capture nondeterminacy.
 
 \subsubsection{Aggregate Functions}
@@ -88,23 +88,26 @@ is stratifiable, locally stratifiable, etc}
 
 \subsection{Distribution Model}
 
-A principal motivation for \lang is modeling and implementing distributed systems.
-To represent such a system we must consider a multiplicity of agents evaluating local programs and
-asynchronously communicating via messages.  As with previous distributed logic languages, we model messages as
-tuples and their transmission as a special case of rule evaluation in which the body is evaluated at one
-agent and the head atom appears at another.  
+A principal motivation for \lang is modeling and implementing distributed systems.   Before we formally introduce issues from distributed computing, we give an intuitive overview of our approach.
 
+To represent a distributed system, we consider a multiplicity of agents, each evaluating its own local program, 
+asynchronously communicating with other agents via messages. 
+ As with previous languages for declarative networking~\cite{Loo2009-CACM}, we will model messages as
+tuples.  We will capture message transmission between programs by introducing additional ``cross-program'' rules, in which the body contains predicates of only one
+agent's program, and the head atom is a predicate from another agent's program.  
+
+\jmh{Don't talk about evaluation -- stick with the idea of multiple programs.}
 We exclude agents from evaluating rules using non-local body atoms, as this computation necessarily involves communication
 not modeled by \lang.  Thus, these message rules are the only manner in which data
-elements derived from one agent's EDB may be visible in the IDB of another.  This restriction is 
-particularly significant to our interpretation of timestamps.  Although the \emph{successor} relation exists
-at each agent according to our definition, there is no reason to assume that a subset of {\em successor} 
-relevant to computation at any particular agent will intersect a relevant subset at another.  In other words,
-if we consider the ``current local time" as a pointer to a particular row of successor, each agent's pointer will likely indicate a different row in a distributed system.
-\lang does not allow an agent to know the current time of another.
+elements derived from one agent's EDB may be visible in the IDB of another.  
 
-It follows that a message rule as described above will deduce a head predicate whose timestamp is independent
-of the timestamps in the body predicates.
+This restriction is 
+particularly significant to our interpretation of timestamps.  Although the \emph{successor} relation exists
+at each agent according to our definition, the bindings from that relation to program variables---that is, the absolute ``times'' at which facts exist---may not be coordinated across agents.  Moreover, the natural asynchrony of distributed systems means that one agent should only be able to learn about  time values at another agent by receiving messages (with unknown delay) from that agent.  
+
+We will enforce this strong notion of asynchrony syntactically in 
+\lang.  To do so, the message rules described above will be required to  deduce a head predicate whose timestamp is independent
+of the timestamps in the body predicates.  We proceed to describe these {\em asynchronous} rules, 
 
 \subsection{Asynchronous Rules}
 
