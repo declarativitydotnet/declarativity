@@ -10,13 +10,20 @@
 
 %%\linebreak
 \begin{quote}
-\emph{Time is a device that was invented to keep everything from happening at once.}~\footnote{Graffiti on a wall at Cambridge University~\cite{scheme}}
-\end{quote}
-Having defined \slang, we are now ready to express traditionally ``operational'' constructs in a proper declarative fashion.  In this section we focus on the notion of ``state'': the persistence and mutability of data across time.
+%
+``Time is a device that was invented to keep everything from
+happening at once."~\footnote{Graffiti on a wall at Cambridge
+University~\cite{scheme}}
+%
+\end{quote} 
 
-The intuition behind the \emph{successor} relation used to define \slang is that it models the
-passage of (logical) time.  In our discussion, we will say that ground atoms with lower timestamps
-occur ``before" atoms with higher ones.
+Given our definition of \slang, we now address the persistence and mutability
+of data across time -- one of the two signature features of distributed systems
+for which we provide a model-theoretic foundation.
+
+The intuition behind \slang's \emph{successor} relation is that it models the
+passage of (logical) time.  In our discussion, we will say that ground atoms
+with lower timestamps occur ``before" atoms with higher ones.
 %%Without specifying how and when each stratum
 %%of \emph{successor} is evaluated, we can see that the syntactic restrictions of \lang ensure that 
 %%we cannot move backwards infinitely often (specifically,
@@ -24,15 +31,21 @@ occur ``before" atoms with higher ones.
 %%we may only move forward in time.
 The constraints we imposed on \slang rules restrict how deductions may be made
 with respect to time.  First, rules may only refer to a single timestep in
-their body, they {\em cannot join across timesteps}.  Second, rules may specify
+their body, and {\em cannot join across timesteps}.  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
-timestep---in \slang, we rule out induction ``backwards'' in time.
-%, or at some unspecified time: 
-%therefore inductions may only be specified in one direction only.
+timestep--in \slang, we rule out induction ``backwards'' in time or
+``skipping'' into the future.
+%, or at some unspecified time: therefore inductions may only be specified in
+%one direction only.
 
-With a notion of time captured in this way, we can consider the contents of the extensional database---and hence a minimal model of the intensional database---with respect to an ``instant in time'': we simply bind the free time suffixes of all rules to a constant.  Because this produces a sequence of models (one per timestep), it gives us an intuitive and unambiguous way to declaratively express persistence and state changes across timesteps.  In this section, we 
-give examples of language constructs that capture motifs such as persistent relations, deletion and update, sequences
-and queues.
+This notion of time allows us to consider the contents of the EDB -- and hence
+a minimal model of the IDB -- with respect to an ``instant in time'': we simply
+bind the time suffixes ($\Tau$) of all body predicates to a constant.  Because
+this produces a sequence of models (one per timestep), it gives us an intuitive
+and unambiguous way to declaratively express persistence and state changes
+across timesteps.  In this section, we give examples of language constructs
+that capture \wrm{state-ricuted????} motifs such as persistent relations,
+deletion and update, sequences, and queues.
 
 \subsection{Simple Persistence}
 
@@ -49,7 +62,7 @@ p\pos($A_1$,$A_2$,[...],$A_n$);}
 %%\end{definition}
 
 A simple persistence rule ensures that a $p$ fact true at time $i$ will be true
-$\forall j \in \mathbb{Z} : j >= i$.  It is interesting to note that we can
+$\forall j \in \mathbb{Z} : j >= i$\footnote{It is interesting to note that we can
 express this rule using a temporal logic assertion that makes use of the $\Box$
 or ``henceforth'' operator:
 
@@ -58,7 +71,7 @@ $\forall A_1, \ldots, A_n \in C : p$\pos$(A_1, \ldots, A_n) \to \Box p$\pos$(A_1
 
 This assertion states that for any constants $A_1, \ldots, A_n$ in the Herbrand
 Universe, $p$\pos$(A_1, \ldots, A_n)$ implies that henceforth, \linebreak
-$p$\pos$(A_1, \ldots, A_n)$ will be true.\rcs{defined herbrand here?  this is the first use}
+$p$\pos$(A_1, \ldots, A_n)$ will be true.\rcs{defined herbrand here?  this is the first use}}.
 
 %\wrm{is there a point to this formula?  can't we just say ``a simple persistence
 %rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
@@ -95,7 +108,7 @@ is true until it is retracted.
 
 %%\newtheorem{example}{Example}
 \begin{example}
-Consider the following \lang program and {\em trace} of events:
+Consider the following \lang program and ground facts:
 
 \begin{Dedalus}
 p\pos(A, B) \(\leftarrow\) p(A, B);
@@ -108,37 +121,30 @@ p\nega(1,2)@300;
 \end{Dedalus}
 
 It is easy to see that the following are true: \dedalus{p(1,2)@200},
-\dedalus{p(1,3)@200}, \dedalus{p(1,3)@300}.  However, \dedalus{p(1,2)@300} is
+\dedalus{p(1,3)@200}, \dedalus{p(1,3)@300}.  However, \dedalus{p(1,2)@301} is
 false because it was deleted at timestep \dedalus{300}.
 \end{example}
 
-This basic template for mutable persistence occurs so frequently that we provide a 
-shorthand for the rule.  Instead of the second rule in the example above, we may
-instead write: 
+Since mutable persistence occurs frequently in practice, we provide the {\em
+persist} macro, which takes as arguments a predicate name and its arity, and
+expands to the corresponding persistence rule.  For example, the above
+\dedalus{p} persistence rule may be equivalently specified as
+\dedalus{persist[p, 2]}.
 
-\begin{Dedalus}
-persist[p, 2]
-\end{Dedalus}
-
-The \emph{persist} macro takes a predicate name and a number of attributes as arguments, 
-and expands to an appropriately specified persistence rule.
-
-%%\begin{definition}
-%
-For some time $\Tau$, an {\em update} is any pair of facts:
+Mutable persistence rules enable {\em updates}.  For some time $\Tau$, an
+update is any pair of facts:
 
 \begin{Dedalus}
 p\nega(\(C_1\),\(C_2\),[...],\(C_n\))@\(\Tau\) 
 p\pos(\(D_1\),\(D_2\),[...],\(D_n\))@\(\Tau+1\)
 \end{Dedalus}
-%
-%%\end{definition}
 
-Intuitively, an update represents replacing an old value of a tuple with a
-newer value.  We say the update is {\em atomic across timesteps}, meaning that
-the old value ceases to exist at the same timestep in which the new value
+Intuitively, an update represents deleting an old value of a tuple and
+inserting a new value.  Every update is {\em atomic across timesteps}, meaning
+that the old value ceases to exist at the same timestep in which the new value
 is derived -- timestep $\Tau+1$ in the above definition.
 
+\wrm{BEGIN WARNING}
 \subsection{Sequences}
 One may represent a database sequence---an object that retains and monotonically increases a counter value---with a pair of inductive rules.  One rule increments the current counter value when some condition is 
 true, while the other persists the value of the sequence when the condition is false.  We can capture the increase
@@ -244,6 +250,6 @@ A queue establishes a mapping between the local clock and the priority-ordering 
 advantage of the natural ordering enforced by stratification over time, to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
 
-
+\wrm{END WARNING}
 
 
