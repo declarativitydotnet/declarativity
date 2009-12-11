@@ -21,6 +21,9 @@ networks that may delay, lose or reorder the results of logical deductions
 
 \subsection{New Constructs}
 
+In this section we relax our restrictions on \slang by admitting aggregate functions to 
+capture ordering constraints, and the choice construct to capture nondeterminacy.
+
 \subsubsection{Aggregate Functions}
 
 We will consider only the class of \emph{exemplary} aggregate
@@ -33,25 +36,25 @@ in the head of a deductive rule of the form:
 \linebreak\dedalus{   \(q_1\)(\(A_1\), \(\ldots\), \(A_n\)), \(\ldots\), \(q_n\)(\(A_1\), \(\ldots\), \(A_n\));}
 
 These functions do not affect the expressivity of the language; we admit them
-to simplify our discussion of ordering.  We note that the \emph{min} function,
+to simplify our discussion of ordering.  It is easy to see that the \emph{min} function,
 which we subsequently use, is expressible in Datalog using negation.
 
-\begin{example}
-The query below selects, for each distinct value of the first column of $p$, the minimum 
-value of the second column.
+%%\begin{example}
+%%The query below selects, for each distinct value of the first column of $p$, the minimum 
+%%value of the second column.
 
-\begin{Dedalus}
-min_p(A, min<B>) \(\leftarrow\) p(A, B);
-\end{Dedalus}
+%%\begin{Dedalus}
+%%min_p(A, min<B>) \(\leftarrow\) p(A, B);
+%%\end{Dedalus}
 
-The Datalog program below is equivalent:
+%%The Datalog program below is equivalent:
 
-\begin{Dedalus}
-notmin_p(A, B) \(\leftarrow\) p(A, B), p(A, C), B > C;
+%%\begin{Dedalus}
+%%notmin_p(A, B) \(\leftarrow\) p(A, B), p(A, C), B > C;
   
-min_p(A, B) \(\leftarrow\) p(A, B), \(\lnot\)notmin_p(A, B);
-\end{Dedalus}
-\end{example}
+%%min_p(A, B) \(\leftarrow\) p(A, B), \(\lnot\)notmin_p(A, B);
+%%\end{Dedalus}
+%%\end{example}
 
 
 
@@ -80,9 +83,32 @@ and each possible choice is associated with a different model.
 \paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
 is stratifiable, locally stratifiable, etc}
 
+
+\subsection{Distribution Model}
+
+A principal motivation for the specification of \lang is modeling and implementing distributed systems.
+To represent such a system we must consider a multiplicity of agents evaluating local programs and
+communicating via messages.  As with previous distributed logic languages, we model messages as
+tuples and their transmission as a special case of rule evaluation in which the body is evaluated at one
+agent and the head atom appears at another.  
+
+An agent clearly cannot evaluate rules whose body
+predicates exist at another agent, and hence these message rules are the only manner in which data
+elements derived from one agent's EDB may be visible in the IDB of another.  This restriction is 
+particularly significant to our interpretation of time stamps.  Although the \emph{successor} relation exists
+at each agent according to our definition, there is no reason to assume that a subset of that relation 
+relevant to computation at any particular agent will intersect the relevant subset at another.  In other words,
+if we consider the ``current local time" as a pointer to a particular row of successor, we must admit that in a 
+distributed system, each agent's pointer will likely point to a different row, and there is certainly no way for
+a given agent to know the value pointed to by another.
+
+It follows that a message rule as described above will deduce a head predicate whose timestamp is independent
+of the timestamps in the body predicates, and which cannot have been predicted by the agent at which the rule
+was evaluated.
+
 \subsection{Asynchronous Rules}
 
-\rcs{ I touched this.  There is no longer a time predicate, we no longer admit causality violations}
+%%\rcs{ I touched this.  There is no longer a time predicate, we no longer admit causality violations}
 
 In order to represent the nondeterminism introduced by distribution, we admit a
 third type of rule, called an {\em asynchronous} rule.  A rule is asynchronous
@@ -99,7 +125,52 @@ deduction is ``lost,'' as time suffixes in rule bodies do not range over
 $\perp$.
 
 We model network nondeterminism using the \dedalus{choice} construct to choose
-from a value in the special \dedalus{successors} predicate, which is defined using the following datalog rules:
+from a value in the special 
+%%\dedalus{successors} 
+\dedalus{time}
+predicate, which is defined using the following datalog rules:
+
+\begin{Dedalus}
+time(S) \(\leftarrow\) S = \(\bot\)
+time(S) \(\leftarrow\) successor(_, S);
+\end{Dedalus}
+
+Each asynchronous rule has the following additional variables in its
+body: \dedalus{time(S), choose((\_), (S))}, where
+\dedalus{S} is the timestamp of the rule head.
+
+\begin{example}
+A well-formed asynchronous \lang rule:
+
+\begin{Dedalus}
+r(A, B, S) \(\leftarrow\) 
+  e(A, B, \(\Tau\)),
+  time(S), choose((_)), (S));
+\end{Dedalus}
+\end{example}
+
+We admit a new temporal head annotation to sugar the rule above.  The
+identifier \dedalus{async} implies the rule is asynchronous, and stands in for the additional body predicates.
+%%$N$ is a variable,
+%%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+%%optionally referenced in the head.  
+The above example expressed using \dedalus{async} is:
+
+\begin{Dedalus}
+asynchronous
+r(A, B)@async \(\leftarrow\) e(A, B);
+\end{Dedalus}
+
+It is easy to see that evaluation of an asynchronous rule may produce a tuple whose timestamp is less than the timestamps
+in the rule's antecedents.  This violates our intuitive interpretation of timestamps capturing causal relations between 
+tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
+cannot possibly depend negatively on itself.
+
+
+
+\paa{rusty's stuff below, not yet glued}
+
+
 
 \begin{Dedalus}
 successors(S, T) \(\leftarrow\) successor(S, T);
@@ -115,35 +186,19 @@ reflect some global ordering compatible with the partial ordering
 observed at runtime.  Implementations of such primitives are well
 understood.
 
-Each asynchronous rule has the following additional varibales in its
+Each causally asynchronous rule has the following additional variables in its
 body: \dedalus{successors($\Tau$, S), choose(($\Tau$), (S))}, where, as above,
 $\Tau$ is the timestamp associated with the rule body, and
 \dedalus{S} is the timestamp of the rule head.
 
-\begin{example}
-A well-formed asynchronous \lang rule:
 
-\begin{Dedalus}
-r(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)),
-  successors(\(\Tau\), S), choose((\(\Tau\)), (S));
-\end{Dedalus}
-\end{example}
-
-We admit a new temporal head annotation to sugar the rule above.  The
-identifier \dedalus{async} implies the rule is asynchronous, and stands in for the additional body predicates.
-%%$N$ is a variable,
-%%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
-%%optionally referenced in the head.  
-The above example expressed using \dedalus{async} is:
-\rcs{do we need to prefix it with ``asynchronous''?}
-
-\begin{Dedalus}
-asynchronous
-r(A, B)@async \(\leftarrow\) e(A, B);
-\end{Dedalus}
 
 \rcs{Can we prove anything now?  It seems as though async rules are equivalent to \slang rules, as long as there is no aggregation or arithmetic.  The problem is that if choice derives a fact N steps in the future, we need to push the fact through N @next rules, and the number of such rules is variable.  If we admit arithmetic in the rewrite, we can model async as a synchronous queue, but \slang doesn't have arithmetic...}
 \rcs{Here to end of section is dead text}
+
+
+
+
 
 %\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \perp$. 
 \rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
