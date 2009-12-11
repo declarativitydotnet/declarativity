@@ -142,15 +142,15 @@ p(1, 2)@123;
 
 \paa{we shouldn't \emph{ever} need to write out r2, right?}
 
-The single ground fact will cause one deduction for each
-tuple in \dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding datalog\rcs{what should we call this?}
-program is unsafe.  
+The single ground fact will cause one deduction for each tuple in
+\dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding
+datalog\rcs{what should we call this?} program is unsafe.  
 %
 \end{example}
 
 However, observe that each of these deductions produces a tuple that changes
-only in its time suffix.  We find it useful to distinguish from unsafe
-programs those programs that, given a finite EDB, eventually derive only tuples
+only in its time suffix.  We find it useful to distinguish between unsafe
+programs and programs that, given a finite EDB, eventually derive only tuples
 that are equivalent except in their time suffixes.
 
 %%\wrm{$<$don't really get whats going on$>$}
@@ -209,7 +209,7 @@ that are equivalent except in their time suffixes.
 Two sets of ground atoms $\Gamma$ and $\Gamma'$ are \emph{equivalent modulo
 time} if each atom $\gamma \in \Gamma$ has a corresponding atom $\gamma' \in
 \Gamma'$ such that $\gamma$ and $\gamma'$ have the same predicate symbol, and
-the same assignment of constant to attributes for all attributes except the
+the same assignment of constants to attributes for all attributes except the
 time suffix.
 %
 \end{definition}
@@ -217,11 +217,13 @@ time suffix.
 %%In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
 %%minus $\Tau$.\rcs{either define pi, write out ``projection'', or drop this paragraph}
 
+\begin{definition}
+%
 We say a \slang instance is \emph{quiescent at time $T$} if the set of all
 atoms with time suffix $T$ is equivalent modulo time to the set of all atoms
 with time suffix $T-1$.
 %%\rcs{what is a true atom?  Why distinguish between true atoms and false atoms?  Surely the neg tuples will match as well.  If not, then the program has somehow not quiesced...}
-
+\end{definition}
 
 %%\paa{well, there are some problems with this.  first, facts are only in the EDB, you mean atom,
 %%second, this is never true because of the time suffix (unless you mean to have defined ``fact''
@@ -230,17 +232,18 @@ with time suffix $T-1$.
 
 \begin{observation}
 %
-A \slang instance quiescent at time $T$ will be quiescent until the next EDB
-fact exists at time $V$, i.e. for all $U \in \mathbb{Z}: V > U >= T$.  If no
-EDB facts exist after $T$, then the instance will be henceforth quiescent.
+A \slang instance that is quiescent at time $T$ will be quiescent until
+timestamp of the next EDB fact $V$, i.e. for all $U \in \mathbb{Z}: V > U >=
+T$.  If no EDB fact has a timestamp greater than $T$, then the instance will be
+henceforth quiescent.
 %%\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
 %
 \end{observation}
 %
 \begin{proof}
 %
-A \slang program admits only instantaneous and inductive rules, which derive new
-tuples at the same time as their ground tuples, or in the immediate next
+A \slang program admits only instantaneous and inductive rules, which derive
+new tuples at the same time as their ground tuples, or in the immediate next
 timestep.  Thus, the set of tuples true at time $T$ is completely determined by
 any tuples true at time $T-1$, and any EDB facts true at time $T$.  Observe
 that the integer value of the timestep does not influence the derivation.
