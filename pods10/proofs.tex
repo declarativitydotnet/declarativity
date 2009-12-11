@@ -61,7 +61,8 @@ collapsed to a single node.
 
 Since our translation from \slang to Datalog does not introduce any cycles or
 negation to a program, a syntactically stratified \slang instance has a
-unique minimal model, as any Datalog instance without choice has a unique
+unique minimal model, as any Datalog instance %without choice
+has a unique
 minimal model. 
 
 %\begin{lemma}
@@ -93,8 +94,8 @@ minimal model.
 %\end{proof}
 
 However, many programs we are interested in expressing are not syntactically
-stratifiable.  Fortunately, \slang has a syntactically checkable notion of
-{\em temporal stratifiability} that maps to a subset of {\em modularly
+stratifiable.  Fortunately, we are able to define a syntactically checkable notion of
+{\em temporal stratifiability} of  \slang programs that maps to a subset of {\em modularly
 stratifiable}~\cite{modular} Datalog programs.
 
 %Intuitively, a Datalog instance is modularly stratifiable if no EDB
