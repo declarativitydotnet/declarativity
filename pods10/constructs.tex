@@ -111,6 +111,17 @@ It is easy to see that the following are true: \dedalus{p(1,2)@200},
 false because it was deleted at timestep \dedalus{300}.
 \end{example}
 
+This basic template for mutable persistence occurs so frequently that we provide a 
+shorthand for the rule.  Instead of the second rule in the example above, we may
+instead write: 
+
+\begin{Dedalus}
+persist[p, 2]
+\end{Dedalus}
+
+The \emph{persist} macro takes a predicate name and a number of attributes as arguments, 
+and expands to an appropriately specified persistence rule.
+
 %%\begin{definition}
 %
 For some time $\Tau$, an {\em update} is any pair of facts:
