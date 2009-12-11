@@ -374,14 +374,6 @@ advantage of the natural ordering enforced by stratification over time, to enfor
 very difficult to express in a logic language.
 
 \subsubsection{Lamport Clocks}
-\rcs{cut this para
-Implementing a Lamport Clock~\cite{timeclocks} is a special case of a queueing discipline as defined above.
-Consider a predicate {m\_priority\_queue} as defined above, but with an extra integer attribute that contains the logical transmission
-time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
-}
-\paa{damn it!  we've sugared out N from the syntax!! now what?}
-\rcs{try number 2 at a new example}
-
 Recall that \dedalus{@async} provides weaker semantics than
 \dedalus{@later}, and can even lead to program executions that violate
 causality.  In contrast, \dedalus{@later} builds a number of
@@ -413,87 +405,7 @@ timesteps, it will simply increase its logical clock to match that of
 the sender.  In contrast, if the tuple is ``sent into the future,''
 then it is processed using the timestep that receives it.  This
 manipulation of timesteps and clock values is equivalent to
-conventional descriptions of Lamport clocks. \rcs{END OF SECTION}
-
-\rcs{perhaps this would be better without the balance update example... I think they'll get that lamport clocks are useful}
-
-Consider a rule:
-\begin{Dedalus}
-x(A, B) :- y(A, B);
-\end{Dedalus}
-whose productions should be annotated using a Lamport clock.  We add a
-third column to x and y that will track the logical timestamps of the
-productions.  With entanglement, we would simply write:
-
-\begin{Dedalus}
-entangle
-x(A, B, N) :- y(A, B, M)@N;
-\end{Dedalus}
-
-which would store the derivation time of \dedalus{x}.  Note that no explicit
-increment of \dedalus{N} is required.  If \dedalus{M} is set according to a similar
-rule, then we know that \dedalus{N} $\ge$ \dedalus{M}, due to the semantics of
-\dedalus{@next} and \dedalus{@async}.
-
-Alternatively, the program could maintain the clock values manually,
-with rules such as:
-
-\begin{Dedalus}
-x(A, B, M+1) :- y(A, B, M), \(\neg\)x(_, _, _);
-x(A, B, max<M,N>+1) :- y(A, B, M), x(_,_,N); 
-\end{Dedalus}
-\rcs{max syntax is cheating, and the rewrite is horribly broken.  However, I'd like to introduce a non-entangled lamport clock in order to motivate entanglement.  FIXME or get rid of everything after ``entanglement''}
-
-This avoids the use of entanglement, but requries aggregation and
-arithmetic.  Also, if a cycle exists between x and y; the rewrite's
-use of addition may be unsafe.
-
-  \rcs{end potential
-  rewrite}
-
-\begin{Dedalus}
-entangle
-m\_priority\_queue(A, B, N)@async \(\leftarrow\)
-  send\_p(A, B)@N;
-\end{Dedalus}
-
-Note that in the rule named \emph{entangle}, the time suffix is projected into the last attribute of \emph{m\_p}.  
-This establishes an \emph{entanglement} between
-the sender's local clock and the program dataflow.  The queueing discipline that implements a
-Lamport clock is then:
-
-\begin{Dedalus}
-
-m\_priority\_queue(A, B, C)@next \(\leftarrow\)
-  m\_priority\_queue(A, B, C),
-  \(\lnot\) del\_m\_priority\_queue(A, B, C);
-
-omin(A, min<C>) \(\leftarrow\)
-  m\_priority\_queue(A, _, C);
-
-lmax(max<C>) \(\leftarrow\)
-  m\_priority\_queue(_, _, C);
-
-disentangle
-priority\_queue(A, B)next \(\leftarrow\)
-  m\_priority\_queue(A, B, C)@N,
-  omin(A, C)@N,
-  lmax(L)@N,
-  N > L;
-
-del\_m\_priority\_queue(A, B) :-
-  m\_priority\_queue(A, B),
-  omax(B);
-  
-\end{Dedalus}
-
-Note that the rule named \emph{disentangle} references the data elements $C$ and $L$, both of which
-contain timestamps, and induces a \emph{priority\_queue} tuple with timestamp $N+1$ only when $N > L$,
-the highest of the timestamps in its message queue.  Under the distributed systems model of Lamport clocks, 
-we expect the tuples in the message queue to  be from other hosts with independent clocks, sending messages 
-over a medium that can delay or reorder them arbitrarily.  In order to make the necessary comparison between local
-and remote clocks, it is necessary to reference the time suffix variable directly, rather than omitting it as we have done 
-in all other \lang examples.
+conventional descriptions of Lamport clocks.
 
 
 
