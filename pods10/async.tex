@@ -387,9 +387,10 @@ Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
 rewriting it to:
 
 \begin{Dedalus}
+persist[p, 2]
 p\_wait(A, B, N)@async \(\leftarrow\) q(A, B)@N;
 p\_wait(A, B, N)@next \(\leftarrow\) p\_wait(A, B, N)@M, N \(\ge\) M;
-p(A, B)@\rcs{persistent} \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
+p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
 \end{Dedalus}
 
 we place the derived tuple in a new relation \dedalus{p\_wait} that
