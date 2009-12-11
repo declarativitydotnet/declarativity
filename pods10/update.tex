@@ -109,7 +109,7 @@ exist.
    \begin{algorithmic}
    \STATE{//rewrite program}
    \FORALL{$P(A_1, \ldots, A_n)$ persistent}
-      \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & $P(A_1, \ldots, A_n)@T, \lnot P(A_1, \ldots, A_n)@T-1.$ \end{tabular}}
+      \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & \hspace{1.5em} $P(A_1, \ldots, A_n)@T, \lnot P(A_1, \ldots, A_n)@T-1.$ \end{tabular}}
       \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $P(A_1, \ldots, A_n)@T \leftarrow P\_store(A_1, \ldots, A_n).$ \end{tabular}}
       \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n)@T.$ \end{tabular}}
    \ENDFOR
