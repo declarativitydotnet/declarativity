@@ -12,7 +12,7 @@
 % \end{figure}
 
 Until now we have restricted our discussion to \slang.  In this section we
-consider \lang, a superset of \slang that admits aggregate functions
+introduce \lang, a superset of \slang that also admits aggregate functions
 and the \emph{choice} construct.  These constructs will allow us to
 express programs that establish or enforce an ordering over inputs, and to
 reason about the inherent nondeterminism in communication over unreliable
@@ -25,12 +25,13 @@ In this section we relax our restrictions on \slang by admitting aggregate funct
 capture ordering constraints, and the choice construct to capture nondeterminacy.
 
 \subsubsection{Aggregate Functions}
-
+\jmh{why only exemplary?  let's just do any aggs and cite appropriately}
 We will consider only the class of \emph{exemplary} aggregate
 functions~\cite{tag} -- an exemplary aggregate function's codomain is a subset
 of its domain. 
 %%-- and the \emph{count} aggregate, which is expressible using arithmetic.  
-We allow exemplary or count aggregate functions $\rho_1 - \rho_n$ to appear
+We allow exemplary %or count 
+aggregate functions $\rho_1 - \rho_n$ to appear
 in the head of a deductive rule of the form:
 
 \dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
