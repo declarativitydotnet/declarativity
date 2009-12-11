@@ -203,16 +203,13 @@ definition of modular stratification according to Ross \etal~\cite{modular}.
 A simple temporally stratifiable \slang program that is not syntactically stratifiable.
 
 \begin{Dedalus}
-r1
-p(A, B, T)@next \(\leftarrow\)
-  p(A, B, T),
-  \(\lnot\)p_neg(A, B, T);
+persist[p, 3]  
   
-r2
+r1
 p(A, B, T) \(\leftarrow\)
   insert\_p(A, B, T);
 
-r3  
+r2  
 p_neg(A, B, T) \(\leftarrow\)
   p(A, B, T),
   delete\_p(T);
