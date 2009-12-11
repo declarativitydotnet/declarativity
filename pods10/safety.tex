@@ -1,5 +1,18 @@
-\section{Safety and Stratification in \large \bf \slang}
-In the previous section we demonstrated that \slang can capture intuitive notions of persistence and mutability of state via a stylized use of Datalog.  However, the alert reader will notice that even very simple \slang programs make for unusual Datalog: among other concerns, they produce derivations for an infinite number of values of the time suffix.  In traditional Datalog settings of databases and queries this is impractical.  But in the context of distributed systems and networks, the need for infinitely-running ``services'' or ``protocols'' is very common. In this section we take traditional notions of acceptable Datalog programs, and extend them in a way that admits sensible non-terminating programs.
+\section{Safety and Stratification}
+
+In the previous section we demonstrated that \slang can capture intuitive
+notions of persistence and mutability of state via a stylized use of Datalog.
+However, the alert reader will note that even very simple \slang programs make
+for unusual Datalog: among other concerns, persistence rules produce
+derivations for an infinite number of values of the time suffix.  In
+traditional Datalog settings of databases and queries this is impractical.  But
+in the context of distributed systems and networks, the need for
+infinitely-running ``services'' or ``protocols'' is very common.  In this
+section we show that expressing distributed systems properties such as
+persistence and mutable state in logic does not necessitate dispensing with
+familiar notions of safety and stratification: we take traditional notions of
+acceptable Datalog programs, and extend them in a way that admits sensible
+non-terminating programs.
 
 \subsection{Temporal Safety}
 A Datalog program is safe if it admits a finite minimal model, and hence has
@@ -28,13 +41,13 @@ attributes, representing every possible interpretation, is itself finite.
 
 \rcs{check this paragraph}
 
-Since our definition of \dedalus{successor} violates these rules, and
-indeed leads to an infinite set of facts, no \slang program meets this
-defintion of safety.  However, \dedalus{sucessor} models time, not
-computation; later sections explain how \lang implementations avoid
-enumerating the contents of \dedalus{successor} at runtime.  This
-section introduces a notion of termination that
-allows us to reason about the safety of \slang programs.
+Since our definition of \dedalus{successor} violates these rules, and indeed
+leads to an infinite set of facts, \slang programs \wrm{urulaje???} this
+defintion of safety.  However, \dedalus{sucessor} models time, not computation;
+later sections explain how \lang implementations avoid enumerating the contents
+of \dedalus{successor} at runtime \wrm{whats pailiative here???}.  This section
+introduces a notion of termination that allows us to reason about the safety of
+\slang programs.
 
 %\nrc{Seems like there ought to be more here. Why do I care about the
 %  preceding text? What does it have to do with the following text?}
@@ -60,28 +73,33 @@ in such a program meet the conditions above, then clearly we would like them to 
 %%\rcs{this used to say conditions 1 and 2, but it is possible that our program is infinitely long...  Also, ``clearly they are safe'' is strange, given that we haven't defined 
 %%safety yet, so I reworded.}
 
-\begin{definition}
-The \emph{deductive reduction} of a \slang program $P$ is the subset of $P$
-consisting of exactly those deductive rules in $P$.
+\begin{definition} 
+%
+The \emph{deductive reduction} of a \slang program $P$ is
+the subset of $P$ consisting of exactly the deductive rules in $P$.
+%
 \end{definition}
 
 \begin{definition}
+%
 A rule is \emph{instantaneously safe} if it is deductive,  function-free and range-restricted.
 A \slang program is instantaneously safe if its deductive reduction is instantaneously safe.
+%
 \end{definition}
 
-Inductive rules may be unsafe.  Consider the \dedalus{successor} relation described above.  According to our
-intuitive interpretation, this relation models the passage of time, in order to
-establish a temporal order among ground atoms. 
+%Inductive rules may be unsafe.  Consider the \dedalus{successor} relation described above.  According to our
+%intuitive interpretation, this relation models the passage of time, in order to
+%establish a temporal order among ground atoms. 
 
-The \dedalus{successor} relation complicates our discussion of safety, as it
+The \dedalus{successor} relation complicates the discussion of safety, as it
 introduces the countably infinite set $\mathbb{Z}$ to our
 %Herbrand
 universe of constants.
-Clearly, a naive interpretation of time can lead to unsafe programs:
-\rcs{how is this any more unsafe than succ(x+1) :- succ(x)?  Suggested text:}
+%Clearly, a naive interpretation of time can lead to unsafe programs:
+%\rcs{how is this any more unsafe than succ(x+1) :- succ(x)?  Suggested text:}
 
-The infinte \dedalus{successor} relation complicates our discussion of safety; consider the following \slang program, which derives a single, persistent fact:
+%The infinte \dedalus{successor} relation complicates our discussion of safety;
+Consider the following \slang program, which derives a single, persistent fact:
 
 %Consider the \dedalus{successor} relation described above.  According to our
 %intuitive interpretation, this relation models the passage of time, in order to
@@ -118,18 +136,13 @@ r1:
 %%\end{Dedalus}
 \begin{Dedalus}
 persist[p, 2]
-\end{Dedalus}
-r2:
-\begin{Dedalus}
-p\pos(A, B)  \(\leftarrow\) p(A, B);
-\end{Dedalus}
-\begin{Dedalus}
+
 p(1, 2)@123;
 \end{Dedalus}
 
 \paa{we shouldn't \emph{ever} need to write out r2, right?}
 
-The single ground fact will, due to \dedalus{r1}, cause one deduction for each
+The single ground fact will cause one deduction for each
 tuple in \dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding datalog\rcs{what should we call this?}
 program is unsafe.  
 %
@@ -235,6 +248,7 @@ that the integer value of the timestep does not influence the derivation.
 If the instance is quiescent at $T$, then given some set of atoms $\mathbb{A}$
 true at $T-1$, the program computes $\mathbb{A}$ at $T$.  Thus in the absence
 of EDB facts at $T+1$, it will again compute $\mathbb{A}$ at $T+1$.
+
 %
 \end{proof}
 
@@ -298,9 +312,10 @@ Assume the program is temporally unsafe.  That is, there exists no time $T$
 such that $\forall U >= T$, the set of all atoms with time suffix $U$ is
 equivalent modulo time to the set of all atoms with time suffix $T-1$.
 
-Since the EDB is finite, a rule that satisfies condition 3 above
-may only be triggered finitely often.  Thus, every rule $r$ of this kind has
-\wrm{DANGER: PROOF IN PROGRESS}
+A rule that satisfies condition 2 may not generate a fact in timestamp $T$
+if that fact does not exist at $T-1$.  A rule that satisfies condition 3
+may only be triggered finitely often, is the EDB is finite.  
+
 %
 \end{proof}
 
