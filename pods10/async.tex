@@ -313,24 +313,21 @@ Clearly, to implement a sequence that increases consecutively without gaps would
 \subsubsection{Queues}
 
 %%Consider a trace of events to a 
-Consider a predicate \dedalus{balance\_update} that represents updating the a
-user's account balance.  Its attributes are a string representing a user, a
-floating point number indicating a new account balance and an integer
-indicating the order in which the updates were issued, according to some
-external clock or sequence:
+Consider a predicate \dedalus{priority\_queue} that represents a series of tasks to be performed in some predefined order.  Its attributes are a string representing a user, a job, and an integer
+indicating the position of the job in the queue:
 
 \begin{Dedalus}
-balance\_update("bob", 100.00, 2355)@123;
-balance\_update("bob", 75.00, 2358)@123;
-balance\_update("alice", 0.00, 2377)@123;
-balance\_update("bob", 10.00, 2455)@123;
+priority\_queue(``bob'', ``bash'', 200)@123;
+priority\_queue(``eve'', ``john'', 1)@123;
+priority\_queue(``alice'', ``ssh'', 204)@123;
+priority\_queue(``bob'', ``ssh'', 205)@123;
 \end{Dedalus}
 
 Note that all the time suffixes are the same.  
 %Depending on the program that implements the balance update, several behaviors
 %are possible.
 Given this schema, we note that a program would likely want to process
-\dedalus{balance\_update} events individually in a data-dependent order, in
+\dedalus{priority\_queue} events individually in a data-dependent order, in
 spite of their coincidence in logical time.  It is difficult to express general
 in-order tuple processing in Datalog, in part because the language does not
 admit sequences.
@@ -339,36 +336,36 @@ admit sequences.
 %notion of order of evaluation (except the implicit ordering implied by
 %stratification).
 
-In the program below, we define a table \dedalus{m\_balance\_update} that
-serves as a queue to feed \dedalus{balance\_update}.  The queue must persist
+In the program below, we define a table \dedalus{m\_priority\_queue} that
+serves as a queue to feed \dedalus{priority\_queue}.  The queue must persist
 across timesteps because it may take multiple timesteps to drain it.  At each
 fixpoint, for each value of \textbf{A}, a single tuple is projected into
-\dedalus{balance\_update} and deleted (atomic with the projection) from
-\dedalus{m\_balance\_update}, changing the value of the aggregate calculated
+\dedalus{priority\_queue} and deleted (atomic with the projection) from
+\dedalus{m\_priority\_queue}, changing the value of the aggregate calculated
 at the subsequent step:
 
 \begin{Dedalus}
 
-m\_balance\_update(A, B, C)@next \(\leftarrow\)
-  m\_balance\_update(A, B, C),
-  notin del\_m\_balance\_update(A, B, C);
+m\_priority\_queue(A, B, C)@next \(\leftarrow\)
+  m\_priority\_queue(A, B, C),
+  notin del\_m\_priority\_queue(A, B, C);
 
 omin(A, min<C>) \(\leftarrow\)
-  m\_balance_update(A, _, C);
+  m\_priority\_queue(A, _, C);
 
 p(A, B, C)@next \(\leftarrow\)
-  m\_balance\_update(A, B, C),
+  m\_priority\_queue(A, B, C),
   omin(A, C);
 
-del\_m\_balance\_update(A, B, C) \(\leftarrow\)
-  m\_balance\_update(A, B, C),
+del\_m\_priority\_queue(A, B, C) \(\leftarrow\)
+  m\_priority\_queue(A, B, C),
   omin(A, C);
 \end{Dedalus}
 
 Under such a queueing discipline, deductive rules that depend on
-\emph{balance\_update} are constrained to consider only one tuple per fixpoint
+\emph{priority\_queue} are constrained to consider only one tuple per fixpoint
 per value of the variable \textbf{A}, thus implementing a per-user FIFO
-discipline.  To enforce a global FIFO ordering over \emph{balance\_update}, we
+discipline.  To enforce a global FIFO ordering over \emph{priority\_queue}, we
 may redefine \emph{omin} and any dependent rules to exclude the \textbf{A}
 atttribute.
 
@@ -377,12 +374,47 @@ advantage of the natural ordering enforced by stratification over time, to enfor
 very difficult to express in a logic language.
 
 \subsubsection{Lamport Clocks}
-
+\rcs{cut this para
 Implementing a Lamport Clock~\cite{timeclocks} is a special case of a queueing discipline as defined above.
-Consider a predicate{m\_balance\_update} as defined above, but with an extra integer attribute that contains the logical transmission
+Consider a predicate {m\_priority\_queue} as defined above, but with an extra integer attribute that contains the logical transmission
 time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
-
+}
 \paa{damn it!  we've sugared out N from the syntax!! now what?}
+\rcs{try number 2 at a new example}
+
+Recall that \dedalus{@async} provides weaker semantics than
+\dedalus{@later}, and can even lead to program executions that violate
+causality.  In contrast, \dedalus{@later} builds a number of
+assumptions about time into the language model.  This section explains
+how to implement Lamport clocks~\cite{timeclocks} atop
+\dedalus{@async}, ensuring that the program observes a causal ordering
+of events.  Depending on the runtime environment, making use of
+\dedalus{@async} and explicitly maintaining Lamport clocks may be more
+or less natural than \dedalus{@later}.
+
+Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
+rewriting it to:
+
+\begin{Dedalus}
+p\_wait(A, B, N)@async \(\leftarrow\) q(A, B)@N;
+p\_wait(A, B, N)@next \(\leftarrow\) p\_wait(A, B, N)@M, N \(\ge\) M;
+p(A, B)@\rcs{persistent} \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
+\end{Dedalus}
+
+we place the derived tuple in a new relation \dedalus{p\_wait} that
+stores any tuples that were ``sent into the past'' until the point in
+time at which they were derived.  Conceptually, this causes the system
+to evaluate a potentially large number of fixpoints (if N is
+significantly less than the timestamp of the system when the tuple
+arrives).  However, if the runtime is able to efficiently evaluate
+timesteps when the database is quiescent (by recognizing that the
+timesteps can be skipped), then instead of ``waiting'' by evaluating
+timesteps, it will simply increase its logical clock to match that of
+the sender.  In contrast, if the tuple is ``sent into the future,''
+then it is processed using the timestep that receives it.  This
+manipulation of timesteps and clock values is equivalent to
+conventional descriptions of Lamport clocks. \rcs{END OF SECTION}
+
 \rcs{perhaps this would be better without the balance update example... I think they'll get that lamport clocks are useful}
 
 Consider a rule:
@@ -421,7 +453,7 @@ use of addition may be unsafe.
 
 \begin{Dedalus}
 entangle
-m\_balance\_update(A, B, N)@async \(\leftarrow\)
+m\_priority\_queue(A, B, N)@async \(\leftarrow\)
   send\_p(A, B)@N;
 \end{Dedalus}
 
@@ -432,31 +464,31 @@ Lamport clock is then:
 
 \begin{Dedalus}
 
-m\_balance\_update(A, B, C)@next \(\leftarrow\)
-  m\_balance\_update(A, B, C),
-  \(\lnot\) del\_m\_balance\_update(A, B, C);
+m\_priority\_queue(A, B, C)@next \(\leftarrow\)
+  m\_priority\_queue(A, B, C),
+  \(\lnot\) del\_m\_priority\_queue(A, B, C);
 
 omin(A, min<C>) \(\leftarrow\)
-  m\_balance\_update(A, _, C);
+  m\_priority\_queue(A, _, C);
 
 lmax(max<C>) \(\leftarrow\)
-  m\_balance\_update(_, _, C);
+  m\_priority\_queue(_, _, C);
 
 disentangle
-balance_update(A, B)next \(\leftarrow\)
-  m\_balance\_update(A, B, C)@N,
+priority\_queue(A, B)next \(\leftarrow\)
+  m\_priority\_queue(A, B, C)@N,
   omin(A, C)@N,
   lmax(L)@N,
   N > L;
 
-del\_m\_balance\_update(A, B) :-
-  m\_balance\_update(A, B),
+del\_m\_priority\_queue(A, B) :-
+  m\_priority\_queue(A, B),
   omax(B);
   
 \end{Dedalus}
 
 Note that the rule named \emph{disentangle} references the data elements $C$ and $L$, both of which
-contain timestamps, and induces a \emph{balance\_update} tuple with timestamp $N+1$ only when $N > L$,
+contain timestamps, and induces a \emph{priority\_queue} tuple with timestamp $N+1$ only when $N > L$,
 the highest of the timestamps in its message queue.  Under the distributed systems model of Lamport clocks, 
 we expect the tuples in the message queue to  be from other hosts with independent clocks, sending messages 
 over a medium that can delay or reorder them arbitrarily.  In order to make the necessary comparison between local
