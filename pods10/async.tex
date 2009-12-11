@@ -166,7 +166,12 @@ in the rule's antecedents.  This violates our intuitive interpretation of timest
 tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
 cannot possibly depend negatively on itself.
 
-
+We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
+purely monotonic.  For such a program~\footnote{This holds also for the trivial cases of programs that ignore messages.}, 
+deductions ``into the past" present no difficulties.
+In fact, the ``eventual consistency" property of NDLog~\cite{loo-sigmod06} relies on the assumption that
+programs are negation-free and hence monotonic.  Any programs with non-monotonic rules that transitively depend on
+message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
 
 \paa{rusty's stuff below, not yet glued}
 
