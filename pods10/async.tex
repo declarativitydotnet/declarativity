@@ -12,8 +12,8 @@
 \end{figure}
 
 Until now we have restricted our discussion to \slang.  In this section we
-consider \lang, a superset of \slang that admits aggregate functions, simple
-arithmetic and the \emph{choice} construct.  These constructs will allow us to
+consider \lang, a superset of \slang that admits aggregate functions
+and the \emph{choice} construct.  These constructs will allow us to
 express programs that establish or enforce an ordering over inputs, and to
 reason about the inherent nondeterminism in communication over unreliable
 networks that may delay, lose or reorder the results of logical deductions 
@@ -28,8 +28,9 @@ capture ordering constraints, and the choice construct to capture nondeterminacy
 
 We will consider only the class of \emph{exemplary} aggregate
 functions~\cite{tag} -- an exemplary aggregate function's codomain is a subset
-of its domain -- and the \emph{count} aggregate, which is expressible using
-arithmetic.  We allow exemplary or count aggregate functions $\rho_1 - \rho_n$ to appear
+of its domain. 
+%%-- and the \emph{count} aggregate, which is expressible using arithmetic.  
+We allow exemplary or count aggregate functions $\rho_1 - \rho_n$ to appear
 in the head of a deductive rule of the form:
 
 \dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
@@ -73,7 +74,7 @@ We also admit the \emph{choice} construct as defined by Greco and Zaniolo~\cite{
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
 \emph{$X_1$} and \emph{$X_2$} are vectors of variables occuring also elsewhere in the body.  Such a subgoal
 enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing" a single assignment of values to the variables
-in \emph{$X_2$} for each distinct set of variables in \emph{$X_1$}.\rcs{there are multiple sets of variables in x1, so x1 is a set of sets?}
+in \emph{$X_2$} for each variable in \emph{$X_1$}.
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programs, a nondeterministic program 
 must be one that has a multiplicity of stable models -- that is to say, an unstratifiable program.  Greco and Zaniolo define 
@@ -87,7 +88,7 @@ is stratifiable, locally stratifiable, etc}
 \subsection{Distribution Model}
 
 A principal motivation for the specification of \lang is modeling and implementing distributed systems.
-To represent such a system we must consider a multiplicity of agents evaluating local programs and
+To represent such a system we must consider a multiplicity of asynchronous agents evaluating local programs and
 communicating via messages.  As with previous distributed logic languages, we model messages as
 tuples and their transmission as a special case of rule evaluation in which the body is evaluated at one
 agent and the head atom appears at another.  
@@ -95,7 +96,7 @@ agent and the head atom appears at another.
 An agent clearly cannot evaluate rules whose body
 predicates exist at another agent, and hence these message rules are the only manner in which data
 elements derived from one agent's EDB may be visible in the IDB of another.  This restriction is 
-particularly significant to our interpretation of time stamps.  Although the \emph{successor} relation exists
+particularly significant to our interpretation of timestamps.  Although the \emph{successor} relation exists
 at each agent according to our definition, there is no reason to assume that a subset of that relation 
 relevant to computation at any particular agent will intersect the relevant subset at another.  In other words,
 if we consider the ``current local time" as a pointer to a particular row of successor, we must admit that in a 
@@ -162,10 +163,16 @@ asynchronous
 r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 
-It is easy to see that evaluation of an asynchronous rule may produce a tuple whose timestamp is less than the timestamps
-in the rule's antecedents.  This violates our intuitive interpretation of timestamps capturing causal relations between 
-tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
-cannot possibly depend negatively on itself.
+It is easy to see that evaluation of an asynchronous rule may produce a tuple whose timestamp is less than $\Tau$, the timestamp
+in the rule's antecedents. 
+%%This violates our intuitive interpretation of timestamps capturing causal relations between 
+%%tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
+%%cannot possibly depend negatively on itself.
+This violates the monotonicity assumptions upon which we based our proof of temporal stratification, and muddies our interpretation
+of timestamps as capturing causal relations between tuples.
+
+
+\subsubsection{Later: Causally-Constrained Asynchrony}
 
 Ultimately, whether a particular set of temporal semantics is
 desirable depends on the underlying application; for example, clever
@@ -173,14 +180,14 @@ combinations of crash-prone databases running ``read uncommitted''
 transactions and asynchronous event queues can easily suffer from
 grandfather paradoxes and other temporal impossibilities.  
 
-\rcs{move this, get rid of monotonic discussion?
-We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
-purely monotonic.  For such a program~\footnote{This holds also for the trivial cases of programs that ignore messages.}, 
-deductions ``into the past" present no difficulties.
-In fact, the ``eventual consistency" property of NDLog~\cite{loo-sigmod06} relies on the assumption that
-programs are negation-free and hence monotonic.  Any programs with non-monotonic rules that transitively depend on
-message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
-}
+%%\rcs{move this, get rid of monotonic discussion?
+%%We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
+%%purely monotonic.  For such a program~\footnote{This holds also for the trivial cases of programs that ignore messages.}, 
+%%deductions ``into the past" present no difficulties.
+%%In fact, the ``eventual consistency" property of NDLog~\cite{loo-sigmod06} relies on the assumption that
+%%programs are negation-free and hence monotonic.  Any programs with non-monotonic rules that transitively depend on
+%%message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
+%%}
 
 The distributed systems literature typically assumes a causal ordering
 of events across systems; Lamport clocks are a simple mechanism that
@@ -198,7 +205,7 @@ after(S, \(\perp\)) \(\leftarrow\) successor(S, _);
 Intuitively, \dedalus{after(S, T)} is true if T happens after S in the
 global ordering of events.  Each \dedalus{@later} rule has the
 following additional variables in its body:
-\dedalus{successors($\Tau$, S), choose(($\Tau$), (S))}, where, as
+\dedalus{after($\Tau$, S), choose(($\Tau$), (S))}, where, as
 above, $\Tau$ is the timestamp associated with the rule body, and
 \dedalus{S} is the timestamp of the rule head.
 
@@ -218,38 +225,40 @@ p(X) \(\leftarrow\) q(X), r(X);
 q(X)@later \(\leftarrow\) s(X);
 \end{Dedalus}
 are non-deterministic if \dedalus{@later} is replaced with
-\dedalus{@async}.  The non-determinism comes from \dedalus{@sync}'s
+\dedalus{@async}.  
+\paa{the rest may stay but may also go}
+The non-determinism comes from \dedalus{@sync}'s
 \dedalus{choose} invocation.  However, the non-determinism also relies
 on the fact that the program is, in some sense, non-monotonic; it
 relies on the fact that \dedalus{r(1)} stops being true before
 \dedalus{q(1)} is derived.
 
-\rcs{Can we prove anything now?  It seems as though async rules are equivalent to \slang rules, as long as there is no aggregation or arithmetic.  The problem is that if choice derives a fact N steps in the future, we need to push the fact through N @next rules, and the number of such rules is variable.  If we admit arithmetic in the rewrite, we can model async as a synchronous queue, but \slang doesn't have arithmetic...}
-\rcs{Here to end of section is dead text}
+%%\rcs{Can we prove anything now?  It seems as though async rules are equivalent to \slang rules, as long as there is no aggregation or arithmetic.  The problem is that if %%choice derives a fact N steps in the future, we need to push the fact through N @next rules, and the number of such rules is variable.  If we admit arithmetic in the rewrite, %%%we can model async as a synchronous queue, but \slang doesn't have arithmetic...}
+%%\rcs{Here to end of section is dead text}
 
 
 
 
 
 %\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \perp$. 
-\rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
-An asynchronous rule has the following
-subgoals in its body: \dedalus{time(S), successors($\Theta$, S), choose(($\Theta$), (S))}, where
-$\Theta$ is a vector containing all variables appearing in the rule body,
-including $\Tau$.  The choice subgoal expresses that the rule head may be
-derived at any value of \dedalus{time}.
+%%\rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
+%%An asynchronous rule has the following
+%%subgoals in its body: \dedalus{time(S), successors($\Theta$, S), choose(($\Theta$), (S))}, where
+%%$\Theta$ is a vector containing all variables appearing in the rule body,
+%%including $\Tau$.  The choice subgoal expresses that the rule head may be
+%%derived at any value of \dedalus{time}.
 %time value that appears in the \dedalus{successor} relation.
 
-\rcs{old example:}
+%%\rcs{old example:}
 
-\begin{Dedalus}
-asynchronous
-r(A, B, S) \(\leftarrow\)
-   e(A, B, \(\Tau\)), successor(_, S), choose((A, B), (S));
-\end{Dedalus}
+%%\begin{Dedalus}
+%%asynchronous
+%%r(A, B, S) \(\leftarrow\)
+%%   e(A, B, \(\Tau\)), successor(_, S), choose((A, B), (S));
+%%\end{Dedalus}
 
 
-\subsection{Entanglement}
+\subsubsection{Entanglement}
 
 Consider the asynchronous rule below:
 
@@ -261,8 +270,22 @@ p(A, B, N)@async \(\leftarrow\)
 Due to the async keywork in the rule head, the \emph{p} tuple will take some unspecified time suffix value.
 Note however that the time suffix $N$ of the rule body appears also in the \emph{p} tuple, capturing a 
 binding between the time value of the deduction and the time value of its consequence.  We call such a binding
-an \emph{entanglement}.   
+an \emph{entanglement}.   Entanglement is a surprisingly powerful construct that allows a rule to 
+reference the logical clock time of the deduction that produced one (or more) of its subgoals.  Note that in order
+to write the rule it was necessary to not sugar away the time suffix in the rule body.  Entanglements are only 
+permitted in asynchronous rules.
 
+\subsection{Distributed Programs}
+
+A distributed \lang program consists of a set of predicates \emph{P} partitioned across a set of hosts \emph{H}.
+%%Consider two hosts $a$ and $b$ in \emph{H}, and two predicates $p$ and $q$ in \emph{P}.  Without loss of generality, 
+%%we call an async rule $r$ a \emph{communication rule} if $p$ is defined at $a$ and $q$ is defined at $b$, $p$ occurs in the  
+A \emph{communication rule} is an asynchronous rule whose head predicate is defined at a different host than its body predicates,
+all of which are defined at a single host.  
+
+It is easy to see that the only mechanism for sharing data between agents in a distributed system is through such communication 
+rules.  Because communication rules (being asynchronous) cannot themselves capture causality relationships between tuples
+via timestamps, any necessary relationship must be encoded into the tuples themselves via an entanglement.
 
 
 \subsection{Ordering and distribution in Logic}
