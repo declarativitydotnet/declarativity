@@ -32,22 +32,20 @@ $\forall \alpha_{i}, \alpha_{j} \in \Gamma : (i < j) \to (\alpha_{i} \subseteq \
 %rather than an inductive proof that every model in the series is minimal.  there is probably a very similar proof of the latter
 %that we could include in the next section after introducing minimal models, stratification etc}
 
-\wrm{todo: disuss replacing FP with some derivation tree thing}
-\begin{definition}
+%\begin{definition}
 %
-Let $F$ be the set of all finite subsets of possible atoms.  Let $P$ be the set
-of all finite subsets of possible rules.  Let $FP : P \times F \mapsto F$ be
-the function representing the \emph{fixpoint} computation carried out by a
-datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
+%Let $F$ be the set of all finite subsets of possible atoms.  Let $P$ be the set
+%of all finite subsets of possible rules.  Let $FP : P \times F \mapsto F$ be
+%the function representing the \emph{fixpoint} computation carried out by a
+%datalog interpreter.  That is, $FP_p$ takes an EDB to its corresponding IDB.
 %
-\end{definition}
+%\end{definition}
 
-
-\begin{lemma}
-\label{lem:costmodel}
+\begin{lemma} \label{lem:costmodel}
 %
-Let $i \in \mathbb{Z}$.  Then, $FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) =
-FP_p(\alpha_{i+1})$.
+Let $MM_p(E)$ represent the {\em minimal model} of a Dedalus EDB $E$ with
+respect to a Dedalus program $p$. \wrm{cite?} Let $i \in \mathbb{Z}$.  Then,
+$MM_p(\alpha_{i+1} \cup MM_p(\alpha_i)) = MM_p(\alpha_{i+1})$.
 %
 \end{lemma}
 
@@ -64,26 +62,26 @@ FP_p(\alpha_{i+1})$.
 %%then it follows that a preamble $\alpha_{n+1}$ and the IDB produced by the previous model produce a minimal model.
 
 by contradiction. Assume $\exists i \in \mathbb{Z}$ such that:
-$FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) \neq FP_p(\alpha_{i+1})$
+$MM_p(\alpha_{i+1} \cup MM_p(\alpha_i)) \neq MM_p(\alpha_{i+1})$
 
-{\bf Case 1:} $\exists A \in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)) : A \not\in FP_p(\alpha_{i+1}).$
+{\bf Case 1:} $\exists A \in MM_p(\alpha_{i+1} \cup MM_p(\alpha_i)) : A \not\in MM_p(\alpha_{i+1}).$
 
 This implies that $A$ is transitively dependent on atoms in $\alpha_{i+1} \cup
-FP_p(\alpha_i)$.  However, if $A$ is transitively dependent only on atoms in
-$\alpha_{i+1}$, then $A$ would be in $FP_p(\alpha_{i+1})$.  Thus, $A$ must be
-transitively dependent on some atoms in $FP_p(\alpha_{i})$.  But $\alpha_{i}
+MM_p(\alpha_i)$.  However, if $A$ is transitively dependent only on atoms in
+$\alpha_{i+1}$, then $A$ would be in $MM_p(\alpha_{i+1})$.  Thus, $A$ must be
+transitively dependent on some atoms in $MM_p(\alpha_{i})$.  But $\alpha_{i}
 \subset \alpha_{i+1}$, so this implies that $A$ is transitively dependent on
-some atom in $\alpha_{i+1}$, which means $A \in FP_p(\alpha_{i+1})$.  This
+some atom in $\alpha_{i+1}$, which means $A \in MM_p(\alpha_{i+1})$.  This
 contradicts our assumption, thus no such $A$ may exist.
 
-{\bf Case 2:} $\exists A \in FP_p(\alpha_{i+1}) : A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i)).$
+{\bf Case 2:} $\exists A \in MM_p(\alpha_{i+1}) : A \not\in MM_p(\alpha_{i+1} \cup MM_p(\alpha_i)).$
 
 This implies that $A$ is transitively dependent on $\alpha_{i+1}$.  In order
-for $A \not\in FP_p(\alpha_{i+1} \cup FP_p(\alpha_i))$, we need $A$ to depend
-negatively on an atom $B \in FP_p(\alpha_i)$.  But $B$ transitively depends on
+for $A \not\in MM_p(\alpha_{i+1} \cup MM_p(\alpha_i))$, we need $A$ to depend
+negatively on an atom $B \in MM_p(\alpha_i)$.  But $B$ transitively depends on
 an atom $C \in \alpha_i$.  $C \in \alpha_{i+1}$ by definition (if $B$ is
-extensional, then $C=B$), so $B \in FP_p(\alpha_{i+1})$, so $a \not\in
-FP_p(\alpha_{i+1})$.  This contradicts our assumption, thus no such $A$ may
+extensional, then $C=B$), so $B \in MM_p(\alpha_{i+1})$, so $a \not\in
+MM_p(\alpha_{i+1})$.  This contradicts our assumption, thus no such $A$ may
 exist.
 %If $I_2 \neq I_3$, it must be the case that either there exists a ground atom in $I_2$ that is not in $I_3$, or that is in
 %$I_3$ and not in $I_2$.  
@@ -97,8 +95,36 @@ exist.
 %As for the second case...
 \end{proof}
 
-\subsection{Cost Model}
+\subsection{Evaluation of Persistent Predicates}
 %%\newdef{definition}{Definition}
+
+\floatname{algorithm}{Algorithm}
+\renewcommand{\algorithmicforall}{\textbf{foreach}}
+\algsetup{indent=2em}
+\newcommand{\exec}{\ensuremath{\mbox{\sf execProgram}}}
+\newcommand{\add}{\ensuremath{\mbox{\sf addRule}}}
+%\newcommand{\ids}{\ensuremath{\mbox{\sf ids}}}
+\begin{algorithm}
+   \caption{Temporal Semi-\Naive Evaluation}\label{alg:tsn}
+   \begin{algorithmic}
+   \STATE{//rewrite program}
+   \FORALL{$P(A_1, \ldots, A_n)$ persistent}
+      \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & $P(A_1, \ldots, A_n)@T, \lnot P(A_1, \ldots, A_n)@T-1.$ \end{tabular}}
+      \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $P(A_1, \ldots, A_n)@T \leftarrow P\_store(A_1, \ldots, A_n).$ \end{tabular}}
+      \STATE{\vspace{-1em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n)@T.$ \end{tabular}}
+   \ENDFOR
+   \STATE{//evaluate program}
+   \FORALL{$t \in \mathbb{Z}$}
+      \STATE{\exec}
+      \FORALL{$P(A_1, \ldots, A_n)$ persistent}
+         \STATE{$P\_store(A_1, \ldots, A_n) =$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \cup \Delta_P^{+}(A_1, \ldots, A_n)$}
+         \STATE{$P\_store(A_1, \ldots, A_n) =$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \setminus \Delta_P^{-}(A_1, \ldots, A_n)$}
+      \ENDFOR
+   \ENDFOR
+  \end{algorithmic}
+\end{algorithm}
+
+
 Lemma~\ref{lem:costmodel} implies that we can trade computation cost for
 storage cost in evaluation of a \slang program. 
 
