@@ -1,10 +1,10 @@
 \section{Evaluation}
-We have been careful to ensure that \slang manages to capture issues of persistence and updatable state without deviating from traditional Datalog semantics.  This means not only that our programs have a unique interpretation, but that they can be computed bottom-up via traditional methods like semi-naive evaluation.  
+In previous sections, we exploited the fact that \slang is a dialect of Datalog to prove semantic properties of \slang programs.  In this section, we turn our attention to execution, adapting the literature on bottom-up evaluation of Datalog to our context.
 
-Unfortunately, the direct application of semi-naive evaluation results in a rather literal and inefficient notion of the idea of ``persistence''.  If a fact is true across a long sequence of timesteps, semi-naive evaluation will persistently ``re-derive'' that fact inductively for each timestep, and the number of derivations in a program will be infinite simply to maintain persistence in time.  Instead, we would like an incremental evaluation strategy that allows an external agent to examine the state of the database at any timestep $t$ without requiring $O(t)$ inductive derivations for persistence.  The intuitive strategy would be to use a memory device, ``storing'' a fact on first derivation and ``deleting'' it at the timestep that the induction is broken.  In this section we derive such an evaluation strategy, in the style of semi-naive evaluation.
+Unfortunately, the direct application of traditional bottom-up Datalog execution strategies like semi-naive evaluation results in a rather literal and inefficient notion of the idea of ``persistence''.  If a fact is true across a long sequence of timesteps, semi-naive evaluation will persistently ``re-derive'' that fact inductively for each timestep, and the number of derivations in a program will be infinite simply to maintain persistence in time.  Instead, we would like an incremental evaluation strategy that allows an external agent to examine the state of the database at any timestep $t$ without requiring $O(t)$ inductive derivations for persistence.  The intuitive strategy would be to use a memory device, ``storing'' a fact on first derivation and ``deleting'' it at the timestep that the induction is broken.  In this section we derive such a strategy via a combination of program rewriting and an operational evaluation loop, in the style of semi-naive evaluation.
 
 \subsection{Temporal Evaluation Over Storage}
-The traditional description of semi-naive evaluation takes a recursive Datalog program, rewrites it to a non-recursive ``delta'' program, and executes that program in a loop bracketed by state modifications.  In that spirit, we present a strategy we call ``temporal evaluation'', which takes a \slang program, rewrites it to a purely deductive Datalog program, and executes that program in a loop---once per timestep---bracketed by state modifications.  
+The traditional description of semi-naive evaluation takes a recursive Datalog program, rewrites it to a non-recursive ``delta'' program, and executes that program in a loop bracketed by state modifications.  In that spirit, we present a strategy we call ``temporal evaluation'', which takes a \slang program, rewrites it to a Datalog program that refers to a single timestep, and executes that program in a loop---once per timestep---bracketed by state modifications.  
 
 
 %\subsection{Evaluation of Persistent Predicates}
@@ -22,11 +22,11 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
    \STATE{\em // rewrite program}
    \FORALL{persistent predicate $P(A_1, \ldots, A_n)$}
 	    \STATE{\em // include ``old facts'' in the current timestep}
-      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $P(A_1, \ldots, A_n)@T \leftarrow P\_store(A_1, \ldots, A_n).$ \end{tabular}}
+      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $P(A_1, \ldots, A_n)@\Tau \leftarrow P\_store(A_1, \ldots, A_n).$ \end{tabular}}
 			\STATE{\em // identify ``new'' derived facts}
-      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & \hspace{1.5em} $P(A_1, \ldots, A_n)@T, \lnot P(A_1, \ldots, A_n)@T-1.$ \end{tabular}}
+      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & \hspace{1.5em} $P(A_1, \ldots, A_n)@\Tau, \lnot P(A_1, \ldots, A_n)@\Tau-1.$ \end{tabular}}
 			\STATE{\em // identify ``new'' facts that are ``to-be-deleted''}
-      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n)@T.$ \end{tabular}}
+      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n)@\Tau.$ \end{tabular}}
    \ENDFOR
    \FORALL{rule $R$}
       \FORALL{persistent predicate $P(A_1, \ldots, A_n)$ in $R$'s body}
@@ -36,7 +36,8 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
    
    \STATE{\em // evaluate program}
    \FORALL{$t \in \mathbb{Z}$}
-      \STATE{compute the fixpoint of the rewritten program}
+      \STATE{replace $\Tau$ with $t$ in the rewritten program, and compute}
+			\STATE{\hspace{1em} a fixpoint of the result via semi-naive evaluation}
       \FORALL{persistent predicate $P(A_1, \ldots, A_n)$}
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \cup \Delta_P^{+}(A_1, \ldots, A_n)$}
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \setminus \Delta_P^{-}(A_1, \ldots, A_n)$}
@@ -44,3 +45,5 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
    \ENDFOR
   \end{algorithmic}
 \end{algorithm}
+
+Observe that Algorithm~\ref{alg:tsn} binds the time suffix of each rule by replacing it with a cont
