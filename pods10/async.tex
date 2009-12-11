@@ -131,7 +131,7 @@ predicate, which is defined using the following datalog rules:
 
 \begin{Dedalus}
 time(\(\perp\));
-time($\SDedalus$) \(\leftarrow\) successor($\SDedalus$, _);
+time(\(\SDedalus\)) \(\leftarrow\) successor(\(\SDedalus\), _);
 \end{Dedalus}
 
 
@@ -143,9 +143,9 @@ $\SDedalus$ is the timestamp of the rule head.
 A well-formed asynchronous \lang rule:
 
 \begin{Dedalus}
-r(A, B, $\SDedalus$) \(\leftarrow\) 
+r(A, B, \(\SDedalus\)) \(\leftarrow\) 
   e(A, B, \(\Tau\)),
-  time($\SDedalus$), choose((_)), ($\SDedalus$));
+  time(\(\SDedalus\)), choose((_)), (\(\SDedalus\)));
 \end{Dedalus}
 \end{example}
 
