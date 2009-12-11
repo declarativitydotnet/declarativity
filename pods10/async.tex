@@ -70,7 +70,7 @@ We also admit the \emph{choice} construct as defined by Greco and Zaniolo~\cite{
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
 \emph{$X_1$} and \emph{$X_2$} are vectors of variables occuring also elsewhere in the body.  Such a subgoal
 enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing" a single assignment of values to the variables
-in \emph{$X_2$} for each distinct set of variables in \emph{$X_1$}.
+in \emph{$X_2$} for each distinct set of variables in \emph{$X_1$}.\rcs{there are multiple sets of variables in x1, so x1 is a set of sets?}
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programs, a nondeterministic program 
 must be one that has a multiplicity of stable models -- that is to say, an unstratifiable program.  Greco and Zaniolo define 
@@ -81,6 +81,8 @@ and each possible choice is associated with a different model.
 is stratifiable, locally stratifiable, etc}
 
 \subsection{Asynchronous Rules}
+
+\rcs{ I touched this.  There is no longer a time predicate, we no longer admit causality violations}
 
 In order to represent the nondeterminism introduced by distribution, we admit a
 third type of rule, called an {\em asynchronous} rule.  A rule is asynchronous
@@ -97,37 +99,67 @@ deduction is ``lost,'' as time suffixes in rule bodies do not range over
 $\perp$.
 
 We model network nondeterminism using the \dedalus{choice} construct to choose
-from a value in the special \dedalus{time} predicate.  \dedalus{time(t)} is
-true if $t \in \mathbb{Z} \cup \perp$. An asynchronous rule has the following
-subgoals in its body: \dedalus{time(S), choose(($\Theta$), (S))}, where
+from a value in the special \dedalus{successors} predicate, which is defined using the following datalog rules:
+
+\begin{Dedalus}
+successors(S, T) \(\leftarrow\) successor(S, T);
+successors(S, U) \(\leftarrow\) successors(S, T), successor(T, U);
+successors(S, \(\perp\)) \(\leftarrow\) successor(S, _);
+\end{Dedalus}
+
+Intuitively, \dedalus{successors(S, T)} is true if T happens after S
+in some global ordering of events.  Although such concepts are outside
+of our language model, we note that events in asynchronous networks
+form partial orders; the intention is that \lang's global clock will
+reflect some global ordering compatible with the partial ordering
+observed at runtime.  Implementations of such primitives are well
+understood.
+
+Each asynchronous rule has the following additional varibales in its
+body: \dedalus{successors($\Tau$, S), choose(($\Tau$), (S))}, where, as above,
+$\Tau$ is the timestamp associated with the rule body, and
+\dedalus{S} is the timestamp of the rule head.
+
+\begin{example}
+A well-formed asynchronous \lang rule:
+
+\begin{Dedalus}
+r(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)),
+  successors(\(\Tau\), S), choose((\(\Tau\)), (S));
+\end{Dedalus}
+\end{example}
+
+We admit a new temporal head annotation to sugar the rule above.  The
+identifier \dedalus{async} implies the rule is asynchronous, and stands in for the additional body predicates.
+%%$N$ is a variable,
+%%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+%%optionally referenced in the head.  
+The above example expressed using \dedalus{async} is:
+\rcs{do we need to prefix it with ``asynchronous''?}
+
+\begin{Dedalus}
+asynchronous
+r(A, B)@async \(\leftarrow\) e(A, B);
+\end{Dedalus}
+
+\rcs{Can we prove anything now?  It seems as though async rules are equivalent to \slang rules, as long as there is no aggregation or arithmetic.  The problem is that if choice derives a fact N steps in the future, we need to push the fact through N @next rules, and the number of such rules is variable.  If we admit arithmetic in the rewrite, we can model async as a synchronous queue, but \slang doesn't have arithmetic...}
+\rcs{Here to end of section is dead text}
+
+%\dedalus{time(t)} is true if $t \in \mathbb{Z} \cup \perp$. 
+\rcs{didn't understand the $\Theta$ thing; kill this paragraph?}
+An asynchronous rule has the following
+subgoals in its body: \dedalus{time(S), successors($\Theta$, S), choose(($\Theta$), (S))}, where
 $\Theta$ is a vector containing all variables appearing in the rule body,
 including $\Tau$.  The choice subgoal expresses that the rule head may be
 derived at any value of \dedalus{time}.
 %time value that appears in the \dedalus{successor} relation.
 
-\begin{example}
-A well-formed asynchronous \lang rule.
+\rcs{old example:}
 
 \begin{Dedalus}
 asynchronous
 r(A, B, S) \(\leftarrow\)
    e(A, B, \(\Tau\)), successor(_, S), choose((A, B), (S));
-\end{Dedalus}
-\end{example}
-
-We admit a new temporal head annotation to sugar the rule above.  The
-identifier \dedalus{async} implies the rule is asynchronous, and stands in for
-\dedalus{successor(\_, S), choose(($\Theta$), (S))} in the body.  
-%%$N$ is a variable,
-%%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
-%%optionally referenced in the head.  
-
-The above example expressed using \dedalus{async} is:
-
-\begin{Dedalus}
-asynchronous
-r(A, B)@async \(\leftarrow\) 
-  e(A, B);
 \end{Dedalus}
 
 
@@ -237,6 +269,41 @@ Consider a predicate{m\_balance\_update} as defined above, but with an extra int
 time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
 
 \paa{damn it!  we've sugared out N from the syntax!! now what?}
+\rcs{perhaps this would be better without the balance update example... I think they'll get that lamport clocks are useful}
+
+Consider a rule:
+\begin{Dedalus}
+x(A, B) :- y(A, B);
+\end{Dedalus}
+whose productions should be annotated using a Lamport clock.  We add a
+third column to x and y that will track the logical timestamps of the
+productions.  With entanglement, we would simply write:
+
+\begin{Dedalus}
+entangle
+x(A, B, N) :- y(A, B, M)@N;
+\end{Dedalus}
+
+which would store the derivation time of \dedalus{x}.  Note that no explicit
+increment of \dedalus{N} is required.  If \dedalus{M} is set according to a similar
+rule, then we know that \dedalus{N} $\ge$ \dedalus{M}, due to the semantics of
+\dedalus{@next} and \dedalus{@async}.
+
+Alternatively, the program could maintain the clock values manually,
+with rules such as:
+
+\begin{Dedalus}
+x(A, B, M+1) :- y(A, B, M), \(\neg\)x(_, _, _);
+x(A, B, max<M,N>+1) :- y(A, B, M), x(_,_,N); 
+\end{Dedalus}
+\rcs{max syntax is cheating, and the rewrite is horribly broken.  However, I'd like to introduce a non-entangled lamport clock in order to motivate entanglement.  FIXME or get rid of everything after ``entanglement''}
+
+This avoids the use of entanglement, but requries aggregation and
+arithmetic.  Also, if a cycle exists between x and y; the rewrite's
+use of addition may be unsafe.
+
+  \rcs{end potential
+  rewrite}
 
 \begin{Dedalus}
 entangle
