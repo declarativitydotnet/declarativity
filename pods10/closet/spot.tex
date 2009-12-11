@@ -208,9 +208,9 @@ del_p(A, C)@N \(\leftarrow\)
 
 \section{Translation to Datalog}
 
-It would appear from the time suffix syntax above that we will require $\lnot$Datalog with arithmetic functions, but this is not the case if we assume
+It would appear from the time suffix syntax above that we will require Datalog$\lnot$ with arithmetic functions, but this is not the case if we assume
 (equivalently) the existence of a binary relation \emph{successor} that is infinite in size (but perhaps constructively defined) and expresses the 
-successor function of Peano Arithmetic.  The rewrite of a Datalog \jmh{Dedalus?} program P to a $\lnot$Datalog program P' proceeds as follows.
+successor function of Peano Arithmetic.  The rewrite of a Datalog \jmh{Dedalus?} program P to a Datalog$\lnot$ program P' proceeds as follows.
 
 \begin{enumerate}
 \item For every predicate p of arity n in P, create a predicate p' of arity n+1 in P', such that the last column of p' is an integer type.
@@ -228,12 +228,12 @@ successor function of Peano Arithmetic.  The rewrite of a Datalog \jmh{Dedalus?}
 
 \newtheorem{lemma}{Lemma}
 \begin{lemma}
-If a Dedalus program with negation is stratified, so is the equivalent $\lnot$Datalog program.
+If a Dedalus program with negation is stratified, so is the equivalent Datalog$\lnot$ program.
 \end{lemma}
 \jmh{You would need a definition of stratification for Dedalus before stating this lemma.}
 
 \begin{lemma}
-If, after removing all temporal rules, a Dedalus program is stratified, the equivalent $\lnot$Datalog program to the original
+If, after removing all temporal rules, a Dedalus program is stratified, the equivalent Datalog$\lnot$ program to the original
 is stratified or modularly stratified.
 \end{lemma}
 

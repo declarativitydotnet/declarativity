@@ -54,7 +54,7 @@ show that some unsafe programs have safe equivalents.}
 
 A \slang program containing only deductive rules is informally equivalent to a
 Datalog program in which all predicates have no time suffix.  If all the rules
-in such a program meet the conditions above, then clearly we would like them to meet \slang's defintion of safety. \rcs{this used to say conditions 1 and 2, but it is possible that our program is infinitely long...  Also, ``clearly they are safe is strange, given that we haven't defined safety yet, so I reworded.}
+in such a program meet the conditions above, then clearly we would like them to meet \slang's defintion of safety. \rcs{this used to say conditions 1 and 2, but it is possible that our program is infinitely long...  Also, ``clearly they are safe'' is strange, given that we haven't defined safety yet, so I reworded.}
 
 \begin{definition}
 The \emph{deductive reduction} of a \slang program $P$ is the subset of $P$
@@ -62,8 +62,8 @@ consisting of exactly those deductive rules in $P$.
 \end{definition}
 
 \begin{definition}
-A rule is \emph{pointwise safe} if it is deductive,  function-free and range-restricted.
-A \slang program is pointwise safe if its deductive reduction is pointwise safe.
+A rule is \emph{instantaneously safe} if it is deductive,  function-free and range-restricted.
+A \slang program is instantaneously safe if its deductive reduction is instantaneously safe.
 \end{definition}
 
 Inductive rules may be unsafe.  Consider the \dedalus{successor} relation described above.  According to our
@@ -110,11 +110,11 @@ An unsafe \slang instance?
 
 r1:\\
 \begin{Dedalus}
-p_pos(A, B)@next \(\leftarrow\) p_pos(A, B), \(\lnot\)p_neg(A, B);
+p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
 \end{Dedalus}
 r2:\\
 \begin{Dedalus}
-p_pos(A, B)  \(\leftarrow\) p(A, B);
+p\pos(A, B)  \(\leftarrow\) p(A, B);
 
 p(1, 2)@123;
 \end{Dedalus}
@@ -208,7 +208,7 @@ EDB facts are true after $T$, then the instance will be henceforth quiescent.\rc
 %
 \begin{proof}
 %
-A \slang program admits only pointwise and inductive rules, which derive new
+A \slang program admits only instantaneous and inductive rules, which derive new
 tuples at the same time as their ground tuples, or in the immediate next
 timestep.  Thus, the set of tuples true at time $T$ is completely determined by
 any tuples true at time $T-1$, and any EDB facts true at time $T$.  Observe
@@ -232,7 +232,7 @@ some time $T$ after which no EDB facts are true.
 \begin{definition}
 %
 Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
-an intensional predicate $e$ in a program $P$ is called a \emph{pointwise
+an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
 predicate} if for every predicate $p$ for which $e \succ^{*} p$, $p$ appears in
 no inductive rules.\rcs{does e depend on p, or is it the other way?  Does no inductive rules mean that $p$ is not persistent?}
 %
@@ -244,23 +244,23 @@ guaranteed to be temporally safe if:
 
 \begin{enumerate}
 %
-\item It is pointwise safe, or
+\item It is instantaneously safe, or
 %
 \item It is an inductive rule in which the head predicate occurs also in the
 body with the same variable bindings for all attributes save the time suffix,
 or
 %%occurs also in the body with the same assignment of variables and constants to attributes.
 %
-\item It is an inductive rule that has at least one pointwise predicate as a
+\item It is an inductive rule that has at least one instantaneous predicate as a
 positive subgoal in the body.  Since the EDB is finite, this inductive rule
 may only be triggered finitely often. \rcs{Ok, so $e \succ p$ must mean that the depends-on is opposite the direction of the arrow, since $e$ is in a deductive rule.}
 %
 \end{enumerate}
 
-%%\paa{maybe this is too greedy.  rule 1 above defines "pointwise safety" or classical datalog-type safety.  
-%%if all deductive rules respect rule 1, we are pointwise finite.  the other two rules describe temporal safety
-%%as such.  that is to say: any deductive rule that is range-restricted and function-free is pointwise safe (deductive rules do
-%%not reference the infinite relation \emph{successor}.  pointwise safe <=> safe in datalog) further, any pointwise safe rule is temporally safe.  
+%%\paa{maybe this is too greedy.  rule 1 above defines "instantaneous safety" or classical datalog-type safety.  
+%%if all deductive rules respect rule 1, we are instantaneously finite.  the other two rules describe temporal safety
+%%as such.  that is to say: any deductive rule that is range-restricted and function-free is instantaneously safe (deductive rules do
+%%not reference the infinite relation \emph{successor}.  instantaneously safe <=> safe in datalog) further, any instantaneously safe rule is temporally safe.  
 %%also, rules that are (2,3) are temporally safe.}
 
 A \slang program is temporally safe if all its rules are temporally safe.

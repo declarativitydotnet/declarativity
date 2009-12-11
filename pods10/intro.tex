@@ -1,7 +1,7 @@
 \section{Introduction}
 %Our research is motivated by two hard problems in distributed systems.  First,
-\wrm{show examples of the problems (not necessarily code) -- evolving state and unreliable communication}
-\wrm{bill to rewrite introduction...}
+%\wrm{show examples of the problems (not necessarily code) -- evolving state and unreliable communication}
+%\wrm{bill to rewrite introduction...}
 
 %Distributing any system introduces nondeterminism.  For example, one may
 %distribute a computation over many inexpensive, but unreliable, commodity
@@ -19,39 +19,46 @@
 %non-determinism by using well-studied techniques in distributed systems, such as
 %Lamport Clocks 
 
-\jmh{Here's my take on an intro outline.}
-\begin{itemize}
-	\item Datalog has seen a recent resurgence as the foundation for a number of applied, domain-specific languages in areas including...  These languages have been promoted for their compact and natural representations of tasks, and for their ability to fairly directly capture formal specifications (of protocols and programs) as executable code.
-	\item While a number of these efforts began as ``declarative'' languages, many chose to extend Datalog with operational features natural to their application domains.  These operational aspects, while familiar, make it difficult to take advantage of the rich literature on Datalog program checks (cite safety, stratifiability, etc.) and optimizations (cite magic sets and the like).  In earlier work on declarative specifications of networking protocols and other distributed systems (cite P2, BOOM), the blend of operational and declarative constructs also led to complications in language semantics (cite MPII Overlog work).
-	\item In this paper we reconsider declarative programming for distributed systems from a model-theoretic perspective, via the introduction of a fully declarative language called \lang.   \lang is a subset of Datalog enhanced with negation, aggregate functions, choice, and a successor function.  \lang provides a logical foundation for the key ``operational'' features of distributed programming, including persistence, state manipulation, asynchrony and component failure.  We show how all of these features are captured in \lang via a natural incorporation of {\em time} as an attribute of Datalog predicates.
-	\item Given this foundation, we extend familiar Datalog notions such as safety and stratified negation to their temporal equivalents in \lang, and show how \lang programs can be syntactically checked to establish these properties.
-	\item From an expressivity perspective, we show that \lang is Turing-complete \jmh{right?}, and demonstrate its practical utility with a number of building-block routines from classical distributed computing, including queues, Lamport clocks, and reliable broadcast.
-\end{itemize}
+%\jmh{Here's my take on an intro outline.}
+In recent years, there has been a resurgence of interest in Datalog as the foundation for applied, domain-specific languages in a wide variety of areas, including networking~\cite{Loo2009-CACM}, distributed systems~\cite{Belaramani:2009,Chu:2007}, natural language processing~\cite{Eisner:2004}, robotics~\cite{Ashley-Rollman:2007}, compiler analysis~\cite{Lam:2005}, security~\cite{Li:2003,Zhou:2009} and computer games~\cite{White:2007}.  The resulting languages have been promoted for their compact and natural representations of tasks in their respective domains, in many cases leading to code that is orders of magnitude shorter than competing imperative implementations.  Another stated advantage of these languages has been the ability to fairly directly capture intuitive specifications of protocols and programs as executable code.
 
-Traditional database systems are based on declarative query languages that
-specify transformations as dataflows over an updatable store.
-\jmh{Not usually thought of as dataflows.  Rel Alg is kinda like dataflow but declarative Rel Calc isn't. Stick with Calc/Declarative as your reference.}
-  Such query
-languages are either not expressive enough to capture common programming
-constructs \wrm{like what?}, or are at best awkward to use in this fashion.
-\wrm{todo: transition that explains Datalog's birth from these languages... I
-don't know enough to write it} The family of logic-based database languages, of
-which Datalog is the progenitor, represent expressive programming languages
-that produce similar dataflow representations.  Datalog is purely deductive: a
-program specifies the rules by which the derived relations are populated based
-on a static database, which is never updated.  Recent programming language
-research has explored the use of Datalog-based languages for expressing
-distributed systems.  Because the state of any complex system evolves with its
-execution, these efforts were forced to extend the Datalog model by admitting
-updates, additions and deletions of the EDB.  Unfortunately, these previous
-attempts were plagued with ambiguities about how and when state changes occur
-and become visible, putting a heavy burden on the programmer to ensure even
-simple properties, such as atomicity of updates over time.
+While most of these efforts were intended to be ``declarative'' languages, many chose to extend Datalog with operational features natural to their application domain.  These operational aspects, though familiar, complicate or limit the ability of the language designers to leverage the rich literature on Datalog: program checks like safety and stratifiability, and optimizations like magic sets and materialized recursive view maintenance~\cite{deductivesurvey}.  In addition, in many of these languages the blend of operational and declarative constructs has led to semantic ambiguities.  This was of particular interest to us in the context of networking and other distributed systems, where these ambiguities have been studied in some depth~\cite{navarro,Mao2009}.
 
-In contrast to reasoning about state change procdurally, \lang observes
-that this concept is intuitively expressed as invariants over {\em time}.  In
-this work, we present a formal model of Datalog augmented with time extensions.
-By reifying time as data an introducing it into the logic, \lang eliminates
-previous ambiguities, ensures atomicity of updates and makes it possible to
-express system invariants that can guarantee liveness properties, a key
-challenge in building distributed systems.
+In this paper we reconsider declarative programming for distributed systems from a model-theoretic perspective, via the introduction of a declarative language called \lang\footnote{\small
+\lang is intended as a precursor language for \textbf{Bloom}, a high-level language for programming distributed systems that
+will replace Overlog in the \textbf{BOOM} project~\cite{boom-techr}.  
+As such, it is derived from the character Stephen Dedalus in James Joyce's \emph{Ulysses}, whose dense and precise chapters 
+precede those of the novel's hero, Leopold Bloom.  The character Dedalus, in turn, was partly derived from Daedalus, the greatest
+of the Greek engineers and father of Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus remains firmly grounded.
+} that enables the specification of rich distributed systems concepts without recourse to operational constructs.   \lang is a subset of a language with well-studied features: Datalog enhanced with negation, aggregate functions, choice, and a successor relation.  \lang provides a model-theoretic foundation for the traditionally ``operational'' features of distributed programming, including persistence, state manipulation, asynchrony and component failure.  We show how all of these features are captured in \lang via a natural incorporation of {\em time} as an attribute of Datalog predicates.
+
+Given this foundation, we extend familiar Datalog notions such as safety and stratified negation to their natural temporal equivalents in \lang, and show simple syntactic checks to conservatively establish these properties.  
+From an expressivity perspective, we show that \lang is Turing-complete, and demonstrate its practical utility with a number of building-block routines from classical distributed computing, including queues, distributed clocks, reliable broadcast and consensus.
+
+% Traditional database systems are based on declarative query languages that
+% specify transformations as dataflows over an updatable store.
+% \jmh{Not usually thought of as dataflows.  Rel Alg is kinda like dataflow but declarative Rel Calc isn't. Stick with Calc/Declarative as your reference.}
+%   Such query
+% languages are either not expressive enough to capture common programming
+% constructs \wrm{like what?}, or are at best awkward to use in this fashion.
+% \wrm{todo: transition that explains Datalog's birth from these languages... I
+% don't know enough to write it} The family of logic-based database languages, of
+% which Datalog is the progenitor, represent expressive programming languages
+% that produce similar dataflow representations.  Datalog is purely deductive: a
+% program specifies the rules by which the derived relations are populated based
+% on a static database, which is never updated.  Recent programming language
+% research has explored the use of Datalog-based languages for expressing
+% distributed systems.  Because the state of any complex system evolves with its
+% execution, these efforts were forced to extend the Datalog model by admitting
+% updates, additions and deletions of the EDB.  Unfortunately, these previous
+% attempts were plagued with ambiguities about how and when state changes occur
+% and become visible, putting a heavy burden on the programmer to ensure even
+% simple properties, such as atomicity of updates over time.
+% 
+% In contrast to reasoning about state change procdurally, \lang observes
+% that this concept is intuitively expressed as invariants over {\em time}.  In
+% this work, we present a formal model of Datalog augmented with time extensions.
+% By reifying time as data an introducing it into the logic, \lang eliminates
+% previous ambiguities, ensures atomicity of updates and makes it possible to
+% express system invariants that can guarantee liveness properties, a key
+% challenge in building distributed systems.
