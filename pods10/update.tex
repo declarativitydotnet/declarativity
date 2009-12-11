@@ -30,8 +30,8 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
    \ENDFOR
    \STATE{\em // evaluate program}
    \FORALL{$t \in \mathbb{Z}$}
-      \STATE{\exec}
-      \FORALL{$P(A_1, \ldots, A_n)$ persistent}
+      \STATE{compute the fixpoint of the rewritten program}
+      \FORALL{persistent predicate $P(A_1, \ldots, A_n)$}
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \cup \Delta_P^{+}(A_1, \ldots, A_n)$}
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \setminus \Delta_P^{-}(A_1, \ldots, A_n)$}
       \ENDFOR
