@@ -1,4 +1,4 @@
- \section{State in Logic}
+\section{State in Logic}
 
 %%\jmh{I think the flavor of this section is to map familiar notions from state manipulation to purely logical syntactic constructs grounded in Datalog.  You should motivate 
 %%at a high level why one would want to do such a thing.  The discussion below is then, in effect, a set of ``design patterns'' or ``typical uses''.  You might want to highlight 
@@ -12,9 +12,10 @@
 \begin{quote}
 ``Time is a device that was invented to keep everything from happening at once."~\footnote{Graffiti on a wall at Cambridge University~\cite{scheme}}
 \end{quote}
+Having defined \slang, we are now ready to express traditionally ``operational'' constructs in a proper declarative fashion.  In this section we focus on the notion of ``state'': the persistence and mutability of data across time.
 
-The intuition behind the \emph{successor} relation is that it models the
-passage of (logical) time.  We say that ground atoms with lower timestamps
+The intuition behind the \emph{successor} relation used to define \slang is that it models the
+passage of (logical) time.  In our discussion, we will say that ground atoms with lower timestamps
 occur ``before" atoms with higher ones.
 %%Without specifying how and when each stratum
 %%of \emph{successor} is evaluated, we can see that the syntactic restrictions of \lang ensure that 
@@ -23,13 +24,13 @@ occur ``before" atoms with higher ones.
 %%we may only move forward in time.
 The constraints we imposed on \slang rules restrict how deductions may be made
 with respect to time.  First, rules may only refer to a single timestep in
-their body, they cannot {\em join across timesteps}.  Second, rules may specify
+their body, they {\em cannot join across timesteps}.  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
-timestep -- we rule out induction ``backwards'' in time.
+timestep---in \slang, we rule out induction ``backwards'' in time.
 %, or at some unspecified time: 
 %therefore inductions may only be specified in one direction only.
 
-This gives us an intuitive and unambiguous way to declaratively express persistence and state changes.  In this section, we 
+With a notion of time captured in this way, we can consider the contents of the extensional database---and hence a minimal model of the intensional database---with respect to an ``instant in time'': we simply bind the free time suffixes of all rules to a constant.  Because this produces a sequence of models (one per timestep), it gives us an intuitive and unambiguous way to declaratively express persistence and state changes across timesteps.  In this section, we 
 give examples of language constructs that capture motifs such as persistent relations, deletion and update, sequences
 and queues.
 
