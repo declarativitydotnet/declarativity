@@ -138,8 +138,7 @@ time(\(\perp\));
 time(\(\SDedalus\)) \(\leftarrow\) successor(\(\SDedalus\), _);
 \end{Dedalus}
 
-
-Each asynchronous rule has the following additional variables in its
+Each asynchronous rule has the following additional predicates in its
 body: \dedalus{time($\SDedalus$), choose((\_), ($\SDedalus$))}, where
 $\SDedalus$ is the timestamp of the rule head.
 
@@ -154,34 +153,34 @@ r(A, B, \(\SDedalus\)) \(\leftarrow\)
 \end{example}
 
 We admit a new temporal head annotation to sugar the rule above.  The
-identifier \dedalus{async} implies the rule is asynchronous, and stands in for the additional body predicates.
+identifier \dedalus{async} implies the rule is asynchronous, and stands in for
+the additional body predicates.
 %%$N$ is a variable,
 %%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
 %%optionally referenced in the head.  
 The above example expressed using \dedalus{async} is:
 
 \begin{Dedalus}
-asynchronous
 r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 
-It is easy to see that evaluation of an asynchronous rule may produce a tuple whose timestamp is less than $\Tau$, the timestamp
-in the rule's antecedents. 
+Evaluation of an asynchronous rule may produce a tuple whose timestamp is less
+than $\Tau$, the timestamp of the rule's antecedents. 
 %%This violates our intuitive interpretation of timestamps capturing causal relations between 
 %%tuples, and compromises the temporal stratifiability proof of \slang, because it is no longer the case that a ground atom
 %%cannot possibly depend negatively on itself.
-This violates the monotonicity assumptions upon which we based our proof of temporal stratification, and muddies our interpretation
-of timestamps as capturing causal relations between tuples.
+This violates the monotonicity assumptions that underlie our proof of temporal
+stratification, and muddies our interpretation of timestamps as capturing
+causal relations between tuples.
 
 
 \subsubsection{Later: Causally-Constrained Asynchrony}
 
-Ultimately, whether a particular set of temporal semantics is
-desirable depends on the underlying application; for example, clever
-combinations of crash-prone databases running ``read uncommitted''
-transactions and asynchronous event queues can easily suffer from
-grandfather paradoxes---traveling to the past to become one's own
-ancestor---and other temporal impossibilities.
+Ultimately, whether a particular set of temporal semantics is desirable depends
+on the underlying application; for example, clever combinations of crash-prone
+databases running ``read uncommitted'' transactions and asynchronous event
+queues can easily suffer from grandfather paradoxes---traveling to the past to
+become one's own ancestor---and other temporal impossibilities.
 
 %%\rcs{move this, get rid of monotonic discussion?
 %%We observe, however, that the order of evaluation of a Datalog program is irrelevant to the final result when the program is 
@@ -192,12 +191,12 @@ ancestor---and other temporal impossibilities.
 %%message tuples, however, may need to enforce an ordering discipline on such tuples.  We discuss this in detail in Section (Lamport Clocks).
 %%}
 
-The distributed systems literature typically assumes a causal ordering
-of events across systems; Lamport clocks are a simple mechanism that
-records the partial ordering induced by network communication between
-the nodes.  With such approaches in mind, we introduce an alternative
-to \dedalus{@async} called \dedalus{@later} that induces a total
-ordering over all timestamps within a \lang program.  Instead of \dedalus{time}, we define \dedalus{after}:
+The distributed systems literature typically assumes a causal ordering of
+events across systems; Lamport clocks are a simple mechanism that records the
+partial ordering induced by network communication between the nodes.  With such
+approaches in mind, we introduce an alternative to \dedalus{@async} called
+\dedalus{@later} that induces a total ordering over all timestamps within a
+\lang program.  Instead of \dedalus{time}, we define \dedalus{after}:
 
 \begin{Dedalus}
 after(S, T) \(\leftarrow\) successor(S, T);
@@ -205,21 +204,20 @@ after(S, U) \(\leftarrow\) after(S, T), successor(T, U);
 after(S, \(\perp\)) \(\leftarrow\) successor(S, _);
 \end{Dedalus}
 
-Intuitively, \dedalus{after(S, T)} is true if T happens after S in the
-global ordering of events.  Each \dedalus{@later} rule has the
-following additional variables in its body:
-\dedalus{after($\Tau$, S), choose(($\Tau$), (S))}, where, as
-above, $\Tau$ is the timestamp associated with the rule body, and
+Intuitively, \dedalus{after(S, T)} is true if T happens after S in the global
+ordering of events.  Each \dedalus{@later} rule has the following additional
+predicates in its body: \dedalus{after($\Tau$, S), choose(($\Tau$), (S))},
+where, as above, $\Tau$ is the timestamp associated with the rule body, and
 \dedalus{S} is the timestamp of the rule head.
 
 Note that our addition of a global ordering does not expose a shared
-synchronized clock to \lang programs.  The nondeterminism associated
-with choice prevents programs from ensuring that operations are
-performed in lock-step.  Instead, the timestamps simply encode some
-logical clock that is equivalent to one that could be maintained by
-the application.  The difference is that, by constraining
-\dedalus{choose}, we can avoid reasoning about program traces that
-contain paradoxes such as causality loops.  In particular, deterministic programs such as:
+synchronized clock to \lang programs.  The nondeterminism associated with
+choice prevents programs from ensuring that operations are performed in
+lock-step.  Instead, the timestamps simply encode some logical clock that is
+equivalent to one that could be maintained by the application.  The difference
+is that, by constraining \dedalus{choose}, we can avoid reasoning about program
+traces that contain paradoxes such as causality loops.  In particular,
+deterministic instances such as:
 
 \begin{Dedalus}
 r(1)@1;

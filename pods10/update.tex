@@ -34,15 +34,22 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
       \ENDFOR
    \ENDFOR
    
-   \STATE{\em // evaluate program}
-   \FORALL{$t \in \mathbb{Z}$}
+   \STATE{\em // evaluate program starting at ``minimum'' EDB timestamp}
+   \STATE{let $t = u \in \mathbb{Z} : \exists P(A_1, \ldots, A_n)@u, \not\exists Q(B_1, \ldots, B_m)@v : v < u$}
+   \REPEAT
       \STATE{replace $\Tau$ with $t$ in the rewritten program, and compute}
 			\STATE{\hspace{1em} a fixpoint of the result via semi-naive evaluation}
       \FORALL{persistent predicate $P(A_1, \ldots, A_n)$}
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \cup \Delta_P^{+}(A_1, \ldots, A_n)$}
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \setminus \Delta_P^{-}(A_1, \ldots, A_n)$}
       \ENDFOR
-   \ENDFOR
+      \STATE{\em // $t$ becomes the least larger timestamp with an atom}
+      \IF{$\exists u \in \mathbb{Z} : u > t, \exists P(A_1, \ldots, A_n)@t, \not\exists v: v > t \wedge v < u$}
+         \STATE{let $t=u$}
+      \ELSE
+         \STATE{let $t=\emptyset$}
+      \ENDIF
+   \UNTIL{$t = \emptyset$}
   \end{algorithmic}
 \end{algorithm}
 
