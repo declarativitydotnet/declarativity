@@ -9,8 +9,8 @@ broadcast protocol below:
 
 program broadcast_simple;
 
-sbcast(#Member, Sender, Message)@async \(\leftarrow\)
-    smessage(#Agent, Sender, Message),
+sbcast(Member, Sender, Message)@async \(\leftarrow\)
+    smessage(Agent, Sender, Message),
     bcast_global::members(#Agent, Member);
 
 sdeliver(Member, Sender, Message) \(\leftarrow\)
@@ -19,8 +19,10 @@ sdeliver(Member, Sender, Message) \(\leftarrow\)
 \end{Dedalus}
 
 The table \emph{members} is a persistent relation defined in another module and containing the broadcast 
-membership list.  The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
-address.  The protocol is straightforward: if a tuple appears in \emph{smessage} (an EDB predicate), then
+membership list.  
+%%The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
+%%address.  
+The protocol is straightforward: if a tuple appears in \emph{smessage} (an EDB predicate), then
 it will be sent to all members (a multicast).  The interpretation of the nondeterministic choice implied by the
 \emph{async} rule indicates that order and delivery are not guaranteed.
 

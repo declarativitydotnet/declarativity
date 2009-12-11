@@ -101,14 +101,19 @@ predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
 Intuitively, this rule allows extensional facts to serve as ground for
 \dedalus{r\pos}, while enabling other rules to derive additioanl \dedalus{r\pos} facts.
 
-\dedalus{r\pos} may be reference in the body or head of any \slang rule.  However, no well-formed \slang rule may involve any extensional predicate, except for a rule of the form above.
+\dedalus{r\pos} may be reference in the body or head of any \slang rule.  
+\dedalus{r\nega} is a predicate that we will use later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
+Like {r\pos}, the use of {r\nega} is the heads and bodies of rules is unrestricted.
 
-\dedalus{r\nega} is a predicate that we will use later to capture the notion of state update; we return to it in Section~\ref{sec:mutable}. 
-\jmh{I hate this -- can we nail it here?}
+%%\jmh{I hate this -- can we nail it here?}
 
+\vspace{1.2em}
+\noindent{\bf Guarded EDB: }
+No well-formed \slang rule may involve any extensional predicate, except for a rule of the form above.
 
 
 \subsection{Abbreviated Syntax and Temporal Interpretation}
+
 \label{sec:abbrvsyntax}
 
 We have been careful to define \slang as a syntactic subset of Datalog; this inclusion allows us to take advantage of Datalog's
