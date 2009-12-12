@@ -45,16 +45,21 @@ is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the pre
 
 \subsection{Distribution Model}
 
-A principal motivation for \lang is to model and implement distributed systems.
-To represent a distributed system, we consider some number of
-agents; each running a {\em subprogram} that consists of some subset
-of the relations referenced by the \lang program running on the
-distributed system.  We constrain the \lang rules so that each rule's
-body contains predicates from exactly one subprogram.  The head of
-an asynchronous rule may reference a relation in any subprogram, but the
-head of all other rules must reference a relation in the subprogram
-that contains the predicates in the body.  Rules that span subprograms are
-{\em communication rules}.
+A principal motivation for \lang is to model and implement distributed
+systems.  To represent a distributed system, we consider some number
+of agents; each running a {\em subprogram} against some subset ({\em
+  horizontal partition}) of each relation's contents.  We add a column
+to the beginning of each relation, then store the name of the
+partition that contains each tuple in that column.  For clarity, we
+say such columns are {\em location specifiers}, and prefix their
+contents and the attributes that bind them with a \dedalus{\#} symbol.
+
+Finally, we constrain \lang rules so that each rule's body contains
+predicates from exactly one partition.  The head of asynchronous rules
+may deduce values to be stored in any partition; an asynchronous rule
+that crosses partitions in this way is called a {\em communication
+  rule}.  All other rules are ``local,'' and deduce facts that are
+stored in the same partition as the antecedents.
 
 This restricts communication between nodes in two important ways.
 First, by restricting bodies to a single agent, it forces all
@@ -64,7 +69,7 @@ learn about time values at another agent by receiving messages (with
 unknown delay) from that agent.  Note that this model says nothing
 about the relationship between the agents' clocks; they could be
 non-monotonically increasing, or they could respect a global order.
-We now turn to a discussion of such constraints.
+We now turn to a discussion of such issues.
 
 \subsection{Asynchronous Rules}
 
@@ -95,7 +100,11 @@ time(\(\SDedalus\)) \(\leftarrow\) successor(\(\SDedalus\), _);
 
 \noindent
 Each asynchronous rule with head predicate \dedalus{p($A_1, \ldots, A_n$)} has the following additional subgoals in its
-body: \dedalus{time($\SDedalus$), choose(($A_1, \ldots, A_n, \Tau$), ($\SDedalus$))}, where
+body:
+
+\dedalus{time($\SDedalus$), choose(($A_1, \ldots, A_n, \Tau$), ($\SDedalus$))}, 
+
+where
 $\SDedalus$ is the timestamp of the rule head.  Note that our use of \dedalus{choose} incorporates all variables of each head predicate tuple, which allows a unique choice of $\SDedalus$ for each head tuple.
 
 
@@ -135,23 +144,26 @@ departure from \slang, since it violates the monotonicity assumptions
 upon which we based our proof of temporal stratification.  On an
 intuitive level, it may also trouble us that rules can derive head
 tuples that exist ``before'' the body tuples on which they are
-grounded; this violates intuitive notions of ``causality,'' and admits
+grounded; this violates intuitive notions of ``causality'' and admits
 the possibility of temporal paradoxes.
 
 We see no reason to restrict \lang in order to rule out such issues,
 as doing so would simply reduce its expressiveness.  Recall, however,
-that our execution environment ensures/assumes \rcs{XXX} some sort of
-monotonicity property, and that with monotonicity of time, we get
-\rcs{foo}, monotonicity of rules we get \rcs{bar}, and with
-monotonicity of neither, we get unstratifiable Datalog
-programs. \rcs{everything after recall is up in the air...}
+that Algorithm~\ref{algorithm} assumed some sort of temporal
+monotonicity property, which we will now define.
+
+%
+%and that with monotonicity of time, we get
+%\rcs{foo}, monotonicity of rules we get \rcs{bar}, and with
+%monotonicity of neither, we get unstratifiable Datalog
+%programs. \rcs{everything after recall is up in the air...}
 
 If we assume that our executions obey some causal ordering, then we
 know there is some partial order over the rule derivations of the
 system, and therefore, there exists at least one total ordering of the
 execution that corresponds to the partial order.  Therefore, each
 execution of a \lang program (which may be nondeterministic due to
-\@async) is equivalent to the execution of some deterministic \slang
+\dedalus{@async}) is equivalent to the execution of some deterministic \slang
 program; causality constraints reintroduce the temporal stratifiability
 that our definition of \lang gave up.
 
@@ -163,9 +175,10 @@ unstratifiable.
 
 We note that non-causal schedulings are of practical importance;
 distributed systems built atop unreliable and asynchronous primitives
-could very well observe seemingly nonsensical orderings; one
-possibility is that, due to caching or failure, comments begin to
-appear to arrive well before the blog post they are attached to.
+could very well observe seemingly nonsensical orderings.  For example,
+in scalable internet publishing application, one can imagine that, due
+to caching or failure, it is possible that comments begin to arrive
+over the network well before the article they respond to.
 
 \subsubsection{Entanglement}
 
@@ -183,7 +196,7 @@ an \emph{entanglement}.   Entanglement is a surprisingly powerful construct that
 reference the logical clock time of the deduction that produced one (or more) of its subgoals.  Note that in order
 to write the rule it was necessary to not sugar away the time suffix in the rule body.  We restrict the use of entanglements to asynchronous rules. \jmh{Why the restriction?  Also, can you justify that it's surprisingly powerful?}
 
-\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}
+\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}\rcs{beginning of sec 6, first sentence}
 
 \subsection{Lamport Clocks}
 
