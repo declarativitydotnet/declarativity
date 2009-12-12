@@ -1,6 +1,11 @@
 
 \subsection{Stratification in {\large{\bf\slang}}}
-Having adapted the notion of safety to a temporal context, it is only natural to turn our attention to another traditional Datalog issue: semantics of programs with negation.  As we will see, the inclusion of time introduces a ``source of monotonicity'' in programs that allows for clean minimal model semantics in some surprising cases, and also provides us with an ability to do purely syntactic checks for monotonicity of a broad class of temporal programs.
+
+We now turn our attention to another traditional Datalog concern: semantics of
+programs with negation.  As we will see, the inclusion of time introduces a
+``source of monotonicity'' in programs that allows for clean minimal model
+semantics in some surprising cases, and enables purely syntactic monotonicity
+checks for a broad class of temporal programs.
 
 %%\paa{notes}
 
@@ -15,13 +20,11 @@ Having adapted the notion of safety to a temporal context, it is only natural to
 %%evaluated" in a lower module.)  since modularly stratified programs have a unique stable model, so do any temporally stratified \lang programs.
 %%\end{enumerate}
 
-\begin{lemma} 
-\label{lemma:no-neg-unique}
+\begin{lemma} \label{lemma:no-neg-unique}
 %
 A \slang program without negation 
 %%and aggregation 
-has a unique
-minimal model.
+has a unique minimal model.
 %
 \end{lemma}
 
@@ -33,8 +36,6 @@ is a pure Datalog
 program.  Every pure Datalog program has a unique minimal model. 
 %
 \end{proof}
-
-%%\rcs{joe said this once. the \slang program has a unique, infinite minimal model.  As the flip flop example shows, this doesn't mean that it quiesces.  We should make the sleight of hand explicit.}
 
 %%\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
 
@@ -56,9 +57,12 @@ predicate dependency graph.
 %%We evaluate such a program by evaluating each strongly connected component of
 %%its predicate dependency graph under a closed-world assumption.  
 
-We may evaluate such a program in any order returned by a topological sort on
-the predicate dependency graph, with each strongly connected component
-collapsed to a single node.
+We may evaluate such a program in {\em stratum order} as described in the
+Datalog literature. \wrm{cite?}
+%any order returned by a topological sort on the predicate dependency graph,
+%with each strongly connected component collapsed to a single node.
+
+It is easy to see that any \slang instance has a unique minimal model, as 
 
 Since our translation from \slang to Datalog does not introduce any cycles or
 negation to a program, a syntactically stratified \slang instance has a

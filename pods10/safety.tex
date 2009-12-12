@@ -340,6 +340,7 @@ implies \wrm{proof incomplete! moving on}
 A \slang instance with a temporally unsafe deductive rule.
 %%\rcs{is this even a \slang instance?  Is it a Datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
 
+
 \begin{Dedalus}
 p(A, B) \(\leftarrow\) q(A);
 \end{Dedalus}
@@ -354,35 +355,24 @@ could range over an infinite set of constants.
 %
 A \slang instance that is temporally unsafe due to infinite oscillation.
 
-%%\begin{Dedalus}
-%%flip\_flop(A, B)@next \(\leftarrow\) flip\_flop(A, B);
-
-%%p(Y)@next \(\leftarrow\) p(X), flip\_flop(X, Y);
-
-%%flip\_flop(0, 1)@1;
-%%flip\_flop(1, 0)@1;
-%%p(0)@2;
-%%\end{Dedalus}
-
-%%\rcs{i found the example hard to read, and don't see how it's fundamentally different from this, which I think is easier to understand:}
-
 \begin{Dedalus}
 flip\_flop(B, A)@next \(\leftarrow\) flip\_flop(A, B);
 flip\_flop(0, 1)@1;
 \end{Dedalus}
 
-In the above program, the first rule -- a simple persistence rule for
-\emph{flip\_flop} -- is temporally safe.  The second rule is an example of
-temporally unsafe induction.  Even though it contains no function symbols, and
-all variables are range-restricted, it entails infinite oscillation of the
-\emph{p} predicate.  
-%because the \emph{p} predicate occurs in the head with a
-%different variable binding than in the body, and because there are no positive
-%event predicates in the body.  
+The above program exemplifies temporally unsafe induction. Even though it
+contains no function symbols, and all variables are range-restricted, it
+entails infinite oscillation of the \emph{p} predicate.  
+%because the \emph{p} predicate occurs in the head with a different variable
+%binding than in the body, and because there are no positive event predicates
+%in the body.  
 %%\wrm{this makes me a bit uncomfortable.
 %%we've defined a conservative test for temporal safety.  so if something fails
 %%the test, it's not necessariliy temporally unsafe.}
 \end{example}
+
+Note that we do not forbid temporally unsafe programs. \wrm{joe sez "discuss
+safety is wil, but-out regured"}
 
 %%By providing a conservative syntactic check for temporal safety, we ensure that \slang
 %%programs have 
