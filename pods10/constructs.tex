@@ -12,18 +12,18 @@
 \begin{quote}
 %
 ``Time is a device that was invented to keep everything from
-happening at once."~\footnote{Graffiti on a wall at Cambridge
+happening at once.''~\footnote{Graffiti on a wall at Cambridge
 University~\cite{scheme}.}
 %
 \end{quote} 
 
 Given our definition of \slang, we now address the persistence and mutability
-of data across time -- one of the two signature features of distributed systems
+of data across time---one of the two signature features of distributed systems
 for which we provide a model-theoretic foundation.
 
 The intuition behind \slang's \emph{successor} relation is that it models the
 passage of (logical) time.  In our discussion, we will say that ground atoms
-with lower timestamps occur ``before" atoms with higher ones.
+with lower timestamps occur ``before'' atoms with higher ones.
 %%Without specifying how and when each stratum
 %%of \emph{successor} is evaluated, we can see that the syntactic restrictions of \lang ensure that 
 %%we cannot move backwards infinitely often (specifically,
@@ -33,13 +33,13 @@ The constraints we imposed on \slang rules restrict how deductions may be made
 with respect to time.  First, rules may only refer to a single timestep in
 their body, and {\em cannot join across timesteps}.  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
-timestep--in \slang, we rule out induction ``backwards'' in time or
+timestep---in \slang, we rule out induction ``backwards'' in time or
 ``skipping'' into the future.
 %, or at some unspecified time: therefore inductions may only be specified in
 %one direction only.
 
-This notion of time allows us to consider the contents of the EDB -- and hence
-a minimal model of the IDB -- with respect to an ``instant in time'': we simply
+This notion of time allows us to consider the contents of the EDB---and hence
+a minimal model of the IDB---with respect to an ``instant in time'': we simply
 bind the time suffixes ($\Tau$) of all body predicates to a constant.  Because
 this produces a sequence of models (one per timestep), it gives us an intuitive
 and unambiguous way to declaratively express persistence and state changes
@@ -84,7 +84,7 @@ $p$\pos$(A_1, \ldots, A_n)$ will be true.}
 \label{sec:mutable}
 
 To model deletions and updates of a fact, it is necessary to break the induction
-in a simple persistence rule.  Adding a {\em p\nega} subgoal to the body of a
+in a simple persistence rule.  Adding a \dedalus{p\nega} subgoal to the body of a
 simple persistence rule accomplishes this:
 
 \begin{Dedalus}
