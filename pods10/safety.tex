@@ -305,8 +305,8 @@ the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
 
 \begin{lemma} 
 %
-A \slang instance with finite EDB where every rule satisfies one of the
-conditions 1-3 above is indeed temporally safe.
+A \slang instance with finite EDB where every rule is one of the kinds 1-3
+above conditions 1-3 above is indeed temporally safe.
 %
 \end{lemma}
 %
@@ -314,16 +314,23 @@ conditions 1-3 above is indeed temporally safe.
 %
 Assume the program is temporally unsafe.  That is, there exists no time $T$
 such that $\forall U >= T$, the set of all atoms with time suffix $U$ is
-equivalent modulo time to the set of all atoms with time suffix $T-1$.
+equivalent modulo time to the set of all atoms with time suffix $T-1$.  Let $E$
+be the maximum timestamp of any fact in the EDB.
 
-A rule that satisfies condition 2 does not entail an atom in timestamp $T$ if
-that atom does not exist at $T-1$.  Rules that satisfy conditions 1 and 3
-may entail atoms in timestamp $T$ not in $T-1$.
+A rule of kind 2 does not entail an atom in timestamp $T$ if that atom does not
+exist at $T-1$.  Rules of kind 1 and 3 may entail atoms in timestamp $T$ not in
+$T-1$.
 
-However, every rule that satisfies conditions 3 may only entail a finite number
-of facts as the EDB is finite, and thus every such rule $r$ may entail no facts
-at a timestamp greater than some maximum timestamp $V_r \in \mathbb{Z}$.  Since
-a \slang program has a finite set of rules, there exists \wrm{still working}
+However, every rule $r$ of kind 3 may only entail a finite number of facts as
+the EDB is finite, and thus may entail no facts at a timestamp greater than
+some maximum timestamp $V_r \in \mathbb{Z}$.  Since a \slang program has a
+finite set of rules we know $\exists V <= E+1 \in \mathbb{Z} : \forall r: V >= V_r$,
+such that no rules of kind 3 produce any deductions with timestamp greater than
+$V$.
+
+Rules of kind 1 may produce deductions forever.  Recall that every predicate in
+\slang is either instantaneous or inductive.  No instantaneous predicates exist
+at time 
 
 Furthermore,
 
