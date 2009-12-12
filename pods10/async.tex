@@ -195,12 +195,15 @@ p(A, B, N)@async \(\leftarrow\)
 Due to the async keyword in the rule head, each \emph{p} tuple will take some unspecified time suffix value.
 Note however that the time suffix $N$ of the rule body appears also in an attribute of \emph{p} other than the time suffix, recording a 
 binding of both the time value of the deduction and the time value of its consequence.  We call such a binding
-an \emph{entanglement}.   Entanglement is a surprisingly powerful construct that allows a rule to 
-reference the logical clock time of the deduction that produced one (or more) of its subgoals.  Note that in order
+an \emph{entanglement}.   Note that in order
 to write the rule it was necessary to not sugar away the time suffix in the rule body.  
-%%We restrict the use of entanglements to asynchronous rules. 
-\jmh{Why the restriction?  Also, can you justify that it's surprisingly powerful?}
-\paa{bill, any thoughts on a nice lean sentence that provides this justification?}
+
+Entanglement is a surprisingly powerful construct that allows a rule
+to reference the logical clock time of the deduction that produced one
+(or more) of its subgoals.  In particular, it allows us to express
+concepts such as infinite sequences, and therefore arbitrarily large
+databases without admitting concepts such as function evaluation or
+arithmetic to our language.
 
 %%\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}\rcs{beginning of sec 6, first sentence}
 
