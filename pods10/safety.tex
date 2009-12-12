@@ -242,16 +242,17 @@ henceforth quiescent.
 %
 \begin{proof}
 %
+\wrm{sightly ???}
 A \slang program admits only instantaneous and inductive rules, which derive
 new tuples at the same time as their ground tuples, or in the immediate next
 timestep.  Thus, the set of tuples true at time $T$ is completely determined by
 any tuples true at time $T-1$, and any EDB facts true at time $T$.  Observe
 that the integer value of the timestep does not influence the derivation.
 
-If the instance is quiescent at $T$, then given some set of atoms $\mathbb{A}$
-true at $T-1$, the program computes $\mathbb{A}$ at $T$.  Thus in the absence
-of EDB facts at $T+1$, it will again compute $\mathbb{A}$ at $T+1$.
-
+If the instance is quiescent at $T$, then given ${\bf A}$, the set of atoms
+with timestamp $T-1$ \wrm{joe sez: and EDB at T???}, the program entails ${\bf
+A}$ at timestamp $T$.  Thus in the absence of EDB facts at $T+1$, it entails
+${\bf A}$ at $T+1$.
 %
 \end{proof}
 
@@ -270,7 +271,7 @@ Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
 an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
 predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$
 depends on $p$), $p$ appears in no inductive rule.
-
+\wrm{cite depends on thing...}
 \end{definition}
 
 %%A rule is temporally safe if:
@@ -300,12 +301,12 @@ positive subgoal in the body.
 While a temporally safe program is henceforth quiescent after some time $T$,
 a temporally unsafe program changes infiniely.  Note that
 the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
-\emph{r1} and \emph{r2} both satisfy the second condition above.
+\emph{r1} satisfies the second condition above.
 
 \begin{lemma} 
 %
-A \slang instance with finite EDB where every rule satisfies conditions 1-3
-above is indeed temporally safe.
+A \slang instance with finite EDB where every rule satisfies one of the
+conditions 1-3 above is indeed temporally safe.
 %
 \end{lemma}
 %
@@ -315,8 +316,22 @@ Assume the program is temporally unsafe.  That is, there exists no time $T$
 such that $\forall U >= T$, the set of all atoms with time suffix $U$ is
 equivalent modulo time to the set of all atoms with time suffix $T-1$.
 
-A rule that satisfies condition 2 may not generate a fact in timestamp $T$
-if that fact does not exist at $T-1$.  A rule that satisfies condition 3
+A rule that satisfies condition 2 does not entail an atom in timestamp $T$ if
+that atom does not exist at $T-1$.  Rules that satisfy conditions 1 and 3
+may entail atoms in timestamp $T$ not in $T-1$.
+
+However, every rule that satisfies conditions 3 may only entail a finite number
+of facts as the EDB is finite, and thus every such rule $r$ may entail no facts
+at a timestamp greater than some maximum timestamp $V_r \in \mathbb{Z}$.  Since
+a \slang program has a finite set of rules, there exists \wrm{still working}
+
+Furthermore,
+
+
+, so each such rule
+$r$ has an associated maximum time value $V_r$, after which 
+
+A rule that satisfies condition 3
 may only be triggered finitely often, is the EDB is finite.  
 
 %
