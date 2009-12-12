@@ -12,8 +12,8 @@
 % \end{figure}
 
 Until now we have restricted our discussion to \slang.  In this section we
-introduce \lang, a superset of \slang that also admits aggregate functions
-and the \emph{choice} construct.  These constructs will allow us to
+introduce \lang, a superset of \slang that also admits the \emph{choice} construct.  
+These constructs will allow us to
 express programs that establish or enforce an ordering over inputs, and to
 reason about the inherent nondeterminism in communication over unreliable
 networks that may delay, lose or reorder the results of logical deductions. 
@@ -167,7 +167,7 @@ system, and therefore, there exists at least one total ordering of the
 execution that corresponds to the partial order.  Therefore, each
 execution of a \lang program (which may be nondeterministic due to
 \dedalus{@async}) is equivalent to the execution of some deterministic \slang
-program; causality constraints reintroduce the temporal stratifiability
+program; these causality assumptions reintroduce the temporal stratifiability
 that our definition of \lang gave up.
 
 Similarly, if we disallow negation, but allow derivations to travel
