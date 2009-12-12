@@ -62,13 +62,8 @@ Datalog literature. \wrm{cite?}
 %any order returned by a topological sort on the predicate dependency graph,
 %with each strongly connected component collapsed to a single node.
 
-It is easy to see that any \slang instance has a unique minimal model, as 
-
-Since our translation from \slang to Datalog does not introduce any cycles or
-negation to a program, a syntactically stratified \slang instance has a
-unique minimal model, as any Datalog instance %without choice
-has a unique
-minimal model. 
+It is easy to see that any syntactically stratified \slang instance has a
+unique minimal model because it is a syntactically stratified Datalog program.
 
 %\begin{lemma}
 %
@@ -99,9 +94,9 @@ minimal model.
 %\end{proof}
 
 However, many programs we are interested in expressing are not syntactically
-stratifiable.  Fortunately, we are able to define a syntactically checkable notion of
-{\em temporal stratifiability} of  \slang programs that maps to a subset of {\em modularly
-stratifiable}~\cite{modular} Datalog programs.
+stratifiable.  Fortunately, we are able to define a syntactically checkable
+notion of {\em temporal stratifiability} of \slang programs that maps to a
+subset of {\em modularly stratifiable}~\cite{modular} Datalog programs.
 
 %Intuitively, a Datalog instance is modularly stratifiable if no EDB
 %element depends negatively on itself.
@@ -172,23 +167,20 @@ Any temporally stratifiable \slang instance $P$ has a unique minimal model.
 deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
 thus it has a unique minimal model.
 
-{\bf Case 2:} $P$ consists of both deductive and inductive rules.
-Assume that $P$ does not have a unique minimal model.  This implies that $P$ is
-not syntactically stratifiable.  Thus, there must exist some cycle through at
-least one predicate $q$ involving negation.
+{\bf Case 2:} $P$ consists of both deductive and inductive rules.  Assume that
+$P$ does not have a unique minimal model.  This implies that $P$ is not
+syntactically stratifiable.  Thus, there must exist some cycle through at least
+one predicate $q$ involving negation.
 %%or aggregation.  
-Furthermore, this
-cycle must involve an inductive rule, as $P$ is temporally stratified.
+Furthermore, this cycle must involve an inductive rule, as $P$ is temporally
+stratified.
 
-We convert our \slang program to a Datalog program $P'$ using the
-transformation from Section~\ref{sec:abbrvsyntax}, which does not introduce any
-additional cycles
-%%\rcs{except in the definition of successor} 
-or negation.  Since the time suffix in the head of an
-inductive rule is strictly greater than the time suffix of its body, no atom
-may depend negatively on itself -- it may only depend negatively on atoms in
-the previous timestep.  Thus, $P'$ is modularly stratified over time, using the
-definition of modular stratification according to Ross \etal~\cite{modular}.
+Since the time suffix in the head of an inductive rule is strictly greater than
+the time suffix of its body, no atom may depend negatively on itself -- it may
+only depend negatively on atoms in the previous timestep.  Thus, $P'$ is
+modularly stratified over time, using the definition of modular stratification
+according to Ross \etal~\cite{modular}.  This guarantees a unique minimal model
+achievable via standard bottom-up fixpoint execution.
 %
 %does not have a unique minimal model.  This implies that $P$ is not
 %syntactically stratifiable, thus there must exist some cycle through at least
@@ -224,10 +216,13 @@ p_neg(A, B, T) \(\leftarrow\)
   delete\_p(T);
 \end{Dedalus}
 
-In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are external events.
-This reasonable program is unstratifiable because $p \succ del\_p \land del\_p \succ p$.  But because the successor relation is constrained
-such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is modularly stratified on \emph{successor}.
-Therefore, we have $p_{n} \not\succ^* del\_p_{n} \not\succ^* p_{n+1}$; informally, earlier values do not depend on later values.
+In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are captured
+in EDB relations.  This reasonable program is unstratifiable because $p \succ
+p\nega \land p\nega \succ p$.  But because the successor relation is
+constrained such that $\forall A,B, successor(A, B) \rightarrow B > A$, any
+such program is modularly stratified on \emph{successor}.  Therefore, we have
+$p_{n} \not\succ^* del\_p_{n} \not\succ^* p_{n+1}$; informally, earlier values
+do not depend on later values.
 %%\paa{need to make the text better, but this old example probably makes sense here}
 \end{example}
 
