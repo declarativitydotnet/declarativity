@@ -337,7 +337,8 @@ implies \wrm{proof incomplete! moving on}
 \end{proof}
 
 \begin{example}
-A \slang instance with a temporally unsafe deductive rule.\rcs{is this even a \slang instance?  Is it a Datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
+A \slang instance with a temporally unsafe deductive rule.
+%%\rcs{is this even a \slang instance?  Is it a Datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
 
 \begin{Dedalus}
 p(A, B) \(\leftarrow\) q(A);
@@ -353,17 +354,17 @@ could range over an infinite set of constants.
 %
 A \slang instance that is temporally unsafe due to infinite oscillation.
 
-\begin{Dedalus}
-flip\_flop(A, B)@next \(\leftarrow\) flip\_flop(A, B);
+%%\begin{Dedalus}
+%%flip\_flop(A, B)@next \(\leftarrow\) flip\_flop(A, B);
 
-p(Y)@next \(\leftarrow\) p(X), flip\_flop(X, Y);
+%%p(Y)@next \(\leftarrow\) p(X), flip\_flop(X, Y);
 
-flip\_flop(0, 1)@1;
-flip\_flop(1, 0)@1;
-p(0)@2;
-\end{Dedalus}
+%%flip\_flop(0, 1)@1;
+%%flip\_flop(1, 0)@1;
+%%p(0)@2;
+%%\end{Dedalus}
 
-\rcs{i found the example hard to read, and don't see how it's fundamentally different from this, which I think is easier to understand:}
+%%\rcs{i found the example hard to read, and don't see how it's fundamentally different from this, which I think is easier to understand:}
 
 \begin{Dedalus}
 flip\_flop(B, A)@next \(\leftarrow\) flip\_flop(A, B);
