@@ -104,6 +104,7 @@ body:
 
 \dedalus{time($\SDedalus$), choose(($A_1, \ldots, A_n, \Tau$), ($\SDedalus$))}, 
 
+\noindent
 where
 $\SDedalus$ is the timestamp of the rule head.  Note that our use of \dedalus{choose} incorporates all variables of each head predicate tuple, which allows a unique choice of $\SDedalus$ for each head tuple.
 
@@ -119,7 +120,7 @@ r(A, B, \(\SDedalus\)) \(\leftarrow\)
 \end{example}
 
 We admit a new temporal head annotation to sugar the rule above.  The
-identifier \dedalus{async} implies the rule is asynchronous, and stands in for
+identifier \dedalus{async} implies that the rule is asynchronous, and stands in for
 the additional body predicates.
 %%$N$ is a variable,
 %%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
@@ -135,22 +136,22 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \end{example}
 
+\subsubsection{Temporal Monotonicity}
 \jmh{What do we need here?  We need to resurrect safety and strat for \lang, not just for \slang.  Monotonic deductive reductions are always cool.  Non-monotonic ones need us to ``inject'' monotonicity via the time suffix.  We lost this with async (which is natural in distributed systems).  We regain it via the addition of rules to enforce monotonicity -- these are akin to Lamport clocks and have the nice property that they don't ``cheat'', they follow our rules on messaging and asynchrony.}\rcs{tried to address this w/ following rewrite...}
 
 Nothing in our definition of asynchronous rules prevents tuples in the
-head of a rule from having a timestamp $\SDedalus$ that is less than
-$\Tau$, the timestamp in the rule's antecedents. This is a significant
-departure from \slang, since it violates the monotonicity assumptions
-upon which we based our proof of temporal stratification.  On an
-intuitive level, it may also trouble us that rules can derive head
-tuples that exist ``before'' the body tuples on which they are
-grounded; this violates intuitive notions of ``causality'' and admits
-the possibility of temporal paradoxes.
+head of a rule from having a timestamp that precedes the timestamp in
+the rule's body. This is a significant departure from \slang, since it
+violates the monotonicity assumptions upon which we based our proof of
+temporal stratification.  On an intuitive level, it may also trouble
+us that rules can derive head tuples that exist ``before'' the body
+tuples on which they are grounded; this violates intuitive notions of
+causality and admits the possibility of temporal paradoxes.
 
-We see no reason to restrict \lang in order to rule out such issues,
-as doing so would simply reduce its expressiveness.  Recall, however,
-that Algorithm~\ref{algorithm} assumed some sort of temporal
-monotonicity property, which we will now define.
+We have avoided restricting \lang to rule out such issues, as doing so
+would reduce its expressiveness.  Recall, however, that
+Algorithm~\ref{algorithm} assumed some sort of temporal monotonicity
+property, which we will now define.
 
 %
 %and that with monotonicity of time, we get
@@ -176,7 +177,7 @@ unstratifiable.
 We note that non-causal schedulings are of practical importance;
 distributed systems built atop unreliable and asynchronous primitives
 could very well observe seemingly nonsensical orderings.  For example,
-in a scalable internet publishing application, one can imagine that, due
+in a scalable Internet publishing application, one can imagine that, due
 to caching or failure, it is possible that comments begin to arrive
 over the network well before the article they respond to.
 
