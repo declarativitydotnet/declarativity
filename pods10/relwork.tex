@@ -17,7 +17,7 @@ by outputting a new (possibly diminished) store and constraint program at each t
 
 Lamport's TLA+~\cite{tla} is a language for specifying 
 concurrent systems in terms of constraints over valuations of state, and temporal logic that describes admissible transitions.  The notion of 
-\emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering" is similar to our declarative definition 
+\emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering'' is similar to our declarative definition 
 of table persistence.  Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (next and later), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
 
 \subsection{Distributed Systems}
@@ -36,12 +36,12 @@ straightforward Datalog, and evaluation proceeds in three phases:
 
 \jmh{You're sidestepping Delete an key update.}
 Unfortunately, the language descriptions give no careful specification of how and when deletions and updates
-should be made visible, so the third step is a ``black box''.  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
+should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
 monotonicity properties (i.e.\ programs without negation or fact deletion)
 are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
 \emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
 Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
-\emph{event creation vs. effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
+\emph{event creation vs.\ effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
 the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao2009}.
 
 
