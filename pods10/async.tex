@@ -209,7 +209,7 @@ to write the rule it was necessary to not sugar away the time suffix in the rule
 Recall that \lang allows program executions to violate causality.
 This section explains how to implement Lamport
 clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
-temporal monotonicity\rcs{term}, by reestablishing a causal order
+temporal monotonicity, by reestablishing a causal order
 despite derivations that may flow backwards through time.
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
