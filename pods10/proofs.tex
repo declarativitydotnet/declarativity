@@ -34,7 +34,7 @@ program.  Every pure Datalog program has a unique minimal model.
 %
 \end{proof}
 
-\rcs{joe said this once. the \slang program has a unique, infinite minimal model.  As the flip flop example shows, this doesn't mean that it quiesces.  We should make the sleight of hand explicit.}
+%%\rcs{joe said this once. the \slang program has a unique, infinite minimal model.  As the flip flop example shows, this doesn't mean that it quiesces.  We should make the sleight of hand explicit.}
 
 %%\jmh{Oops, you forgot that this model is countably infinite due to infinite time. So I could add countably many random consistent facts and have an equally ``small'' model. You will need a more refined definition of safety and minimality that accounts for time.}
 
@@ -178,7 +178,9 @@ cycle must involve an inductive rule, as $P$ is temporally stratified.
 
 We convert our \slang program to a Datalog program $P'$ using the
 transformation from Section~\ref{sec:abbrvsyntax}, which does not introduce any
-additional cycles\rcs{except in the definition of successor} or negation.  Since the time suffix in the head of an
+additional cycles
+%%\rcs{except in the definition of successor} 
+or negation.  Since the time suffix in the head of an
 inductive rule is strictly greater than the time suffix of its body, no atom
 may depend negatively on itself -- it may only depend negatively on atoms in
 the previous timestep.  Thus, $P'$ is modularly stratified over time, using the
@@ -222,7 +224,7 @@ In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are external 
 This reasonable program is unstratifiable because $p \succ del\_p \land del\_p \succ p$.  But because the successor relation is constrained
 such that $\forall A,B (successor(A, B) \rightarrow B > A)$, any such program is modularly stratified on \emph{successor}.
 Therefore, we have $p_{n} \not\succ^* del\_p_{n} \not\succ^* p_{n+1}$; informally, earlier values do not depend on later values.
-\paa{need to make the text better, but this old example probably makes sense here}
+%%\paa{need to make the text better, but this old example probably makes sense here}
 \end{example}
 
 \begin{figure}[t]
