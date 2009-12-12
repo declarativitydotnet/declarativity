@@ -221,7 +221,7 @@ p\_wait(A, B, N)@async \(\leftarrow\) q(A, B)@N;
 p\_wait(A, B, N)@next \(\leftarrow\) p\_wait(A, B, N)@M, N \(\ge\) M;
 p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
 \end{Dedalus}
-
+\noindent
 we place the derived tuple in a new relation \dedalus{p\_wait} that
 stores any tuples that were ``sent into the past'' until the point in
 time at which they were derived.  Conceptually, this causes the system
