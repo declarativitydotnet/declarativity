@@ -135,13 +135,11 @@ Consider the following \slang program, which derives a single, persistent fact:
 %
 An unsafe \slang instance?
 \\
-r1:
 %%\begin{Dedalus}
 %%p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
 %%\end{Dedalus}
 \begin{Dedalus}
 persist[p, 2]
-
 p(1, 2)@123;
 \end{Dedalus}
 
