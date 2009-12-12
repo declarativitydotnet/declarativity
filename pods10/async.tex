@@ -228,8 +228,7 @@ time at which they were derived.  Conceptually, this causes the system
 to evaluate a potentially large number of timesteps (if N is
 significantly less than the timestamp of the system when the tuple
 arrives).  However, if the runtime is able to efficiently evaluate
-timesteps when the database is quiescent (by recognizing that the
-timesteps can be skipped, as is done in Algorithm~\ref{alg:tsn}), then
+timesteps when the database is quiescent, then
 instead of ``waiting'' by evaluating timesteps, it will simply
 increase its logical clock to match that of the sender.  In contrast,
 if the tuple is ``sent into the future,'' then it is processed using
