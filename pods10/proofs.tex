@@ -58,10 +58,10 @@ predicate dependency graph.
 %%its predicate dependency graph under a closed-world assumption.  
 
 We may evaluate such a program in {\em stratum order} as described in the
-Datalog literature. \wrm{cite?}
+Datalog literature~\cite{ullmanbook}.
+%%\wrm{cite?}
 %any order returned by a topological sort on the predicate dependency graph,
 %with each strongly connected component collapsed to a single node.
-
 It is easy to see that any syntactically stratified \slang instance has a
 unique minimal model because it is a syntactically stratified Datalog program.
 
@@ -221,7 +221,7 @@ in EDB relations.  This reasonable program is unstratifiable because $p \succ
 p\nega \land p\nega \succ p$.  But because the successor relation is
 constrained such that $\forall A,B, successor(A, B) \rightarrow B > A$, any
 such program is modularly stratified on \emph{successor}.  Therefore, we have
-$p_{n} \not\succ^* del\_p_{n} \not\succ^* p_{n+1}$; informally, earlier values
+$p_{n} \not\succ^* p\_neg_{n} \not\succ^* p_{n+1}$; informally, earlier values
 do not depend on later values.
 %%\paa{need to make the text better, but this old example probably makes sense here}
 \end{example}
