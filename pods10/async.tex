@@ -137,7 +137,7 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{example}
 
 \subsubsection{Temporal Monotonicity}
-\jmh{What do we need here?  We need to resurrect safety and strat for \lang, not just for \slang.  Monotonic deductive reductions are always cool.  Non-monotonic ones need us to ``inject'' monotonicity via the time suffix.  We lost this with async (which is natural in distributed systems).  We regain it via the addition of rules to enforce monotonicity -- these are akin to Lamport clocks and have the nice property that they don't ``cheat'', they follow our rules on messaging and asynchrony.}\rcs{tried to address this w/ following rewrite...}
+
 
 Nothing in our definition of asynchronous rules prevents tuples in the
 head of a rule from having a timestamp that precedes the timestamp in

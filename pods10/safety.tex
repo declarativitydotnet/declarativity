@@ -5,7 +5,8 @@ notions of persistence and mutability of state via a stylized use of Datalog.
 However, the alert reader will note that even very simple \slang programs make
 for unusual Datalog: among other concerns, persistence rules produce
 derivations for an infinite number of values of the time suffix.
-Traditional Datalog interpreters work against static databases, and would attempt to enumerate these values, which would make this approach impractical.\rcs{still don't like prev sentence..}  
+Traditional Datalog interpreters, which work against static databases, would attempt to enumerate these values, 
+making this approach impractical
 
 However,
 in the context of distributed systems and networks, the need for
@@ -41,13 +42,13 @@ set of all constant symbols appearing in the program and EDB.
 In fact, the set of all possible assignments of these constants to predicate
 attributes, representing every possible interpretation, is itself finite. 
 
-\rcs{check this paragraph}
-
 Since our definition of \dedalus{successor} violates these rules, and indeed
 leads to an infinite set of facts, \slang programs violate this
 definition of safety.  However, \dedalus{successor} models time, not computation;
 later sections explain how \lang implementations avoid enumerating the contents
-of \dedalus{successor} at runtime \wrm{whats pailiative (helping fix the problem) here???}.  This section
+of \dedalus{successor} at runtime 
+%%\wrm{whats pailiative (helping fix the problem) here???}.  
+This section
 introduces a notion of termination that allows us to reason about the safety of
 \slang programs.
 
@@ -66,8 +67,8 @@ introduces a notion of termination that allows us to reason about the safety of
 
 %\subsection{Temporal Safety}
 
-\wrm{show some examples before restricting to temporal safety!!  maybe even
-show that some unsafe programs have safe equivalents.}
+%%\wrm{show some examples before restricting to temporal safety!!  maybe even
+%%show that some unsafe programs have safe equivalents.}
 
 A \slang program containing only deductive rules is informally equivalent to a
 Datalog program in which all predicates have no time suffix.  If all the rules
@@ -142,11 +143,13 @@ persist[p, 2]
 p(1, 2)@123;
 \end{Dedalus}
 
-\paa{we shouldn't \emph{ever} need to write out r2, right?}
+%%\paa{we shouldn't \emph{ever} need to write out r2, right?}
 
 The single ground fact will cause one deduction for each tuple in
 \dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding
-Datalog\rcs{what should we call this?} program is unsafe.  
+Datalog
+%%\rcs{what should we call this?}
+program is unsafe.  
 %
 \end{example}
 
