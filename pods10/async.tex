@@ -50,7 +50,7 @@ To represent a distributed system, we consider a some number of
 agents; each running a {\em subprogram} that consists of some subset
 of the relations referenced by the \lang program running on the
 distributed system.  We constrain the \lang rules so that each rule's
-body ontains predicates from exactly one subprogram.  The head of
+body contains predicates from exactly one subprogram.  The head of
 asynchronous rules may reference a relation in any subprogram, but the
 head of all other rules must reference a relation in the subprogram
 that contains the predicates in the body.  Rules that span subprograms are
@@ -86,7 +86,7 @@ We model network nondeterminism using the \dedalus{choice} construct to choose
 from a value in the special 
 %%\dedalus{successors} 
 \dedalus{time}
-predicate, which is defined using the following datalog rules:
+predicate, which is defined using the following Datalog rules:
 
 \begin{Dedalus}
 time(\(\top\));
@@ -150,9 +150,9 @@ If we assume that our executions obey some causal ordering, then we
 know there is some partial order over the rule derivations of the
 system, and therefore, there exists at least one total ordering of the
 execution that corresponds to the partial order.  Therefore, each
-execution of a \lang program (which may be non-determinstic due to
+execution of a \lang program (which may be non-deterministic due to
 \@async) is equivalent to the execution of some deterministic \slang
-program; causality constraints reintroduce the temporal straifiability
+program; causality constraints reintroduce the temporal stratifiability
 that our definition of \lang gave up.
 
 Similarly, if we disallow negation, but allow derivations to pass
@@ -162,9 +162,9 @@ causality violations leads to an underlying Datalog program that is
 unstratifiable.
 
 We note that non-causal schedulings are of practical importance;
-distributed systems built atop ureliable and asynchronous primitives
+distributed systems built atop unreliable and asynchronous primitives
 could very well observe seemingly nonsensical orderings; one
-possibiity is that, due to caching or failure, comments begin to
+possibility is that, due to caching or failure, comments begin to
 appear to arrive well before the blog post they are attached to.
 
 \subsubsection{Entanglement}
