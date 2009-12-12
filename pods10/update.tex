@@ -1,7 +1,19 @@
 \section{Evaluation}
-In previous sections, we exploited the fact that \slang is a dialect of Datalog to prove semantic properties of \slang programs.  In this section, we turn our attention to execution, adapting the literature on bottom-up evaluation of Datalog to our context.
+In previous sections, we extended the notions of stratifiability and safety to \slang programs.  In this section, we address the third and final property of \slang programs that we want to ensure -- efficient execution.
 
-Unfortunately, the direct application of traditional bottom-up Datalog execution strategies like semi-naive evaluation results in a rather literal and inefficient notion of the idea of ``persistence.''  If a fact is true across a long sequence of timesteps, bottom-up evaluation will persistently ``re-derive'' that fact inductively for each timestep, and the number of derivations in a program will be infinite simply to maintain persistence in time.  Instead, we would like an incremental evaluation strategy that allows an external agent to examine the state of the database at any timestep $t$ without requiring $O(t)$ inductive derivations for persistence.  The intuitive strategy would be to use a memory device, ``storing'' a fact on first derivation and ``deleting'' it at the timestep that the induction is broken.  In this section we derive such a strategy via a combination of program rewriting and an operational evaluation loop, in the style of semi-naive evaluation.
+Unfortunately, the direct application of traditional bottom-up Datalog
+execution strategies like semi-naive evaluation results in a rather literal and
+inefficient notion of the idea of ``persistence.''  If a fact is true across a
+long sequence of timesteps, bottom-up evaluation will persistently
+``re-derive'' that fact inductively for each timestep, and the number of
+derivations in a program will be infinite simply to maintain persistence in
+time.  Instead, we would like an incremental evaluation strategy that allows an
+external agent to examine the state of the database at any timestep $t$ without
+requiring $O(t)$ inductive derivations for persistence.  The intuitive strategy
+would be to use a memory device, ``storing'' a fact on first derivation and
+``deleting'' it at the timestep that the induction is broken.  In this section
+we derive such a strategy via a combination of program rewriting and an
+operational evaluation loop, in the style of semi-naive evaluation.
 
 \subsection{Temporal Evaluation Over Storage}
 The traditional description of semi-naive evaluation takes a recursive Datalog program, rewrites it to a non-recursive ``delta'' program, and executes that program in a loop bracketed by state modifications.  In that spirit, we present a strategy we call ``temporal evaluation,'' which takes a \slang program, rewrites it to a Datalog program that refers to a single timestep, and executes that program in a loop---once per timestep---bracketed by state modifications.  Algorithm~\ref{alg:tsn} presents this strategy.
