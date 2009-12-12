@@ -23,7 +23,7 @@ constants---and a countably infinite universe of variable symbols $\Vars = A_1,
 A_2, \ldots$.
 %, and a distinguished variable $\Tau$.
 % which may take on the values of any constants.   
-We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended beyond \dedalus{successor(x,y)} is true \rcs{was: beyond the fact that \dedalus{successor(x,y)} holds} iff $y = x + 1$.
+We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended beyond the fact that \dedalus{successor(x,y)} is true iff $y = x + 1$.
 %We consider the
 %standard strict total order $<$. We define the \dedalus{successor} relation,
 %where \dedalus{successor(i,j)} means that \dedalus{j} is the least element that
@@ -101,30 +101,32 @@ r\pos(A_1,A_2,[...],A_n,\(\SDedalus\)) \(\leftarrow\)
 That is, for every extensional predicate \dedalus{r} there is an intensional
 predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
 Intuitively, this rule allows extensional facts to serve as ground for
-\dedalus{r\pos}, while enabling other rules to derive additioanl \dedalus{r\pos} facts.
+\dedalus{r\pos}, while enabling other rules to derive additional \dedalus{r\pos} facts.
 
-The predicate \dedalus{r\pos} may be reference in the body or head of any \slang rule.  
+The predicate \dedalus{r\pos} may be referenced in the body or head of any \slang rule.  
 We will make use of the predicate \dedalus{r\nega} later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
 Like {r\pos}, the use of {r\nega} is the heads and bodies of rules is unrestricted.
-
-%%\jmh{I hate this -- can we nail it here?}
 
 \vspace{1.2em}
 \noindent{\bf Guarded EDB: }
 No well-formed \slang rule may involve any extensional predicate, except for a rule of the form above.
 \paa{need another sentence, but not sure what it should be...}
 
+
+%%\jmh{I hate this -- can we nail it here?}
+
+
 \subsection{Abbreviated Syntax and Temporal Interpretation}
 
 \label{sec:abbrvsyntax}
 
-We have been careful to define \slang as a syntactic subset of Datalog; this inclusion allows us to take advantage of Datalog's
+We have been careful to define \slang as a subset of Datalog; this inclusion allows us to take advantage of Datalog's
 well-known semantics and the rich literature on the language.
 
 \slang programs are intended to capture 
 %naturally
-temporal semantics.  For example, a fact with some constant $C$ in its time
-suffix can be thought of as a fact that is true ``at time $C$''.  
+temporal semantics.  For example, a fact, \dedalus{p(A,B)@C}, with some constant $C$ in its time
+suffix can be thought of as a fact that is true ``at time $C$''.
 %%Deductive
 %%rules can be seen as {\em atemporal} statements: they range over all values of
 %%the time suffix, and express deductions that are ``always'' valid. 

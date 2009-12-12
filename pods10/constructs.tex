@@ -44,7 +44,7 @@ bind the time suffixes ($\Tau$) of all body predicates to a constant.  Because
 this produces a sequence of models (one per timestep), it gives us an intuitive
 and unambiguous way to declaratively express persistence and state changes
 across timesteps.  In this section, we give examples of language constructs
-that capture \wrm{state-ricuted????} motifs such as persistent relations,
+that capture state-oriented motifs such as persistent relations,
 deletion and update, sequences, and queues.
 
 \subsection{Simple Persistence}
@@ -61,17 +61,18 @@ p\pos($A_1$,$A_2$,[...],$A_n$);}
 %%A rule of the above form is known as a {\em simple persistence rule}.
 %%\end{definition}
 
-A simple persistence rule ensures that a $p$ fact true at time $i$ will be true
-$\forall j \in \mathbb{Z} : j >= i$\footnote{It is interesting to note that we can
+A simple persistence rule\footnote{It is interesting to note that we can
 express this rule using a temporal logic assertion that makes use of the $\Box$
 or ``henceforth'' operator:
-
 $\forall A_1, \ldots, A_n \in C : p$\pos$(A_1, \ldots, A_n) \to \Box p$\pos$(A_1,
 \ldots, A_n)$.
 
 This assertion states that for any constants $A_1, \ldots, A_n$ in the Herbrand
 Universe, $p$\pos$(A_1, \ldots, A_n)$ implies that henceforth, \linebreak
-$p$\pos$(A_1, \ldots, A_n)$ will be true.\rcs{defined herbrand here?  this is the first use}}.
+$p$\pos$(A_1, \ldots, A_n)$ will be true.}
+%
+ ensures that a $p$ fact true at time $i$ will be true $\forall j \in \mathbb{Z} : j >= i$.
+
 
 %\wrm{is there a point to this formula?  can't we just say ``a simple persistence
 %rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
@@ -101,8 +102,8 @@ p_pos(A_1,A_2,[...],A_n)@next \(\leftarrow\)
 If, at any time $k$, we have a fact
 \dedalus{p\nega($C_1$,$C_2$,[...],$C_n$)@k}, then we do not deduce a
 \dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@k+1} fact.  By induction, we do not
-deduce a \dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@l} for any $l > k$, unless
-this \dedalus{p\pos} fact is re-derived at some timestep $l > k$ by another
+deduce a \dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@j} for any $j > k$, unless
+this \dedalus{p\pos} fact is re-derived at some timestep $j > k$ by another
 rule.  This corresponds to the intuition that a persistent fact, once stated,
 is true until it is retracted.  
 
@@ -120,7 +121,7 @@ p(1,3)@102;
 p\nega(1,2)@300;
 \end{Dedalus}
 
-It is easy to see that the following are true: \dedalus{p(1,2)@200},
+It is easy to see that the following facts are true: \dedalus{p(1,2)@200},
 \dedalus{p(1,3)@200}, \dedalus{p(1,3)@300}.  However, \dedalus{p(1,2)@301} is
 false because it was deleted at timestep \dedalus{300}.
 \end{example}
