@@ -312,29 +312,61 @@ the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
 
 \begin{lemma} 
 %
-A \slang instance with finite EDB where every rule is one of the kinds 1-3
-above conditions 1-3 above is indeed temporally safe.
+A temporally stratifiable \slang instance with finite EDB where every rule is
+one of the kinds 1-3 above conditions 1-3 above is indeed temporally safe.
 %
 \end{lemma}
 %
 \begin{proof}
 %
 Assume the program is temporally unsafe.  That is, there exists no time $T$
-such that $\forall U >= T$, the set of all atoms with time suffix $U$ is
-equivalent modulo time to the set of all atoms with time suffix $T-1$.  Let $E$
+such that $\forall U >= T$, the set of all atoms with timestamp $U$ is
+equivalent modulo time to the set of all atoms with timestamp $T-1$.  Let $E$
 be the maximum timestamp of any fact in the EDB.
 
-However, every rule $r$ of kind 3 may only entail a finite number of facts as
-the EDB is finite, and thus may entail no facts at a timestamp greater than
-some maximum timestamp $V_r \in \mathbb{Z}$.  Since a \slang program has a
-finite set of rules we know $\exists V <= E+1 \in \mathbb{Z} : \forall r: V >= V_r$,
-such that no rules of kind 3 produce any deductions with timestamp greater than
-$V$.
+Observe that every rule $r$ of kind 3 may only entail a finite number of facts -- as
+the EDB is finite -- and thus may entail no facts at a timestamp greater than
+some maximum timestamp $V_r <= E+1 \in \mathbb{Z}$.  Since a \slang program has a
+finite set of rules we know $\exists V \in \mathbb{Z} : \forall r: V >= V_r$, and
+thus $V <= E+1$.
 
-If an atom does not exist at time $E+1$, it may not exist at any time after $E+1$.
-Assume there is some atom $a$, such that $\lnot a@E+1$ and $a@W : w>E+1$.  This
-implies \wrm{proof incomplete! moving on}
+We now consider times $T$ such that $T > E+1$.  By the above argument, no rules
+of kind 3 entail any facts with a timestamp greater than $E+1$.  Recall that
+no EDB atoms are true at any timestamp greater than $E$.  Thus, any facts with
+timestamp greater than $E+1$ are entailed by rules of kind 1 or 2.
 
+Consider the set of equivalence classes modulo time of all possible atoms, {\bf
+A}, given the Herbrand universe.  We know {\bf A} is finite, as the Herbrand
+Universe is finite.  Therefore, if the program is temporally unsafe, then the
+set of atoms entailed by the program, {\bf B}, both contains and excludes
+infinitely many members of at least one equivalence class in {\bf A} (i.e.
+something ``infinitely oscillates in time'' between being true and false).
+Since the program has finitely many rules, at least one rule must entail
+infinitely many atoms (from at least one of the equivalence classes from {\bf
+A}).  Thus, there must be a cycle that contains $P$ and $\lnot P$.
+
+We show the existence of some cycle containing only rules of kind 1 involving
+$P$ and $\lnot P$, which implies that the program is temporally unstratifiable.
+In order for such a cycle to exist, $P$ must transitively entail $\lnot P$, and
+$\lnot P$ must transitively entail $P$.  Thus, the program contains a
+rule with $\lnot P$ in its body, and some predicate $R$ in its head, as well as
+a rule that expresses the transitive entailment of $P$ by $R$.
+
+{\bf Case 1: }$P \neq R$.  In this case, then the former rule must be of kind
+1, as for any $Q \neq P$, a rule of kind 2 with $P$ in the head may not
+directly entail $Q$ given $P$.  The latter rule must also be of kind 1 -- if it
+is of kind 2, then it necessarily contains $P$ in its body, which means that it
+cannot entail $P$, as it would not be triggered unless P were already true.  If
+the latter rule contains $R$ in its body, then the program is syntactically
+unstratifiable.  If the latter rule does not contain $R$ in its body, then it
+contains some predicate $S$ transitively entailed by $R$; wlog the body contains
+$R$.  Thus, the program is syntactically unstratifiable.
+
+{\bf Case 2: }$P = R$.  In this case, the former rule and latter rule are the
+same rule: $P \leftarrow \lnot P$.  This rule is clearly syntactically
+unstratifiable.
+
+Thus, the program is temporally unstratifiable.
 %
 \end{proof}
 
