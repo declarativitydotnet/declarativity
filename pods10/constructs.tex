@@ -164,7 +164,7 @@ Note that these two rules produce only a single value of seq at each timestep, b
 \subsection{Queues}
 
 
-\jmh{Can't we whittle this down to the bone?  Why are we dealing with user and job attributes?  Why not drop user?}
+\jmh{Can't we whittle this down to the bone?  Why are we dealing with user and job attributes?  Why not drop user?}\rcs{my example; joe's right.  It is all h4xor3d right now.}
 
 While sequences are useful constructs for generating or imposing an ordering on tuples, programs will in some cases require that tuples
 are processed in a particular order and with a particular punctuation.   To this end, we introduce a queue template, which employs 
@@ -247,8 +247,7 @@ may redefine \emph{omin} and any dependent rules to exclude the \textbf{A}
 attribute.
 
 \paa{joe dislikes the below but I like it.  thoughts?}
-A queue establishes a mapping between the local clock and the priority-ordering attribute of the input relation. By doing so, we are able to take
-advantage of the natural ordering enforced by stratification over time, to enforce an ordering property over our input that is otherwise 
+A queue establishes a mapping between \slang's timesteps\rcs{this said local clock, but I don't know what that was.  w/ this change, I like this paragraph} and the priority-ordering attribute of the input relation. By doing so, we are able to use the natural ordering enforced by stratification over time to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
 
 \wrm{END WARNING}
