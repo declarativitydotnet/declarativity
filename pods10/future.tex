@@ -4,25 +4,37 @@
 as expressive because its operational semantics (cite boom-tr) are essentially the same as the behavior of Algorithm 1.  Formalizing this
 a bit difficult since it entails developing a proper definition of the operational semantics of our Overlog interpreter.  Rather than trouble ourselves
 with that, we are in the process of ``porting'' our Overlog code to Dedalus. }
+
+
 Datalog has inspired a variety of recent applied work, which touts the benefits of declarative specifications for practical implementations.  Unfortunately, Datalog's declarative semantics make no guarantees
 regarding the order in which derivations will occur; or rather, they derive all derivations in one atomic fixpoint computation.  This makes it difficult to associate natural ``side-effects'' like state update and message delivery with purely logical notions of deduction.
 
 
-\lang is the result of our experience using hybrid
+%%lang is in part  result of our experience using hybrid
+We have acquired substantial experience building real, datacenter-scale
+distributed systems using hybrid
 declarative/imperative languages such as Overlog~\cite{Loo2009-CACM}
 to implement a number of networking protocols and distributed
 systems~\cite{boom-techr,Alvaro2009I-Do-Declare:-C,Chu:2007,Loo2009-CACM}.
-Although our experience with those languages was largely positive, the
-combination of Datalog and imperative constructs hampered our
-development of program analyses, and even our understanding of the
+While our experience with those languages was largely positive, the 
+combination of Datalog and imperative constructs 
+%%hampered our development of program analyses, and even
+often clouded  our understanding of the
 ``correct'' execution of single-node programs that performed state
-updates.
+updates.  
 
+\lang developed in large part as a reaction to the semantic difficulties
+presented by these distributed logic languages.  
 By mapping time to another type of data over which logical deductions
 are performed, \lang allows us to express concepts such as asynchrony and state update in terms of a purely deductive logic
 language, achieving the goal of a declarative language without sacrificing critically expressive features for the distributed systems domain.
+We believe that \lang is just as expressive as Overlog, whose operational semantics~\cite{boom-tr} are essentially the same
+as those described in Algorithm 1.  Formalizing this intuition is difficult because the operational semantics of Overlog are only informally
+defined.  Instead, we are currently in the process of ``porting'' many of our Overlog programs to \lang.
 
-\jmh{I think this paragraph says ``\lang handles state'', and the next says ``\lang handles asynchrony.''  Yes?  Let's say so than.}
+
+%%\jmh{I think this paragraph says ``\lang handles state'', and the next says ``\lang handles asynchrony.''  Yes?  Let's say so than.}
+
 At their core, state update and communication differ from logical
 deductions only in terms of timing; \lang's notion of time allows us
 to interleave operations and time in terms of logical deductions.
@@ -35,7 +47,7 @@ asynchronous and unreliable communication introduce nondeterminism
 which \lang models with \dedalus{choose}.  
 
 Our hope is that modeling external process and events with a single
-primitive will greatly simplify program analysis techniques.  Rather
+primitive will greatly simplify formal program verification techniques for the distributed systems domain.  Rather
 than spending time and effort translating imperative code into sets of logical
 invariants over program executions, analyses of \lang programs can
 work directly against the invariants encoded by the program, allowing
@@ -43,4 +55,13 @@ them to focus on invocations of \dedalus{choose}, each of which
 encodes some less easily avoided source of non-determinism and
 ambiguity, such as a hardware failure or end-user.
 
-\rcs{not really happy with the last paragraph; we should at least say some high-level thing about raising level of abstraction of programming, enabling more applications, etc, etc...}
+Logic languages are attractive because they raise the level of abstraction at which programs are specified
+and implemented, but this often comes at the cost of expressivity.  Instead of admitting language extensions that require low-level 
+operational reasoning about program behavior and obscuring the uncertainty associated with network communication, \lang 
+neatly accommodates both state update and asynchrony through the reification of time as data.  By adhering thus to the model-theoretic
+semantics of Datalog, \lang is able to take advantage of the rich Datalog literature, appropriating the notions of safety, stratification
+and semi-naive evaluation do its expanded domain.  
+
+
+
+
