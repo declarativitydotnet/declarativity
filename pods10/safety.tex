@@ -343,30 +343,29 @@ infinitely many members of at least one equivalence class in {\bf A} (i.e.
 something ``infinitely oscillates in time'' between being true and false).
 Since the program has finitely many rules, at least one rule must entail
 infinitely many atoms (from at least one of the equivalence classes from {\bf
-A}).  Thus, there must be a cycle that contains $P$ and $\lnot P$.
+A}). Thus, it is easy to see that there must be a cycle that contains some predicate $P$ and $\lnot P$.
 
-We show the existence of some cycle containing only rules of kind 1 involving
-$P$ and $\lnot P$, which implies that the program is temporally unstratifiable.
-In order for such a cycle to exist, $P$ must transitively entail $\lnot P$, and
-$\lnot P$ must transitively entail $P$.  Thus, the program contains a
-rule with $\lnot P$ in its body, and some predicate $R$ in its head, as well as
-a rule that expresses the transitive entailment of $P$ by $R$.
+We show there exists such a cycle containing only rules of kind 1, which
+implies that the program is temporally unstratifiable.  In order for such a
+cycle to exist, $P$ must transitively depend on $\lnot P$, and $\lnot P$ must
+transitively depend on $P$.  Thus, the program contains a rule $J_1$ with
+$\lnot P$ in its body, and some predicate $R$ in its head, as well as a rule
+$J_2$ that is transitively dependent on $R$, with $P$ in its head.
 
-{\bf Case 1: }$P \neq R$.  In this case, then the former rule must be of kind
-1, as for any $Q \neq P$, a rule of kind 2 with $P$ in the head may not
-directly entail $Q$ given $P$.  The latter rule must also be of kind 1 -- if it
-is of kind 2, then it necessarily contains $P$ in its body, which means that it
-cannot entail $P$, as it would not be triggered unless P were already true.  If
-the latter rule contains $R$ in its body, then the program is syntactically
-unstratifiable.  If the latter rule does not contain $R$ in its body, then it
-contains some predicate $S$ transitively entailed by $R$; wlog the body contains
-$R$.  Thus, the program is syntactically unstratifiable.
+{\bf Case 1: }$P \neq R$.  In this case, $J_1$ must be of kind 1, as for any $Q
+\neq P$, a rule of kind 2 with $P$ in the head may not directly entail $Q$
+given $P$.  $J_2$ must also be of kind 1 -- if it is of kind 2, then it
+necessarily contains $P$ in its body, so it cannot entail $P$ unless $P$ is
+entailed by some other rule.  If $J_2$ contains $R$ in its body, then the
+program is syntactically unstratifiable.  But if $J_2$ does not contain $R$ in
+its body, then it contains some predicate $S$ transitively entailed by $R$;
+wlog the body contains $R$.  Thus, the program is syntactically unstratifiable.
 
-{\bf Case 2: }$P = R$.  In this case, the former rule and latter rule are the
-same rule: $P \leftarrow \lnot P$.  This rule is clearly syntactically
-unstratifiable.
+{\bf Case 2: }$P = R$.  In this case, $J_1$ and $J_2$ are the same rule: $P
+\leftarrow \lnot P$.  Thus, the program is syntacticaly unstratifiable.
 
-Thus, the program is temporally unstratifiable.
+Thus, the program is temporally unstratifiable, which contradicts our
+assumption.
 %
 \end{proof}
 
