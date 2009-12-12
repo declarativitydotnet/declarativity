@@ -30,10 +30,12 @@ networks that may delay, lose or reorder the results of logical deductions.
 %%\subsubsection{Choice}
 An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of nondeterminism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 
-The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
-\emph{$X_1$} and \emph{$X_2$} are vectors whose constituent variables occur elsewhere in the body.  Following Greco and Zaniolo, such a subgoal
-enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing'' a single assignment of values to the variables
-in \emph{$X_2$} for each variable in \emph{$X_1$}.
+The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear
+in the body of a rule, where \emph{$X_1$} and \emph{$X_2$} are vectors
+whose constituent variables occur elsewhere in the body.  Such a
+subgoal enforces the functional dependency \emph{$X_1$} $\to$ $X_2$,
+``choosing'' a single assignment of values to the variables in
+\emph{$X_2$} for each variable in \emph{$X_1$}.
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
 must have a multiplicity of stable models---that is it must be unstratifiable.  Greco and Zaniolo define 
@@ -44,30 +46,28 @@ and each possible choice is associated with a different model.
 is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the previous paragraph, or rewrite it to simply say ``see the Italians if you want to understand more, but for our purposes assume a unique non-deterministic assignment that respects the FDs.  This allows us to have agreed-upon minimal models.''}
 
 \subsection{Distribution Model}
-
-A principal motivation for \lang is to model and implement distributed
-systems.  To represent a distributed system, we consider some number
-of agents; each running a {\em subprogram} against some subset ({\em
-  horizontal partition}) of each relation's contents.  We add a column
-to the beginning of each relation, then store the name of the
-partition that contains each tuple in that column.  For clarity, we
-say such columns are {\em location specifiers}, and prefix their
-contents and the attributes that bind them with a \dedalus{\#} symbol.
+To represent a distributed system, we consider some number of agents,
+each running a {\em subprogram} against a disjoint subset ({\em
+  horizontal partition}) of each relation's contents.  We add an
+attribute to the beginning of each relation that identifies the
+partition for every tuple in that relation. For clarity, we say such
+attribute are {\em location specifiers}, and prefix them with a
+\dedalus{\#} symbol.
 
 Finally, we constrain \lang rules so that each rule's body contains
-predicates from exactly one partition.  The head of asynchronous rules
+predicates from exactly one partition.  The head of an asynchronous rule
 may deduce values to be stored in any partition; an asynchronous rule
 that crosses partitions in this way is called a {\em communication
   rule}.  All other rules are ``local,'' and deduce facts that are
 stored in the same partition as the antecedents.
 
-This restricts communication between nodes in two important ways.
-First, by restricting bodies to a single agent, it forces all
-communication between agents to occur via communication rules.  Second,
-because all communication rules are asynchronous, agents may only
-learn about time values at another agent by receiving messages (with
-unknown delay) from that agent.  Note that this model says nothing
-about the relationship between the agents' clocks; they could be
+This restricts communication between agents in two important ways.
+First, by restricting bodies to a single agent, all communication
+between agents must occur via communication rules.  Second, because
+all communication rules are asynchronous, agents may only learn about
+time values at another agent by receiving messages (with unbounded
+delay) from that agent.  Note that this model says nothing about the
+relationship between the agents' clocks; they could be
 non-monotonically increasing, or they could respect a global order.
 We now turn to a discussion of such issues.
 
