@@ -48,7 +48,7 @@ Since our definition of \dedalus{successor} violates these rules, and indeed
 leads to an infinite set of facts, \slang programs violate this
 definition of safety.  However, \dedalus{successor} models time, not computation;
 later sections explain how \lang implementations avoid enumerating the contents
-of \dedalus{successor} at runtime 
+of \dedalus{successor} at runtime.
 %%\wrm{whats pailiative (helping fix the problem) here???}.  
 This section
 introduces a notion of termination that allows us to reason about the safety of
@@ -362,7 +362,7 @@ its body, then it contains some predicate $S$ transitively entailed by $R$;
 wlog the body contains $R$.  Thus, the program is syntactically unstratifiable.
 
 {\bf Case 2: }$P = R$.  In this case, $J_1$ and $J_2$ are the same rule: $P
-\leftarrow \lnot P$.  Thus, the program is syntacticaly unstratifiable.
+\leftarrow \lnot P$.  Thus, the program is syntactically unstratifiable.
 
 Thus, the program is temporally unstratifiable, which contradicts our
 assumption.
