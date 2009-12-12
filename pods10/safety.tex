@@ -275,8 +275,10 @@ quiescent after some time $T$.
 Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
 an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
 predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$
-depends on $p$), $p$ appears in no inductive rule.
-\wrm{cite depends on thing...}\rcs{this definition is too restrictive.  see rule 3 below}
+depends on $p$), either $p$ appears in the head of no inductive rules, or if the body
+of each inductive rule in which $p$ appears contains at least positive instantaneous 
+predicate.
+
 \end{definition}
 
 %%A rule is temporally safe if:
