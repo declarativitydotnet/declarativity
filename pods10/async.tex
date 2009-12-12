@@ -39,11 +39,13 @@ subgoal enforces the functional dependency \emph{$X_1$} $\to$ $X_2$,
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
 must have a multiplicity of stable models---that is it must be unstratifiable.  Greco and Zaniolo define 
-choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly connected component of rules, 
-and each possible choice is associated with a different model.
+choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules, 
+and each possible choice is associated with a different model.  This results in a unique, non-deterministic assignment that
+respects the given functional dependencies.
 
-\paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
-is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the previous paragraph, or rewrite it to simply say ``see the Italians if you want to understand more, but for our purposes assume a unique non-deterministic assignment that respects the FDs.  This allows us to have agreed-upon minimal models.''}
+%%\paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
+%%is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the previous paragraph, or rewrite it to simply say ``see the Italians if you want to understand more, 
+%%but for our purposes assume a unique non-deterministic assignment that respects the FDs.  This allows us to have agreed-upon minimal models.''}
 
 \subsection{Distribution Model}
 To represent a distributed system, we consider some number of agents,
@@ -195,9 +197,12 @@ Note however that the time suffix $N$ of the rule body appears also in an attrib
 binding of both the time value of the deduction and the time value of its consequence.  We call such a binding
 an \emph{entanglement}.   Entanglement is a surprisingly powerful construct that allows a rule to 
 reference the logical clock time of the deduction that produced one (or more) of its subgoals.  Note that in order
-to write the rule it was necessary to not sugar away the time suffix in the rule body.  We restrict the use of entanglements to asynchronous rules. \jmh{Why the restriction?  Also, can you justify that it's surprisingly powerful?}
+to write the rule it was necessary to not sugar away the time suffix in the rule body.  
+%%We restrict the use of entanglements to asynchronous rules. 
+\jmh{Why the restriction?  Also, can you justify that it's surprisingly powerful?}
+\paa{bill, any thoughts on a nice lean sentence that provides this justification?}
 
-\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}\rcs{beginning of sec 6, first sentence}
+%%\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}\rcs{beginning of sec 6, first sentence}
 
 \subsection{Lamport Clocks}
 
@@ -243,5 +248,5 @@ appending a unique node identifier to each timestamp; this could be
 done automatically by the runtime, or by adding arithmetic expressions
 or other computations to the rewritten predicates.
 
-\jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
-\rcs{I'd like to do this, but don't have any good examples...}
+%%\jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
+%%\rcs{I'd like to do this, but don't have any good examples...}
