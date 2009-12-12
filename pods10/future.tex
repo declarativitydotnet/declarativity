@@ -23,10 +23,11 @@ often clouded  our understanding of the
 ``correct'' execution of single-node programs that performed state
 updates.  
 
-\lang developed in large part as a reaction to the semantic difficulties
+This work developed in large part as a reaction to the semantic difficulties
 presented by these distributed logic languages.  
-By mapping time to another type of data over which logical deductions
-are performed, \lang allows us to express concepts such as asynchrony and state update in terms of a purely deductive logic
+%%By mapping time to another type of data over which logical deductions
+%%are performed, 
+\lang allows us to express concepts such as asynchrony and state update in terms of a purely deductive logic
 language, achieving the goal of a declarative language without sacrificing critically expressive features for the distributed systems domain.
 We believe that \lang is just as expressive as Overlog, whose operational semantics~\cite{boom-tr} are essentially the same
 as those described in Algorithm 1.  Formalizing this intuition is difficult because the operational semantics of Overlog are only informally
@@ -60,7 +61,7 @@ and implemented, but this often comes at the cost of expressivity.  Instead of a
 operational reasoning about program behavior and obscuring the uncertainty associated with network communication, \lang 
 neatly accommodates both state update and asynchrony through the reification of time as data.  By adhering thus to the model-theoretic
 semantics of Datalog, \lang is able to take advantage of the rich Datalog literature, appropriating the notions of safety, stratification
-and semi-naive evaluation do its expanded domain.  
+and semi-naive evaluation to its expanded domain.  
 
 
 
