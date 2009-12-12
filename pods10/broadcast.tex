@@ -4,22 +4,17 @@ timeouts and retries, and often hide the nondeterminism behind these abstraction
 achieving encapsulation of nondeterminism while dealing explicitly with the uncertainty in the model.  Consider the simple
 broadcast protocol below:
 
-\jmh{what's the ``program'' construct?  do you need it?  if so, define it.}
-
 \begin{Dedalus}
-
-program broadcast_simple;
-
-sbcast(Member, Sender, Message)@async \(\leftarrow\)
-    smessage(Agent, Sender, Message),
-    bcast_global::members(#Agent, Member);
+sbcast(#Member, Sender, Message)@async \(\leftarrow\)
+    smessage(#Agent, Sender, Message),
+    members(#Agent, Member);
 
 sdeliver(Member, Sender, Message) \(\leftarrow\)
     sbcast(Member, Sender, Message);
 
 \end{Dedalus}
 
-The table \emph{members} is a persistent relation defined in another module \jmh{what's a module??} and containing the broadcast 
+The table \emph{members} is a persistent relation defined elsewhere, containing the broadcast 
 membership list.  
 %%The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
 %%address.  
@@ -27,12 +22,12 @@ The protocol is straightforward: if a tuple appears in \emph{smessage} (an EDB p
 it will be sent to all members (a multicast).  The interpretation of the non-deterministic choice implied by the
 \emph{async} rule indicates that order and delivery (i.e. finite delay) are not guaranteed.
 
-The module \emph{broadcast\_reliable} shown below makes use of the
+The program shown below makes use of the
 multicast primitive provided by \emph{broadcast\_simple}, and uses it
 to implement a basic reliable broadcast using a textbook
 mechanism~\cite{mullender} that assumes any node that fails to recieve
 a message sent to it has failed.  When broadcast completes, all nodes
-that have not failed have recieved the message.
+that have not failed have received the message.
 
 Simple broadcast is augmented in that if a node receives a message, it 
 also multicasts it to every member \emph{before} delivering the message locally:
