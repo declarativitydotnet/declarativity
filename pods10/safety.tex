@@ -43,7 +43,7 @@ attributes, representing every possible interpretation, is itself finite.
 
 Since our definition of \dedalus{successor} violates these rules, and indeed
 leads to an infinite set of facts, \slang programs \wrm{urulaje???} this
-defintion of safety.  However, \dedalus{sucessor} models time, not computation;
+definition of safety.  However, \dedalus{successor} models time, not computation;
 later sections explain how \lang implementations avoid enumerating the contents
 of \dedalus{successor} at runtime \wrm{whats pailiative here???}.  This section
 introduces a notion of termination that allows us to reason about the safety of
@@ -69,7 +69,7 @@ show that some unsafe programs have safe equivalents.}
 
 A \slang program containing only deductive rules is informally equivalent to a
 Datalog program in which all predicates have no time suffix.  If all the rules
-in such a program meet the conditions above, then clearly we would like them to meet \slang's defintion of safety. 
+in such a program meet the conditions above, then clearly we would like them to meet \slang's definition of safety. 
 %%\rcs{this used to say conditions 1 and 2, but it is possible that our program is infinitely long...  Also, ``clearly they are safe'' is strange, given that we haven't defined 
 %%safety yet, so I reworded.}
 
@@ -144,7 +144,7 @@ p(1, 2)@123;
 
 The single ground fact will cause one deduction for each tuple in
 \dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding
-datalog\rcs{what should we call this?} program is unsafe.  
+Datalog\rcs{what should we call this?} program is unsafe.  
 %
 \end{example}
 
@@ -299,7 +299,7 @@ positive subgoal in the body.
 %%also, rules that are (2,3) are temporally safe.}
 
 While a temporally safe program is henceforth quiescent after some time $T$,
-a temporally unsafe program changes infiniely.  Note that
+a temporally unsafe program changes infinitely.  Note that
 the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
 \emph{r1} satisfies the second condition above.
 
@@ -338,7 +338,7 @@ may only be triggered finitely often, is the EDB is finite.
 \end{proof}
 
 \begin{example}
-A \slang instance with a temporally unsafe deductive rule.\rcs{is this even a \slang instance?  Is it a datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
+A \slang instance with a temporally unsafe deductive rule.\rcs{is this even a \slang instance?  Is it a Datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
 
 \begin{Dedalus}
 p(A, B) \(\leftarrow\) q(A);
@@ -364,7 +364,7 @@ flip\_flop(1, 0)@1;
 p(0)@2;
 \end{Dedalus}
 
-\rcs{i found the exampe hard to read, and don't see how it's fundamentally different from this, which I think is easier to understand:}
+\rcs{i found the example hard to read, and don't see how it's fundamentally different from this, which I think is easier to understand:}
 
 \begin{Dedalus}
 flip\_flop(B, A)@next \(\leftarrow\) flip\_flop(A, B);
