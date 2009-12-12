@@ -70,9 +70,13 @@ asynchronous processing and communication.  We show how these features
 are captured in \lang via a natural incorporation of {\em time} as an
 attribute of Datalog predicates.
 
-Given the ability to express programs with these two features, we address three important, domain-specific properties of \lang programs: a temporal notion of {\em safety} appropriate to long-running services and protocols, {\em stratified} monotonic reasoning with negation over time, and efficient evaluation
-in time via a simple execution strategy.  We also provide conservative syntactic checks
-for our temporal notions of safety and stratification.  
+Given the ability to express programs with these two features, we
+address three important properties of \lang programs: a temporal
+notion of {\em safety} appropriate to long-running services and
+protocols, {\em stratified} monotonic reasoning with negation over
+time, and efficient evaluation via a simple execution strategy.  We
+also provide conservative syntactic checks for our temporal notions of
+safety and stratification.
 
 From an expressivity perspective, we demonstrate the practical utility of \lang with specific examples a number of building-block routines from classical distributed computing, including sequences, queues, distributed clocks, and reliable broadcast.  We also discuss the correspondence between \lang and our prior work implementing full-featured distributed services in somewhat more operational Datalog variants~\cite{Loo2009-CACM,boom-techr}.
 
