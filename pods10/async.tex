@@ -81,7 +81,7 @@ if the
 %(Section~\ref{sec:syntaxrestrictions}).  in our discussion of \slang,
 %representing the time suffixes occuring respectively in the body and head of a
 %rule.
-relation between the head time suffix $\SDedalus$ and the body time suffix $\Tau$ is
+relationship between the head time suffix $\SDedalus$ and the body time suffix $\Tau$ is
 unknown.  Furthermore, $\SDedalus$ (but not $\Tau$) may take on the special value
 $\top$ which means ``never.''  Derivation at $\top$ indicates that the
 deduction is ``lost,'' as time suffixes in rule bodies do not range over
@@ -167,7 +167,7 @@ execution of a \lang program (which may be nondeterministic due to
 program; causality constraints reintroduce the temporal stratifiability
 that our definition of \lang gave up.
 
-Similarly, if we disallow negation, but allow derivations to pass
+Similarly, if we disallow negation, but allow derivations to travel
 backwards in time, the resulting \lang program is still temporally
 stratifiable.  However, admitting both negation across timesteps and
 causality violations leads to an underlying Datalog program that is
@@ -176,7 +176,7 @@ unstratifiable.
 We note that non-causal schedulings are of practical importance;
 distributed systems built atop unreliable and asynchronous primitives
 could very well observe seemingly nonsensical orderings.  For example,
-in scalable internet publishing application, one can imagine that, due
+in a scalable internet publishing application, one can imagine that, due
 to caching or failure, it is possible that comments begin to arrive
 over the network well before the article they respond to.
 
@@ -203,7 +203,7 @@ to write the rule it was necessary to not sugar away the time suffix in the rule
 Recall that \lang allows program executions to violate causality.
 This section explains how to implement Lamport
 clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
-temporal monotonicity\rcs{term}, by reestablishing a causal order,
+temporal monotonicity\rcs{term}, by reestablishing a causal order
 despite derivations that may flow backwards through time.
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
@@ -223,7 +223,7 @@ to evaluate a potentially large number of timesteps (if N is
 significantly less than the timestamp of the system when the tuple
 arrives).  However, if the runtime is able to efficiently evaluate
 timesteps when the database is quiescent (by recognizing that the
-timesteps can be skipped, as is done in Algorithm~\ref{alg:tsn}), then
+timesteps can be skipped, as is done in Algorithm~\ref{alg:tsn}\rcs{ouch; alg 1 requires causality!!!}), then
 instead of ``waiting'' by evaluating timesteps, it will simply
 increase its logical clock to match that of the sender.  In contrast,
 if the tuple is ``sent into the future,'' then it is processed using
@@ -231,7 +231,7 @@ the timestep that receives it.
 
 This manipulation of timesteps and clock values is equivalent to
 conventional descriptions of Lamport clocks, except that our Lamport
-clock implementation also needs to events in order to avoid causality
+clock implementation also needs to delay derivations in order to avoid causality
 violations.  Therefore, it needs to temporarily store incoming tuples
 in the \dedalus{p\_wait} relation.
 
