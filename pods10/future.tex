@@ -8,11 +8,15 @@ Datalog has inspired a variety of recent applied work, which touts the benefits 
 regarding the order in which derivations will occur; or rather, they derive all derivations in one atomic fixpoint computation.  This makes it difficult to associate natural ``side-effects'' like state update and message delivery with purely logical notions of deduction.
 
 
-\lang is the result of our experience using hybrid declarative/imperative languages such as
-Overlog~\cite{Loo2009-CACM} to implement a number of networking protocols
-and distributed systems~\cite{boom-techr,Loo2009-CACM,Alvaro2009I-Do-Declare:-C,Chu:2007}.  Although our experience with those
-languages was largely positive, the combination of Datalog and imperative constructs hampered our development of program analyses, and even our understanding of the ``correct'' execution of single-node programs that performed state updates.
-
+\lang is the result of our experience using hybrid
+declarative/imperative languages such as Overlog~\cite{Loo2009-CACM}
+to implement a number of networking protocols and distributed
+systems~\cite{boom-techr,Alvaro2009I-Do-Declare:-C,Chu:2007,Loo2009-CACM}.
+Although our experience with those languages was largely positive, the
+combination of Datalog and imperative constructs hampered our
+development of program analyses, and even our understanding of the
+``correct'' execution of single-node programs that performed state
+updates.
 
 By mapping time to another type of data over which logical deductions
 are performed, \lang allows us to express concepts such as asynchrony and state update in terms of a purely deductive logic

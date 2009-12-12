@@ -45,9 +45,9 @@ these languages the blend of operational and declarative constructs
 has led to semantic ambiguities.  This was of particular interest to
 us in the context of networking and other distributed systems, both
 because we have considerable practical experience with these
-languages~\cite{Loo2009-CACM,boom-techr}, and because others have
+languages~\cite{boom-techr,Loo2009-CACM}, and because others have
 examined the semantic ambiguities of these languages in some
-depth~\cite{navarro,Mao2009}.
+depth~\cite{Mao2009,navarro}.
 
 In this paper we reconsider declarative programming for distributed
 systems from a model-theoretic perspective, via the introduction of a
@@ -78,7 +78,13 @@ time, and efficient evaluation via a simple execution strategy.  We
 also provide conservative syntactic checks for our temporal notions of
 safety and stratification.
 
-From an expressivity perspective, we demonstrate the practical utility of \lang with specific examples, including a number of building-block routines from classical distributed computing, such as sequences, queues, distributed clocks, and reliable broadcast.  We also discuss the correspondence between \lang and our prior work implementing full-featured distributed services in somewhat more operational Datalog variants~\cite{Loo2009-CACM,boom-techr}.
+From an expressivity perspective, we demonstrate the practical utility
+of \lang with specific examples, including a number of building-block
+routines from classical distributed computing, such as sequences,
+queues, distributed clocks, and reliable broadcast.  We also discuss
+the correspondence between \lang and our prior work implementing
+full-featured distributed services in somewhat more operational
+Datalog variants~\cite{boom-techr,Loo2009-CACM}.
 
 % Traditional database systems are based on declarative query languages that
 % specify transformations as dataflows over an updatable store.

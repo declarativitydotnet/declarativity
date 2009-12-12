@@ -8,11 +8,11 @@ interpretation by admitting temporal extensions into their syntax and interpreti
 across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
 First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
 Partly as a result of this, we are able to enforce stricter constraints on the allowable time suffixes in rules: a program may only specify what deductions are visible
-in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu, et al.  Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges''. 
+in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu, et al.  Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges.''
 
 U-Datalog~\cite{udatalog-neg} addresses updates using syntax annotations that establish different interpretations for the set of updated 
 relations and the IDB, interpreting update atoms as constraints and using constraint logic programming techniques to test for inconsistent
-derivations.  Similarly, Timed Concurrent Constraint Programming (TCCP)~\cite{tccp, tdccp} handles nonmonotonic constructs in a CLP framework
+derivations.  Similarly, Timed Concurrent Constraint Programming (TCCP)~\cite{tdccp,tccp} handles nonmonotonic constructs in a CLP framework
 by outputting a new (possibly diminished) store and constraint program at each timestep.  
 
 Lamport's TLA+~\cite{tla} is a language for specifying 
@@ -22,7 +22,7 @@ of table persistence.  Two distinguishing features of \lang with respect to TLA+
 
 \subsection{Distributed Systems}
 
-Significant recent work (\cite{boom-techr,Loo2009-CACM,Chu:2007,Belaramani:2009}, etc.) has focused on applying deductive database languages extended with networking 
+Significant recent work (\cite{boom-techr,Chu:2007,Belaramani:2009,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
 a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
 Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
