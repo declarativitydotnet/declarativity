@@ -319,10 +319,6 @@ such that $\forall U >= T$, the set of all atoms with time suffix $U$ is
 equivalent modulo time to the set of all atoms with time suffix $T-1$.  Let $E$
 be the maximum timestamp of any fact in the EDB.
 
-A rule of kind 2 does not entail an atom in timestamp $T$ if that atom does not
-exist at $T-1$.  Rules of kind 1 and 3 may entail atoms in timestamp $T$ not in
-$T-1$.
-
 However, every rule $r$ of kind 3 may only entail a finite number of facts as
 the EDB is finite, and thus may entail no facts at a timestamp greater than
 some maximum timestamp $V_r \in \mathbb{Z}$.  Since a \slang program has a
@@ -330,18 +326,9 @@ finite set of rules we know $\exists V <= E+1 \in \mathbb{Z} : \forall r: V >= V
 such that no rules of kind 3 produce any deductions with timestamp greater than
 $V$.
 
-Rules of kind 1 may produce deductions forever.  Recall that every predicate in
-\slang is either instantaneous or inductive.  No instantaneous predicates exist
-at time 
-
-Furthermore,
-
-
-, so each such rule
-$r$ has an associated maximum time value $V_r$, after which 
-
-A rule that satisfies condition 3
-may only be triggered finitely often, is the EDB is finite.  
+If an atom does not exist at time $E+1$, it may not exist at any time after $E+1$.
+Assume there is some atom $a$, such that $\lnot a@E+1$ and $a@W : w>E+1$.  This
+implies \wrm{proof incomplete! moving on}
 
 %
 \end{proof}
