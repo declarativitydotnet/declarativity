@@ -33,7 +33,6 @@ Simple broadcast is augmented in that if a node receives a message, it
 also multicasts it to every member \emph{before} delivering the message locally:
 
 \begin{Dedalus}
-program broadcast_reliable;
 
 bcast_simple::smessage(Agent, Sender, Message)  \(\leftarrow\)
     rmessage(Agent, Sender, Message);
