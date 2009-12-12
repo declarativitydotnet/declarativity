@@ -28,15 +28,15 @@ networks that may delay, lose or reorder the results of logical deductions.
 
 
 %%\subsubsection{Choice}
-A signature feature of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of non-determinism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
+An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of nondeterminism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 
 The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear in the body of a rule, where
 \emph{$X_1$} and \emph{$X_2$} are vectors whose constituent variables occur elsewhere in the body.  Following Greco and Zaniolo, such a subgoal
-enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing" a single assignment of values to the variables
+enforces the functional dependency \emph{$X_1$} $\to$ $X_2$, ``choosing'' a single assignment of values to the variables
 in \emph{$X_2$} for each variable in \emph{$X_1$}.
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
-must have a multiplicity of stable models -- that is it must be unstratifiable.  Greco and Zaniolo define 
+must have a multiplicity of stable models---that is it must be unstratifiable.  Greco and Zaniolo define 
 choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly connected component of rules, 
 and each possible choice is associated with a different model.
 
@@ -46,19 +46,19 @@ is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the pre
 \subsection{Distribution Model}
 
 A principal motivation for \lang is to model and implement distributed systems.
-To represent a distributed system, we consider a some number of
+To represent a distributed system, we consider some number of
 agents; each running a {\em subprogram} that consists of some subset
 of the relations referenced by the \lang program running on the
 distributed system.  We constrain the \lang rules so that each rule's
 body contains predicates from exactly one subprogram.  The head of
-asynchronous rules may reference a relation in any subprogram, but the
+an asynchronous rule may reference a relation in any subprogram, but the
 head of all other rules must reference a relation in the subprogram
 that contains the predicates in the body.  Rules that span subprograms are
 {\em communication rules}.
 
 This restricts communication between nodes in two important ways.
 First, by restricting bodies to a single agent, it forces all
-communication between agents to be via communication rules.  Second,
+communication between agents to occur via communication rules.  Second,
 because all communication rules are asynchronous, agents may only
 learn about time values at another agent by receiving messages (with
 unknown delay) from that agent.  Note that this model says nothing
@@ -82,7 +82,7 @@ $\top$ which means ``never.''  Derivation at $\top$ indicates that the
 deduction is ``lost,'' as time suffixes in rule bodies do not range over
 $\top$.
 
-We model network nondeterminism using the \dedalus{choice} construct to choose
+We model network nondeterminism using the choice construct to choose
 from a value in the special 
 %%\dedalus{successors} 
 \dedalus{time}
@@ -150,7 +150,7 @@ If we assume that our executions obey some causal ordering, then we
 know there is some partial order over the rule derivations of the
 system, and therefore, there exists at least one total ordering of the
 execution that corresponds to the partial order.  Therefore, each
-execution of a \lang program (which may be non-deterministic due to
+execution of a \lang program (which may be nondeterministic due to
 \@async) is equivalent to the execution of some deterministic \slang
 program; causality constraints reintroduce the temporal stratifiability
 that our definition of \lang gave up.
