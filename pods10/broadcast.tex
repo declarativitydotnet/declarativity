@@ -1,13 +1,11 @@
 \subsection{Reliable Broadcast}
-\jmh{Shouldn't this be a subsubsection like Lamport clocks?}
 Distributed systems cope with unreliable networks by using mechanisms like broadcast and consensus protocols, 
 timeouts and retries, and often hide the nondeterminism behind these abstractions.  \lang supports these notions,
 achieving encapsulation of nondeterminism while dealing explicitly with the uncertainty in the model.  Consider the simple
 broadcast protocol below:
 
-\jmh{Argh, where did this predicate name prefix shit come from?  Also, can we do this without horizontal partitioning, as we described previously?  Trivial solution is to put Agent into the relation name but then you need a head per neighbor.  Ick, and uh-oh.}
-
 \jmh{what's the ``program'' construct?  do you need it?  if so, define it.}
+
 \begin{Dedalus}
 
 program broadcast_simple;
@@ -26,7 +24,7 @@ membership list.
 %%The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
 %%address.  
 The protocol is straightforward: if a tuple appears in \emph{smessage} (an EDB predicate), then
-it will be sent to all members (a multicast).  The interpretation of the non deterministic choice implied by the
+it will be sent to all members (a multicast).  The interpretation of the non-deterministic choice implied by the
 \emph{async} rule indicates that order and delivery (i.e. finite delay) are not guaranteed.
 
 The module \emph{broadcast\_reliable} shown below makes use of the multicast primitive provided by \emph{broadcast\_simple}, and
@@ -54,4 +52,4 @@ rdeliver(Me, Sender, Message)@next  \(\leftarrow\)
 
 \jmh{Can you comment on the careful mix of synchrony and asynchrony here?  Seems like that's the payoff of this example discussion.}
 Implementing other disciplines like FIFO and atomic broadcast and consensus are similar exercises, requiring the use of
-ordered queueing and sequences.  For space reasons, these protocols are not listed here.
+ordered queueing and sequences.  For space reasons, these protocols are not listed here.\rcs{in what sense is this reliable?  there are no retries...}
