@@ -51,10 +51,10 @@ Our hope is that modeling external process and events with a single
 primitive will greatly simplify formal program verification techniques for the distributed systems domain.  Rather
 than spending time and effort translating imperative code into sets of logical
 invariants over program executions, analyses of \lang programs can
-work directly against the invariants encoded by the program, allowing
-them to focus on invocations of \dedalus{choose}, each of which
-encodes some less easily avoided source of non-determinism and
-ambiguity, such as a hardware failure or end-user.
+work directly against the invariants encoded by the program.  This  allows
+the analysis to focus instead on invocations of \dedalus{choice}, each of which
+encodes some less easily-avoided source of nondeterminism and
+ambiguity, such as a component failure.
 
 Logic languages are attractive because they raise the level of abstraction at which programs are specified
 and implemented, but this often comes at the cost of expressivity.  Instead of admitting language extensions that require low-level 
