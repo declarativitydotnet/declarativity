@@ -27,11 +27,15 @@ The protocol is straightforward: if a tuple appears in \emph{smessage} (an EDB p
 it will be sent to all members (a multicast).  The interpretation of the non-deterministic choice implied by the
 \emph{async} rule indicates that order and delivery (i.e. finite delay) are not guaranteed.
 
-The module \emph{broadcast\_reliable} shown below makes use of the multicast primitive provided by \emph{broadcast\_simple}, and
-uses it to implement a basic reliable broadcast using a textbook mechanism~\cite{mullender}. 
-Simple broadcast is augmented in that if a node receives a message, it 
-also multicasts it to every member \emph{before} delivering the message locally.  
+The module \emph{broadcast\_reliable} shown below makes use of the
+multicast primitive provided by \emph{broadcast\_simple}, and uses it
+to implement a basic reliable broadcast using a textbook
+mechanism~\cite{mullender} that assumes any node that fails to recieve
+a message sent to it has failed.  When broadcast completes, all nodes
+that have not failed have recieved the message.
 
+Simple broadcast is augmented in that if a node receives a message, it 
+also multicasts it to every member \emph{before} delivering the message locally:
 
 \begin{Dedalus}
 program broadcast_reliable;
@@ -50,6 +54,12 @@ rdeliver(Me, Sender, Message)@next  \(\leftarrow\)
 
 \end{Dedalus}
 
-\jmh{Can you comment on the careful mix of synchrony and asynchrony here?  Seems like that's the payoff of this example discussion.}
-Implementing other disciplines like FIFO and atomic broadcast and consensus are similar exercises, requiring the use of
-ordered queueing and sequences.  For space reasons, these protocols are not listed here.\rcs{in what sense is this reliable?  there are no retries...}
+Note that all network communication is initiated by the
+\dedalus{@async} rule in simple broadcast.  The \dedalus{@next} is
+required in the \dedalus{rdeliver} in order to prevent nodes from
+taking actions based upon the broadcast before it is guaranteed to
+meet the reliability guarantee.
+
+Implementing other disciplines like FIFO and atomic broadcast and
+consensus are similar exercises, requiring the use of ordered queueing
+and sequences.
