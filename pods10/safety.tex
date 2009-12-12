@@ -4,8 +4,10 @@ In the previous section we demonstrated that \slang can capture intuitive
 notions of persistence and mutability of state via a stylized use of Datalog.
 However, the alert reader will note that even very simple \slang programs make
 for unusual Datalog: among other concerns, persistence rules produce
-derivations for an infinite number of values of the time suffix.  In
-traditional Datalog settings of databases and queries this is impractical.  But
+derivations for an infinite number of values of the time suffix.
+Traditional Datalog interpreters work against static databases, and would attempt to enumerate these values, which would make this approach impractical.\rcs{still don't like prev sentence..}  
+
+However,
 in the context of distributed systems and networks, the need for
 infinitely-running ``services'' or ``protocols'' is very common.  In this
 section we show that expressing distributed systems properties such as
@@ -42,10 +44,10 @@ attributes, representing every possible interpretation, is itself finite.
 \rcs{check this paragraph}
 
 Since our definition of \dedalus{successor} violates these rules, and indeed
-leads to an infinite set of facts, \slang programs \wrm{urulaje???} this
+leads to an infinite set of facts, \slang programs violate this
 definition of safety.  However, \dedalus{successor} models time, not computation;
 later sections explain how \lang implementations avoid enumerating the contents
-of \dedalus{successor} at runtime \wrm{whats pailiative here???}.  This section
+of \dedalus{successor} at runtime \wrm{whats pailiative (helping fix the problem) here???}.  This section
 introduces a notion of termination that allows us to reason about the safety of
 \slang programs.
 
