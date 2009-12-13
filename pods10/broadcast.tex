@@ -14,16 +14,16 @@ sdeliver(Member, Sender, Message) \(\leftarrow\)
 
 \end{Dedalus}
 
-The table \emph{members} is a persistent relation defined elsewhere, containing the broadcast 
+The table \dedalus{members} is a persistent relation defined elsewhere, containing the broadcast 
 membership list.  
 %%The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
 %%address.  
-The protocol is straightforward: if a tuple appears in \emph{smessage} (an EDB predicate), then
+The protocol is straightforward: if a tuple appears in \dedalus{smessage} (an EDB predicate), then
 it will be sent to all members (a multicast).  The interpretation of the non-deterministic choice implied by the
-\emph{async} rule indicates that order and delivery (i.e. finite delay) are not guaranteed.
+\dedalus{@async} rule indicates that order and delivery (i.e. finite delay) are not guaranteed.
 
 The program shown below makes use of the
-multicast primitive provided by \emph{broadcast\_simple}, and uses it
+multicast primitive provided by \dedalus{broadcast\_simple}, and uses it
 to implement a basic reliable broadcast using a textbook
 mechanism~\cite{mullender} that assumes any node that fails to receive
 a message sent to it has failed.  When broadcast completes, all nodes
@@ -33,7 +33,6 @@ Simple broadcast is augmented in that if a node receives a message, it
 also multicasts it to every member \emph{before} delivering the message locally:
 
 \begin{Dedalus}
-
 bcast_simple::smessage(Agent, Sender, Message)  \(\leftarrow\)
     rmessage(Agent, Sender, Message);
 
