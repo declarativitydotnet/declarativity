@@ -182,14 +182,13 @@ to caching or failure, it is possible that comments begin to arrive
 over the network well before the article they respond to.
 
 \subsubsection{Entanglement}
-
 Consider the asynchronous rule below:
 
 \begin{Dedalus}
 p(A, B, N)@async \(\leftarrow\)
   q(A, B)@N;
 \end{Dedalus}
-
+\noindent
 Due to the \dedalus{async} keyword in the rule head, each \emph{p} tuple will take some unspecified time suffix value.
 Note however that the time suffix $N$ of the rule body appears also in an attribute of \emph{p} other than the time suffix, recording a 
 binding of both the time value of the deduction and the time value of its consequence.  We call such a binding

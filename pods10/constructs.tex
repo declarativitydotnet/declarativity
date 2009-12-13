@@ -114,7 +114,6 @@ Consider the following \slang program and ground facts:
 
 \begin{Dedalus}
 p\pos(A, B) \(\leftarrow\) p(A, B);
-
 p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
 
 p(1,2)@101;
@@ -154,8 +153,7 @@ of the sequence value without using arithmetic, because the infinite series of \
 property we require:
 
 \begin{Dedalus}
-seq(B)@next \(\leftarrow\) seq(A), successor(A,B), event(_);
-  
+seq(B)@next \(\leftarrow\) seq(A), successor(A,B), event(_);  
 seq(A)@next \(\leftarrow\) seq(A), \(\lnot\)event(_);
 \end{Dedalus}
 
