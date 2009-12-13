@@ -150,7 +150,7 @@ is derived---timestep $\Tau+1$ in the above definition.
 \subsection{Sequences}
 One may represent a database sequence---an object that retains and monotonically increases a counter value---with a pair of inductive rules.  One rule increments the current counter value when some condition is 
 true, while the other persists the value of the sequence when the condition is false.  We can capture the increase
-of the sequence value without using arithmetic, because the infinite series of \emph{successor} has the monotonicity
+of the sequence value without using arithmetic, because the infinite series of \dedalus{successor} has the monotonicity
 property we require:
 
 \begin{Dedalus}
@@ -241,15 +241,12 @@ del\_m\_priority\_queue(A, B, C) \(\leftarrow\)
 \end{Dedalus}
 
 Under such a queueing discipline, deductive rules that depend on
-\emph{priority\_queue} are constrained to consider only min-priority tuples at each timestep
+\dedalus{priority\_queue} are constrained to consider only min-priority tuples at each timestep
 per value of the variable \textbf{A}, thus implementing a per-user FIFO
-discipline.  To enforce a global FIFO ordering over \emph{priority\_queue}, we
-may redefine \emph{omin} and any dependent rules to exclude the \textbf{A}
+discipline.  To enforce a global FIFO ordering over \dedalus{priority\_queue}, we
+may redefine \dedalus{omin} and any dependent rules to exclude the \textbf{A}
 attribute.
 
 A queue establishes a mapping between \slang's timesteps
 and the priority-ordering attribute of the input relation. By doing so, we are able to use the natural ordering enforced by stratification over time to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
-
-
-
