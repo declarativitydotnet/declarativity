@@ -126,23 +126,22 @@ We have been careful to define \slang as a subset of Datalog; this inclusion all
 well-known semantics and the rich literature on the language.
 
 \slang programs are intended to capture 
-%naturally
 temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$)@$C_{n+1}$}, with some constant $C_{n+1}$ in its time
 suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
 %%Deductive
 %%rules can be seen as {\em atemporal} statements: they range over all values of
 %%the time suffix, and express deductions that are ``always'' valid. 
 Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
-predicates agreeing in the time suffix and describe what is true ``for an instant" given 
+predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
 what is known at that instant.
  Inductive %%and asynchronous 
- rules are {\em temporal} --- their consequents are defined to
+ rules are {\em temporal}---their consequents are defined to
 be true ``at a different time'' than their antecedents. 
 
 
 
-To simplify \slang notation for this typical interpretation,  we introduce
-some natural syntactic ``sugar'' as follows:
+To simplify \slang notation for this typical interpretation, we
+introduce some syntactic ``sugar'' as follows:
 
 \begin{itemize}
 %
@@ -161,7 +160,7 @@ it as implicit.
 %
 \item {\em Temporal head annotation:} Since the time suffix in a head predicate
 may be either equal to $\Tau$, or equal to $\Tau$'s successor, we omit the time
-suffix from the head -- and its relevant constraints from the body -- and
+suffix from the head---and its relevant constraints from the body---and
 instead attach an identifier to the head predicate of each temporal rules, to indicate the change in
 timestep.  A temporal head predicate is of the form:
 

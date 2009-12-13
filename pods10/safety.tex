@@ -1,21 +1,21 @@
 \section{Stratification and Safety}
 \label{sec:safety}
-In the previous section we demonstrated that \slang can capture intuitive
-notions of persistence and mutability of state via a stylized use of Datalog.
-However, the alert reader will note that even very simple \slang programs make
-for unusual Datalog: among other concerns, persistence rules produce
-derivations for an infinite number of values of the time suffix.
-Traditional Datalog interpreters, which work against static databases, would attempt to enumerate these values, 
-making this approach impractical.
+In the previous section we demonstrated that \slang can capture
+intuitive notions of persistence and mutability of state via a
+stylized use of Datalog.  However, the alert reader will note that
+even very simple \slang programs make for unusual Datalog: among other
+concerns, persistence rules produce derivations for an infinite number
+of values of the time suffix.  Traditional Datalog interpreters, which
+work against static databases, would attempt to enumerate these
+values, making this approach impractical.
 
-However,
-in the context of distributed systems and networks, the need for
-infinitely-running ``services'' or ``protocols'' is very common.  In this
-section we show that expressing distributed systems properties such as
-persistence and mutable state in logic does not necessitate dispensing with
-familiar notions of safety and stratification: we take traditional notions of
-acceptable Datalog programs, and extend them in a way that admits sensible
-non-terminating programs.
+However, in the context of distributed systems and networks, the need
+for non-terminating ``services'' or ``protocols'' is very common.  In
+this section we show that expressing distributed systems properties
+such as persistence and mutable state in logic does not require
+dispensing with familiar notions of safety and stratification: we take
+traditional notions of acceptable Datalog programs, and extend them in
+a way that admits sensible non-terminating programs.
 
 \input{proofs}
 
@@ -36,7 +36,7 @@ appear in a non-negated body subgoal.
 \end{enumerate}
 
 These constraints ensure that the Herbrand Universe is finite: any atom that
-may be deduced by a safe program may take its attributes only from the 
+may be deduced by a safe program may only take its attributes from the 
 set of all constant symbols appearing in the program and EDB.
 %%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
 %%\paa{ignoring this provocative comment.}
@@ -324,11 +324,11 @@ such that $\forall U >= T$, the set of all atoms with timestamp $U$ is
 equivalent modulo time to the set of all atoms with timestamp $T-1$.  Let $E$
 be the maximum timestamp of any fact in the EDB.
 
-Observe that every rule $r$ of kind 3 may only entail a finite number of facts -- as
-the EDB is finite -- and thus may entail no facts at a timestamp greater than
-some maximum timestamp $V_r <= E+1 \in \mathbb{Z}$.  Since a \slang program has a
-finite set of rules we know $\exists V \in \mathbb{Z} : \forall r: V >= V_r$, and
-thus $V <= E+1$.
+Observe that every rule $r$ of kind 3 may only entail a finite number
+of facts---as the EDB is finite---and thus may entail no facts at a
+timestamp greater than some maximum timestamp $V_r <= E+1 \in
+\mathbb{Z}$.  Since a \slang program has a finite set of rules we know
+$\exists V \in \mathbb{Z} : \forall r: V >= V_r$, and thus $V <= E+1$.
 
 We now consider times $T$ such that $T > E+1$.  By the above argument, no rules
 of kind 3 entail any facts with a timestamp greater than $E+1$.  Recall that
@@ -354,7 +354,7 @@ $J_2$ that is transitively dependent on $R$, with $P$ in its head.
 
 {\bf Case 1: }$P \neq R$.  In this case, $J_1$ must be of kind 1, as for any $Q
 \neq P$, a rule of kind 2 with $P$ in the head may not directly entail $Q$
-given $P$.  $J_2$ must also be of kind 1 -- if it is of kind 2, then it
+given $P$.  $J_2$ must also be of kind 1---if it is of kind 2, then it
 necessarily contains $P$ in its body, so it cannot entail $P$ unless $P$ is
 entailed by some other rule.  If $J_2$ contains $R$ in its body, then the
 program is syntactically unstratifiable.  But if $J_2$ does not contain $R$ in
