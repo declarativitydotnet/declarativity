@@ -1,7 +1,7 @@
 
 \subsection{Stratification in {\large{\bf\slang}}}
-
-We first turn our attention to the semantics of
+\label{sec:strat}
+We next turn our attention to the semantics of
 programs with negation.  As we will see, the inclusion of time introduces a
 ``source of monotonicity'' in programs that allows for clean minimal model
 semantics in some surprising cases, and enables purely syntactic monotonicity
@@ -204,7 +204,7 @@ achievable via standard bottom-up fixpoint execution.
 A simple temporally stratifiable \slang program that is not syntactically stratifiable.
 
 \begin{Dedalus}
-persist[p, 3]  
+persist[p, p\_neg, 3]  
   
 r1
 p(A, B, T) \(\leftarrow\)

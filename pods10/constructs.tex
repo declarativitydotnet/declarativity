@@ -24,15 +24,15 @@ for which we provide a model-theoretic foundation.
 
 The intuition behind \slang's \dedalus{successor} relation is that it models the
 passage of (logical) time.  In our discussion, we will say that ground atoms
-with lower timestamps occur ``before'' atoms with higher ones.
+with lower time suffixes occur ``before'' atoms with higher ones.
 %%Without specifying how and when each stratum
 %%of \emph{successor} is evaluated, we can see that the syntactic restrictions of \lang ensure that 
 %%we cannot move backwards infinitely often (specifically,
 %%we may only move backwards via \emph{choice}, and every call to \emph{choice} may move us forward.  \paa{save for later, pretend there is no async?}).
 %%we may only move forward in time.
 The constraints we imposed on \slang rules restrict how deductions may be made
-with respect to time.  First, rules may only refer to a single timestep in
-their body, and {\em cannot join across timesteps}.  Second, rules may specify
+with respect to time.  First, rules may only refer to a single time suffix variable in
+their body, and hence {\em cannot join across different ``timesteps''}.  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
 timestep---in \slang, we rule out induction ``backwards'' in time or
 ``skipping'' into the future.
@@ -44,12 +44,11 @@ a minimal model of the IDB---with respect to an ``instant in time'': we simply
 bind the time suffixes ($\Tau$) of all body predicates to a constant.  Because
 this produces a sequence of models (one per timestep), it gives us an intuitive
 and unambiguous way to declaratively express persistence and state changes
-across timesteps.  In this section, we give examples of language constructs
+across time.  In this section, we give examples of language constructs
 that capture state-oriented motifs such as persistent relations,
 deletion and update, sequences, and queues.
 
 \subsection{Simple Persistence}
-
 A fact in predicate $p$ at time $\Tau$ may provide ground for deductive rules
 at time $\Tau$, as well as ground for deductive rules in timesteps greater than $\Tau$,
 provided there exists a {\em simple persistence rule} of the form:
@@ -127,10 +126,10 @@ false because it was ``deleted'' at timestep \dedalus{300}.
 \end{example}
 
 Since mutable persistence occurs frequently in practice, we provide the {\em
-persist} macro, which takes as arguments a predicate name and its arity, and
-expands to the corresponding persistence rule.  For example, the above
-\dedalus{p} persistence rule may be equivalently specified as
-\dedalus{persist[p, 2]}.
+persist} macro, which takes three arguments: a predicate name, the name of another predicate to hold ``deleted'' facts, and the (matching) arity of the two predicates. The macro
+expands to the corresponding mutable persistence rule.  For example, the above
+\dedalus{p\_pos} persistence rule may be equivalently specified as
+\dedalus{persist[p\_pos, p\_neg, 2]}.
 
 Mutable persistence rules enable {\em updates}.  For some time $\Tau$, an
 update is any pair of facts:
@@ -164,7 +163,7 @@ Note that these two rules produce only a single value of \dedalus{seq} at each t
 %%\jmh{Can't we whittle this down to the bone?  Why are we dealing with user and job attributes?  Why not drop user?}\rcs{my example; joe's right.  It is all h4xor3d right now.}
 
 While sequences are useful constructs for generating or imposing an ordering on tuples, programs will in some cases require that tuples
-are processed in a particular order and with a particular punctuation.   To this end, we introduce a queue template, which employs 
+are processed in a particular (partial) order associated with particular timesteps.   To this end, we introduce a queue template, which employs 
 inductive persistence and aggregate functions in rule heads to process tuples according to a data-dependent order, rather than as a set.
 
 Aggregate functions simplify our discussion of queues.  Mumick and Shmueli observe correspondences in the expressivity of Datalog with stratified negation and stratified aggregation functions~\cite{mumickshmueli}.  Adding aggregation to our language does not affect its expressive power, but is useful for writing natural constructs for distributed computing including queues and ordering.  
@@ -214,10 +213,7 @@ timestep, for each value of \textbf{A}, a single tuple is projected into
 at the subsequent step:
 
 \begin{Dedalus}
-% persist m\_priority\_queue
-m\_priority\_queue(A, B, C)@next \(\leftarrow\)
-  m\_priority\_queue(A, B, C),
-  notin del\_m\_priority\_queue(A, B, C);
+persist[m\_priority\_queue, del\_m\_priority\_queue, 3]
 
 % find the min priority
 omin(A, min<C>) \(\leftarrow\)
@@ -244,5 +240,5 @@ may redefine \dedalus{omin} and any dependent rules to exclude the \textbf{A}
 attribute.
 
 A queue establishes a mapping between \slang's timesteps
-and the priority-ordering attribute of the input relation. By doing so, we are able to use the natural ordering enforced by stratification over time to enforce an ordering property over our input that is otherwise 
-very difficult to express in a logic language.
+and the priority-ordering attribute of the input relation. By doing so, we take advantage of the monotonic property of timestamps to enforce an ordering property over our input that is otherwise 
+very difficult to express in a logic language.  We return to this idea in our discussion of temporal ``entanglement'' Section~\ref{sec:entangle}.

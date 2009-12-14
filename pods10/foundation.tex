@@ -126,7 +126,7 @@ We have been careful to define \slang as a subset of Datalog; this inclusion all
 well-known semantics and the rich literature on the language.
 
 \slang programs are intended to capture 
-temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$)@$C_{n+1}$}, with some constant $C_{n+1}$ in its time
+temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
 suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
 %%Deductive
 %%rules can be seen as {\em atemporal} statements: they range over all values of
@@ -162,7 +162,7 @@ it as implicit.
 may be either equal to $\Tau$, or equal to $\Tau$'s successor, we omit the time
 suffix from the head---and its relevant constraints from the body---and
 instead attach an identifier to the head predicate of each temporal rules, to indicate the change in
-timestep.  A temporal head predicate is of the form:
+time suffix.  A temporal head predicate is of the form:
 
 \dedalus{r($A_1$,$A_2$,[...],$A_n$)@next}
 
