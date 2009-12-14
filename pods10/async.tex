@@ -40,7 +40,7 @@ The choice construct is nondeterministic.  In a model-theoretic interpretation o
 must have a multiplicity of stable models---that is it must be unstratifiable.  Greco and Zaniolo define 
 choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules, 
 and each possible choice is associated with a different model.  Each such model has a unique, non-deterministic assignment that
-respects the given functional dependencies.  In our discussion, it may be helpful to think of one such model chosen non-deterministically---a non-deterministic ``assignment of timestamps to tuples''.
+respects the given functional dependencies.  In our discussion, it may be helpful to think of one such model chosen non-deterministically---a non-deterministic ``assignment of timestamps to tuples.''
 
 %%\paa{significantly, for any choice, the resulting program has a unique minimal model if the program (independent of the choice expansion)
 %%is stratifiable, locally stratifiable, etc}  \jmh{You do need to resolve the previous paragraph, or rewrite it to simply say ``see the Italians if you want to understand more, 
@@ -52,11 +52,11 @@ To represent a distributed system, we consider some number of agents,
 each running a copy of the same program against a disjoint subset ({\em
   horizontal partition}) of each predicate's contents.  We require one
 attribute in each predicate to be used to identify the
-partitionining for tuples in that predicate. We call such an
+partitioning for tuples in that predicate. We call such an
 attribute a {\em location specifier}, and prefix it with a
 \dedalus{\#} symbol in Dedalus.
 
-Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e. the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local'', since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  We now proceed to our model of the asynchrony of this communication, which is captured in a syntactic constraint on the heads of communication rules.
+Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  We now proceed to our model of the asynchrony of this communication, which is captured in a syntactic constraint on the heads of communication rules.
 
 \subsection{Asynchronous Rules}
 
@@ -147,7 +147,7 @@ tuples on which they are grounded; this violates intuitive notions of
 causality and admits the possibility of temporal paradoxes.
 
 We have avoided restricting \lang to rule out such issues, as doing so
-would reduce its expressiveness.  Recall that simple monotonic Datalog (without negation) is insensitive to the values in any particular attribute.  Hence \lang programs without negation are also well-defined regardless of any ``temporal ordering'' of deductions: in monotonic programs, even if tuples with timestamps ``in the future'' are used to derive tuples ``from the past'', there is an unambiguous least minimal model.
+would reduce its expressiveness.  Recall that simple monotonic Datalog (without negation) is insensitive to the values in any particular attribute.  Hence \lang programs without negation are also well-defined regardless of any ``temporal ordering'' of deductions: in monotonic programs, even if tuples with timestamps ``in the future'' are used to derive tuples ``from the past,'' there is an unambiguous least minimal model.
 
 For non-monotonic \slang programs, the monotonicity of the time suffix ensures us a unique minimal model in many cases.  Whenever we can guarantee monotonicity of the time suffix for \lang programs, our results from Section~\ref{sec:strat} still apply for all models produced by the choice construct.
 
@@ -178,11 +178,11 @@ For non-monotonic \slang programs, the monotonicity of the time suffix ensures u
 \subsubsection{Practical Implications}
 Given this discussion, in practice we are interested in three asynchronous scenarios: (a) monotonic programs (even with non-monotonicity in time), (b) non-monotonic programs whose semantics guarantee monotonicity of time suffixes  and (c) non-monotonic programs where we have domain knowledge guaranteeing monotonicity of time suffixes.  Each represents practical scenarios of interest.
 
-The first category captures the spirit of many simple distributed implementations that are built atop unreliable asynchronous substrates.  For example, in some Internet publishing applications (weblogs, online fora), it is possible due to caching or failure that a ``thread'' of discussion arrives out of order, with responses appearing before the comments they reference.  In many cases a monotonic ``bag semantics'' for the comment program is considered a reasonable interface for readers, and the ability to tolerate temporal anomalies simplifies the challenge of scaling a system through distrbution.
+The first category captures the spirit of many simple distributed implementations that are built atop unreliable asynchronous substrates.  For example, in some Internet publishing applications (weblogs, online fora), it is possible due to caching or failure that a ``thread'' of discussion arrives out of order, with responses appearing before the comments they reference.  In many cases a monotonic ``bag semantics'' for the comment program is considered a reasonable interface for readers, and the ability to tolerate temporal anomalies simplifies the challenge of scaling a system through distribution.
 
 The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the theoretical literature of distributed computing, this is known as a {\em causal ordering}, and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
 
-Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering -- for example, som multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proofs of temporal stratification and Algorithm~\cite{alg:tsn} both apply.
+Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proofs of temporal stratification and Algorithm~\cite{alg:tsn} both apply.
 
 \subsubsection{Entanglement}
 \label{sec:entangle}
@@ -207,7 +207,7 @@ to reference the logical clock time of the deduction that produced one
 
 \subsection{Lamport Clocks}
 \label{sec:lamport}
-Recall that \lang allows program executions to order message timestamps arbitrarily, violating intuitive notions of causality by allowing deductions to ``affect the past''.
+Recall that \lang allows program executions to order message timestamps arbitrarily, violating intuitive notions of causality by allowing deductions to ``affect the past.''
 This section explains how to implement Lamport
 clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
 temporal monotonicity, by reestablishing a causal order
