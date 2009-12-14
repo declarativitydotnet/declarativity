@@ -243,7 +243,7 @@ in the \dedalus{p\_wait} relation.
 We gloss over one detail here: Lamport clocks rely
 upon a ``tie-breaking'' function to ensure that no two events have the
 same timestamp.  In \lang, such a function could be implemented via another use of \dedalus{choice}, or by a program convention like
-appending a unique node identifier to each timestamp to prevent ``ties''.
+appending a unique node identifier to each timestamp to prevent ``ties.''
 
 %%\jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
 %%\rcs{I'd like to do this, but don't have any good examples...}
