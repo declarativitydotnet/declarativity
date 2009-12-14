@@ -1,4 +1,4 @@
-\section{Stratification and Safety}
+\section{Safety and Stratification}
 \label{sec:safety}
 In the previous section we demonstrated that \slang can capture
 intuitive notions of persistence and mutability of state via a
@@ -17,12 +17,12 @@ dispensing with familiar notions of safety and stratification: we take
 traditional notions of acceptable Datalog programs, and extend them in
 a way that admits sensible non-terminating programs.
 
-\input{proofs}
-
 \subsection{Temporal Safety}
-A Datalog program is safe if it admits a finite minimal model, and hence has
-a finite execution.  Safety in Datalog is traditionally achieved
-through the following constraints:
+We begin by considering the issue of finite results raised above.
+In traditional Datalog, this is a well-studied concern.
+A Datalog program is considered {\em safe} if it has a finite minimal model, and hence has
+a finite execution.  Safety in Datalog is traditionally ensured
+through the following syntactic constraints:
 
 \begin{enumerate}
 %
@@ -139,7 +139,7 @@ An unsafe \slang instance?
 %%p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
 %%\end{Dedalus}
 \begin{Dedalus}
-persist[p, 2]
+persist[p, p\_neg 2]
 p(1, 2)@123;
 \end{Dedalus}
 
@@ -312,8 +312,7 @@ the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
 
 \begin{lemma} 
 %
-A temporally stratifiable \slang instance with finite EDB where every rule is
-one of the kinds 1-3 above is indeed temporally safe.
+A temporally stratifiable \slang instance is temporally safe if it has a finite EDB and every rule is one of the kinds 1-3 above.
 %
 \end{lemma}
 %

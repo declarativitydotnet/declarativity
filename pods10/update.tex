@@ -17,7 +17,7 @@ we derive such a strategy via a combination of program rewriting and an
 operational evaluation loop, in the style of semi-naive evaluation.
 
 \subsection{Temporal Evaluation Over Storage}
-The traditional description of semi-naive evaluation takes a recursive Datalog program, rewrites it to a non-recursive ``delta'' program, and executes that program in a loop bracketed by state modifications.  In that spirit, we present a strategy we call ``temporal evaluation,'' which takes a \slang program, rewrites it to a Datalog program that refers to a single timestep, and executes that program in a loop---once per timestep---bracketed by state modifications.  Algorithm~\ref{alg:tsn} presents this strategy.
+The traditional description of semi-naive evaluation takes a recursive Datalog program, rewrites it to a non-recursive ``delta'' program, and executes that program in a loop bracketed by state modifications.  In that spirit, we present a strategy we call ``temporal evaluation,'' which takes a \slang program, rewrites it to a Datalog program that refers to a single timestep, and executes that program in a loop---once per timestep---bracketed by state modifications.  Algorithm~\ref{alg:tsn} presents this strategy.  Note that the \slang rules are written in their native ``unsugared'' syntax because we rewrite them into Datalog that strays from \slang conventions:
 
 \floatname{algorithm}{Algorithm}
 \renewcommand{\algorithmicforall}{\textbf{foreach}}
@@ -31,20 +31,20 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
    \STATE{\em // rewrite program}
    \FORALL{persistent predicate $P(A_1, \ldots, A_n)$}
 	    \STATE{\em // include ``old facts'' in the current timestep}
-      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $P(A_1, \ldots, A_n)@\Tau \leftarrow P\_store(A_1, \ldots, A_n).$ \end{tabular}}
+      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $P(A_1, \ldots, A_n, \Tau) \leftarrow P\_store(A_1, \ldots, A_n).$ \end{tabular}}
 			\STATE{\em // identify ``new'' derived facts}
-      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & \hspace{1.5em} $P(A_1, \ldots, A_n)@\Tau, \lnot P(A_1, \ldots, A_n)@\Tau-1.$ \end{tabular}}
+      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{+}(A_1, \ldots, A_n) \leftarrow$ \\ & \hspace{1.5em} $P(A_1, \ldots, A_n, \Tau), \lnot P(A_1, \ldots, A_n, \Tau-1).$ \end{tabular}}
 			\STATE{\em // identify ``new'' facts that are ``to-be-deleted''}
-      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n)@\Tau.$ \end{tabular}}
+      \STATE{\vspace{-1.2em}\begin{tabular}[t]{l l} \\ \add & $\Delta_P^{-} \leftarrow P\_neg(A_1, \ldots, A_n, \Tau).$ \end{tabular}}
    \ENDFOR
    \FORALL{rule $R$}
-      \FORALL{persistent predicate $P(A_1, \ldots, A_n)$ in $R$'s body}
-         \STATE{substitute $P\_store(A_1, \ldots, A_n)$ for $P(A_1, \ldots, A_N)$}
+      \FORALL{persistent predicate $P(A_1, \ldots, A_n, \Tau)$ in $R$'s body}
+         \STATE{substitute $P\_store(A_1, \ldots, A_n)$ for $P(A_1, \ldots, A_N, \Tau)$}
       \ENDFOR
    \ENDFOR
    
    \STATE{\em // evaluate program starting at ``minimum'' EDB timestamp}
-   \STATE{let $t = u \in \mathbb{Z} : \exists P(A_1, \ldots, A_n)@u, \not\exists Q(B_1, \ldots, B_m)@v : v < u$}
+   \STATE{let $t = u \in \mathbb{Z} : \exists P(A_1, \ldots, A_n, u), \not\exists Q(B_1, \ldots, B_m, v) : v < u$}
    \REPEAT
       \STATE{replace $\Tau$ with $t$ in the rewritten program, and compute}
 			\STATE{\hspace{1em} a fixpoint of the result via semi-naive evaluation}
@@ -53,7 +53,7 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
          \STATE{$P\_store(A_1, \ldots, A_n) :=$ \\ \hspace{1.5em} $P\_store(A_1, \ldots, A_n) \setminus \Delta_P^{-}(A_1, \ldots, A_n)$}
       \ENDFOR
       \STATE{\em // $t$ becomes the least larger timestamp with an atom}
-      \IF{$\exists u \in \mathbb{Z} : u > t, \exists P(A_1, \ldots, A_n)@t, \not\exists v: v > t \wedge v < u$}
+      \IF{$\exists u \in \mathbb{Z} : u > t, \exists P(A_1, \ldots, A_n, t), \not\exists v: v > t \wedge v < u$}
          \STATE{let $t=u$}
       \ELSE
          \STATE{let $t=\emptyset$}

@@ -14,7 +14,7 @@ sdeliver(Member, Sender, Message) \(\leftarrow\)
 
 \end{Dedalus}
 
-The table \dedalus{members} is a persistent relation defined elsewhere, containing the broadcast 
+Assume the table \dedalus{members} is a persistent relation given to us, containing the broadcast 
 membership list.  
 %%The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
 %%address.  
@@ -29,17 +29,17 @@ mechanism~\cite{mullender} that assumes any node that fails to receive
 a message sent to it has failed.  When broadcast completes, all nodes
 that have not failed have received the message.
 
-Simple broadcast is augmented in that if a node receives a message, it 
+Our simple two-rule broadcast program is augmented with the following rules, so that if a node receives a message, it 
 also multicasts it to every member \emph{before} delivering the message locally:
 
 \begin{Dedalus}
-bcast_simple::smessage(Agent, Sender, Message)  \(\leftarrow\)
+smessage(Agent, Sender, Message)  \(\leftarrow\)
     rmessage(Agent, Sender, Message);
 
 buf_bcast(Sender, Me, Message)  \(\leftarrow\)
-    bcast_simple::sdeliver(Me, Sender, Message);
+    sdeliver(Me, Sender, Message);
 
-bcast_simple::smessage(Me, Sender, Message)  \(\leftarrow\)
+smessage(Me, Sender, Message)  \(\leftarrow\)
     buf_bcast(Sender, Me, Message);
 
 rdeliver(Me, Sender, Message)@next  \(\leftarrow\)
@@ -47,8 +47,8 @@ rdeliver(Me, Sender, Message)@next  \(\leftarrow\)
 \end{Dedalus}
 
 Note that all network communication is initiated by the
-\dedalus{@async} rule in simple broadcast.  The \dedalus{@next} is
-required in the \dedalus{rdeliver} in order to prevent nodes from
+\dedalus{@async} rule from the original simple broadcast.  The \dedalus{@next} is
+required in the \dedalus{rdeliver} definition in order to prevent nodes from
 taking actions based upon the broadcast before it is guaranteed to
 meet the reliability guarantee.
 
