@@ -17,6 +17,9 @@ dispensing with familiar notions of safety and stratification: we take
 traditional notions of acceptable Datalog programs, and extend them in
 a way that admits sensible non-terminating programs.
 
+
+\input{proofs}
+
 \subsection{Temporal Safety}
 We begin by considering the issue of finite results raised above.
 In traditional Datalog, this is a well-studied concern.
@@ -78,12 +81,7 @@ in such a program meet the conditions above, then clearly we would like them to 
 %%\rcs{this used to say conditions 1 and 2, but it is possible that our program is infinitely long...  Also, ``clearly they are safe'' is strange, given that we haven't defined 
 %%safety yet, so I reworded.}
 
-\begin{definition} 
-%
-The \emph{deductive reduction} of a \slang program $P$ is
-the subset of $P$ consisting of exactly the deductive rules in $P$.
-%
-\end{definition}
+
 
 \begin{definition}
 %
