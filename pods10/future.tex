@@ -47,8 +47,8 @@ hold over all program executions.
 However, interactions with external processes, and primitives such as
 asynchronous and unreliable communication introduce nondeterminism
 which \lang models with \dedalus{choose}.  
-Our hope is that modeling external process and events with a single
-primitive will simplify formal program verification techniques for the distributed systems domain.  Two natural directions in this vein are to determine for a given \lang program whether Church-Rosser confluence holds for all models produced by \dedalus{choice}, and to capture finer-grained notions like serializability of such models with respect to transaction identifiers embedded in EDB facts.  
+Our hope is that modeling external processes and events with a single
+primitive will simplify formal program verification techniques for the distributed systems domain.  Two natural directions in this vein are to determine for a given \lang program whether Church-Rosser confluence holds for all models produced by \dedalus{choice}, or to capture finer-grained notions like serializability of such models with respect to transaction identifiers embedded in EDB facts.  
 % 
 %   Rather
 % than spending time and effort translating imperative code into sets of logical
