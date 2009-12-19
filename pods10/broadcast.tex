@@ -6,12 +6,11 @@ broadcast protocol below:
 
 \begin{Dedalus}
 sbcast(#Member, Sender, Message)@async \(\leftarrow\)
-    smessage(#Agent, Sender, Message),
-    members(#Agent, Member);
+  smessage(#Agent, Sender, Message),
+  members(#Agent, Member);
 
 sdeliver(Member, Sender, Message) \(\leftarrow\)
-    sbcast(Member, Sender, Message);
-
+  sbcast(Member, Sender, Message);
 \end{Dedalus}
 
 Assume the table \dedalus{members} is a persistent relation given to us, containing the broadcast 
@@ -34,16 +33,16 @@ also multicasts it to every member \emph{before} delivering the message locally:
 
 \begin{Dedalus}
 smessage(Agent, Sender, Message)  \(\leftarrow\)
-    rmessage(Agent, Sender, Message);
+  rmessage(Agent, Sender, Message);
 
 buf_bcast(Sender, Me, Message)  \(\leftarrow\)
-    sdeliver(Me, Sender, Message);
+  sdeliver(Me, Sender, Message);
 
 smessage(Me, Sender, Message)  \(\leftarrow\)
-    buf_bcast(Sender, Me, Message);
+  buf_bcast(Sender, Me, Message);
 
 rdeliver(Me, Sender, Message)@next  \(\leftarrow\)
-    buf_bcast(Sender, Me, Message);
+  buf_bcast(Sender, Me, Message);
 \end{Dedalus}
 
 Note that all network communication is initiated by the
