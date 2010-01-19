@@ -236,7 +236,7 @@ with time suffix $T-1$.
 \begin{observation}
 %
 A \slang instance that is quiescent at time $T$ will be quiescent until
-timestamp of the next EDB fact $V$, i.e. for all $U \in \mathbb{Z}: V > U >=
+timestamp of the next EDB fact $V$, i.e.\ for all $U \in \mathbb{Z}: V > U >=
 T$.  If no EDB fact has a timestamp greater than $T$, then the instance will be
 henceforth quiescent.
 %%\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
@@ -336,7 +336,7 @@ Consider the set of equivalence classes modulo time of all possible atoms, {\bf
 A}, given the Herbrand universe.  We know {\bf A} is finite, as the Herbrand
 Universe is finite.  Therefore, if the program is temporally unsafe, then {\bf B}, the
 set of atoms entailed by the program, both contains and excludes
-infinitely many members of at least one equivalence class in {\bf A} (i.e.
+infinitely many members of at least one equivalence class in {\bf A} (i.e.,
 something ``infinitely oscillates in time'' between being true and false).
 Since the program has finitely many rules, at least one rule must entail
 infinitely many atoms (from at least one of the equivalence classes from {\bf

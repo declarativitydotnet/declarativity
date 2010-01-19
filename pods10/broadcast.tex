@@ -19,7 +19,7 @@ membership list.
 %%address.  
 The protocol is straightforward: if a tuple appears in \dedalus{smessage} (an EDB predicate), then
 it will be sent to all members (a multicast).  The interpretation of the non-deterministic choice implied by the
-\dedalus{@async} rule indicates that order and delivery (i.e. finite delay) are not guaranteed.
+\dedalus{@async} rule indicates that order and delivery (i.e., finite delay) are not guaranteed.
 
 The program shown below makes use of the
 multicast primitive provided by \dedalus{broadcast\_simple}, and uses it
