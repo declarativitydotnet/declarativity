@@ -37,7 +37,7 @@ straightforward Datalog, and evaluation proceeds in three phases:
 %%\jmh{You're sidestepping Delete an key update.}\rcs{think I fixed it in item 3}
 Unfortunately, the language descriptions give no careful specification of how and when deletions and updates
 should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
-monotonicity properties (i.e.\ programs without negation or fact deletion)
+monotonicity properties (i.e., programs without negation or fact deletion)
 are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
 \emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
 Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
