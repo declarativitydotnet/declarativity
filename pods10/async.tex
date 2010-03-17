@@ -180,7 +180,7 @@ Given this discussion, in practice we are interested in three asynchronous scena
 
 The first category captures the spirit of many simple distributed implementations that are built atop unreliable asynchronous substrates.  For example, in some Internet publishing applications (weblogs, online fora), it is possible due to caching or failure that a ``thread'' of discussion arrives out of order, with responses appearing before the comments they reference.  In many cases a monotonic ``bag semantics'' for the comment program is considered a reasonable interface for readers, and the ability to tolerate temporal anomalies simplifies the challenge of scaling a system through distribution.
 
-The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the theoretical literature of distributed computing, this is known as a {\em causal ordering}, and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
+The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the literature of distributed computing, this is known as a {\em causal ordering} and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
 
 Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proofs of temporal stratification and Algorithm~\ref{alg:tsn} both apply.
 
@@ -210,7 +210,7 @@ to reference the logical clock time of the deduction that produced one
 Recall that \lang allows program executions to order message timestamps arbitrarily, violating intuitive notions of causality by allowing deductions to ``affect the past.''
 This section explains how to implement Lamport
 clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
-temporal monotonicity, by reestablishing a causal order
+temporal monotonicity by reestablishing a causal order
 despite derivations that flow backwards through time.
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
