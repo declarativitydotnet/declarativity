@@ -1,0 +1,102 @@
+program tap;
+
+import java.lang.Double;
+import java.lang.Float;
+import java.lang.Integer;
+import java.util.ArrayList;
+
+
+import jol.types.basic.Tuple;
+import jol.types.basic.TupleSet;
+
+
+define(tap_precondition, {String, String, String, Long});
+define(tap_send, keys(0,1,2,3,4,5), {String, String, String, String, Long, Integer});
+define(tap_universe, keys(0,1,2), {String, String, String, String, String});
+define(tap_done, {String});
+
+//watch(tap_precondition, a);
+watch(tap_send, ae);
+//watch(tap_universe, a);
+
+
+define(coverage, {String, String, String, Integer});
+
+//watch(coverage, a);
+
+coverage(Prog, Pred, Rule, count<Time>) :-
+    tap_send(Me, Prog, Rule, Pred, Time);
+
+
+define(rule_noncoverage, {String, String, String});
+watch(rule_noncoverage, ae);
+rule_noncoverage(Prog, Pred, Rule) :-
+    tap_universe(Me, Prog, Rule, Pred),
+    tap_done(Me),
+    notin tap_send(Me, _, Rule, Pred, _);
+
+
+define(head_noncoverage, {String, String});
+watch(head_noncoverage, ae);
+head_noncoverage(Prog, Pred) :-
+    tap_universe(Me, Prog, _, Pred),
+    tap_done(Me),
+    notin tap_send(Me, _, _, Pred, _);
+
+watch(total_cnt,a);
+watch(touched_cnt,a);
+
+define(total_cnt, keys(0,1), {String, String, Integer});
+total_cnt(Me, Prog, count<Rule>) :-
+    tap_universe(Me, Prog, Rule, _);
+
+define(touched_cnt, keys(0,1), {String, String, Integer});
+//watch(touched_cnt, a);
+touched_cnt(Me, Prog, count<Rule>) :-
+    tap_send(Me, Prog, Rule, _, _);
+
+define(nc_perc, {String, String, Float, Integer, Integer});
+watch(nc_perc, ae);
+nc_perc(Me, Prog, Perc, Tcnt, TC) :-
+    total_cnt(Me, Prog, Tcnt),
+    touched_cnt(Me, Prog, TC),  
+    tap_done(Me),
+    Perc := TC.floatValue() / Tcnt.floatValue();
+
+nc_perc(Me, Prog, 0, Tcnt, 0) :-
+    tap_done(Me),
+    total_cnt(Me, Prog, Tcnt),
+    notin touched_cnt(Me, Prog, _);
+
+
+define(allRcv, {String, String, String, String, Long, Integer});
+watch(allRcv, a);
+allRcv(Me, Prog, Rule, Pred, Ts, Cnt) :- 
+    tap_send(Me, Prog, Rule, Pred, Ts, Cnt),
+    tap_done(Me);
+
+
+define(allU, {String, String, String, String, String});
+watch(allU, a);
+allU(Me, Prog, Rule, Pred, Type) :- 
+    tap_universe(Me, Prog, Rule, Pred, Type),
+    tap_done(Me);
+
+define(networkSend, keys(0,1,2,3), {String, String, String, Integer, Integer});
+watch(networkSend, ae);
+networkSend(Prog, Rule, Pred, Cnt, count<Ts>) :-
+    tap_send(Me, Prog, Rule, Pred, Ts, Cnt),
+    tap_done(Me),
+    tap_universe(Me, Prog, Rule, Pred, "N");
+
+define(networkFires, keys(0,1),{String, String, String, Integer});
+watch(networkFires, ae);
+networkFires(Prog, Rule, Pred, ICnt) :-
+    networkSend(Prog, Rule, Pred, PCnt, CCnt),
+    // a pesky bug
+    Rule != "Rule0"
+{
+    ICnt := (PCnt * CCnt);
+};
+// sum does not appear to be working properly, so I will roll my own
+

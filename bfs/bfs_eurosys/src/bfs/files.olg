@@ -1,0 +1,119 @@
+program bfs_heartbeat;
+
+import bfs.Conf;
+import bfs.DataServer;
+import java.io.File;
+import java.lang.Object;
+import java.lang.System;
+import java.util.List;
+import java.util.Set;
+import jol.core.Runtime;
+
+timer(clock, physical, 3000, infinity, 0);
+
+// Node address, data directory on host file system
+define(datadir, keys(0), {String, File});
+
+define(dir, keys(0), {String, List});
+dir(Host, DirList) :-
+    datadir(Host, Dir),
+    DirList := DataServer.dirListing(Dir),
+    clock(_, _, _);
+
+define(indx, keys(0), {String, Integer});
+indx(Host, 0) :-
+    dir#insert(Host, _);
+
+indx(Host, Next) :-
+    indx(Host, Old),
+    chunkTmp(Host, _, _),
+    Next := Old + 1;
+
+define(chunkTmp, {String, String, Integer});
+chunkTmp(Host, FName, FLength) :-
+    dir(Host, List),
+    indx(Host, I),
+    I < List.size()
+    { F := (File) List.get(I);
+      FName := F.getName();
+      FLength := Integer.valueOf(Long.valueOf(F.length()).toString()); };
+
+define(chunk, keys(0,1), {String, String, Integer});
+//watch(chunk, ae);
+chunk(Host, FName, FLength) :-
+    chunkTmp#insert(Host, FName, FLength);
+
+
+/* cleanup rules disabled
+delete
+chunk(Host, FName, FLength) :-
+    chunk(Host, FName, FLength),
+    dir#insert(Host, List);
+*/
+
+
+define(heartBeat,keys(0,1,2),{String,String,Integer,Integer,Long,Long});
+//watch(heartBeat,ae);
+heartBeat(Host, Master, ChunkId, Length, Tstamp, Id) :-
+    chunk(Host, FName, Length),
+    ChunkId := Integer.valueOf(FName),
+    masters(Host, Master),
+    clock(_, _, _),
+    Tstamp := System.currentTimeMillis(),
+    Id := Runtime.idgen();
+
+// Periodically send an HB to notify the masters that this data node
+// is still alive, even if its content hasn't changed
+heartBeat(Host, Master, -1, -1, Tstamp, -1) :-
+    masters(Host, Master),
+    clock(_, _, _),
+    Tstamp := System.currentTimeMillis();
+
+
+define(sendHeartBeat, {String, String, Integer, Integer, Long, Long});
+//watch(sendHeartBeat,ae);
+sendHeartBeat(@Master, Host, ChunkId, Length, Tstamp, Id) :-
+    heartBeat(@Host, Master, ChunkId, Length, Tstamp, Id),
+    notin serverKnows(@Host, Master, ChunkId, _);
+
+define(ackHeartBeat, {String, String, Long});
+//watch(ackHeartBeat,ae);
+
+define(serverKnows, keys(0,1,2,3), {String, String, Integer, Long});
+//watch(serverKnows,ae);
+serverKnows(Host, Master, ChunkId, Id) :-
+    heartBeat(Host, Master, ChunkId, _, _, Id),
+    ackHeartBeat#insert(Host, Master, Id);
+
+define(masters, keys(0,1), {String, String});
+define(mindx, keys(0), {String, Integer, Integer});
+//watch(masters,ae);
+//watch(mindx,ae);
+//watch(periodic,ae);
+
+// XXX: this periodic is a hack
+timer(periodic, logical, 1, 1, 1);
+mindx(Me, 0, 0) :-
+    dir(Me, _),
+    periodic(_, _, _);
+
+mindx(Host, P, I) :-
+    mindx(Host, P, Old),
+    masters#insert(Host, Master),
+    Old < Conf.getNumMasters(P)-1,
+    I := Old + 1;
+
+mindx(Host, P, 0) :-
+    mindx(Host, Old, I),
+    masters#insert(Host, Master),
+    Old < Conf.getNumPartitions()-1,
+    I == Conf.getNumMasters(Old)-1,
+    P := Old + 1;
+
+masters(Host, Master) :-
+    mindx#insert(Host, P, I),
+    Master := Conf.getMasterAddress(P, I);
+
+watch(bfs_global::send_migrate, ae);
+define(catch_migrate, {String, String, Integer, Integer, Set});
+watch(catch_migrate, ae);
