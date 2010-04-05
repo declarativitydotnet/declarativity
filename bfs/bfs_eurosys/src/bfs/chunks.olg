@@ -1,0 +1,29 @@
+program bfs_chunks;
+
+import java.util.List;
+import java.util.Set;
+
+define(candidate_datanode, keys(0), {String, List});
+public
+candidate_datanode(Master, list<DataNode>) :-
+    bfs_heartbeat::datanode(Master, DataNode, _);
+
+define(chunkMigration, keys(0,1,2), {String, String, Integer, Integer, Set});
+watch(chunkMigration, ae);
+public
+chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, set<DataNode>) :-
+    bfs_heartbeat::newReplica(Master, ChunkId, DnWithReplica, CurrRepCnt, _),
+    bfs_global::migration_choices(Master, DataNode, ChunkId),
+    bfs_heartbeat::representative_datanode(Master, ChunkId, DnWithReplica);
+
+public
+delete
+bfs_heartbeat::newReplicaRequest(Master, ChunkId, CurrRepCnt, Time) :-
+    bfs_heartbeat::newReplica(Master, ChunkId, _, CurrRepCnt, Time),
+    chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, _);
+
+watch(bfs_global::send_migrate, ae);
+
+public
+bfs_global::send_migrate(DnWithReplica, Master, ChunkId, CurrRepCnt, Dns) :-
+  chunkMigration(Master, DnWithReplica, ChunkId, CurrRepCnt, Dns);

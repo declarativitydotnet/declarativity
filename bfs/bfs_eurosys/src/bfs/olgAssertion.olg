@@ -1,0 +1,8 @@
+program olg_assertion;
+
+define(die, {String, String});
+
+timer(per, physical, 7000, infinity, 7000);
+
+
+

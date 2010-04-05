@@ -1,0 +1,90 @@
+program paxos_client_liveness;
+
+import java.lang.System;
+import jol.core.Runtime;
+
+/* the purpose of this program is to encapsulate the liveness component of paxos, so that the module responsible
+   for correctness can remain uncluttered.  the basic idea is 
+*/
+
+define(livelog,keys(0,1,2,3),{String,String,String,Long,Long});
+//define(timeError,keys(0,1,2,3),{String,String,String,Long});
+define(timeError,{String,String,String,Long});
+//define(timeIssue,keys(0,1,2,3),{String,String,String,Long});
+define(timeIssue,keys(0,1,2,3),{String,String,String,Long,Long});
+define(timeout,keys(0),{Long,Integer});
+// a lazy timer that we'll change later.
+timer(tick,physical,1000,10000,0);
+
+watch(livelog,ad);
+watch(timeError,ad);
+watch(timeIssue,ad);
+//watch(paxos_global::decreeRequestbuffer,ae);
+
+timeout(5000L,10);
+
+
+public
+livelog(Master,Client,Request,Id,Time) :- 
+  paxos::storedDecreeRequest#insert(Master,Request,Client,Id),
+  Time := System.currentTimeMillis();
+
+livelog(Master,Client,Request,Id,Time) :-
+  paxos_global::decreeRequestBuffer(Master,Request,Client),
+  Id := Runtime.idgen(),
+  Time := System.currentTimeMillis();
+
+public
+timeIssue(Master,Client,Request,Id,TickId) :-
+  livelog(Master,Client,Request,Id,Time),
+  tick#insert(_,_,_),
+  TickId := Runtime.idgen(),
+  Now := new Long(System.currentTimeMillis()),
+  timeout(Timeout,Times),
+  notin multipaxos::decree(Master,Instance,Round,Request),
+  notin timeIssue(Master,Client,_,Id),
+  (Now - Time) > Timeout;
+
+public
+timeError(Master,Client,Request,Id) :-
+  livelog(Master,Client,Request,Id,Time),
+  tick(_,_,_),
+  Now := new Long(System.currentTimeMillis()),
+  timeout(Timeout,Times),
+  notin multipaxos::decree(Master,Instance,Round,Request),
+  (Now - Time) > (Timeout * Times);
+
+delete
+timeIssue(Master,Client,Request,Id,Tickid) :-
+  timeIssue(Master,Client,Request,Id,Tickid),
+  timeError(Master,Client,Request,Id);
+
+delete 
+livelog(Master,Client,Request,Id,Time) :-
+  livelog(Master,Client,Request,Id,Time),
+  timeError(Master,Client,Request,Id);
+
+public
+delete 
+livelog(Master,Client,Request,Id,Time) :-
+  livelog(Master,Client,Request,Id,Time),
+  multipaxos::decree(Master,Instance,Round,Request);
+
+
+public
+paxos_global::decreeRequestBuffer(Master,Request,Client) :-
+  timeIssue#insert(Master,Client,Request,Id,TickId);//,
+ // paxos::storedDecreeRequest(Master,Request,Client,Id);
+
+public
+delete
+timeIssue(Master,Client,Request,Id,TickId) :-
+  timeIssue(Master,Client,Request,Id,TickId),
+  paxos_global::decreeRequestBuffer#insert(Master,Request,Client);
+
+public 
+paxos_global::requestStatus(Master,Client,Decree,Instance,Status) :-
+  timeError(Master,Client,Decree,Id),
+  Instance := -100,
+  Status := "timeout";
+
