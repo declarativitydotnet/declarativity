@@ -115,22 +115,26 @@ mainline code.
 % our software, and to work with the open source community to encourage
 % adoption and integration with existing tools.
 
-\subsection{Twelve Month Milestones}
+\subsection{Twelve Month Agenda}
 
-Between the formalization of Dedalus and the implementation of C4, we have made
-significant progress towards our goal in the last six months.  In the next
-twelve months, we intend to deliver two more concrete artifacts.
+In the past six months, we have made significant progress toward our goals, by
+formalizing Dedalus and completing an initial version of the C4 runtime. In the
+next twelve months, we intend to deliver two additional artifacts. First, we
+plan to create a model checker to formally verify safety and liveness properties
+of Dedalus programs.  It is our belief that the inference-based model of
+computation in Dedalus will be best served by a customized model checker that
+takes advantage of its high level of abstraction~\cite{cardan, armc}.  We are
+also exploring the translation of Dedalus programs into propositional
+representations and TLA+ specifications~\cite{tla}, in order to leverage
+SAT-based verification frameworks and the TLC model checker~\cite{tlc},
+respectively.
 
-The next step in the evolution of the Dedalus language is the creation of a
-model checker to formally verify safety and liveness properties of Dedalus
-programs.  It is our belief that the inference-based model of computation in
-Dedalus will be best served by a customized model checker that takes advantage
-of its high level of abstraction~\cite{cardan, armc}.  We will nevertheless also
-explore the translation of Dedalus programs into propositional representations
-and TLA+ specifications~\cite{tla}, in order to leverage SAT-based verification
-frameworks and the TLC model checker~\cite{tlc}, respectively.
-
-\paa{say something about blossom}
+Next, we plan to use Bloom and C4 to develop a high-performance implementation
+of the Paxos consensus protocol~\cite{netdb,part-time}. Using a prototype version of the
+Blossom program optimizer, we will then ``co-optimize'' our Paxos implementation
+together with the application code that uses it. For example, this will
+automatically allow cheaper synchronization between program operations that are
+mutually commutative.
 
 The model checker and optimizer are distinct goals, but together enable further
 cross-layer optimizations.  If we can prove, for example, that there are no data
