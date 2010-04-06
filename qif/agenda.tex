@@ -1,0 +1,141 @@
+\section{Research Agenda}
+
+\subsection{Foundation: \emph{Dedalus}}
+We have begun by ensuring that our new language is
+firmly grounded in a formal semantics that is amenable to automatic
+verification. We leverage the well-understood semantics of Datalog:
+these provide an unambiguous meaning for local-node programs over a static
+database.  Datalog is a subset of first-order logic, and thus is naturally
+suited to theorem proving applications~\cite{verification} and model
+checkers. However, Datalog does not include the notion of state update or
+asynchrony. Hence, we have recently proposed a version of Datalog that we call
+\emph{Dedalus}, which adds an explicit notion of time to the
+language\cite{dedalus-tr}.
+
+%%With a formal specification of the language's non-distributed
+%%semantics in place, we will then consider the effect of time,
+%%distribution and asynchrony.  
+By using time to explicitly model both evolving state and the message delay and loss associated with
+physical distribution, Dedalus will allow us to reason directly about the effect 
+of changing a program's distribution.
+Given a program and its local semantics,
+in what ways can the program be evaluated in a distributed fashion
+(i.e., on a collection of independent nodes) such that the local
+semantics are preserved?  Extending this notion further, given an
+arbitrary physical distribution, what changes must be made to the
+program code to make the local and distributed semantics equivalent?
+Finally, does our language enable efficient program analyses that can discover these equivalences,
+so that such changes be made in an automated fashion?
+
+Understanding the relationship between dataflow semantics and
+physical distribution will enable two related goals.  First, it will
+allow us to model distributed programs in a local setting that
+emulates physical distribution, allowing us to simulate
+distributed systems and automatically find obscure failure
+conditions. Second, applying the same reasoning in reverse, we hope
+to provide \emph{automatic distribution}: rewriting single-site
+programs to run in a distributed setting, thus realizing equivalent
+semantics over a broad range of distributed architectures and
+platforms.  When fully-automated transformations are not possible, we
+also plan to explore using programmer-provided ``hints'' to enable
+distribution with minimal program changes.
+
+\subsection{Language: \emph{Bloom}}
+A second challenge for our team is to deliver these capabilities in a
+form that is palatable to a typical programmer.  ``Journeyman''
+programmers represent a much larger and more prolific community than
+the specialists, and as we have already argued, the next generation of
+innovation in the cloud will come from the street, not the ivory
+tower.
+
+To appeal to the developer community, we first need a more
+programmer-friendly syntax than the current Overlog language. 
+The new language should preserve the data-centric spirit of such
+declarative networking languages, but not necessarily their style,
+in which programs are expressed as a disjunction of logical implications.
+Equally
+critical is a rich set of developer tools, in particular a debugger
+designed for distributed programs.  Finally, widespread adoption will
+require tight integration with existing languages that are used to
+build distributed systems, including Java, Python, Ruby, and Erlang.
+
+\subsection{Engineering: \emph{Blossom} and \emph{C4}}
+Two concrete software artifacts will result from our efforts. 
+We have already completed building a prototype of an efficient dataflow
+engine we call \emph{C4}. In the past, users of declarative networking
+languages have been forced to sacrifice efficient performance for
+readable, high-level programs. We believe that this is a false
+dichotomy, provided that the language runtime is implemented
+carefully. Our C4 prototype improves performance by more than
+100x over a previous declarative language runtime developed at UC
+Berkeley. We plan to use C4 as the execution runtime for the Bloom
+language. 
+
+Next, we plan to
+build \emph{Blossom}, an adaptive query optimizer that will intelligently
+distribute Bloom program components on different network nodes. Like the query
+optimizer used by relational database systems, Blossom will consider different
+alternatives for evaluating a program---for example, whether a program component
+should run at the client, at a remote server, or at an intermediate ``edge''
+server. The optimizer will select the alternative it predicts will be cheapest
+according to a given cost metric---for example, the program configuration that
+runs the fastest, or uses the least power. Unlike a traditional query optimizer,
+our network-aware optimizer will run continuously, moving program components
+around as the network conditions change. This will enable our agenda of
+automatic parallelization and tier-independence, allowing program components to
+move seamlessly between data centers and mobile devices. Blossom will leverage
+our foundation in Dedalus, to understand the class of legal rewrites that can be
+performed without changing the behavior of the program. These techniques could
+also be employed to improve power utilization, for instance by moving
+computation away from a mobile device that is low on power.
+
+
+\subsection{Validation: \emph{BOOM}}
+To validate the success of our work, we plan to use the Bloom system
+to build a collection of practical distributed systems. Specifically,
+we are building BOOM, a complete set of cloud computing
+infrastructure, including support for analytics via MapReduce and a
+scan-oriented distributed file system, a key-value store for
+interactive web applications, a virtual machine management and
+provisioning layer, and a fault-tolerant application server for
+running business logic. Our goal is to specify all of these components
+in less than 10,000 lines of Bloom, which would be several orders of
+magnitude more concise than conventional techniques. By building this
+software concurrently with Bloom itself, we hope to gain first-hand
+experience in the design of complex distributed systems, which will
+inform the ongoing design of the language.
+
+We have already made some progress toward this goal: BOOM Analytics is
+a reimplementation of Hadoop and HDFS in Overlog, a previous
+declarative networking language~\cite{boom-eurosys}. A team of four
+graduate students built BOOM Analytics in less than six months of
+part-time work, and added significant new features such as
+multi-master HDFS NameNode replication for fault tolerance and
+partitioning to improve scalability---features not yet present in the
+Hadoop mainline code.
+
+\paa{mention the netdb paxos stuff in more detail?}
+
+The ultimate validation will involve releasing our efforts to be used
+and modified by the community at large. We plan to open source all of
+our software, and to work with the open source community to encourage
+adoption and integration with existing tools.
+
+\subsection{Twelve Month Milestones}
+
+Between the formalization of Dedalus and the implemention of  \emph{C4}, we have made significant progress towards
+our goal in the last six months.  In the next twelve months, we intend to deliver two more concrete artifacts.
+
+The next step in the evolution of the \emph{Dedalus} language is the creation of a model checker to formally verify safety and liveness
+properties of \emph{Dedalus} programs.  It is our belief that the inference-based model of computation in Dedalus will
+be best served by a customized model checker that takes advantage of its high level of abstraction~\cite{cardan, armc}.  
+We will nevertheless also explore the
+translation of \emph{Dedalus} programs into propositional representations and TLA+ specifications~\cite{tla}, in order to leverage SAT-based 
+verification frameworks and the TLC model checker~\cite{tlc}, respectively.  
+
+\paa{say something about blossom}
+
+The model checker and optimizer are distinct goals, but together enable further cross-layer optimizations.  If we can prove, for example, that
+there are no data dependencies between two subprograms, then the optimizer can consider scheduling them on distinct hosts without 
+any synchronization.  If we can show that various subprograms with different performance and distribution properties implement the same
+specification of a communication protocol, we can use a cost-based optimizer to choose among them at runtime.
