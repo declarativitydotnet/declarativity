@@ -88,7 +88,7 @@ computation away from a mobile device that is low on power.
 
 
 \subsection{Validation: \emph{BOOM}}
-To validate the success of our work, we plan to use the Bloom system
+To validate the success of our work, we plan to use Bloom
 to build a collection of practical distributed systems. Specifically,
 we are building BOOM, a complete set of cloud computing
 infrastructure, including support for analytics via MapReduce and a
@@ -102,21 +102,18 @@ software concurrently with Bloom itself, we hope to gain first-hand
 experience in the design of complex distributed systems, which will
 inform the ongoing design of the language.
 
-We have already made some progress toward this goal: BOOM Analytics is
-a reimplementation of Hadoop and HDFS in Overlog, a previous
-declarative networking language~\cite{boom-eurosys}. A team of four
-graduate students built BOOM Analytics in less than six months of
-part-time work, and added significant new features such as
-multi-master HDFS NameNode replication for fault tolerance and
-partitioning to improve scalability---features not yet present in the
-Hadoop mainline code.
+We have already made significant progress toward this goal: BOOM Analytics is a
+reimplementation of Hadoop and HDFS in Overlog, a previous declarative
+networking language~\cite{boom-eurosys}. A team of four graduate students built
+BOOM Analytics in less than six months of part-time work, and added significant
+new features such as multi-master HDFS NameNode replication for fault tolerance
+and partitioning to improve scalability---features not yet present in the Hadoop
+mainline code.
 
-\paa{mention the netdb paxos stuff in more detail?}
-
-The ultimate validation will involve releasing our efforts to be used
-and modified by the community at large. We plan to open source all of
-our software, and to work with the open source community to encourage
-adoption and integration with existing tools.
+% The ultimate validation will involve releasing our efforts to be used
+% and modified by the community at large. We plan to open source all of
+% our software, and to work with the open source community to encourage
+% adoption and integration with existing tools.
 
 \subsection{Twelve Month Milestones}
 
