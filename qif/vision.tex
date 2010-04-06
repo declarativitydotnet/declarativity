@@ -3,8 +3,13 @@ In our experience~\cite{boom-eurosys, netdb}, much of the intellectual
 complexity in a typical distributed system resides in \emph{state
   management}: for example, managing protocol and session state, replicating and
   partitioning that state, and restoring system state to consistency after
-  failures. Hence, a data-centric approach is a
-natural fit: by allowing the programmer to focus on applying transformations to
+  failures. 
+%%Hence, a data-centric approach is a
+%%natural fit: b
+We advocate a data-centric approach to the specification and implementation 
+of such systems, in which all state is represented uniformly as data and programs
+are expressed as continuous declarative queries.
+By allowing the programmer to focus on applying transformations to
 data, much of the boilerplate code required in conventional languages can be
 eliminated. Instead, the programmer can focus on reasoning about what is
 difficult.
