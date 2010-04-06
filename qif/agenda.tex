@@ -45,18 +45,16 @@ larger and more prolific community than the specialists; we believe that the
 next generation of innovation in the cloud will come from the street, not a
 small community of highly-skilled specialists.
 
-Prior work at Berkeley on declarative networking~\cite{loo-sigcomm05, loo-sosp05, loo-sigmod06} 
-used Overlog, a Datalog-based language, to express routing protocols and overlay networks.
-To appeal to the developer community, we first need a more
-programmer-friendly syntax than the current Overlog language. 
-The new language should preserve the data-centric spirit of such
-declarative networking languages, but not necessarily their style,
-in which programs are expressed as a disjunction of logical implications.
-Equally
-critical is a rich set of developer tools, in particular a debugger
-designed for distributed programs.  Finally, widespread adoption will
-require close integration with popular languages for building distributed
-systems, including C, Erlang, Java, and Ruby.
+Prior work at Berkeley on declarative networking~\cite{loo-sigmod06, loo-sosp05,
+  loo-sigcomm05} used Overlog, a Datalog-based language, to express routing
+protocols and overlay networks.  To appeal to the developer community, we first
+need a more programmer-friendly syntax than the current Overlog language.  Bloom
+will preserve the data-centric spirit of prior declarative networking languages
+but not necessarily their syntax, in which programs are expressed as a
+disjunction of logical implications.  Equally critical is a rich set of
+developer tools, in particular a debugger designed for distributed programs.
+Finally, widespread adoption will require close integration with popular
+languages for building distributed systems including C, Erlang, Java, and Ruby.
 
 \subsection{Engineering: \emph{Blossom} and \emph{C4}}
 Two concrete software artifacts will result from our efforts. 
