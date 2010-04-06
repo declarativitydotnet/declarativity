@@ -123,19 +123,25 @@ adoption and integration with existing tools.
 
 \subsection{Twelve Month Milestones}
 
-Between the formalization of Dedalus and the implementation of  \emph{C4}, we have made significant progress towards
-our goal in the last six months.  In the next twelve months, we intend to deliver two more concrete artifacts.
+Between the formalization of Dedalus and the implementation of C4, we have made
+significant progress towards our goal in the last six months.  In the next
+twelve months, we intend to deliver two more concrete artifacts.
 
-The next step in the evolution of the \emph{Dedalus} language is the creation of a model checker to formally verify safety and liveness
-properties of \emph{Dedalus} programs.  It is our belief that the inference-based model of computation in Dedalus will
-be best served by a customized model checker that takes advantage of its high level of abstraction~\cite{cardan, armc}.  
-We will nevertheless also explore the
-translation of \emph{Dedalus} programs into propositional representations and TLA+ specifications~\cite{tla}, in order to leverage SAT-based 
-verification frameworks and the TLC model checker~\cite{tlc}, respectively.  
+The next step in the evolution of the Dedalus language is the creation of a
+model checker to formally verify safety and liveness properties of Dedalus
+programs.  It is our belief that the inference-based model of computation in
+Dedalus will be best served by a customized model checker that takes advantage
+of its high level of abstraction~\cite{cardan, armc}.  We will nevertheless also
+explore the translation of Dedalus programs into propositional representations
+and TLA+ specifications~\cite{tla}, in order to leverage SAT-based verification
+frameworks and the TLC model checker~\cite{tlc}, respectively.
 
 \paa{say something about blossom}
 
-The model checker and optimizer are distinct goals, but together enable further cross-layer optimizations.  If we can prove, for example, that
-there are no data dependencies between two subprograms, then the optimizer can consider scheduling them on distinct hosts without 
-any synchronization.  If we can show that various subprograms with different performance and distribution properties implement the same
-specification of a communication protocol, we can use a cost-based optimizer to choose among them at runtime.
+The model checker and optimizer are distinct goals, but together enable further
+cross-layer optimizations.  If we can prove, for example, that there are no data
+dependencies between two subprograms, then the optimizer can consider scheduling
+them on distinct hosts without any synchronization.  If we can show that various
+subprograms with different performance and distribution properties implement the
+same specification of a communication protocol, we can use a cost-based
+optimizer to choose among them at runtime.
