@@ -1,52 +1,49 @@
 \section{Research Agenda}
 
 \subsection{Foundation: \emph{Dedalus}}
-We have begun by ensuring that our new language is
-firmly grounded in a formal semantics that is amenable to automatic
-verification. We leverage the well-understood semantics of Datalog:
-these provide an unambiguous meaning for local-node programs over a static
-database.  Datalog is a subset of first-order logic, and thus is naturally
-suited to theorem proving applications~\cite{verification} and model
-checkers. However, Datalog does not include the notion of state update or
-asynchrony. Hence, we have recently proposed a version of Datalog that we call
-\emph{Dedalus}, which adds an explicit notion of time to the
-language\cite{dedalus-tr}.
+We believe that our new language must be firmly grounded in a formal semantics
+that is amenable to automatic verification. We began by leveraging the
+well-understood semantics of Datalog~\cite{ullmanbook}: these provide an
+unambiguous meaning for single-node programs over a static database.  Datalog is
+a subset of first-order logic, and thus is naturally suited to theorem proving
+applications~\cite{verification} and model checkers. However, Datalog does not
+include the notion of state update or asynchrony. Hence, we have recently
+developed a version of Datalog that we call \emph{Dedalus}, which adds an
+explicit notion of time to the language\cite{dedalus-tr}.
 
 %%With a formal specification of the language's non-distributed
 %%semantics in place, we will then consider the effect of time,
 %%distribution and asynchrony.  
-By using time to explicitly model both evolving state and the message delay and loss associated with
-physical distribution, Dedalus will allow us to reason directly about the effect 
-of changing a program's distribution.
-Given a program and its local semantics,
-in what ways can the program be evaluated in a distributed fashion
-(i.e., on a collection of independent nodes) such that the local
-semantics are preserved?  Extending this notion further, given an
-arbitrary physical distribution, what changes must be made to the
-program code to make the local and distributed semantics equivalent?
-Finally, does our language enable efficient program analyses that can discover these equivalences,
-so that such changes be made in an automated fashion?
 
-Understanding the relationship between dataflow semantics and
-physical distribution will enable two related goals.  First, it will
-allow us to model distributed programs in a local setting that
-emulates physical distribution, allowing us to simulate
-distributed systems and automatically find obscure failure
-conditions. Second, applying the same reasoning in reverse, we hope
-to provide \emph{automatic distribution}: rewriting single-site
-programs to run in a distributed setting, thus realizing equivalent
-semantics over a broad range of distributed architectures and
-platforms.  When fully-automated transformations are not possible, we
-also plan to explore using programmer-provided ``hints'' to enable
-distribution with minimal program changes.
+By using time to explicitly model both evolving state and asynchronous network
+messages, Dedalus allows us to reason directly about the effect of changing a
+program's distribution.  For example, given a program and its local semantics,
+in what ways can the program be evaluated in a distributed fashion (i.e., on a
+collection of independent nodes) such that the local semantics are preserved?
+Extending this notion further, given an arbitrary physical distribution, what
+changes must be made to the program code to make the local and distributed
+semantics equivalent?  Finally, does our language enable efficient program
+analyses that can discover these equivalences, so that such changes be made in
+an automated fashion? With the definition of Dedalus completed, we have now
+turned to addressing these questions.
+
+Understanding the relationship between program semantics and physical
+distribution will enable two related goals.  First, it will allow us to model
+distributed programs in a local setting that emulates physical distribution,
+allowing us to simulate distributed systems and automatically find obscure
+failure conditions. Second, applying the same reasoning in reverse, we hope to
+provide \emph{automatic distribution}: rewriting single-site programs to run in
+a distributed setting, thus realizing equivalent semantics over a broad range of
+distributed architectures and platforms.  When fully-automated transformations
+are not possible, we also plan to explore using programmer-provided ``hints'' to
+enable distribution with minimal program changes.
 
 \subsection{Language: \emph{Bloom}}
-A second challenge for our team is to deliver these capabilities in a
-form that is palatable to a typical programmer.  ``Journeyman''
-programmers represent a much larger and more prolific community than
-the specialists, and as we have already argued, the next generation of
-innovation in the cloud will come from the street, not the ivory
-tower.
+A second challenge for our team is to deliver these capabilities in a form that
+is palatable to a typical programmer.  Journeyman programmers represent a much
+larger and more prolific community than the specialists; we believe that the
+next generation of innovation in the cloud will come from the street, not a
+small community of highly-skilled specialists.
 
 To appeal to the developer community, we first need a more
 programmer-friendly syntax than the current Overlog language. 
