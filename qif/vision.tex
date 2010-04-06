@@ -1,27 +1,24 @@
 \subsection{The Bloom Vision}
-In our experience~\cite{netdb, boom-eurosys}, much of the intellectual
+In our experience~\cite{boom-eurosys, netdb}, much of the intellectual
 complexity in a typical distributed system resides in \emph{state
   management}: for example, managing protocol and session state, replicating and
   partitioning that state, and restoring system state to consistency after
   failures. Hence, a data-centric approach is a
-natural fit: by allowing the programmer to focus on applying
-transformations to data, much of the boilerplate code required in
-conventional languages can be eliminated. Instead, the programmer can
-focus on reasoning about what is difficult.
+natural fit: by allowing the programmer to focus on applying transformations to
+data, much of the boilerplate code required in conventional languages can be
+eliminated. Instead, the programmer can focus on reasoning about what is
+difficult.
 
-The widespread popularity of MapReduce~\cite{mapreduce-osdi} is a
-prominent example of the promise of data-centric
-programming. MapReduce programmers focus on applying transformations
-to sets of data: the MapReduce framework handles the messy details of
-partitioning, distribution and fault tolerance. MapReduce essentially
-raises the level of abstraction, from the traditional Van Neumann
+The widespread popularity of MapReduce~\cite{mapreduce-osdi} is a prominent
+example of the promise of data-centric programming. MapReduce programmers focus
+on applying transformations to sets of data: the MapReduce framework handles the
+messy details of partitioning, distribution and fault tolerance. MapReduce
+essentially raises the level of abstraction, from the traditional Van Neumann
 model to a functional dataflow model.
 
-While MapReduce is limited to batch processing, it points the way
-toward a promising approach to building distributed systems. In this
-project, we propose to investigate whether data-centric techniques can
-be generalized and used to build a broad range of distributed
-systems. \paa{sneak in a reference to HOP here?}
-To achieve this goal, we are designing \emph{Bloom}, a new
-declarative language for distributed computing, and a stack of
-associated software tools.
+While MapReduce is limited to batch processing, it points the way toward a
+promising approach to building distributed systems. In this project, we propose
+to investigate whether data-centric techniques can be generalized and used to
+build a broad range of distributed systems. To achieve this goal, we are
+designing \emph{Bloom}, a new declarative language for distributed computing,
+and a stack of associated software tools.

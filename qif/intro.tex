@@ -1,34 +1,35 @@
 \section{Pervasive Distributed Systems and Data-Centric Programming}
 
-In this proposal, we advocate a data-centric approach to programming
-distributed systems. The rise of cloud computing has made clusters a
-commodity, by allowing developers to rent nearly unlimited computing
-power ``on demand.'' Simultaneously, mobile devices are rapidly
-becoming an attractive means to access a wide variety of network
-services. These trends suggest that, in the near future, nearly every
-non-trivial program will be physically dispersed. Despite this,
-writing distributed programs remains difficult, expensive, and
-error-prone. If the potential of cloud computing and ubiquitous mobile
-devices is to be fully realized, distributing programming must be made
-significantly easier.
+The rise of cloud computing has made clusters a commodity, by allowing
+developers to rent nearly unlimited computing power ``on demand.''
+Simultaneously, mobile devices are rapidly becoming an attractive means to
+access a wide variety of network services. These trends suggest that, in the
+near future, \emph{nearly every non-trivial program will be physically
+  dispersed}. Unfortunately, writing scalable, reliable distributed programs
+remains difficult, expensive, and error-prone. If the potential of cloud
+computing and ubiquitous mobile devices is to be fully realized, distributing
+programming must be made significantly easier.
 
-Most distributed programs are written using a conventional programming
-language designed for centralized computation; features for
-distributed programming are typically an afterthought. As a result,
-relatively simple distributed algorithms often require thousands of
-lines of code to implement in practice---the essence of the algorithm
-is obscured by boilerplate code for event loops, communication,
-explicit concurrency, and marshalling of messages. This yields
-programs that are difficult to understand and expensive to modify.
+Most distributed programs are written using a conventional programming language
+designed primarily for centralized computation; features for distributed
+programming are typically an afterthought. As a result, relatively simple
+distributed algorithms often require thousands of lines of code to implement in
+practice---the essence of the algorithm is obscured by boilerplate code for
+event loops, communication, explicit concurrency, and marshalling of
+messages. This yields programs that are difficult to understand and expensive to
+modify. To address these problems, in this proposal we advocate a
+\emph{data-centric} approach to programming distributed systems, in which
+programmers write high-level distributed queries over relations.
 
-These problems are exacerbated by the heterogeneous, dynamic network environment
-that will accompany pervasive distribution. A user might begin using a
-distributed program on their netbook and then move to a mobile phone with a
-limited battery. They might then arrive at work, and transition to working on a
-desktop machine. At each stage in this process, the optimal program architecture
-differs: deciding which program components should run at which location should
-be made dynamically, rather than as part of the design process. The
-heterogeneous nature of pervasive distribution is best met by
-\emph{distribution-independent} programs. In contrast, conventional languages
-require programmers to carefully divide their programs into different
+The need for a fundamental improvement in distributed programming is exacerbated
+by the heterogeneous, dynamic network environment that will accompany pervasive
+distribution. A user might begin using a distributed program on their netbook
+and then move to a mobile phone with a limited battery. They might then arrive
+at work, and transition to working on a desktop machine. At each stage in this
+process, the optimal program architecture differs. Hence, we believe that
+decisions about the locations at which program components should run should be
+made dynamically by an optimizing compiler, rather than being hardcoded during
+the design process. The heterogeneous nature of pervasive distribution is best
+met by \emph{distribution-independent} programs. In contrast, conventional
+languages require programmers to carefully divide their programs into different
 computational modules at design-time.
