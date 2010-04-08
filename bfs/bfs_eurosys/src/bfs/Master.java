@@ -10,8 +10,6 @@ import jol.types.basic.TupleSet;
 import jol.types.exception.JolRuntimeException;
 import jol.types.exception.UpdateException;
 import jol.types.table.TableName;
-import bfs.telemetry.LogEvents;
-import bfs.telemetry.Telemetry;
 
 
 public class Master {
@@ -19,8 +17,6 @@ public class Master {
     private final int port;
     private final int partition;
     private JolSystem system;
-    private boolean enableLog = false;
-    private LogEvents logEvents;
 
     public static void main(String[] args) throws JolRuntimeException, UpdateException {
         int[] masterIndex = Conf.findSelfIndex(true);
@@ -35,8 +31,6 @@ public class Master {
     }
 
     public void stop() {
-    	if (this.enableLog)
-    		this.logEvents.shutdown();
         this.system.shutdown();
     }
 
@@ -46,12 +40,6 @@ public class Master {
         OlgAssertion olgAssert = new OlgAssertion(this.system, true);
         Tap tap = new Tap(this.system, Conf.getTapSink());
 
-        if (Conf.getLogSink() != null) {
-		    Telemetry telemetry = new Telemetry(this.system);
-		    // the table telemetry::cpu_info(RemoteAddress, ThisAddress, User, Sys, Times is now available for querying
-		    // remote nodes must have called startSource(ThisAddress, RemoteAddress)
-		    telemetry.startSink(Conf.getLogSink());
-        }
 
         this.system.install("bfs", ClassLoader.getSystemResource("bfs/bfs_global.olg"));
         this.system.evaluate();
@@ -93,13 +81,6 @@ public class Master {
 
         this.system.start();
 
-        if (this.enableLog) {
-            File f = new File("/log/error.log");
-            if (!f.canRead()) f = new File("/var/log/messages");
-            if (!f.canRead()) f = new File("/usr/share/dict/words");
-
-        	this.logEvents = new LogEvents(this.system, f);
-        }
 
         System.out.println("Master node @ " + this.port + " ready!");
     }
