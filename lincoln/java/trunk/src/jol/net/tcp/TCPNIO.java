@@ -209,6 +209,7 @@ public class TCPNIO extends Server {
 					writeBuffer();
 				}
 			} catch (IOException e) {
+				e.printStackTrace();
 				return false;
 			}
 			return true;
