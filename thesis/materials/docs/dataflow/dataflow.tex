@@ -1,0 +1,214 @@
+\documentclass[dvips,10pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{epsfig}
+\usepackage{verbatim}
+\usepackage{times}
+\usepackage[bf,small,compact]{titlesec}
+
+\date{}
+\title{Dataflow Architecture for P2 \vspace{-1em}}
+
+% Setup stuff
+% Side margins:
+\oddsidemargin 0in
+\evensidemargin 0in
+
+% Text width:
+\textwidth 6.5in
+
+% Top margin:
+\topmargin -.25in
+
+% Text height:
+\textheight 8.5in
+
+% Give footnotes a little more room:
+%\renewcommand{\footnotesep}{5mm}
+
+\author{Us Smarties}
+\sloppy
+\begin{document}
+\maketitle
+\begin{abstract}
+Can we {\em please} close the door on this already?
+
+\end{abstract}
+\section{Introduction}
+Lots of takes on dataflow arch in DB and NW communities.  DB query
+engines.  OS support for NW ``Data Manipulation'' (in Clark and
+Tennehouse's terminology) including Scout.  Network router toolkits
+like Click.  Network/DB hybrids including Volcano's Exchange operator,
+Telegraph's Fjords model, the architecture of PIER.
+
+An effort here to taxonomize the design space for software dataflow
+systems, and a description of an implementation in P2 that maximizes
+flexibility in the model without sacrificing any efficiency with
+respect to more constrained designs.
+
+\section{Background Thoughts on Indirection: Space and Time}
+Producer-Consumer ``handoff'' is most easily pictured as having two
+agents rendezvous at the same place and time to transfer a datum.  But
+co-location and simultaneity are not always possible to achieve in
+practice -- particularly with networked machines, but even within the
+confines of a single machine.
+
+``Everything in CS can be solved with a level of indirection'' applies
+here.  We often think of indirection in {\em space}, in which we free
+the producer and consumer from agreeing {\em a priori} upon a spatial
+  location.  This is typically done by providing a lookup mechanism
+  for one or both parties to identify the current rendezvous location.
+
+We can also achieve indirection in {\em time}, in which we free the
+producer and consumer from agreeing {\em a priori} on a time for the
+rendezvous.  This is achieved by persistence.  Note that persistence
+can be leverage when either the producer or the consumer arrives at
+the rendezvous first. The producer can place data into storage (a
+queue, a mailbox, etc.) which holds the data until the consumer
+arrives.  Alternatively, the consumer can place a forwarding handler
+into storage in advance of the producer, so that when the producer
+arrives it can invoke the data receipt logic.
+
+(``Persistence'' has another meaning in common speech, which is akin
+to the notion of ``retry'' or ``polling'' in networking.  Retry in the
+absence of storage is a way of achieving simultaneity, and hence
+removing indirection in time.  Typically, retry is not used alone,
+however. It is combined with at least a modest amount of storage --
+say 1 message worth -- to avoid the need for perfect simultaneity.
+Instead, retry limits the latency of handoff and the rate-lag between
+producer and consumer.)
+
+\section{A Generic Dataflow Handoff Model}
+We begin with a generic model in which two independent agents
+(machines or processes) need to achieve handoff.  We ignore
+indirection in space for the moment.
+
+We assume a ``slot'' (a queue of size 1) for persistence.  This slot
+can hold a tuple of the form $(desire, data, handler)$.  The $data$ is
+(a handle for) the actual data to be transferred; the $handler$ is a
+piece of code (a continuation, functor, function pointer, etc.) that
+can be invoked.  We now enumerate the possible actions a producer or
+consumer can take on the slot:
+
+\begin{verbatim}
+// I doubt this would compile in any language 
+// but hopefully you see what I mean.  It's also not
+// optimized to avoid copies or the like.
+// Perhaps should convert to prose or 
+// more pseudo-ish code to avoid getting
+// nailed on the detail.
+class slot {
+  private boolean desire;
+  private data;
+  private return_code &handler;
+
+  void put_desire { desire = true; }
+  boolean check_desire { return desire; }
+  void put_data(d)     { data = d; }
+  void put_handler(h)  { handler = h; }
+
+  void clear_slot() { desire = false; data = handler = NULL; }
+
+  data get_data() { desire = false; d = data; data = NULL; return d; }
+  return_code invoke_handler() { return handler(); }
+}
+\end{verbatim}
+
+\subsection{Coupling Data and Control Flows}
+One standard approach to dataflow architectures is to couple the
+scheduling of the producer and consumer with the passage of data.  For
+example, the standard database iterator model has consumers call
+(i.e. directly schedule) producers, with data being returned on the
+stack at the end of the producer's computation.  This is sometimes
+called a ``pull'' model.  The opposite approach is also used in some
+systems, in which producers call consumers, passing the data on the
+call stack.
+
+Both of these approaches can be achieved in our model with appropriate
+scheduling of producer code, consumer code, and slot methods.  The
+slot plays the role that would be played by the stack in the
+function-call approach.  In these scenarios, the scheduler
+deterministically orders the invocation of consumer and producer code
+to achieve the coupling in time that is implicit in the function-call
+approach.
+
+\begin{verbatim}
+Coupled Pull (iterator)
+=======================
+pull_consumer_prologue(); // calls slot.set_desire();
+pull_producer_prologue(); // calls slot.put_data
+pull_producer_epilogue();
+pull_consumer_epilogue(); // calls get_data();
+
+
+Coupled Push
+============
+push_producer_prologue(); // calls slot.put_data
+push_consumer_prologue(); 
+push_consumer_epilogue(); // calls get_data();
+push_producer_epilogue();
+\end{verbatim}
+
+\subsection{Asynchronous Push and Pull}
+In many scenarios, the arrival of data or of desires cannot be
+controlled.  Hence the scheduling of producer and consumer code may be
+deserving of more flexibility that in the coupled approaches we have
+seen so far.  One example of this is a ``non-blocking pull'' model, in
+which desire precedes data by some uncontrolled amount of time.  This
+is the standard scenario in disk I/O requests.
+
+\begin{verbatim}
+Non-Blocking Pull
+=================
+// FIX TO CONSIDER THE PREFETCH SCENARIO AS WELL!
+async_pull_consumer_prologue(); 
+  // calls slot.put_desire, 
+  // and slot.put_handler(async_pull_consumer_epilogue)
+
+add async_pull_producer() to the run queue; 
+  // eventually calls slot.put_data()
+  // followed immediately by slot.invoke_handler()
+\end{verbatim}
+
+An alternative scenario is the ``non-blocking push'' model, in which
+the producer may run ahead of the consumer.  This scenario arises in
+network send environments, where the consumption of a packet has to
+wait for a channel slot.
+
+\begin{verbatim}
+Non-Blocking Push
+=================
+// FIX TO CONSIDER BACKPRESSURE!
+asynch_push_producer_prologue();
+  // calls slot.put_data, 
+  // and slot.put_handler(async_push_producer_epilogue)
+
+add async_push_consumer() to the run queue;
+  // eventually calls slot.get_data()
+  // followed by slot.invoke_handler()
+\end{verbatim}
+
+
+\subsection{Completely Decoupled Producer/Consumer pairs}
+\begin{itemize}
+\item Asynch P/C with polling 
+\item Asynch P/C with handlers
+\item Mix and match polling/handlers?
+\end{itemize}
+
+\section{Multi-Operator Pipelines}
+
+\section{From Events to Threads}
+In the previous model we assumed that producers and consumers were
+independent agents.  An alternative approach is to consider a
+single-node, threaded architecture, in which we can (perhaps flexibly)
+choose to connect multiple operators in a single thread via function
+calls.  This essentially couples control-flow and dataflow for subsets
+of the operators, as discussed above.
+
+Argument here that Mothy's ``slot-as-thread-boundary'' approach can be
+made to do everything we did up to now.  
+
+Argument that it's more efficient to couple control and dataflow for
+predictable operators.
+\end{document}

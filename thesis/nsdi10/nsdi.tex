@@ -1,0 +1,95 @@
+% TEMPLATE for Usenix papers, specifically to meet requirements of
+%  USENIX '05
+% originally a template for producing IEEE-format articles using LaTeX.
+%   written by Matthew Ward, CS Department, Worcester Polytechnic Institute.
+% adapted by David Beazley for his excellent SWIG paper in Proceedings,
+%   Tcl 96
+% turned into a smartass generic template by De Clarke, with thanks to
+%   both the above pioneers
+% use at your own risk.  Complaints to /dev/null.
+% make it two column with no page numbering, default is 10 point
+
+% Munged by Fred Douglis <douglis@research.att.com> 10/97 to separate
+% the .sty file from the LaTeX source template, so that people can
+% more easily include the .sty file into an existing document.  Also
+% changed to more closely follow the style guidelines as represented
+% by the Word sample file. 
+% This version uses the latex2e styles, not the very ancient 2.09 stuff.
+\documentclass[letterpaper,twocolumn,10pt]{article}
+\usepackage{usenix,epsfig,endnotes}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{color}
+\usepackage{times}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{subfig}
+
+\newcommand{\JT} {JobTracker\xspace}
+\newcommand{\TT} {TaskTracker\xspace}
+\newcommand{\NN} {NameNode\xspace}
+\newcommand{\DN} {DataNode\xspace}
+
+% \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+% \newcommand{\nrc}[1]{{\textcolor{green}{#1 -- nrc}}}
+% \newcommand{\rcs}[1]{{\textcolor{red}{#1 -- rcs}}}
+%\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+
+\begin{document}
+
+
+%don't want date printed
+\date{}
+
+%make title bold and 14 pt font (Latex default is non-bold, 16 pt)
+\title{\Large \bf MapReduce Online}
+
+%for single author (just remove % characters)
+\author{
+{\rm Tyson Condie, Neil Conway, Peter Alvaro, Joseph M.\ Hellerstein}\\ UC Berkeley
+\and
+{\rm Khaled Elmeleegy, Russell Sears}\\ Yahoo! Research
+}
+
+\maketitle
+
+\begin{abstract}
+  MapReduce is a popular framework for data-intensive distributed computing of
+  batch jobs. To simplify fault tolerance, many implementations of MapReduce
+  \emph{materialize} the entire output of each map and reduce task before it can
+  be consumed. In this paper, we propose a modified MapReduce architecture that
+  allows data to be \emph{pipelined} between operators. This extends the
+  MapReduce programming model beyond batch processing, and can reduce completion
+  times and improve system utilization for batch jobs as well.  We present a
+  modified version of the Hadoop MapReduce framework that supports \emph{online
+    aggregation}, which allows users to see ``early returns'' from a job as it
+  is being computed. Our Hadoop Online Prototype ({\em HOP}) also supports
+  \emph{continuous queries}, which enable MapReduce programs to be written for
+  applications such as event monitoring and stream processing. HOP retains the
+  fault tolerance properties of Hadoop and can run unmodified user-defined
+  MapReduce programs.
+\end{abstract}
+
+\input{intro}
+\input{background}
+\input{pipelining}
+\input{onlineaggs}
+\input{continuous}
+\input{perf}
+\input{relwork}
+\input{conclusion}
+
+\section*{Acknowledgments}
+We would like to thank Daniel Abadi, Kuang Chen, Mosharaf Chowdhury, Akshay
+Krishnamurthy, Andrew Pavlo, Hong Tang , and our shepherd Jeff Dean for their
+helpful comments and suggestions. This material is based upon work supported by
+the National Science Foundation under Grant Nos.\ 0713661, 0722077 and 0803690,
+the Air Force Office of Scientific Research under Grant No.\ FA95500810352, the
+Natural Sciences and Engineering Research Council of Canada, and gifts from IBM,
+Microsoft, and Yahoo!.
+
+{\footnotesize \bibliographystyle{acm}
+\bibliography{nsdi}}
+
+\end{document}

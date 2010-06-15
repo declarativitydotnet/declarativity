@@ -1,0 +1,214 @@
+\chapter[Introduction]{Introduction}
+\section{Introduction} \label{Intro}
+
+In a typical communication system a binary input message
+$\mathbf{x}$ is encoded at the transmitter, using a
+substitution-error correcting code $C$, into a coded sequence
+$\mathbf{c}$ = $C(\mathbf{x})$, which we will assume is also a
+binary sequence. The modulated version of this sequence may be
+modeled as being corrupted by additive noise, so the received
+waveform after matched filtering  can be written as
+\begin{equation}
+r(t)=\sum_{i} c_i h(t-iT) +n(t),
+\end{equation}
+where $c_i$ is the $i^{th}$%$i^{\text{th}}$
+bit of $\mathbf{c}$, $h(t)$ is convolution of the modulating pulse
+and the matched filter, and $n(t)$ represents the noise introduced
+by the channel.
+
+The receiver samples $r(t)$ at time instances
+$\left\{kT_s+\tau_k\right\} $, and the sequence of samples is fed
+into the decoder which decides on the most likely input message.
+Accurate synchronization of the sampling instants, i.e that $T_s$
+be equal to $T$ and that each $\tau_k$ be ideal, is critical for
+the full utilization of the coding gain of the substitution-error
+correcting code. As the operating requirements under which timing
+recovery must be performed become more stringent, because of
+higher data rates and/or longer delays in the decision feedback
+loop that adjusts the sampling instants, such synchronization is
+becoming harder to achieve. Several authors have studied the
+problem of accurate timing recovery. Proposed solutions include
+building a more sophisticated timing recovery block \cite{liu:02},
+multiple hypothesis analysis of the sampling instances
+\cite{kbek:04}, and for the intersymbol interference (ISI)
+channels in particular, a soft-output detector for both ISI and
+timing errors \cite{zhangkavcic:03}, and an iterative timing
+recovery approach that incorporates timing recovery in turbo
+equalization \cite{iterativetr:04}.
+
+As an alternative to more complex and more expensive timing
+recovery schemes, we propose to shift the emphasis away from the
+timing recovery block  and instead modify the decoding procedure
+and the code itself to compensate for inadequate synchronization.
+By analyzing the robustness of a substitution-error correction
+code to synchronization errors, one could use a subcode of the
+original code that would have good minimum distance under both
+substitution as well as sampling errors. The trade-off would be
+between the incurred rate loss associated with the code
+modification versus the increased complexity and latency
+associated with the existing approaches mentioned above. The
+challenge of the proposed approach lies in determining the
+synchronization error correction capabilities of individual codes
+of interest, and in determining as large as possible a subcode
+with the desired properties.
+
+
+To illustrate the issues that arise when adequate timing recovery
+is missing, assume (for purposes of argument) that $h(t)$ is a
+rectangular pulse of duration $T$ and unit amplitude and that we
+are operating in the infinite signal-to-noise (SNR) regime where
+the effect of $n(t)$ is negligible. Then $r(t)$ simply becomes
+\begin{equation}
+r(t)= \sum_{i} c_i 1(iT\leq t < (i+1)T)~.
+\end{equation}
+
+If samples were taken in the middle of each pulse the sampled
+version of $r(t)$ would be precisely $\mathbf{c}$. Now suppose
+that inadequate timing recovery causes the sampling to occur at
+time instants $kT_s+\tau_k$.
+\begin{figure}\label{figa}
+\begin{picture}(50,100)(0,40)
+\put(10,50){\vector(1,0){220}} \put(10,50){\vector(0,1){70}}
+\put(50,50){\line(0,1){50}} \put(90,50){\line(0,1){50}}
+\put(130,50){\line(0,1){50}} \put(170,50){\line(0,1){50}}
+\put(210,50){\line(0,1){50}} \put(50,100){\line(1,0){40}}
+\put(130,100){\line(1,0){40}} \put(170,100){\line(1,0){40}}
+\put(0,100){{1}} \put(0, 130){{$r(t)$}} \put(30,30){{T}}
+\put(70,30){{2T}}\put(110,30){{3T}}\put(150,30){{4T}}
+\put(190,30){{5T}} \put(220, 70){{$\ldots$}} \put(235,40){{$t$}}
+\put(50,100){\line(1,0){5}} \put(27,47){{$\diamond$}}
+\put(62,97){{$\diamond$}} \put(97,47){{$\diamond$}}
+\put(132,97){{$\diamond$}} \put(162,97){{$\diamond$}}
+\put(200,97){{$\diamond$}} \put(30,47){\line(0,1){5}}
+\put(70,47){\line(0,1){5}} \put(110,47){\line(0,1){5}}
+\put(150,47){\line(0,1){5}}\put(190,47){\line(0,1){5}}
+\put(10,100){\line(1,0){5}}
+\end{picture}
+
+\caption{An example of oversampling.}\label{pic:graph2}
+\end{figure}
+
+As an example, consider a sequence $\mathbf{c}$ =
+(0,1,0,1,1,$\ldots$) that results in the waveform $r(t)$ shown in
+Figure~\ref{figa}. The sampling points $kT_s+\tau_k$ are marked in
+the figure by $\diamond$. In this example, $T_s<T$ causes
+oversampling, and the sampled version of $r(t)$ contains a
+repeated bit (here the fourth bit is sampled twice).
+%\input{figure2.tex}
+Analogously, when $T_s>T$, undersampling can cause the separation
+between two consecutive samples to be so large that some bit is
+not sampled at all. Therefore without adequate timing recovery the
+sampled version of $r(t)$ results in a sequence obtained by
+repeating or deleting some bits in $\mathbf{c}$.
+
+A codeword $\mathbf{c}$ can in general give rise to a whole set of
+received sampled versions of $r(t)$. The possible set of such
+sequences depends on how good the timing recovery scheme is. When
+two distinct codewords $\mathbf{c_1}$ and $\mathbf{c_2}$ can
+result in the same sampled sequence, it is no longer possible to
+uniquely determine the coded sequence or its pre-image
+$\mathbf{x}$ from the received sequence, even in the noise-free
+environment. We then say that the substitution-error correcting
+code $C$ has an \textit{identification problem}. We also say that
+the pair of codewords $\mathbf{c_1}$ and $\mathbf{c_2}$ has an
+identification problem.
+
+More generally, two distinct codewords $\mathbf{c_1}$ and
+$\mathbf{c_2}$ could result in sampled sequences with poor Hamming
+distance. This would result in poor performance over a channel
+that permits substitution errors. In this case we say that the
+substitution-error correcting code $C$ has {\em poor
+identification}. We also say that the pair of codewords
+$\mathbf{c_1}$ and $\mathbf{c_2}$ has poor identification.
+
+In this paper we adopt a set-theoretic model for the
+synchronization errors in which a codeword gives rise to a set of
+possible received sampled sequences which depends on how many bits
+are allowed to be repeated or deleted. In this context, our goal
+is to ensure that we have good identification by restricting
+attention to a large linear subcode for which each pair of
+distinct codewords has good post-synchronization error Hamming
+distance. Further, we would like to analyze the performance of
+this subcode when used over a channel that introduces both
+substitution and synchronization errors. In this paper we address
+such questions for the RM($1$,$m$) code.
+
+It should be mentioned that several authors have studied codes
+immune to insertions and deletions of bits. For example, the
+so-called Varshamov-Tenengolts code proposed in \cite{vt:65} and
+popularized by Levenshtein in \cite {lev:66} has been further
+studied by Ferreira et al., \cite {ferr:97}, Levenshtein
+\cite{lev:92}, Sloane \cite{sloane:00}, and Tenengolts
+\cite{ten:84}. Related constructions were proposed in
+\cite{bours:94}, \cite{calabi:69}, \cite{clarke:93},
+\cite{klove:95} and \cite{ullman:66}. Even though these
+constructions result in codes that are immune to a given number of
+insertions and deletions of bits, they have a limited guarantee
+for other desirable properties of standard substitution-error
+correcting codes (such as linearity and a good minimum Hamming
+distance). Several other authors have proposed concatenated codes
+that correct synchronization errors, such as in \cite{cmnv:03},
+\cite{cf:03}, and \cite{dmackay:01}. These have a significant
+incurred rate loss penalty. In contrast to these works, our
+approach is to start with known substitution-error correcting
+codes and propose how to modify them with only a small loss in the
+rate in order to continue to provide good performance under
+synchronization errors, which are themselves modeled as a certain
+number of repetitions or deletions of bits. A related problem of a
+code construction for frame synchronization was studied in
+\cite{stiffler:65} and \cite{bose:67}.
+
+We study RM($1$,$m$) codes in this paper. In
+Section~\ref{section3}, we prove several structural properties of
+the run-lengths of such a code. Using these properties, in
+Section~\ref{section4} we systematically analyze the
+identification problem for such codes for single deletion errors.
+We propose a simple way to prune an RM($1$,$m$) code to obtain a
+linear subcode that does not suffer from the identification
+problem for a single deletion. This subcode is also shown to have
+good post-deletion and post-repetition minimum distance. In
+Section ~\ref{section5} we discuss how to decode the pruned code
+over channels in which substitution errors are present in addition
+to possibly the deletion of a single bit or the repetition of a
+single bit. We present a bounded distance decoding algorithm that
+is a variant of the fast Hadamard matrix based decoding which is
+traditionally used to decode the RM($1$,$m$) codes. The complexity
+of this algorithm is of the same order as that of the traditional
+decoder. Finally, Section ~\ref{section6} concludes the paper and
+proposes future extensions of this work.
+
+\section{Background}
+
+Substitution error correcting codes are traditionally used in
+communication systems for encoding of a binary input message
+$\mathbf{x}$ into a coded sequence $\mathbf{c}$ = $C(\mathbf{x})$.
+The modulated version of this sequence is usually corrupted by
+additive noise, and is seen at the receiver as a waveform $r(t)$,
+\begin{equation}\label{eq:rt}
+r(t)=\sum_{i} c_i h(t-iT) +n(t),
+\end{equation}
+where $c_i$ is the $i^{\text{th}}$ %$i^{\text{th}}$
+bit of $\mathbf{c}$, $h(t)$ is the modulating pulse, and $n(t)$ is
+the noise introduced in the channel. The received waveform $r(t)$
+is sampled at certain sampling points determined by the timing
+recovery process, and the resulting sampled sequence is passed to
+the decoder which then produces the estimate of $\mathbf{c}$ (or
+$\mathbf{x}$). In the analysis of substitution error correcting
+codes and their decoding algorithms it is traditionally assumed
+that the decoder receives a sequence which is a properly sampled
+version of the waveform $r(t)$.
+
+The timing recovery process involves a substantial overhead in the
+design of communication chips, both in terms of occupying area on
+the chip and in terms of power consumption. To avoid some of this
+cost, particularly in high speed systems, chip designers could
+attempt to make do with poorer timing recovery, while oversampling
+the received waveform to attempt to ensure that no information is
+lost. Thus the waveform $r(t)$ instead of being sampled at
+instances $kT_s+\tau_k$ might be sampled at instances roughly $T$
+apart, for $T<T_s$. In the idealized infinite SNR limit of a PAM
+system, this appears as if some symbols are sampled more than
+once. As a result, instead of creating $n$ samples from $r(t)$,
+$n+s$ samples are produced, where $s \geq 0$. As a consequence,
+when $s>0$, the decoder is presented with a sampled sequence whose
+length exceeds the length of a codeword.

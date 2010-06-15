@@ -1,0 +1,94 @@
+\documentclass[10pt]{sigplanconf}
+\usepackage{color}
+\usepackage{times}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{boxedminipage}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{balance}
+\usepackage[protrusion=true,expansion=true]{microtype}
+%\pdfminorversion=3
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+\newcommand{\BOOM} {BOOM\xspace}
+\newcommand{\BOOMA} {BOOM Analytics\xspace}
+\newcommand{\BIGBOOM} {BOOM\xspace}
+\newcommand{\JOL} {JOL\xspace}
+\newcommand{\BIGJOL} {JOL\xspace}
+\newcommand{\JT} {JobTracker\xspace}
+\newcommand{\TT} {TaskTracker\xspace}
+\newcommand{\NN} {NameNode\xspace}
+\newcommand{\DN} {DataNode\xspace}
+\renewcommand{\ttdefault}{cmtt}
+
+\begin{document}
+
+\title{\BOOMA: Exploring Data-Centric, Declarative Programming for the Cloud}
+\conferenceinfo{EuroSys'10,} {April 13--16, 2010, Paris, France.}
+\CopyrightYear{2010}
+\copyrightdata{978-1-60558-577-2/10/04}
+
+\authorinfo{Peter Alvaro}{UC Berkeley}{palvaro@eecs.berkeley.edu}
+\authorinfo{Tyson Condie}{UC Berkeley}{tcondie@eecs.berkeley.edu}
+\authorinfo{Neil Conway}{UC Berkeley}{nrc@eecs.berkeley.edu}
+\authorinfo{Khaled Elmeleegy}{Yahoo!\ Research}{khaled@yahoo-inc.com}
+\authorinfo{Joseph M. Hellerstein}{UC Berkeley}{hellerstein@eecs.berkeley.edu}
+\authorinfo{Russell Sears}{UC Berkeley}{sears@eecs.berkeley.edu}
+
+\maketitle
+\begin{abstract}
+  Building and debugging distributed software remains extremely difficult. We
+  conjecture that by adopting a \emph{data-centric} approach to system design
+  and by employing \emph{declarative} programming languages, a broad range of
+  distributed software can be recast naturally in a data-parallel programming
+  model.  Our hope is that this model can significantly raise the level of
+  abstraction for programmers, improving code simplicity, speed of development,
+  ease of software evolution, and program correctness.
+
+  This paper presents our experience with an initial large-scale experiment in
+  this direction.  First, we used the Overlog language to implement a ``Big
+  Data'' analytics stack that is API-compatible with Hadoop and HDFS and
+  provides comparable performance.  Second, we extended the system with complex
+  distributed features not yet available in Hadoop, including high availability,
+  scalability, and unique monitoring and debugging facilities. We present both
+  quantitative and anecdotal results from our experience, providing some
+  concrete evidence that both data-centric design and declarative languages can
+  substantially simplify distributed systems programming.
+\end{abstract}
+
+\category{H.3.4}{Information Storage and Retrieval}{Systems and
+  Software---Distributed systems}
+
+\terms Design, Experimentation, Languages
+
+\keywords
+Cloud Computing, Datalog, MapReduce
+
+\input{intro}
+\input{relwork}
+
+\input{bg}
+
+\input{hdfs}
+
+\input{rely}
+
+\input{scale}
+
+\input{manage}
+
+\input{mapreduce}
+
+\input{eval}
+
+\input{lessons}
+
+\input{conclusion}
+\input{acknowledgments}
+\balance
+\bibliographystyle{abbrvnat}
+\bibliography{euro041-alvaro}
+
+\end{document}

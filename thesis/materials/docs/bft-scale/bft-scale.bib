@@ -1,0 +1,295 @@
+@string{nsdi = "Proceedings of USENIX Networked Systems Design and Implementation (NSDI)"}
+@string{atc = "Proceedings of USENIX Annual Technical Conference"}
+@string{sosp = "Proceedings of ACM Symposium on Operating System Principles (SOSP)"}
+@string{hotos = "Proceedings of USENIX Hot Topics in Operating System (HotOS)"}
+@String{sosp2005 = {Proceedings of the Twentieth {ACM} Symposium on
+                  Operating Systems Principles}}
+@String{sosp2005addr = {Brighton, {UK}}}
+@string{ietf="{IETF}"}
+@string{osdi = "Proceedings of USENIX Operating System Design and Implementation (OSDI)"}
+@string{sigcomm = "Proceedings of ACM Special Interest Group On Data Communications (SIGCOMM)"}
+@string{iptps = "Proceedings of International Workshop on Peer to Peer Systems (IPTPS)"}
+@string{sruti = "Proceedings of Workshop on Steps to Reducing Unwanted Traffic on the Internet (SRUTI)"}
+
+@inproceedings{Castro1999,
+  author = "Miguel Castro and Barbara Liskov",
+  title = "{Practical Byzantine Fault Tolerance}",
+  booktitle = "OSDI",
+  address = "{New Orleans, USA}",
+  year = {1999},
+  month = feb
+}
+
+@article{Yu2002,
+  author = "Haifeng Yu and Amin Vahdat",
+  title = "{Design and Evaluation of a Conit-Based Continuous Consistentcy Model for Replicated Services}",
+  journal =      {ACM Transactions on Computer Systems},
+  volume =       {20},
+  number =       {3},
+  year =         {2002},
+  pages =        {239--282},
+  publisher =    {ACM Press},
+  address =      {New York, NY, USA}
+}
+
+@inproceedings{Petersen1997,
+  author = "Karin Petersen and Mike Spreitzer and Douglas Terry and Marvin Theimer and Alan Demers",
+  title = "{Flexible Update Propagation for Weakly Consistent Replication}",
+  booktitle = "SOSP",
+  address = "{Saint Malo, France}",
+  year = {1997},
+  month = oct
+}
+
+@inBook{Hardware-compiler-branch,
+  author =       "{John L. Hennessy and David A. Patterson}",
+  title =        "{Computer Architecture: A Quantitative Approach}",
+  publisher =    {Morgan Kaufmann Publishers},
+  chapter = "4",
+  edition =     "3rd Edition",
+  year =         2006
+}
+
+
+@article{paxos-tocs,
+  author = "Leslie Lamport",
+  title = "{The Part-Time Parliament}",
+  journal =      {ACM Transactions on Computer Systems},
+  volume =       {16},
+  number =       {2},
+  year =         {1998},
+  pages =        {133--169},
+  publisher =    {ACM Press},
+  address =      {New York, NY, USA}
+}
+
+@InProceedings{practi-nsdi, 
+author = {N Belaramani and M. Dahlin and L. Gao and A. Nayate and A. Venkataramani and P. Yalagandula and J. Zheng}, 
+ title = "{{PRACTI} Replication}", 
+ booktitle = nsdi, 
+ year = 2006 , 
+ address = "{San Jose, USA}",
+ month = may
+ }
+@article{byzantine-general,
+ author = {Leslie Lamport and Robert Shostak and Marshall Pease},
+ title = "{The Byzantine Generals Problem}",
+ journal = {ACM Transactions on Programming Languages and Systems},
+ volume = {4},
+ number = {3},
+ year = {1982},
+ pages = {382--401},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+@article{fail-stop,
+ author = {Richard D. Schlichting and Fred B. Schneider},
+ title = "{Fail-stop processors: an approach to designing fault-tolerant computing systems}",
+ journal = {ACM Transaction on Computer Systems},
+ volume = {1},
+ number = {3},
+ year = {1983},
+ pages = {222--238},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+@inProceedings{Douceur2006,
+ author = "John R. Douceur and Jon Howell",
+ title = "{Byzantine Fault Isolation in the Farsite Distributed File System}",
+ booktitle = iptps,
+ year = 2006,
+ address = "{Santa Barbara, USA}",
+ month = feb
+}
+
+@inProceedings{fault-scalable-sosp-05,
+ author = {Michael Abd-El-Malek and Gregory R. Ganger and Garth R. Goodson and Michael K. Reiter and Jay J. Wylie},
+ title = "{Fault-scalable Byzantine fault-tolerant services}",
+ booktitle = "SOSP",
+ year = {2005},
+ address = "{Brighton, UK}",
+ month = oct
+ }
+
+@inProceedings{hq-replication-osdi-06,
+ author = {James Cowling and Daniel Myers and Barbara Liskov and Rodrigo Rogdrigues and Liuba Shrira},
+ title = "{HQ Replication: A Hybird Quorum Protocol for Byzantine Fault Tolerance}",
+ booktitle = "OSDI",
+ year = {2006},
+ address = "{Seattle, USA}",
+ month = nov
+}
+
+@inProceedings{karma-p2pecon-03,
+ author = "{V. Vishnumurthy, S. Chandrakumar, and E. G. Sirer}", 
+ title = "{Karma: A secure economic framework for p2p resource sharing}",
+ booktitle = "{Proceedings of Workshop on Economics of Peer-to-Peer Systems}",
+ year = {2003},
+ address = "{Berkeley, USA}",
+ mon = jun
+}
+
+@inProceedings{secure-routing-osdi-02,
+ author = "{M. Castro and P. Drushel and A. Ganesh and A. Rowstron and 
+D. Wallach}",
+  title = "Secure routing for structured peer-to-peer overlay networks",
+  booktitle = osdi,
+  year = "2002",
+  address = "{Boston, USA}",
+  month = dec
+}
+
+@inProceedings{oceanstore-asplos-2000,
+author = "{John Kubiatowicz and David Bindel and Yan Chen and Patrick
+                  Eaton and Dennis Geels and Ramakrishna Gummadi and Sean Rhea
+                  and Hakim Weatherspoon and Westly Weimer and Christopher 
+                  Wells and Ben Zhao}",
+  title =        "{OceanStore: An Architecture for Global-scale Persistent
+                  Storage}",
+  booktitle =    {Proceedings of ACM ASPLOS},
+  year =         {2000},
+  month =        {November},
+  address = "{San Jose, USA}"
+}
+@inProceedings{sruti-2005,
+ author = {Jayanthkumar Kannan and Lakshminarayan Subramanian and Ion Stoica and Randy H. Katz},
+ title = "{Analyzing Cooperative Containment of Fast Scanning Worms}",
+ booktitle = sruti,
+ year = {2005},
+ address = "{Cambridge, USA}",
+ month = jul
+}
+
+@article{optimistic-repl-survey,
+ author = {Yasushi Saito and Marc Shapiro},
+ title = {Optimistic replication},
+ journal = {ACM Computing Surveys},
+ volume = {37},
+ number = {1},
+ year = {2005},
+ pages = {42--81},
+ publisher = {ACM Press},
+ address = {New York, NY, USA},
+ }
+
+@inProceedings{Walfish2006,
+ author = "{Michael Walfish and J.D. Zamfirescu and Hari Balakrishnan and 
+David Karger and Scott Shenker}",
+ title = "{Distributed Quota Enforcement for Spam Control}",
+ booktitle = nsdi,
+ year = 2006,
+ month = may,
+ address = "{San Jose, USA}"
+}
+
+@inProceedings{ppay-ccs-03,
+ author = "{Beverly Yang and Hector Garcia-Molina}",
+ title = "{PPay: Micropayments for Peer-to-Peer Systems}",
+ booktitle = "{Proceedings of ACM Computer and Communications Security Conference (CCS)}",
+ address = "{Washington, USA}",
+ year = {2003},
+ month = dec
+}
+
+@inproceedings{Rodrigues2001,
+  author =	 {Rodrigo Rodrigues and Miguel Castro and Barbara
+                  Liskov},
+  title =	 {{BASE}: Using Abstraction to Improve Fault Tolerance},
+  booktitle =	 {Proceedings of the 18th {ACM} Symposium on Operating
+                  System Principles},
+  pages =	 {15--28},
+  year =	 {2001},
+  volume =	 {35},
+  number =	 {5},
+  address =	 {Banff, Canada},
+  month =	 oct,
+}
+
+@InProceedings{Huang2006,
+  author = 	 {Ling Huang and Minos Garofalakis and Joseph M. Hellerstein and Anthony D. Joseph and Nina Taft},
+  title = 	 {{Toward Sophisticated Detection with Distributed Triggers}},
+  OPTcrossref =  {},
+  OPTkey = 	 {},
+  booktitle =	 {SIGCOMM 2006 Workshop on Mining Network Data (MineNet-06)},
+  OPTpages = 	 {},
+  year =	 {2006},
+  OPTeditor = 	 {},
+  OPTvolume = 	 {},
+  OPTnumber = 	 {},
+  OPTseries = 	 {},
+  address =	 {Pisa, Italy},
+  month =	 sep,
+  OPTorganization = {},
+  OPTpublisher = {},
+  OPTnote = 	 {},
+  OPTannote = 	 {}
+}
+
+@InProceedings{byzantine-quorum-malkhi,
+ author = {Dahlia Malkhi and Michael Reiter},
+ title = {Byzantine quorum systems},
+ booktitle = {STOC '97: Proceedings of the twenty-ninth annual ACM symposium on Theory of computing},
+ year = {1997},
+ location = {El Paso, Texas, United States},
+ month = may,
+ }
+
+@InProceedings{Speculator-sosp-05,
+  author =	 {Edmund B. Nightingale and Peter M. Chen and Jason
+                  Flinn},
+  title =	 {Speculative execution in a distributed file system},
+  booktitle =	 "SOSP",
+  year =	 {2005},
+  address =	 {Brighton, United Kingdom},
+  month =	 oct
+}
+
+
+@Misc{hq++:website,
+  author =       {Atul Singh and Petros Maniatis and Peter Druschel and Timothy Roscoe},
+  title =        {Safe Hints in Byzantine-fault Tolerant Distributed Services},
+  howpublished = {\url{http://www.cs.rice.edu/~atuls/hq++.pdf}},
+  month =        jan,
+  year =         2007
+}
+
+
+@InProceedings{Yin2003,
+  author =	 {Jian Yin and Jean-Philippe Martin and Arun
+                  Venkataramani and Lorenzo Alvisi and Mike Dahlin},
+  title =	 {Separating agreement from execution for byzantine
+                  fault tolerant services},
+  booktitle =	 sosp,
+  year =	 {2003},
+  pages =	 {253--267},
+  month =	 oct,
+  location =	 {Bolton Landing, NY, USA},
+}
+
+
+
+@article{Satyanarayanan2002,
+  author =	 {Mahadev Satyanarayanan},
+  title =	 {{The evolution of Coda}},
+  journal =	 {ACM Trans. Comput. Syst.},
+  volume =	 {20},
+  number =	 {2},
+  year =	 {2002},
+  pages =	 {85-124},
+}
+
+@inproceedings{Terry1995,
+  author =	 "Douglas B. Terry and Marvin M. Theimer and Karin
+                  Petersen and Alan J. Demers and Mike J. Spreitzer and
+                  Carl H. Hauser",
+  title =	 {{Managing Update Conflicts in Bayou, a Weakly
+                  Connected Replicated Storage System}},
+  booktitle =	 "SOSP",
+  year =	 "1995",
+}
+
+
+
+

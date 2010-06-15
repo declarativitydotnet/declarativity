@@ -1,0 +1,49 @@
+\section{Runtime System}
+
+The execution model of declarative networks is based on a distributed
+variant of the standard evaluation technique for Datalog programs that
+is commonly known as {\em semi-\naive} (SN)
+evaluation~\cite{declareNetworks}, with modifications to enable
+pipelined asynchronous evaluation suited to a distributed setting.
+Reference~\cite{declareNetworks} provides details on the implementation
+and execution model of declarative networking.
+
+Unlike traditional semi-\naive\ evaluation, PSN does not require
+computations in synchronous rounds (or iterations), a prohibitively
+expensive operation in distributed settings.  We consider the following
+recursive Datalog rule:
+
+% \begin{equation}\label{eqn:central}
+
+%\vspace{-0.1in}
+\begin{center}$d $ :- $ d_{1}, d_{2}, ..., d_{n}, b_{1}, b_{2}, ..., b_{m}$\end{center}
+%\vspace{-0.1in}
+
+\noindent where there are $n$ derived predicates ($d_{1},...,d_{n}$),
+and $m$ {\em base predicates} ($b_{1},...,b_{m}$) in the rule body.
+Derived predicates refer to intensional relations that are derived
+during rule execution, and may be mutually recursive with $d$.  Base
+predicates refer to extensional (stored) relations whose values are not
+changed during rule execution.  In PSN, a delta rule is generated for
+each derived predicate, where the $k^{th}$ {\em delta rule} is of the
+form:
+%\vspace{-0.1in}
+\begin{center}$\triangle d$ :- $ d_{1},..,d_{k-1},\triangle d_{k}, d_{k+1},..,d_{n},
+b_{1},b_{2},...,b_{m}$\end{center}
+
+\noindent where $\triangle d_{k}$ denotes a tuple $t_{k} \in d_{k}$ that is used as
+input to the rule for computing new $d$ tuples.
+
+In the simplest version of PSN with no buffering, tuples are processed
+tuple-at-time in a pipelined fashion.  Each node maintains a FIFO queue
+(ordered by arrival timestamp) of new input tuples.  Each new tuple is
+dequeued and is used as input to its respective a delta rule.  The
+execution of a delta rule may generate new tuples which are either
+inserted into the local queue or sent to a remote node for further
+execution.  Duplicate evaluations are avoided using local arrival
+timestamps, where each new tuple is only processed with tuples with
+older timestamps.
+
+
+\reminder{Add PSN, semi-naive evaluation, and localization rewrite via
+  exmaple. Proofs in paper.}

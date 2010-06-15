@@ -1,0 +1,139 @@
+\section{Architecture}
+\label{sec:arch}
+In this section, we present a strawman design that incorporates our
+defenses and particular design choices from Section~\ref{sec:defenses}.
+We first describe the randomness oracle, specify how peers validate node
+identifiers usi
+We first present the components involved and then the updated protocols
+for overlay maintenance.
+
+\subsection{Components}
+In our strawman design, in addition to regular peers, there is a
+distinguished component providing
+identifier unpredictability, the \emph{randomness oracle}.  The
+determination of peer identifiers is performed by peers based on input
+from the randomness oracle.
+
+
+\subsection{Randomness Oracle}
+\label{sec:epoch_server}
+The state of a randomness oracle consists of its history of chosen
+random numbers, along with the times at which those numbers were
+assigned.  The oracle forgets random numbers far enough in the past that
+no current peer identifier is computed from them. \comm{Varun}{Should we explain
+why 2*$G$ and not just $G$} Typically, this means
+remembering no more than $2 \times G$ random number certificates; for
+256 churn groups this means about 75 KBytes of total state, which can
+conceivably be accommodated even in the CPU cache of a low-end PC-based
+server. Note that randomness certificates have a short lifetime (on the
+order of minutes), so a revocation mechanism is not required.
+
+Certificates are issued once per time-step.  Even for time-steps on the
+order of a few seconds, the required processing is no more than the cost
+of signing a new certificate (16 bits for the time-step number, 160 bits
+for the random number), which can well-be accommodated by a low-end CPU.
+
+In our simple design, a peer who is about to change identifiers obtains
+the appropriate randomness certificates from the oracle.  It can forward
+those certificates to peers with which it interacts
+while moving to a new position in the overlay; those peers need not
+contact the oracle for those certificates and can easily cache them
+until expiration. As an optimization, the randomness oracle could
+conceivably IP-multicast a stream of randomness certificates to all peers
+in the overlay; a newcomer peer first joins the multicast group and then
+starts the process of joining the overlay, with a time overhead of no more
+than a few
+network round trip times.
+
+
+\subsection{Peer Links}
+\label{sec:links}
+\comm{Varun}{We dont need to store Randomness certis in the RT once
+we have verified their authenticity. Only storing the expiration time should do?
+Storing the random certificate for each entry gives the feeling of a castro 
+approach}
+\comm{Tyson}{Yes we do: if I get a routing table entry from you then I will
+want the certificate that tells me its ok. }
+
+Entries in a peer's routing table or leaf set have the form 
+\{\emph{NodeID}, \emph{IP Address}, \emph{Expiration Time-step},
+\emph{Randomness Certificate}\}.  The included randomness certificate
+corresponds to the time-step at which the referent of the entry changed
+identifiers; the expiration time-step is there primarily for
+convenience, and to prepare for future designs in which 
+identifiers have different lifetimes.
+
+\comm{Varun}{such=? Non referential such?}
+A correct peer can verify the compliance of such entries as follows.
+\begin{enumerate}
+\item Compute the churn group to which the entry IP address belongs.
+\item Verify that the randomness certificate corresponds to that churn
+  group.
+\item Verify that the randomness certificate has not expired, i.e.,
+  the churn group has not churned again since this certificate was
+  issued. In our simple scheme, this means checking that $t \geq
+  T_\mathit{now} - 2kG$.   comm{Sriram}{An explanation of what t and Tnow are. And saying that the 2 accounts for stale certificates etc.}
+
+\item Verify the signature of the certificate (no need to check for
+  revocation). \comm{Varun}{We could combine this step with step 2?}
+\item Verify the mapping from IP address and randomness certificate to
+  node identifier.\comm{Varun}{Could we put this more simpler as: verify
+  nodeID=SHA1(nodeIP||randomness certificate)}
+\end{enumerate}
+This verification need only be performed once for each entry, until the
+associated identity expires.
+
+
+
+\subsection{Routing Table Maintenance}
+\label{sec:routing_state}
+When a peer joins a logical area of the network, it provides a reference
+to itself, in the form described in Section~\ref{sec:links}, to peers
+that wish to add it to their routing tables or leaf sets.
+Before a peer inserts such an entry into its routing state, it validates
+the entry by itself, and then ensures that no diversity rules are
+violated; if either check fails, the entry is rejected.  In our simple
+design, the only diversity rule we use is that no more than $d$ entries
+in a peer's routing table and leaf set may have the same unspoofable
+identifier.
+Periodically (no faster than every $k$ time-steps), a peer cleans out
+entries from its routing state that have expired.
+
+Peers maintain two sets of routing state, one set for high-performance
+routing that incorporates optimizations such as proximity neighbor
+selection, and one \emph{constrained} set, formed as described by Castro
+et al.~\cite{Castro2002short}.  The constrained routing state is used to
+precompute routing state across identifier changes.\comm{Sriram}{An explanation of what t and Tnow are. And saying that the 2 accounts for stale certificates etc.}
+
+
+Soon before it has to change identifiers, a peer precomputes the 
+\emph{prospective} constrained routing table and leaf set, corresponding
+to its next
+node identifier.  It starts computing this prospective routing state
+immediately after it receives the random number at its next churn
+time-step (either via multicast, or by contacting the randomness
+oracle).  The peer obtains its prospective leaf set by routing to its
+next node identifier a request for the leaf set of the node currently
+there.  It obtains its prospective routing table entries, again,  in a fashion similar to the
+formation of the constrained routing table described by Castro et
+al.~\cite{Castro2002short}, as well as the discovery algorithm in
+Bamboo~\cite{Rhea2004short}.  Specifically, for an entry in the $r$-th
+row and $c$-th column of the prospective routing table, the peer routes
+a lookup request to the nearest occupant of the node identifier with the
+same $r$ high-order digits, $c$ as its $r+1$-st digit, and a locally
+selected random number for its low-order digits. Entries for both the
+prospective leaf set and the routing table are dropped if they are due
+to expire before the peer will have moved to its new logical position. 
+All lookups for the precomputation of prospective routing state are
+routed over the current constrained routing table.
+
+To change identifiers, a peer announces its impending arrival to its
+prospective leaf set and switches routing state, initializing both
+current routing state sets with the prospecting routing state it
+precomputed.  For specific application, this is also the time when the
+peer might off-load any keys it currently stores (e.g., in a DHT
+scenario).  Note that if the prospective leaf set contains no valid
+(i.e., correct and unexpired) entries, then the peer is forced to
+completely rejoin the network anew.
+
+

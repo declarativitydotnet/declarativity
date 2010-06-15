@@ -1,0 +1,76 @@
+\jmh{Current intro takes too long to get to this paper's stuff.  The basic outline is (1) Declarative Nets matter (2) Declarative Nets should exploit a breadth of query optimization never before implemented in one system, and (3) we believe that meta-optimization of a recursive query language is the way to do it.  The inspiration for (3) was (a) the naturally recursive nature of optimization tasks like dynamic programming, and (b) the alignment between stats-gathering and query processing.  Architecting a meta-optimizer requires a query engine that bootstraps itself in interesting ways.  We need to argue that this teaches something more than  ``it can be done''; we want to say something like it's more maintainable, or it provides lessons that can be used in other contexts, or something.  We may also want to talk about the ways that P2 had to be extended. }
+
+\jmh{General concerns for later in the paper.  We need a crisp clear presentation of our declarative language, including a discussion of our new local fixpoint semantics. Given that, it's fine to can talk about the P2 runtime and its requirement for event-driven execution.  But cast all the event-driven stuff as system internals, not as ``our'' language.  After all, given what you call the ``materialized view rewrite'', some of the ``restrictions'' of Overlog that you discuss have actually disappeared.  That may be the only distinction we need to make. So if you're unhappy pretending there's a vapor-language called NDLog, instead present Overlog's semantics as if that rewrite must be in place and call it Overlog throughout, and just say that Overlog has evolved since SOSP to be more declarative, along the lines of Boon's NDLog.  Please stop saying that our main language ``is event-driven'' since that undercuts our declarative story substantially and isn't really true.}
+
+\label{sec:introduction}
+Declarative languages have been used for data processing since the
+early days of relational databases, leading to the widely-used SQL
+query language.  In the 1980's, significant research effort in the
+deductive database literature was spent on extending declarative
+languages with powerful features like recursion, and various
+optimization techniques were invented for those languages as well.
+However, the practical use of recursive queries has been quite limited
+in the field until a recent revival of applicability in a number of
+research areas~\cite{ullmantalk}.
+
+One of the most promising new application areas for such recursive
+queries has been declarative networking, in which declarative programs
+are used to specify and implement networks and distributed systems.
+This work has gained the attention of the
+networking~\cite{loo-sigcomm05,condie-hotnets05}, distributed
+systems~\cite{loo-sosp05,singh-eurosys06},
+database~\cite{loo-sigmod06} and sensor network~\cite{chu-sensys07} research communities.  
+
+
+The P2
+group began this work two years ago by looking at {\em declarative
+  routing}~\cite{loo-sigcomm05}, demonstrating that recursive queries
+can be used to express a variety of well-known wired and wireless
+routing protocols in a compact and clean fashion, typically in a
+handful of lines of program code.  This compactness arises in part
+from the centrality of graphs and graph algorithms in networking;
+recursive queries were designed precisely for queries about graph
+properties.  
+
+Encouraged by the ability to compactly specify protocols in a logic
+language gave rise to a system called {\bf P2}
+(\url{http://p2.cs.berkeley.edu}) that uses this language to ease the
+construction of the application-level overlay networking logic often
+implemented in distributed systems on the Internet~\cite{loo-sosp05}.
+P2 takes specifications in a declarative query language, and compiles
+them into dataflow programs that resemble a mixture of traditional
+relational query plans and traditional network routers.  P2 then
+installs those dataflow programs onto a set of machines in the
+network, resulting in distributed execution of the desired protocol.
+
+The P2 group developed implementation of the Chord~\cite{chord}
+content-based routing network (also known as a ``Distributed Hash
+Table'' or DHT) specified in 47 Datalog-like rules, versus {\em
+  thousands} of lines of C++ for the original version from MIT; the
+declarative implementation was competitive with the original in terms
+of performance and robustness~\cite{loo-sosp05}.  P2 has since been
+used by multiple researchers both within and outside the group for a
+wide variety of additional tasks including distributed system
+debugging~\cite{singh-eurosys06}, distributed consensus
+protocols~\cite{paxon} and parallel data-intensive computations that
+promise to significantly generalize data-parallel systems like
+Google's MapReduce~\cite{mapreduce}.  
+
+The success of P2 in compactly expressing and implementing 
+routing protocols has spawned a new interest in applying the same 
+ideas to query optimization.  Many traditional query optimizer
+algorithms exhibit a recursive structure that is easily expressed by
+a language such as Overlog. The most obvious recursive optimization
+algorithm is the System R algorithm~\cite{selinger}.  The algorithm follows 
+a dynamic program model in its goal to discover the best plan of size $k$,
+where the subproblem is defined as the optimal plan of size $k - 1$. We
+have outlined in this paper a program written in Overlog that performs a
+state space enumeration of plans in a manner similar to the System R algorithm.
+Our version of the System R optimizer is not complete due to the lack of
+access method support in P2, particularly sorted relational orders (to express
+interesting ordered plans) and persistent tables (for costing I/Os). Nevertheless,
+the work described in this paper has convinced us that a recursive query 
+language like Overlog can naturally express 
+a wide range of optimization techniques from the database and networking 
+literature.
+

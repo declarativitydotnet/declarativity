@@ -1,0 +1,14 @@
+set terminal postscript eps "Times-Roman" 26
+set output "Mesg_Count_Comp_BI_HQS.ps"
+set xlabel "f"
+set ylabel "Average #message recv/sent"
+set key left top
+#set xtics (1,2,3,4,5)
+#set yrange [0:12]
+set xrange [1:10]
+#set arrow from 0.143,0.5 to 0.143,1.5 nohead
+#set arrow from 0.05,1.0 to 0.25, 1 nohead
+#set arrow from 0.4,0.5 to 0.17,0.9
+#set label "Break-even point: 14.3%" at 0.4,0.5
+#plot "avg_mesg_count_comparision_bi.dat" using 1:2 title "HQ-S" with linespoints, "avg_mesg_count_comparision_bi.dat" using 1:4 title "PBFT(10)" with linespoints,"avg_mesg_count_comparision_bi.dat" using 1:6 title "BI-HQ(NE=20)" with linespoints, "avg_mesg_count_comparision_bi.dat" using 1:7 title "BI-HQ(NE=40)" with linespoints, "avg_mesg_count_comparision_bi.dat" using 1:8 title "BI-HQ(NE=80)" with linespoints
+plot "avg_mesg_count_comparision_bi_hq_proxy.dat" using 1:3 title "PBFT" with linespoints, "avg_mesg_count_comparision_bi_hq_proxy.dat" using 1:2 title "HQ++" with linespoints, "avg_mesg_count_comparision_bi_hq_proxy.dat" using 1:6 title "BI-HQ(x=2)" with linespoints, "avg_mesg_count_comparision_bi_hq_proxy.dat" using 1:9 title "BI-HQ(x=5)" with linespoints

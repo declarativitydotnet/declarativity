@@ -1,0 +1,188 @@
+\subsection{Secure Border Gateway Protocol: S-BGP}
+We start with a secure version of BGP described in the Secure Border Gateway Protocol paper~\cite{secure-bgp}. 
+For clarity of exposition, we consider a simplified version of S-BGP in which each node considers the best 
+path to the destination ignoring any policy issues at the moment. Futhermore, we define the least hop path to 
+be the best path, however we note that any such critirea can be used. We currently do not model revocations, however 
+it is easy to extend the current specification to include revocations by deleting the transitively generated 
+says relationship after every use.
+
+In the following code, we assume that whenever a principal with key $K$ makes a statement $p$ to node $S$,
+an entry says@S(S, K, p) appears in says table at S which is an input table to S. Note that an input table is like 
+a write only memory which can only be read by the node at which it is located. Furthermore, in this code all 
+references to ``says'' can be considered as ``non-repudiable says'' implemented as $\langle X \rangle_{P,U,U}$ 
+in terms of our primitive.
+
+% \begin{code}
+% private\\
+% \> materialize(speaksFor, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(assigned, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(asSpkr, $\infty$, $\infty$, keys(1,2,3,4,5))\\
+% \> materialize(ipASPath, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(nextHop, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(keys, $\infty$, $\infty$, keys(1,4,5))\\
+% \> materialize(myAS, $\infty$, $\infty$, keys(1,2))\\
+% \> materialize(link, $\infty$, $\infty$, keys(1,2,3))\\
+% \\
+% IP1: speaksFor(@Me, IPRng, K):- \\
+% \> speaksFor(@Me, IPRng', K'), \\
+% \> says@Me(K', $\phi$, 0, U) <ipHierarchy(@S, K, IPRng)>, \\
+% \> IPRng $\subseteq$ IPRng'\\
+% IP2: speaksFor(@S, {\em{Universe}, $K_{Root}$})\\
+% AS1: assigned@S(S, ASs, K) :- assigned@S(S, ASs', K'), \\
+% \> ASs $\subseteq$ ASs', \\
+% \> says@S(S, \_, K', $\langle$K, ASs, ``AS hierarchy''$\rangle$,\_, ''RSA'')\\
+% AS2: assigned@S(S,{\em Universe}, $K_{Root}$)\\
+% ASSPKR1: asSpkr@S(S, AS, K, DNS, N):- \\
+% \> says@S(S, \_, K', $\langle$K, AS, DNS, N, \\
+% \> \> ``Address attestation''$\rangle$, \_, ``RSA''),\\
+% \> assigned@S(S, ASs', K'), AS $\subseteq$ ASs' \\
+% RT1: ipASPath@S(S, P\_AS, IPRng, C):- \\
+% \> says@S(S, \_, K, $\langle$AS, IPRng, ``rt attest''$\rangle$, \_, ``RSA''),\\
+% \> speaksFor@S(S, IPRng, K),\\
+% \> C = f\_LocalRouteCost(),\\
+% \> P\_AS = $\langle$ AS $\rangle$\\
+% RT2: ipASPath@S(S, P\_AS, IPRng, C):- \\
+% \> ipASPath@S(S, P\_AS', IPRng, C'), \\
+% \> AS'=f\_Head(P\_AS'), \\
+% \> asSpkr@S(S, AS', K, DNS, N), \\
+% \> says@S(S, \_, K, $\langle$P\_AS, C, IPRng, ``rt attest''$\rangle$, \_, ``RSA''),\\
+% \> P\_AS = $\langle$ AS, P\_AS' $\rangle$, AS $\notin$ P\_AS'\\
+% NH1: nextHop@s(S, IPRng, null, C) :- \\
+% \> asSpkr@S(S, AS, K, DNS, S),\\
+% \> ipASPath@S(S, P\_AS, IPRng, C), P\_AS = $\langle$ AS $\rangle$\\
+% NH2: nextHop@S(S, IPRng, D, C):- \\
+% \> ipASPath@S(S, P\_AS, IPRng, C), \\
+% \> AS=f\_Head(f\_Tail(P\_AS)), AS != null,\\
+% \> asSpkr@S(S, AS, K, DNS, D),\\
+% \> AS=f\_Head(P\_AS), myAS@S(S,AS'), link@S(S, D, \_)\\
+% LR1: myAS@S(S, AS)\\
+% -----------------------security declarations------------------------\\
+% LR2: keys@S(S, $K_r$, $K_u$, AS, ``AS Key'')\\
+% RT3: makeSay@S(S, D, $K_r$, $K_u$, $\langle$P\_AS, C, IPRng, \\
+% \> ``rt attest''$\rangle$, null, ``RSA''):- \\
+% \> ipASPath@S(S, P\_AS', IPRng, C'), \\
+% \> keys@S(S, $K_r$, $K_u$, AS, ``AS Key''),\\
+% \> link@S(S, D, C''), C = C' + C'',\\
+% \> asSpkr@S(S, AS, K, DNS, D)
+% \end{code}
+% 
+
+\begin{code}
+\textbf{private:}\\
+\> materialize(ipASPath, $\infty$, $\infty$, keys(1,2,3))\\
+\> materialize(localPath, $\infty$, $\infty$, keys(1,2,3))\\
+\> materialize(myKeys, $\infty$, $\infty$, keys(1,4,5))\\
+\> materialize(myAS, $\infty$, $\infty$, keys(1,2))\\
+\textbf{input:}\\
+\> materialize(pathCert, 1000, $\infty$, keys(1,2))\\
+\> materialize(broadcastPath, $\infty$, $\infty$, keys(1,2,3))\\
+\\
+IP1: Root speaksFor@S $IPRange_{U}$:- \\
+IP2: P speaksFor@S IPRange:- \\
+\> P speaksFor@S IPRange', IPRange $\subseteq$ IPRange'\\
+IP3: P speaksFor@S IPRange:- \\
+\> IPRange says delegate(\_, <P, IPRange>)\\
+AS1: Root speaksFor@S $AS_{Universe}$\\
+AS2: P speaksFor@S $ASS_{1}$:- \\
+\> P speaksFor@S $ASS_{2}$, $ASS_{1} \subseteq ASS_{2}$\\
+AS3: K speaksFor@S AS:- \\
+\> AS says delegate(\_, <K, @Z, AS>)\\
+AS4: P speaksFor@S AS:- AS says delegate(\_, <P, AS>)\\
+RT1: ipASPath(@S, P\_AS, IPRng, C, ct):- \\
+\> myAS(@S, AS), AS speaksFor@S IPRng,\\
+\> C = f\_LocalCost(), ct = [], P\_AS = [AS]\\
+RT2: ipASPath(@S, P\_AS, IPRng, C, ct):-\\
+\> AS speaksFor@S IPRng,\\
+\> C = 0, P\_AS = [AS], ct = []\\
+RT3: ipASPath(@S, P\_AS, IPRng, C, cert):-\\
+\> K says broadcastPath(@S, P\_AS, IPRng, C),\\
+\> f\_tail(P\_AS) = P\_AS', f\_head(P\_AS') = AS',\\
+\> AS' says delegate(\_, <K, @Z, AS'>)\\
+\> link(@S, @Z, C)\\
+\> ipASPath(@S, P\_AS', IPRng, C', cert'),\\
+\> cert = [cert', AS' says broadcastPath(@S, P\_AS, IPRng, C)]\\
+RT4: ipASPath(@S, P\_AS, IPRng, C, cert):-\\
+\> pathCert(@S, certlist), ct $\in$ certlist,\\
+\> cert = [cert', ct],\\
+\> ct = AS' says broadcastPath(\_, P\_AS, IPRng, C),\\
+\> f\_head(f\_tail(p\_AS)) = AS',\\
+\> ipASPath(@S, P\_AS', IPRng, C', cert')\\
+RT5: broadcastPath(@Z, <P\_AS, IPRng, C>):-\\
+\> localPath(@S, P\_AS', IPrng, C', cert),\\
+\> link(@S, @Z, C''), AS' says delegate(\_, <K, @Z, AS'>),\\
+\> C = C' + C'', P\_AS = [AS', P\_AS']\\
+RT6: pathCert(@Z, ct):-\\
+\> localPath(@S, P\_AS', IPrng, C', ct),\\
+\> link(@S, @Z, C''), AS' says delegate(\_, <K, @Z, AS'>),\\
+LP1: localPath(@S, P\_AS, IPRng, aggr<C>, ct):-\\
+\> myAS(@S, AS), f\_head(P\_AS) = AS,\\
+\> ipASPath(@S, P\_AS, IPRng, C, ct)
+\end{code}
+
+% \begin{code}
+% private\\
+% \> materialize(speaksFor, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(assigned, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(asSpkr, $\infty$, $\infty$, keys(1,2,3,4,5))\\
+% \> materialize(ipASPath, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(nextHop, $\infty$, $\infty$, keys(1,2,3))\\
+% \> materialize(keys, $\infty$, $\infty$, keys(1,4,5))\\
+% \> materialize(myAS, $\infty$, $\infty$, keys(1,2))\\
+% \> materialize(link, $\infty$, $\infty$, keys(1,2,3))\\
+% \\
+% IP1: speaksFor@S(S, IPRng, K):- \\
+% \> speaksFor@S(S, IPRng', K'), \\
+% \> says@S(S, \_, K', $\langle$K, IPRng, ``ip hierarchy''$\rangle$,\_, ``RSA''), \\
+% \> IPRng $\subseteq$ IPRng'\\
+% IP2: speaksFor@S(S, {\em{Universe}, $K_{Root}$})\\
+% AS1: assigned@S(S, ASs, K) :- assigned@S(S, ASs', K'), \\
+% \> ASs $\subseteq$ ASs', \\
+% \> says@S(S, \_, K', $\langle$K, ASs, ``AS hierarchy''$\rangle$,\_, ''RSA'')\\
+% AS2: assigned@S(S,{\em Universe}, $K_{Root}$)\\
+% ASSPKR1: asSpkr@S(S, AS, K, DNS, N):- \\
+% \> says@S(S, \_, K', $\langle$K, AS, DNS, N, \\
+% \> \> ``Address attestation''$\rangle$, \_, ``RSA''),\\
+% \> assigned@S(S, ASs', K'), AS $\subseteq$ ASs' \\
+% RT1: ipASPath@S(S, P\_AS, IPRng, C):- \\
+% \> says@S(S, \_, K, $\langle$AS, IPRng, ``rt attest''$\rangle$, \_, ``RSA''),\\
+% \> speaksFor@S(S, IPRng, K),\\
+% \> C = f\_LocalRouteCost(),\\
+% \> P\_AS = $\langle$ AS $\rangle$\\
+% RT2: ipASPath@S(S, P\_AS, IPRng, C):- \\
+% \> ipASPath@S(S, P\_AS', IPRng, C'), \\
+% \> AS'=f\_Head(P\_AS'), \\
+% \> asSpkr@S(S, AS', K, DNS, N), \\
+% \> says@S(S, \_, K, $\langle$P\_AS, C, IPRng, ``rt attest''$\rangle$, \_, ``RSA''),\\
+% \> P\_AS = $\langle$ AS, P\_AS' $\rangle$, AS $\notin$ P\_AS'\\
+% NH1: nextHop@s(S, IPRng, null, C) :- \\
+% \> asSpkr@S(S, AS, K, DNS, S),\\
+% \> ipASPath@S(S, P\_AS, IPRng, C), P\_AS = $\langle$ AS $\rangle$\\
+% NH2: nextHop@S(S, IPRng, D, C):- \\
+% \> ipASPath@S(S, P\_AS, IPRng, C), \\
+% \> AS=f\_Head(f\_Tail(P\_AS)), AS != null,\\
+% \> asSpkr@S(S, AS, K, DNS, D),\\
+% \> AS=f\_Head(P\_AS), myAS@S(S,AS'), link@S(S, D, \_)\\
+% LR1: myAS@S(S, AS)\\
+% -----------------------security declarations------------------------\\
+% LR2: keys@S(S, $K_r$, $K_u$, AS, ``AS Key'')\\
+% RT3: makeSay@S(S, D, $K_r$, $K_u$, $\langle$P\_AS, C, IPRng, \\
+% \> ``rt attest''$\rangle$, null, ``RSA''):- \\
+% \> ipASPath@S(S, P\_AS', IPRng, C'), \\
+% \> keys@S(S, $K_r$, $K_u$, AS, ``AS Key''),\\
+% \> link@S(S, D, C''), C = C' + C'',\\
+% \> asSpkr@S(S, AS, K, DNS, D)
+% \end{code}
+
+%\noindent {\bf BGP1:} path@S(\underline{S}, D, P, C):- link@S(\underline{S}, D, C), 
+%\hspace{1in} 
+%P=f\_concatPath(link(\underline{S}, D, C), nil)
+%\noindent {\bf BGP2:} path(\underline{S}, D, P, C):- link(\underline{S}, D, C), 
+%\hspace{1in} 
+%speaksFor(\underline{S}, D', P'), D'$\subseteq$D,
+%\hspace{1in} 
+%P=f\_concatPath(link(\underline{S}, D, C), P')
+%\noindent {\bf SF1:} path(\underline{S}, D, P, C):- link(\underline{S}, D, C), 
+%\hspace{1in} 
+%speaksFor(\underline{S}, D', P'), D'$\subseteq$D,
+%\hspace{1in} 
+%P=f\_concatPath(link(\underline{S}, D, C), P')

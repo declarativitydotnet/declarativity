@@ -1,0 +1,51 @@
+\begin{thebibliography}{1}
+
+\bibitem{fault-scalable-sosp-05}
+M.~Abd-El-Malek, G.~R. Ganger, G.~R. Goodson, M.~Reiter, and J.~J. Wylie.
+\newblock {Fault-scalable Byzantine fault-tolerant services}.
+\newblock In {\em SOSP}, {Brighton, UK}, Oct. 2005.
+
+\bibitem{Castro1999}
+M.~Castro and B.~Liskov.
+\newblock {Practical Byzantine Fault Tolerance}.
+\newblock In {\em OSDI}, {New Orleans, USA}, Feb. 1999.
+
+\bibitem{hq-replication-osdi-06}
+J.~Cowling, D.~Myers, B.~Liskov, R.~Rodrigues, and L.~Shrira.
+\newblock {HQ Replication: A Hybird Quorum Protocol for Byzantine Fault
+  Tolerance}.
+\newblock In {\em OSDI}, {Seattle, USA}, Nov. 2006.
+
+\bibitem{Hardware-compiler-branch}
+{John L. Hennessy and David A. Patterson}.
+\newblock {\em {Computer Architecture: A Quantitative Approach}}, chapter~4.
+\newblock Morgan Kaufmann Publishers, 3rd edition edition, 2006.
+
+\bibitem{Speculator-sosp-05}
+E.~B. Nightingale, P.~M. Chen, and J.~Flinn.
+\newblock Speculative execution in a distributed file system.
+\newblock In {\em SOSP}, Brighton, United Kingdom, Oct. 2005.
+
+\bibitem{Satyanarayanan2002}
+M.~Satyanarayanan.
+\newblock {The evolution of Coda}.
+\newblock {\em ACM Transactions on Computer Systems}, 20(2):85--124, 2002.
+
+\bibitem{hq++:website}
+A.~Singh, P.~Maniatis, P.~Druschel, and T.~Roscoe.
+\newblock Safe hints in byzantine-fault tolerant distributed services.
+\newblock \url{http://www.cs.rice.edu/~atuls/hq++.pdf}, Jan. 2007.
+
+\bibitem{Terry1995}
+D.~Terry, M.~Theimer, K.~Petersen, A.~Demers, M.~Spreitzer, and C.~H. Hauser.
+\newblock {Managing Update Conflicts in Bayou, a Weakly Connected Replicated
+  Storage System}.
+\newblock In {\em SOSP}, 1995.
+
+\bibitem{Yu2002}
+H.~Yu and A.~Vahdat.
+\newblock {Design and Evaluation of a Conit-Based Continuous Consistentcy Model
+  for Replicated Services}.
+\newblock {\em ACM Transactions on Computer Systems}, 20(3):239--282, 2002.
+
+\end{thebibliography}

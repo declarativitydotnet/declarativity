@@ -1,0 +1,884 @@
+%\documentclass[12pt]{article}
+%\documentclass[12pt]{article}
+%\pagestyle{plain} \topmargin -0.60in \oddsidemargin 0.0625in
+%\textheight 9.00in \textwidth 6.50in
+%\renewcommand{\baselinestretch}{1.4}
+%\parskip 0.20in
+\documentclass[10pt,conference]{IEEEtran}
+\usepackage{amstext,amssymb}
+\usepackage{graphicx}
+\usepackage{times}
+%\usepackage{psfig,latexsym}
+\usepackage{latexsym}
+%\usepackage{amstext,amssymb}
+\usepackage{amsmath}
+%\usepackage{verbatim}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\newtheorem{proposal}{Proposal}
+\newcommand{\nchoosek}[2]{\left(\begin{array}{c}#1\\#2\end{array}\right)}
+\newcommand{\comment}[1]{}
+
+
+% If the IEEEtran.cls has not been installed into the LaTeX system files,
+% manually specify the path to it:
+% \documentclass[conference]{../sty/IEEEtran}
+\long\def\comment#1{}
+
+
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor IEEEtran}
+
+
+\begin{document}
+
+% paper title
+\title{On Subsets of Binary Strings Immune to Multiple Repetition
+Errors}
+\author{\authorblockN{Lara Dolecek}
+\authorblockA{EECS Department\\
+University of California\\
+Berkeley, CA 94720, USA \\
+Email: dolecek@eecs.berkeley.edu} \and
+\authorblockN{Venkat Anantharam}
+\authorblockA{EECS Department\\
+University of California\\
+Berkeley, CA 94720, USA\\
+Email: ananth@eecs.berkeley.edu}} \maketitle
+
+\begin{abstract}In this paper we discuss some families of
+subsets of binary strings (codes) that are immune to multiple
+repetition errors. We discuss a technique to
+construct single repetition error correcting codes and
+use number theoretic techniques to give an explicit formula
+for the cardinalities of these codes.
+This approach results in codes the ratio of whose
+cardinality to the best upper bounds approaches unity in the
+increasing codelength limit (asymptotic optimality).
+We also propose a somewhat different technique to
+construct multiple
+repetition error correcting codes.
+Here the cardinalities are asymptotically
+within a fixed constant of the best known upper bounds.
+Our constructions are asymptotically better by a
+constant factor than the best previously
+known such constructions, due to Levenshtein.
+\end{abstract}
+
+\section{Introduction}
+
+Substitution error correcting codes are traditionally used in
+communication systems for encoding of a binary input message
+$\mathbf{x}$ into a coded sequence $\mathbf{c}$ = $C(\mathbf{x})$.
+The modulated version of this sequence is usually corrupted by
+additive noise, and is seen at the receiver as a waveform $r(t)$,
+\begin{equation}\label{eq:rt}
+r(t)=\sum_{i} c_i h(t-iT) +n(t),
+\end{equation}
+where $c_i$ is the $i^{\text{th}}$ %$i^{\text{th}}$
+bit of $\mathbf{c}$, $h(t)$ is the modulating pulse, and $n(t)$ is
+the noise introduced in the channel. The received waveform $r(t)$ is
+sampled at certain sampling points determined by the timing recovery
+process, and the resulting sampled sequence is passed to the decoder
+which then produces the estimate of $\mathbf{c}$ (or $\mathbf{x}$).
+In the analysis of substitution error correcting codes and
+their decoding algorithms it is traditionally assumed that the
+decoder receives a sequence which is a properly sampled version of the
+waveform $r(t)$.
+
+The timing recovery process involves a substantial overhead
+in the design of communication chips, both in terms of occupying
+area on the chip and in terms of power consumption. To
+avoid some of this cost, particularly in high speed systems,
+chip designers could attempt to make do with poorer
+timing recovery, while oversampling the
+received waveform to attempt to ensure that no
+information is lost. Thus the waveform $r(t)$ instead of
+being sampled at instances $kT_s+\tau_k$ might be
+sampled at instances roughly $T$ apart, for $T<T_s$.
+In the idealized infinite SNR limit of a PAM system,
+this appears as if some symbols are sampled more than
+once. As a
+result, instead of creating $n$ samples from $r(t)$, $n+s$ samples
+are produced, where $s \geq 0$. As a consequence, when $s>0$, the
+decoder is presented with a sampled sequence whose length exceeds
+the length of a codeword.
+
+Motivated by this scenario, in this paper we study the
+problem of finding maximally sized
+subsets of binary strings (codes)
+that are immune to a given number $s$ of repetitions, in the sense
+that no two strings in the code can give rise to the same
+string after $s$ repetitions.
+
+A closely related problem of studying codes capable of overcoming a
+certain number of insertions and deletions was first studied by
+Levenshtein \cite{lev:66} where it was shown that the so-called
+Varshamov-Tenengolts codes \cite{vt:65} originally proposed for the
+correction of asymmetric errors are capable of overcoming one
+deletion or one insertion. They were also shown to be asymptotically
+optimal. They have been further studied in \cite{ferr:97} and
+\cite{bours:94}. In \cite{sloane:00} further results on their
+cardinalities were obtained. Extensions to constructions for
+overcoming multiple insertions and deletions have so far found
+limited success, \cite{ferr:02}, \cite{ferr:03}.
+
+In Section \ref{aux}
+we first introduce an auxiliary
+transformation that converts our problem into
+that of creating subsets of binary strings immune to the
+insertions of $0$'s.
+ In Section \ref{one} we
+focus on subsets of binary strings immune to single repetitions. We
+present explicit constructions of such subsets and use number
+theoretic techniques to give explicit formulas for their
+cardinalities. Our constructions here are asymptotically optimal. In
+Section \ref{many} we discuss subsets of binary strings immune to
+multiple repetitions. Our constructions here are asymptotically
+within a constant factor of the best known upper bounds and
+asymptotically better, by a constant factor than the best previously
+known such constructions, due to Levenshtein \cite{lev:66a}.
+
+\vspace{0in}
+\section{Auxiliary transformation}\label{aux}
+
+
+To construct a binary, $s$ repetition correcting code $C$ of length
+$n$ we first construct an auxiliary code $\tilde{C}$ of length
+$m=n-1$ which is $s$ `0'-insertion correcting code. These two codes
+are related through the following transformation.
+
+
+Suppose $\mathbf{c} \in C$. We let $\mathbf{\tilde{c}}= \mathbf{c}
+\times T_n \text{ mod } 2$, where $T_n$ is $n \times n-1$ matrix,
+satisfying\vspace{-0.0in}\begin{equation}\label{eq:t}T_{n}(i,j)=\left\{
+\begin{array}{lll}
+    1, & \text{if }i = j,j+1\\
+    0, & \text{else.} \\
+\end{array} \right. \end{equation}
+
+
+Now, the repetition in $\mathbf{c}$ in position $p$ corresponds to
+the insertion of `0' in position $p-1$ in $\mathbf{\tilde{c}}$,
+and weight($\mathbf{\tilde{c}}$) = number of runs in $\mathbf{c}$
+-1. We let $\tilde{C}$ be the collection of strings of length
+$n-1$ obtained by applying $T_n$ to all strings $C$. Note that
+$\mathbf{c}$ and its complement both map into the same string in
+$\tilde{C}$.
+
+It is thus sufficient to construct a code of length $n-1$ capable of
+overcoming $s$ `0'-insertions and apply inverse $T_n$ transformation
+to obtain $s$ repetitions correcting code of length $n$.
+\section{One repetition case}\label{one}
+Following the analysis of Sloane \cite{sloane:00} and Levenshtein
+\cite{lev:66} of the related so-called Varshamov-Tenengolts codes
+\cite{vt:65} known to be capable of overcoming one deletion or one
+insertion, let $A_w^m$ be the set of all binary strings of length
+$m$ and $w$ ones, for $0 \leq w \leq m$. Partition $A_w^m$ based on
+the value of the first moment of each string. More specifically, let
+$S_{w,k}^m$ be the subset of $A_w^m$ such that
+\begin{equation}S_{w,k}^m=\{(s_1,s_2,...,s_m)| \sum_{i=1}^m
+i \times s_i \equiv
+k \text{ mod } (w+1)\}.\end{equation}
+
+\begin{lemma}Each subset $S_{w,k}^m$ is a single `0'-insertion correcting
+code.\end{lemma} \textit{Proof}: Suppose the string $\mathbf{s'}$
+is received. We want to uniquely determine the codeword
+$\mathbf{s}=(s_1,s_2,...,s_m) \in S_{w,k}^m$ such that
+$\mathbf{s'}$ is the result of inserting at most one zero in
+$\mathbf{s}$.
+
+If the length of $\mathbf{s'}$ is $m$, conclude that no insertion
+occurred, and that $\mathbf{s}=\mathbf{s'}$.
+
+If the length of $\mathbf{s'}$ is $m+1$, a zero has been inserted.
+For $\mathbf{s'}=(s_1^{'},s_2^{'},...,s_m^{'},s_{m+1}^{'})$, compute
+$\sum_{i=1}^{m+1} i \times s_i^{'} \text{ mod } (w+1)$. Due to the
+insertion, $\sum_{i=1}^{m+1} i \times s_i^{'}= \sum_{i=1}^{m} i
+\times s_i + R_1$ where $R_1$ denotes the number of 1's to the right
+of the insertion. Note that $R_1$ is always between $0$ and $w$.
+
+Let $k'$ be equal to $\sum_{i=1}^{m+1} i \times s_1^{'} \text{ mod }
+(w+1)$. If $k'=k$ the insertion occurred after the rightmost one, so
+we declare $\mathbf{s}$ to be the $m$ leftmost bits in
+$\mathbf{s'}$. If $k'>k$ we declare $\mathbf{s}$ to be the string
+obtained by deleting the zero immediately preceding the rightmost
+$k'-k$ ones.  Finally, if $k'< k$, we declare $\mathbf{s}$ to be the
+string obtained by deleting the zero immediately preceding the
+rightmost $w+1-k+k'$ ones.\hfill$\blacksquare$
+
+\vspace{0.2in} Since $|A_w^m| = \left( \begin{array}{c}
+                             m \\
+                             w \\
+                           \end{array}
+                           \right)$ there exists $k$ such that
+                           \[|S_{w,k}^m | \geq \frac{1}{w+1}
+\left( \begin{array}{c}
+                             m \\
+                             w \\
+                           \end{array}
+                           \right).\]
+
+Since two codewords of different weights cannot result in the same
+string when at most one zero is inserted we may let $\tilde{C}$ be
+the union of largest sets $S_{w,k^*_w}^m$ over different weights
+$w$,
+i.e. \[\tilde{C}=\bigcup_{w=1}^{m} S_{w,k^*_w}^m,\] where
+$S_{w,k^*_w}^m$
+is the set of largest cardinality among all sets $S_{w,k}^m$ for
+$0\leq k\leq w$. Thus, the cardinality of $\tilde{C}$ is at least
+\[\sum_{w=0}^m \left(
+\begin{array}{c}
+                             m \\
+                             w \\
+                           \end{array}
+                           \right) \frac{1}{w+1}=\frac{1}{m+1}
+                           \left(2^{m+1}-1\right).\]
+
+The upper bound $U_1(m)$ on any set of strings each of length $m$
+capable of overcoming one insertion of a zero is derived in
+\cite{lev:66a} to be
+\begin{equation}\label{ub0}U_1(m)=\frac{2^{m+1}}{m}~.\end{equation}
+
+Hence the proposed construction is asymptotically optimal.
+
+By applying inverse $T_n$ transformation for $n=m+1$ to $\tilde{C}$
+we obtain a code of length $n$ and of size at least $\frac{1}{n}
+                           \left(2^{n+1}-2\right)$.
+
+
+
+The cardinalities of the sets $S_{w,k}^m$ may be computed explicitly
+as we now show.
+
+Recall that the M\"{o}bius function $\mu(x)$ of a positive integer
+$x=p_1^{a_1}p_2^{a_2}\dots p_k^{a_k}$ for distinct primes
+$p_1,p_2,\dots,p_k$ is defined as \cite{apostol},
+\begin{equation}
+\mu(x)=\left\{ \begin{array}{lll} 1 &\text{ for }x=1\\
+(-1)^k &\text{ if }a_1=\dots=a_k=1\\
+0 &\text{ otherwise }.
+\end{array}\right.
+\end{equation}and that the Euler function $\phi(x)$ denotes the number of
+integers $y$, $1 \leq y \leq x-1$ that are relatively prime with
+$x$. By convention $\phi(1)=1$.
+
+\begin{lemma}\label{le2}
+Let $g=gcd(m+1,w+1)$. The cardinality of $S_{w,k}^m$ is
+%\begin{equation}\label{le1}
+%\begin{array}{lll}|S_{w,k}^m|&=&\\\frac{1}{m+1}& \sum_{d|g}& \left( \begin{array}{c}
+ %                            \frac{m+1}{d} \\
+  %                           \frac{w+1}{d} \\
+   %                        \end{array}
+    %                      \right) (-1)^{(w+1)(1+\frac{1}{d})}
+     %                     \phi(d)\frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}\end{array}\end{equation}
+\begin{equation*}
+\hspace{-2.75in}|S_{w,k}^m|=
+\end{equation*}
+\begin{equation}\label{le1}
+\frac{1}{m+1}\sum_{d|g} \left(
+\begin{array}{c}
+                             \frac{m+1}{d} \\
+                             \frac{w+1}{d} \\
+                           \end{array}
+                          \right) (-1)^{(w+1)(1+\frac{1}{d})}
+                          \phi(d)\frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}\end{equation}
+
+                          where $gcd(d,k)$ is the greatest common
+                          divisor of $d$ and $k$, interpreted as
+$d$ if $k=0$.
+\end{lemma}
+\textit{Proof}: Motivated by the analysis of Sloane \cite{sloane:00}
+of the Varshamov-Tenengolts codes, let us introduce the function
+$f_{b,n}(U,V)$ in which the coefficient of $U^sV^k$, call it
+$g^b_{k,s}(n)$ represents the number of strings of length $n$, weight
+$s$ and the first moment equal to $k \mod b$
+\begin{equation}
+f_{b,n}(U,V)=\sum_{k=0}^{b-1} \sum_{s=0}^n g^b_{k,s}(n)U^sV^k.
+\end{equation}
+
+%In particular we are interested in evaluating the coefficient
+%$U^sV^k$ since it will help us determine the number of strings of
+%length $m=n-1$, weight $w=b-1$ and the first moment congruent to
+%$k\mod w+1=b$.
+
+Observe that $f_{b,n}(U,V)$ can be written as a generating
+function
+\begin{equation}\label{eq1a}
+f_{b,n}(U,V)= \prod_{t=1}^n (1+UV^t) \mod (V^b-1)~.
+\end{equation}
+
+
+Let $a=e^{i\frac{2\pi }{b}}$ so that for $V=a^j$
+\begin{equation}\label{eq1b}
+f_{b,n}(U,e^{i\frac{2\pi j}{b}})= \sum_{k=0}^{b-1} \sum_{s=0}^n
+g^b_{k,s}(n)U^s e^{i\frac{2\pi jk}{b}}~.
+\end{equation}
+
+By inverting this expression we can write
+\begin{equation}\label{eq1}
+\begin{array}{lll}
+&\sum_{s=0}^n g^b_{k,s}(n)U^s \\ \\=& \frac{1}{b}
+\sum_{j=0}^{b-1}f_{b,n}(U,e^{i\frac{2\pi j}{b}}) e^{-i\frac{2\pi
+jk}{b}}\\ \\=& \frac{1}{b} \sum_{j=0}^{b-1} \prod_{t=1}^n
+(1+Ue^{i\frac{2\pi jt}{b}}) e^{-i\frac{2\pi jk}{b}}~.
+\end{array}
+\end{equation}
+
+Our next goal is to evaluate the coefficient $U^b$ on the right
+hand side. To do so we first evaluate the following expression
+\begin{equation}
+\prod_{t=1}^b (1+Ue^{i\frac{2\pi jt}{b}})~.
+\end{equation}
+
+Let $d_j=b/gcd(b,j)$ and $s_j=j/gcd(b,j)$, and write
+\begin{equation}
+\begin{array}{lll}
+{}&\prod_{t=1}^b (1+Ue^{i\frac{2\pi jt}{b}})\\=&
+\left(\prod_{t=1}^{d_j} (1+Ue^{i\frac{2\pi
+s_j t}{d_j}})\right)^{gcd(b,j)}\\
+=& \left( 1+ U\sum_{t_1=1}^{d_j} e^{i\frac{2\pi s_j t_1}{d_j}}+
+\right.
+\\{}&\hspace{0.3in}U^2\sum_{t_1=1}^{d_j}\sum_{t_2=t_1+1}^{d_j}
+e^{i\frac{2\pi s_j(t_1+t_2)}{d_j}} +\\{}&\left.\hspace{0.3in}+\dots
++ U^{d_j} e^{i\frac{2\pi s_j
+(1+2+\dots+d_j)}{d_j}}\right)^{gcd(b,j)}~.
+\end{array}
+\end{equation}
+
+
+Since $gcd(d_j,s_j)=1$, the set \[V=\{e^{i\frac{2\pi s_j 1}{d_j}},
+e^{i\frac{2\pi s_j 2}{d_j}}\dots e^{i\frac{2\pi s_j d_j}{d_j}}\}\]
+represents all distinct solutions of the equation
+\begin{equation}\label{poly}
+x^{d_j}-1=0~.
+\end{equation}
+
+For a polynomial equation $P(x)$ of degree $d$, the coefficient
+multiplying $x^k$ is a scaled symmetric function of $d-k$ roots.
+Hence, symmetric functions involving at most $d_j-1$ elements of $V$
+evaluate to zero. The symmetric function involving all elements of
+$V$, which is their product, evaluates to $(-1)^{d_j+1}$.
+
+Therefore,
+\begin{equation}
+\prod_{t=1}^b (1+Ue^{i\frac{2\pi
+jt}{b}})=\left(1+(-1)^{1+d_j}U^{d_j}
+\right)^{gcd(b,j)}.
+\end{equation}
+ Returning to the inner product in (\ref{eq1}), let us first
+suppose that $b|n$. Then
+\begin{equation}
+\begin{array}{lll}
+{}&{}&\prod_{t=1}^n \left(1+Ue^{i\frac{2\pi jt}{b}}\right)\\
+{}&=&\left(\prod_{t=1}^b \left(1+Ue^{i\frac{2\pi
+jt}{b}}\right)\right)^{n/b}\\
+{}&=&\left(1+(-1)^{1+d_j}U^{d_j}
+\right)^{gcd(b,j)n/b}\\
+{}&=&\sum_{l=0}^{\frac{n}{d_j}} \left( \begin{array}{c}
+                             \frac{n}{d_j} \\
+                             l \\
+                           \end{array}
+                           \right)
+(-1)^{l(1+d_j)}U^{ld_j}~.
+\end{array}
+\end{equation}
+
+%Recall $d_j=\frac{b}{gcd(b,j)}$ so that
+Thus (\ref{eq1}) becomes
+\begin{eqnarray*}
+{}&{}&\sum_{s=0}^n g^b_{k,s}(n)U^s\\&=&\frac{1}{b}\sum_{j=0}^{b-1}
+\sum_{l=0}^{\frac{n}{d_j}} \left(
+\begin{array}{c}
+                             \frac{n}{d_j} \\
+                             l \\
+                           \end{array}
+                           \right)(-1)^{l(1+d_j)}U^{d_jl}e^{-i\frac{2\pi
+                           j k}{b}}~.\hspace{0.0in}
+                           \end{eqnarray*}
+
+We now regroup the terms whose $j$'s yield the same $d_j$'s
+\begin{eqnarray*}
+\sum_{s=0}^n g^b_{k,s}(n)U^s=\frac{1}{b}\sum_{d|b}
+\sum_{l=0}^{\frac{n}{d}} \left(
+\begin{array}{c}
+                             \frac{n}{d} \\
+                             l \\
+                           \end{array}
+                           \right)(-1)^{l(1+d)}U^{d l}\\ \times
+\sum_{j: gcd(j,b)=b/d, 0 \leq j\leq b-1}e^{-i\frac{2\pi
+                           j k}{b}}.
+\end{eqnarray*}
+
+%Recall $s=j/gcd(j,b)$. Then $s$ and $d_j$ are relatively prime and
+The rightmost sum can also be written as
+\begin{equation}
+\sum_{j:gcd(j,b)=b/d, 0 \leq j\leq b-1}e^{-i\frac{2\pi
+                           j k}{b}}= \sum_{s:0 \leq s\leq d-1,gcd(s,d)=1}
+e^{-i\frac{2\pi
+                           s k}{d}}~.
+\end{equation}
+
+
+This last expression is known as the Ramanujan sum \cite{apostol}
+and simplifies to \begin{equation}\sum_{s:0 \leq s\leq
+d-1,gcd(s,d)=1}e^{-i\frac{2\pi
+                           s k}{d}}=\phi(d)
+\frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}~.
+                           \end{equation}
+Now the coefficient of $U^b$ in (\ref{eq1}) is
+\begin{equation}\label{eq2}
+\frac{1}{b} \sum_{d|b} \left( \begin{array}{c}
+                             \frac{n}{d} \\
+                             \frac{b}{d} \\
+                           \end{array} \right)(-1)^{\frac{b}{d}(1+d)}\phi(d) \frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}
+\end{equation}
+which is precisely the number of strings of length $n$, weight $b$,
+and the first moment congruent to $k \mod b$.
+
+Consider the set of strings described by $S_{w,k}^m$ for $m=n-1$ and
+$w=b-1$. If we append '1' to each such string we would obtain a
+fraction of $b/n$ of all strings of length $n$ (by symmetry of the
+positions $b$, $2b$, $\dots$ $n/b \times b$), weight $b$, and the
+first moment congruent to $k \mod b$.
+
+Therefore, the cardinality of $S_{w,k}^m$ is $b/n$ times the
+expression in (\ref{eq2}),
+%\begin{equation}\label{eq22}
+%\begin{array}{lll}
+%|S_{w,k}^m|&=\\\frac{1}{m+1} &\sum_{d|w+1}& \left(
+%\begin{array}{c}
+ %                            \frac{m+1}{d} \\
+  %                           \frac{w+1}{d} \\
+   %                        \end{array} \right)(-1)^{\frac{w+1}{d}(1+d)}\phi(d)
+    %                       \frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}~.
+%\end{array}\end{equation}
+
+\begin{equation*}
+\hspace{-2.75in}|S_{w,k}^m|=\\
+\end{equation*}
+\begin{equation}\label{eq22}\frac{1}{m+1} \sum_{d|w+1} \left(
+\begin{array}{c}
+                             \frac{m+1}{d} \\
+                             \frac{w+1}{d} \\
+                           \end{array} \right)(-1)^{\frac{w+1}{d}(1+d)}\phi(d)
+                           \frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}~.
+\end{equation}
+
+
+Notice that the last expression is the same as the one proposed in
+Lemma~\ref{le2} with $gcd(m+1,w+1)=w+1$.
+
+Now suppose that $b$ is not a factor of $n$.  We work with
+$f_{g,n}(U,V)$ as in (\ref{eq1a}) where $g=gcd(n,b)$ and get
+%compute the
+%total number of strings of length $n$
+ %and weight $b$ whose first moment is congruent to $k \mod g$. Let
+ %$h_j=g/gcd(g,j)$.
+ %We now regroup the terms whose $j$'s yield the same $h_j$'s
+\begin{eqnarray*}
+\sum_{s=0}^n g^g_{k,s}(n)U^s=\frac{1}{g}\sum_{d|g}
+\sum_{l=0}^{\frac{n}{d}} \left(
+\begin{array}{c}
+                             \frac{n}{d} \\
+                             l \\
+                           \end{array}
+                           \right)(-1)^{l(1+d)}U^{d l}\\\times
+\sum_{j:gcd(j,g)=g/d, 0 \leq j\leq g-1}e^{-i\frac{2\pi
+                           j k}{g}}~.
+\end{eqnarray*}
+
+Thus the coefficient of $U^b$ here is
+\begin{equation}\label{eq3}
+\frac{1}{g} \sum_{d|g} \left( \begin{array}{c}
+                             \frac{n}{d} \\
+                             \frac{b}{d} \\
+                           \end{array} \right)(-1)^{\frac{b}{d}(1+d)}\phi(d)
+                           \frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}~.
+\end{equation}
+
+This is  the number of strings of length $n$, weight $b$, and the
+first moment congruent to $k \mod g$.  Since (\ref{eq3}) captures
+the number of strings of length $n$, weight $b$, and the first
+moment congruent to $k_t=k +tg \mod b$ for $0 \leq t \leq b/g-1$ and
+since the evaluation is the same for all such $k_t$, it follows by
+symmetry that the fraction $\frac{g}{b}$ of the quantity in
+(\ref{eq3}) represents the number of strings of length $n$, weight
+$b$, and the first moment congruent to $k \mod b$. Furthermore, the
+ fraction $\frac{b}{n}$ of this last quantity corresponds to the
+strings describing the set $S_{w,k}^m$. Therefore $|S_{w,k}^m|$ is
+
+%\begin{equation}
+%\begin{array}{ccc}
+%|S_{w,k}^m|&=\\\frac{1}{m+1}& \sum_{d|g}& \left(
+%\begin{array}{c}
+%                             \frac{m+1}{d} \\
+ %                            \frac{w+1}{d} \\
+  %                         \end{array} \right)(-1)^{(w+1+\frac{1}{d}(1+w))}\phi(d) \frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}
+%\end{array}\end{equation}
+\begin{equation*}
+\hspace{-2.75in}|S_{w,k}^m|=
+\end{equation*}
+\begin{equation}
+\frac{1}{m+1}\sum_{d|g} \left(
+\begin{array}{c}
+                             \frac{m+1}{d} \\
+                             \frac{w+1}{d} \\
+                           \end{array} \right)(-1)^{(w+1+\frac{1}{d}(1+w))}\phi(d) \frac{\mu\left(\frac{d}{gcd(d,k)}\right)}{\phi\left(\frac{d}{gcd(d,k)}\right)}
+\end{equation} which completes the proof of the
+lemma.\hfill$\blacksquare$
+
+
+\subsection{Connection with necklaces}
+
+It is interesting to briefly visit
+the relationship between optimal single
+insertion of a zero correcting codes and combinatorial objects known
+as necklaces \cite{GR61}.
+
+A necklace consisting of $n$ beads can be viewed as an equivalence
+class of strings of length $n$ under cyclic shift (rotation).
+
+Let us consider two-colored necklaces of length $n$ with $b$ black
+beads and $n-b$ white beads. It is known that the total number of
+distinct necklaces is
+\begin{equation}
+T(n)=\frac{1}{n} \sum_{d|gcd(n,b)} \left( \begin{array}{c}
+                             \frac{n}{d} \\
+                             \frac{b}{d} \\
+                           \end{array} \right)\phi(d)~.
+\end{equation}
+
+In general necklaces may exhibit periodicity.
+However, consider, for example for the case $gcd(n,b)=1$.
+Then there are
+\begin{equation*}
+\frac{1}{n} \left( \begin{array}{c}
+                             n \\
+                             b \\
+                           \end{array} \right)
+\end{equation*}
+distinct necklaces, all of which are aperiodic.
+Now assume that $b+1|n$ and note that
+this implies $gcd(n+1,b+1) =1$.
+Suppose we label
+each necklace beads in the increasing order $1$ through $n$ and we
+rotate each necklace by one position at the time relative to this
+labeling. At each step we sum mod $b+1$ the positions of $b$ black
+beads. For each necklace each of residues $k$, $0 \leq k \leq b$ is
+encountered $n/(b+1)$ times. The total number of times each residue
+$k$ is encountered is thus
+\begin{equation*}
+\frac{1}{b+1} \left( \begin{array}{c}
+                             n \\
+                             b \\
+                           \end{array} \right)=\frac{1}{n+1} \left( \begin{array}{c}
+                             n+1 \\
+                             b+1 \\
+                           \end{array} \right),
+\end{equation*}
+which as expected equals the number of binary strings of weight $b$,
+length $n$, and the first moment congruent to $k$ mod $b+1$ (same
+for all $k$).
+
+\section{Multiple repetition case}\label{many}
+
+Let $\mathbf{a}=\left(a_1,a_2,...,a_t\right)$ for $t \geq 1$, and
+consider the set $\hat{S}(m,w,\mathbf{a},p)$ for $w \geq 1$
+defined as
+\begin{equation}\begin{array}{lll}\hat{S}(m,w,\mathbf{a},p) = \{ & \mathbf{s}=(s_1, s_2, ... s_m) \in \{0,1\}^m
+:\\ {} & \sum_{i=1}^m s_i = w,\\
+{} & \sum_{i=1}^{w+1} ib_i \equiv a_1 \text{ mod } p,\\ {} &
+\sum_{i=1}^{w+1} i^2b_i
+\equiv a_2 \text{ mod } p,\\
+{} & \hspace{0.5in}\vdots\\ {} & \sum_{i=1}^{w+1} i^tb_i \equiv a_t
+\text{ mod } p~\}.\end{array}\end{equation} The set
+$\hat{S}(m,0,\mathbf{0},p)$ contains just the all-zeros string by
+convention. Let $\mathbf{a_0} = \mathbf{0}$ and let
+$\hat{S}\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+be defined as
+\begin{equation}\label{union}\hat{S}\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)=
+\bigcup_{l=0}^{m} \hat{S}(m,l,\mathbf{a_l},p_l).,\end{equation}
+where $b_1, \ldots, b_{w+1}$ denote the sizes of the
+{\em bins} of $0$'s between successive $1$'s.
+
+\begin{lemma}\textit{If each $p_l$ is prime and $p_l >$
+max$(t,l)$, the set
+$\hat{S}\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+is t-insertions of zeros correcting.}\end{lemma}
+
+\textit{Proof}: It suffices to show that each set
+$\hat{S}(m,l,\mathbf{a_l},p_l)$ is $t$-insertions of zeros
+correcting. Suppose a string $\mathbf{x} \in$
+$\hat{S}(m,l,\mathbf{a_l},p_l)$ is transmitted. After experiencing
+$t$ insertions of zeros, it is received as a string $\mathbf{x'}$.
+We now show that $\mathbf{x}$ is always uniquely determined from
+$\mathbf{x'}$.
+
+Let $i_1 \leq i_2 \leq ... \leq i_t$ be the (unknown) indices of the
+bins of zeros that have experienced insertions. For each $j$, $1\leq
+j \leq t$, compute $a_j'\equiv \sum_{i=1}^{w+1} i^jb_i' \text{ mod }
+p_l$, where $b_i'$ is the size of the $i^{\text{th}}$ bin of zeros
+of $\mathbf{x'}$,
+\begin{equation}\label{eq5}\begin{array}{ll}
+a_j'& \equiv \sum_{i=1}^{w+1} i^jb_i' \text{ mod } p_l\\
+{}  & \equiv a_j + (i_1^j+i_2^j+...+i_t^j) \text{ mod }p_l,
+\end{array}
+\end{equation}
+where $a_j$ is the $j^{\text{th}}$ entry in the residue vector
+$\mathbf{a_l}$.
+
+Using Newton's identities over $GF(p_l)$ which relate power sums to
+symmetric functions of the same variable set, the set
+$\{i_1,i_2,...,i_t\}$ is uniquely determined from the set of
+equations \[(i_1^j+i_2^j+...+i_t^j) \equiv a_j'-a_j\text{ mod }p_l\]
+for $1 \leq j \leq t$. For the details of the proof please see
+\cite{isit06}.\hfill$\blacksquare$  \comment{ By collecting the
+resulting expressions over all $j$, and setting $a_j^{''} \equiv
+a_j'-a_j$ mod $p_l$, we arrive at
+\begin{equation}
+E_t=\left\{
+\begin{array}{ll}
+a_1^{''} \equiv i_1+i_2+...+i_t \text{ mod }p_l\\
+a_2^{''} \equiv i_1^2+i_2^2+...+i_t^2 \text{ mod }p_l\\
+\dots \dots \dots\\
+a_t^{''} \equiv i_1^t+i_2^t+...+i_t^t \text{ mod }p_l.\\
+\end{array} \right.
+\end{equation}
+The terms on the right hand side of the congruency constraints are
+known as power sums in $t$ variables. Let $S_k$ denote the
+$k^{\text{th}}$ power sum mod $p_l$ of $\{i_1,i_2,...,i_t\}$,
+\begin{equation}
+S_k\equiv i_1^k+i_2^k+...+i_t^k \text{ mod }p_l,
+\end{equation}
+and let $\Lambda_k$ denote the $k^{\text{th}}$ elementary symmetric
+function of  $\{i_1,i_2,...,i_t\}$ mod$p_l$,
+\begin{equation}
+\Lambda_k \equiv \sum_{v_1<v_2<...<v_k} i_{v_1}i_{v_2}\cdots i_{v_k}
+\text{ mod } p_l.
+\end{equation}
+Using Newton's identities over $GF(p_l)$ which relate power sums to
+symmetric functions of the same variable set, and are of the type
+\begin{equation}\label{newton}
+S_k-\Lambda_{1}S_{k-1}+\Lambda_{2}S_{k-2}-...+(-1)^{k-1}\Lambda_{k-1}S_{1}+(-1)^kk\Lambda_{k}
+=0,
+\end{equation}
+for $k \leq t$, we can obtain an equivalent system of $t$ equations:
+\begin{equation}
+\widetilde{E}_t=\left\{
+\begin{array}{ll}
+d_1 \equiv \sum_{j=1}^t i_j \text{ mod }p_l\\
+d_2 \equiv \sum_{j<k} i_j i_k\text{ mod }p_l\\
+\dots \dots \dots \\
+d_t \equiv \prod_{j=1}^t i_j \text{ mod }p_l,
+\end{array} \right.
+\end{equation}
+where each residue $d_k$ is computed recursively from
+$\{d_1,...,d_{k-1}\}$ and $\{a_1^{''},a_2^{''},...a_k^{''}\}$.
+Specifically, since the largest coefficient in (\ref{newton}) is
+$t$, and $t<p_l$ by construction, the last term in (\ref{newton})
+never vanishes due to the multiplication by the coefficient $k$.
+Consider now the following equation:
+\begin{equation}\label{eq:p0} \prod_{j=1}^t(x-i_j)\equiv 0 \text{ mod } p_l,
+\end{equation}
+and expand it into the standard form
+\begin{equation}\label{eq:p}
+x^t+c_{t-1}x^{t-1}+...+c_1x+c_0 \equiv 0 \text{ mod } p_l.
+\end{equation}
+By collecting the same terms in (\ref{eq:p0}) and (\ref{eq:p}), it
+follows that $d_k \equiv (-1)^kc_{t-k} \text{ mod } p_l$.
+Furthermore, by Lagrange's Theorem, the equation (\ref{eq:p}) has at
+most $t$ solutions. Since $i_t \leq p_l$ all incongruent solutions
+are distinguishable, and thus the solution set of (\ref{eq:p}) is
+precisely the set $\{i_1,i_2,...,i_t\}$. Therefore, since the system
+$E_t$ of $t$ equations uniquely determines the set
+$\{i_1,i_2,...,i_t\}$, the locations of the inserted zeros (up to
+the position within the bin they were inserted in) are uniquely
+determined, and thus $\mathbf{x}$ is always uniquely recovered from
+$\mathbf{x'}$.$\hfill\blacksquare$ }
+
+Hence,
+$\hat{S}\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+is $t$-insertions of zeros correcting for $p_l$ is prime and $p_l >$
+max$(t,l)$.
+
+ Let
+$\hat{S}^*\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+be defined as
+\begin{equation}\label{union}\hat{S}^*\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)=
+\bigcup_{l=0}^{m} \hat{S}(m,l,\mathbf{a_l}^*,p_l).\end{equation}
+where $\hat{S}(m,l,\mathbf{a_l}^*,p_l)$ is the largest among all
+sets $\hat{S}(m,l,\mathbf{a_l}^*,p_l)$ for $\mathbf{a_l} \in
+\{0,1,\dots,p_l\}^t$. The cardinality of
+$\hat{S}(m,l,\mathbf{a_l}^*,p_l)$ is at least \[ \left(
+\begin{array}{c}
+                             m \\
+                             l \\
+                           \end{array}
+                           \right) \frac{1}{p_l^t}~.\]
+
+Since for all $n$ there exists a prime between $n$ and $2n$ it
+follows that the cardinality of $\hat{S}(m,l,\mathbf{a_l}^*,p_l)$
+for $l\geq t$ is at least \[ \left(
+\begin{array}{c}
+                             m \\
+                             l \\
+                           \end{array}
+                           \right) \frac{1}{(2l)^t}~.\]
+
+Thus, the cardinality of
+$\hat{S}^*\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+is at least
+\begin{equation}\label{up1}1+\sum_{w=1}^{t-1} \left(
+\begin{array}{c}
+                            m \\
+                             w \\
+                           \end{array}
+                           \right) {\large \frac{1}{\left(2t\right)^t}} +\sum_{w=t}^m \left(
+\begin{array}{c}
+                            m \\
+                             w \\
+                           \end{array}
+                           \right) \frac{1}{(2w)^t}~,
+\end{equation}
+
+which is lower bounded by
+%\begin{equation}\begin{array}{cc}1+\frac{1}{\left(2t\right)^t}\sum_{w=1}^{t-1}
+%\left(
+%\begin{array}{c}
+ %                           m \\
+  %                           w \\
+   %                        \end{array}
+    %                       \right)+
+     %                       \\\frac{1}{(2^t)(m+1)(m+2)\dots(m+t)}
+      %                     \left(2^{m+t}-\sum_{k=0}^{2t-1}\left( \begin{array}{c}
+       %                     m+t \\
+        %                     k \\
+         %                  \end{array}
+          %                 \right)\right).\end{array}\end{equation}
+\begin{equation*}\hspace{-1.75in}1+\frac{1}{\left(2t\right)^t}\sum_{w=1}^{t-1} \left(
+\begin{array}{c}
+                            m \\
+                             w \\
+                           \end{array}
+                           \right)+
+                            \end{equation*}
+                           \begin{equation}\frac{1}{(2^t)(m+1)(m+2)\dots(m+t)}
+                           \left(2^{m+t}-\sum_{k=0}^{2t-1}\left( \begin{array}{c}
+                            m+t \\
+                             k \\
+                           \end{array}
+                           \right)\right).\end{equation}
+It is known that the prime counting function $\pi(n)$ which counts
+the number of primes up to $n$, satisfies for $n \geq 17$, the
+inequalities \[\frac{n}{ln(n)} < \pi(n) < 1.25506\frac{n}{ln(n)}~.\]
+
+Thus for $n>38$, there exists a prime between $n$ and $1.5n$ and the
+lower bound on the asymptotic cardinality of
+$\hat{S}^*\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+can be improved to
+\begin{equation}\label{up2}\frac{1}{(1.5^t)(m+1)(m+2)\dots(m+t)}
+                           \left(2^{m+t}\right)-P(m),\end{equation}
+
+where $P(m)$ is a polynomial in $m$. In the limit $m \rightarrow
+\infty$, it is approximately
+\begin{equation}\frac{1}{(1.5^t)}\frac{2^{m+t}}{(m+1)^t}~.\end{equation}
+
+A construction proposed by Levenshtein \cite{lev:66a} has the lower
+asymptotic bound on the cardinality given by
+\begin{equation}\label{leven}
+\frac{1}{(\log_2 2t)^t}\frac{2^m}{m^t}~.
+\end{equation}
+
+Note that both (\ref{up1}) and the improved bound (\ref{up2})
+improve on (\ref{leven}) by at least a constant factor.
+
+The upper bound $U_t(m)$ on any set of strings each of length $m$
+capable of overcoming $t$ insertions of zero is \[U_t(m)=c(t)
+\frac{2^m}{m^t},\] as obtained in \cite{lev:66a}, where \[ c(t)
+=\left\{
+\begin{array}{lll} 2^t t! &
+\text{ odd } t\\
+8^{t/2}((t/2)!)^2&\text{ even } t\end{array} \right. \]
+
+which makes the proposed construction be within a factor of this
+bound. By applying inverse $T_n$ transformation for $n=m+1$ to
+$\hat{S}^*\left(m,(\mathbf{a_1},p_1),(\mathbf{a_2},p_2),...,(\mathbf{a_m},p_m)\right)$
+and noting that both strings under the inverse $T_n$ transformation
+can simultaneously belong to the repetition error correcting set, we
+obtain a code of length $n$ capable of overcoming $t$ repetitions
+and of asymptotic size at least
+\begin{equation}\frac{1}{(1.5^t)}\frac{2^{n+t}}{n^t}~.\end{equation}
+
+\section{Conclusion}
+In this paper we discussed the problem
+of constructing repetition error correcting
+codes (subsets of binary strings).
+We presented some explicit constructions and provided
+some results on
+the cardinalities of these constructions.
+Specific contributions included a generalization of a
+generating function calculation of Sloane \cite{sloane:00}
+and a construction of multiple repetition error correcting
+codes that is asymptotically a constant factor better than
+the previously best known construction due to
+Levenshtein \cite{lev:66a}.
+
+\section*{Acknowledgment}
+% optional entry into table of contents (if used)
+%\addcontentsline{toc}{section}{Acknowledgment}
+This research was supported in part by
+NSF award CCF-0635372,
+Marvell Semiconductor Inc., and the University of
+California MICRO program.
+\begin{thebibliography}{10}
+\bibitem{apostol} T. M. Apostol, ``\emph{Introduction to Analytic Number
+Theory}'', Springer-Verlag, NY, 1976.
+\bibitem{bours:94}
+P. A. H. Bours, ``Construction of fixed-length insertion/deletion
+correcting runlength-limited code", \emph{IEEE Transactions on
+Information Theory}, vol.\ 40(6), pp.~1841--1856, Nov. 1994.
+%\bibitem{isit07a} L. Dolecek and V. Anantharam, ''Communication Over Channels with Varying Sampling Rate", available online
+%at www.eecs.berkeley.edu/~{}dolecek/papers.
+\bibitem{isit06} L. Dolecek and V. Anantharam, ``A synchonization
+technique for array-based LDPC codes'', \emph{International
+Symposium on Information Theory}, Seattle, WA, July 9-13, 2006.
+\bibitem{GR61}
+E. N. Gilbert and J. Riordan, ``Symmetry types of periodic
+sequences", \emph{Illinois Journal of Mathematics}, Vol. 5, pp.
+657--665, 1961.
+\bibitem{ferr:97}
+H. C. Ferreira, W. A. Clarke, A. S. J. Helberg, K. A. S.
+Abdel-Gaffar and A. J. Han Vinck, ``Insertion/deletion correction
+with spectral nulls", \emph{IEEE Transactions on Information
+Theory}, vol.\ 43(2), pp.~722--732, March 1997.
+\bibitem{ferr:02}
+A. S. J. Helberg and H. C. Ferreira, ``On multiple
+insertion/deletion correcting codes", \emph{IEEE Transactions on
+Information Theory} vol.\ 48(1), pp.~305--308, Jan. 2002.
+\bibitem{lev:66a}
+V. I. Levenshtein, "Binary codes capable of correcting spurious
+insertions and deletions of ones", \emph{Problems of Information
+Transmission}, vol.\ 1(1),pp.~8--17, Jan. 1965.
+\bibitem{lev:66}
+V. I. Levenshtein, "Binary codes capable of correcting deletions,
+insertions and reversals", \emph{Sov. Phys.-Dokl.}, vol.\ 10(8),
+pp.~707--710, Feb. 1966.
+\bibitem{sloane:00}
+N. J. A. Sloane, "On single deletion correcting codes", 2000.
+Available at http://www.research.att.com/\~{ }njas/doc/dijen.pdf
+\bibitem{ferr:03}
+T. G. Swart and H.C. Ferreira, "A note on double insertion/deletion
+correcting codes", \emph{IEEE Transactions on Information Theory}
+vol.\ 49(1), pp.~269--273, Jan. 2003.
+\bibitem{vt:65}
+R. R. Varshamov and G.M. Tenengolts, ``Codes which correct single
+asymmetric errors,'' \emph{Avtomatika i Telemehkanika}, vol.\ 26,
+no. 2, pp.~288--292, 1965.
+%\bibitem{vanlint}
+%J. H. van Lint, "\emph{A Course in Combinatorics}", Cambridge
+%University Press, 1992.
+\end{thebibliography}
+\end{document}

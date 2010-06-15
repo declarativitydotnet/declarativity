@@ -1,0 +1,153 @@
+%
+% ======================================
+% Main Document
+%      - Part I:   Front Matters
+%      - Part II:  Dissertation Chapters
+%      - Part III: Back Matters
+% ======================================
+
+\documentclass{ucthesis}
+%\documentclass[12pt,oneside,final]{ucthesis}
+%\def\dsp{\def\baselinestretch{2.0}\large\normalsize}
+%\dsp
+
+
+% packages from Johan
+% -------------------
+%\usepackage{calc,babel,xspace}
+%\usepackage{array,multirow,booktabs,units,url}
+% -----------------------
+% end packages from johan
+
+\usepackage[final]{graphicx}
+\usepackage{amstext,amssymb}
+\usepackage{amstext,amssymb}
+
+\usepackage{times}
+\usepackage{boxedminipage}
+\usepackage{fancyhdr}
+\usepackage{tabularx}
+\usepackage{hhline}
+\usepackage{color}
+\usepackage{alltt}
+\usepackage{xspace}
+\usepackage{subfigure}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{balance}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+
+%\includeonly{mimo}
+\newcommand{\comment}[1]{}
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{remark}{Remark}
+\newtheorem{corollary}{Corollary}
+\newcommand{\asn}{\ensuremath{:\,=}}
+\newcommand{\defn}{\ensuremath{:\,=}}
+\newcommand{\var}{\ensuremath{\operatorname{var}}}
+
+\newcommand{\BOOM} {BOOM\xspace}
+\newcommand{\BOOMA} {BOOM Analytics\xspace}
+\newcommand{\BIGBOOM} {BOOM\xspace}
+\newcommand{\JOL} {JOL\xspace}
+\newcommand{\BIGJOL} {JOL\xspace}
+\newcommand{\JT} {JobTracker\xspace}
+\newcommand{\TT} {TaskTracker\xspace}
+\newcommand{\NN} {NameNode\xspace}
+\newcommand{\DN} {DataNode\xspace}
+\renewcommand{\ttdefault}{cmtt}
+
+\newcommand{\note}[1]{}
+
+\def\compactify{\itemsep=0pt \topsep=0pt \partopsep=0pt \parsep=0pt}
+ \let\latexusecounter=\usecounter
+ \newenvironment{CompactItemize}
+   {\def\usecounter{\compactify\latexusecounter}
+    \begin{itemize}}
+   {\end{itemize}\let\usecounter=\latexusecounter}
+ \newenvironment{CompactEnumerate}
+   {\def\usecounter{\compactify\latexusecounter}
+    \begin{enumerate}}
+   {\end{enumerate}\let\usecounter=\latexusecounter}
+
+\renewcommand{\ttdefault}{cmtt}
+\newcommand{\dataloglabel}[1]{\mbox{\bf #1:}\hfil}
+\newenvironment{datalog}
+  {\begin{list}{}%
+      {\it \small \renewcommand{\makelabel}{\dataloglabel}%
+    \setlength{\parsep}{-2pt}%
+    }%
+  }%
+{\end{list}}
+\newcommand{\datalogspace}{\textcolor[gray]{1}{.}\hspace{0.5in}}
+\def\link{\texttt{\#link}\xspace}
+\newcommand{\term}[1]{\textbf{#1}}
+\newcommand{\stitle}[1]{\textbf{#1}---}
+
+\newcommand{\ol}[1]{\texttt{\small #1}\xspace}
+
+% this defines fancy header
+% -------------------------
+%\usepackage{fancyhdr}
+%\pagestyle{fancy} \fancyhead{} \fancyfoot{} \if@twoside
+%\fancyhead[LO]{\slshape\leftmark}
+%\fancyhead[LE,RO]{\rmfamily\thepage}
+%\fancyhead[RE]{\slshape\rightmark} \else
+%\fancyhead[LO]{\slshape\leftmark}
+%\fancyhead[RO]{\rmfamily\thepage} \fi
+
+
+\begin{document}
+
+% ========================
+% Part I: Front Matters
+%         - title page
+%         - copyright
+%         - abstract
+%         - dedication
+%         - TOC, LOF, LOT
+%         - acknowledgment
+% ========================
+
+\include{title}
+
+
+
+
+
+% ========================================
+% Part II: Dissertation Chapters
+%          - introduction (intro)
+%          - circuit optimization (cctopt)
+%          - micro-architectures (uarch)
+%          - signal processing (sp-tech)
+%          - cad flows (cad-flows)
+%          - examples (svd-chip)
+%          - experimental (test)
+%          - conclusion (conclusion)
+% ========================================
+
+\setcounter{page}{1}
+\renewcommand{\thepage}{\arabic{page}}\include{overview}
+%\include{background}
+%\include{dataflow}
+%\include{declarative_optimization}
+%\include{boom}
+%\include{hop}
+
+\include{conc}
+% ===============================
+% Part III: Back Matters
+%           - bibliography
+%           - appendix
+%           - index
+% ===============================
+
+%\ssp
+\bibliography{thesis}
+\include{thesis}
+
+\end{document}

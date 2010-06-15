@@ -1,0 +1,84 @@
+\begin{algorithm} \label{alg:check_neighbors}
+\caption{Each peer periodically runs checkNeighbors() to check the state of its routing table (RT) and 
+leaf set (LS) entries. An entry found to be in an unacceptable state is removed.}
+\textbf{function} update($entry$) \{
+\begin{algorithmic}[1]
+\STATE $GKEYS$ = getKeys($entry.ip$)
+\IF {$computeNodeID(entry.ip, GKEYS[prev]) = entry.nodeID$}
+\STATE $entry.state   = STALE$
+\STATE $entry.expire = GKEYS[prev].expire$
+\ELSIF{$computeNodeID(entry.ip, GKEYS[current]) = entry.nodeID$}
+\STATE $entry.state   = CURRENT$
+\STATE $entry.expire = GKEYS[current].expire$
+\ELSIF{$computeNodeID(entry.ip, GKEYS[next]) = entry.nodeID$}
+\STATE $entry.state   = CURRENT$
+\STATE $entry.expire = GKEYS[current].expire$
+\ELSE
+\STATE $entry.state = INVALID$
+\ENDIF
+\end{algorithmic}
+\}\\
+
+\textbf{function} checkNeighbors() \{
+\begin{algorithmic}[1]
+\FORALL{$e$ such that $e~\in LS$}
+	\IF {$e.expire <= getCurrentTime()$}
+		\STATE update($e$)
+		\IF {$e.state = INVALID$} 
+			\STATE drop $e$ from $NS$
+		\ELSIF{$e.state = STALE$}
+			\STATE notifyStale($e.ip$)
+		\ENDIF
+	\ENDIF
+\ENDFOR
+\STATE
+\FOR{$r = 0$ to $RT\_ROWS$}
+	\FOR{$c = 0$ to $RT\_COLUMNS$}
+		\IF {$RT[r][c] \neq null$ \&\& \\ $RT[r][c].expire <= getCurrentTime()$}
+			\STATE update($RT[r][c]$)
+			\IF {$RT[r][c].state \neq CURRENT$}
+				\STATE notifyStale($RT[r][c].ip$)
+				\STATE $RT[r][c] = null$
+			\ENDIF
+		\ENDIF
+	\ENDFOR
+\ENDFOR
+\STATE DiversityCheck($RT$)
+\STATE $alarm = \min_{e \in \{LS, RT\}} e.expire$
+\STATE Callback($checkNeighbors()$, $alarm$)
+\end{algorithmic}
+\}\\
+\end{algorithm}
+
+
+\begin{algorithm} \label{alg:prospect}
+\caption{Each peer computes is next routing table and leaf set by calling refreshProspectNeighbors()
+prior to the expiration of its current routing table and leaf set. The function $EXP(nodeID)$ takes an 
+arbitrary nodeID and returns the logical expiration time of the nodeID (The nodeID structure will also
+contain the IP address of the owning peer).}
+\textbf{function} refreshProspectNeighbors() \{
+\begin{algorithmic}[1]
+\small
+\STATE $peer$ = Bamboo.LookupPeer($myNextNodeID$)
+\STATE $tmpLeafSet = peer.getCurLeafSet()$
+\STATE Validate($tmpLeafSet$)
+\FORALL{$p$ such that $p~\in tmpLeafSet$}
+	\IF {$EXP(myCurNodeID) < EXP(p.nodeID)$} 
+		\STATE {prospectLeafSet.add($p$)}
+	\ENDIF
+\ENDFOR
+\STATE
+\FOR{$r = 0$ to $PT\_ROWS$}
+	\FOR{$c = 0$ to $PT\_COLUMNS$}
+		\STATE $point$ = \\ $Prefix_r(myNextNodeID) \| randomSufix(r)$
+		\STATE $p$ = Bamboo.LookupPeer($point$)
+		\IF {$PT[r][c] = null$ \&\& \\ $EXP(myCurNodeID) < EXP(p.nodeID)$}
+			\STATE $PT[r][c] = p$
+		\ELSIF {$PT[r][c] \neq null$ \&\& \\ $EXP(PT[r][c].nodeID) < EXP(p.nodeID)$}
+			\STATE $PT[r][c] = p$
+		\ENDIF
+	\ENDFOR
+\ENDFOR 
+\end{algorithmic}
+\}
+\end{algorithm}

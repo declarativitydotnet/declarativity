@@ -1,0 +1,341 @@
+% \section{Initial Prototype}
+% \label{sec:proto}
+% Our coding effort began in May, 2008, with an initial implementation
+% of \JOL. Development of the Overlog-based version of HDFS (\BOOM-FS)
+% started in September of 2008.  We began development of our
+% Overlog-based modifications to MapReduce (\BOOM-MR) in January, 2009,
+% and the results we report on here are from May, 2009.
+
+% We used two different design styles in developing the two halves of
+% \BOOMA.  Our \BOOM-FS implementation began as a clean-slate rewrite in
+% Overlog. When we had a prototype file system working in an
+% Overlog-only environment, we retrofitted the appropriate Java APIs to
+% make it API-compliant with Hadoop.  For \BOOM-MR, by contrast, we
+% ported the ``interesting'' material in Hadoop's MapReduce code
+% piece-by-piece to Overlog, leaving various API routines in their
+% original state in Java.
+
+
+\section{HDFS Rewrite}
+\label{sec:boom-fs}
+Our first effort in developing \BOOMA was \BOOM-FS, a clean-slate rewrite of
+HDFS in Overlog.  HDFS is loosely based on GFS~\cite{gfs-sosp}, and is targeted
+at storing large files for full-scan workloads.  In HDFS, file system metadata
+is stored at a centralized \emph{{\NN}}, but file data is partitioned into
+\emph{chunks} and distributed across a set of \emph{{\DN}s}. By default, each
+chunk is 64MB and is replicated at three {\DN}s to provide fault tolerance. {\DN}s
+periodically send heartbeat messages to the {\NN} containing the set of chunks
+stored at the {\DN}. The {\NN} caches this information. If the {\NN} has not
+seen a heartbeat from a {\DN} for a certain period of time, it assumes that the
+{\DN} has crashed and deletes it from the cache; it will also create additional
+copies of the chunks stored at the crashed {\DN} to ensure fault tolerance.
+
+Clients only contact the {\NN} to perform metadata operations, such as
+obtaining the list of chunks in a file; all data operations involve
+only clients and {\DN}s. HDFS only supports file read and append
+operations; chunks cannot be modified once they have been written.
+
+
+%%In contrast to our ``porting'' strategy for implementing \BOOM-MR, we
+%%chose to build \BOOM-FS from scratch.  
+
+%%This required us to exercise
+%%Overlog more broadly, limiting our Hadoop/Java compatibility task to
+%%implementing the HDFS client API in Java.  We did this by creating a
+%%simple translation layer between Hadoop API operations and \BOOM-FS
+%%protocol commands. The resulting \BOOM-FS implementation works with
+%%either vanilla Hadoop MapReduce or \BOOM-MR.
+
+Like GFS, HDFS maintains a clean separation of control and data protocols:
+metadata operations, chunk placement and {\DN} liveness are decoupled from the
+code that performs bulk data transfers. Following this lead, we implemented the
+simple high-bandwidth data path ``by hand'' in Java, concentrating our Overlog
+code on the trickier control-path logic. This allowed us to use a prototype
+version of \JOL that focused on functionality more than performance. As we
+document in Section~\ref{sec:eval}, this was sufficient to allow \BOOM-FS to
+keep pace with HDFS in typical MapReduce workloads.
+
+% The Java 
+% integration features of \JOL made, we were able to use
+% the most appropriate language for the problem at hand. As we reflect
+% in Section \ref{sec:lessons}, this produced a hybrid system that is
+% both clean and efficient.
+
+\subsection{File System State}
+The first step of our rewrite was to represent file system metadata as
+a collection of relations (Table~\ref{tab:bfs-schema}). We then
+implemented file system operations by writing queries over this
+schema.
+
+The \emph{file} relation contains a row for each file or directory stored in
+\BOOM-FS\@. The set of chunks in a file is identified by the corresponding rows
+in the \emph{fchunk} relation.\footnote{The order of a file's chunks must also
+  be specified, because relations are unordered. Currently, we assign chunk IDs
+  in a monotonically increasing fashion and only support append operations, so
+  clients can determine a file's chunk order by sorting chunk IDs.} The
+\emph{datanode} and \emph{hb\_chunk} relations contain the set of live {\DN}s
+and the chunks stored by each {\DN}, respectively. The {\NN} updates these
+relations as new heartbeats arrive; if the {\NN} does not receive a heartbeat
+from a {\DN} within a configurable amount of time, it assumes that the {\DN} has
+failed and removes the corresponding rows from these tables.
+
+The {\NN} must ensure that file system metadata is durable and restored to a
+consistent state after a failure. This was easy to implement using Overlog; each
+Overlog fixpoint brings the system from one consistent state to another. We used
+the Stasis storage library~\cite{stasis} to write durable state changes to disk
+as an atomic transaction at the end of each fixpoint. Like P2, \JOL allows
+durability to be specified on a per-table basis. So the relations in
+Table~\ref{tab:bfs-schema} were marked durable, whereas ``scratch tables'' that
+are used to compute responses to file system requests were
+transient --- emptied at the end of each fixpoint.
+
+\begin{table}
+\centering
+\scriptsize{
+\begin{tabular}{|l|l|l|} \hline
+\textit{Name}   & \textit{Description} & \textit{Relevant attributes} \\ \hline\hline
+file          & Files   & \underline{fileid}, parentfileid, name, isDir\\ \hline
+fqpath & Fully-qualified pathnames & path, \underline{fileid}\\ \hline
+fchunk         &  Chunks per file  & \underline{chunkid}, \underline{fileid} \\ \hline
+datanode  & {\DN} heartbeats      & \underline{nodeAddr}, lastHeartbeatTime \\  \hline
+hb\_chunk  & Chunk heartbeats            & \underline{nodeAddr}, \underline{chunkid},  length\\ \hline
+\end{tabular}
+}
+\caption{\BOOM-FS relations defining file system metadata. The underlined attributes
+together make up the primary key of each relation.}
+\label{tab:bfs-schema}
+\vspace{-8pt}
+\end{table}
+
+Since a file system is naturally hierarchical, the ``queries'' needed to
+traverse it are recursive. While recursion in SQL is considered somewhat
+esoteric, it is a common pattern in Datalog and hence Overlog.  For example, an
+attribute of the \emph{file} table describes the parent-child relationship of
+files; by computing the transitive closure of this relation, we can infer the
+fully-qualified pathname of each file (\emph{fqpath}). The two Overlog rules
+that derive \emph{fqpath} from \emph{file} are listed in
+Figure~\ref{fig:bfs-path}. Note that when a \emph{file} representing a directory
+is removed, all \emph{fqpath} tuples that describe child paths of that directory
+are automatically removed (because they can no longer be derived from the
+updated contents of \emph{file}).
+
+Because path information is accessed frequently, we configured the \emph{fqpath}
+relation to be cached after it is computed. Overlog will automatically update
+\emph{fqpath} when \emph{file} is changed, using standard relational view
+maintenance logic~\cite{ullmanbook}. \BOOM-FS defines several other views to
+compute derived file system metadata, such as the total size of each file and
+the contents of each directory. The materialization of each view can be changed
+via simple Overlog table definition statements without altering the semantics of
+the program. During the development process, we regularly adjusted view
+materialization to trade off read performance against write performance and
+storage requirements.
+
+At each \DN, chunks are stored as regular files on the file system. In
+addition, each {\DN} maintains a relation describing the chunks stored
+at that node. This relation is populated by periodically invoking a
+table function defined in Java that walks the appropriate directory of
+the {\DN}'s local file system.
+
+% \jmh{We reimplemented data nodes, so got to define our own API between them and name nodes}
+% For storage of file system data, we had two design choices: leave the HDFS {\DN} implementations as 
+% they were and implement the APIs necessary for communication with the new {\NN} and client applications, 
+% or replace the {\DN}s as well.  We chose the latter because it was easy to do so: state representation 
+% in a {\DN} 
+%The state at the {\DN}s is quite simple (a mapping of local chunks to
+%sizes and checksums). \jmh{Ref here to details in a schema diagram?}
+
+\subsection{Communication Protocols}
+Both HDFS and \BOOM-FS use three different protocols: the \emph{metadata
+  protocol} that clients and {\NN}s use to exchange file metadata, the
+\emph{heartbeat protocol} that {\DN}s use to notify the {\NN} about chunk
+locations and {\DN} liveness, and the \emph{data protocol} that clients and
+{\DN}s use to exchange chunks. We implemented the metadata and heartbeat
+protocols with a set of distributed Overlog rules.  The data protocol was
+implemented in Java because it is simple and performance critical. We proceed to
+describe the three protocols in order.
+
+For each command in the metadata protocol, there is a single rule at
+the client (stating that a new request tuple should be ``stored'' at
+the {\NN}). There are typically two corresponding rules at the {\NN}:
+one to specify the result tuple that should be stored at the client,
+and another to handle errors by returning a failure message. 
+%%An
+%%example of the {\NN} rules for Chunk Location requests is shown in
+%%Figure~\ref{fig:bfs-chunk-locs}.
+
+Requests that modify metadata follow the same basic structure, except that in
+addition to deducing a new result tuple at the client, the {\NN} rules also
+deduce changes to the file system metadata relations. Concurrent requests to the
+{\NN} are handled in a serial fashion by {\JOL}. While this simple approach has
+been sufficient for our experiments, we plan to explore more sophisticated
+concurrency control techniques in the future.
+
+\begin{figure}[t]
+\centering
+\begin{footnotesize}
+\begin{verbatim}
+// fqpath: Fully-qualified paths.
+// Base case: root directory has null parent
+fqpath(Path, FileId) :-
+    file(FileId, FParentId, _, true),
+    FParentId = null, Path = "/";
+
+fqpath(Path, FileId) :-
+    file(FileId, FParentId, FName, _),
+    fqpath(ParentPath, FParentId),
+    // Do not add extra slash if parent is root dir
+    PathSep = (ParentPath = "/" ? "" : "/"),
+    Path = ParentPath + PathSep + FName;
+\end{verbatim}
+\end{footnotesize}
+\vspace{-8pt}
+\caption{Example Overlog for deriving fully-qualified pathnames from
+  the base file system metadata in \BOOM-FS.}
+\label{fig:bfs-path}
+\vspace{-8pt}
+\end{figure}
+
+
+%%\begin{figure}
+%%\centering
+%%\begin{footnotesize}
+%%\begin{verbatim}
+%%// The set of nodes holding each chunk
+%%compute_chunk_locs(ChunkId, set<NodeAddr>) :-
+%%    hb_chunk(NodeAddr, ChunkId, _);
+
+%%// Chunk exists => return success and set of nodes
+%%response(@Src, RequestId, true, NodeSet) :-
+%%    request(@Master, RequestId, Src,
+ %%           "ChunkLocations", ChunkId),
+%%    compute_chunk_locs(ChunkId, NodeSet);
+
+%%// Chunk does not exist => return failure
+%%response(@Src, RequestId, false, null) :-
+%%    request(@Master, RequestId, Src,
+%%            "ChunkLocations", ChunkId),
+%%    notin hb_chunk(_, ChunkId, _);
+%%\end{verbatim}
+%%\end{footnotesize}
+%%\vspace{-12pt}
+%%\caption{{\NN} rules to return the set of {\DN}s that hold a given
+%%  chunk in \BOOM-FS.}
+%%\label{fig:bfs-chunk-locs}
+%%\vspace{-2pt}
+%%\end{figure}
+
+The heartbeat protocol follows a similar request/response pattern, but it is not
+driven by the arrival of network events. In order to trigger such events in a
+data-centric language, Overlog offers a \emph{periodic} relation~\cite{p2} that
+can be configured to produce new tuples at every tick of a wall-clock
+timer. {\DN}s use the \emph{periodic} relation to send heartbeat messages to
+{\NN}s.
+
+The {\NN} can also send control messages to {\DN}s. This occurs when a file
+system invariant is unmet and the {\NN} requires the cooperation of the {\DN} to
+restore the invariant. For example, the {\NN} records the number of replicas of
+each chunk (as reported by heartbeat messages). If the number of replicas of a
+chunk drops below the configured replication factor (e.g., due to a {\DN}
+failure), the {\NN} sends a message to a {\DN} that stores the chunk, asking it
+to send a copy of the chunk to another {\DN}.
+
+Finally, the data protocol is a straightforward mechanism for
+transferring the contents of a chunk between clients and {\DN}s. This
+protocol is orchestrated by Overlog rules but implemented in
+Java. When an Overlog rule deduces that a chunk must be transferred
+from host \emph{X} to \emph{Y}, an output event is triggered at
+\emph{X}. A Java event handler at \emph{X} listens for these output
+events and uses a simple but efficient data transfer protocol to send
+the chunk to host \emph{Y}. To implement this protocol, we wrote a
+simple multi-threaded server in Java that runs on the {\DN}s.
+
+\begin{table}
+\centering
+\scriptsize{
+\begin{tabular}{|l|r|r|} \hline
+\textit{System}   & \textit{Lines of Java} & \textit{Lines of Overlog} \\ \hline\hline
+HDFS       & \texttildelow{}21,700   & 0 \\ \hline
+\BOOM-FS & 1,431    & 469 \\ \hline
+\end{tabular}
+}
+\caption{Code size of two file system implementations.}
+\label{tbl:boomfs}
+\vspace{-8pt}
+\end{table}
+
+\subsection{Discussion}
+\label{sec:hdfs-discuss}
+After four person-months of work, we had a working implementation of metadata
+handling in Overlog, and it was straightforward to add Java code to store chunks
+in UNIX files. Adding metadata durability took about a day.  Adding the
+necessary Hadoop client APIs in Java took an additional week.  As
+Table~\ref{tbl:boomfs} shows, \BOOM-FS contains an order of magnitude less code
+than HDFS\@. The \DN implementation accounts for 414 lines of the Java in
+\BOOM-FS; the remainder is devoted to system configuration, bootstrapping, and a
+client library. Adding support for accessing \BOOM-FS via Hadoop's API required
+an additional 400 lines of Java.
+
+In retrospect, the main benefit of our data-centric approach was to expose the
+simplicity of HDFS's core state, which consists of simple file system metadata
+and streams of messages in a few communication protocols.  Having identified the
+relevant data and captured it in relations, the task of writing code to
+coordinate the data was relatively easy and could have been written fairly
+quickly in any language with good support for collection types.
+
+Beyond this data-centric approach, the clearest benefit of Overlog's
+declarativity at this stage turned out to be the ability to (a) express paths as
+simple recursive queries over parent links, and (b) flexibly decide when to
+maintain materialized views (i.e., cached or precomputed results) of those paths
+separate from their specification.\footnote{In future, these decisions could be
+  suggested or made automatic by an optimizer based on data and workloads.}
+Overlog's built-in support for persistence, messaging, and timers were also
+convenient, and enabled file system policy to be stated concisely.
+
+When we began this work, we expected that using a declarative language would
+allow the natural specification and maintenance of file system invariants. We
+found that this was only partially true. For {\NN}-local invariants (e.g.,
+ensuring that the \emph{fqpath} relation is consistent with the \emph{file}
+relation), Overlog gave us confidence in the correctness of our system. However,
+Overlog was less useful for describing invariants that require the coordination
+of multiple nodes (e.g., ensuring that the replication factor of each chunk is
+satisfied). On reflection, this is because distributed Overlog rules induce
+asynchrony across nodes; hence, such rules must describe \emph{protocols} to
+enforce distributed invariants, not the invariants themselves. Hence, the code
+we wrote to maintain the replication factor of each chunk had a low-level,
+``state machine''-like flavor. We return to this point in
+Section~\ref{sec:overlog-lessons}.
+
+Although \BOOM-FS replicates the basic architecture and functionality of HDFS,
+we did not attempt to achieve feature parity.  HDFS features that \BOOM-FS does
+not support include file access permissions, a web interface for status
+monitoring, and proactive rebalancing of chunks among {\DN}s in a cluster. Like
+HDFS, the initial \BOOM-FS prototype avoids distributed systems and parallelism
+challenges by implementing coordination with a single centralized \NN.  It can
+tolerate \DN failures but has a single point of failure and scalability
+bottleneck at the \NN. We discuss how we improved \NN fault tolerance and
+scalability in Sections~\ref{sec:rely} and \ref{sec:scale}, respectively. As we
+discuss in Section~\ref{sec:eval}, the performance of \BOOM-FS is competitive
+with HDFS\@.
+
+
+% In Hadoop 18, each map or reduce task is executed in a newly-spawned
+% child process. In our initial \BOOM-FS prototype, each process created
+% a new copy of the JOL interpreter. This resulted in poor performance,
+% because the current version of JOL takes \textasciitilde{}1.5 seconds
+% to create an instance of the interpreter, which can be a significant
+% portion of the total runtime of a typical map task. To avoid this
+% problem, we modified Hadoop to spawn a single ``JOL server'' process
+% at each worker node. To access \BOOM-FS, map and reduce tasks
+% communicate with the JOL server process using RPCs. This issue could
+% also have been mitigated by using the ``reuse JVMs'' capability
+% introduced in Hadoop 19.
+
+% , and we feel
+% that \BOOM-FS reflects that simplicity well.  HDFS sidesteps many of
+% the performance challenges of traditional file systems and databases
+% by focusing nearly exclusively on scanning large files.  It  As a result, most of our implementation consists of simple
+% message handling and management of the hierarchical file system
+% namespace. Datalog materialized view logic was not hard to implement
+% in \JOL, and took care of most of the performance issues we faced over
+% the course of our development.
+

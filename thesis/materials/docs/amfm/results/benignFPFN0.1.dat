@@ -1,0 +1,11 @@
+#Munging exponential agnostic file [agnosticBenign.dat] with epsilon [0.1]
+Epsilon 0.1 Card 10000 Values 50 Alarms 2 InBounds 50 FalsePositives 2 FalseNegatives 0
+Epsilon 0.1 Card 20000 Values 50 Alarms 0 InBounds 48 FalsePositives 0 FalseNegatives 2
+Epsilon 0.1 Card 30000 Values 50 Alarms 1 InBounds 50 FalsePositives 1 FalseNegatives 0
+Epsilon 0.1 Card 40000 Values 50 Alarms 0 InBounds 48 FalsePositives 0 FalseNegatives 2
+Epsilon 0.1 Card 50000 Values 50 Alarms 0 InBounds 50 FalsePositives 0 FalseNegatives 0
+Epsilon 0.1 Card 60000 Values 50 Alarms 0 InBounds 49 FalsePositives 0 FalseNegatives 1
+Epsilon 0.1 Card 70000 Values 50 Alarms 0 InBounds 49 FalsePositives 0 FalseNegatives 1
+Epsilon 0.1 Card 80000 Values 50 Alarms 0 InBounds 49 FalsePositives 0 FalseNegatives 1
+Epsilon 0.1 Card 90000 Values 50 Alarms 0 InBounds 48 FalsePositives 0 FalseNegatives 2
+Epsilon 0.1 Card 100000 Values 50 Alarms 2 InBounds 48 FalsePositives 0 FalseNegatives 0

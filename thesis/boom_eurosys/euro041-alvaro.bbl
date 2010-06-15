@@ -1,0 +1,224 @@
+\begin{thebibliography}{41}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Abouzeid et~al.(2009)]{hadoopdb}
+A.~Abouzeid et~al.
+\newblock {HadoopDB}: An architectural hybrid of {MapReduce} and {DBMS}
+  technologies for analytical workloads.
+\newblock In \emph{VLDB}, 2009.
+
+\bibitem[Alvaro et~al.(2009{\natexlab{a}})]{boom-techr}
+P.~Alvaro et~al.
+\newblock {BOOM}: Data-centric programming in the datacenter.
+\newblock Technical Report UCB/EECS-2009-113, EECS Department, University of
+  California, Berkeley, Jul 2009{\natexlab{a}}.
+
+\bibitem[Alvaro et~al.(2009{\natexlab{b}})]{dedalus-tr}
+P.~Alvaro et~al.
+\newblock Dedalus: {Datalog} in time and space.
+\newblock Technical Report UCB/EECS-2009-173, EECS Department, University of
+  California, Berkeley, Dec 2009{\natexlab{b}}.
+
+\bibitem[Alvaro et~al.(2009{\natexlab{c}})]{netdb-declare}
+P.~Alvaro et~al.
+\newblock {I Do Declare}: Consensus in a logic language.
+\newblock In \emph{NetDB}, 2009{\natexlab{c}}.
+
+\bibitem[Ashley-Rollman et~al.(2007)]{meld}
+M.~P. Ashley-Rollman et~al.
+\newblock {Declarative Programming for Modular Robots}.
+\newblock In \emph{Workshop on Self-Reconfigurable Robots/Systems and
+  Applications}, 2007.
+
+\bibitem[Belaramani et~al.(2009)]{pads}
+N.~Belaramani et~al.
+\newblock {PADS}: A policy architecture for data replication systems.
+\newblock In \emph{NSDI}, 2009.
+
+\bibitem[Burrows(2006)]{chubby}
+M.~Burrows.
+\newblock The {Chubby} lock service for loosely-coupled distributed systems.
+\newblock In \emph{OSDI}, 2006.
+
+\bibitem[Cabrero et~al.(2003)]{armistice}
+D.~Cabrero et~al.
+\newblock {ARMISTICE}: an experience developing management software with
+  {Erlang}.
+\newblock In \emph{ACM SIGPLAN Workshop on Erlang}, 2003.
+
+\bibitem[Chandra et~al.(2007)]{paxos-live}
+T.~D. Chandra et~al.
+\newblock Paxos made live: an engineering perspective.
+\newblock In \emph{PODC}, 2007.
+
+\bibitem[Condie et~al.(2008)]{evitaraced}
+T.~Condie et~al.
+\newblock {Evita Raced}: metacompilation for declarative networks.
+\newblock In \emph{VLDB}, 2008.
+
+\bibitem[Dean and Ghemawat(2004)]{mapreduce-osdi}
+J.~Dean and S.~Ghemawat.
+\newblock {MapReduce}: Simplified data processing on large clusters.
+\newblock In \emph{OSDI}, 2004.
+
+\bibitem[DeCandia et~al.(2007)]{dynamo}
+G.~DeCandia et~al.
+\newblock Dynamo: Amazon's highly available key-value store.
+\newblock In \emph{SOSP}, 2007.
+
+\bibitem[Eisner et~al.(2004)]{dyna}
+J.~Eisner et~al.
+\newblock Dyna: a declarative language for implementing dynamic programs.
+\newblock In \emph{ACL}, 2004.
+
+\bibitem[Ghemawat et~al.(2003)]{gfs-sosp}
+S.~Ghemawat et~al.
+\newblock The {Google} file system.
+\newblock In \emph{SOSP}, 2003.
+
+\bibitem[Gunawi et~al.(2008)]{wiscfsck}
+H.~S. Gunawi et~al.
+\newblock {SQCK: A Declarative File System Checker}.
+\newblock In \emph{OSDI}, 2008.
+
+\bibitem[Gupta et~al.(1994)]{panic}
+A.~Gupta et~al.
+\newblock Constraint checking with partial information.
+\newblock In \emph{PODS}, 1994.
+
+\bibitem[Isard et~al.(2007)]{dryad}
+M.~Isard et~al.
+\newblock Dryad: distributed data-parallel programs from sequential building
+  blocks.
+\newblock In \emph{EuroSys}, 2007.
+
+\bibitem[Jones(1993)]{jones-sosp93}
+M.~B. Jones.
+\newblock Interposition agents: transparently interposing user code at the
+  system interface.
+\newblock In \emph{SOSP}, 1993.
+
+\bibitem[Kohler et~al.(2000)]{click}
+E.~Kohler et~al.
+\newblock The {Click} modular router.
+\newblock \emph{{ACM} Transactions on Computer Systems}, 18\penalty0
+  (3):\penalty0 263--297, August 2000.
+
+\bibitem[Lam et~al.(2005)]{bddbddb}
+M.~S. Lam et~al.
+\newblock Context-sensitive program analysis as database queries.
+\newblock In \emph{PODS}, 2005.
+
+\bibitem[Lamport(1998)]{part-time}
+L.~Lamport.
+\newblock The part-time parliament.
+\newblock \emph{ACM Transactions on Computer Systems}, 16\penalty0
+  (2):\penalty0 133--169, 1998.
+
+\bibitem[LATE Hadoop Jira()]{jira}
+LATE Hadoop Jira.
+\newblock Hadoop jira issue tracker, July 2009.
+\newblock \smallurl{http://issues.apache.org/jira/browse/HADOOP}.
+
+\bibitem[Loo et~al.(2006)]{loo-sigmod06}
+B.~T. Loo et~al.
+\newblock Declarative networking: language, execution and optimization.
+\newblock In \emph{SIGMOD}, 2006.
+
+\bibitem[Loo et~al.(2005)]{p2}
+B.~T. Loo et~al.
+\newblock Implementing declarative overlays.
+\newblock In \emph{SOSP}, 2005.
+
+\bibitem[Lynch(1997)]{lynchbook}
+N.~A. Lynch.
+\newblock \emph{Distributed Algorithms}.
+\newblock Morgan Kaufmann, 1997.
+
+\bibitem[Marczak et~al.(2009)]{lbtrust}
+W.~R. Marczak et~al.
+\newblock Declarative reconfigurable trust management.
+\newblock In \emph{CIDR}, 2009.
+
+\bibitem[Marguerie et~al.(2008)]{linq}
+F.~Marguerie et~al.
+\newblock \emph{{LINQ} In Action}.
+\newblock Manning Publications Co., 2008.
+
+\bibitem[{Nokia Corporation}(2009)]{disco}
+{Nokia Corporation}.
+\newblock disco: massive data -- minimal code, 2009.
+\newblock \smallurl{http://discoproject.org/}.
+
+\bibitem[Schutt et~al.(2008)]{scalaris}
+T.~Schutt et~al.
+\newblock {Scalaris}: Reliable transactional {P2P} key/value store.
+\newblock In \emph{ACM SIGPLAN Workshop on Erlang}, 2008.
+
+\bibitem[Sears and Brewer(2006)]{stasis}
+R.~Sears and E.~Brewer.
+\newblock Stasis: flexible transactional storage.
+\newblock In \emph{OSDI}, 2006.
+
+\bibitem[Singh et~al.(2006)]{singh-eurosys}
+A.~Singh et~al.
+\newblock Using queries for distributed monitoring and forensics.
+\newblock In \emph{EuroSys}, 2006.
+
+\bibitem[Singh et~al.(2008)]{singh-nsdi}
+A.~Singh et~al.
+\newblock {BFT} protocols under fire.
+\newblock In \emph{NSDI}, 2008.
+
+\bibitem[Stonebraker(1986)]{postgres}
+M.~Stonebraker.
+\newblock Inclusion of new types in relational data base systems.
+\newblock In \emph{ICDE}, 1986.
+
+\bibitem[Szekely and Torres(2005)]{paxonp2}
+B.~Szekely and E.~Torres, Dec. 2005.
+\newblock \smallurl{http://www.klinewoods.com/papers/p2paxos.pdf}.
+
+\bibitem[Thusoo et~al.(2009)]{hive}
+A.~Thusoo et~al.
+\newblock Hive - a warehousing solution over a {Map-Reduce} framework.
+\newblock In \emph{VLDB}, 2009.
+
+\bibitem[Ullman(1990)]{ullmanbook}
+J.~D. Ullman.
+\newblock \emph{Principles of Database and Knowledge-Base Systems: Volume II:
+  The New Technologies}.
+\newblock W.\ H.\ Freeman \& Company, 1990.
+
+\bibitem[White et~al.(2007)]{cornellgames}
+W.~White et~al.
+\newblock Scaling games to epic proportions.
+\newblock In \emph{SIGMOD}, 2007.
+
+\bibitem[Yang et~al.(2006)]{hilda}
+F.~Yang et~al.
+\newblock Hilda: A high-level language for data-driven web applications.
+\newblock In \emph{ICDE}, 2006.
+
+\bibitem[Yu et~al.(2008)]{DryadLINQ}
+Y.~Yu et~al.
+\newblock {DryadLINQ}: A system for general-purpose distributed data-parallel
+  computing using a high-level language.
+\newblock In \emph{OSDI}, 2008.
+
+\bibitem[Zaharia et~al.(2010)]{delay-sched}
+M.~Zaharia et~al.
+\newblock Delay scheduling: A simple technique for achieving locality and
+  fairness in cluster scheduling.
+\newblock In \emph{EuroSys}, 2010.
+
+\bibitem[Zaharia et~al.(2008)]{late-sched}
+M.~Zaharia et~al.
+\newblock Improving {MapReduce} performance in heterogeneous environments.
+\newblock In \emph{OSDI}, 2008.
+
+\end{thebibliography}

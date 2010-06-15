@@ -1,0 +1,345 @@
+\documentclass{article} 
+\usepackage{cite} 
+\usepackage{url}
+
+\usepackage{times}
+\usepackage{xspace} 
+\usepackage{color} 
+\usepackage{epsfig}
+\usepackage{listings}
+\usepackage[boxruled,linesnumbered]{algorithm2e}
+
+
+%% Overlog definition adapted from 
+%% Prolog definition (c) 1997 Dominique de Waleffe
+%%
+\lstdefinelanguage{Overlog}%
+  {morekeywords={materialize,periodic,insert,delete},%
+   sensitive=f,%
+   morecomment=[s]{/*}{*/},%
+   morestring=[bd]",%
+   morestring=[bd]'%
+  }[keywords,comments,strings]%
+
+\lstset{language=Overlog,
+        basicstyle=\small\sffamily,
+%        stringstyle=\ttfamily,
+        keywordstyle=\color{blue}\bfseries,
+        numbers=left, numberstyle=\tiny, stepnumber=1, numbersep=5pt
+}
+
+
+%\pagestyle{empty}
+
+\newcommand{\link}[1]{{\small \url{#1}}} 
+\def\dblspace{\xspace\xspace}
+
+\newtheorem{defn}{Definition}
+\newtheorem{conjecture}{Conjecture}
+
+
+% Setup stuff
+% Side margins:
+\oddsidemargin 0.025in
+\evensidemargin 0.025in
+% Text width:
+\textwidth 6.45in
+% Top margin:
+\topmargin -.5in
+% Text height:
+\textheight 9in
+%\pagestyle{empty}
+\sloppy
+
+\begin{document}
+
+\title{Toward a More Expressive Global Semantics for NDLog}
+
+\author{Joseph M.\ Hellerstein and co.}
+
+\date{}
+
+\maketitle
+\begin{abstract}
+\end{abstract}
+\section{Introduction}
+NDLog, as defined in~\cite{loo-sigmod06}, is defined in terms of
+Datalog semantics, and that semantics is achieved via pipelined or
+batched semi-naive evaluation.  In Boon Thau Loo's
+thesis~\cite{loothesis}, that work is extended to consider soft-state
+semantics, still under simple extensions of Datalog semantics.
+
+In our experience and our discussions with users, traditional Datalog
+semantics have proved insufficient for various purposes.  A driving
+example of this is the following simple snippet from the Symphony
+DHT.  The basic idea is that a node X sends a request to node Y to add
+X as a neighbor.  If Y has fewer than 10 neighbors so far, it should
+(atomically) add X as a neighbor and send an acknowledgment to X.  if
+Y has 10 or more neighbors, it should send a negative acknowledgment
+to X.
+
+\begin{lstlisting}
+materialize(neighbor, infinity, 100, (1, 2)).
+
+neighbor_count(@Y, count<*>) :- neighbor(@Y, Z).
+neighbor(@Y, X) :- request(@Y, X), neighbor_count(@Y, Z), Z < 10.
+neighbor_ack(@X, Y) :- request(@Y, X), neighbor_count(@Y, Z), Z < 10.
+neighbor_nak(@X, Y) :- request(@Y, X), neighbor_count(@Y, Z), Z >= 10.
+\end{lstlisting}
+
+A number of the challenges that we have been unable to neatly handle with
+NDLog arise in this example:
+\begin{itemize}
+\item {\bf Atomic Event Handling}.  In the example, we want the
+  processing of a the single request to atomically result in both the
+  addition to the neighbor table (line 4), and the generation of the
+  neighbor\_ack event (line 5).  Currently there is no way to
+  guarantee this operationally, and semi-naive evaluation can produce
+  a ``race condition'' in which too many neighbor\_ack tuples are
+  generated before new neighbor facts are computed, which will
+  resulting in inconsistency between the neighbor table and the acks
+  sent.  This is obviously being described in operational terms, and
+  is tricky to capture in a declarative sense.
+\item {\bf Cyclic Negation Semantics}.  We have seen examples of
+  fairly natural programs that contain rules that are mutually
+  recursive through a negated or aggregated predicates.  Consider he
+  program above: neighbor ``feeds'' an aggregate in neighbor\_count in
+  line 3, and neighbor\_count in turn feeds neighbor in line 4.  If we
+  change the constant ``10'' in the program to ``1'', this is
+  precisely the same as checking for emptiness -- i.e. negation.  This
+  kind of cyclic dependency through negation makes it difficult to
+  assign semantics to programs in many cases.  Some approaches to this
+  problem include either program analysis (e.g. for detecting
+  locally-stratified programs) or more complex program semantics (e.g.
+  the well-founded semantics).  However, the Symphony example above
+  appears to elude all these extensions.
+\end{itemize}
+Arguably these two problems go hand-in-hand -- one could say that the
+former is an operational manifestation of the semantic problem in the latter.
+
+\section{Semi-Operational Semantics} 
+Intuitively, to get beyond this problem we wish to define an idealized
+``semi-operational'' semantics in which:
+\begin{itemize}
+\item Only one node in the network is active at any time
+\item When active, a node processes a single event locally to
+  completion -- i.e. until its NDLog rules can derive no more facts
+  without communication.
+\end{itemize}
+We call this notion ``semi-operational'' because it operationally
+constrains the execution of the global system in time, but leaves each
+node's computation to be specified as a declarative (local) logic
+program to be executed by arbitrary fixpoint computation.
+Conveniently, it deals with the atomic event handling problem we
+observed above; we will conjecture below that it can help with some of
+the challenges of cyclic negation a well.
+
+In the spirit of serializability analyses in transactional databaes,
+our goal here will to be to achieve the intuitive semantics in a
+manner that actually relaxes the execution constraints to allow for
+multiple events be processed simultaneously across multiple active
+nodes.  In the {\em next section} we will conjecture about static
+checks for programs for which this simultaneous processing produces
+the same outcomes as the node-at-a-time semantics described above.
+
+
+We will assume knowledged of all the standard definitions of Datalog,
+including {\em relations (tables)}, {\em tuples}, {\em Extensional
+  Data Base (EDB)}, {\em Intensional Data Base (IDB)}, {\em rules} and
+{\em programs}.  From the earlier work on P2~\cite{loo-sigmod06} we
+adopt the NDLog language, including the notions of {\em location
+  specifiers} and {\em localization} of programs.
+
+\begin{defn}
+  We allow any table to be labeled as an {\em event table}.  An {\em
+    event} is a tuple in an event table.
+\end{defn}
+Event tables will have special constraints in our local timestep
+semantics described below.
+
+Recall that any NDLog program can be ``localized'' via a rewrite that
+produces a program in which the body predicates of each rule share a
+single location specifier~\cite{loo-sigmod06}.  Given a localized
+program, we define the following:
+\begin{defn}
+  A {\em local timestep} $T^n_i = (n, i, {\cal E}, {\cal P}, e)$
+  describes a discrete state of a single node $n$ in a declarative
+  network.  A local time step is defined by a unique sequence number
+  $i$ taken from a monotonically increasing counter at $n$, an EDB
+  ${\cal E}$, a localized NDLog program ${\cal P}$, and exactly one
+  event $e$.
+\end{defn}
+Note that for any timestep, only one event table is non-empty -- the
+one containing the event for the timestep.
+
+
+\begin{defn}
+  The {\em local-only rewrite} of a localized NDLog program is a
+  Datalog program, formed by taking those rules in the NDLog program
+  that have the same location specifier in the head predicate as is
+  found in (all of) the body predicates, and removing the NDLog
+  annotations for location specifiers and link relations.
+\end{defn}
+
+  
+\begin{defn}
+  The {\em local model} of a local timestep is the minimal model for
+  the Datalog program formed by the local-only rewrite of the timestep's
+  program, along with the timestep's EDB and its event tuple.
+\end{defn}
+Since the local model is defined via a Datalog program, it can be
+computed via a fixpoint evaluation of the local-only rewrite over the
+EDB and the event tuple, using a traditional technique like semi-naive
+evaluation.
+
+\begin{defn}
+  Given an NDLog program \cal{P}, the {\em communication rewrite} of
+  \cal{P} is an NDLog program formed by taking each rule in \cal{P}
+  that is not in the local-only rewrite, and adorning the head predicate
+  with the superscript {${}^s$}.
+\end{defn}
+
+\begin{defn}
+  The {\em consequences} of a local timestep are the relations in the
+  communication rewrite that appear as head predicates in rules with
+  a different location specifier than the body.
+\end{defn}
+
+\begin{defn}
+  A {\em global timestep} $\tau_i$ is defined by a set of local
+  timesteps $T^n_{n_i}$.
+\end{defn}
+
+\begin{defn}
+  A {\em global clock} $\tau$ is a series of global timesteps where
+  (a) two consecutive timesteps differ in the timestep of only a
+  single node (the {\em tick node}), (b) the order of global timesteps
+  is consistent with the order of each node's local timesteps, (c)
+  each unique event in a global timestep's tick node timestep
+  corresponds to a distinct consequence from a local timestep in some
+  earlier global timestep.
+\end{defn}
+Note that a the set of nodes reflected in a global clock's global
+timesteps may change over time.
+
+\section{Static Analysis Goals}
+In this section we outline some program analyses that would be nice to
+achieve.
+
+\begin{defn} 
+The {\em local coercion} of an NDLog program modifies all its
+predicates by changing the former location specifier to a standard
+variable (removing the {\tt @} sign), and adding to each predicate a
+new location specifier {\tt @X}.
+\end{defn}
+In effect, local coercion produces a ``simulation'' of the NDLog
+network on a single machine.
+
+\begin{itemize}
+\item {\bf Guaranteed natural semantics:} Identify a family of
+  programs for which it can be shown that the global outcome of {\em
+    any} consistent global clock is equivalent to the Datalog
+  semantics of the local coercion of the program.
+
+\item {\bf Achievable natural semantics:} Identify a family of
+  programs for which the global outcome of {\em some} consistent
+  global clock is equivalent to the Datalog semantics of the local
+  coercion of the program.  This would be more helpful if it constructed
+  a set of constraints on the global clock that would characterize such
+  global clocks.
+
+\item {\bf Semantic benefits to delay:} It is my suspicion that there
+  may be some programs whose local coercion has {\em no} clear
+  semantics (e.g. because of negation), but it does have a unique natural
+  semantics under our semi-operational global clock model.  This may
+  depend on a local stratification analysis, see below.  I am hopeful
+  that the Symphony example above is such a program.
+\end{itemize}
+
+\section{Rewriting to the Global Semantics}
+The following is work in progress!
+
+Idea: rewrite the program to a fully logical representation of the
+global semantics.  Logically what we want is a global event ``heap''
+with some random priorities, and we rewrite each non-local rule to (a)
+put a timestamped version of its output in a specially-named table,
+(b) add the timestamp for each output event to the event heap, and (c)
+add the specially-named table tuples to the normal table only when the
+current timeTick (a built-in function) is the same as the timestamped
+tuple in the specially-named table.  The hope is that we can implement
+that with some simple randomly-assigned future timestamps that are
+checked against global clocks.  The trick is to make those timestamps
+unique.  Alternatively, we could explore how you get a queue expressed
+in some variant of datalog.
+
+\begin{algorithm}[H]
+\SetLine
+\KwIn{An NDLog program}
+
+\tcp{Still need to a construct to dequeue exactly one event per
+  timestep.  Possibly via timestamping new events with rand() and
+  joining each event table with the min-timestamp of any event.}
+
+Localize the program\;
+add a rule {\tt minTick(min<T>) :- pendingTicks(@X, T)}\;
+
+\For{each rule in the localized program containing an event
+  predicate in the body} {
+  \tcp{add a check that the event timestamp = min of all event timestamps?}
+}
+\For{each non-local rule with head {\tt p( ... )}} {
+  adorn the head predicate to be $\mbox{\tt p}^s$\;
+  \tcp{Pick a future tick for the resulting event(s)}
+  add an additional rule whose body contains only $\mbox{\tt p}^s( ... )$ from above, 
+      and whose head is a predicate $\mbox{\tt p}^r( ... )$ having the same
+      variables as ${\tt p}^s$, except changing $T$ to be ${\tt nextTurn(@Y)}$ \;
+  add an additional rule {\tt p( ... ) :- $\mbox{\tt p}^r$( ..., T), minTick(T).}
+}
+    
+\caption{An algorithm to rewrite an NDLog program into a Global
+  Execution Semantics.}
+\end{algorithm}
+\section{Some Proof Techniques We Can Pursue}
+Assuming we can get the rewrite above correct, we should be able to
+throw traditional Datalog analyses at the outputs of the rewrite.
+Then we can statically analyze input programs via a combo of rewrite
+and traditional analysis.
+
+\subsection{Rule Dependency Graph Analyses}
+\begin{conjecture} {\em The rewriting technique preserves monotonicity:} Any
+  monotonic NDLog program results in a monotonic 
+  rewritten program.  This perhaps gives the corollary that monotonic
+  NDLog implies Guaranteed Natural Semantics.
+\end{conjecture}
+\begin{conjecture} {\em Rewriting preserves Stratification:} Any
+  NDLog program with stratified negation results in a rewritten
+  program with stratified negation.  If so, we may be able to
+  rejigger the rewrite rules to observe stratification properly so
+  that we get Guaranteed Natural Semantics for those programs.
+\end{conjecture}
+
+\subsection{Tuple Derivation Tree Analyses}
+\begin{conjecture} {\em Rewriting can introduce Local Stratification:} 
+  I suspect that {\em some} programs that have no well-defined
+  semantics will end up making sense under the Global Semantics if you
+  analyze the individual tuple derivations, rather than the rule
+  dependency graphs.  The idea here is that by pushing consequences
+  into unique future timesteps, things like the Symphony rules may
+  make sense under some traditional semantics, perhaps a variant of
+  local stratification.  The way you show this is by analyzing how
+  facts get used in deduction, and show that individual facts don't
+  participate in cycles with negation/aggregation.
+\end{conjecture}
+
+\subsection{Soft State Analysis}
+As something of an aside, I'd like to be able to statically analyze a
+program to see whether all soft-state relations can be expected to
+stay refreshed in the absence of faults.  If we can do this analysis,
+then we can probably treat soft state and hard state similarly -- soft
+state is slightly more likely to undergo ``deletions and insertions''
+due to message delays, but we expect it to be reasonably persistent in
+the absence of faults.
+\bibliographystyle{alpha}
+\bibliography{semantics}
+
+\end{document}

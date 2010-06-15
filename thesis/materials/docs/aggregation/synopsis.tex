@@ -1,0 +1,38 @@
+\documentclass{article}
+
+\title{Stuff}
+
+\begin{document}
+
+\maketitle
+
+\section{Synopsys Data Structures for Massive Data Sets}
+
+\begin{enumerate}
+
+\item Frequency Moments
+
+Let $A=(a_1, a_2,\ldots, a_n)$ be a sequence of elements, where
+$a_i \in U = \{1, 2, \ldots, u\}$ and $u \leq 2^{n^\epsilon}$. Let $H
+= (m_1, m_2,\ldots, m_u)$ be a set, such that $m_i$ is the frequency
+of $i$ in $A$. Define, for each $k \geq 0$, $F_k =
+\sum_{i=1}^{u}m_{i}^{k}$.
+
+Defined like this, $F_k$ are known as the \emph{frequency moments}
+of $A$. In particular, $F_0$ is the number of distinct elements in
+$A$, $F_1$ is the number of elements in $A$, $F_2$ is the \emph{Gini's
+  index of homogeneity}.
+
+{\bf Results}\\
+\begin{enumerate}
+\item $F_0$ can be effectively estimated using a synopsis data
+  structure with footprint only $O(\log n)$, but it cannot be effectively
+  estimated based solely on randm sample of the data set unless
+  $\Omega(n)$ memory is used.
+\end{enumerate}
+
+
+
+\end{enumerate}
+ 
+\end{document}

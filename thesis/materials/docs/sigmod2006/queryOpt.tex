@@ -1,0 +1,424 @@
+\section{Query Optimizations}
+\label{sec:queryOpt}
+We proceed to discuss a set of query optimization opportunities
+that arise in the declarative networking context.  These include
+applications of traditional Datalog optimizations, as well as new
+techniques for multi-query optimization, result caching, and
+cost-based optimizations based on graph statistics. Some of these
+techniques---in particular the use of traditional Datalog
+optimizations and caching---were proposed in our previous
+work~\cite{declareRoute}. We present extensions to our basic
+techniques, as well as new avenues for optimization. 
+
+Compared to the relatively solid foundation of the previous discussion,
+ our approach here is more speculative: we open up a number of broad issues, and in
+Section~\ref{sec:expr} we provide a taste of the potential benefits of
+most of them via a full-fledged implementation running on a sizable
+network testbed.  However our intention here is not to ``close the
+book'' on any of these issues; much as in traditional database query
+optimization and execution, we expect that our techniques here for
+declarative networking will lead to significant work in a series of
+more focused investigations.
+
+
+\subsection{Traditional Datalog Optimizations}
+
+We first explore the applicability of three traditional Datalog optimization
+techniques: {\em aggregate selections}, {\em magic sets} and {\em
+  predicate reordering}.
+
+\subsubsection{Aggregate Selections}
+\label{subsec:aggregateSelections}
+
+A \naive execution of the {\em shortest-path} query computes all
+  possible paths, even those paths that do not contribute to the eventual shortest
+  paths. This inefficiency can be avoided with a query optimization
+technique known as {\em aggregate selections}~\cite{sudarshan91aggregation,zaniolo}. 
+
+Aggregate selections are useful when the running state of a monotonic
+$AGG$ function can be used to prune query evaluation. For example, by applying
+aggregate selections to the {\em shortest-path} query, each node only
+needs to propagate the most current shortest paths for each destination
+to neighbors. This propagation can be done whenever a shorter path is
+derived.  
+
+A potential problem with this approach is that the propagation of new
+shortest paths may be unnecessarily aggressive, resulting in wasted communication.
+As an enhancement, in the {\em periodic aggregate selections} scheme, a node buffers up
+new paths received from neighbors, recomputes any new shortest paths
+incrementally, and then propagates the new shortest paths
+periodically. The periodic technique has the potential for reducing
+network bandwidth consumption, at the expense of increasing convergence time.
+It is useful for queries whose input tuples tend 
+to arrive over the network out of order in terms of the monotonic aggregate --
+\eg computing ``shortest'' paths for metrics that are  
+not correlated with the network delays that dictate the arrival of the
+tuples during execution.
+
+In addition, aggregate selections are necessary for the termination of
+some queries, as alluded to previously in
+Section~\ref{sec:queryModel}. For example, with aggregate selections,
+even if paths with cycles are permitted, the {\em
+  shortest-path} query will terminate, avoiding cyclic paths of
+  increasing lengths.  
+
+%Example of queries that converges:
+%\begin{itemize}
+%\item Shortest path (C$_{1}+C_{2}$, min, C$>$0)
+%\item Most reliable path (C$_{1}*C_{2}$, max, 0$\le$C$\le$1)
+%\item Maximum capacity path (min(C$_{1},C_{2}$), max, C$>$0)
+%\end{itemize}
+%and Extension Tables~\cite{extension}. 
+
+\subsubsection{Magic Sets and Predicate Reordering}
+\label{sec:magic}
+\label{sec:leftLinear}
+
+The {\em shortest-path} query in our example computes {\em all-pairs} shortest
+paths. This leads to unnecessary overhead when only a
+subset of paths limited by sources and/or destinations is queried. This
+problem can be alleviated by applying two optimization techniques:  {\em
+  magic-sets rewriting} and {\em predicate reordering}.
+
+\noindent
+{\bf Magic-Sets Rewriting:} To limit query computation to the relevant portion
+of the network, we use a query rewrite technique, called {\em
+  magic sets rewriting}~\cite{oldMagic}. The Magic Sets method is
+closely related to methods such as Alexander~\cite{alexander} and
+QSQ~\cite{qsr}. Rather than review Magic Sets here,
+we illustrate its use in an example: by modifying SP1 from the
+shortest-path query, the following computes only paths limited to destinations
+in the $magicDst$ table. 
+
+\vspace{2pt}
+{\small
+\noindent{{\bf \#include(SP2,SP3,SP4)}} \\
+\noindent{\bf SP1-D: } path({\bf @S},@D,@D,P,C) :- {\em magicDst({\bf
+@D}),}\link{\em ({\bf @S},@D,C)},\\
+\datalogspace P = $f\_concatPath$(link({\bf @S},@D,C), nil). \\
+{\bf Query: } shortestPath({\bf @S},@D,P,C).
+}
+\vspace{2pt}
+
+
+Rule SP1-D initializes 1-hop paths for destinations whose \\$magicDst({\bf @D})$
+is present in the $magicDst$ table. This ensures that rule SP2 only
+propagates paths to selected destinations based on the $magicDst$
+table. The shortest paths are then computed as before using rules SP3
+and SP4. 
+
+\noindent
+{\bf Predicate Reordering:} The use of magic sets in the previous query is not useful for pruning paths from
+  sources. This is because paths are derived in a {\em ``Bottom-Up'' (BU)\/} fashion
+  starting from destination nodes, where the derived paths are shipped
+  ``backwards'' along neighbor links from destinations to sources. Interestingly, switching the search strategy
+  can be done simply by {\em reordering} the $path$ and \link
+  predicates. This has the effect of turning SP2 from a {\em right-recursive} to a {\em
+  left-recursive} rule. Together with the use of magic sets, the
+  following {\em magic-shortest-path} query allows filtering on {\em both} sources and {\em
+  destinations}: 
+
+\vspace{2pt}
+{\small
+\noindent{\bf SP1-SD: } pathDst({\bf @D},@S,@D,P,C) :- {\em magicSrc({\bf @S})}, \link({\bf @S},@D,C),\\
+\datalogspace P = $f\_concatPath$(link({\bf @S},@D,C), nil). \\
+{\bf SP2-SD: } pathDst({\bf @D},@S,@Z,P,C) :- {\em pathDst({\bf @Z},@S,@Z$_{1}$,P$_{1}$,C$_{1}$),}\\
+\datalogspace\link({\bf @Z},@D,C$_{2}$), C := C$_{1}$ + C$_{2}$, \\
+\datalogspace P = $f\_concatPath$(P$_{1}$,link({\bf @Z},@D,C$_{2}$)).\\
+{\bf SP3-SD: } spCost({\bf @D},@S,min$<$C$>$) :- {\em magicDst({\bf
+    @D})},\\
+\datalogspace pathDst({\bf @D},@S,@Z,P,C).\\
+{\bf SP4-SD: } shortestPath({\bf @D},@S,P,C) :- spCost({\bf @D},@S,C),\\
+\datalogspace pathDst({\bf @D},@S,@Z,P,C).
+%{\bf SP5-SD: } spResults({\bf @N},@S,@D,P,C) :- spResults({\bf
+%  @N_{1},@S,@D,P,C),@N=f\_last(P),@N != null.
+%{\bf SP6-SD: } shortestPath({\bf @S},@D,P,C) :- spResults({\bf @S},@S,@D,P,C).
+}
+\vspace{2pt}
+
+The query computes 1-hop paths starting from each $magicSrc$
+using rule SP1-SD. Rule SP2-SD then recursively computes new paths 
+by following all reachable links, and stores these paths as
+\texttt{pathDst( {\bf dst}, src, prevHop, pathVector, cost)} tuples at each
+destination. Rules SP3-SD and SP4-SD then filter relevant paths based on $magicDst$, and compute the
+shortest paths, which can then be propagated along the shortest paths back to the source node. In fact,
+executing the query in this {\em ``Top-Down'' (TD)\/} fashion
+resembles a network protocol called {\em dynamic source
+routing}~\cite{dsr} which is proposed for ad-hoc wireless environments, where
+the high rate of change in the network makes such targeted path
+discovery more efficient compared to computing all-pairs shortest
+paths. 
+
+
+\subsection{Multi-Query Optimizations}
+\label{subsec:multiQuerySharing}
+
+In a distributed setting, it is likely that many related queries will be
+concurrently executed independently by different nodes. A key requirement for scalability is the
+ability to share common query computations (\eg pairwise shortest paths) among a potentially large number
+of queries. We outline two basic strategies for multi-query sharing in
+this environment: {\em query-result caching} and {\em
+  opportunistic message sharing}. 
+
+
+%\subsubsection{Query Results Caching}
+%\label{subsec:magicCache}
+\vspace*{.3em}\noindent
+{\bf Query-Result Caching.\/}
+Consider the {\em magic-shortest-path} query where node {\em a} computes
+  $shortestPath({\bf a},d,[a,b,d],6)$ to node {\em d}. This cached value
+  can be reused by all queries for destination {\em d} that pass
+  through {\em a}, \eg the path from {\em e} to {\em d}. Currently, our implementation generates the cache internally, building a cache of all
+the query results (in this case $shortestPath$ tuples) as they are sent
+back on the reverse path to the source node. Since the subpaths of 
+shortest paths are optimal, these can also be cached as an
+enhancement. As ongoing work, we are exploring techniques for declaratively specifying
+the cache, and evaluating caching policies. 
+% To
+%  utilize the cache, we can rewrite SP2-SD in the following way:%
+
+%\noindent{\bf SP2-Cache: } spCacheHit({\bf @Z},@S,@D,P,C) :- {\em pathDst({\bf @Z},@S,@D,@Z$_{1}$,P$_{1}$,C$_{1}$),\\
+%\datalogspace spCache({\bf @Z},@D,P$_{2}$,C$_{2}$)},  = C$_{1}$ + C$_{2}$, \\
+%\datalogspace P = $f\_concatPath$(P$_{1}$,P$_{2}$).
+
+%Rule SP2-Cache expresses the policy that the shortest path
+%query for @S to @D can utilize the cache at node @Z if it
+%exists. The generated $spCacheHit$ tuple is then sent back to the source
+%node @S.
+
+
+
+
+%\subsubsection{Opportunistic Message Sharing}
+%\label{subsec:messageShare}
+\vspace*{.3em}\noindent
+{\bf Opportunistic Message Sharing.\/}
+In the previous example, we consider how different nodes (src/dst) can
+share their work in running the {\em same} query logic with different
+constants. Sharing across {\em different} queries is a more difficult problem, since it
+is non-trivial to detect query containment in
+general~\cite{containment}. However, we observe that in many cases,
+there can be correlation in the message patterns even for different
+queries. One example arises when different queries request ``shortest'' paths based on different metrics, such as latency,
+reliability and bandwidth; $path$ tuples being propagated for these
+separate queries may be identical modulo the metric attribute being
+optimized. 
+
+A strategy that we have implemented is {\em opportunistic message
+  sharing}, where multiple outgoing tuples that share common attribute
+  values are essentially joined into one tuple if they are
+  outbound to the same destination and share several common
+  attributes; they can be re-partitioned at the receiving end. This
+  achieves the effects of jointly rewriting the queries in a
+  fashion, but on an opportunistic basis: derivations are
+  done in this combined fashion only in cases that are
+  spatiotemporally convenient during processing.
+In order to improve the odds of achieving this sharing, outbound tuples
+  may be buffered for a time and combined in batch before being sent.
+
+As an alternative to this opportunistic sharing at the network level,
+one can achieve explicit sharing at a logical level, \eg using correlated
+aggregate selections for pruning different paths based on a combination
+of metrics. For example, consider running two queries: one that computes
+shortest latency paths, and another that computes max-bandwidth paths. We can
+rewrite these as a single query by checking two aggregate selections,
+\ie only prune paths that satisfy {\em both} aggregate
+selections.
+
+
+
+%\subsection{Hybrid Rewrites}
+\subsection{Cost-Based Rewrites}
+\label{subsec:hybridRewrites}
+
+Currently, queries are executed using a left- (BU) or
+right-recursive (TD) query expression (Section~\ref{sec:magic}).
+Our main goal during query execution is {\em network efficiency\/} 
+(\ie reducing the burden on the underlying network), which, typically,
+also implies faster query convergence. 
+It is not difficult to see that neither BU nor TD execution is universally 
+superior under different network/query settings.
+Even in the simple case of a shortest-path discovery query 
+$shortestPath(@S,$ $@D,P,C)$ between two given nodes $(@S,@D)$,
+minimizing message overhead implies that our query processor
+should prefer a strategy that restricts execution to ``sparser'' regions
+of the network (\eg \\doing a TD exploration from a sparsely-connected 
+source $@S$).
+%
+%(Consider, for instance, the extreme case where $\calS=$ $\{s\}$ is only connected
+%to a single chain of nodes leading to $\calD=$ $\{d\}$, whereas $d$ is a ``hub'' node
+%with hundreds of neighbors.)
+%In fact, as our discussion will show, in many scenarios, the optimal execution 
+%strategy is a {\em hybrid search algorithm\/} that carefully combines both 
+%BU and TD search.
+
+We argue that {\em cost-based\/} query optimization techniques are needed 
+to guarantee effective query execution plans.
+While such techniques have long been studied in the context of relational 
+database systems, optimizing distributed recursive queries for network
+efficiency raises several novel challenges 
+that we are exploring in our ongoing work.
+In the remainder of this section, we briefly discuss some of our 
+preliminary ideas in this area and their ties with work in 
+network protocols.
+%
+%We essentially seek to optimize distributed recursive queries  for network efficiency
+%over an asynchronous dataflow engine running on a given network topology; of course,
+%adding additional problem characteristics (such as failure characteristics and network
+%dynamics) only raises the complexity of the problem.
+
+\vspace*{.3em}\noindent
+{\bf The Neighborhood Function Statistic.\/}
+As with traditional query optimization, cost-based techniques must
+rely on appropriate {\em statistics\/} for the underlying execution
+environment that can drive the optimizer's choices.
+One such key statistic for network efficiency is the
+{\em local neighborhood function\/} $N()$.
+Formally, $N(X,r)$ is the number of distinct network nodes within
+$r$ hops of node $X$.
+The neighborhood function is a natural generalization of the size of the 
+transitive closure (\ie reachability set) of a node, 
+%%; furthermore, it is a
+%fairly ``stable'' statistic (even though the specific nodes in the neighborhoods
+%may change)  
+that can be estimated locally (\eg through other recursive queries running in the background/periodically).
+$N(X,r)$  can also be efficiently {\em approximated\/} through 
+approximate-counting techniques using small (log-size) 
+messages~\cite{anf}.
+To see the relevance of $N()$ for our query-optimization problem, consider 
+our example $shortestPath(@s,@d,P,$ $C)$ query,  and
+let {\tt dist}($s,d$)  denote the distance of $s$, $d$ in the network.
+A TD search would explore the network starting from node $s$, and 
+% (assuming synchronous transmissions for simplicity)  
+(modulo network batching) result in a total of
+$N(s, {\tt dist}(s,d))$ messages  
+(since it reaches all nodes within a radius of {\tt dist}($s,d$) from $s$). 
+Note that each node only forwards the query message once, even though it may 
+receive it along multiple paths.
+Similarly, the cost for a BU query execution is $N(d, {\tt dist}(s,d))$.
+%It is easy to see, 
+However, neither of these strategies is necessarily
+optimal in terms of message cost.
+The optimal strategy is actually a {\em hybrid scheme\/} that ``splits'' the search 
+radius dist($s,d$)
+between $s$ and $d$ to minimize the overall messages; that is,
+it first finds $r_s$ and $r_d$ such that:
+%\begin{equation}
+\vspace*{-6pt}\noindent
+\[
+(r_s, r_d)\ =\ \arg\min_{r_s+r_d = {\scriptsize\tt dist}(s,d)}\{\ N(s, r_s) + N(d, r_d)\ \},
+%\label{eqn:singleopt}
+%\end{equation}
+\]
+\vspace*{-10pt}\noindent
+\noindent\\
+and then runs concurrent TD and BU searches from nodes $s$ and $d$ (with radii $r_s$ and $r_d$,
+respectively).
+At the end of this process, both the TD and the BU search have intersected in 
+at least one network node, which can easily assemble the shortest ($s,d$) path.
+The above search strategy can be easily implemented as a rewrite
+using simple \Dlog  rules.
+While the above optimization problem is trivially solvable in
+$O({\tt dist}(s,d))$ time, generalizing this hybrid-rewrite scheme
+to the case of multiple sources and destinations raises difficult 
+algorithmic challenges.
+And, of course, adapting such cost-based  optimization algorithms
+to work in the distributed, dynamic setting poses systems challenges.
+Finally, note that neighborhood-function information can also 
+provide a valuable indicator for the utility of a node as a result 
+cache (Section~\ref{subsec:multiQuerySharing}) during query processing.
+%(e.g. caches on ``hub'' nodes with rapidly-growing neighborhoods are more likely 
+%to prove useful).
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\eat{
+Now, while our hybrid-search optimization problem for the single shortest-path case 
+(Equation~(\ref{eqn:singleopt})) is easily solvable (in $O({\mathrm dist}(s,d))$ time), 
+the difficulty of the problem increases significantly when dealing with {\em multiple\/}
+source and destination nodes.
+Assume that we want to discover shortest paths between all sources 
+$\calS=$ $\{s_1,$ $\ldots,$ $s_m\}$ and all destinations
+$\calD=$ $\{d_1,$ $\ldots,$ $d_n\}$; then, a message-optimal hybrid-search strategy 
+must use an $m$-tuple of source radii $(r_{s_1},$ $\ldots,$ $r_{s_m}\}$ that 
+minimize the expression
+\begin{equation*}
+\sum_i N(s_i, r_{s_i})\ +\ \sum_j N(d_j, \max_i\{ {\mathrm dist}(s_i, d_j)-r_{s_i} \})
+\end{equation*}
+where the $\max\{\}$ term in the second sum ensures that the search neighborhoods
+intersect {\em for all\/} $(s_i, d_j)$ pairs.
+The complexity of obvious solutions to the above problem explodes exponentially in $m$,
+and we are currently working on more efficient optimization strategies.
+
+Of course, the above discussion assumes an ideal, ``centralized'' problem setting,
+where the optimizer has access to the the distance and neighborhood-function 
+information for all nodes involved in the query.
+Adapting such cost-based optimizations to a distributed setting raises additional
+challenges.
+One possible solution is to maintain repository-nodes inside the network where 
+the optimizer can access relevant distance and neighborhood-function 
+statistics.
+Another option is to allow nodes to employ more sophisticated, incremental 
+path-discovery algorithms (\eg based on {\em expanding-ring search}~\cite{expring})
+driven by their local neighborhood-function information.
+We are exploring these options in the next-generation algorithms.
+
+%
+%One area of optimizations we are exploring is on the use of a
+%hybrid strategy, where queries are computed using a mixture of both
+%strategies. {\em MINOS's}
+
+}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\vspace*{.3em}\noindent
+{\bf Adaptive Network Routing Protocols.\/}
+While we do not evaluate the above concepts in our experiments below,
+we note that the networking literature has considered adaptive routing protocols
+that strongly resemble our use of hybrid rewrites; hence, we believe
+this is an important area for future investigation and generalization.
+One interesting example is the class of
+{\em Zone-Routing Protocols} (ZRP)~\cite{zrp}.
+A ZRP algorithm works by each node precomputing {\em k-hop-radius\/} shortest paths to
+neighboring nodes (in its ``zone'')  using a BU strategy.
+Then, a shortest-path route from a source to destination is computed in a
+TD fashion, using essentially the {\em magic-shortest-path} query described above, 
+utilizing any precomputed shortest paths along the way.
+Each node sets its zone radius $k$ adaptively based on the density and rate of change of 
+links in its neighborhood; in fact,
+recent work~\cite{sharp} on adjusting the zone radius for ZRP-like routing uses
+exactly the neighborhood-function statistic.
+% discussed earlier in this
+%section. 
+
+
+
+%\subsection{Gossip-Based Approximations}
+%OPTIONAL if time permits.
+%When receive paths, compute new paths based on subset of links. Simple
+%change in rules, add a f\_coinFlip predicate to rules for computing links.
+
+
+
+
+
+
+%\subsection{Query Approximations}
+%Suppress best path messages that are within X\% of last advertised. For
+%example, if we are willing to tolerate X\% errors of each path, then
+%each node only needs to send path messages to neighboring nodes if the
+%current path improves upon previous by $>$X\%. The actual worst-case margin of
+%error is closer to $1-((1-X)^k)$, where k is the hop count diameter of the network.
+
+%Another form of approximation applies to multi-objective queries, for
+%example all-pairs best paths queries that optimizes for both latency and
+%loss-rates. Skylines can be used to compute the dominating paths along
+%multiple metric dimensions, but are expensive when objectives are not highly correlated. We can make
+%use of approximate skylines in this case. 
+%\subsection{Multi-Objective Queries}
+%Optional. Skylines and approximate skylines. Skylines are expensive
+%unless the multiple objectives are highly correlated.
+
+

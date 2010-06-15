@@ -1,0 +1,1855 @@
+\documentclass[11pt]{article}
+\usepackage{color,enumerate,graphicx,parskip,times,url,xspace}
+\usepackage{alltt}
+\usepackage{makeidx}
+
+\newcommand{\note}[1]{[\textcolor{red}{\textit{#1}}]}
+%\newcommand{\note}[1]{}
+\newcommand{\hfile}[1]{\texttt{#1}}
+\renewcommand{\ttdefault}{cmtt}
+
+\newcommand{\indexType}[1]{\index{#1@{\texttt{#1} (type)}}}
+\newcommand{\indexClass}[1]{\index{#1@{\texttt{#1} (class)}}}
+\newcommand{\indexMethod}[2]{\index{#1!#2@{\texttt{#2} (method)}}}
+\newcommand{\indexAttribute}[2]{\index{#1!#2@{\texttt{#2} (attribute)}}}
+\newcommand{\indexFunction}[1]{\index{#1@{\texttt{#1} (function)}}}
+\newcommand{\indexValue}[1]{\index{#1@{\texttt{#1} (value)}}}
+\newcommand{\indexMacro}[1]{\index{#1@{\texttt{#1} (macro)}}}
+\newcommand{\indexEnum}[1]{\index{#1@{\texttt{#1} (enumeration)}}}
+\newcommand{\indexObject}[1]{\index{#1@{\texttt{#1} (object)}}}
+\newcommand{\indexOperator}[2]{\index{operator #1!#2@{\texttt{#2}}}}
+\newcommand{\indexTemplate}[2]{\index{#1@{\texttt{#1} (\texttt{#2} template)}}}
+
+\setlength{\voffset}{0in}
+\setlength{\hoffset}{0in}
+\setlength{\headheight}{0pt}
+\setlength{\topmargin}{0in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6.5in}
+\setlength{\headsep}{0in}
+
+\makeindex
+
+\begin{document}
+\title{Lots of things you always wanted to know about Libasync but
+  were too afraid to ask Dave Mazi{\`e}res}
+\author{Timothy Roscoe\\
+Intel Research at Berkeley\\
+2150 Shattuck Avenue Suite 1300\\
+Berkeley, CA 94704, USA
+}
+\date{\today}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+
+This is an \emph{unofficial} manual for \texttt{libasync}, the
+low-level library that comes with the SFS distribution~\cite{sfs}.
+Being unofficial, it should not be regarded as authoritative in any
+way (it's derived from reading the source code and using the library),
+but will hopefully serve as a handy reference.  There are probably
+lots of mistakes, ranging from typos to misunderstandings of the
+code.  Let me know and I'll fix them. 
+
+The assumption is you've read \emph{Using
+libasync}~\cite{using_libasync}, the basic documentation which 
+contains enough to get you started.  Where something is almost
+completely documented in \emph{Using libasync}, it gets a pretty brief
+treatment here.  The purpose of this reference is
+to fill in the gaps in that document - there's quite a lot of useful
+stuff in libasync which isn't documented (at least, not outside of
+MIT).  That said, it's always a good idea to keep the source code of
+libasync around for reference after you've built the SFS toolkit. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Memory management, C strings, and marshalling}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{New and malloc}
+
+Libsync provides debugging versions of the C++ memory allocator, with
+\texttt{New} and \texttt{vNew}.  See \textit{Using
+  libasync}~\cite{using_libasync} for the details.
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Reference-counted Pointers}
+
+Libasync's facilities for reference-counted pointers are well
+described in \textit{Using libasync}~\cite{using_libasync}.  The
+relevant files to example 
+are \texttt{refcnt.h} and \texttt{refcnt.C}; this is actually one of
+the better-commented areas of the library.   
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Serialization and marshalling}
+
+\begin{alltt}
+  \indexFunction{putint}
+  void putint (void *dp, u_int32_t val);
+  \indexFunction{getint}u_int32_t getint (const void *dp);
+  \indexFunction{puthyper}void puthyper (void *dp, u_int64_t val);
+  \indexFunction{gethyper}u_int64_t gethyper (const void *dp);
+\end{alltt}
+
+Low-level marshalling routines for 32-bit and 64-bit unsigned
+integers.  \texttt{dp} should (unsurprisingly) be at least 4 or 8
+bytes in size.  No bounds checks are made on this. 
+
+\begin{alltt}
+  \indexFunction{armor64}
+  str armor64 (str bin);
+  str armor64 (const void *, size_t);
+  \indexFunction{armor64len}size_t armor64len (const u_char *);
+  \indexFunction{dearmor64}str dearmor64 (str asc)
+  str dearmor64 (const char *, ssize_t len = -1);
+\end{alltt}
+
+RFC1521-style base-64 encoding.   The input to the encoding or
+decoding functions can either be a \texttt{str} or a buffer.
+\texttt{armor64len} works out the number of bytes of data encoded into
+a given base64 string (i.e., the amount of memory you will need to
+hold the decoded string). 
+
+\begin{alltt}
+  \indexFunction{armor64A}
+  str armor64A (str bin);
+  str armor64A (const void *s, size_t len);
+  \indexFunction{armor64Alen}size_t armor64Alen (const u_char *s);
+  \indexFunction{dearmor64A}str dearmor64A (str asc);
+  str dearmor64A (const char *s, ssize_t len);
+\end{alltt}
+
+As above, but using an alternate base-64 encoding, suitable for file
+names.  The encoding uses '-' instead of '/' and does not append any
+'=' chars. 
+
+\begin{alltt}
+  \indexFunction{armor32}
+  str armor32 (str bin);
+  str armor32 (const void *, size_t);
+  \indexFunction{armor32len}size_t armor32len (const u_char *s);
+  \indexFunction{dearmor32}str dearmor32 (str asc);
+  str dearmor32 (const char *, ssize_t len = -1);
+\end{alltt}
+
+As above, but a base-32 encoding, using
+'2'-'9','a'-'k','m','n','p'-'z' (i.e. digits and lower-case letters
+except 0,1,o,l). 
+
+\begin{alltt}
+  \indexFunction{str2file}
+  bool str2file (str file, str s, int perm = 0666, bool excl = false);  \indexFunction{file2str}
+  str file2str (str file);
+\end{alltt}
+
+Functions to atomically read and write a string buffer to and from a
+named file.  Writing is handled in the standard way by opening a
+temporary file (the given name with a tilde appended) and doing a
+final atomic rename.   If \texttt{excl} is false (non-zero), it is
+assumed that more than one process or thread may be attempting to
+perform this operation simultaneously.  In this case, extra
+precautions are taken to ensure mutual exclusion on the file,
+including retrying the operation in the event of contention.
+Consequently, setting \texttt{excl} to true should be regarded as an
+optimization when you \emph{know} that all calls to \texttt{str2file}
+are already serialized. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{String functions}
+
+A handful of auxiliary string functions are provided, either to fill
+in gaps in the standard library or to provide well-defined semantics
+where implementations for different systems differ. 
+
+\begin{alltt}
+  \indexFunction{mempbrk}
+  char *mempbrk (char *, const char *, int);
+\end{alltt}
+
+Memory equivalent of strpbrk().  It finds the first
+occurrence of any character from s2 in s1, but takes a length argument
+for s1 rather than stopping at a null byte.
+
+\begin{alltt}
+  \indexFunction{xstrsep}
+  char *xstrsep (char **, const char *);
+\end{alltt}
+
+A \texttt{strsep} function that returns a null field for adjacent
+separators.  This is the same as the 4.4BSD strsep, but different
+from the one in the GNU libc.
+
+\begin{alltt}
+  \indexFunction{strnnsep}
+  char *strnnsep (char **, const char *);
+\end{alltt}
+Get the next non-null token (like GNU strsep).  Strsep() will
+return a null token for two adjacent separators, so we may have to
+loop.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{I/O buffering}
+
+\begin{alltt}
+  \indexClass{suio}
+  class suio \{
+  public:
+    enum \{ smallbufsize = 0x80 \};
+    enum \{ blocksize = 0x2000 \};
+
+    suio ();
+    ~suio ();
+    ...
+\};
+\end{alltt}
+
+The \texttt{suio} class maintains a set of iovecs for use with
+handling small writes.  One way to think of it is as a FIFO buffer -
+you can accumulate data on the end of the queue, and remove it from
+the front of the queue. 
+
+Many of the \texttt{suio} methods also have ``function'' equivalents
+(either true functions or macros), which may make things more
+readable.   The methods are described here first, followed by the
+convenience functions. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Suio methods}
+
+\begin{alltt}
+  \indexMethod{suio}{clear}
+  void suio::clear ();
+\end{alltt}
+Clear all the data currently associated with the suio.
+
+\begin{alltt}
+  \indexMethod{suio}{getspace}
+  char *suio::getspace (size_t n);
+  \indexMethod{suio}{getspace\_aligned}char *suio::getspace_aligned (size_t n);
+\end{alltt}
+Suio objects maintain scratch space avoid reallocating too much memory
+on demand.  \texttt{getspace} ensures that the current scratch buffer has at
+least \texttt{n} free bytes in it.  \texttt{getspace\_aligned} does the
+same, but additionally ensures that the first available location in
+the buffer is 32-bit word-aligned.
+
+\begin{alltt}
+  \indexMethod{suio}{fill}
+  void suio::fill (char c, ssize_t n);
+  \indexMethod{suio}{copy}void suio::copy (const void *, size_t);
+  \indexMethod{suio}{copyv}void suio::copyv (const iovec *iov, size_t cnt, size_t skip = 0);
+  \indexMethod{suio}{copyu}void suio::copyu (const suio *uio);
+\end{alltt}
+Add data to the \texttt{suio}.  \texttt{fill} adds \texttt{n}
+instances of character \texttt{c}, while \texttt{copy},
+\texttt{copyv}, and \texttt{copyu} copy in data from a memory buffer,
+array of \texttt{iovec}s, or another \texttt{suio} respectively.   All
+the copy operations are guaranteed to take a copy of the data. 
+
+\begin{alltt}
+  \indexMethod{suio}{print}
+  void suio::print (const void *, size_t);
+\end{alltt}
+Unlike \texttt{copy}, \texttt{print} is not guaranteed to copy the
+data.  \textit{Using libasync} explains this in (a bit) more detail. 
+
+\begin{alltt}
+  \indexMethod{suio}{take}
+  void suio::take (suio *src);
+\end{alltt}
+Append all the data held by the \texttt{uio} \texttt{src}, and remove
+it from \texttt{uio}. 
+
+\begin{alltt}
+  \indexMethod{suio}{rembytes}
+  void suio::rembytes (size_t n);
+\end{alltt}
+Remove (discard) \texttt{n} bytes of data from the beginning of the
+array.    
+
+\begin{alltt}
+  \indexMethod{suio}{iovcb}
+  void suio::iovcb (cb_t cb);
+\end{alltt}
+Registers a callback. The callback will be in invoked whenever the
+number of bytes removed from the \texttt{suio} (whether by
+\texttt{rembytes()} or \texttt{output()}) exceeds the number of bytes
+added to the buffer when the callback was installed.  Internally, the
+class uses this to invoke the correct deallocators to free up memory
+as it goes.  However, it can be used for other purposes. 
+
+\begin{alltt}
+  \indexMethod{suio}{breakiov}
+  void suio::breakiov ();
+\end{alltt}
+``Breaks'' the current iovec.  Normally, when bytes are being appended
+to the \texttt{suio}, space in the latest \texttt{iovec} (the scratch
+space) is filled up before allocating a new iovec.  \texttt{breakiov}
+forces a new iovec to be allocated and used next time any data is
+appended to the \texttt{suio}. 
+
+\begin{alltt}
+  \indexMethod{suio}{iov}
+  const iovec *suio::iov () const;
+  \indexMethod{suio}{iovlim}const iovec *suio::iovlim () const;
+  \indexMethod{suio}{}size_t suio::iovcnt () const;
+\end{alltt}
+Provides access to the vector of \texttt{iovec}s maintained by the
+\texttt{suio}.  \texttt{iov} returns a pointer the first element of the
+vector, \texttt{iovlim} points to just after the last element, and
+\texttt{iovcnt} gives the number of \texttt{iovec}s.
+
+\begin{alltt}
+\end{alltt}
+Returns the total number of bytes of valid data in the \texttt{suio}.
+
+\begin{alltt}
+  \indexMethod{suio}{resid}
+  size_t suio::resid () const;
+  \indexMethod{suio}{byteno}u_int64_t suio::byteno () const;
+  \indexMethod{suio}{iovno}u_int64_t suio::iovno () const;
+\end{alltt}
+Provide access to various size properties of the \texttt{suio}.  
+\texttt{resid} returns the total number of bytes of valid data
+resident in the \texttt{suio}.  \texttt{byteno} returns the number of
+bytes that have been removed from the start of the \texttt{suio}, or
+equivalently the offset into the byte array where \texttt{output} will
+start reading it's data from.  \texttt{iovno} returns the number of
+the \texttt{iovec} which contains the byte referred to by
+\texttt{byteno}. 
+
+\begin{alltt}
+  \indexMethod{suio}{output}
+  int (output) (int fd, int cnt = -1);
+\end{alltt}
+Write \texttt{cnt} \emph{iovecs} of data (or all the valid data if
+\texttt{cnt} is -1) from the \texttt{suio} to the file descriptor
+\texttt{fd}.  This will have the effect of advancing the output
+pointer in the same way as \texttt{rembytes}.  If \texttt{cnt} is
+non-negative, there must be at least that many iovecs present, or you
+will get an assertion failure (which seems a little harsh, but there
+you go.  Returns the number of bytes written.  
+
+\begin{alltt}
+  \indexMethod{suio}{copyout}
+  size_t copyout (void *buf, size_t len) const;
+  size_t copyout (void *buf) const;
+\end{alltt}
+Copy out data in the \texttt{suio} from the current output position
+(\texttt{byteno}) into the buffer.  Returns the number of bytes
+actually copied.  If \texttt{len} is not specified, the whole buffer
+is copied.  This does \emph{not} remove data from the \texttt{suio};
+you still (probably) need to call \texttt{rembytes}. 
+
+\begin{alltt}
+  \indexMethod{suio}{fastspace}
+  size_t fastspace () const;
+\end{alltt}
+A somewhat quick and dirty way of finding out how much free scratch
+space there currently is. 
+
+\begin{alltt}
+  \indexMethod{suio}{}
+  int (input) (int fd, size_t len = blocksize);
+\end{alltt}
+Try to read \texttt{len} bytes in from the file descriptor and append
+them to the \texttt{suio}.  Returns the number of bytes actually
+read. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Suio functions}
+
+\begin{alltt}
+  \indexFunction{suio\_vuprintf}
+  void suio_vuprintf (struct suio *, const char *, va_list);
+  \indexFunction{suio\_uprintf}void suio_uprintf (struct suio *, const char *, ...);
+\end{alltt}
+Formatted print statement.  Constructs data to append to the
+\texttt{suio} using \texttt{printf}-style format strings. 
+
+\begin{alltt}
+  \indexFunction{suio\_flatten}
+  char *suio_flatten (const struct suio *);
+\end{alltt}
+Allocate (using \texttt{xmalloc}) a contiguous buffer and copy the
+contents of the \texttt{siuo} into it. 
+
+\begin{alltt}
+  \indexFunction{suio\_print}
+  void suio_print (suio *uio, const void *buf, size_t len);
+  \indexMacro{suio\_fill}#define suio_fill(uio, c, len)
+  \indexMacro{suio\_copy}#define suio_copy(uio, buf, len)
+  \indexMacro{suio\_callback}#define suio_callback(uio, cb)
+\end{alltt}
+\texttt{suio\_print}, \texttt{suio\_fill} and \texttt{suio\_copy} are
+equivalent to the \texttt{print}, \texttt{fill}, and \texttt{copy}
+methods.  \texttt{suio\_callback} installs a callback using the
+\texttt{iovcb} method. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Reference-counted strings}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{String buffers}
+
+Managed strings in libasync are built around string buffers
+(\texttt{strbuf}s), which are themselves built on \texttt{suio}
+objects and intelligently share the storage. 
+
+\begin{alltt}
+  \indexClass{strbuf}
+  class strbuf \{
+  public:
+    strbuf ();
+    strbuf (const str &s);
+    strbuf (const strbuf &b);
+    explicit strbuf (const ref<suio> &u);
+    explicit strbuf (const char *fmt, ...);
+    strbuf &operator= (const strbuf &);
+  \};
+\end{alltt}
+String buffers can be constructed from \texttt{suio}s, strings, string
+buffers, or a \texttt{printf}-style format string and associated
+arguments. 
+
+\begin{alltt}
+  \indexMethod{strbuf}{fmt}
+  const strbuf &strbuf::fmt (const char *fmt, ...) const;
+  \indexMethod{strbuf}{vfmt}const strbuf &strbuf::vfmt (const char *fmt, va_list ap) const;
+  \indexMethod{strbuf}{buf}const strbuf &strbuf::buf (const char *buf, size_t len) const;
+\end{alltt}
+Adding values to a string buffer via \texttt{printf}-style formatting,
+or from sized byte buffers. 
+
+\begin{alltt}
+  \indexMethod{strbuf}{cat}
+  const strbuf &strbuf::cat (const char *p, bool copy = true) const;
+
+  template<class A1> const strbuf &strbuf::cat (const A1 &a1) const;
+  template<class A1, class A2> const strbuf &strbuf::cat (const A1 &a1, const A2 &a2) const;
+\end{alltt}
+Low-level functions to append characters to a string buffer.  Memory
+is managed sensible where possible, but in the case of raw character
+string pointers the caller can specify whether to take a private copy
+of the data. 
+
+\begin{alltt}
+  \indexMethod{strbuf}{iov}
+  const iovec *strbuf::iov () const;
+  \indexMethod{strbuf}{iovcnt}size_t strbuf::iovcnt () const;
+  \indexMethod{strbuf}{tosuio}suio *strbuf::tosuio () const;
+\end{alltt}
+Access to the underlying data representations of the buffer. 
+
+\begin{alltt}
+  \indexFunction{strbuf\_cat}
+  const strbuf &strbuf_cat( const strbuf &, const strbuf &);
+  const strbuf &strbuf_cat( const strbuf &b, const strbuf &b2);
+  const strbuf &strbuf_cat( const strbuf &b, const str &s);
+  const strbuf &strbuf_cat( const strbuf &b, const char *p, bool copy = true);
+  const strbuf &strbuf_cat( const strbuf &b, int n);
+  const strbuf &strbuf_cat( const strbuf &b, u_int n);
+  const strbuf &strbuf_cat( const strbuf &b, long n);
+  const strbuf &strbuf_cat( const strbuf &b, u_long n);
+  const strbuf &strbuf_cat( const strbuf &b, int64_t n);
+  const strbuf &strbuf_cat( const strbuf &b, u_int64_t n);
+  template<class A, class B = void> class strbufcatobj;
+  template<class A> class strbufcatobj<A>;
+  template<class A, class B> const strbuf &strbuf_cat (const strbuf &sb, const strbufcatobj<A, B> &o);
+  template<class A, class B> strbufcatobj<A, B> cat (const A &a, const B &b);
+  template<class A> strbufcatobj<A> cat (const A &a);
+\end{alltt}
+Almost anything can be passed to \texttt{strbuf\_cat}, whereupon it is
+formatted and appended to the buffer. 
+
+\begin{alltt}
+  \indexClass{hexdump}
+  class hexdump \{
+  public:
+    hexdump (const void *b, size_t l);
+  \};
+  const strbuf &strbuf_cat (const strbuf &sb, const hexdump &hd);
+\end{alltt}
+Create a hexdump of a range of memory and append it to a string
+buffer. 
+
+\begin{alltt}
+  template<class T> const strbuf &operator<< (const strbuf &sb, const T &a);
+  const strbuf &operator<< (const strbuf &sb, const str &s);
+  const strbuf &operator<< (const strbuf &sb, const char *a);
+  const strbuf operator<< (const str &s, const char *a);
+  const strbuf operator<< (const str &s1, const str &s2);
+\end{alltt}
+Needless to say, \texttt{strbuf} provide \texttt{<<} equivalents for
+all the concatenation operations. 
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Strings}
+
+The class for reference-counted strings themselves is \texttt{str} in
+\texttt{str.h}. 
+
+\begin{alltt}
+  \indexClass{str}
+  class str \{
+  public:
+    str ();
+    str (const str &s);
+    str (const char *p);
+    str (const strbuf &b);
+    explicit str (const suio &u);
+    str (const char *buf, size_t len);
+    str (const iovec *iov, int cnt);
+
+    str &operator= (const str &s);
+    str &operator= (const char *p);
+    str &operator= (const strbuf &b);
+    ...
+  \}
+\end{alltt}
+
+Strings can be created or assigned from most of the usual objects.  In
+particular, \texttt{iovec}s and \texttt{suio}s can be used. 
+
+\begin{alltt}
+  \indexMethod{str}{setbuf}str &setbuf (const char *buf, size_t len);
+  \indexMethod{str}{setiov}str &setiov (const iovec *iov, int cnt);
+\end{alltt}
+
+Methods to manually set the string contents from an \texttt{iovec}
+or \texttt{suio}. 
+
+\begin{alltt}
+  \indexMethod{str}{len}size_t len () const;
+\end{alltt}
+
+Return the length of the string.
+
+\begin{alltt}
+  \indexMethod{str}{cstr}const char *cstr () const;
+  \indexMethod{str}{operator const char *}operator const char *() const;
+\end{alltt}
+Access the string as a C-style null-terminated array of
+\texttt{char}. 
+
+\begin{alltt}
+  \indexMethod{str}{operator[]}char operator[] (ptrdiff_t n) const;
+\end{alltt}
+Access each \texttt{char} of the string. 
+
+\begin{alltt}
+  \indexMethod{str}{cmp}int cmp (const str &s) const;
+  int cmp (const char *p) const;
+
+  \indexMethod{str}{operator==}bool operator== (const str &s) const;
+  bool operator!= (const str &s) const;
+  bool operator< (const str &s) const;
+  bool operator<= (const str &s) const;
+  bool operator> (const str &s) const;
+  bool operator>= (const str &s) const;
+
+  \indexMethod{str}{operator==}bool operator== (const char *p) const;
+  \indexMethod{str}{operator!=}bool operator!= (const char *p) const;
+\end{alltt}
+
+Strings support all the usual comparison operators, including equality
+with C strings. 
+
+\begin{alltt}
+  \indexMethod{str}{operator hash\_t}operator hash_t () const;
+\end{alltt}
+
+Strings are also hashable. 
+
+\begin{alltt}
+  \indexFunction{substr}str substr (const str &s, size_t pos, size_t len = (size_t) -1);
+\end{alltt}
+
+Function to extract a substring of a \texttt{str}, starting at
+position \texttt{pos} and of length \texttt{len}.  If \texttt{pos} is
+out of range it is reduced to the length of the string; similarly
+\texttt{len} is reduced so that it fits into the string. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Character buffers}
+
+\begin{itemize}
+\item \texttt{cbuf.h}: Character buffers
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Useful data structures}
+
+Libasync has quite a few templates and utility classes similar to
+those found in the STL. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Arrays}
+
+\indexTemplate{array}{class}
+
+To quote from \texttt{array.h}: 
+
+WHY: C arrays (e.g. \texttt{int c[64];}) vastly complicate some
+aspects of C++ template programming.  Suppose you have a template
+\texttt{tmpl} with a class parameter \texttt{T}, and \texttt{T} is
+instantiated with an array: 
+
+\begin{alltt}
+   class elm \{
+     //...
+   \};
+   template<class T> tmpl \{
+     //...
+   \};
+   typedef tmpl<elm[64]> problem_t;
+\end{alltt}
+
+If, for instance, \texttt{tmpl} generally needs to allocate an object of
+type \texttt{T}, a function in \texttt{tmpl} might have code like this:
+
+\begin{alltt}
+   T *objp = new T;
+\end{alltt}
+
+However, this won't work when \texttt{T} is \texttt{elm[64]}, because
+the code "\texttt{new elm[64]}" returns an "\texttt{elm *}", not a
+"\texttt{(*) elm[64]}". 
+
+Worse yet, any code that uses placement new or calls destructors
+will not work.  If \texttt{T} is an array, then allocating a
+"\texttt{new T}" invokes operator \texttt{new[]} rather than operator
+\texttt{new}, and that generally requires more than \texttt{sizeof(T)}
+bytes. 
+
+Finally, a lot of template classes require things like copy
+constructors or assignment to work, and neither of those does with
+C arrays.
+
+WHAT: The simple solution to all these problems is simply not to use C 
+arrays.  The dirt-simple type "\texttt{array<type, size>}" is simply
+an array wrapped in a structure.  These arrays can be allocated with 
+the ordinary scalar \texttt{new}, and things like assignment and copy
+construction will work fine.
+
+So there you have it.   If \texttt{CHECK\_BOUNDS} is defined at
+compile-time when the template is instantiated, accesses to arrays are
+also bounds-checked. 
+
+\begin{alltt}
+  \indexMacro{toarray}
+  #define toarray(T)
+\end{alltt}
+The macro \texttt{toarray} converts a C array type to a template
+array.  
+
+\begin{alltt}
+  template<class T, size_t n> class array \{
+  public:
+    typedef typename toarray(T) elm_t;
+    enum \{ nelm = n \};
+    ...
+\};
+\end{alltt}
+
+The number of elements in the array is accessible as the attribute
+\indexAttribute{array}{nelm} \texttt{nelm}.
+
+\begin{alltt}
+  \indexMethod{array}{size}
+  static size_t array<T,n>::size ();
+\end{alltt}
+Return the size of the array. 
+
+\begin{alltt}
+  \indexMethod{array}{base}
+  elm_t *array<T,n>::base ();
+  const elm_t *array<T,n>::base () const;
+\end{alltt}
+Return a pointer to the first element in the array. 
+
+\begin{alltt}
+  \indexMethod{array}{lim}
+  elm_t *array<T,n>::lim ();
+  const elm_t *array<T,n>::lim () const;
+\end{alltt}
+Return a pointer to the (non-existent) element after the last one in
+the array. 
+
+\begin{alltt}
+  \indexMethod{array}{operator[]}
+  elm_t &array<T,n>::operator[] (ptrdiff_t i);
+  const elm_t &array<T,n>::operator[] (ptrdiff_t i);
+\end{alltt}
+The index operator.  
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Vectors}
+
+Libasync provides a basic vector class.  As in the STL, a vector is a
+bit like an array, but can be dynamically resized. 
+
+\begin{alltt}
+  \indexTemplate{vec}{class}
+  template<class T, size_t N = 0> class vec \{
+  public:
+    vec();
+    vec(const vec &v);
+    template<size_t NN> vec (const vec<T, NN> &v);
+    vec &operator= (const vec &v);
+    template<size_t NN> vec &operator= (const vec<T, NN> &v);
+    ...
+\};
+\end{alltt}
+
+\begin{alltt}
+  \indexMethod{vec}{reserve}
+  void reserve (size_t n);
+  \indexMethod{vec}{setsize}void setsize (size_t n);
+\end{alltt}
+
+\texttt{reserve} ensures that the vector can easily be resized to at
+least \texttt{n} elements bigger than its current size, but does not
+actually change the number of elements currently held in the vector.  
+\texttt{setsize} makes the vector exactly \texttt{n} elements in size,
+discarding extra elements if necessary.
+
+\begin{alltt}
+  \indexMethod{vec}{base}
+  elm_t *base ();
+  const elm_t *base () const;
+\  \indexMethod{vec}{lim}elm_t *lim ();
+  const elm_t *lim () const;
+  \indexMethod{vec}{size}size_t size () const;
+  \indexMethod{vec}{bool}bool empty () const;
+\end{alltt}
+
+Return information about the size of the array, and provide basic pointer
+access to the first and one-after-the-last elements.  \texttt{elm\_t}
+is a private type alias for the type of the template instantiation.  
+
+\begin{alltt}
+  \indexMethod{vec}{front}
+  elm_t &front ();
+  const elm_t &front () const;
+  \indexMethod{vec}{back}elm_t &back ();
+  const elm_t &back () const;
+  \indexMethod{vec}{operator[]}elm_t &operator[] (ptrdiff_t i);
+  const elm_t &operator[] (ptrdiff_t i) const;
+\end{alltt}
+
+Read access to elements of the vector.  \texttt{front()} and
+\texttt{back()} return the first and last elements respectively.
+
+\begin{alltt}
+  \indexMethod{vec}{push\_back}
+  elm_t &push_back ();
+  elm_t &push_back (const elm_t &e);
+  \indexMethod{vec}{pop\_back}elm_t pop_back ();
+  \indexMethod{vec}{popn\_back}void popn_back (size_t n);
+  \indexMethod{vec}{pop\_front}elm_t pop_front ();
+  \indexMethod{vec}{popn\_front}void popn_front (size_t n);
+\end{alltt}
+
+Modify the vector by add or removing elements.  \texttt{push\_back}
+appends an element to the end of the vector (using the element's
+default constructor if no explicit value is given).
+\texttt{pop\_back} removes and returns the last element of the
+vector, and \texttt{pop\_front} removes and returns the first element.
+\texttt{popn\_back} and \texttt{popn\_front} remove the last
+\texttt{n} and first \texttt{n} elements respectively. 
+
+\begin{alltt}
+  \indexTemplate{swap}{function}
+  template<class T> void swap (vec<T> &a, vec<T> &b);
+\end{alltt}
+
+Swaps the contents of the two vectors. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Bit Vectors}
+
+Libasync provides a class for arbitrary-sized bit vectors.  It's
+pretty lightweight - the object overhead is basically 8 bytes, plus
+the bits themselves. 
+
+\begin{alltt}
+  \indexClass{bitvec}
+  class bitvec \{
+    bitvec ();
+    bitvec (size_t n);
+    bitvec (const bitvec &v);
+    ~bitvec ();
+    ...
+  \};
+\end{alltt}
+
+Bit vectors are dynamically resized, but can be contructed with an
+explicit initial width. 
+
+\begin{alltt}
+  \indexMethod{bitvec}{setsize}
+  void bitvec::setsize (size_t n)
+  \indexMethod{bitvec}{zsetsize}void bitvec::zsetsize (size_t n);
+  \indexMethod{bitvec}{osetsize}void bitvec::osetsize (size_t n);
+  \indexMethod{bitvec}{size}size_t bitvec::size () const;
+\end{alltt}
+Resize the bit vector.  \texttt{zsetsize()} explicitly sets any
+newly-added bits to zero, and \texttt{osetsize()} sets any newly-added
+bits to 1.  \texttt{size()} returns the size of the vector. 
+
+\begin{alltt}
+  bool bitvec::at (ptrdiff_t i) const;
+  \indexMethod{bitvec}{setbit}void bitvec::(setbit) (ptrdiff_t i, bool val);
+  \indexMethod{bitvec}{setrange}void bitvec::setrange (size_t s, size_t e, bool v);
+  \indexMethod{bitvec}{operator[]}bool bitvec::operator[] (ptrdiff_t i) const;
+  wbit bitvec::operator[] (ptrdiff_t i);
+\end{alltt}
+Element access.  Mostly self-explanatory; \texttt{wbit} is a private
+(actually protected) class that implements a ``write'' operation which
+takes a \texttt{bool}. The upshot of all this is that assignment to a
+bit using the \texttt{operator[]} operator ``just works''. 
+
+\begin{alltt}
+  \indexMethod{bitvec}{operator=}
+  bitvec &bitvec::operator= (const bitvec &v);
+\end{alltt}
+Assignment operator. Again, fairly self-explanatory. 
+
+\begin{alltt}
+  \indexFunction{swap}
+  void swap (bitvec &a, bitvec &b);
+\end{alltt}
+Swap the values of two bit vectors. 
+
+\begin{alltt}
+  const strbuf &strbuf_cat (const strbuf &sb, const bitvec &v);
+\end{alltt}
+Add a bit vector to the end of a \texttt{strbuf} as a set of '1' and
+'0' characters and return the \texttt{strbuf}. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+subsection{Still to be documented}
+
+\begin{itemize}
+\item \texttt{bitvec.h}: Bit vectors
+\item \texttt{ihash}: intrusive hash table templates
+\item \texttt{itree}: Red-Black trees
+\item \texttt{keyfunc.h}: Hashing templates
+\item \texttt{list.h}: linked lists
+\item \texttt{msb.h}: Finding the most significant bit of an integer
+\item \texttt{qhash}: 
+\item \texttt{union}: Tagged unions
+\item \texttt{vec}: vectors
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Callbacks}
+
+Unsurprisingly, libasync relies heavily on the use of callbacks.
+These are documented quite extensively in \textit{Using
+  libasync}~\cite{using_libasync}, and so we only detail here topics
+not covered there. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Convenience definitions}
+
+The following common callback types are defined in \hfile{amisc.h}:
+\indexType{cbv} \indexType{cbi} \indexType{cbs} \indexType{cbb} \begin{alltt}
+  typedef callback<void>::ref cbv;
+  typedef callback<void, int>::ref cbi;
+  typedef callback<void, str>::ref cbs;
+  typedef callback<void, bool>::ref cbb;
+\end{alltt}
+
+The following null values for the above are also given:
+\indexValue{cbv\_null} \indexValue{cbi\_null} \indexValue{cbs\_null} \indexValue{cbb\_null} \begin{alltt}
+  extern cbs cbs_null;
+  extern cbb cbb_null;
+  extern cbv cbv_null;
+  extern cbi cbi_null;
+\end{alltt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Process control}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Setuid Protection}
+
+Libasync provides some functions to avoid security problems which
+arise when a binary is executed setuid, and there are dangerous
+environment variables set.  \textit{From \texttt{sysconf.h}:}
+
+Setuid or setgid programs must contain
+
+\begin{alltt}
+  \indexValue{suidprotect}
+   int suidprotect = 1;
+\end{alltt}
+in the file that contains main.  Otherwise, bad things may happen
+in global constructors, even before the first line of main gets to
+execute.  In C++, clearing dangerous environment variables in main
+is insecure, as it may already be too late.
+
+\begin{alltt}
+  \indexValue{execprotect}
+  int execprotect;
+\end{alltt}
+Analogous variable, which should be set to 1 if the program will drop
+privileges. 
+
+\begin{alltt}
+  \indexFunction{suidsafe}
+  int suidsafe (void);
+\end{alltt}
+Returns 1 if \texttt{setuidprotect} was not initialized to 1 or the
+program was not setuid or the program was run by root.  Otherwise, it
+returns 0.  What does this actually mean?  If the program has been
+declared (by the programmer, setting \texttt{suidprotect} to 1) to
+potentially be running setuid, and in fact it is running setuid, then
+\texttt{suidsafe} returns 0 indicating that one must be cautious.  Clear?
+
+\begin{alltt}
+  \indexFunction{execsafe}
+  int execsafe (void);
+\end{alltt}
+Returns 1 if \texttt{setuidprotect} and \texttt{execprotect} are both
+zero, otherwise returns 0.  
+
+\begin{alltt}
+  \indexFunction{safegetenv}
+  char *safegetenv(const char *);
+\end{alltt}
+Returns the output of \texttt{getenv} unless \texttt{suidsafe()} is 1,
+in which case it always returns NULL. 
+
+\begin{alltt}
+  \indexFunction{xputenv}
+  int xputenv (const char *s);
+\end{alltt}
+Safe version of \texttt{putenv} which is guaranteed to copy its
+argument.  If the native \texttt{putenv} already does, this is a
+macro. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Processes}
+
+\begin{alltt}
+  \indexValue{execdir}
+  extern str execdir;
+\end{alltt}
+The default directory path for resolving unqualified executable
+pathnames. This defaults to the SFS installation directory. 
+
+\begin{alltt}
+  \indexFunction{afork}
+  pid_t afork ();
+\end{alltt}
+Do a fork.  This performs some magic with stderr and SIGPIPE to
+preserve behaviour better for libasync programs.  In particular, this
+is used by \texttt{chldrun}. 
+
+\begin{alltt}
+  \indexFunction{fix\_exec\_path} 
+  str fix_exec_path (str path, str dir = NULL);
+\end{alltt}
+\texttt{path} is the name of an executable, \texttt{dir} is a
+directory to look for it in if \texttt{path} is unqualified.  Return a
+unified path to the executable. 
+
+\begin{alltt}
+  \indexFunction{find\_program} 
+  str find_program (const char *program);
+\end{alltt}
+Return the full path to a program called \texttt{program}, by looking
+along \texttt{\${}PATH}.
+
+\begin{alltt}
+  \indexFunction{find\_program\_plus\_libsfs} 
+  str find_program_plus_libsfs (const char *program);
+\end{alltt}
+As above, but also look in \texttt{execdir}. 
+
+\begin{alltt}
+  \indexFunction{setstdfds} 
+  void setstdfds (int in, int out, int err);
+\end{alltt}
+Make sure that \texttt{in}, \texttt{out}, and \texttt{err} are dup2'ed
+to the 0, 1, and 2, and the original fds are closed. 
+\note{Note: this function is global (in \hfile{spawn.C}) but not
+declared in a header file}.  
+
+\begin{alltt}
+  \indexFunction{spawn}
+  pid_t spawn (const char *path, const char *const *av,
+               int in = 0, int out = 1, int err = 2, 
+               cbv::ptr postforkcb = NULL,
+               char *const *env = NULL);
+\end{alltt}
+A clean fork and exec. 
+Fork and then attempt to do an \texttt{exec} with the given file
+descriptors as stdin, stdout, and stderr.  After the fork (but before
+the exec), call \texttt{postforkcb}, if it's not null.  The parent
+then waits to read from a newly-created pipe - if the exec succeeds,
+this pipe is closed, and so the parent knows that everything went
+well.  If the exec fails, the child writes the current \texttt{errno}
+to the pipe, and the parent sets its own \texttt{errno} to this
+value. 
+
+\begin{alltt}
+  \indexFunction{aspawn}
+  pid_t aspawn (const char *path, const char *const *av,
+                int in = 0, int out = 1, int err = 2, 
+                cbv::ptr postforkcb = NULL,
+                char *const *env = NULL);
+\end{alltt}
+Simpler than the above: if the exec fails, the child simply prints a
+warning and exits.  The parent returns the child pid regardless of
+whether the exec succeeds. 
+
+\begin{alltt}
+  \indexFunction{pipe2str}
+  void pipe2str (int fd, cbs cb, int *fdp = NULL, strbuf *sb = NULL);
+\end{alltt}
+Package the output from a pipe into a string.  \texttt{fd} is one end
+of a pipe, presumably with some process writing useful data to the
+other end.  The complete output from the pipe is read into \texttt{sb}
+and then passed to the callback when the pipe is closed from the other
+end.  
+
+If \texttt{fdp} is not null, and points to a negative integer,
+\texttt{pipe2str} will also attempt to read a file descriptor from the
+pipe using \texttt{readfd}.
+
+Generally speaking, \texttt{sb} should not be defined when calling
+this externally, as if \texttt{sb} is defined the function assumes
+that \texttt{fd} is already asynchronous has has this function as a
+callback, which is almost certainly not what you want. 
+
+\begin{alltt}
+  \indexFunction{chldrun}
+  void chldrun (cbi chld, cbs cb);
+\end{alltt}
+Executes a function in a child process.  Performs an \texttt{afork()},
+and calls \texttt{chld} in the child passing as argument one end of a
+pipe.  The other is handed, along with the final callback \texttt{cb}
+to \texttt{pipe2str} in the parent.  If anything goes wrong in this
+function, \texttt{cb} will be called with NULL. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Daemonization}
+
+Libasync has the ability to use an external logging process, by
+defining the compile-time constant \texttt{PATH\_LOGGER} to point to
+something like \texttt{/usr/bin/logger}.  Otherwise, logs will go to a
+file. 
+
+\begin{alltt}
+  \indexValue{syslog\_priority}
+  extern str syslog_priority;
+\end{alltt}
+Pretty much what it says - defaults to ``daemon.notice''.
+
+\begin{alltt}
+  \indexFunction{daemonize}
+  void daemonize ();
+\end{alltt}
+Turns the process into a daemon.  Actually, not sure I trust this code
+- it only does the one fork, and the closing of relevant file
+descriptors is somewhat suspect.  This is not a one-stop shop for
+daemonization: read and understand the source code
+(\hfile{daemonize.C}) and write your own daemonization code (two
+forks, one setsid, lots of dups, you know the drill) unless this does
+what you want.  What this does do is create a pidfile, and ensure that
+it is deleted when the process exits.   On the other hand, given the
+level of sophistication of the rest of the code, it's very possible
+that I'm missing something. 
+
+\begin{alltt}
+  \indexFunction{start\_logger}
+  int start_logger (const str &priority, const str &tag, const str &line, 
+                    const str &logfile, int flags, mode_t mode);
+\end{alltt}
+Start logging to \texttt{logfile}, or syslog (depending on whether
+\texttt{PATH\_LOGGER} is set).  The log file is used if syslog fails,
+as well.  The \texttt{priority} and \texttt{tag} arguments are passed
+to syslog; the \texttt{logfile}, \texttt{flags}, and \texttt{mode}
+args are for the log file. \texttt{line} is the initial log entry. 
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Initialization and Shutdown}
+
+Libasync provides (in \hfile{init.h}) macros to define functions which
+are executed at startup (implemented using a static class) and at
+process exit (using a wrapper class with a destructor).  
+
+\begin{alltt}
+  \indexMacro{INITFN}
+  #define INITFN(fn)
+\end{alltt}
+Macro to cause function \texttt{fn} to be executed at initialization
+time.  Prototype is \texttt{static void fn ();}. 
+
+\begin{alltt}
+  \indexMacro{EXITFN}
+  #define EXITFN(fn)
+\end{alltt}
+Macro to cause function \texttt{fn} to be executed when the process
+exits. Prototype is \texttt{static void fn ();}. 
+
+\begin{alltt}
+  \indexMacro{INIT}
+  #define INIT(name)
+\end{alltt}
+Declares a class \texttt{\it name}. The programmer must provide
+definitions of the following class members:
+\begin{alltt}
+  static int name::count;
+  static void name::start ();
+  static void name::stop ();
+\end{alltt}
+\texttt{start} will be called exactly once when
+the process initializes, and \texttt{stop} will be called exactly once
+when the process exits. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Networking}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Functions for network addresses}
+
+Libasync overloads equality operators for network addresses,
+and also provides hash functions. 
+
+\begin{alltt}
+  \indexOperator{==}{in\_addr}bool operator== (const in_addr &a, const in_addr &b);
+  \indexOperator{"!=}{in\_addr}bool operator!= (const in_addr &a, const in_addr &b);
+  \indexOperator{==}{sockaddr\_in}bool operator== (const sockaddr_in &a, const sockaddr_in &b);
+  \indexOperator{"!=}{sockaddr\_in}bool operator!= (const sockaddr_in &a, const sockaddr_in &b);
+\end{alltt}
+Fairly self-explanatory. 
+
+\begin{alltt}
+  \indexTemplate{hashfn}{in\_addr}template<> struct hashfn<in_addr>;
+  \indexTemplate{hashfn}{sockaddr\_in}template<> struct hashfn<sockaddr_in>;
+\end{alltt}
+Makes \texttt{in\_addr} and texttt{sockaddr\_in} hashable. See the
+section on hash templates for more information. 
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Sockets and file descriptors}
+
+\begin{alltt}
+  \indexValue{sndbufsize} \indexValue{rcvbufsize}
+  sndbufsize, rcvbufsize
+\end{alltt}
+Send and receive buffer sizes.  Default to compile-time constant of
+0x11000 or 0x05000 depending on whether
+\texttt{SFS\_ALLOW\_LARGE\_BUFFER} is configured (defined).  Can be
+overridden at load time by the \texttt{SNDBUFSIZE} and
+texttt{RCVBUFSIZE} environment variables.
+
+\begin{alltt}
+  \indexFunction{inetsocket}
+  int inetsocket (int type, u_int16_t port = 0, u_int32_t addr = INADDR_ANY);
+\end{alltt}
+Create and bind a socket to the address and port given.  \texttt{type}
+is the second argument to \texttt{socket()};
+e.g. \texttt{SOCK\_DGRAM}.  If it's a TCP socket, SO\_REUSEADDR is set
+on the socket. 
+
+\begin{alltt}
+  \indexFunction{inetsocket\_resvport}
+  int inetsocket_resvport (int type, u_int32_t = INADDR_ANY);
+\end{alltt}
+Magic for binding to a reserved port (below 1024) using
+\texttt{bindresvport} if available, or else binds to the highest
+available port below 1024 using \texttt{bind}. 
+
+\begin{alltt}
+  \indexFunction{unixsocket}
+  int unixsocket (const char *path);
+\end{alltt}
+Create and bind to a Unix stream socket. 
+
+\begin{alltt}
+  \indexFunction{unixsocket\_connect}
+  int unixsocket_connect (const char *path);
+\end{alltt}
+Create a Unix stream socket and connect to a path. 
+
+\begin{alltt}
+  \indexFunction{isunixsocket}
+  bool isunixsocket (int fd);
+\end{alltt}
+Self-explanatory.
+
+\begin{alltt}
+  \indexFunction{close\_on\_exec}
+  void close_on_exec (int fd);
+\end{alltt}
+Sets the close-on-exec flag on the file descriptor to true.  This
+means that the file descriptor will be closed in this process (or a
+child) when \texttt{exec} is called. 
+
+\begin{alltt}
+  \indexFunction{\_make\_async}
+  int _make_async (int fd);
+\end{alltt}
+Puts the file descriptor into non-blocking mode.  \emph{This} is the
+function to call on file (rather than socket) descriptors.
+
+\begin{alltt}
+  \indexFunction{make\_async}
+  void make_async (int s);
+\end{alltt}
+Puts the \emph{socket} descriptor into asynchronous mode.  Sets the
+send and receive buffer sizes from \texttt{sndbufsize} and
+\texttt{rcvbufsize}.  Enables keepalives on stream sockets. 
+
+\begin{alltt}
+  \indexFunction{make\_sync}
+  void make_sync (int s);
+\end{alltt}
+Takes the file descriptor out of non-blocking mode. 
+
+\begin{alltt}
+  \indexFunction{tcp\_nodelay}
+  void tcp_nodelay (int);
+\end{alltt}
+Sets whatever options are necessary to put the TCP socket into ``low
+delay'' mode.  This includes setting \texttt{TCP\_NODELAY} and also
+marking it with a low delay TOS. 
+
+\begin{alltt}
+  \indexFunction{tcp\_abort}
+  void tcp_abort (int);
+\end{alltt}
+Sets \texttt{SO\_LINGER} off on the socket and closes it abruptly.
+
+\begin{alltt}
+  \indexFunction{addreq}
+  bool addreq (const sockaddr *, const sockaddr *, socklen_t);
+\end{alltt}
+Compares two socket addresses for equality. 
+
+\begin{alltt}
+  \indexFunction{sigio\_set}
+  int sigio_set (int fd);
+\end{alltt}
+Sets SIGIO on the file descriptor (so that I/O events send signals to the
+calling process). 
+
+\begin{alltt}
+  \indexFunction{sigio\_clear}
+  int sigio_clear (int fd);
+\end{alltt}
+Clears SIGIO on the file descriptor.
+
+\begin{alltt}
+  \indexFunction{readvfd}ssize_t readvfd (int fd, const struct iovec *iov, int iovcnt, int *rfdp);
+  \indexFunction{writevfd}ssize_t writevfd (int fd, const struct iovec *iov, int iovcnt, int wfd);
+  \indexFunction{readfd}ssize_t readfd (int fd, void *buf, size_t len, int *rfdp);
+  \indexFunction{writefd}ssize_t writefd (int fd, const void *buf, size_t len, int wfd);
+\end{alltt}
+Send and receive file descriptors over Unix sockets.  These are
+wrappers around the appropriate \texttt{sendmsg} and \texttt{recvmsg}
+calls; the file descriptor to pass is in \texttt{wfd} or
+\texttt{rfdp}. 
+
+\begin{alltt}
+  \indexFunction{myipaddrs}
+  bool myipaddrs (vec<in_addr> *res);
+\end{alltt}
+Enumerates all the IP addresses of the host into the vector
+\texttt{res}. 
+
+\begin{alltt}
+  \indexEnum{selop} \indexValue{selread} \indexValue{selwrite}
+  enum selop \{ selread = 0, selwrite = 1 \};
+  \indexFunction{fdwait}int fdwait (int fd, selop op, timeval *tvp);
+\end{alltt}
+Performs a blocking \texttt{select} on the file descriptor for time
+\texttt{tvp}.  There is only a single, static fdset, but it can
+be reallocated and reallocated (if fd is too high a number).
+Cosequently, don't call this from more than one thread.  It's not
+terrible clear how useful this is in the wider context. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{TCP Connections}
+
+Libasync provides functions for asynchronously connecting TCP
+sockets.  A callback is invoked when the connection is established.
+Note that in different versions of libasync the basic handle for an
+in-progress TCP connection differs: it's either \texttt{tcpconnect\_t}
+or \texttt{tcpconn\_t}.  It's a good idea to have an Autoconf test to
+work out the correct one.  
+
+\begin{alltt}
+  \indexType{tcpconnect\_t} \indexFunction{tcpconnect}
+  tcpconnect_t *tcpconnect (in_addr addr, u_int16_t port, cbi cb);
+\end{alltt}
+Asynchronously create a TCP connection to the given address and port.
+TCP connection objects are reference counted.  The 
+callback \texttt{cb} takes a single integer argument which is the file
+descriptor for the connection.  The callback will be called with -1
+if the connection failed, or a real fd value when the connection has
+been established.  
+
+\begin{alltt}
+  \indexFunction{tcpconnect}
+  tcpconnect_t *tcpconnect (str hostname, u_int16_t port, cbi cb,
+	                bool dnssearch = true, str *namep = NULL);
+\end{alltt}
+As above, but resolve the hostname using \texttt{dns\_hostbyname}
+(q.v.).  
+
+\begin{alltt}
+  \indexFunction{tcpconnect\_cancel}
+  void tcpconnect_cancel (tcpconnect_t *tc);
+\end{alltt}
+Signal to cancel the pending connection.  The connection will then be
+discarded and the socket closed by the runtime at the first available
+opportunity. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{DNS resolution}
+
+Libasync includes an asynchronous DNS resolver. 
+
+\begin{alltt}
+  \indexFunction{myname}
+  str myname ();
+\end{alltt}
+Attempt to return the fully-qualified domain name of this host.  If
+the results of this call are unexpected, the host is quite possibly
+misconfigured. 
+
+\begin{alltt}
+  \indexFunction{mydomain}
+  str mydomain ();
+\end{alltt}
+Return the domain name of the host from the \texttt{\_res} structure
+(see res\_init(3)).
+
+\begin{alltt}
+  \indexFunction{cbhent}
+  typedef callback<void, ptr<hostent>, int>::ref cbhent;
+\end{alltt}
+Callback type for invocations of the resolver to look up hosts by
+name or address.  When a result is available, the callback is called
+with a (reference counted) pointer to the \texttt{hostent} structure
+and an integer indicating the error status (see below).
+
+\begin{alltt}
+  \indexFunction{dns\_hostbyname}
+  void dns_hostbyname (str name, cbhent cb,
+	               bool search = false, bool addrok = true);
+\end{alltt}
+Initiate a lookup of a host by name (i.e., search for an A record).
+If \texttt{addrok} is true, and 
+the \texttt{name} is actually a numeric IP address, then no actual
+lookup is done.  Instead, an appropriate \texttt{hostent} is
+manufactured and the callback called immediately (before the function
+returns).  If \texttt{search} is true, the node's domain is searched
+first. 
+
+\begin{alltt}
+  \indexFunction{dns\_hostbyaddr}
+  void dns_hostbyaddr (const in_addr addr, cbhent cb);
+\end{alltt}
+Initiate a host lookup by IP address. 
+
+\begin{alltt}
+  \indexType{mxrec}
+  struct mxrec \{
+    u_short pref;
+    char *name;
+  \};
+  \indexType{mxlist}
+  struct mxlist \{
+    char *m_name;                /* Name of host for which MX list taken */
+    u_short m_nmx;               /* Number of mx records */
+    struct mxrec m_mxes[1];      /* MX records */
+  \};
+\end{alltt}
+Types analogous to texttt{hostent} for returning the results of an MX
+record lookup. 
+
+\begin{alltt}
+  \indexType{cbmxlist}
+  typedef callback<void, ptr<mxlist>, int>::ref cbmxlist;
+\end{alltt}
+Similar to \texttt{cbhent}, but used for MX record queries (see
+below). 
+
+\begin{alltt}
+  \indexFunction{dns\_mxbyname}
+  void dns_mxbyname (str name, cbmxlist cb, bool search = false);
+\end{alltt}
+Look up an MX record by name. 
+
+\begin{alltt}
+  \indexFunction{dns\_strerror}
+  const char *dns_strerror (int);
+\end{alltt}
+Return a human-readable string explaining the error number returned
+(via callback) from the resolver. 
+
+\begin{alltt}
+  \indexFunction{dns\_tmperr}
+  int dns_tmperr (int no);
+\end{alltt}
+Returns true iff the error is termporary, i.e. it might be worth
+retrying when things are up or less congested.  False means that a
+reasonable response was received from the DNS, and that either the
+results don't exist, or there is a configuration error in some
+nameserver - in other words, it's not worth trying until someone
+somewhere fixes their DNS. 
+
+\begin{alltt}
+  \indexFunction{printaddrs}
+  void printaddrs (const char *msg, ptr<hostent> h, int dns_errno = 0);
+  \indexFunction{printmxlist}void printmxlist (const char *msg, ptr<mxlist> m, int dns_errno = 0);
+\end{alltt}
+Debugging functions (in C, no less!) to print the results of a
+lookup.  If \texttt{h} or \texttt{m} is null, then format the error
+using \texttt{dns\_strerror} instead. 
+
+\begin{alltt}
+  \indexFunction{dns\_reload}
+  void dns_reload ();
+\end{alltt}
+
+Cause a reinitialization of the DNS resolver to occur.  This happens
+asynchronously. 
+
+Finally, the DNS resolver can generate a number of new error types
+beyond \texttt{errno.h}: 
+\begin{alltt}
+  \indexValue{ARERR\_NXREC}#define ARERR_NXREC     0x101 /* No records of appropriate type */
+  \indexValue{ARERR\_TIMEOUT}#define ARERR_TIMEOUT   0x102 /* Query timed out */
+  \indexValue{ARERR\_PTRSPOOF}#define ARERR_PTRSPOOF  0x103 /* PTR response was a lie! */
+  \indexValue{ARERR\_BADRESP}#define ARERR_BADRESP   0x104 /* Nameserver replied with malformed packet */
+  \indexValue{ARERR\_CANTSEND}#define ARERR_CANTSEND  0x105 /* Can't send to name server */
+  \indexValue{ARERR\_REQINVAL}#define ARERR_REQINVAL  0x106 /* Request was for malformed domain name */
+  \indexValue{ARERR\_CNAMELOOP}#define ARERR_CNAMELOOP 0x107 /* CNAME records form loop */
+\end{alltt}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\subsection{Notification of network changes}
+
+Libasync can provide callbacks when the network configuration of the
+host machine changes.  The set of IP addresses assigned to the machine
+is checked approximately once every minute while the main loop is
+running. 
+
+\begin{alltt}
+  \indexType{ifchgcb\_t}struct ifchgcb_t;
+  \indexFunction{ifchgcb}ifchgcb_t *ifchgcb (cbv cb);
+  \indexFunction{ifchgcb\_remove}void ifchgcb_remove (ifchgcb_t *chg);
+\end{alltt}
+
+\texttt{ifchgcb} registers a callback in the event that the set of
+network addresses assigned to the machine changes.  The return value
+from this is a token that can later be passed to
+\texttt{ifchgcb\_remove} to deregister the callback. 
+
+\begin{alltt}
+  \indexValue{ifchg\_addrs}
+  extern vec<in_addr> ifchg_addrs;
+\end{alltt}
+The current list of the nodes IP addresses. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Error output}
+
+Various facilities are provided for dealing with program error
+output.  There are two broad categories - firstly, convenient
+functions for warnings, fatal errors, panics, etc. that emulate both
+\texttt{printf} and iostream syntax, and secondly a asynchronous error
+facility that 
+writes errors asynchronously until flushed.  Other error handling
+semantics can also be hooked in in a similar way.  The relevant files
+are \texttt{err.h}, \texttt{err.C}, and \texttt{aerr.C}. 
+
+\begin{alltt}
+  \indexObject{warn}#define warn 
+  \indexObject{warnx}#define warnx
+  \indexObject{fatal}#define fatal
+  \indexObject{panic}#define panic
+\end{alltt}
+The basic objects for writing out error messages.  \texttt{warn} is
+for general system warnings, \texttt{warnx} suppresses printing of the
+program name.  \texttt{fatal} causes the program to exit, more or less
+cleanly, whereas \texttt{panic} causes an abort.   All these macros
+can be used like \texttt{printf}, i.e. with a variable number of
+arguments, the first of which is a format string, or like
+\texttt{cerr} with the \texttt{<<} operator.  It is interesting 
+to see how these are implemented (in \texttt{err.h}). 
+
+\begin{alltt}
+  \indexFunction{vwarn}#define vwarn
+  \indexFunction{vwarnx}#define vwarnx
+\end{alltt}
+Explicit variable-argument list variants of \texttt{warn} and
+\texttt{warnx}, but analogy with \texttt{vprintf}. 
+
+\begin{alltt}
+  \indexValue{progname}extern bssstr progname;
+  \indexValue{progdir}extern str progdir;
+\end{alltt}
+The name of the program, for instance to use in logging, and the
+directory that the program binary is located in.  Set by
+\texttt{setprogname} (see below).  
+
+\begin{alltt}
+  \indexValue{fatalhook}
+  extern void (*fatalhook) ();
+\end{alltt}
+If not null, will be called in the event of a fatal error (i.e. one
+signalled by \texttt{fatal} below.  Not set by libasync. 
+
+\begin{alltt}
+  \indexValue{errfd}
+  extern int errfd;
+\end{alltt}
+The file descriptor for error output.  Defaults to stderr (i.e., 2).
+
+\begin{alltt}
+  \indexValue{fatal\_no\_destruct}
+  extern bool fatal_no_destruct;
+\end{alltt}
+Determines what happens when the process exits due to a \texttt{fatal}
+error (as opposed to a \texttt{panic}).  Set this to true (non-zero)
+if you want the process to exit immediately (via \texttt{\_exit(1)})
+rather than calling destructors (via \texttt{exit(1)}). 
+
+\begin{alltt}
+  \indexValue{\_err\_output}
+  extern void (*_err_output) (suio *uio, int flags);
+\end{alltt}
+Pointer to the current error output function.  This function is called
+for every warning or error message.  It defaults to
+\texttt{\_err\_output\_sync}, but is changed to an asynchronous output
+function by \texttt{err\_init()}, see below. 
+
+\begin{alltt}
+  \indexFunction{err\_reset}
+  void err_reset ();
+\end{alltt}
+Resets error output to be fully synchronous (i.e. calling
+\texttt{\_err\_output\_sync}).  Calls (and zeros)
+\texttt{\_err\_reset\_hook}, if non-null. 
+
+\begin{alltt}
+  \indexValue{\_err\_reset\_hook}
+  extern void (*_err_reset_hook) ();
+\end{alltt}
+Function to call when error handling is returned to synchronous by
+\texttt{err\_reset()}. 
+
+\begin{alltt}
+  \indexFunction{\_err\_output\_sync}
+  void _err_output_sync (suio *uio, int flags);
+\end{alltt}
+The default error output function.  Writes the uio to the current
+error file descriptor, and then aborts (in the case of a panic) or
+exits (in the case of a fatal error).  The flags which indicate this
+are set by \texttt{warn}, \texttt{fatal}, etc. below. 
+
+\begin{alltt}
+  \indexFunction{setprogname}
+  void setprogname (char *argv0);
+\end{alltt}
+Set the program name and directory from the given string, typically
+obtained from \texttt{argv[0]}. 
+
+\begin{alltt}
+  \indexFunction{err\_init}
+  void err_init ();
+  \indexFunction{err\_flush}
+  void err_flush ();
+\end{alltt}
+\texttt{err\_init} sets the error output function to be asynchronous
+(rather than the default \texttt{\_err\_output\_sync} above).
+\texttt{err\_flush} flushes all outstanding asynchronous error
+writes.  See \texttt{aerr.C} for more details about how these work.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Core asynchronous functions}
+
+\begin{alltt}
+  \indexValue{tsnow}extern timespec tsnow;
+  \indexValue{timenow}extern const time_t &timenow;
+  \indexFunction{amain}void amain () __attribute__ ((noreturn));
+  \indexFunction{acheck}void acheck ();
+\end{alltt}
+
+\begin{alltt}
+  \indexFunction{chldcb}
+  void chldcb (pid_t chld, cbi::ptr cb);
+\end{alltt}
+Install a callback to be called when a child process with the given
+pid exits.  Install a callback of ``null'' to remove the callback.
+
+\begin{alltt}
+  \indexFunction{sigcb}
+  cbv::ptr sigcb (int sig, cbv::ptr cb, int flags = 0);
+\end{alltt}
+Wrapper to make signal handlers also look like callbacks.  Installs
+\texttt{cb} as a signal handler, or sets back to \texttt{SIG\_DFL} if
+\texttt{cb} is null.  What actually happens is that a signal sets a
+flag which causes the corresponding callback for the signal to be
+invoked next time around the event loop.  A corollary is that signal
+callbacks execute as the normal thread, not as a ``real'' signal
+handler.  This will almost certainly simplify the code. 
+
+\begin{alltt}
+  \indexEnum{selop} \indexValue{selread} \indexValue{selwrite}
+  enum selop \{ selread = 0, selwrite = 1 \};
+  \indexFunction{fdcb}void fdcb (int fd, selop op, cbv::ptr cb);
+\end{alltt}
+Install a callback for activity on a file descriptor.  Install
+a callback of ``null'' to remove the callback. 
+
+\begin{alltt}
+  \indexType{timecb\_t}
+  struct timecb_t;
+  \indexFunction{timecb}timecb_t *timecb (const timespec &ts, cbv cb);
+  timecb_t *timecb (time_t tm, cbv cb);
+  \indexFunction{timecb\_remove}void timecb_remove (timecb_t *);
+\end{alltt}
+Schedule a callback \texttt{cb} for an absolute time in the future.  A
+\texttt{timecb\_t} is an opaque type used to remove the callback. 
+
+\begin{alltt}
+  indexFunction{delaycb}
+  timecb_t *delaycb (time_t sec, u_int32_t nsec, cbv cb);
+  timecb_t *delaycb (time_t tm, cbv cb)
+\end{alltt}
+Schedule a callback for an offset from the current time into the
+future, rather than an absolute time. 
+
+\begin{alltt}
+  \indexType{lazycb\_t}
+  struct lazycb_t;
+  \indexFunction{lazycb}lazycb_t *lazycb (time_t min_interval, cbv cb);
+  \indexFunction{lazycb\_remove}void lazycb_remove (lazycb_t *lazy);
+\end{alltt}
+Lazy callbacks differ from timed callbacks.  Installing a lazy
+callback for some minimum time interval in the future will never cause
+select to wake up any sooner.  Lazy callbacks which have passed their
+\texttt{min\_interval} will be called next time around the event loop
+just before file descriptors are checked (i.e. select is called), so
+they can be used to defer procedure calls until all the timed, signal,
+and file callbacks have executed.  
+
+\begin{alltt}
+fdcb_check: select, then calls callbacks for all fds. 
+amain: ainit, err_init, timecb_check, then _acheck repeatedly
+acheck: timecb_check, ainit, _acheck.
+_acheck: lazycb_check, fdcb_check, sigcb_check, timecb_check
+ainit: creates sigpipes if they don't already exist. 
+\end{alltt}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Time operators}
+
+Libasync provides lots of operators for \texttt{struct timespec}. 
+
+\begin{alltt}
+  \indexFunction{tscmp}
+  int tscmp (const timespec &a, const timespec &b);
+\end{alltt}
+A basic comparison function for timespecs.  
+
+\begin{alltt}
+  \indexOperator{==}{timespec}
+  bool operator== (const timespec &a, const timespec &b);
+  \indexOperator{"!=}{timespec}bool operator!= (const timespec &a, const timespec &b);
+  bool operator< (const timespec &a, const timespec &b);
+  bool operator<= (const timespec &a, const timespec &b);
+  bool operator> (const timespec &a, const timespec &b);
+  bool operator>= (const timespec &a, const timespec &b);
+  \indexOperator{+}{timespec}timespec operator+ (const timespec &a, const timespec &b);
+  \index{operator--!timespec@{\texttt{timespec}}}timespec operator- (const timespec &a, const timespec &b);
+\end{alltt}
+Fairly self-explanatory. 
+
+In addition, libasync implements \texttt{clock\_gettime} from BSD if
+the system doesn't have it. 
+
+\begin{alltt}
+  \indexFunction{clock\_gettime}
+  int clock_gettime (int id, struct timespec *ts);
+  \indexMacro{CLOCK\_REALTIME}#define CLOCK_REALTIME 0
+  \indexMacro{CLOCK\_VIRTUAL}#define CLOCK_VIRTUAL 1
+  \indexMacro{CLOCK\_PROF}#define CLOCK_PROF 2
+\end{alltt}
+
+Fills in a \texttt{timespec} with some value in it depending on the
+value of id.  Note that not all the BSD values are provided.
+\texttt{CLOCK\_REALTIME} returns time that increments as a wall clock
+should, \texttt{CLOCK\_VIRTUAL} returns time that increments only when
+the CPU is running in user mode on behalf of the calling process, and
+\texttt{CLOCK\_PROF} returns time that increments only when the
+process is runnign in user or kernel mode.   Returns 0 for success, or
+-1 for failure (and sets \texttt{errno} appropriately). 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Regular expressions}
+
+Libasync incorporates Phil Hazel's Perl-Compatible Regular Expression
+C library.  It is currently not documented here, but there is
+documentation available on the web~\cite{pcre_manual} and it's
+important to know it's there. 
+
+In practice, what you want to use is DM's wrapper in \texttt{rxx.h}.
+It is initialized automatically (via \texttt{INIT}) and provides lots
+of high-level objects, functions and operators. 
+
+\begin{alltt}
+  \indexFunction{split}
+  int split (vec<str> *out, rxx pat, str expr, size_t lim, bool emptylast)
+  \indexFunction{join}str join (str sep, const vec<str> &v);
+\end{alltt}
+Split and join strings, similar to Python, Perl, or Ruby. 
+
+\begin{alltt}
+  \indexClass{rxx}
+  class rxx \{
+    rxx (const char *pat, const char *opt = "");
+    rxx (const rxx &r);
+    ...
+  \};
+\end{alltt}
+
+\begin{alltt}
+  \indexMethod{rxx}{\_exec}void rxx::_exec (const char *p, size_t len, int options);
+  \indexMethod{rxx}{exec}void rxx::exec (str s, int options);
+\end{alltt}
+``Execute'' the regular expression on the given string (or buffer).
+See the PCRE documentation for more details, but note that in
+practice, users will use \texttt{match} or \texttt{search} instead,
+which presents a cleaner interface to the results. 
+
+\begin{alltt}
+  \indexMethod{rxx}{study}
+  void rxx::study ();
+\end{alltt}
+``Study'' the regular expression.  See the PCRE documentation. 
+
+\begin{alltt}
+  \indexMethod{rxx}{clear}
+  void rxx::clear ();
+\end{alltt}
+Reset the regular expression (clear all current match state). 
+
+\begin{alltt}
+  \indexMethod{rxx}{search}
+  matchresult rxx::search (str s, int opt = 0);
+  \indexMethod{rxx}{match}matchresult rxx::match (str s, int opt = 0);
+  \indexMethod{rxx}{success}bool rxx::success () const;
+  \indexMethod{rxx}{operator()} rxx::operator bool () const;
+\end{alltt}
+\texttt{match} looks for an exact match for the regular expression
+with the string.  \texttt{search} looks for some match anywhere within
+the string.  \texttt{success} indicates whether the match or search
+succeeded. 
+
+\begin{alltt}
+  \indexMethod{rxx}{at}
+  str rxx::at (ptrdiff_t n) const;
+  \indexMethod{rxx}{operator[]}str rxx::operator[] (ptrdiff_t n) const;
+\end{alltt}
+Return the substring of the original corresponding to the
+\texttt{n}'th subpattern match for the regular expression.
+
+\begin{alltt}
+  int rxx::start (int n) const;
+  int rxx::end (int n) const;
+  int rxx::len (int n) const;
+\end{alltt}
+Return the start and end offsets, and the length, of the substring of
+the original corresponding to the \texttt{n}'th subpattern match for
+the regular expression. 
+
+\begin{alltt}
+  \indexClass{rxx::matchresult}
+  class rxx::matchresult \{
+    matchresult (const rxx &r);
+    const rxx &r;
+    ...
+  \};
+\end{alltt}
+
+\begin{alltt}
+  operator str () const \{ return r.at (0); \}
+  str operator[] (ptrdiff_t n) const \{ return r.at (n); \}
+\end{alltt}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Lock files}
+
+\begin{alltt}
+  \indexFunction{stat\_unchanged}
+  bool stat_unchanged (const struct stat *sb1, const struct stat *sb2);
+\end{alltt}
+Returns true if \texttt{*sb1} is close enough to \texttt{*sb2} to
+indicate that they refer to the same file, and it has not changed
+between calls to stat or fstat. 
+
+\begin{alltt}
+  \indexClass{lockfile}
+  class lockfile \{
+  public:
+    const str path;
+    const int fd;
+    bool ok () const;
+    static ptr<lockfile> alloc (const str &path, bool wait = false);
+  \};
+\end{alltt}
+Class representing a lock file.  See below for methods.
+
+\begin{alltt}
+bool lockfile::ok () const;
+\end{alltt}
+Returns false iff the lock file has changed (i.e., the fd held by the
+class refers to a different file from the pathname).  If this is the
+case, the lockfile is clearly not working...
+
+\begin{alltt}
+static ptr<lockfile> lockfile::alloc (const str &path, bool wait = false);
+\end{alltt}
+The correct way to get hold of a lockfile (the class has no public
+constructor).   If \texttt{wait} is true, keep trying until we have
+the lock on the lockfile.  If \texttt{wait} is false, return NULL if
+someone else has the lock. 
+
+\bibliographystyle{abbrv} 
+\bibliography{libasync}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Header files still to document}
+
+\begin{itemize}
+\item \texttt{ident.C}: 
+\item \texttt{aiod*}: Asynchronous I/O daemons
+\item \texttt{aios}: Asynchronous ios implementation
+\item \texttt{backoff.h}: Retransmission queues
+\item \texttt{fdlim.h}: Portable get/set fd limits
+\item \texttt{parseargs}: argument parsing from a file
+\end{itemize}
+
+\printindex
+
+\end{document}

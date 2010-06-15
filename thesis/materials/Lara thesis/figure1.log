@@ -1,0 +1,16 @@
+This is TeX, Version 3.14159 (MiKTeX 2.2) (preloaded format=latex 2000.11.28)  29 AUG 2007 14:51
+**figure1.tex
+(figure1.tex
+LaTeX2e <2001/06/01>
+Babel <v3.7h> and hyphenation patterns for english, french, german, ngerman, du
+mylang, nohyphenation, loaded.
+
+! LaTeX Error: Environment figure* undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                      
+                                          
+l.2 \begin{figure*}
+                   \resizebox{3cm}{2cm}{
+? 

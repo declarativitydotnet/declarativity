@@ -1,0 +1,66 @@
+\section{Introduction}
+
+%The goal of this paper is to present a new approach to building distributed systems that reduces the time and effort spent in building systems while providing greater understanding of the important properties of the system.
+%\bi
+%\item lots of systems are build everyday (mostly from scratch)
+%\item systems are often complex enough that building them takes several months to years
+%\item difficult to reason about the properties of the ``implemented system''. i.e. difficult to argue the implementation follows the specification. For e.g. its difficult to claim or even reason that several thousand lines of PBFT implementation is correctly implementing the 20-30 odd lines of pseudo code specified in the PBFT paper~\cite{castr99}.
+%\item key ideas often buried deep within the system implementation thus changing them requires non-trivial effort. Wouldn't it be nice to have an implementation expressed in form of ``ideas'' and have a compiler take care of the details.
+%\ei
+
+%We present a declarative approach that overcomes the above problems. Our approach yields following benefits:
+%\bi
+%\item Simple and concise specification that represents ``just'' the ideas, not the details giving better insight in the system: implementation not cluttered with unnecessary details
+%\item Easily changeable implementation with the tweak of few parameters or change of few lines of code
+%\item High degree of re-usability across implementations
+%\item Macros that enable easy switching of important implementation details such as encryption algorithm used etc. Potential for automatic optimization based on some cost functions as is done in database world.
+%\item system properties independent of operating environment: declarative specification based on what rather than how. different environments giving different implementations
+%\item complex protocols can be and should be expressed in an implementation independent way
+%\item enables optimizations that cross-cur security: e.g. data placement: more flexibility-more optimization :- database paradigm
+%\item new innovations: new insights into systems, easily build-able systems and implementing old systems in new environments or using new techniques (for eg a new cryptographic technique)
+%\item a system can can be precisely specified in a page in the paper yielding to reproducible and more impactful research.
+%\ei
+
+%Our system builds on the P2 approach of using a declarative approach to specify overlay networks using an query based language called overlog. 
+
+\subsection{Motivation}
+
+The broad vision behind this work is the present a new approach to building distributed system that reduces the design and implementation time and effort while providing better understanding of the important properties of the system. 
+
+\bi
+\item lots of systems are build everyday (mostly from scratch)
+\item systems are often complex enough that building them takes several months to years
+\item difficult to reason about the properties of the ``implemented system''. i.e. difficult to argue the implementation follows the specification. For e.g. its difficult to claim or even reason that several thousand lines of PBFT implementation is correctly implementing the 20-30 odd lines of pseudo code specified in the PBFT paper~\cite{castr99}.
+\item key ideas often buried deep within the system implementation thus changing them requires non-trivial effort. Wouldn't it be nice to have an implementation expressed in form of ``ideas'' and have a compiler take care of the details.
+\ei
+
+We present a declarative approach that overcomes the above problems. Our approach yields following benefits:
+\bi
+\item Simple and concise specification that represents ``just'' the ideas, not the details giving better insight in the system: implementation not cluttered with unnecessary details
+\item Easily changeable implementation with the tweak of few parameters or change of few lines of code
+\item High degree of re-usability across implementations
+\item Macros that enable easy switching of important implementation details such as encryption algorithm used etc. Potential for automatic optimization based on some cost functions as is done in database world.
+\item system properties independent of operating environment: declarative specification based on what rather than how. different environments giving different implementations
+\item complex protocols can be and should be expressed in an implementation independent way
+\item enables optimizations that cross-cur security: e.g. data placement: more flexibility-more optimization :- database paradigm
+\item new innovations: new insights into systems, easily build-able systems and implementing old systems in new environments or using new techniques (for eg a new cryptographic technique)
+\item a system can can be precisely specified in a page in the paper yielding to reproducible and more impactful research.
+\ei
+
+Several other systems have shared similar vision [MACE. MACEDON, URSA, P2] but there are several aspects in which we differ from those. The most important of those are support for security and location independent data-structures.
+
+Security forms the critical component of any real distributed system. One of the key goals of this project is to add support for security primitives that can abstract away the precise encryption algorithm from the specification. Thus, once expressed in form of our primitive, the specification could be implemented using a variety of different algorithms depending on the operating environment. This will allow the same specification to be used under multiple different environments. For example, if a node A is interested in performing action ``a'' if it receives an authenticated request from node B, then the authentication can be implemented using AES, RSA or even plain text depending on the kind of environment. However, the specification doesn't need to change depending on the environment as the implementation details are hidden from the specification through the abstract primitive. Instead, the implementation can be tuned by setting some global macros.
+
+The second important innovation of our work are the semantics and mechanism for distributed objects. Distributed objects are like conventional object, except that parts of a distributed object can be scattered throughout the network. The application specification is oblivious to the location of such objects. Thus, the applications can use these distributed objects without worrying about their location and the implementation can transparently export these graphs to optimize performance. These exporting policies can be tuned by some global macros. These distributed objects expose many possibilities of optimizing. A lazy export policy will export only the requisite portions of the graph to the receiver to minimize bandwidth whereas a pro-active export policy will serialize and export the graph together to reduce latency and overall bandwidth consumption.
+
+There is another important benefit of supporting such distributed objects in our system. Our system is based on P2 which is declarative query processing engine. As a result, the basic unit of information in our system is tuple. However, programs with tuples generally tend to be flat and tedious to write and comprehend. These distributed objects, represented in form of relational tuple graph, yields the addition benefit of adding structure to the program making them easier to understand without violating the relational semantics of the P2 world.
+
+Finally, security, tuple graphs and their integration needs some subtle syntactic and semantic addition to the language. These additions must ensure that the intuitive appeal of the language isn't lost in an attempt to provide greater flexibility. We discuss the additions in detail in subsequent sections.
+
+\subsection{System Model}
+
+We assume that the cryptographic primitives we use are perfect. All the nodes are homogeneous and have the same copy of the program. The latter requirement arises from our use of P2 framework.
+
+
+
+

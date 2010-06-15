@@ -1,0 +1,12 @@
+This is e-TeX, Version 3.141592-2.2 (MiKTeX 2.4) (preloaded format=latex 2004.12.30)  16 OCT 2007 13:52
+entering extended mode
+**reed-muller-struc.tex
+(reed-muller-struc.tex
+LaTeX2e <2003/12/01>
+Babel <v3.8a> and hyphenation patterns for english, french, german, ngerman, du
+mylang, nohyphenation, loaded.
+! Undefined control sequence.
+l.64 \chapter
+             [Structural Properties of Reed-Muller Codes]{Structural Propert...
+
+? 

@@ -1,0 +1,10 @@
+Y 10000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 7516.4984 FP 0.04 FN 0 Alarms 0.04 Bounds 1
+Y 20000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 15228.826 FP 0.14 FN 0 Alarms 0.14 Bounds 1
+Y 30000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 22901.29 FP 0.2 FN 0 Alarms 0.2 Bounds 1
+Y 40000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 31063.944 FP 0.3 FN 0 Alarms 0.3 Bounds 1
+Y 50000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 39495.752 FP 0.56 FN 0 Alarms 0.58 Bounds 0.98
+Y 60000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 47944.494 FP 0.58 FN 0.02 Alarms 0.76 Bounds 0.8
+Y 70000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 56311.228 FP 0.26 FN 0 Alarms 0.86 Bounds 0.4
+Y 80000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 64898.226 FP 0.06 FN 0 Alarms 0.88 Bounds 0.18
+Y 90000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 72668.33 FP 0.04 FN 0 Alarms 0.98 Bounds 0.06
+Y 100000 Epsilon 0.1 Coverage 25000 Count 50 AvgYHat 81165.64 FP 0 FN 0 Alarms 0.98 Bounds 0.02
