@@ -1,0 +1,164 @@
+\section{The Monitoring Rev}
+\label{sec:manage}
+As our \BOOMA prototype matured and we began to refine it, we started to suffer
+from a lack of performance monitoring and debugging tools. As Singh et al.\
+observed, Overlog is in essence a stream query language, well-suited to writing
+distributed monitoring queries~\cite{singh-eurosys}.  This offers a naturally
+introspective approach: simple Overlog queries can monitor complex protocols.
+Following that idea, we decided to develop a suite of debugging and monitoring
+tools for our own use in Overlog.
+
+%\jmh{Our first effort on this front was to simply annotate our code with logical constraints.  Is this stuff just coding discipline, or did we introduce some kind of language feature here?  And what is all this discussion of ``outermost enclosing Overlog programs''?}
+
+%\paa{we introduced the trivial language feature of the distinguished predicate ("die") that will create an exception in the host language via a callback.  similar to what boon describes in the lbtrust work}
+
+\subsection{Invariants}
+\label{sec:invar}
+%\jmh{I'm still not too happy with this subsection.  I asked Brewer and Remzi for more cites on the ``maxim'', and if they can't suggest anything we should reword less pedantically.}
+One advantage of a logic-oriented language like Overlog is that system
+invariants can easily be written declaratively and enforced by the runtime.
+This includes ``watchdog rules'' that provide runtime checks of program behavior.
+ % --- in fact, local rules in Overlog are essentially invariant specifications over derived relations.  It is often useful to add additional ``watchdog'' invariants to debug an Overlog program, even though they are not required during execution.  
+For example, a simple watchdog rule can check that the number of messages sent by a
+protocol like Paxos matches the specification.  
+%\jmh{Idea for future work: static inference of such properties from rulesets (perhaps a formal execution model required?)  Start with this precise example!}
+% Formally, this may be implicit in the protocol specification, and hence redundant.  But the redundancy only holds if the protocol is correctly specified; the point of adding such logic is to ensure that the specification is correct.   Moreover, 
+% \nrc{Is the following text relevant? Interesting, probably true, but why do I care?} Distributed Overlog rules induce asynchrony across nodes; such rules are only {\em attempts} to achieve invariants.  An Overlog program needs to be enhanced with global coordination mechanisms like two-phase commit or distributed snapshots to convert distributed Overlog rules into global invariants~\cite{chandylamport}.  Singh et al.\ have shown how to implement Chandy-Lamport distributed snapshots in Overlog~\cite{singh-eurosys}; we did not go that far in our own implementation.  
+
+To simplify debugging, we wanted a mechanism to integrate Overlog invariant
+checks into Java exception handling.  To this end, we added a relation called
+\emph{die} to \JOL; when tuples are inserted into the \emph{die} relation, a Java
+event listener is triggered that throws an exception.  This feature makes it
+easy to link invariant assertions in Overlog to Java exceptions: one writes an
+Overlog rule with an invariant check in the body, and the \emph{die} relation in
+the head. Our use of the \emph{die} relation is similar to the \emph{panic}
+relation described by Gupta et al.~\cite{panic}.
+
+% \jmh{This is an example of a ``listener'' that we mentioned earlier; we need a name for update-oriented table functions.}
+
+
+We made extensive use of these local-node invariants in our code and unit tests.
+Although these watchdog rules increase the size of a program, they improve both
+reliability and readability.  In fact, had we been coding in Java rather than
+Overlog we would likely have put the same invariants in natural language
+comments, and ``compiled them'' into executable form via hand-written routines
+below the comments (with the attendant risk that the Java does not in fact
+achieve the semantics of the comment).  We found that adding invariants of this
+form was especially useful given the nature of Overlog: the terse syntax means
+that program complexity grows rapidly with code size.  Assertions that we
+specified early in the implementation of Paxos aided our confidence in its
+correctness as we added features and optimizations.
+
+\subsection{Monitoring via Metaprogramming}
+\label{sec:monitor}
+Our initial prototype of \BOOM-FS had significant performance problems.
+Unfortunately, Java-level performance tools were of little help. A poorly-tuned
+Overlog program spends most of its time in the same routines as a well-tuned
+Overlog program: in dataflow operators like Join and Aggregation.  Java-level
+profiling lacks the semantics to determine which Overlog rules are causing the
+lion's share of the runtime.
+
+It is easy to do this kind of bookkeeping directly in
+Overlog.  In the simplest approach, one can replicate the body of each
+rule in an Overlog program and send its output to a log table (which
+can be either local or remote). For example, the Paxos rule that tests
+whether a particular round of voting has reached quorum:
+
+{\footnotesize
+\begin{verbatim}
+  quorum(@Master, Round) :-
+      priestCnt(@Master, Pcnt),
+      lastPromiseCnt(@Master, Round, Vcnt),
+      Vcnt > (Pcnt / 2);
+\end{verbatim}
+}
+\noindent
+might have an associated tracing rule:
+{\footnotesize
+\begin{verbatim}
+  trace_r1(@Master, Round, RuleHead, Tstamp) :-
+      priestCnt(@Master, Pcnt),
+      lastPromiseCnt(@Master, Round, Vcnt),
+      Vcnt > (Pcnt / 2),
+      RuleHead = "quorum",
+      Tstamp = System.currentTimeMillis();
+\end{verbatim}
+}
+\noindent
+This approach captures per-rule dataflow in a trace relation that can
+be queried later.  Finer levels of detail can be achieved by
+``tapping'' each of the predicates in the rule body separately in a
+similar fashion.  The resulting program passes no more than twice as
+much data through the system, with one copy of the data being ``teed
+off'' for tracing along the way.  When profiling, this overhead is
+often acceptable. However, writing the trace rules by hand is tedious.
+
+Using the metaprogramming approach of Evita Raced~\cite{evitaraced},
+we were able to automate this task via a \emph{trace rewriting} program
+written in Overlog, involving the meta-tables of rules and terms.  The
+trace rewriting expresses logically that for selected rules of some
+program, new rules should be added to the program containing the body
+terms of the original rule and auto-generated head terms. Network
+traces fall out of this approach naturally: any dataflow transition
+that results in network communication is flagged in the generated head
+predicate during trace rewriting.
+
+% For example, a rule like:
+% {\small
+% \begin{verbatim}
+% sendPrepare(@Peer,Round,Decree,Agent) :-
+%   prepare(@Agent,Round,Decree),
+%   Round >= 0, parliament(@Agent,Peer);
+% \end{verbatim}
+% }
+% \noindent
+% specifies that each tuple of \texttt{\small prepare} with Round > 0 should be joined with each tuple of \texttt{\small prepare}, and the resulting projected tuple should be sent to the location in its second field and stored in table \texttt{\small sendPrepare}.  This rule can cause the addition of a network trace rule:
+% {\small 
+% \begin{verbatim}
+% tap_out_sendPrepare(Peer,Round,Decree,@Agent) :-
+%   prepare(@Agent,Round,Decree),
+%   Round >= 0, parliament(@Agent,Peer);
+% \end{verbatim}
+% }
+% \noindent
+% that logs the message to be sent; it can also cause the addition of a rule:
+% {\small 
+% \begin{verbatim}
+% tap_in_sendPrepare(@Peer,Round,Decree,Agent) :-
+%   prepare(@Agent,Round,Decree),
+%   Round >= 0, parliament(@Agent,Peer);
+% \end{verbatim}
+% }
+% \noindent
+% that logs the messages received.  Note the difference in the location specifiers (\at) in the two head relations.
+
+Using this idea, it took less than a day to create a general-purpose Overlog
+code coverage tool that traced the execution of our unit tests and reported
+statistics on the ``firings'' of rules in the \JOL runtime, and the counts of
+tuples deduced into tables. We ran our regression tests through this tool, and
+immediately found both ``dead code'' rules in our programs, and code that we
+knew needed to be exercised by the tests but was as-yet uncovered.
+
+\subsection{Discussion}
+The invariant assertions described in Section~\ref{sec:invar} are expressed in
+12 Overlog rules (60 lines of code).  We added assertions incrementally over the
+lifetime of the project; while a bit harder to measure than our more focused
+efforts, we estimate this at no more than 8 person-hours in total.  The
+monitoring rewrites described in Section~\ref{sec:monitor} required 15 rules in
+64 lines of Overlog. We also wrote a tool to present the trace summary to the
+end user, which constituted 280 lines of Java. Because \JOL already provided the
+metaprogramming features we needed, it took less than one developer day to
+implement these rewrites.
+
+Capturing parser state in tables had several benefits.  Because the program code
+itself is represented as data, introspection is a query over the metadata catalog,
+while automatic program rewrites are updates to the catalog tables.  Setting up
+traces to report upon distributed executions was a simple matter of writing
+rules that query existing rules and insert new ones.
+
+Using a declarative, rule-based language allowed us to express assertions in a
+``cross-cutting'' fashion.  A watchdog rule describes a query over system state
+that must never hold: such a rule is both a specification of an invariant and a
+check that enforces it.  The assertion need not be closely coupled with the
+rules that modify the relevant state; instead, assertion rules may be written as
+a independent collection of concerns.

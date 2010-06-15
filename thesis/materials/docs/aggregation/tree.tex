@@ -1,0 +1,108 @@
+\documentclass[10pt]{style}
+\usepackage[centertags]{amsmath}
+\usepackage{amsthm}
+\usepackage{epsfig}
+
+% THEOREMS ---------------------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}%[section]
+
+\theoremstyle{remark}
+\newtheorem{rem}{Remark}[section]
+
+\numberwithin{equation}{section}
+\renewcommand{\theequation}{\thesection.\arabic{equation}}
+
+\title {Binary Tree Network Reliability}
+\author {Aydan R. Yumerefendi}
+\begin{document}
+
+  \maketitle
+
+  We examine the problem of binary tree network reliability. Let $B$
+  be a complete binary tree with $n$ leaf nodes and $\log_2{n}+1$
+  levels. We label the levels of $B$ staring from 0 to $\log_2n$, where 0 is the leaf
+  level. Let $v$ be a value we would like to send to the root of the
+  tree by sending it to $c \geq 1$ leaf tree nodes. Let $P(k,n,c)$ be
+  the probability that a node at level $k$ in a binary tree with $n$
+  leaves will not receive $v$ when we initially send $c$ copies of it
+  to leaf tree nodes chosen uniformly at random with replacement.
+
+  {\bf No failures}
+  Assume that no node of $B$ fails before $B$ has completed all
+  forwarding. Let $A$ be the event that a leaf node is selected to
+  receive a copy of $v$ after the first selection: $P(A) =
+  \frac{1}{n}$ and $P(\overline{A}) = \frac{n-1}{n}$. Let $B$ be the
+  event that a leaf node is not selected to receive a copy of $v$
+  after $c$ selections: $P(B) = (\frac{n-1}{n})^c$. 
+
+  \noindent $\Rightarrow P(0,n,c)= (\frac{n-1}{n})^c$.
+  A tree node on level k, will not receive a copy of $v$ if none of
+  its children on level $k-1$ have received a copy. Therefore:
+  \begin{eqnarray*}
+    P(k,n,c) = P(k-1,n,c)P(k-1, n-2^{k-1},c)
+  \end{eqnarray*}
+  Where the first factor is the probability that $a$ did not receive
+  the value, and the second factor is the probability that $b$ did not
+  receive the value.
+
+  For $k =1$, we have that:
+  \begin{eqnarray*}
+    P(1, n,c) &=& P(0, n,c)P(0, n-1,c) = \\
+    &=&(\frac{n-1}{n})^c(\frac{n-2}{n-1})^c=\\
+    &=&(\frac{n-2}{n})^c
+  \end{eqnarray*}
+
+  \begin{prop}
+    $P(k,n,c) = (\frac{n-2^k}{n})^c$
+  \end{prop}
+
+  \begin{proof}
+    We demonstrated that the above statement holds for $k=1$. Let
+    for $k=l \leq 1$ the statement also be true. For $k=l+1$, we have:
+    \begin{eqnarray*}
+      P(l+1,n,c) &=& P(l,n,c)P(l, n-2^{l},c) = \\
+      &=& (\frac{n-2^l}{n})^c(\frac{n-2^{l}-2^{l}}{n-2^l})^c =\\
+      &=& (\frac{n-2^{l+1}}{n})^c
+    \end{eqnarray*}
+    $\Rightarrow P(k,n,c) = (\frac{n-2^k}{n})^c$ for any $0 \leq k
+    \leq \log_2n$. 
+  \end{proof}
+
+  {\bf Independent Failures} Assume that each tree node can fail
+  independently with probability $\epsilon$. A node at level $k$ fails
+  with probability $\epsilon$ and  does not fail with probability
+  $1-\epsilon$. A failed node does not receive $v$ with probability
+  $1$. Therefore:
+  \begin{eqnarray*}
+    P(k,n,c) = \epsilon + (1-\epsilon)P'(k-1, n, c)
+  \end{eqnarray*}
+  where $P'(k-1,n,c)$ is the joint probability that both children of
+  the node do not receive a copy of $v$.
+
+  Let $P(B_i^k)$ be the probability that in the initial distribution
+  of $v$, there have been $i$ selections in the first $2^k$ tree leaf
+  nodes. We can express $P'(k,n,c)$ as:
+  \begin{eqnarray*}
+    P'(k, n, c) = \sum_{i=0}^{i=c}P(k-1,2^{k-1},i)P(k-1, n-2^{k-1}, c-i)P(B_i^{k-1})
+  \end{eqnarray*}
+
+  Let $X_{n,c}^k$ be a random variable describing the number of
+  selections in the first $2^k$ nodes of a network of $n$ total nodes
+  and replication factor $c$. We have that:
+  \begin{eqnarray*}
+    P(X_{n,c}^0=i) = {c \choose i}(\frac{1}{n})^i(\frac{n-1}{n})^{c-i} 
+  \end{eqnarray*}
+  We can define $P(X_{n,c}^k=i)$ recursively as:
+  \begin{eqnarray*}
+    P(X_{n,c}^k=i) = \sum_{j=0}^{j=i}P(X_{n,c}^{k-1}=
+    i-j)P(X_{n-2^{k-1},c-i+j}^{k-1}= j)
+  \end{eqnarray*}
+
+\end{document}

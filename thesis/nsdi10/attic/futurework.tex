@@ -1,0 +1,23 @@
+\section{Future Work}
+Our HOP implementation demonstrates the feasibility of interactive processing in a MapReduce framework, providing new functionality like online aggregation and continuous queries at modest cost, and in fact providing improved performance for many traditional batch MapReduce jobs as well.  It raises a number of research questions and opportunities as well.
+
+A number of questions arise in the general area of scheduling.
+Stock Hadoop already has many degrees of freedom in scheduling batch tasks across machines and time, and the introduction of pipelining only increases this design space.  First, pipeline parallelism is a new option for improving performance.  Given a fixed budget of task slots the system can run, pipeline depth has to be traded off against the number of concurrent partitions of a single dataflow stage (map or a reduce).  Second, the ability to schedule deep pipelines with direct communication between reduces and maps (bypassing HDFS) opens up new opportunities and challenges in co-locating computations carefully to avoid communication.
+
+Pipelining also has tradeoffs with the use of map-side combiners.  For example, given a job that counts the number of males and females in a list of people, pipelining may not be a good option, since there is massive data reduction available from a blocking map-side combiner. On the other hand, for jobs where we can not run combiners at the map side, e.g. Sort, pipelining is likely the better choice when resources are plentiful, due to the benefits of pipelined parallelism.  Since the data-reduction benefit of combiners is not typically known in advance, pipelining batch sizes should probably be chosen in a dynamic fashion.
+
+% Inter-job pipelining brings up some interesting opportunities for optimization as well. First, if we have a chain of two jobs, we can have the
+% first job write its output to the local disk instead of going to HDFS. This
+% saves the HDFS overhead at the expense of the risk of local disk failure.
+% Since the intermediate data is relatively ephemeral, the window of risk may be tolerable in many cases. Second, we want to try scheduling maps of second job at nodes where reduces of the first job are running. This way data pipelining will be done locally and will not have to go through the network.
+
+% Online aggregation changes some of the scheduling criteria in cases where there are not enough slots systemwide for all of a job's tasks.  Map and reduce tasks affect an online aggregation job differently: leaving map tasks unscheduled is akin to sampling the input file, whereas leaving reduce tasks unscheduled is akin to missing certain output keys -- some of which could be from groups with many inputs.  This favors reducers over mappers, at least during early stages of processing.  
+
+In order to improve early results of pipelined flows (e.g., for online aggregation), it is often desirable to prioritize ``interesting'' data in the pipeline, both at the mapper and reducer.  Online reordering of data streams has been studied in the centralized setting~\cite{juggle}, but it is unclear how to expose it in the MapReduce programming framework, with multiple nodes running in parallel -- especially if the data in the input file is not well randomized.  
+
+Continuous queries over streams raise many specific for optimizations, including sharing of work across queries on the same streams, adapting dataflow processing dynamically to account for workload and resource shifts, and minimizing the work done per query depending on windowing and aggregate function semantics.  Most of these issues would need to be rethought in the context of a MapReduce framework, but in the absence of a good driving example, it is not clear which of these to prioritize.
+ % many of which have been well-studied in the literature and should port naturally to a MapReduce setting, as demonstrated in initial work on the topic~\cite{logoyocum08}.  One key issue in the literature is the sharing of work across multiple queries on the same stream~\cite{precisionsharing,huebsch}; but prior work does not necessarily map well to a MapReduce framework, and the issue deserves more investigation.  
+One useful, concrete goal for continuous MapReduce is to make HOP reflective: ensure that Hadoop can provide near-real-time performance monitoring via continuous MapReduce jobs, incurring minimal overhead while producing good results.  
+
+Having opened up MapReduce to enable early returns and continuous queries, a natural line of research is to explore new and creative uses of the system.  
+{\em too tired to finish tonight.  The idea is to pitch radical reuse of Hadoop for interactive processing.  Will try to finish toomorrow AM.  -J }

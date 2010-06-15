@@ -1,0 +1,303 @@
+% Try to fill figures onto the page
+\usepackage{amsmath,amssymb,amsfonts}
+%\usepackage{times}
+\usepackage{theorem}
+\usepackage{color,graphicx}
+\usepackage{boxedminipage}
+\usepackage{program}
+\usepackage{float}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[tight]{subfigure}
+\usepackage{fancyhdr}
+\usepackage{calc}
+%\usepackage{bibspacing}
+
+\theoremstyle{plain}
+\setlength{\theorempostskipamount}{5pt}
+\setlength{\theorempreskipamount}{5pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newtheorem{Def}{Definition}
+\newtheorem{Not}{Notation}
+\newtheorem{Claim}{Claim}
+\newtheorem{Theorem}{Theorem}
+\newtheorem{Lem}{Lemma}
+\newtheorem{Cor}{Corollary}
+\newtheorem{Example}{Example}
+\newtheorem{Assumption}{Assumption}
+\newtheorem{Constraint}{Constraint}
+\providecommand{\LAR}{\leftarrow}
+\providecommand{\RAR}{\rightarrow}
+\providecommand{\DOT}{\centerdot}
+\providecommand{\satisfies}{\rightarrow}
+
+
+\floatstyle{ruled}
+\newfloat{Algorithm}{thp}{lop}
+\floatstyle{ruled}
+\newfloat{Query}{thp}{lop}
+
+\renewcommand{\topfraction}{1.00}
+\renewcommand{\floatpagefraction}{1.00}
+\renewcommand{\textfraction}{0.00}
+\renewcommand{\dbltopfraction}{1.00}
+\renewcommand{\dblfloatpagefraction}{1.00}
+
+\def\ttt{~}
+\def\mc{\prec_{mc}}
+\def\po{\prec}
+%\def\domain{\cal D}
+\def\fc#1#2#3{#1 \mkern1mu\hbox{:}\; #2 \leadsto #3}
+\def\mci#1#2#3{#1 \mkern1mu\hbox{:}\; #2 \prec_{mc} #3}
+\def\eci#1#2#3{#1 \mkern1mu\hbox{:}\; #2 =_{ec} #3}
+\def\Xvec{{\vec X}}
+\def\Yvec{{\vec Y}}
+\def\xvec{{\vec x}}
+\def\yvec{{\vec y}}
+\def\imp{\mathrel{:}\mathrel{-}}
+\def\dcone{\bigvee_{i=1}^n {\cal C}_i}
+\def\dctwo{\bigvee_{i=1}^m {\cal B}_i}
+\def\edb{e_1,\ldots,e_m}
+\def\comp{\circ}
+\newcommand{\calp}{\ensuremath{\mathcal{P}}}
+\newcommand{\calf}{\ensuremath{\mathcal{F}}}
+\newcommand{\calc}{\ensuremath{\mathcal{C}}}
+\newcommand{\caln}{\ensuremath{\mathcal{N}}}
+\newcommand{\call}{\ensuremath{\mathcal{L}}}
+\newcommand{\cala}{\ensuremath{\mathcal{A}}}
+\newcommand{\calr}{\ensuremath{\mathcal{R}}}
+\newcommand{\calv}{\ensuremath{\mathcal{V}}}
+\newcommand{\calq}{\ensuremath{\mathcal{Q}}}
+\newcommand{\calm}{\ensuremath{\mathcal{M}}}
+%\newcommand{\tukwila}{\mbox{\sf Tukwila}}
+\newcommand{\tukwila}{Tukwila}
+%\newcommand{\Tukwila}{\mbox{\sf Tukwila}}
+\newcommand{\Tukwila}{Tukwila}
+\newcommand{\calo}{\ensuremath{\mathcal{O}}}
+\newcommand{\calw}{\ensuremath{\mathcal{W}}}
+\newcommand{\cals}{\ensuremath{\mathcal{S}}}
+\newcommand{\calt}{\ensuremath{\mathcal{T}}}
+\newcommand{\cale}{\ensuremath{\mathcal{E}}}
+\newcommand{\cali}{\ensuremath{\mathcal{I}}}
+\newcommand{\cald}{\ensuremath{\mathcal{D}}}
+\newcommand{\calg}{\ensuremath{\mathcal{G}}}
+\newif\iffullpaper
+%\fullpaperfalse
+\fullpapertrue
+
+
+\newcommand{\ojoin}{\mbox{}^-_-\!\raisebox{-0.3mm}{$\bowtie$}\!^-_-}
+
+
+
+%%%%%%%%%%%%%%%%  Weld's additions
+
+\newcommand{\comment}[1]{}
+\newcommand{\NOTE}[1]{\marginpar{\em {#1}}}
+\newcommand{\bug}
+    {\mbox{\rule{2mm}{2mm}}}
+\newcommand{\Bug}[1]
+    {\bug \footnote{BUG: {#1}}}
+\newcommand{\TT}[1]{\mbox{\tt #1}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\BE}{\begin{enumerate}}
+\newcommand{\EE}{\end{enumerate}}
+\newcommand{\link}[1]{{\small \url{#1}}}
+
+
+%\newcommand{\etc}{\mbox{\it etc.}}
+%\newcommand{\eg}{\mbox{\it e.g.}}
+%\newcommand{\ie}{\mbox{\it i.e.}}
+%\newcommand{\Eg}{\mbox{\it E.g.}}
+%\newcommand{\Ie}{\mbox{\it I.e.}}
+%\newcommand{\etc}{\mbox{etc.}\xspace}
+%\newcommand{\eg}{e.g.,}
+%\newcommand{\ie}{i.e.,}
+\newcommand{\?}{\mbox{?}}
+
+\newcommand{\tuple}[1]
+        {\mbox{$\langle{#1}\rangle$}}
+%\newcommand{\set}[1]
+%        {\mbox{$\{{#1}\}$}}
+\newcommand{\size}[1]{\mbox{$\mid\!#1\!\mid$}}
+\newcommand{\fun}[2]{$\mathbf{#1}(#2)$}
+
+\newtheorem{defn}{Definition}
+\newtheorem{them}{Proposition}          
+\newtheorem{lemma}[them]{Proposition}   
+%\newtheorem{example}{Example}
+\newtheorem{ex}{Example}[section]
+
+
+
+%%%%%%%%%%%%%%%%%% Friedman's additions
+
+%\newcommand{\myps}[3]{\psfig{figure=#1,scale=100*{#2}}}
+\newcommand{\myps}[3]{\rotatebox{#3}{\scalebox{#2}{\includegraphics{#1}}}}
+
+%\newcommand{\myitem}[1] {{\noindent}{\bf {#1}}}
+\newcommand{\myitem}[1] {\item {#1}}
+\newcommand{\mylist}{\begin{itemize_squeeze}}
+\newcommand{\mylistend}{\end{itemize_squeeze}}
+\newcommand{\myparagraph}[1]{\vspace{-.15in}\paragraph{#1}}
+\newcommand{\mysubsection}[1]{\vspace{-.1in}\subsection{#1}\vspace{-.12in}}
+\newcommand{\mysubsubsection}[1]{\vspace{-.1in}\subsubsection{#1}\vspace{-.12in}}
+\newcommand{\mysubsubsections}[1]{\vspace{-.1in}\subsubsection*{#1}\vspace{-.12in}}
+\newcommand{\mycaption}[1]{\vspace{-.1in}\caption{#1}\vspace{-.13in}}
+\newcommand{\mysection}[1]{\vspace{-.15in}\section{#1}\vspace{-.15in}}
+%\newcommand{\pair}[2]   {\mbox{$\langle{\mbox{#1}},{\mbox{#2}}\rangle$}}
+%\newcommand{\tuple}[1]   {\mbox{$\langle{\mbox{#1}}\rangle$}}
+\newcommand{\triple}[3]{\ensuremath{(#1,#2,#3)}}
+\newcommand{\pair}[2]{\ensuremath{(#1,#2)}}
+\newcommand{\constant}[1]{\mbox{$\tt{#1}$}}
+\newcommand{\etal}       {{\em et al.\/}}
+\newcommand{\naive}      {na\"{\i}ve\xspace}
+\newcommand{\Naive}      {Na\"{\i}ve}
+\newcommand{\new}[1]{{\em #1\/}}                % New term (emphasized).
+%\newcommand{\new}[1]     {\emph{#1}}
+%\newcommand{\fixedfont}[1] {\texttt{#1}}
+\newcommand{\fixedfont}[1]{#1} % fix this
+
+\newenvironment{itemize_squeeze}{
+  \begin{list}{$\bullet$}{
+                \setlength{\rightmargin}{0pt}% Horizontal spacing
+                \setlength{\listparindent}{0pt}
+                \setlength{\itemindent}{0pt}
+                \setlength{\labelwidth}{5pt}
+                \setlength{\labelsep}{3pt}
+                \setlength{\leftmargin}{8pt}
+                \setlength{\parsep}{0pt}%        Vertical spacing
+                \setlength{\itemsep}{0pt}
+                \setlength{\topsep}{3pt}
+                \setlength{\parskip}{0pt}
+                \setlength{\partopsep}{0pt}}}
+{
+%                \addtolength{\textwidth}{1in}%               Misc
+%                \addtolength{\oddsidemargin}{-.5in}
+%                \addtolength{\textheight}{1.5in}
+%                \addtolength{\topmargin}{-1in}
+  \end{list}}
+
+\newenvironment{itemize_squeeze_oneitem}{
+  \begin{list}{ }{
+                \setlength{\rightmargin}{0pt}% Horizontal spacing
+                \setlength{\listparindent}{0pt}
+                \setlength{\itemindent}{0pt}
+                \setlength{\labelwidth}{5pt}
+                \setlength{\labelsep}{3pt}
+                \setlength{\leftmargin}{8pt}
+                \setlength{\parsep}{0pt}%        Vertical spacing
+                \setlength{\itemsep}{0pt}
+                \setlength{\topsep}{3pt}
+                \setlength{\parskip}{0pt}
+                \setlength{\partopsep}{0pt}}}
+{
+  \end{list}}
+
+
+%%%%%%%% Macros for examples, zives:
+% \begin{example}{width}..\end{example} environment establishes minipage, 
+%       increments ex. counter
+% \begin{ecolumn}{width} creates a column with small font
+%
+% \ecaption{name}{text} creates a counter label plus a caption
+% \eref{name} returns the counter value
+\newcounter{example}
+\newenvironment{example}[1][\textwidth]{\begin{minipage}[t]{#1}\addtocounter{example}{1}}{\end{minipage}}
+\newenvironment{ecolumn}[1][3.5in]{\begin{minipage}[t]{#1}\footnotesize}{\end{minipage}}
+\newcommand{\eref}[1]{\arabic{ex:#1}}
+\newcommand{\ecaption}[2]{\center{Example \arabic{example}: #2}\vspace{+0.15in}\newcounter{ex:#1}\setcounter{ex:#1}{\arabic{example}}}
+
+% Outputs a figure with a divider line at the top and bottom
+\newenvironment{linedfig}{\begin{figure*}[tb]\rule{\textwidth}{0.5pt}}{\rule{\textwidth}{0.5pt}\end{figure*}}
+
+% Use \openbox{\newcommandname} and \closebox{\newcommandname} (where \newcommandname is
+% a command name you invent) to create a framed box into which you can put verbatim, etc.
+% You can nest this inside of a figure environment, also (but the caption goes *outside*).
+\newcommand{\openbox}[1]{\newsavebox{#1}\begin{lrbox}{#1}}
+\newcommand{\closebox}[1]{\end{lrbox}\fbox{\usebox{#1}}}
+
+\newcommand{\id}{{\tt ID}}
+\newcommand{\idref}{{\tt IDREF}}
+\newcommand{\idrefs}{{\tt IDREFS}}
+\newcommand{\pcdata}{{\tt PCDATA}}
+
+\newcommand{\appearedin}[1] {
+\vspace{-2.5in}
+\vbox to 0pt{\hfill\framebox{\bf \it Appeared in proceedings of #1}}
+\vspace{2.5in}
+}
+
+\newcommand{\submittedto}[1] {
+\vspace{-2.5in}
+\vbox to 0pt{\hfill\framebox{\bf \it Submitted to #1}}
+\vspace{2.5in}
+}
+
+\newenvironment{example2}{\begin{ex} \nopagebreak
+  \begin{rm}}{{\hfill$\Box$}\end{rm}\end{ex}} 
+
+\newenvironment{theorem}{\begin{thm} \nopagebreak}{\end{thm}}
+
+\newenvironment{proof2}{\noindent {\bf Proof. } \nopagebreak 
+\begin{normalsize}}{\end{normalsize}{\hfill$\Box$}\vspace*{0.2cm}}
+
+\newenvironment{definition}[1]{\begin{defin}\begin{rm}({\bf 
+#1})}{{\hfill$\Box$}\end{rm}\end{defin}}
+
+\newenvironment{examp}{\begin{ex} \nopagebreak
+  \begin{rm}}{{\hfill$\Box$}\end{rm}\end{ex}} 
+
+\newenvironment{corollary}{\begin{corol} \nopagebreak}{\end{corol}}
+
+\newenvironment{namedproof}[1]{\noindent {\bf Proof.}~(#1) \nopagebreak
+\begin{normalsize}}{\end{normalsize}{\hfill$\Box$}\vspace*{0.2cm}}
+
+\def\papernumber #1 raised #2 {
+%\vspace{-#2}
+\vbox to 0pt{\hfill\framebox{\bf \it Paper \# #1}}
+\vspace{#2}
+}
+
+\def\dand{{\mbox{$\; \& \;$}}}
+\def\dif{{\mbox{$\; :- \;$}}}
+\def\tand{{\mbox{$\; \sqcap \;$}}}
+
+\def\classic{{\sc Classic}}
+
+\newcommand{\V}{\mbox{${\cal V}$}}
+%\newcommand{\R}{\mbox{${\cal R}$}}
+\newcommand{\barX}{{\bar X}}
+\newcommand{\barY}{{\bar Y}}
+\newcommand{\barA}{{\bar A}}
+\newcommand{\barC}{{\bar C}}
+\newcommand{\plan}{{\cal P}}
+\newcommand{\query}{{\cal Q}}
+\newcommand{\viewdef}{{\cal V}}
+\newcommand{\vlit}{v}
+\newcommand{\marker}{\star}
+%\newcommand{\system}{``Q''}
+\newcommand{\system}{Tukwila-CQP}
+
+\newcommand{\eat}[1]{}
+
+\newcommand{\reminder}[1]{{\bf  [[  #1 ]]}\typeout{#1}}
+
+
+
+\def\Dlog{{\em NDlog}\xspace}
+\def\Mlog{{\em Mozlog}\xspace}
+\def\Overlog{{\em Overlog}\xspace}
+\def\P2{{\em P2}\xspace}
+\def\Pitu{{\em P2}\xspace}
+\def\Sys{{\em P2}\xspace}
+\newenvironment{SQL}{\begin{alltt}\footnotesize}{\end{alltt}}
+\newcommand{\nd}[1]{\texttt{\scriptsize #1}}
+\newenvironment{NDlog}{\vspace{-1.5mm}\begin{alltt}\scriptsize}{\end{alltt}\vspace{-1.5mm}}
+\newcommand{\datalogspace}{\textcolor[gray]{1}{.}\hspace{0.8in}}
+\newcommand{\lab}[1]{\textrm{\bf #1:\hspace{0.35in}}}
+
+\newcommand{\jmh}[1]{\textcolor{red}{#1 -- jmh}}
+\newcommand{\ion}[1]{\textcolor{blue}{#1 -- ion}}
+\newcommand{\petros}[1]{\textcolor{green}{#1 -- petros}}

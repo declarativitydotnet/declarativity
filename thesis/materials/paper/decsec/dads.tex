@@ -1,0 +1,147 @@
+\subsection{Distributed Abstract Data Structures: DADS}
+\prince{need to highlight that compound tuples enable lazy vs pro-active export of data: Also enable distributed graphs to be seen as one atomic object}
+%In order to support all kinds of security protocols, we must be able to authenticate multiple tuples together i.e. a principal must be able to say multiple tuples simultaneously such as {\em P says ``A and B''}. The most important reason for this requirement is that in secure contexts, {\em P says ``A and B''} is not same as {\em P says ``A''} and {\em P says ``B''}. This is because P saying A and B together provides this additional guarantee that if A is {\em fresh} (or in other words known to be recent), then B will also be {\em fresh}. We don't get this guarantee if we hear A and B separately from P. Note that freshness is an important property in security, particularly in authentication~\cite{lampson91} and hence it's important to be able to say multiple tuples together. Furthermore, ability to say multiple tuple provides additional structure to the program as now related tuples can be communicated together with just one command and the implementation will automatically export all the tuples as opposed to exporting each tuple explicitly. Finally, it often incurs larger overhead per unit message size if we send several small messages rather than sending a big message.
+
+%DADS are used for three different reasons in our system: 
+%\be
+%\item They provide a mechanism to group data together.
+%\item They provide structure to otherwise unstructured relational program.
+%\item They provide logical structuring of data in a location independent fashion.
+%\ee
+%The fact that Syslog derives from Datalog, a relational query processing language, is the main cause of the flatness of the Syslog programs. Data in Overlog and Datalog, can be cumulated in form of tuples only. There is no in-built way to structure data beyond tuples. However, it becomes increasingly complex to encode complex data structures that real systems use in form of tables and tuples. 
+\delete{
+Our syntactic and semantic additions for DADS are driven by the urge to adhere to the underlying the relational model. This greatly constrained the choices we had for adding structure to our base language. For example, it ruled out embedding data from multiple tuples into one field as it would have been very difficult to efficiently support lookups, joins etc on such embedded data. Furthermore, simple foreign key approach also posed several limitations such as unclear semantics of which all data gets exported when a tuple containing foreign keys gets exported, and more importantly foreign key approach doesn't naturally provides immutability to received data which seems important from systems perspective. In face of all these challenges, our semantics try to combine the benefits of both foreign key approach and the embedding approach while eliminating their shortcomings.
+}
+
+%\prince{this para seems un-necessary or at least too verbose. needs revision}
+%Now, in theory it is possible to construct a large tuple consisting of all the fields from A and B. But, there are several drawbacks of such an approach:
+%\begin{enumerate}
+%\item First important drawback from the programmer's point of view is the need to write the code to copy actual  tuples into such large carrier tuples every time a set of tuples is communicated.
+% \item Secondly, as the number of tuples that could be communicated securely increases, the number of such large tuples increases combinatorially. 
+%\item Lastly, this approach directly contradicts the code re-usability paradigm as the programmer needs to write different set of rules for sending the same tuple in different carrier tuples. 
+%\end{enumerate}
+
+DADS link together tuples in a relational manner by providing tuples the ability to reference other tuples. Thus, DADS represent the relational analogue of objects. DADS can be best understood as tuple trees, where parent tuple provide links to children tuples. These links are called {\em tuple links}. Tuple links are always declared at the parent tuple. Multiple parents can be linked to same child.
+
+\delete{
+DADS eliminate the problems with sending individual tuples and using carrier tuples. They eliminate both the performance overheads associated with sending tuples separately and the programmer overheads of creating a giant carrier tuple while providing the security guarantees of saying several tuples together. Furthermore, they enable code re-usability as now the code for sending a tuple doesn't need to be re-written by the programmer. This code is automatically generated and reused across all the occurrences of a tuple. Compound tuples enable versatility as they enable any combination of tuples to be constructed with little programmer overhead. Finally, they expose a slew of performance optimizations to the compiler by scheduling the export of links and associated data. A lazy implementation can make the movement of data demand driven to reduce network overhead whilst a latency sensitive application can request prefetching-fetching or pushing of the data with the links.
+}
+
+
+There are four major operations associated with a DADS. We briefly describe these operations below along with highlighting the equivalence with the operations on objects.
+\be
+\item Declaring the structure of a DADS: Declaring a class
+\item Creating a new DADS: Creating an object of a class
+\item Defining the contents of a DADS instance: Defining the contents of an object of a class
+\item Accessing contents of a DADS: Accessing fields of an object
+\ee
+
+{\bf Declaring the structure of a DADS:} A DADS is defined by the structure of a DADS graph and the type (table name) of the tuples embedded in the DADS graph at each node. This information is specified in form of {\em refTables} as shown below. A refTable entry represents a link from a {\em given field of a given tuple type} to {\em another tuple type}. This link information, recursively defines the structure of a DADS. 
+
+\begin{center}
+RefType \textit{ref}(ParentTableName, ChildTableName, LinkField)
+\end{center}
+
+This link establishes that the {\em LinkField}'th field of the {\em ParentTableName} is a link to the tuples of type {\em ChildTableName}. Thus, the LinkField'th field can be used to reference ChildTableName tuples linked through a ParentTableName tuple. RefType denotes the types of links. 
+
+We need to augment the language to include the syntax for creating DADS and defining their contents. New DADS can be created by the use of {\em new} keyword. A new DADS is specified by:
+\be
+\item Encapsulating the newly created DADS in the {\em new} wrapper.
+\item Prefixing the new link fields in the new wrapper by the {\em \&} sign: New link fields denote the set of fields which should be created fresh and populated by executing the constructor rules. For all other links, that are copied from some other {\em similar} link type, data from other link type is copied. Here, links are said to be {\em similar} iff they refer {\em to} the same tuple type.
+\ee
+
+There are two additions in the syntax of the Overlog language to support DADS.
+\begin{code}
+new<@Me, Opaque, TupleName(@Dest, ...other fields...)
+\end{code}
+
+These {\em new} predicates can be used in place of the conventional tuples. The semantics vary depending on where they are used. The second syntactic addition to support creation of new links. New link fields are denoted by the prefix $\&$.
+
+Syntactically speaking, accessing tuples embedded in a DADS graph is no different from accessing non-DADS tuples. The difference lies in the semantics of the location field. 
+
+\subsubsection{Semantics}
+
+The key aspects of DADS semantics are driven by the location independence of the DADS tuples. This implies that the semantics must be independent on the location of the actual DADS tuple and the properties we get are valid irrespective of the location of the actual DADS tuple. To simplify consistency issues associated with local and distributed data in a DADS, we make the DADS immutable. Thus any tuple which is placed in a DADS location specifier can't be modified. Note that this doesn't constrain us from modifying the root DADS tuples which have links to other tuples but are not {\em in} a DADS itself. With this is mind, lets start discussing the semantics of DADS in Syslog.
+
+We start with the taxonomy of the tuple links. Tuple links can be of several types depending on their security properties and the type of tuple they link to:
+\be
+\item {\bf Strong Links:} Integrity properties extend across these links. That is, integrity of a parent tuple ensures integrity of all tuples that are linked {\em strongly} to the parent tuple. Recursively applying this property on a DADS tuple graph, we get the property that integrity of a tuple ensures the integrity of the strongly connected children of the sub-tree rooted at that tuple.
+\item {\bf Weak Links:} Integrity properties cease to hold beyond these links. However, they are still useful for other semantic additions to language such as deep copy. Weak Links are ignored when dealing with authenticated or summarized statements. Weak links provide the benefits of structure, versatility, code reusability and expressibility to Syslog programs.
+\item {\bf WeakSays Links:} These are weak links that link to the {\em says} tuples of the ChildTableName table . 
+\item {\bf StrongSays Links:} These are strong links that link to the {\em says} tuples of the ChildTableName table.
+\ee
+
+Next we discuss the semantics of accessing these tuples. Even though syntactically, accessing DADS tuple is same as accessing a conventional tuple, there are some subtle semantic difference. The most important of these being that in rules containing DADS tuple, the referring tuple and the referred tuple must both occur simultaneously. Thus, it is not possible to write a rule that has a DADS referred tuple but not the DADS referring tuple. As stated earlier, this is driven by the location independence of the DADS tuple. The specification doesn't constrains the physical location of the DADS tuple but instead refers them using their logical location i.e. the location specifier. Hence, to limit the search space for locating the DADS tuple, we need the referring tuple to appear and bound the DADS location specifier. This enables us to identify the location of the referred DADS tuple using the information appear in the referring tuple. 
+
+This is not to say that DADS tuple graphs can be only 2-level deep (i.e. the first level needs to be a non-DADS tuple). A DADS tuple graph can be arbitrarily deep but any rule accessing a DADS tuple must be able to trace the path to that DADS tuple from the root non-DADS tuple (through possible other DADS tuple). Such a DADS tuple access is called bounded DADS access. Unbounded DADS accesses are not supported in our system for efficiency reasons.
+
+Let's consider an example to illustrate this point better.
+\begin{code}
+weak ref(parent, child, 2)\\
+r1 doSomething(@Me, A) :- parent(@Me, L), \\
+\> child(@L, A, Me).\\
+r2 doNothing(@Me, A) :-  child(@L, A, Me)
+\end{code}
+
+Rule r1 says that a tuple {\em doSomething(@Me, A)} should appear whenever we have a parent tuple and a DADS linked child tuple. Given that parent tuple are known to contain links to child tuple through second field, we statically know that the child tuple is a DADS linked tuple and hence can efficiently restrict the search to the set of DADS tuples pointed by the parent tuple present at node {\em Me}. On the other hand, rule r2 doesn't bound the DADS tuple thereby requiring the implementation to search the global space of nodes to locate all possible matching child tuples making the process prohibitively expensive. Thus, we don't support rules of type r2.
+
+Last and probably the most important aspect of DADS semantics is the construction of DADS. There are two steps in constructing a DADS. 
+\be
+\item Creating a {\em container tuple}
+\item Filling the {\em new links} in the container tuple using the constructor rules. 
+\ee
+
+{\em Container tuples} are the tuples that can contain links to other DADS tuples. Note that container tuples can be conventional tuples (i.e. non-DADS tuple which are not embedded in any DADS graph) or DADS tuples (i.e. embedded in some other DADS graph). These tuples are created using the {\em new} keyword. {\em New} keyword for creating container tuples can be viewed as the analogue of the new keyword used in c++ and java to create new objects. The syntax of the new keyword is given below:
+\begin{center}
+new<@Me, Opaque, TupleName(@Dest, ...other fields...)>
+\end{center}
+
+The Me field denotes the location or the node at which the construction takes place. This has to be a node location, not a DADS location specifier. The Opaque field can be used to export any information to the constructor rules that needn't be placed in the constructed object but might be needed to decide what is placed in the constructed object. The TupleName gives the name of the tuple being constructed and other fields give the field values for each field. The Dest field gives the final destination of the newly constructed tuple. This can be a node location, if the constructed tuple is the root of the DADS graph or it can be the DADS location specifier of an existing DADS if the newly constructed tuple needs to placed in that DADS.
+
+TupleName tuple can contain zero or more link fields as defined by the ref declarations. However, as specified above, no new link location specifier is created. Instead, location specifiers in the newly constructed TupleName tuple are linked to the DADS graphs as defined by the copied location specifiers present in other fields. If instead, a new location specifier needs to be created, then an unbounded variable prefixed by the $\&$ sign must be placed in the desired location amongst other fields. Thus, if a new location specifier needs to be created at a ref position 2 i.e. right after the Dest, then something like this should work. It must be ensured that L is unbounded in this rule.
+\begin{code}
+new<@Me, Opaque, TupleName(@Dest, \&L,\\
+\> ..other fields...):- ...other terms...
+\end{code}
+
+Let's now discuss the semantics for filling in the {\em new links}. New links are the links created using the $\&$ prefix in the new rules. A constructor rule is different from a conventional rule in the fact that the destination of the head tuples is a DADS location specifier rather than a physical node location. Thus intuitively, constructor rules {\em places} the constructed tuples into the DADS link identified by the head's location specifier. Let's consider an example to see this in action:
+\begin{code}
+child(@L, A) :- new<@Me, Opaque, parent(@Dest, L)>,\\
+\> child(@Me, A).
+\end{code}
+
+This rule says that whenever a new parent tuple with a new location specifier $L$ in the second field of parent appears, find all the join-able child tuples and place them in the new location specifier $L$. After the tuple has been completely constructed, ship it to the {\em Dest} node.
+
+There are some other semantic constraints on the use of DADS and constructor rules. Firstly, all the tuples containing and being placed in a DADS must be materialized. This is because DADS tuples need to be referrable even after the fix-point creating them is over and events don't survive post-fix-points. Next, note that presence of a new primitive on the RHS implicitly identifies the constructor rules. No other annotation is needed. Furthermore, the events for these rules are predefined-defined to be the new annotated tuples. Thus, it becomes essential to not have any other event tuple on the right hand side of constructor rules as multiple events are not allowed by P2 semantics. 
+
+Our implementation for constructor rules relies heavily on the ability to completely process the constructor rules locally in a fix-point. This is because a non-local construction can gather mutually inconsistent views of the inserted tuples. Similarly, non-uni-fix-point construction can include different versions of the same tuple. Thus, to simplify the consistency semantics, we require that all the terms on the right hand side of the constructor rules must be local. It is allowable to have other DADS terms on the right hand side as long as it can be ensured that the corresponding tuples are physically located on the same node as the referring terms. 
+
+Let's consider an extension of our previous secure routing example that uses DADS. Let's suppose that there is an auditor that periodically logs all the routing entries of a node. The auditor sends an {\em audit} message to all the nodes and the nodes respond by sending a DADS containing all its routing entries. We give the audit related code below:
+
+\begin{code}
+materialize(routeLog, infinity, infinity, keys(2,3)).\\
+weak ref(routeLog, reachable, 4).\\
+
+{\bf {\em auditor code}}\\
+a1 auditRequest(@N, Me, TimeStamp) :-\\
+\> periodic(@Me, 20, 20, $\infty$), nodes(@Me, N).\\
+a2 doAnything(@Me, TimeStamp):- \\
+\> routeLog(@Me, TimeStamp, Node, L), \\
+\> reachable(@L, A, B, C).\\
+
+{\bf {\em router code}}\\
+cc1 new<@Me, null, routeLog(@A, TS, Me, \&L)>:-\\
+\> auditRequest(@Me, A, TS).\\
+c1 reachable(@L, Me, B, C):-\\
+\> new<@Me, null, routeLog(@A, TS, Me, L)>,\\
+\> reachable(@Me, Me, B, C).
+\end{code}
+
+Let's consider each of the rules in this example. Rule a1 requests the audit log from all the nodes. Rule a2 illusrates how the data of the routeLog can be extracted if needed. It demonstrates that the location specifier $L$ appearing in the link position as defined by the {\em ref} entry, can be used as a location variable for the linked {\em reachable} tuples. Rule a2 does nothing in this case but similar rule can be written to do useful work such as validation or aggregation etc. In this case rule a2 is redundant, since the only purpose of this auditor is to log route entries, which happens automatically by virtue of DADS.
+
+Now lets consider the router rules. Rule cc1 is the container creator rule that creates a {\em new routeLog} tuple on receiving an auditRequest. This new routeLog is defined to contain a new link field at {\em 4th} position. In this case, we don't want to pass any opaque information, hence opaque field is set to null. This cc1 rule creates an event for the {\em new routeLog} tuple. This event triggers that constructur rule c1. Constructor rule c1 defines the contents of a new routeLog tuple. This gets executed in the fix-point in which the {\em new routeLog} event is created. This is necessary to ensure consistency semantics of the DADS. Rule c1 {\em links} all the reachable tuples to the newly created routeLog DADS. Thus, at the end of rule c1's fix-point, a routeLog tuple with link to all the reachable tuples are created.
+
+\prince{Can be added: \\
+1> Example using the compound tuples and likewise an example illustrating the use of authentication primitive\\
+2> More details on the semantics of compound tuples (and its relationship with the fix-point semantics
+}

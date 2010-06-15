@@ -1,0 +1,309 @@
+@comment{
+
+This is intended to be a bibliography of documents that are commonly
+referenced in PlanetLab documents.  Please add new entries as appropriate,
+the following conventions should help keep things somewhat consistent:
+
+1) labels i.e., the string used to identify a document, should be all
+lowercase and may include numbers and dashes.
+
+2) PlanetLab design notes should be entered as technical reports and
+should be labelled PDN-YY-NNN where YY and NNN represent the year of
+publication and document number respectively.
+
+3) the list should be sorted alphabetically by label - this helps
+verify whether a document is in the list or not.
+
+4) commonly used or easily misspelt names have author abbreviations of
+the form A_FOO, where FOO represents an individual's 'ID' e.g., A_LLP.
+
+5) documents that are published as both PDNs and conference/workshop
+proceedings may be listed twice; the PDN entry should carry a 'note'
+field indicating where the document was published.
+
+6) titles may be enclosed in braces to prevent LaTeX mangling the
+case of initial letters in each word as it thinks best.
+
+7) author lists longer than 4 may be abbreviated using 'and others'.
+
+8) most important of all: no lines longer than 80 characters.
+
+}
+
+@string{A_LLP = {Larry Peterson}}
+@string{A_MHW = {Mike Wawrzoniak}}
+@string{A_TR = {Timothy Roscoe}}
+
+@string{PLAB = "{PlanetLab}"}
+@string{PLARCH = "{The {PlanetLab} Architecture Team}"}
+
+@string{CCR             = "{ACM} Computer Communications Review"}
+@string{HOTNETS_2002    = "Proc. of ACM HotNets-I"}
+@string{HOTNETS_2003    = "Proc. of ACM HotNets-II"}
+@string{NSDI            = "Network System Design and Implementation (NSDI)"}
+@string{NSDI_2004       = "Proc.\ 1st NSDI"}
+@string{OSDI            = "Operating System Design and Implementation (OSDI)"}
+@string{OSDI_2002       = "Proc.\ 5th OSDI"}
+@string{SIGCOMM_2003    = "Proc. of the ACM SIGCOMM 2003 Conference"}
+@string{SIGOPS_EW10     = "10th {ACM SIGOPS} European Workshop"}
+
+@string{HOTNETS_2002_ADDR    = "Princeton, New Jersey"}
+@string{HOTNETS_2003_ADDR    = "Cambridge, Massachusetts"}
+@string{NSDI_2004_ADDR       = "San Francisco, California"}
+@string{OSDI_2002_ADDR       = "Boston, Massachusetts"}
+@string{SIGCOMM_2003_ADDR    = "Karlsruhe, Germany" }
+@string{SIGOPS_EW10_ADDR     = "Saint-Emilion, France"}
+
+
+
+@InProceedings{bavier04,
+   Author       = "Andy Bavier and Mic Bowman and David Culler and
+                  Brent Chun and Scott Karlin and Steve Muir and " #
+                  A_LLP # " and " # A_TR # " and Tammo Spalink and " #
+                  A_MHW,
+   Title        = "{Operating System Support for Planetary-Scale
+                  Network Services}",
+   Booktitle    = NSDI_2004,
+   Address      = NSDI_2004_ADDR,
+   Month        = mar,
+   Year         = {2004},
+}
+
+@InProceedings{nakao03,
+   Author       = "Akihiro Nakao and " # A_LLP # " and Andy Bavier",
+   Title        = "{A Routing Underlay for Overlay Networks}",
+   Booktitle    = SIGCOMM_2003,
+   Address      = SIGCOMM_2003_ADDR,
+   Month        = aug,
+   Year         = {2003}
+}
+
+@InProceedings{peterson02,
+   Author       = A_LLP # { and Tom Anderson and David Culler and } #
+                  A_TR,
+   Title        = "{A Blueprint for Introducing Disruptive Technology
+                  into the Internet}",
+   Booktitle    = HOTNETS_2002,
+   Address      = HOTNETS_2002_ADDR,
+   Month        = oct,
+   Year         = {2002}
+}
+
+@InProceedings{pai03,
+   Author       = "Vivek Pai and Limin Wang and KyoungSoo Park and Ruoming
+                   Pang and " # A_LLP,
+   Title        = "{The Dark Side of the Web: An Open Proxy's View}",
+   Booktitle    = HOTNETS_2003,
+   Address      = HOTNETS_2003_ADDR,
+   Month        = oct,
+   Year         = {2003},
+}
+
+@TechReport{pdn-02-001,
+  author = 	 A_LLP # { and Tom Anderson and David Culler and } #
+                 A_TR,
+  title = 	 {{A Blueprint for Introducing Disruptive Technology
+                  into the Internet}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-001},
+  month = 	 jul,
+  note = 	 {Appears in } # HOTNETS_2002 # {, } #
+                  HOTNETS_2002_ADDR # {, } # oct # { 2002},
+}
+
+@TechReport{pdn-02-002,
+  author = 	 PLARCH,
+  title = 	 PLAB # {{ Phase 0: Technical Specification}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-002},
+  month = 	 aug,
+  note = 	 {Edited by Timothy Roscoe},
+}
+
+@TechReport{pdn-02-003,
+  author = 	 A_LLP # { and } # A_TR,
+  title = 	 PLAB # {{ Phase 1: Transition to an Isolation Kernel}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-003},
+  month = 	 sep,
+}
+
+@TechReport{pdn-02-004,
+  author = 	 {Miguel Castro and Peter Druschel and Anne-Marie
+                  Kermarrec and Antony Rowstron},
+  title = 	 {{One Ring to Rule Them All: Service Discovery and
+                  Binding in Structured Peer-to-Peer Overlay
+                  Networks}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-004},
+  month = 	 sep,
+  note = 	 {Appears in Proc. of the } # SIGOPS_EW10 # {, } # sep
+                  # { 2002}
+}
+
+@TechReport{pdn-02-005,
+  author = 	 PLARCH,
+  title = 	 {{Dynamic Slice Creation}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-005},
+  month = 	 oct,
+  note =         {Edited by Larry Peterson},
+}
+
+@TechReport{pdn-02-006,
+  author = 	 {Andrew Warfield and Steve Hand and Timothy Harris
+                  and Ian Pratt},
+  title = 	 {{Isolation of Shared Network Resources in Xenoservers}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-006},
+  month = 	 nov,
+}
+
+@TechReport{pdn-02-007,
+  author = 	 {Micah Beck and Terry Moore and James S. Plank},
+  title = 	 {{An End-to-End Approach to Globally Scalable Network
+                  Storage}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-007},
+  month = 	 nov,
+}
+
+@TechReport{pdn-02-008,
+  author = 	 A_TR # { and Richard Mortier and Paul Jardetzky and
+                  Steven Hand},
+  title = 	 {{InfoSpect: Using a Logic Language for System
+                  Health Monitoring in Distributed Systems}},
+  institution =  PLAB,
+  year = 	 {2002},
+  number = 	 {02-008},
+  month = 	 dec,
+  note = 	 {Appears in Proc. of the } # SIGOPS_EW10 # {, } # sep
+                  # { 2002}
+}
+
+@TechReport{pdn-03-009,
+  author = 	 {Brent Chun and others},
+  title = 	 PLAB # {{: An Overlay Testbed for Broad-Coverage
+                  Services}},
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-009},
+  month = 	 jan,
+  note = 	 {Appears in } # CCR # {, vol. 33, no. 3, July 2003},
+}
+
+@TechReport{pdn-03-010,
+  author = 	 A_TR # { and } # A_LLP # { and Scott Karlin and } #
+                  A_MHW,
+  title = 	 {{A Simple Common Sensor Interface for }} # PLAB,
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-010},
+  month = 	 mar,
+  note = 	 {(updated May 2003)},
+}
+
+@TechReport{pdn-03-011,
+  author = 	 {Akihiro Nakao and } # A_LLP,
+  title = 	 {{BGP Feed Configuration Memo}},
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-011},
+  month = 	 apr,
+}
+
+@TechReport{pdn-03-012,
+  author = 	 {Akihiro Nakao and } # A_LLP # { and Andy Bavier},
+  title = 	 {{A Routing Underlay for Overlay Networks}},
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-012},
+  month = 	 apr,
+  note =         {Appears in } # SIGCOMM_2003 # {, } #
+                  SIGCOMM_2003_ADDR # {, } # aug # { 2003},
+}
+
+@TechReport{pdn-03-013,
+  author = 	 {Brent Chun and Tammo Spalink},
+  title = 	 {{Slice Creation and Management}},
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-013},
+  month = 	 jul,
+}
+
+@TechReport{pdn-03-014,
+  author = 	 A_MHW # { and } # A_LLP # { and } # A_TR,
+  title = 	 {{Sophia: An Information Plane for Networked Systems}},
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-014},
+  month = 	 jul,
+  note =         {Appears in Proc. of } # HOTNETS_2003 # {, } #
+                  HOTNETS_2003_ADDR # {, } # oct # { 2003}
+}
+
+@TechReport{pdn-03-015,
+  author = 	 {Robert Adams},
+  title = 	 {{Distributed System Management: }} # PLAB # {{
+                  Incidents and Management Tools}},
+  institution =  PLAB,
+  year = 	 {2003},
+  number = 	 {03-015},
+  month = 	 nov,
+}
+
+@TechReport{pdn-03-016,
+  author = 	 {Jeff Sedayao and David Mazi{\`{e}}res},
+  title = 	 {{Port Use and Contention in }} # PLAB,
+  institution =  PLAB,
+  year = 	 {03-016},
+  number = 	 {2003},
+  month = 	 nov,
+}
+
+@TechReport{pdn-04-017,
+  author = 	 A_LLP # { and others },
+  title = 	 {{Evolving the Slice Abstraction}},
+  institution =  PLAB,
+  year = 	 {2004},
+  number = 	 {04-017},
+  month = 	 jan,
+}
+
+@TechReport{pdn-04-018,
+  author = 	 {Matei Ripeanu and others},
+  title = 	 {{Comparing Globus and }} # PLAB # {{ Resource
+                  Management Solutions}},
+  institution =  PLAB,
+  year = 	 {2004},
+  number = 	 {04-018},
+  month = 	 feb,
+}
+
+@InProceedings{wang02,
+   Author       = "Limin Wang and Vivek Pai and " # A_LLP,
+   Title        = "{The Effectiveness of Request Redirection on CDN
+                  Robustness}",
+   Booktitle    = OSDI_2002,
+   Address      = OSDI_2002_ADDR,
+   Pages        = "345--360",
+   Month        = dec,
+   Year         = {2002},
+}
+
+@InProceedings{wawrzoniak03,
+   Author       = A_MHW # { and } # A_LLP # { and } # A_TR,
+   Title        = "{Sophia: An Information Plane for Networked Systems}",
+   Booktitle    = HOTNETS_2003,
+   Address      = HOTNETS_2003_ADDR,
+   Month        = oct,
+   Year         = {2003}
+}

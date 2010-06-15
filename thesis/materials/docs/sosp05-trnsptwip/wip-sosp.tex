@@ -1,0 +1,256 @@
+\documentclass{sig-alt-full}
+\usepackage{graphicx}
+\usepackage{times}
+\usepackage{url}
+
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6.5in}
+
+
+\renewcommand{\subsection}[1]{\vspace{12pt}\noindent{\bf #1:}}
+
+%% The name of the system is....?
+\def\Sys{P2\xspace}
+
+\newcommand{\note}[1]{}
+
+\pagenumbering{arabic}
+
+\begin{document} 
+\bibliographystyle{abbrv}
+\conferenceinfo{WIP SOSP'05,} {October 23--26, 2005, Brighton, United Kingdom.}
+\CopyrightYear{2005}
+
+\title{A need for Componentized Transport Protocols}
+\author{Tyson Condie, Joseph M. Hellerstein, Petros Maniatis, 
+             Sean Rhea, Timothy Roscoe \\
+             U.C. Berkeley and Intel Research Berkeley}
+%\date{}
+\maketitle
+%\thispagestyle{plain}
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\section{Extended Abstract}
+\label{sec:intro}
+
+\note{Outline: This is a topic of long interest.}
+
+There has been a steady stream of research over the years into
+\emph{componentized network protocols}: protocol 
+implementations assembled from a variety of building blocks.  A 
+promise of such frameworks has generally been
+flexibility: a protocol stack tailored for a particular application
+can be easily assembled, usually without writing any new code, by
+binding protocol objects together. 
+
+\note{Outline: But the interest has yet to translate to application.}
+
+Despite its conceptual elegance, protocol
+implementations based on this approach have never
+caught on, particularly at the transport level.  Most applications today make use 
+of a kernel-provided IP stack, and usually TCP for transport, to perform network
+communication. The consensus is that for both bulk-transfer of data and RPC-like call semantics, 
+TCP appears to be perfectly adequate, and it is not worth inventing something new.
+
+\note{Paper outline Part 1: look at new apps with custom transport} 
+
+In the last few years, considerable research has been devoted to both 
+structured and unstructured \emph{overlay} and \emph{peer-to-peer} 
+applications.  As distributed systems, these applications generally include their 
+own techniques for routing messages on an overlay.   Many such deployed
+systems, including Bamboo~\cite{rhea_usenix_2004}, MIT
+Chord~\cite{chord}, and P2~\cite{p2:sosp}, use custom transport 
+protocols that provide TCP-friendly congestion control behavior, but over UDP.
+
+\note{Paper outline 2: What's different in the apps?  What's required of the transport?} 
+ 
+In this work, we are evaluating this design shift by examining features of P2P 
+applications and overlays that motivate their designers to adopt custom transport 
+protocols, and the way in which these applications differ from traditional 
+network-based applications. Our initial examination focuses on
+four aspects of overlay network applications that motivate customized
+transport protocols: application-level routing freedom,
+next hop flexibility, application-level buffer management, and alternative 
+congestion control algorithms.
+
+%\textbf{Application-level routing freedom:}
+%Widely-distributed applications have many choices about
+%where to forward a message.  Unlike traditional client-server
+%applications, there may be several equivalent end-points for a message 
+%(e.g., to retrieve a replica of some object).  
+%Moreover, P2P systems usually incorporate some kind of overlay
+%network, even if it is not explicit in the design (e.g., the structured overlay of a DHT, 
+%or the link-state overlay of an enterprise network of Microsoft
+%Exchange servers).  This provides options not only for the
+%destination of a message, but also the overlay path taken to get
+%there.
+
+% % % 
+\subsection{Application-level routing freedom}
+\label{sec:routingFreedom}
+Widely-distributed applications have many choices about
+where to forward a message.  Unlike traditional client-server
+applications, there may be several equivalent end-points for a message 
+(e.g., to retrieve a replica of some object).  
+Moreover, P2P systems usually incorporate some kind of overlay
+network, even if it is not explicit in the
+design (e.g., the structured overlay of a DHT, or the
+link-state overlay of an enterprise network of Microsoft
+Exchange servers).  Overlay networks provide options not only for the
+destination of a message, but also the overlay path taken to get
+there.
+
+Designers exploit this new-found freedom to achieve high performance
+(latency, throughput, reliability, etc.) by implementing
+sophisticated adaptive policies for forwarding data in the system.  For
+example, a node in the Bamboo DHT~\cite{rhea_usenix_2004} constantly
+measures minimum round-trip times to nodes in its routing table, sets
+aggressive timeouts, and rapidly resends messages to alternate
+neighbors if these timeouts are exceeded.   This performs
+dramatically better under churn, since Bamboo can rapidly route 
+around failures and transient load spikes~\cite{rhea_usenix_2004}. 
+
+In terms of the implementation, this inverts a
+traditional ordering of functionality in a transport stack:
+destination selection (e.g., the lookup in Bamboo's routing table)
+now takes place downstream of retries, since successive
+retries for a message can be sent to different destinations. 
+
+
+%\textbf{Next hop flexibility:}
+%In addition to having flexibility in the choice of destination, some
+%P2P applications have the additional property of choosing among a very
+%large set of such destinations---a set whose size and contents are
+%typically not known in advance. A problem thus arises in maintaining congestion 
+%windows for a large and unpredictable number of destinations, many of which are only
+%needed for a single lookup RPC. 
+
+\subsection{Next hop flexibility}
+\label{sec:unpredictableNextHop}
+In addition to having flexibility in the choice of destination, some
+P2P applications have the additional property of choosing among a very
+large set of such destinations---a set whose size and contents are
+typically not known in advance.  A good example
+is the iterative routing employed by MIT Chord~\cite{dabek_nsdi04} and the 
+Kademlia~\cite{kademlia} variants used in eDonkey~\cite{edonkey} and 
+trackerless BitTorrent~\cite{bittorrent-dht}.  
+
+A problem thus arises in maintaining congestion windows for a
+large and unpredictable number of destinations, many of which are only
+needed for a single lookup RPC.  To address this problem,
+DHash++ uses a custom transport protocol called
+STP~\cite{dabek_nsdi04} that maintains aggregate congestion state for
+all nodes, rather than the per-node state maintained by TCP, 
+DCCP~\cite{dccp-problem}, etc. Consequently, all outgoing packets 
+traverse a single congestion-control instance before being sent to a variety of
+destinations. 
+
+This technique represents a different change in the
+transport stack implementation from the Bamboo example above.  Here,
+congestion control is performed independently of the destination of
+messages.  Indeed, the decision of where to send the message may be
+deferred until the congestion window allows it to be sent. 
+
+% % %
+%\textbf{Application buffer management:}
+%The designers of DCCP point out the benefits to applications of
+%``\emph{late data choice}, where the application commits to sending a
+%particular piece of data very late in the sending
+%process'' and suggest using familiar ring-buffer
+%techniques for queueing packets rather than the traditional Unix API.
+%This change allows latency-sensitive applications to revise or replace
+%outgoing packets up until the time when the protocol
+%implementation can send them. In practice, traditional protocol implementations
+%(such as Unix TCP) thwart this, since outgoing data may be held at a
+%node in a buffer (before being sent, or for retry purposes), without
+%being available to the application for further processing.
+
+% % %
+\clearpage
+\subsection{Application-level buffer management}
+\label{sec:applicationBufferManagement}
+The designers of DCCP point out the benefits to applications of 
+``\emph{late data choice}, where the application commits to sending a
+particular piece of data very late in the sending
+process''~\cite{dccp-api} and suggest using familiar ring-buffer
+techniques for queuing packets rather than the traditional Unix API.
+This change allows latency-sensitive applications to revise or replace
+outgoing packets up until the time when the protocol
+implementation can send them. 
+
+A good motivating example is the use of in-network
+aggregation techniques for distributed query processors such as
+PIER~\cite{pier-cidr} and SDIMS~\cite{dahlin}.  Data is sent
+up an aggregation tree to the
+root, and aggregation computation is performed at any intermediate
+node holding more than one datum at a time.  Ideally, each node
+would send data up the tree eagerly (whenever congestion
+control allowed it), but otherwise aggregate it with any new data
+arriving from below. 
+
+In practice, traditional protocol implementations
+(such as Unix TCP) thwart this, since outgoing data may be held at a
+node in a buffer (before being sent, or for retry purposes), without
+being available to the query processor for further aggregation. This limitation 
+results in situations where stale results are sent even though a fresher one 
+is available. 
+
+We therefore embrace DCCP's notion of late data choice, but extend
+it further: in addition to being able to revise outgoing packets, widely
+distributed applications such as distributed query processors
+benefit from late creation of the packets themselves; an API which
+provides an upcall to request the next packet to send allows
+intelligent just-in-time creation of packets, containing an up to date 
+computation at all times.   
+
+Furthermore, our approach integrates well with systems that exploit
+routing freedom to dynamically vary message destinations, as in our
+first example: a query processor may have several potential
+``parents'' to which it can send partial aggregates~\cite{gibbons-sensys04}. 
+
+% % %
+\subsection{Alternative congestion control algorithms}
+Finally, TCP's window-based, sender-driven congestion control
+algorithm may not be the most appropriate for all applications.  Floyd
+et al.~\cite{floyd00equationbased} propose TFRC: a rate-based,
+receiver-driven ``TCP-friendly'' congestion control algorithm (as opposed
+to window halving congestion control employed by sender-driven algorithms) for
+flows that benefit from slower changes in sending rate, such as some
+multimedia traffic.  DCCP allows for selection of several different
+congestion control algorithms, of which TFRC is one. 
+Our own experience with overlay network implementations has shown that 
+TFRC-like approaches have significant advantages, particularly in
+latency-sensitive overlays that exhibit high loss or unpredictable
+message delays. 
+
+Selection of particular congestion control algorithms can, of course, be achieved 
+via a parameter to the
+kernel protocol stack, but when combined with the application
+routing behavior described above, it becomes hard to build a
+monolithic protocol implementation that can accommodate different
+congestion control algorithms, themselves occupying different
+positions in the data path.   A more natural construction factors out
+congestion control into a replaceable module that can be judiciously 
+positioned and configured to application and network characteristics. 
+
+% % % 
+\subsection{Discussion}
+Taken as an ensemble, the issues above suggest that the solution space
+for overlay networks is much wider than that for client-server
+applications.  This is in part simply because they are distributed,
+and hence must interact with and adapt to the network as a whole
+rather than to a single path through it,  blurring the boundary
+between the application and protocol implementation.  
+
+Component based transport protocols provide a natural replacement of black 
+box protocol implementations, with small processing units that can be arranged 
+to form the desired semantics. We are exploring the space of componentized 
+transport protocols in overlay networks using the transport protocol portion of P2, 
+a declarative overlay processor we have built. P2 allows custom transport protocols 
+to be assembled from reusable dataflow building blocks. A variety of diverse but
+important application behaviors can be achieved naturally within P2's framework, 
+in ways that are hard or impossible to achieve with monolithic kernel implementations 
+of transport protocols such as TCP, RTP, SCTP or DCCP. 
+
+\bibliography{wip-sosp}
+\end{document}

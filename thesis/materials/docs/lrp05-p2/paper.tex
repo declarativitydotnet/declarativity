@@ -1,0 +1,836 @@
+\documentclass[twocolumn,10pt]{article}
+\usepackage{color}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\usepackage{parskip}
+\usepackage{times}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{fancyhdr}
+
+\newcommand{\note}[1]{[\textcolor{red}{\textit{#1}}]}
+%\newcommand{\note}[1]{}
+\renewcommand{\ttdefault}{cmtt}
+
+\setlength{\voffset}{0in}
+\setlength{\hoffset}{0in}
+\setlength{\headheight}{0pt}
+\setlength{\topmargin}{0in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textheight}{9in}
+\setlength{\textwidth}{6.5in}
+
+\setlength{\headsep}{0in}
+
+\def\proheader{Intel Confidential. Not for distribution or attribution.}
+\def\Sys{P2\xspace}
+\def\Lrp{Declarative Overlays\xspace}
+\def\Lang{Overlog\xspace}
+
+\pagestyle{fancy}
+\chead{}
+%\chead{\proheader}
+\rhead{}
+\lhead{}
+%\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\begin{document}
+\relax
+\title{\Lrp LRP White Paper}
+\author{Timothy Roscoe\\
+with\\
+David Gay, Joseph M. Hellerstein, and Petros Maniatis}
+\date{\today}
+\maketitle
+
+\begin{abstract}
+This Whitepaper provides an introduction to the background and goals
+of the \Lrp project~\footnote{Some portions of this whitepaper have
+been adapted from a forthcoming SOSP paper by the
+team~\cite{p2_sosp05}, available on the LRP website.}.  It is intended
+as prework and background reading for the \Lrp concept proposal
+presentation.
+
+We describe the problem we are tackling: making overlay networks easy
+to implement and deploy by allowing specifications in a high-level
+declarative language to be directly executed on nodes to instantiate
+overlays.  We use the term ``overlays'' in a broad sense, defined
+below.  The project is focussed on the key research challenges thrown
+up by the prototype P2 system built by the team: what kind of language
+is appropriate for developers to specify overlay networks in, how
+specifications in such a language can be translated into executable
+form, and what optimizations can be applied to make the execution more
+efficient. 
+
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:vision}
+
+\note{Quick bit about what we're trying to do.}
+
+Overlay networks are used today in a variety of distributed systems
+ranging from file-sharing and storage systems to communication
+infrastructures.  However, designing, building and adapting these
+overlays to the intended application and the target environment is a
+difficult and time consuming process.  
+
+As distributed applications, and distributed application development,
+become the norm, the difficulty of efficiently
+designing, implementing, deploying, and debugging overlay
+functionality will become a bottleneck to software development. 
+
+This LRP investigates a declarative approach to this process: 
+Application designers create a concise logical
+specification of an overlay network, and the system (typically
+accessed as a service or application library) interprets the
+specification, performs resource discovery, maintains routing data
+structures, and may optionally provide forwarding for the overlay.
+
+As a proof of concept, we have already implemented an early version of
+\Sys, a system which uses a declarative logic
+language to express the overlay networks in a highly compact and
+reusable form. \Sys can express a Narada-style mesh
+network~\cite{chu00case} in 12 rules, and the Chord structured
+overlay~\cite{chord} in only 35 rules.  \Sys directly parses and
+executes such  specifications using a dataflow architecture to
+construct and maintain the overlay networks.
+
+In this project, we will address the hard challenges raised by our
+initial experience with the \Sys prototype; namely, design of an
+appropriate language for expressing overlay properties, the
+translation of specifications in the language into ``executable''
+form, and optimization techniques to reduce the overhead of executing
+the specifications. 
+
+In the rest of this whitepaper, we ...
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Motivation}
+\label{sec:forwhom}
+
+In this section we set out in more detail the particular problem we
+are addressing: why it is a pressing concern for the community at
+large, how it fits into Intel's short-term and long-term strategic
+directions, and why the LRP team is ideally placed to carry out the
+work.   First, however, we need to define a term. 
+
+\subsection{Overlays?}
+
+``Overlay'' is a loaded term.  What exactly do we mean 
+by the term ``overlay network'' in the context of this project?
+
+Our claim is this: \emph{any} non-trivial distributed application 
+incorporates the functionality of one or more overlay networks:
+resource discovery, topology construction, routing, and message
+forwarding.  Some examples will make this clear:
+\begin{itemize}
+
+\item Microsoft Exchange email servers within an enterprise network
+  maintain an overlay network between themselves, using a link-state
+  algorithm over TCP for routing mail and status messages. 
+
+\item The distributed infrastructure envisaged by the DDI
+  SRP requires an overlay network for belief
+  propagation to be maintained across sensing and inference nodes.
+  The exact requirements for this particular overlay have yet to be
+  determined; it's likely that several candidate designs will be evaluated.
+
+\item The server scale-out effort within the CTG Systems Technology
+  Lab is aimed at 
+  customers being able to acquire, on, demand an overlay network of
+  virtual machines spread over multiple sites.  Such an overlay might
+  provide connectivity at the IP level (via network tunnels or VPNs),
+  or be accessed closer to the application level (for example, via a
+  messaging interface), but the challenge of maintaining this overlay
+  network is substantially the same in both cases. 
+
+\item More generally, systems of more than one computer that are
+  intended to be self-managing in some sense (``autonomic'',
+  ``embedded IT'', etc.) must set up an overlay network to communicate
+  between their consituent nodes.  This is an important prerequisite
+  for exploiting embedded management functionality (such as *AT)
+  within server equipment. 
+
+\item File-sharing P2P networks maintain neighbour tables for flooding
+  file queries through nodes.  This is the most obvious, and probably
+  the least interesting, example: such applications are often little
+  more than the overlays themselves, and the overlays are relatively
+  simple. 
+
+\item Finally, Distributed Hash-Tables (DHTs) are included in our
+  broad definition of overlay networks, but it should be clear by now
+  that they represent for us a relatively specialized area of the
+  design space.  While hardly any DHT-based applications have been
+  deployed (despite the success of the OpenDHT project), DHTs
+  represent a useful exercise for the LRP since they can be relatively
+  complex examples of overlay networks.  Our canonical first example
+  of an overlay built using \Sys is a complete implementation of
+  Chord~\cite{chord}. 
+
+\end{itemize}
+
+These examples make it clear than one or more overlay networks
+form an intrinsic component of \emph{any} distributed system, whether
+or not the functionality of the overlay is explicitly factored out as
+such in the design.   
+
+Put another way, the designer of a distributed system, whether it be
+for management, content distribution, message delivery, gaming,
+sensing, or whatever, is faced with the problem of implementing some
+kind of overlay network. 
+
+\subsection{The problem: overlays are hard}
+
+Building an overlay network as part of a distributed service
+requires several large steps.  First, a designer must decide on the
+required properties of the overlay network.  These include
+fault-tolerance, redundancy, whether the network is optimized for
+latency, throughput, etc. but also include the target environment, for
+example whether the overlay extends across address translators and/or
+firewalls.
+
+Next, a routing protocol \note{just routing, or topology construction
+too? -- JMH} must then be selected, or possibly designed
+from scratch if no suitable one is known.  This protocol must then be
+implemented.  Experience shows that this can be a significant
+programming, debugging, and tuning effort.   There are remarkably few
+reusable toolkits for implementing such protocols (see
+section~\ref{sec:background}). 
+
+Finally, the network must be deployed: resources must be discovered
+and acquired. This is an ongoing process: nodes inevitably come and go
+(a process known as ``churn'') in any large distributed system, and
+the overlay must adapt to differing a end-node population.  
+
+Moreover, uptake of the many recent, relatively rich
+overlay network proposals has been hindered by the complexity of
+choosing, adapting, and/or extending an overlay design to suit the needs
+of a third-party distributed system.
+
+\subsection{The solution: declarative overlays}
+
+This project will develop a system (\Sys) which will automate most of
+the process of creating an overlay for a distributed application:
+developers write a short, declarative description of the overlay
+properties they require, and \Sys will interpret the specification,
+instantiate the network, and maintain it under changing network
+conditions. 
+
+Our argument for \Sys is similar to the argument for SQL and
+relational database management systems some 35 years ago.  The goals of
+our implementation are also akin to those of the early relational
+database systems: to establish the feasibility of the declarative
+approach in practice at a coarse grain, without trying to capture all
+possible optimizations in the first generation of the system.
+
+To put the argument a different way, 
+overlay networks are a common identifiable component of large
+distributed systems, and furthermore now form a sufficiently
+well-understood concept.  \Sys, like the early relational database
+systems, explores the suitability of a high-level logic-based language
+for this class of tasks, and the feasibility of implementing that
+language with acceptable efficiency.  There is value in developers of
+such systems paying a small price in runtime efficiency and/or
+performance in exchange for drastically reduced time spent in
+development, deployment, and evolution of the application-level
+routing logic. 
+
+In section~\ref{sec:approach}  we go into more detail about \Sys and
+its general approach. 
+
+\subsection{Why Intel?}
+
+Why is this problem of importance to Intel? 
+
+In the near term, Intel's platform strategy will increasingly face
+problems of (a) building distributed systems as part of its own
+internal efforts to build a management infrastructure, but more
+importantly (b) encouraging the development of the distributed
+applications required to take advantage of distributed virtualization
+technology, both within a datacenter and between datacenters.   The
+former problem is being addressed within CTG/STL in the context of the
+server scale-out effort, and \Lrp has a synergistic relationship with
+that work\footnote{Relationships with other projects range from 
+\emph{disconflicted}, where the projects are actively ensuring no 
+duplication or conflict of work, through \emph{synergistic}, where the
+projects are collaboratively working towards a common strategic goal,
+to \emph{dependent}, where one project actively relies on the results
+from another (and possibly vice versa).}. 
+
+Longer term, facilitating the development of overlay networks is in
+line with the broader strategy of turning ``the network'' into a more
+computational entity than at present.  \Lrp can therefore be viewed
+alongside other Intel Research projects such as PlanetLab, IrisLog,
+OpenDHT, Autograph, etc.  In the context of the (forthcoming) Sector
+Plan for Systems and Networking, \Lrp falls squarely into the
+``Network Architecture'' quadrant. 
+
+That said, the easy creation of dynamic overlays based on continous
+query processing, which is the central idea in \Lrp, has clear
+applicability to projects such as CoMo in the ``Security and
+Monitoring'' quadrant of the Systems and Networking Sector Plan.
+Since such application lies outside the scope of this LRP, we will not
+mention it further here.  
+
+In section~\ref{sec:exits}, we examine applicability of \Lrp to
+manageability problems raised by the ``Platform Virtualization''
+quadrant of the Systems and Networking Sector Plan, and companion
+projects in STL. 
+
+\subsection{Why us?}
+
+The \Lrp group at Berkeley originated the concept of declaratively
+specifying network properties, and has investigated it in the context
+of conventional IP networking~\cite{loo-hotnets04,loo-sigcomm05}. 
+Furthermore, the problem we have described is multidisciplinary in
+nature.  It includes strong elements of systems architecture,
+databases, networking, and programming language design, and the group
+enjoys considerable expertise in all these areas.  Consequently, 
+No other research group is as ideally placed to address this problem,
+and we enjoy a considerable lead on the competition.  This is a chance
+for Intel Research to once again establish itself as a pioneer in an
+emerging field. 
+
+We are also confident of being able to deliver successful results: our
+initial prototype has conclusively demonstrated the basic
+feasibility of the approach.  In doing so, it has exposed the central
+research questions which we intend to address in this project, and
+which we discuss in section~\ref{sec:early}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Technical Approach}
+\label{sec:approach}
+
+To ease the development and the deployment of overlay networks,
+we are building \Sys, a system which uses a declarative logic
+language to express the overlay networks in a highly compact and
+reusable form. \Sys can already express a Narada-style mesh network in
+12 rules, and the Chord structured overlay in only 35 rules.  \Sys
+directly parses and executes such specifications using a dataflow
+architecture to construct and maintain the overlay networks. 
+Applications submit to \Sys a concise logical
+description of an overlay network, and \Sys performs resource
+discovery, maintains routing data structures, and may optionally
+provide forwarding for the overlay.
+
+\Sys is intended to greatly
+simplify the process of selecting, implementing, deploying and evolving an
+overlay network design.  It is novel in (a) using a declarative logic
+language for specifying overlays, and (b) employing a dataflow
+framework at runtime for maintaining the overlays instead of the more
+conventional finite-state-machine approach.  \Sys automatically
+compiles the declarative specification of the overlay into a dataflow
+program, and can compile multiple overlay specifications into a single
+dataflow. 
+
+This facilitates not only code reuse among systems, but also the
+comparison, extension, and hybridization of overlay designs within a
+single system.  Moreover, describing overlays declaratively
+(effectively as queries) enables the natural integration of
+distributed information-gathering tasks like resource discovery and
+network status monitoring.  
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{An overview of \Sys}
+\label{sec:p2}
+
+In this section we provide a broad overview of the \Sys approach to
+overlay specification and runtime execution.  In the past, overlay
+networks have
+typically been characterized in one of two ways.  The {\em
+  protocol-centric} approach favored by MACEDON~\cite{rodriguez04macedon} traces
+  its roots to event 
+  languages~\cite{estelle-success,fdt-book} that
+specify overlay execution via automata for event- and
+message-handling.  This style emphasizes the dynamics of the overlay
+and its maintenance, but makes it difficult to determine the overlay's
+coarse structure and invariant properties.  The alternative is a {\em
+  structure-centric} approach, whose roots can be traced to the
+  specification of parallel interconnection
+  networks~\cite{leighton-book}.  This style, which has influenced
+the literature on distributed hash tables (DHTs),  specifies overlays
+by focusing on a network graph structure (hypercube, torus, DeBruijn
+graph, small-world graph, etc.), whose invariant properties must be 
+maintained via asynchronous messaging.  Unfortunately, graph-theoretic
+descriptions tend to be expressed at a high level in natural language,
+and often gloss over details of the actual
+runtime messaging.  As a
+result, implementing structure-centric overlays often requires a fair
+bit of engineering~\cite{rhea_usenix_2004,dabek_nsdi04}, and different implementations of the same overlay can vary significantly in
+their actual execution.
+
+\Sys spans the two approaches above, and expands upon them in a way
+that we believe is particularly attractive for overlay specification
+and runtime.  The interface of \Sys is closer in spirit to the
+structure-centric approach, in that it encourages the specification of
+overlays as logical structures with invariants.  However, it also
+automatically compiles this specification to a dataflow program for
+managing asynchronous messages, which looks closer to the
+protocol-centric approach.  We believe \Sys improves in certain
+regards upon previous overlay specification
+work in either camp, by providing a machine-interpretable description
+language based on relations among nodes in the network, and by using a
+dataflow runtime model instead of automata-like protocols.
+
+Unlike some other proposals for overlay toolkits, \Sys does not aim
+for performance results as good as optimized C, C++, or Java code with
+hand-tuned overlay parameters.  Instead, our aim in this paper is to
+demonstrate that declarative overlay descriptions can be implemented
+by \Sys with \emph{acceptable} performance, and that there are
+benefits to the declarative specification that go beyond the raw
+performance of a single overlay design.  We believe that this is
+useful for rapidly prototyping new ideas, and eventually for deploying
+production systems as well.
+
+This last point perhaps requires elaboration: we are not excusing our
+\emph{code} for being slow; on the contrary, anecdotal evidence is
+that \Sys already uses less working set and fewer CPU cycles that
+fully hand-coded overlay networks.   The performance win of 
+traditional hand-coded overlays over \Sys does not lie with coding
+efficiency, rather it is by the careful tuning of protocol parameters
+such as timeouts and counters.  Approaching the performance of such
+systems without overly complicating the specifications is an important
+secondary goal of the LRP. 
+
+In this section we provide a high-level view of the three components
+of our approach: the use of relational tables to represent overlay
+state, our high-level declarative language to specify the overlay's
+logical properties and behavior, and graphs of dataflow elements that
+represent runtime information processing. 
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{Tables and Streams}
+\label{sec:tablesandstreams}
+
+We model an overlay as a distributed data structure,
+represented via a set of structured relations (sets of tuples)
+as in a relational database.  \Sys employs two types
+of relations: persistent but soft-state {\em tables}, and
+{\em streams} of transient tuples, as in stream query
+engines~\cite{aurora,telegraphcq,stream}.
+
+There are many ways to represent network graphs, but the relational
+approach seems attractive for a variety of reasons.  
+First, structured tables are a simple and natural representation for
+network state; for example, neighbor tables are widely used in
+networks.
+Second, and more importantly for our purposes, tables -- and
+relationships between them -- are easy to represent concisely in a
+declarative language, as the success of SQL has shown.
+Third, the distributed database abstraction
+provides a consistently named view of all the 
+local tables and messages at different nodes: queries and rules can
+specify distributed state in a high-level, concise way.
+
+Finally, the relational abstraction is a natural way to reuse
+functionality and share routing state among different overlays.
+Tables with multiple indexes can store tuples relevant to several
+overlays, which can select elements from each table with their own
+criteria.  Table names (with appropriate namespace scoping) provide 
+a natural way to share definitions between multiple overlay
+specifications. 
+
+
+Our experience with overlay implementations has shown that relations,
+together with some suitable mechanisms for selecting tuples from each
+table, can fairly naturally represent the persistent routing state of
+the overlays we considered.  In our SOSP paper~\cite{p2_sosp05} we
+give examples in support of this claim.
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
+\subsection{The \Lang language}
+\label{sec:overlog}
+
+Having established our data model, we turn our attention to the \Sys
+specification language for overlays.  As noted above, we choose to
+specify overlays declaratively via a logic language.  Our language,
+which we term \Lang, is based on the widely-used
+Datalog~\cite{alicebook} query language.
+
+A few preliminary remarks are in order to frame the discussion that
+follows.  Datalog itself is a general declarative query language --
+essentially a subset of Prolog free from any operational (imperative) constructs.
+\Lang is not a pure logic language like Datalog; we add constructs to
+specify physical distribution properties (in particular, where tuples
+are physically generated, stored, or sent), continuous queries over
+streams as well as tables, and deletion of tuples from tables. 
+
+Note that \Lang in its currently-implemented form is not designed as a
+Domain-Specific Language for 
+overlay specification; it is simply an adaptation of a powerful query
+language to a distributed context of data and messages.  Our 
+motivation for the design of \Lang was to investigate \emph{which}
+language features are of particular value for specifying the
+properties of overlay networks, and so lay the groundwork for a
+future, dedicated overlay description language.  This LRP proposal
+takes the design of such a second-generation language as one of its
+primary goals. 
+
+Despite these caveats, overlay descriptions in \Lang are already
+remarkably 
+concise, especially considering that they can be \textit{directly
+translated} by \Sys into dataflow graphs that maintain overlay
+networks.
+
+\subsection{Dataflow}
+Given that \Lang is a declarative query-like language over distributed
+nodes, it is natural to consider compiling it into an executable
+representation akin to a database ``query plan.''  Parallel
+and distributed database query systems like Gamma~\cite{gamma}, 
+Volcano~\cite{graefe-sigmod90} and PIER~\cite{pier-cidr} use {\em
+dataflow graphs} 
+as their basic query executables: these graphs connect various
+database ``operators'' with dataflow edges that represent the passing
+of tuples among operators, possibly across a network.  A query engine
+runtime can execute these dataflow programs over stored and streaming
+data sources.
+
+Traditionally, network implementation models are
+built on automaton abstractions, which do not appear at first sight to
+have much in common with database query plans.  However, in recent
+years, software router 
+toolkits like Scout~\cite{scout}, Click~\cite{click-tocs} and
+XORP~\cite{handley05xorp} have demonstrated that network message handling and
+protocol implementation can be neatly factored into dataflow diagrams,
+and that this model provides clarity and extensibility beyond that
+offered by automata, without sacrificing performance. 
+We adopt the Click term \textit{element} for a node in a \Sys
+dataflow graph, but as in database query plans, each edge in the graph
+carries a stream of well-structured tuples, rather than annotated IP
+packets.  Note that while all tuples flowing on a single edge share a structure
+(schema), tuples on one edge may have very different structure than
+tuples on another -- this is a significant distinction with the
+uniform IP packets of Click.
+
+\Sys dataflows tend to mix together network packet processing elements
+for tasks like queuing, (de)multiplexing, and congestion control along
+with relational database operators like joins and aggregations.
+% \footnote{To
+% avoid confusion, the term {\em join} in this paper usually refers to the
+% relational operator from the database literature.}
+
+% While the elements in Click tend to operate on fixed-type objects (IP packet
+% fragments), via relatively lightweight, mostly stateless elements.
+% 
+% Parallel and distributed query processors, exemplified by research
+% prototypes including Gamma~\cite{gamma}, Volcano~\cite{graefe-sigmod90} and
+% PIER~\cite{pier-cidr}, also run distributed dataflow programs -- in
+% this case to execute database queries across multiple nodes.  These
+% systems differ from routers in handling streams of tuples of various
+% types (schemas), and in running relatively complex dataflow elements
+% that maintain large amounts of state\footnote{The in-flight state in a
+%   database query plan need not be transactional, inasmuch as it is
+%   specific to a single query and not shared.  However it can be
+%   substantial in volume (e.g. an entire database table may be
+%   stored as in-flight data for a join), and must persist through
+%   the query's execution, which can take minutes or hours in some
+%   cases.}.
+% 
+% \Sys draws inspiration from both these classes of systems.  
+% Like the
+% extensible routers, \Sys is designed to execute network packet handling
+% efficiently, particularly for routing messages along the overlay
+% topology.  Like the database query engines, it is designed to
+% efficiently execute stateful operators like joins for matching state
+% across nodes and over time; this is particularly important for
+% overlay structure maintenance messages.
+
+
+% 
+% \note{FSM problemss}
+% 
+% \note{Features: Datalog, dataflow+tables}
+% 
+% \note{So, we need to argue that all the disadvantages of FSMs that
+% we've listed above do not apply to our approach}. 
+
+
+% \note{Final link para:}
+% 
+% The structure of a \Sys node, therefore, is a collection of tables
+% plus a diagram of dataflow elements which exchange tuples, and send
+% and receive them over the network.  The remaining high-level component
+% of \Sys is the mechanism by which users and developers specify the
+% tables and dataflow diagrams to the system.
+
+\subsection{Discussion}
+\label{sec:approach-discuss}
+We believe that the combination of a declarative language and a
+ dataflow runtime forms a powerful and surprisingly natural
+ environment for overlay specification and runtime.  The obvious
+ alternative to our approach is the automata approach used in
+ traditional protocol specifications and implementations and the
+ MACEDON overlay toolkit.  Relative to automata, logical
+ specifications and dataflow graphs have a number of software
+ engineering advantages:
+\begin{itemize}
+\item {\bf Scoping:} In principle, automata must handle any possible
+  event (message) in each state.  While automata can in principle be
+  nested or enapsulated as a matter of design discipline, the
+  potentially arbitrary interplay between states and events leads to
+  relatively few design constraints, making automata difficult both to
+  specify correctly, and to understand once specified.  By contrast, in
+  a dataflow diagram compiled from an \Lang program, the inputs to an
+  element are {\em by definition} coming from other
+  specific elements whose behavior is well specified.  This constrains
+  what needs to be handled in each element implementation,
+  aiding in both specification and comprehension.
+\item {\bf Typing:} Similarly, the events or messages 
+  handled in automata are of any type possible in the system.  In
+  dataflow diagrams, all tuples that pass along an edge share the same
+  schema, hence a dataflow element implementation
+  need only worry about a stream of similar, well-formed tuples.
+\item {\bf Encapsulation and Reuse:} Because automata interrelate
+  possible events and states, they are difficult to reuse in other
+  contexts that may involve different sets of events, or additional
+  states with different interactions.  By contrast, subsets of rules
+  in \Lang programs can be easily extracted and reused in other
+  programs.  Moreover, even the compiled dataflow
+  diagrams often have discrete subgraphs that are clearly reusable: a
+  dataflow subgraph typically has a few well-specified inputs
+  (incoming edges) and outputs (outbound edges), and in many cases has
+  easily interpretable behavior.  This admits the possibility (not yet
+  implemented in \Sys) of allowing incoming programs to
+  opportunistically ``jump on'' to ongoing dataflows, in the spirit of
+  adaptive stream query engines like TelegraphCQ~\cite{telegraphcq}.
+\end{itemize}
+
+The modularity provided by a declarative language is also useful
+for bootstrapping the system.   We can compare \Sys to another
+distributed query processor built over a dataflow framework:
+PIER~\cite{pier-cidr}.  PIER uses a distributed hash table
+(Bamboo~\cite{rhea_usenix_2004}) as a basic common substrate, which is
+then employed to instantiate query-specific overlay networks such as 
+aggregation trees.  
+
+In contrast, \Sys simply uses whatever underlying
+network is present, and each node can be configured with a relatively
+small set of ``base facts'' (such as addresses of a few nearby
+neighbors).  Knowledge of the rest of the network is then built up in
+the declarative domain.  It is possible to construct a DHT over \Sys~--
+indeed, our main example in this paper is a version of Chord -- but \Sys
+in no way requires a DHT to be present, nor relies on the assumptions
+a DHT typically exploits (such as full-mesh connectivity between
+nodes, and lack of explicit control over node and data placement).  
+
+The use of joins is endemic to
+\Sys because of our choice of \Lang: the unification (matching) of
+variables in the body of a rule is implemented in a dataflow by an
+equality-based relational join or \textit{equijoin}.
+Observe that overlay network maintenance traffic
+is fundamentally a matter of asynchronous data structure manipulation:
+matching a stream of incoming structural 
+change messages (node arrivals and departures, neighbor table updates,
+path changes, etc.)~with existing state at a node to produce new
+state, new messages, or both. This matching of asynchronous messages is
+naturally representable as an equijoin of a stream and a table, whether or
+not it is highlighted as such in the execution model.  This issue is
+discussed further in the context of stream queries
+in~\cite{shankar-stems}. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Status and early technical results}
+\label{sec:early}
+
+We have demonstrated an early working version of \Sys, our declarative
+overlay engine. P2 takes overlay specifications written in Overlog,
+an initial language adapted from the well-known Datalog query
+language, translates them on each network node into a Click-style
+graph of software dataflow elements, and ``executes'' the graph:
+packets are received, tuples flow through the dataflow graph, tables
+are updated, and packets are sent to other nodes.
+
+Overlog can express the Chord DHT in 35 rules.  This specification can
+be directly executed by P2 as it stands, and the resulting overlay
+shows reasonable forwarding (lookup) performance and resilience to
+node churn.  Our experience with P2 so far are summarized in our
+forthcoming SOSP paper~\cite{p2_sosp05}, a pre-camera-ready version of
+which has been uploaded to the LRP website.  
+
+Consequently, this LRP is \textbf{not} about establishing the
+feasibility of the approach, nor do we see any great risk in this
+respect: we have demonstrated that a concise specification on a
+relatively complex overlay can be instantiated automatically. 
+
+Furthermore, this LRP is \textbf{not} about performing software
+engineering on a P2 artifact whose design has been established, though
+like any systems project, building the artifact in order to understand
+the solution space is a central part of the methodology.  
+
+Instead, the purpose of this LRP is to investigate the hard research
+challenges thrown up by our early experience: the design of an
+appropriate specification language, translation of the language into
+an efficient dataflow graph, and optimization of (possibly multiple)
+overlay specifications. 
+
+Datalog is a highly general query language, with a syntax based on
+Prolog.  As such, it has served as a useful basis for experimentation
+in the form of Overlog,  However, it is clear both from our own
+experience and comments from outside the team (including SOSP
+reviewers) that the syntax is highly counterintuitive.  Moreover, the
+generality of the language works against it: it is hard to prove
+desirable ``safety'' properties of specifications, and some constructs
+which have turned out to be commonplace in overlay specifications are
+hard to represent in Overlog as it currently stands.  In addition to
+further reducing the readability of our specifications, this
+low-level generality makes it harder for the parser and planner to
+optimize the dataflow.   
+
+Defining, implementing, and evaluating a ``better Overlog'' comprises
+most the meat of the LRP. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Background and related work}
+\label{sec:background}
+
+The design of \Sys can be viewed as a synthesis of ideas from database
+systems, particularly recent work in distributed and continuous query
+processing, with logic languages, and the result applied to overlay
+networks.   Throughout this paper we have highlighted the database
+systems techniques we employ in \Sys; in this section we
+situate \Lang and \Sys's approach in the context of existing work on
+generating overlays from protocol descriptions. 
+
+There is a long tradition of automating the generation of protocol
+implementations from specifications.  Much of the early work focuses
+on expressing OSI protocols in a finite state machine language
+(Esterel, Estelle, LOTOS, SDL~\cite{esterel,fdt-book}, etc.), and
+compiling them into CPU-efficient implementations
+(e.g.,~\cite{dabbous-sigcomm96,vuong-estelle-tose88}).  The focus of
+this body of work is on supporting formal protocol specification
+(e.g. for verification), ideally without sacrificing CPU performance.
+
+More recently, there has been increased emphasis on readability and
+code reuse for network protocol specification languages.  This
+includes domain-specific object-oriented languages like
+Morpheus~\cite{morpheus} and Prolac~\cite{prolac}, and functional
+approaches like the Fox project's TCP implementation~\cite{fox}.
+
+It is typical to think of implementing network protocols in terms of
+state machines, whose transitions are triggered by timer events or the
+arrival of messages (either over the network or from a local client
+application).  This is the approach taken in essentially all of the
+work cited above.  Network protocol stacks are typically implemented
+in such a manner even when hand-coded, and this approach lends itself
+to object-oriented programming languages, where FSMs are encapsulated
+in software objects.  
+
+Overlays built using an FSM approach are generally event-driven from a
+Unix ``select'' loop or equivalent OS functionality, and can be highly
+efficient in terms of resource usage (CPU, etc.) on a node.  A recent
+example of this approach is MACEDON~\cite{rodriguez04macedon}, which
+adopts the FSM approach by
+encapsulating the event loop, timers, finite state 
+machines, and message formats, and compiling the resulting syntactic
+elements to C++.   Because the output of the MACEDON compiler closely
+mirrors the structure of the code that a skilled programmer would
+produce for an overlay, performance of a well-tuned MACEDON network
+can approximate a custom implementation with much less code: a
+(rather limited) subset of the full Chord overlay can be expressed in
+around 360 lines of code.  
+
+An interesting alternative to state machines is
+RTAG~\cite{anderson88rtag}, 
+where the protocol is expressed as a grammar.  Incoming messages and
+events are modelled as tokens causing reductions in grammar rules, and
+the state of a connection is held on the parser stack rather than
+encapsulated in an FSM.  
+
+The $i3$~\cite{i3} infrastructure offers a rendezvous-based
+abstraction that provides significant flexibility in specifying
+communication structures and patterns.  $i3$ is similar in fundamental
+ways to the relational abstraction used in \Sys -- the decoupling of
+senders and receivers via keys in $i3$ is similar to the keys and
+foreign keys of relational models, and the same flexible indirections
+are possible in both.  However, $i3$ is targeted as a fundamental
+communication abstraction, whereas \Sys is a more functional but
+arguably more special-purpose system.
+
+Although Click's configuration language unambiguously specifies the
+dataflow elements and graph to be generated, the idea of using a
+high-level logic language for describing network protocols seems
+relatively new.  Members of our group~\cite{loo-hotnets04} recently
+proposed performing IP routing using declarative queries, also written
+in a variant of Datalog.  Our implementation of \Sys is focused on
+overlay construction rather than IP routing, but some of the
+optimization techniques suggested in~\cite{loo-hotnets04} from the
+deductive database literature are applicable in \Sys.  
+
+Like the IP routing scheme, by representing the desired network
+properties in \Lang at an higher level of abstraction than a dataflow
+graph, protocol grammar, or FSM description, \Sys achieves very
+concise descriptions which can nevertheless generate dataflow graphs
+than can be executed to maintain the overlay. 
+
+In addition to conciseness, as section~\ref{sec:overlog} discusses, a
+top-down approach like \Lang offers more opportunities for compile- and
+run-time optimization of overlay descriptions, and \Lang's
+decomposition of state into tables and flows provides more natural
+opportunities for code reuse and runtime sharing.  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Long-term evolution and impact}
+\label{sec:exits}
+
+We conclude with a brief discussion of how \Lrp might continue beyond
+the course of the LRP.   The central question in considering the
+future of \Lrp is whether the effort to implement a \Sys-like system
+is ``worth it'': is there sufficient demand for such a system, versus
+developers rolling their own overlay networks?
+
+It goes without saying that the \Lrp team strongly believe this,
+and that \Sys may represent the seminal ``first system'' in the
+field.   However, the question is a highly subjective one, and
+historically it has frequently been 
+hard to persuade software developers to adopt a simpler approach until
+they are convinced that it will save them effort.  This kind of
+selling is beyond the scope of this current LRP. 
+
+That said, it is our conjecture (based in part on our extensive
+experience with systems like Bamboo~\cite{rhea_usenix_2004} and
+PIER~\cite{pier-cidr}) that the majority of embedded overlay
+networks currently deployed in large distributed systems contain
+subtle implementation bugs that can cause occasional performance or
+consistency problems which are extraordinarily difficult to debug.  A
+exciting direction of \Sys post-LRP is to use its powerful
+query-processing functionality as a debugging tool for such networks
+(including those implemented in P2).  Exposing the problems can
+motivate the use of a safer toolset. 
+
+In the short-term, we can imagine several SRPs emerging from the \Lrp
+project.  To take two examples: 
+
+\paragraph{\Sys as the network-specification component of a virtual
+  machine server scale-out solution.}  Server scale-out as it is
+  currently envisaged involves dynamically provisioning
+  customer-specific networks of virtual machines spanning multiple
+  sites.   A system to perform such provisioning requires a several
+  dynamic overlay networks to be maintained, some of which may be
+  highly customer-specific.  A potential SRP would use results from
+  \Lrp to investigate how to provide such a facility. 
+
+\paragraph{Use of \Sys as control plane for distributed systems
+  management solution.}  Effective and scalable use of *AT
+  technologies for management of systems of PCs requires an overlay
+  network which is tolerant to failures, and includes advanced query
+  processing techniques for reacting to management events (machines
+  failing, changes in physical conditions like temperature, etc.).  To
+  the best of our knowledge, the skillset to build such a system does
+  not exist in CTG, nor are the issues in building it being adequately
+  addressed at present.  An SRP which exploits \Sys's powerful query
+  processing facilities to solve this problem would greatly increase
+  the credibility of the the *AT technologies. 
+
+For more details, see the accompanying SOSP submission. 
+
+\bibliographystyle{abbrv} 
+%%\footnotesize
+\bibliography{paper,rfcs}
+
+\end{document}

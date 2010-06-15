@@ -1,0 +1,472 @@
+%\if 0
+\documentclass[letterpaper,twocolumn,10pt]{article}
+%\documentclass[conference,10pt]{IEEEtran}
+\usepackage{epsfig,endnotes}
+\usepackage{mathptmx}
+\usepackage{epsfig,color}
+\usepackage{cite,url}
+\usepackage{amsmath}
+
+%\pagestyle{empty}
+\begin{document}
+\title{Design and correctness arguements}
+%\fi
+\section{System Architecture}
+
+Applications use TACT model to specify their consistency requirements.
+We use replication to mask faulty behavior (Castro's BFT algorithm).
+Goal is to see how we can relax relying on the costly consensus 
+algorithm, but at the same time provide interesting guarantees to the
+applications.
+
+\section{Parameters, definitions and assumptions}
+
+Parameters: $N$ is the set of total replicas,
+$f$ is the maximum number of replicas which can fail simultaneously 
+and $N \ge 3f+1$.
+
+Replicas are numbered from (0,1...,N-1).
+
+Consistency bounds: system wide numerical error (NE)
+bound is $\alpha$ and order error (OE) is $\lambda$.
+
+Client access protocol: each request carries a sequence number.
+Wait for response from 2f+1 replicas. Find out the latest committed
+sequence number (CSN) (at least f+1 are correct, at least 1 has participated
+in the latest commit). Find out the local updates these responses 
+reflect. Pick the one with latest CSN and which promises to have
+applied all of my tentative updates. [How do we guarantee this?]
+
+Replica response protocol: given the sequence number in the request,
+validate it (check for monotonic seq num, proper signature). If done,
+insert the request (if an update) in the write log and prepare a response.
+Response is $[CH_latest + tentative_updates_of_client]$. Send also the
+the last sequence number of CH$_{latest}$.
+
+Define NE. For NE, we need to define what is the observed history
+and what is the ideal history for an operation. In original TACT,
+observed history is the history of a replica where the operation is
+submitted. Since we are replicating each operation, we need to redefine
+the observed history for a given operation.
+
+Observed history: Ideally, the observed history should be
+$CH_latest + all_tentative_updates_from_client_i$ applied in the
+order given by the replica.
+
+Ideal history: $CH_latest + all_tentative_updates$, with the guarantee
+that all tentative updates will be committed within next checkpoint.
+
+Accepted operation: if an operation receives matching response from at least
+(f+1) correct replicas, then it is considered an accepted operation. 
+Additionally, we need to ensure that these replicas are providing response
+based on the latest checkpointed history. To do that, matching responses
+are collected after obtaining (2f+1) responses. 
+
+Implications for correct clients: we assume that they submit operations
+after ensuring that previous operations are "accepted".
+
+Goal: ensure that NE is enforced for all "accepted" operations.
+
+To show this, we need to enforce following invariants:
+\begin{itemize}
+\item{} All accepted operations are present in the histories of any quorum of
+(f+1) correct replicas.
+\item{} During commit, all (f+1) correct replicas push out their tentative
+updates in the commit if not present already.
+\item{} Only accepted writes are committed. With our assumption of correct
+clients, this holds vacously. With faulty clients, we will need a protocol.
+\item{} System does not accept more than $\alpha$-weighted updates before it
+commits at least $2\alpha/3$-weighted updates of them.
+\end{itemize}
+
+
+\subsection{Definitions}
+From TACT land:
+
+
+
+Initial variable state: $v_{o}$.
+
+\textbf{History:} a totally ordered (serial) set of reads and writes.
+
+\textbf{Linearizable History (LH):} An ordering of operations which is 
+sequential and external and causal order compatible (ECG). It
+consists of all operations accepted by the system. The ordering
+in LH is final.
+
+\textbf{Checkpoint:} upto $\beta$ weighted writes are assigned a unique
+sequence number and hence a place in $H_{Ideal}$
+and this is accepted by a quorum of (N-f) replicas. These updates
+become \textit{committed}.
+
+\textbf{Committed-History (CH):} A history consisting of checkpoints
+from correct replicas. We will show that it is also linearizable
+and this is the ideal history $H_{Ideal}$ in our setting.
+
+\textbf{Local History($H_{i}$):} One node's history of accesses. It is a
+sequence of checkpoints it participated in as well as pending updates
+accepted locally. Pending updates are subject to re-ordering.
+Committed updates are a subsequence of the LH, not necessarily
+a prefix since BFT does not guarantee that a given correct replica
+will necessarily participate in each checkpoint.
+
+\textbf{State at replica $i$:} $v_{i} = v_{o} + H_{i}$. Means that all
+updates in local history are applied to the initial value to obtain
+the final value.
+
+\textbf{Ideal variable state:} $v_{Ideal} = v_{o} + H_{Ideal}$.
+
+\textbf{Absolute numerical error} of a replica for $v$: $e(i) = F(v_{Ideal}) - F(v_{i})$.
+
+\textbf{Weak synchrony:} delay to transmit a message between two
+correct replica's does not exceed the
+time-out period indefinitely (Castro's definition).
+
+\textbf{Stronger synchrony:} No correct replica can miss more than $k$
+checkpoint events occuring in the system.
+
+\textbf{Perfect synchrony:} No message is lost. Each correct node receives
+a message send by another correct node in same amount of time.
+
+\paragraph{CH is linearizable(proof):} Let CH=a(1)a(2)a(3)..., where
+a(i) represents accesses contained in the i'th checkpoint. 
+Consider a(i) as a single operation. Then CH is linearizable at this
+granularity since BFT guarantees it. What is remaining is to show that
+each a(i) is also sequential and follows real-time order. This again
+holds since each a(i) is observed at a correct replica which correctly
+orders them. Hence, CH is linearizable.
+
+\subsection{Assumptions}
+
+\begin{enumerate}
+\item{} Clients are trusted and have an ID.
+\item{} Clients assign monotonically increasing sequence
+number to their updates, providing a partial
+order. With client IDs, we provide a total order.
+\item{} Unit weight for each update.
+\item{} A faulty server may locally accept $\lambda$ number 
+updates without propagating them.
+\end{enumerate}
+
+\section{Replica automaton}
+
+\paragraph{Signature}
+\begin{itemize}
+\item{Input:}\\
+\texttt{RECEIVE($<$WRITE, C, CSeq, w$>_{\sigma_{C}}$)$_{i}$}\\
+\texttt{RECEIVE($<$READ, C$>_{\sigma_{C}}$)$_{i}$}\\
+\texttt{RECEIVE($<$CHECKPOINT, U, s, e, R(j)$>_{\sigma_{R_{j}}}$)$_{i}$}\\
+\texttt{RECEIVE($<$ACK-CKPT, s, e, R(j)$>_{\sigma_{R_{j}}}$)$_{i}$}
+
+\item{Internal:}\\
+\texttt{EXECUTE(r)$_{i}$}\\
+\texttt{TAKE-CHECKPOINT(r)$_{i}$}\\
+\texttt{INCORPORATE(r)$_{i}$}\\
+\texttt{PROCEED()$_{i}$}
+
+\item{Output:}\\
+\texttt{SEND(m,$X$)$_{i}$}
+\end{itemize}
+
+
+\paragraph{State}
+$v_{o}$: initial value of a variable.\\
+$v_{i}$: current value of a variable, $v_{i} = v_{o} + H$.\\
+$H$: history of local updates to the variable, initially $\{\}$\\
+$busy$: bool, indicating that replica is waiting to complete a checkpoint.\\ 
+$U$: recent updates not being propagated to others, initially $\{\}$\\
+$\chi$: function to evaluate the weight of an update or set of updates.\\
+\texttt{bar()}: function to update the variable.\\
+$in_{i} \in \omega$, initially $\{\}$.\\
+$out_{i} \in \omega$, initially $\{\}$.\\
+R denotes the replica set.\\
+R(i) denotes the replica with id $i$.\\
+$\omega$ denotes the alphabet of messages.\\
+$\sigma_{i}$ denotes that a message is signed by node $i$.
+source(m) denotes the source of a given message.
+
+\paragraph{Input transitions}
+
+\begin{itemize}
+\item{\texttt{RECEIVE($<$WRITE, C, cSeq, w$>_{\sigma_{C}}$)$_{i}$}}\\ 
+\textbf{Effect:}\\
+if(busy) return BUSY;\\
+let $m = <$\texttt{WRITE, C, cSeq, w}$>_{\sigma_{C}}$.\\
+$in_{i} = in_{i} \bigcup m$\\
+
+\item{\texttt{RECEIVE($<$READ, C$>_{\sigma_{C}}$)$_{i}$}} \\
+\textbf{Effect:}\\
+let $m = <$\texttt{READ, C}$>_{\sigma_{C}}$.\\
+$in_{i} = in_{i} \bigcup m$\\
+
+\item{\texttt{RECEIVE($<$CHECKPOINT, U, s, e, R(j)$>_{\sigma_{R(j)}}$)$_{i}$}}\\
+\textbf{Effect:}\\
+let $m = <$\texttt{CHECKPOINT, U, s, e, R(j)}$>_{\sigma_{R(j)}}$.\\
+$in_{i} = in_{i} \bigcup m$\\
+
+\item{\texttt{RECEIVE($<$ACK-CHKPT, s, e, R(j)$>_{\sigma_{R(j)}}$)$_{i}$}}\\
+\textbf{Precondition:}\\
+busy == true\\
+\textbf{Effect:}\\
+let $m$ = $<$\texttt{ACK-CHKPT,s,e,R(j)}$>_{\sigma_{R(j)}}$\\
+$in_{i} = in_{i} \bigcup m$\\
+\end{itemize}
+
+
+\paragraph{Output transitions}
+
+\begin{itemize}
+
+\item{\texttt{SEND($<$m, R-$\{$i$\}>$)$_{i}$}}\\
+\textbf{Precondition:}\\
+m == CHECKPOINT\\
+\textbf{Effect:}\\
+out$_{i}$ = out$_{i}$ - m;
+
+\item{\texttt{SEND($<$m, C$>$)$_{i}$}}\\
+\textbf{Precondition:}\\
+m == REPLY\\
+\textbf{Effect:}\\
+out$_{i}$ = out$_{i}$ - m;
+
+\end{itemize}
+
+\paragraph{Internal transitions}
+
+\begin{itemize}
+\item{\texttt{EXECUTE($<$m$>$)$_{i}$}}\\
+\textbf{Precondition:}\\
+m == READ $||$ (m == WRITE $\wedge$ (\texttt{bar(v$_{i}$, m) - v$_{i} \le \beta$}))\\
+\textbf{Effect:}\\
+if m == READ\\
+\hspace*{4pt} out$_{i}$ = out$_{i} \bigcup <$\texttt{REPLY, v, i}$>_{\sigma_{R_{i}}}$\\
+else if m == WRITE\\
+\hspace*{8pt} U = U $\bigcup$ m.\\
+\hspace*{8pt} H = H $\bigcup$ m.\\
+$v_{i}$ = \texttt{bar(v$_{i}$, m)}.\\
+out$_{i}$ = out$_{i} \bigcup <$\texttt{REPLY, ACCEPT,i}$>_{\sigma_{R_{i}}}$
+
+\item{\texttt{TAKE-CHECKPOINT($<$m$>$)$_{i}$}}\\
+\textbf{Precondition:}\\
+$\chi(U) == \beta ||$ (m == WRITE $\wedge$ (\texttt{bar(v$_{i}$, m) - v$_{i} > \beta$}))\\
+\textbf{Effect:}\\
+out$_{i}$ = out$_{i} \bigcup <$\texttt{CHECKPOINT, U, s, e, i}$>_{\sigma_{R_{i}}}$\\
+busy = true;
+
+\item{\texttt{INCORPORATE($<$m$>_{\sigma_{R(j)}}$)$_{i}$}}\\
+\textbf{Precondition:}\\
+m == CHECKPOINT $\wedge$ $\chi(m) \le \beta \wedge j \ne i$\\
+\textbf{Effect:}\\
+H = H $\bigcup$ m.\\
+$v_{i}$ = \texttt{bar(v$_{i}$, m)}.
+
+\item{\texttt{PROCEED()$_{i}$}}\\
+\textbf{Precondition:}\\
+busy == true $\wedge$ $|V| \ge N-f$ s.t.
+V = $\{ m \in$ in$_{i}$ $\wedge$ m == \texttt{ACK-CHKPT} $\wedge$ source(m) $\in$ R$\}$\\
+\textbf{Effect:}\\
+busy = false;\\
+U = $\{\}$
+
+
+\end{itemize}
+
+
+\section{Simple Protocol}
+\textbf{Client access protocol:}
+Each client is mapped to a unique replica and 
+submits its request to only that replica.
+
+Assume that a faulty replica can accept upto $\lambda$ weighted
+updates.
+
+We consider only the checkpoints initiated by a correct replica.
+
+\paragraph{Invariant 1} Under perfect synchrony, numerical error
+of a correct replica can be at most (N-f-1)$\beta$+f$\lambda$ at
+any time.
+
+\paragraph{Proof:} Each correct replica can accept upto $\beta$
+weighted updates before starting a checkpoint. Before the first
+checkpoint, numerical error is (N-f-1)$\beta$+f$\lambda$ counting
+(N-f-1) other correct replicas and f faulty replicas.
+
+As soon as a correct
+replica receives 2f ACKs, it is guaranteed that every other correct
+replica has also received the checkpoint. So, the numerical error
+of each correct replica drops by $\beta$. However, the originating
+replica can make further progress after finishing the earlier checkpoint
+and accept upto $\beta$ more updates. Hence, numerical error
+of each correct replica can again grow at-most by $\beta$, thereby
+maintaining the bound.
+
+
+\paragraph{Invariant 2} After $k$ checkpoints, numerical error of
+a correct replica can be at most (k+(N-f-1))$\beta$+f$\lambda$.
+
+\paragraph{Proof (by induction)} 
+k=0: Each correct replica can accept upto $\beta$ weighted
+updates before it initiates a checkpoint, by the definition
+of TAKE-CHECKPOINT. Since there are (N-f-1) other correct replicas,
+a correct replica can be ignorant of (N-f-1)$\beta$ such updates.
+A faulty replica accepts $\lambda$ weighted updates and since
+there are at most $f$ faulty replicas, a correct replica can miss upto
+$f\lambda$ such updates. Hence, numerical
+error of a correct replica is bounded by (N-f-1)$\beta$+f$\lambda$.
+
+For the inductive step, let us assume the above for the $k$'th checkpoint. Now, let
+us consider (k+1)'st checkpoint. By definition of a checkpoint,
+one correct replica will propagate its $\beta$-weighted updates to at least
+(N-2f) other correct replicas. As soon as this happens, the initiator
+can make further progress and accept $\beta$ more updates.
+The correct replicas (at least (N-2f) of them) who receive this checkpoint have the
+same numerical error as before since even though they received the last checkpoint
+they are still missing the initiator's latest $\beta$-weighted updates
+which are not visible yet. However, f correct replicas
+might miss it, so their numerical error is (k+(N-f-1))$\beta$+f$\lambda
++\beta$=((k+1)+(N-f-1))$\beta$+f$\lambda$. Hence, proved.
+
+\textbf{Observations}
+If $\lambda\le\beta$, then numerical error at any
+correct replica is bounded by $(k+N-1)\beta = k\beta + \alpha$.
+If this condition does not hold, then numerical error is 
+unbounded for any replica, which is why we need to design next
+level of protocol. Note that if
+k=0, then we can enforce error bounds within $\alpha$ for
+any correct replica (perfect synchrony).
+
+\paragraph{Invariant 3} Let CKP$_{R(i)}$ be the checkpoints
+received by replica R(i) and CKP be the union of all checkpoints 
+received by all correct replicas. 
+Consider \textit{any} quorum Q of replicas of size (N-f). Let M = $\{\bigcup$
+CKP$_{R(i)}$: R(i) $\in$ Q$\}$. Then, M=CKP.
+
+\paragraph{Proof} First, we show that there exists at least 1 common
+correct replica between two consecutive checkpoints. Consider i'th
+checkpoint. By definition of a checkpoint, at least (N-f) replicas
+participate in it. Let Q$_{i}$ be the quorum of replicas participating
+in i'th checkpoint. Similarly, Q$_{i+1}$ be the quorum participating
+in (i+1)'st checkpoint. Standard set algebra suggests that
+\[
+|Q_{i} \cup Q_{i+1}| = |Q_{i}| + |Q_{i+1}| - |Q_{i} \cap
+Q_{i+1}| 
+\]
+Since left side can be at most N, and $|$Q$|$=(N-f) we have
+\[
+N \ge 2(N-f) - x 
+\implies x \ge N-2f
+\]
+Since N$\ge$3f+1, we have $x \ge f+1$. Since there are at most
+f faulty replicas, at least 1 correct replica participates in two
+given checkpoints.
+
+We will prove this invariant using induction.
+
+Base case is vacuously true (for k=0).
+
+For the inductive step, suppose that after $k$ checkpoints, following holds: 
+union of checkpoints seen by any quorum of (N-f) correct replicas
+forms all checkpoints seen in the system. Now,
+consider the $(k+1)$'st checkpoint. By the definition of a 
+checkpoint, at least (N-f) replicas would receive it.
+This quorum of replicas would intersect with any quorum of size 
+(N-f) of replicas in at least 1 correct replica.
+Since this 
+common replica received $(k+1)$'st checkpoint, our claim holds.
+
+\textbf{Observation} This invariant suggests that if a client
+reads from at least (N-2f) correct replicas, then union of updates
+seen by these reads guarantees the error to be within $\alpha$,
+irrespective of synchrony assumptions (of course, $\lambda\le\beta$
+for this to hold).
+
+\paragraph{Invariant 4} A faulty replica can not submit arbitrary
+weighted updates in a checkpoint.
+
+\paragraph{Proof} From the definition of INCORPORATE, a
+correct replica inserts the updates from another replica only
+when the updates contained in the checkpoint have $\le \beta$
+weight. All other updates are rejected. Moreover, updates
+are signed by the client, hence a faulty replica can not
+arbitrarily insert fake updates on the behalf of a client.
+
+
+\textbf{Comment} What if a faulty replica submits its update
+to only one other correct replica? This simply means that 
+that correct replica's numerical error goes down further.
+Need to work on this.
+
+\paragraph{Conclusion for this protocol} This protocol is not satisfactory
+since $\lambda$ is unbounded, which can cause clients
+behind correct replicas to miss the updates occuring at
+these replicas. For clients behind faulty replicas, they
+may not see \textit{any} update other than their own.
+
+\section{Modified protocol}
+\textbf{Client access protocol:} Each client is mapped to a
+quorum of $2f+1$ replicas. A client submits its request to
+this quorum and waits for $f+1$ responses, at least 1 of 
+them being from a correct replica.
+
+\paragraph{Quorum construction:} Note that replicas are numbered
+from 0 to N-1. We construct N quorums, each of size 2f+1. Each
+node is part of 2f+1 quorums. Formally, the set of quorums is 
+the set $\Psi$, where\\
+$\Psi = \{Q_{i}:0 \le i \le N-1\}$ and $|Q_{i}| = 2f+1$,
+finally $Q_{i}=\{r_{i},r_{i+1},...,r_{i+2f}\}$
+Each client $C_{i}$ is mapped to a unique quorum $Q_{i}$.
+Additionally, each correct replica accepts writes of 
+weight $\beta'=\alpha/2f$ before propagating them in a checkpoint.
+
+\paragraph{Invariant 1} Numerical
+error of a correct replica is bounded by $\alpha$ before
+the first checkpoint.
+
+\paragraph{Informal argument}
+There exists a quorum $Q$ such that f members are faulty
+and remaining are correct. A client issuing its write to
+this quorum may get an ACK from all faulty members but only
+1 correct replica, call it $r_{0}$. Once $r_{0}$ is full
+with $\beta'$ updates, it will not send an ACK. However,
+at this point, another correct replica accepts next batch
+of $\beta'$ updates. Since there are f+1 correct replica's
+in a quorum, they can accept $(f+1)\beta'$ weighted 
+\textit{unique} writes. Now, these f+1 correct replicas will
+not ACK any more update issued to them. There are f other
+correct replicas remaining which can accept, individually,
+$\beta'$ more updates. So, in total, there could be
+at most $(2f+1)\beta'$ weighted updates in the system. Note
+that once these correct replica's are full, they will not
+accept any more update and hence no futher update will
+be accepted by the system. For each correct replica,
+it can miss upto $2f\beta'$ updates. The numerical
+error is then
+\[
+e(i) \le 2f\beta' = \alpha
+\]
+
+\paragraph{Invariant 2} After $k$ checkpoints, numerical
+error of a correct replica is bounded by $k\beta' +\alpha$.
+
+\paragraph{Informal arguement} We will use induction to
+prove this invariant. Note that previous Invariant provides
+the base case. Assume that after $k$ checkpoints, numerical
+error of each replica is bounded by $k\beta'+\alpha$. Now,
+consider the $(k+1)$'st checkpoint. Again, a checkpoint
+implies that at least (f+1) correct replica's receive it.
+Once this happens, the originating replica can proceed
+to accept $\beta'$ more updates. Correct replica's 
+who received the $(k+1)$'st checkpoint (at least
+f+1) still have the same numerical error. However, those
+correct replica's which did not receive $(k+1)$'st checkpoint
+will have missed these $\beta'$ more updates. Hence, their
+numerical error would be $k\beta' +\alpha+\beta' = 
+(k+1)\beta'+\alpha$. Hence proved.
+
+\paragraph{Requirements for formal proof} We need proofs for
+two sub-problems. First, there exists a construction of quorum
+system such that the above execution trace is valid. Second,
+we need to prove that the above execution trace is the worst
+case. Still working on these, so the above proofs are not
+as rigourous as they should be. 
+\end{document}

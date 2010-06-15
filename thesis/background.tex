@@ -1,0 +1,267 @@
+\chapter[P2 Declarative Network System]{P2 Declarative Network System}
+\label{ch:p2}
+
+We begin with an overview of key aspects of the P2 declarative network system. While ostensibly a network protocol 
+engine, architecturally P2 resembles a fairly traditional shared-nothing parallel query processor, targeted at both stored 
+state and data streams.  P2 supports a recursive query language called Overlog that resembles traditional Datalog with 
+some extensions we discuss below.  Each P2 node runs the same query engine, and, by default, participates equally 
+in every ``query.''   In parallel programming terms, P2 supports the  Single-Program-Multiple-Data (SPMD) model of 
+parallel computation.
+
+The P2 runtime at each node consists of a compiler---which parses programs,
+optimizes them, and physically plans them---a dataflow executor, and access methods.  
+The initial version of the P2 compiler was monolithic and implemented in an imperative language (C++). 
+The subject of work described in Chapter~\ref{ch:do} is the replacement of the monolithic compiler with a
+runtime-extensible compiler framework that admits not only imperative
+but also declarative optimizers and other compilation stages.  This chapter highlights the distinguishing 
+features of the Overlog language, as well as the P2 dataflow executor and access methods. 
+
+\section{Overlog: The P2 Query Language}
+\label{ch:p2:sec:overlog}
+The original paper on P2~\cite{p2:sosp} presented Overlog in an ad-hoc manner as an event-driven language. Since that time, the P2 group has refined the Overlog language and the P2 runtime semantics a fair bit.  However, the only published discussion of the current state of Overlog is in the tutorial document included with the P2 source distribution, which is also quite informal. This section is an overview those
+semantics, since they form the setting for our work. 
+
+\begin{figure*}
+\begin{boxedminipage}{\linewidth}
+\begin{verbatim}
+materialize(link,infinity,infinity,keys(1,2)). 
+materialize(path,1,infinity,keys(1,2,3)). 
+materialize(shortestPath,1,infinity,keys(1,2,3)).
+
+link(@"localhost:10000", "localhost:10001").
+link(@"localhost:10001", "localhost:10002").
+
+r1 path(@X,Y,P,C) :- 
+       link(@X,Y,C), P := f_cons(X,Y). 
+       
+r2 path(@X,Y,P,C) :- 
+       link(@X,Z,C1), path(@Z,Y,P2,C2),
+       f_contains(X,P2) == false,
+      P := f_cons(X,P2), C := C1 + C2. 
+      
+r4 minCostPath(@X,Y,a_min<C>) :- 
+      path(@X,Y,P,C). 
+      
+r5 shortestPath(@X,Y,P,C) :-
+      minCostPath(@X,Y,C), path(@X,Y,P,C).
+\end{verbatim}
+\end{boxedminipage}
+\ssp
+\caption{\label{fig:overlogSP}Shortest path program in Overlog. \ol{a\_}
+prefixes introduce aggregate functions and \ol{f\_} prefixes introduce
+built-in functions.}
+\end{figure*}
+
+Overlog is based on the traditional recursive query language, Datalog; we assume a passing familiarity with Datalog in our discussion.  As in Datalog, an Overlog {\em program} consists of a set of deduction {\em rules} that define the set of tuples that can be derived from a base set of tuples called {\em facts}. Each rule has a {\em body} on the right of the \texttt{:-} divider, and a {\em head} on the left; the head represents tuples that can be derived from the body.  The body is a comma-separated list of {\em terms}; a term is either a {\em predicate} (i.e., a relation), a {\em condition} (i.e., a relational selection) or an {\em assignment}~\footnote{Overlog's assignments 
+are strictly syntactic replacements of variables with expressions; they
+are akin to ``\#define'' macros in C++.}.  An example Overlog program is shown in Figure~\ref{fig:overlogSP}.  
+Overlog introduces some notable extensions to Datalog:
+
+\stitle{Horizontal partitioning}Overlog's basic data model consists of
+relational tables that are partitioned across the nodes in a P2 network.
+Each relation in an Overlog rule must have one attribute that is
+preceded by an ``@'' sign.  This attribute is called the {\em location
+  specifier} of the relation, and must contain values in the network's
+underlying address space (e.g., IP addresses for Internet settings,
+802.13.4 addresses for sensor networks, hash-identifiers for code
+written atop distributed hash tables, etc.)  Location specifiers specify
+the horizontal partitioning of the relation: each tuple is stored at the
+address found in its location specifier attribute.  At a given node, we
+call a tuple a {\em local tuple} if its location specifier is equal to
+the local address.  Network communication is implicit in Overlog: tuples
+must be stored at the address in their location specifier, and hence the
+runtime engine has to send some of its derived tuples across the network
+to achieve this physical constraint.  Loo, et al. provide syntactic tests to
+ensure that a set of rules can be maintained partitioned in a manner
+consistent with its location specifiers and network
+topology~\cite{loo-sigmod06}.
+
+
+\stitle{Soft State and Events}Associated with each Overlog table is a
+``soft-state'' lifetime that determines how long (in seconds) a tuple in
+that table remains stored before it is automatically deleted.  Lifetimes
+can vary from zero to infinity.  Zero-lifetime tables are referred to as
+{\em event} tables, and their tuples are called \emph{events}; all other
+tables are referred to as {\em materialized} tables.  Overlog contains a
+\ol{materialize} declaration that specifies the lifetime of a
+materialized table.  At any instant in time, at any given node in the
+network, the contents of the local Overlog ``database'' are considered
+to be: (a) the local tuples in materialized tables whose lifetime has
+not run out, (b) at most one local event fact across {\em all} event
+tables, and (c) any derived local tuples that can be deduced from (a)
+and (b) via the program rules.  Note that while (b) specifies that only
+one event fact is considered to be live at a time per node, (c) could
+include {\em derived} local events, which are considered to be live
+simultaneously with the event fact.  This three-part definition defines the semantics for a
+single P2 node at a snapshot in time.  P2 has no defined semantics
+across time and space (in the network); we describe the relevant operational
+semantics of the prototype in Section~\ref{sec:eventloop}.
+     
+\stitle{Deletions and Updates}Overlog, like SQL, supports declarative
+expressions that identify tuples to be deleted in a deferred manner
+after query execution completes.  To this end, any Overlog rule in a
+program can be prefaced by the keyword \ol{delete}.  The program is run to fixpoint, after which the tuples derived in  {\tt
+  delete} rules -- as well as other tuples derivable from those -- are removed
+from materialized tables before another
+fixpoint is executed. It is also possible in Overlog to specify
+updates, but the syntax for doing so is different.  Overlog's {\tt
+  materialize} statement supports the specification of a primary key for
+each relation.  Any derived tuple that matches an existing tuple on the
+primary key is intended to {\em replace} that existing tuple, but
+the replacement is separated into an insertion and a deletion: the
+deduction of the new fact to be inserted is visible within the current
+fixpoint, whereas the deletion of the original fact is deferred until
+after the fixpoint is computed.
+
+    \subsection{A Canonical Example}
+        \label{sec:declnet}
+
+
+        To illustrate the specifics of Overlog, we briefly revisit a shortest
+        paths example (Figure~\ref{fig:overlogSP}), similar to that
+        of~\cite{loo-sigmod06}, but with fully-realized Overlog syntax that runs
+        in P2.  The three \ol{materialize} statements specify that \ol{link},
+        \ol{path} and \ol{bestpath} are all tables with infinite lifetime and
+        infinite storage space\footnote{The third argument of P2's table
+          definition optionally specifies a constraint on the number of tuples
+          guaranteed to be allowed in the relation. The P2 runtime replaces
+          tuples in ``full'' tables as needed during execution; replaced tuples
+          are handled in the same way as tuples displaced due to primary-key overwrite.}.  
+        For each table, the positions of the primary key attributes are noted as well.  
+        Rule \ol{r1} can be read as saying ``if there is a link tuple of the form \ol{(X,Y,C)} stored at node \ol{X}, then one can derive the existence of a path tuple \ol{(X,Y,P,C)} at node \ol{X}, where \ol{P} is the output of the function \ol{f\_cons(X,Y)} -- the concatenation of \ol{X} and \ol{Y}.''  
+Note that rule \ol{r1} has the same location specifiers throughout, and
+        involves no communication.  This is not true of the recursive
+        rule \ol{r2}, which connects any \ol{link} tuple at a node
+        \ol{X} with any path tuple at a neighboring node \ol{Z}, the
+        output of which is to be stored back at \ol{X}. As described in
+        the earlier work on P2~\cite{loo-sigcomm05,loo-sigmod06} such
+        rules can be easily rewritten so that the body predicates all
+        have the same location specifier; the only communication then is
+        shipping the results of the deduction to the head relation's
+        location specifier.  In Section~\ref{sec:localization} we
+        briefly describe how we reimplemented this functionality in a
+        \emph{localization} compiler stage written in Overlog, within
+        Evita Raced.
+
+
+\section{The P2 Runtime Engine}
+The P2 runtime is a dataflow engine that was based on ideas from relational databases and network routers; its scheduling and data hand-off closely resemble the Click extensible router~\cite{click-tocs}.  Like Click, the P2 runtime supports dataflow {\em elements} (or ``operators'') of two sorts: pull-based elements akin to database iterators~\cite{graefe-survey}, and push-based elements as well.  As in Click, whenever a pull-based element and a push-based element need to be connected, an explicit ``glue'' element (either a pull-to-push driver, or a queue element) serves to bridge the two.  More details of this dataflow coordination are presented in the original P2 paper~\cite{p2:sosp}.
+
+\subsubsection{Dataflow Elements}
+The set of elements provided in P2 includes a suite of operators familiar from relational query engines: selection, projection, and in-memory indexes.  P2 supports joins of two relations in a manner similar to the symmetric hash join: it takes an arriving tuple from one relation, inserts it into an in-memory table for that relation, and probes for matches in an access method over the other relation (either an index or a scan).  
+The work described in Chapter~\ref{ch:do} extended this suite to include sorting and merge-joins, which allowed us to explore some traditional query optimization opportunities and trade-offs as discussed in Section~\ref{sec:systemr}.
+
+P2 currently has no support for persistent storage, beyond the ability to read input streams from comma-separated-value files.  Its tables are stored in memory-based balanced trees that are instantiated at program startup; additional such trees are constructed by the planner as secondary indexes to support query predicates.
+
+P2 also provides a number of elements used for networking, which handle issues like packet fragmentation and assembly, congestion control, multiplexing and demultiplexing, and so on; these are composable in ways that are of interest to network protocol designers and will be further discussed in Chapter~\ref{ch:dataflow}. The basic pattern that the reader should assume is that each P2 node has a single IP port for communication, and the dataflow graph is ``wrapped'' in elements that handle network ingress with translation of packets into tuples, and network egress with translation of tuples into packets.
+
+\subsection{The P2 Event Loop}
+\label{sec:eventloop}
+The control flow in the P2 runtime is driven by a fairly traditional event loop that responds to any network or timer event by invoking an appropriate dataflow segment to handle the event.
+
+The basic control loop in P2 works as follows:
+\begin{CompactEnumerate}
+    \item An event is taken from the system input queue, corresponding to a single newly-arrived tuple, which is either an {\em insert} tuple (i.e., the result of a normal deduction) or a {\em delete} tuple (the result of a \ol{delete} rule or a primary-key update).  We will refer to this tuple as the {\em current tuple}.
+    \item The value of the system clock is noted in a variable we will call the {\em current time}.  This is the time that will be used to determine the liveness of soft-state tuples.  
+    %(Note that any event tuples that arrived previously will no longer be live in any event table, which guarantees the single-event semantics described above.)
+    \item The current tuple is, logically, appended to its table.
+    \item If the current tuple is an insert tuple, the dataflow corresponding to the Overlog program is initiated and run to a local fixpoint following traditional Datalog semantics, with the following exception: during processing, any non-local derived tuples are buffered in a {\em send queue}, as are any derived tuples to be deleted.
+    \item If, instead, the current tuple is a delete tuple, the dataflow
+    is run to a local fixpoint, but newly-derived local tuples
+    (including the current tuple) are copied to a {\em delete queue},
+    and newly-derived non-local tuples are marked as delete tuples
+    before being placed in the send queue so as to cascade the deletions
+    to remote nodes' databases.
+    \item All tuples in the delete queue are deleted from their associated tables, and the delete queue is emptied.
+    \item The send queue is flushed across the network, with any local updates inserted into the local input queue.
+\end{CompactEnumerate}
+Some additional operational details we discovered in P2 are discussed
+further in Section~\ref{sec:gripes}.
+
+Unlike Datalog, Overlog must run in the continuous processing context of networking, over streams of tuples representing system events.  This inherently requires more than the single computation of a fixpoint as described in the Datalog literature. P2 has modified its handling of this issue since the initial paper~\cite{p2:sosp}. P2 nests a fairly traditional declarative Datalog fixpoint execution within an operationally defined local event loop at each node.  An input queue is kept at each P2 node, to hold tuples that correspond to network messages and clock interrupts.  Each tuple in the queue is tagged with the name of a relation in the schema of the Datalog database. The loop begins by noting the local wall-clock time, and deleting from all tables any tuples whose soft-state lifetime has expired; this includes event tuples from the previous iteration of the loop.  At that point, a tuple is dequeued from the input queue and inserted into its associated table.  At that point, the Overlog program is run  to fixpoint atomically, nearly as if it were a traditional single Datalog program.  One exception to traditional Datalog is the handling of derived tuples with remote location specifiers; these are placed directly into network queues for subsequent processing. Another exception involves rules that have {\em actions} in the head -- these actions can be table insertion or deletion; derived tuples in such rules are also enqueued for subsequent processing.  When fixpoint is reached, the queued network messages are sent to their destinations, and the table actions are carried out on the database.  This completes one iteration of the event loop.
+
+From this perspective, the P2 runtime looks quite a bit like an Event-Condition-Action system with dataflow underneath: events are provided by the clock and network, conditions are checked via the dataflow engine for matches, which are then converted into actions: network messages to be sent, or table updates to be performed.
+
+\section{Application: Overlay Networks}
+
+The primary goal of the P2 project was to make it easy to implement and
+deploy overlay networks by allowing specifications in a high-level
+declarative language to be directly executed on nodes to instantiate
+overlays. In an early version of P2, we implemented and deployed a
+Narada-style mesh network~\cite{chu00case}, using only 12 rules, and the 
+Chord structured overlay~\cite{chord} in only 35 rules. 
+Our experience with overlay implementations has shown that relations,
+together with a recursive query language, can fairly naturally represent the 
+persistent routing state of the overlays we considered.  In paper~\cite{p2:sosp} 
+we give examples in support of this claim.
+
+The P2 dataflow runtime mixes together network packet processing elements
+for tasks like queuing, (de)multiplexing, and congestion control along
+with relational database operators like joins and aggregations. We have built
+a number of optimizations into the P2 system that would not have been possible
+in a traditional automaton abstraction. These optimizations cover both the networking
+layer (Chapter~\ref{ch:dataflow}) and the query layer (Chapter~\ref{ch:do}) since
+the dataflow runtime is uniform across both. 
+
+
+% \jmh{This is probably too long.  Also, we need to purge text that was recycled from SOSP.  }
+% The design of P2 was inspired by prior work in both databases and
+% networking. It is based in large part upon a
+% side-by-side comparison between the PIER peer-to-peer query
+% engine~\cite{pier-cidr05} and the Click router~\cite{click-tocs}. Like
+% PIER, P2 can manage structureddata tuples flowing through a broad
+% range of query processing elements, which may accumulate significant
+% state and perform substantial asynchronous processing.  Like Click, P2
+% stresses high-performance transfers of data units, as well as dataflow
+% elements with both ``push'' and ``pull'' modalities. 
+% 
+% At a coarse grain, P2 in its current state consists of (1) an Overlog
+% parser, (2) an Planner that translates Overlog to a runtime dataflow
+% plan, and (3) a runtime plan executor.  The
+% life of a query is simple: the query is parsed into an internal
+% representation, the planner constructs a corresponding dataflow graph
+% of elements, and the graph is executed by the runtime until it is
+% canceled.  We proceed to overview the components bottom-up; more
+% details are given in the P2 SOSP paper~\cite{p2:sosp}.
+% 
+% Processing in P2 is handled with a dataflow model inspired by Click
+% and PIER.  As in Click, nodes in a P2 dataflow
+% graph can be chosen from a set of C++ objects called
+% \textit{elements}.  In database systems these are often called
+% \textit{operators}, since they derive from logical operators in the
+% relational algebra.  Elements have some number of input and output
+% \emph{ports}.  An arc in the dataflow graph is represented by a
+% binding between an output port on one element and an input port on
+% another.  Tuples arrive at the element on input ports, and elements
+% emit tuples from their output ports. Handoff of a tuple between two elements takes one
+% of two forms, \emph{push} or \emph{pull}, determined when the elements
+% are configured into a dataflow graph.   
+% 
+% P2 provides a number of built in dataflow elements that allow it to
+% implement networking and query processing logic.  This includes
+% elements for the streaming relational query operators found in most
+% database systems, e.g., selection, projection, join, and aggregation.
+% It also includes networking elements responsible for socket handling,
+% packet scheduling, congestion control, reliable transmission, data
+% serialization, and dispatch.  P2 has elements to store incoming tuples in tables, 
+% iteratively emit tuples in a table matching a filter expression, and {\em listener}
+% elements that are notified whenever a tuple is added or deleted from a
+% table. Finally, like Click, P2 includes a collection of general-purpose
+% ``glue'' elements, such as a queue, a multiplexer, a round-robin
+% scheduler, etc.
+% 
+% Storage in P2 is currently via a main-memory relational Table
+% implementation, named using unique IDs that can be shared between
+% different queries and/or dataflow elements.  In-memory indices
+% (implemented using standard balanced binary trees) can be attached to
+% attributes of tables to enable quick equality lookups.  The current
+% in-memory implementation serves the system requirements for implementing
+% network overlays and streaming query applications, all of which tend
+% to expire tuples from memory rather than accumulating them
+% indefinitely.  P2's event-driven, run-to-completion model obviates the
+% need for locking or transaction support, and relatively simple indices
+% suffice to meet performance requirements.  We plan additional
+% table implementations that use stable storage for persistent data
+% storage; that engineering task is relatively straightforward, but not
+% within the scope of this paper.
+% 

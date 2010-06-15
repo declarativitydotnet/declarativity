@@ -1,0 +1,74 @@
+This is pdfeTeX, Version 3.141592-1.21a-2.2 (Web2C 7.5.4)
+entering extended mode
+(./euro041-alvaro.tex
+LaTeX2e <2003/12/01>
+Babel <v3.8d> and hyphenation patterns for american, french, german, ngerman, b
+ahasa, basque, bulgarian, catalan, croatian, czech, danish, dutch, esperanto, e
+stonian, finnish, greek, icelandic, irish, italian, latin, magyar, norsk, polis
+h, portuges, romanian, russian, serbian, slovak, slovene, spanish, swedish, tur
+kish, ukrainian, nohyphenation, loaded.
+(./sigplanconf.cls
+Document Class: sigplanconf 2009/09/30 v2.3 ACM SIGPLAN Proceedings
+(/opt/local/share/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2004/02/16 v1.4f Standard LaTeX document class
+(/opt/local/share/texmf-dist/tex/latex/base/size10.clo))
+Using natbib package with 'numbers' citation style.
+(/opt/local/share/texmf-dist/tex/latex/natbib/natbib.sty))
+(/opt/local/share/texmf-dist/tex/latex/graphics/color.sty
+(/opt/local/share/texmf-dist/tex/latex/graphics/color.cfg)
+(/opt/local/share/texmf-dist/tex/latex/graphics/pdftex.def))
+(/opt/local/share/texmf-dist/tex/latex/psnfss/times.sty)
+(/opt/local/share/texmf-dist/tex/latex/url/url.sty)
+(/opt/local/share/texmf-dist/tex/latex/graphics/graphicx.sty
+(/opt/local/share/texmf-dist/tex/latex/graphics/keyval.sty)
+(/opt/local/share/texmf-dist/tex/latex/graphics/graphics.sty
+(/opt/local/share/texmf-dist/tex/latex/graphics/trig.sty)
+(/opt/local/share/texmf-dist/tex/latex/graphics/graphics.cfg)))
+(/opt/local/share/texmf-dist/tex/latex/boxedminipage/boxedminipage.sty)
+(/opt/local/share/texmf-dist/tex/latex/tools/xspace.sty)
+(/opt/local/share/texmf-dist/tex/latex/base/textcomp.sty
+(/opt/local/share/texmf-dist/tex/latex/base/ts1enc.def))
+(/opt/local/share/texmf-dist/tex/latex/wrapfig/wrapfig.sty)
+(/opt/local/share/texmf-dist/tex/latex/preprint/balance.sty)
+(/opt/local/share/texmf-dist/tex/latex/microtype/microtype.sty
+(/opt/local/share/texmf-dist/tex/latex/microtype/microtype.cfg))
+(./euro041-alvaro.aux) (/opt/local/share/texmf-dist/tex/latex/base/ts1cmr.fd)
+(/opt/local/share/texmf-dist/tex/latex/psnfss/ot1ptm.fd)
+(/opt/local/share/texmf-dist/tex/latex/microtype/mt-ptm.cfg)
+(/opt/local/share/texmf-dist/tex/context/base/supp-pdf.tex
+(/opt/local/share/texmf-dist/tex/context/base/supp-mis.tex
+loading : Context Support Macros / Miscellaneous (2004.10.26)
+)
+loading : Context Support Macros / PDF (2004.03.26)
+) (/opt/local/share/texmf-dist/tex/latex/psnfss/ot1phv.fd)
+(/opt/local/share/texmf-dist/tex/latex/psnfss/ts1ptm.fd) (./intro.tex
+Underfull \vbox (badness 10000) has occurred while \output is active [1{/opt/lo
+cal/share/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+(/opt/local/share/texmf-dist/tex/latex/microtype/mt-cmr.cfg)
+Underfull \vbox (badness 3701) has occurred while \output is active [2])
+(./relwork.tex) (./bg.tex
+Underfull \vbox (badness 10000) has occurred while \output is active
+<jol-node.pdf, id=80, 495.8525pt x 237.88875pt> <use jol-node.pdf> [3])
+(./hdfs.tex
+Underfull \vbox (badness 2359) has occurred while \output is active [4 <./jol-n
+ode.pdf>] [5]) (./rely.tex [6]) (./scale.tex) [7] (./manage.tex [8])
+(./mapreduce.tex [9]
+<graphs/reduce_stragglers.pdf, id=138, 363.3575pt x 218.8175pt>
+<use graphs/reduce_stragglers.pdf>
+Underfull \vbox (badness 10000) has occurred while \output is active)
+(./eval.tex <graphs/fourgraphs.pdf, id=139, 555.07375pt x 364.36125pt>
+<use graphs/fourgraphs.pdf>
+Underfull \vbox (badness 10000) has occurred while \output is active [10 <./gra
+phs/reduce_stragglers.pdf>]) (./lessons.tex [11 <./graphs/fourgraphs.pdf>]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 2698) has occurred while \output is active [12])
+(./conclusion.tex) (./acknowledgments.tex) (./euro041-alvaro.bbl
+
+Package balance Warning: You have called \balance in second column
+(balance)                Columns might not be balanced.
+
+[13]
+Underfull \hbox (badness 2103) in paragraph at lines 183--185
+[]\^^@ B. Szekely and E. Tor-res, Dec. 2005.  $\OT1/cmtt/m/n/9 http : / / www .
+
+)

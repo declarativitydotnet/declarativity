@@ -1,0 +1,25 @@
+TODOs for camera-ready:
+
+* Discuss why BOOM-FS was slightly slower than HDFS
+* Abstract: distinguish between data-centric design and declarative PLs
+* Read over reviews one last time
+
+Procedural:
+
+* Updated version of TR
+
+Possible:
+
+* Add larger code sample?
+
+Larus:
+
+* Define data-centric more precisely
+* How does systems infrastructure relate to distributed apps?
+
+To explain:
+
+* Define the "state machine" model of distributed programming?
+* Explain "Postgres-style extensibility"
+* Explain database-style pipelined query plans
+

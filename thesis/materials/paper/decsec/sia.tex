@@ -1,0 +1,76 @@
+\subsection{Sample Specification: SIA}
+
+\subsubsection{Solution 1: Direct Approach}
+\begin{code}
+\textbf{Sensor Code}\\
+\textbf{private:}\\
+\> materialize(temp, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(query, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(myKey, $\infty$, $\infty$, keys(1))\\
+\> materialize(verification, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(consentT, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(aggrV, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(commit, $\infty$, $\infty$, keys(1, 2))\\
+\textbf{input:}\\
+\> materialize(offPath, $\infty$, $\infty$, keys(1,2))\\
+\textbf{output:}\\
+\> materialize(aggrVal, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(children, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(numChildren, $\infty$, $\infty$, keys(1))\\
+\> materialize(parent, $\infty$, $\infty$, keys(1))\\
+\> materialize(consent, $\infty$, $\infty$, keys(1, 2))\\
+\\
+Q1: query(@Me, N, Total, Querier)\\
+L1: myVal(@Me, val)\\
+C1: children(@Me, C1)\\
+C2: children(@Me, C2)\\
+C3: numChildren(@Me, Num)\\
+P1: parent(@Me, P)\\
+A1: aggrVal(@Me, N, S, C, Cnt, H):- myVal(@Me, S), \\
+\> numChildren(@Me, 0), query(@Me, N, T, Q)\\
+\> Cnt = 1, C = T - S, H = f\_hash(N||S||C||Cnt)\\
+A2: temp(@Me, N, $sum$<S>, $sum$<C>, $sum$<Cnt>, \\
+\> $f\_aggr$<H>):- children(@Me, Z)\\
+\> aggrVal(@Z, N, S, C, Cnt, H) \\
+A3: aggrVal(@Me, N, S, C, Cnt, H):- \\
+\> numChildren(@Me, Cnt'),\\
+\> temp(@Me, N, S, C, Cnt, H), Cnt' = Cnt\\
+D1: offPath(@Z, Z, N, S, C, Cnt, H):-\\
+\> aggrVal(@Z', N, S, C, Cnt, H), children(@Me, Z),\\
+\> children(@Me, Z'), Z' != Z\\
+D2: offPath(@Z, Z, N, S, C, Cnt, H):-\\
+\> offPath(@Me, Me, N, S, C, Cnt, H), \\
+\> children(@Me, Z)\\
+CQ1: commit(@Me, N, H):- query(@Me, N, \_, Q),\\
+\> Q says commit(\_, N, H)\\
+V1: verification(@Me, Me, N, S, C, Cnt, H):-\\
+\> myVal(@Me, S), query(@Me, N, T, Q)\\
+\> Cnt = 1, C = T - S, H = f\_hash(N||S||C||Cnt)\\
+V2: aggrV(@Me, P, N, $sum$<S>, $sum$<C>, $sum$<Cnt>,\\
+\>  $f\_aggr$<H>):- children(@P, Z),\\
+\> verification(@Me, Z, N, S, C, Cnt, H) \\
+V3: verification(@Me, P, N, S, C, Cnt, H):-\\
+\> aggrV(@Me, P, N, S, C, Cnt, H), \\
+\> numChildren(@P, Cnt'), Cnt' = Cnt\\
+S1: consent(@Me, N, Consent):- commit(@Me, N, H),\\
+\> verification(@Me, Q, N, S, C, Cnt, H),\\
+\> query(@Me, N, T, Q), numChildren(@Me, 0),\\
+\> Consent = f\_commit(K, ``OK'', N), myKey(@Me, K)\\
+S2: consentT(@Me, N, xor<Consent>, count<Consent>):- \\
+\> consent(@Z, N, Consent), children(@Me, Z)\\
+S3: consent(@Me, N, C):- numChildren(@Me, Cnt),\\
+\> consentT(@Me, N, C, Cnt)\\
+\textbf{Querier}\\
+\textbf{private:}\\
+\> materialize(queryData, $\infty$, $\infty$, keys(1, 2))\\
+\> materialize(leaf, $\infty$, $\infty$, keys(1,2))\\
+\\
+L1: leaf(@Me, S, K)\\
+Q1: queryData(@Me, N, Root, Count, Total)\\
+DC1: commit(@S, N, Commit):- leaf(@Me, N, L),\\
+\> queryData(@Me, N, R, Cnt, T), S = Cnt*T - C\\
+\> aggrVal(@R, N, S, C, Cnt, Commit)\\
+ER1: expConsent(@Me, xor<C>):- leaf(@Me, S, K),\\
+\> queryData(@Me, N, Root, Count, Total),\\
+\> C =  f\_commit(K, ``OK'', N)
+\end{code}

@@ -1,0 +1,165 @@
+\relax 
+\citation{mapreduce-osdi}
+\citation{onlineagg}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{1}}
+\newlabel{sec:intro}{{1}{1}}
+\citation{mapreduce-osdi}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}Structure of the Paper}{2}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background}{2}}
+\newlabel{sec:background}{{2}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Programming Model}{2}}
+\newlabel{sec:progmodel}{{2.1}{2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Map function interface.}}{2}}
+\newlabel{fig:mapfunction}{{1}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Hadoop Architecture}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}Map Task Execution}{2}}
+\newlabel{sec:maptask}{{2.3}{2}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Map task index and data file format (2 partition/reduce case).}}{3}}
+\newlabel{fig:mapoutput}{{2}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4}Reduce Task Execution}{3}}
+\newlabel{sec:reducetask}{{2.4}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Reduce function interface.}}{3}}
+\newlabel{fig:reducefunction}{{3}{3}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Pipelined MapReduce}{3}}
+\newlabel{sec:pipelining}{{3}{3}}
+\citation{mapreduce-osdi}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Pipelining Within A Job}{4}}
+\newlabel{sec:intra-pipe}{{3.1}{4}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Na\"{\i }ve Pipelining}{4}}
+\newlabel{sec:naive}{{3.1.1}{4}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.2}Refinements}{4}}
+\newlabel{sec:pipe-refine}{{3.1.2}{4}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.3}Granularity of Map Output}{4}}
+\newlabel{sec:mapout}{{3.1.3}{4}}
+\citation{eddies}
+\citation{pig}
+\citation{mapreduce-osdi}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Pipelining Between Jobs}{5}}
+\newlabel{sec:inter-pipe}{{3.2}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Fault Tolerance}{5}}
+\newlabel{sec:ft}{{3.3}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Task Scheduling}{5}}
+\newlabel{sec:pipeline-sched}{{3.4}{5}}
+\citation{hive}
+\citation{pig}
+\citation{sawzall}
+\citation{onlineagg}
+\citation{dbo}
+\@writefile{toc}{\contentsline {section}{\numberline {4}Online Aggregation}{6}}
+\newlabel{sec:online}{{4}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Single-Job Online Aggregation}{6}}
+\newlabel{sec:online-single}{{4.1}{6}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1}Progress Metric}{6}}
+\newlabel{sec:online-metric}{{4.1.1}{6}}
+\citation{datacube}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Multi-Job Online Aggregation}{7}}
+\newlabel{sec:online-multi}{{4.2}{7}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Top-100 query over 5.5GB of Wikipedia article text. The vertical lines describe the increasing accuracy of the approximate answers produced by online aggregation.}}{7}}
+\newlabel{fig:topkonlinewiki}{{4}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Evaluation}{7}}
+\newlabel{sec:online-eval}{{4.3}{7}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1}Approximation Metrics}{7}}
+\citation{wikistats}
+\citation{mapreduce-osdi}
+\citation{sosp-mining}
+\newlabel{fig:approx-relative}{{5a}{8}}
+\newlabel{sub@fig:approx-relative}{{(a)}{a}}
+\newlabel{fig:approx-hour}{{5b}{8}}
+\newlabel{sub@fig:approx-hour}{{(b)}{b}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Comparison of two approximation metrics. Figure\nobreakspace  {}\subref  {fig:approx-relative} shows the relative error for each approximation metric over the runtime of the job, averaged over all groups. Figure\nobreakspace  {}\subref  {fig:approx-hour} compares an example approximate answer produced by each metric with the final answer, for each language and for a single hour.}}{8}}
+\newlabel{fig:approx}{{5}{8}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Continuous Queries}{8}}
+\newlabel{sec:continuous}{{5}{8}}
+\citation{flux-ft}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Continuous MapReduce Jobs}{9}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {5.1.1}Fault Tolerance}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Prototype Monitoring System}{9}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Evaluation}{9}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Number of pages swapped over time on the thrashing host, as reported by \texttt  {vmstat}. The vertical line indicates the time at which the alert was sent by the monitoring system.}}{10}}
+\newlabel{fig:outlier}{{6}{10}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Performance Evaluation}{10}}
+\newlabel{sec:perf}{{6}{10}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Background and Configuration}{10}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces CDF of map and reduce task completion times for a 10GB wordcount job using 20 map tasks and 5 reduce tasks (512MB block size). The total job runtimes were 561 seconds for blocking and 462 seconds for pipelining.}}{11}}
+\newlabel{fig:wc1}{{7}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces CDF of map and reduce task completion times for a 10GB wordcount job using 20 map tasks and 20 reduce tasks (512MB block size). The total job runtimes were 361 seconds for blocking and 290 seconds for pipelining.}}{11}}
+\newlabel{fig:wc2}{{8}{11}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Small Job Results}{11}}
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces CDF of map and reduce task completion times for a 10GB wordcount job using 20 map tasks and 1 reduce task (512MB block size). The total job runtimes were 29 minutes for blocking and 34 minutes for pipelining.}}{12}}
+\newlabel{fig:wc3}{{9}{12}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces CDF of map and reduce task completion times for a 100GB wordcount job using 240 map tasks and 60 reduce tasks (512MB block size). The total job runtimes were 48 minutes for blocking and 36 minutes for pipelining.}}{12}}
+\newlabel{fig:wc4}{{10}{12}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Large Job Results}{12}}
+\citation{mapreduce-osdi}
+\citation{dryad07}
+\citation{pavlo09}
+\citation{aster}
+\citation{greenplum}
+\citation{exchange}
+\citation{osprey-icde}
+\citation{logoyocum08}
+\citation{onlineagg}
+\citation{ieeecontrol}
+\citation{luo-ripple}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces CDF of map and reduce task completion times for a 100GB wordcount job using 3120 map tasks and 60 reduce tasks (32MB block size). The total job runtimes were 42 minutes for blocking and 34 minutes for pipelining.}}{13}}
+\newlabel{fig:wc5}{{11}{13}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Related Work}{13}}
+\newlabel{sec:relwork}{{7}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}Parallel Dataflow}{13}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}Online Aggregation}{13}}
+\citation{dbo}
+\citation{jermaine-shuffle}
+\citation{wu-vldb09}
+\citation{gibbons98new}
+\citation{ieeecontrol}
+\citation{borealis}
+\citation{stream}
+\citation{tcq-cidr}
+\citation{flux-ft}
+\citation{borealisFT}
+\citation{sbon}
+\citation{flux-ft}
+\citation{flux-lb}
+\citation{flux-lb}
+\citation{flux-ft}
+\citation{olston-usenix08}
+\citation{eddies}
+\citation{flux-lb}
+\citation{ieeecontrol}
+\citation{seda}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}Continuous Queries}{14}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion and Future Work}{14}}
+\newlabel{sec:concl}{{8}{14}}
+\bibstyle{acm}
+\bibdata{nsdi}
+\bibcite{borealis}{1}
+\bibcite{eddies}{2}
+\bibcite{borealisFT}{3}
+\bibcite{tcq-cidr}{4}
+\bibcite{aster}{5}
+\bibcite{mapreduce-osdi}{6}
+\bibcite{gibbons98new}{7}
+\bibcite{exchange}{8}
+\bibcite{datacube}{9}
+\bibcite{greenplum}{10}
+\bibcite{ieeecontrol}{11}
+\bibcite{onlineagg}{12}
+\bibcite{dryad07}{13}
+\bibcite{jermaine-shuffle}{14}
+\bibcite{dbo}{15}
+\bibcite{logoyocum08}{16}
+\bibcite{luo-ripple}{17}
+\bibcite{stream}{18}
+\bibcite{olston-usenix08}{19}
+\bibcite{pig}{20}
+\bibcite{pavlo09}{21}
+\bibcite{sbon}{22}
+\bibcite{sawzall}{23}
+\bibcite{flux-ft}{24}
+\bibcite{flux-lb}{25}
+\bibcite{wikistats}{26}
+\bibcite{hive}{27}
+\bibcite{seda}{28}
+\bibcite{wu-vldb09}{29}
+\bibcite{sosp-mining}{30}
+\bibcite{osprey-icde}{31}

@@ -1,0 +1,90 @@
+\documentclass{article}
+\author{Aydan R. Yunerefendi}
+\title{Sum Estimation Using Sampling}
+
+\begin{document}
+\maketitle
+
+  It is possible to estimate the sum of a set of values by using
+  sampling. Let $N$ be the size of the set and the $i^{th}$ value be
+  $y_i$. The general idea is to take a sample of size $m$ from the
+  data set and to use the sample mean $\overline{y} =
+  \frac{1}{m}\sum_{i=1}^{i=m}y_i$ as an estimator of the population
+  mean $\overline{Y} = \frac{1}{N}\sum_{i=1}^{i=N}y_i$. Canetti et
+  al.~\cite{canetti94lower} show that to obtain an additive
+  $(\epsilon, \delta)$ approximation ($Pr(|\overline{y}-\overline{Y}|
+  > \epsilon) \leq \delta$) we need to take
+  $\Omega(\frac{1}{\epsilon^2}\ln\frac{1}{\delta})$ samples. 
+
+  We estimate the total sum to be $\widehat{T} = N\overline{x}$. If
+  the correct total is $T$, we have that $|\widehat{T}-T| =
+  N|\overline{y}-\overline{Y}| \leq \epsilon N$. 
+
+  Hou et al.~\cite{hou91error} provide more concrete results for the
+  desired sample size. They use multiplicative error and study the
+  desired sample size using different techniques.
+
+  If we know the exact population mean ($\overline{Y}$) and population
+  variance ($\sigma_{Y}^2$), we can estimate the size of the sample
+  needed to obtain an $(\epsilon, \delta)$ approximation to be:
+
+  \begin{eqnarray*}
+    m \geq (\frac{t\sigma}{\epsilon\overline{Y}})^2
+  \end{eqnarray*}
+
+  Clearly if we already know the population parameters we can compute
+  $T$, without using any sampling. Therefore this number serves as a
+  base reference point: any scenario in which we are unsure about the
+  population parameters will require more samples.
+
+  Hou et al. proceed by describing a double sampling approach to limit
+  the size of the sample. Double sampling was described first by Cox
+  and the idea is to sample in two steps. In the first step a sample
+  of size $m_1$ is taken and the sample mean and variance are
+  computed. Using the sample mean and the variance, we compute the
+  desired sample size $m$ and continue to sample the remaining $m-m_1$
+  samples. The formula for $m$ is:
+
+  \begin{eqnarray*}
+    m = (\frac{tv}{\epsilon \overline{y}})^2(1 +
+    8(\frac{\epsilon}{t})^2 + \frac{v^2}{m_1\overline{y}^2} +
+    \frac{2}{m_1})
+  \end{eqnarray*}
+  where $\overline{y}$ and $v$ are the sample mean the sample
+  variance.
+
+  This formula clearly demonstrates the effect of not knowing the
+  exact population parameters: the first factor is the size from the
+  ideal case and the second factor corrects for the uncertainty.
+
+  The resulting estimator $\overline{T}$ becomes slightly biased and we
+  have to multiply it by a factor of $(1-2(\frac{\epsilon}{t})^2)$ to
+  correct for the bias.
+
+  Cox provides another formula for computing the sample size when the
+  population has only 0 and 1 values:
+
+  \begin{eqnarray*}
+    m = \frac{(\frac{t}{\epsilon})^(1-p_1)}{p_1} + \frac{2}{p_1(1-p_1)}
+    + \frac{t^2}{\epsilon^2p_1m_1}
+  \end{eqnarray*}
+  where $p_1$ is the proportion of sample units having value 1 in the
+  first step.
+
+  The corresponding bias correction is:
+  $N(p-\frac{(\frac{\epsilon}{t})^2}{1-p})$, where $p$ is the
+  proportion of the overall sample units with the value 1.
+
+  In situations where the sample size is not much smaller relative to
+  the population size, it is possible to improve the result by using
+  sampling without replacement. Section 5 of~\cite{hou91error}
+  presents some minor modifications to the above formulas.
+
+  Another approach to solve the same problem uses sequential
+  sampling. The idea of sequential sampling is that the exact number
+  of samples is not known in advance. We continue sampling until some
+  stopping condition is satisfied. It is possible to calculate the
+  expected sample size, but not the exact sample size.
+
+  
+\end{document}

@@ -1,0 +1,57 @@
+\section{Language}
+
+We extend the Overlog language~\cite{p2sosp} to include the primitives related with authentication, and DADS. We call this language {\em Syslog}. In the following sections, we describe the syntactic and semantic additions to the Overlog language. While many primitives will be useful to support all kinds of distributed systems, we start with the most essential ones. Our solution presents a case for declarative approach to system building by providing a prototype system that can be used to build a reasonably large set of distributed systems. We illustrate a few systems in this paper: PBFT, SIA and S-BGP. However, we don't try to support every possible primitive needed by a distributed system. The support for new primitives can be incrementally added.
+
+%\prince{need to sell these primitives as incarnations of primitives from TAOS and BAN logic papers to motivate why is it useful to express systems in form of these primitives: i.e. ease of understanding, basic primitives strong enough to express a variety of systems and provable properties. Also want to highlight that most of the properties from TAOS regime can be implemented using language. Furthermore, also say that even though we directly support only authentication and possibly integrity, several other useful constructs such as trust, authorization, access control can be implemented using the language. the future goal is to integrate these constructs more closely.}
+\subsection{Authentication Primitive}
+
+The first primitive that we consider is an incarnation of the {\em says} primitive from the TAOS and BAN logic world. Our {\em says} primitive captures the essence of a large variety of authentication algorithms while retaining the basic intuition behind the use of authentication in secure systems. Generally speaking, people use authentication to get {\em sufficient confidence} that a {\em set of principals(speakers:S)} {\bf{\em said}} {\em something(msg)} to {\em another set of principals(receivers:R)}. Furthermore, in some cases, this act of speaking might be verifiable by another {\em set of principals(verifiers:V)}. A few authentication algorithms take a step further to allow the speakers to be a quorum rather than a precise set. Thus, such a quorum can be represented by the pair (PotentialSpeakerSet:P, K) indicating that at least K principals from the set {\em potentialSpeakerSet} made this statement. This abstract specification is precisely what our {\em says} primitive captures. Thus, our says primitive looks like this:
+\begin{center}
+says(P, R, K, V)<msg>
+\end{center}
+
+This primitive can be interpreted as a message and an accompanying certificate. The certificate is only guaranteed to be interpretable by principals in ReceiverSet and VerifierSet. Receiver and Verifier nodes can interpret the primitive as ``At least K principals in the set P, said msg that can be authenticated by everyone in the set R and verified by everyone in set V''. We refer to PotentialSpeakerSet(P), ReceiverSet(R), K, and VerifierSet(V) as says parameters in subsequent discussions as they parameterize the abstract says primitive. Table X describes how different encryption algorithms can be specified in terms of our says primitive. For example, public key encryption can be represented using PotentialSpeakerSet comprising of the single speaker and K equal to one. The ReceiverSet and VerifierSet can be set to universal set comprising of all the principals in the system.
+
+\prince{Give a table that describes how several real-life cryptographic constructs can be expressed using this says primitive.}
+
+%Note that one important characteristic of an encryption algorithm still remains unspecified-specified in the above primitive. This unspecified-specified characteristic is the {\em degree of confidence}. Different encryption algorithms provide different degree of confidence and hence may be more desirable than others in certain environment. For e.g, in certain environments it might be acceptable to use 128bit signatures while other environments might require 256 or even 2048 bit signatures. Similarly, in certain secure and trusted environments it might suffice to use plain text communication while other environments might desire strong cryptography. Likewise, for performance or some other operation conditions one encryption algorithm might be more desirable than other. Note that difference in preference of encryption algorithm needn't be across different implementation, it could be based on interfaces or even the communication agent. For e.g. when communicating to a node on secure channel, plain text communication might suffice, which when communicating to another node, a different encryption algorithm might be more desirable. Thus, the use of an abstract says primitive still ensures that the same specification can be transparently applied to all the environments. 
+
+%The precise choice of encryption algorithm defines the liveness and performance policy that can be specified separate from the core specification in terms of the {\em says} primitive. The {\em says parameters} and the specification using these parameters defines the safety policy. Note that the distinction between safety and liveness is a bit unclear here because what might be {\em safe} in one environment (e.g. plain-text) may not be safe in another environment. Thus, to ensure safety, it is important that the choice of protocols is appropriately exercised. Thus, given a choice of encryption algorithms, all of which are safe for a given environment, the specification in terms of says primitive suffices to ensure safety. (We highlight in the evaluation/introduction section why it is non-trivial to do this in presence of code transformations from one encryption primitive to another based on costs)
+
+\subsubsection{Semantics}
+As a straightforward translation of our security primitive into language, we have added a {\em says} keyword in our language. The message tuple appears in angular brackets following says and the params tuple. Thus, a says statement in Syslog looks like:
+\begin{center}
+says(P, R, k, V) <tuple(@S, A, B, ...)> 
+\end{center}
+When this says statement appears on the right hand side of the delimiter $:-$, it means do the action on left hand side if all other conditions on right hand side are true and if the principal S has received a says message that claims that {\em at least k principals from P say tuple(@S, A, B,...) that can be authenticated by every principal in R and this can be verified by every principal in V}. Note that since the certificate is interpretable only at the nodes in R and V, receipt of such a message will trigger an action only on these nodes. 
+
+When this says statement appears on the left hand side, it directs the implementation to make a statement {\em tuple(@S, A, B, ...)} that can be authenticated by every principal in R and verified by every principal in V to node S. This can be successfully done only at the following set of nodes. At all other nodes, the authenticated message is discarded.
+
+\be
+\item At nodes $P'$, which have sufficient authority to act as {\em at least k principals in P}, to produce a certificate interpretable by nodes in R and V, and verifiable by nodes in V. 
+\item At nodes $F'$ that have a certificate that {\em at least k principals in P} are making the statement tuple(@S, A...). The certificate must be interpretable by F' and principals in R and can be verified by principals in V.
+\item At nodes $F''$, that have a set of certificates that can be combined to produce a new certificate that has properties of 2. The combination takes place according to the authentication algebra that we describe in the next sub-section. 
+\ee
+
+Let's revisit the reachability example we considered in the background section and suppose that now nodes don't trust the links to be secure. Hence, they want the advertisements (saysReachable) to be authenticated. Such a simple authentication scheme could prevent spoofing of router address in the advertisements. In this scenario, we don't care about the non-repudiation or verifiability aspect. So, secret key encryption might be ideal. Thus, the authenticated reachability code might look like this:
+\begin{code}
+r1 reachable(@A, A, B, B) :- link(@A, B).\\
+r2' says(B, A, 1, $\phi$) <saysReachable(@A, A, B, C)> :- \\
+\> reachable(@B, B, NextHop, C), link(@B, A)\\
+r3' reachable(@A, A, B, C) :- link(@A, B), \\
+\> says(B, A, 1, $\phi$) <saysReachable(@A, A, B, C)>.
+\end{code}
+
+Let's look at rule r2' and compare it with rule r2 of the reachability example. Rule r2' is changed from rule r2 to say that instead of sending a simple unauthenticated statement to linked node A, send an authenticated statement that can be authenticated by the neighbor A that can be interpreted by node B as a certificate that node A has made this saysReachable statement. This certificate doesn't need to be verifiable. Similarly, rule r3' is changed to say that instead of accepting an unauthenticated message, wait until we get an authenticated message (i.e a message + certificate) from a linked node B claiming that it has path to node C. The authenticated message must be interpretable by node A.
+
+\prince{this example might be a bit too complicated}
+Let's revisit the reachability example we considered in the background section and suppose that now nodes don't trust their neighbors. Hence, they want the advertisements (saysReachable) to be authenticated and non-repudiable. This authentication certificate can be chained together to verify whether a node is correctly claiming a route for a given ip address or not. Such a scheme is used in the S-BGP algorithm. We want to get verifiability, thus the verifier set must comprise of all nodes in the system (i.e. Universal Set). A simplified form of such authenticated reachability code might look like this:
+\begin{code}
+r1 reachable(@A, A, B, B) :- link(@A, B).\\
+r2' says(B, U, 1, $U$) <saysReachable(@A, A, B, C)> :- \\
+\> reachable(@B, B, NextHop, C), link(@B, A)\\
+r3' reachable(@A, A, B, C) :- link(@A, B), \\
+\> says(B, U, 1, $U$) <saysReachable(@A, A, B, C)>.
+\end{code}
+
+Let's look at rule r2' and compare it with rule r2 of the reachability example. Rule r2' is changed from rule r2 to say that instead of sending a simple unauthenticated statement to linked node A, send an authenticated statement that can be authenticated by everyone and is verifiable by everyone. Similarly, rule r3' is changed to say that instead of accepting an unauthenticated message, wait until we get an authenticated message from a linked node B claiming that it has path to node C. The message must have certificate claiming that principal B is making the saysReachable statement that is readable by principals in universal set $U$ and verifiable by principals in universal set $U$.

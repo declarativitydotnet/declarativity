@@ -1,0 +1,204 @@
+\section{Introduction}
+
+The database literature has a rich tradition of research on recursive
+query languages and processing.  This work has influenced commercial
+database systems to a certain extent.
+%; SQL:1999 includes syntax for recursion.  
+However, recursion is still considered an esoteric feature
+by most practitioners, and research in the area has had limited
+practical impact.  Even within the database research community, there
+is longstanding controversy over the practical relevance of recursive
+queries, going back at least to the Laguna Beach
+Report~\cite{lagbeach}, and continuing into relatively recent textbooks~\cite{redbook98}.
+
+In more recent work, we have made the case that recursive query technology
+has a natural application in the design of Internet infrastructure.
+We presented an approach called {\em declarative networking} that enables
+declarative specification and deployment of distributed protocols and
+% systems
+algorithms via distributed recursive queries over network
+graphs \cite{declareRoute,declareOverlays,singhEurosys}.  
+% In declarative
+% networking, networks are specified using recursive queries, which are
+% automatically compiled into efficient distributed dataflow
+% implementations of network protocols. 
+We recently described how we
+implemented and deployed this concept in a system called
+{\em \Sys}~\cite{declareOverlays,singhEurosys}.  Our high-level goal 
+is to provide a software environment that can accelerate the
+process of specifying, implementing, experimenting with and evolving
+designs for network architectures.
+
+Declarative networking is part of a larger effort to revisit the
+current Internet Architecture, which is considered by many
+researchers to be fundamentally ill-suited to handle today's network
+uses and abuses~\cite{geni-report05}.  While radical new 
+architectures are being proposed for a ``clean slate'' design, there
+are also many efforts to develop application-level ``overlay''
+networks on top of the current Internet, to prototype and roll out new
+network services in an evolutionary fashion~\cite{virtualNetworks}.
+Whether one is a proponent of revolution or evolution in this context,
+there is agreement that we are entering a period of significant
+flux in network services, protocols and architectures.
+
+In such an environment, innovation can be better focused and
+accelerated by having the right software tools at hand.  Declarative
+query approaches appear to be one of the most promising avenues for
+dealing with the complexity of prototyping, deploying and evolving new network architectures.
+%%% Declarative networking is part of a larger % recent
+%%% networking trend towards routing architectures that are highly
+%%% programmable, often on a per-application basis. One motivation for
+%%% this development is to overcome barriers to the evolution of the
+%%% Internet architecture by deploying application-level networking logic
+%%% (``overlay networks'') as diverse operational prototypes of
+%%% a future design~\cite{virtualNetworks}; another is to allow
+%%% modifications of existing routing protocols that admit proofs of
+%%% desirable properties such as convergence and
+%%% stability~\cite{metarouting}.
+%%% 
+%%% % Sketch of the declarative networking idea.
+%%% Declarative query approaches appear to be one of the most promising
+%%% avenues for dealing with the complexity of this vision.  
+The forwarding tables in network routing nodes can be regarded as a view over
+changing ground state (network links, nodes, load, operator policies,
+etc.), and this view is kept correct by the maintenance
+of distributed queries over this state.  These queries are necessarily recursive,
+maintaining facts about arbitrarily long multi-hop paths over a network of
+single-hop links.
+
+
+% and perhaps
+%culminating with Stonebraker's assertion in the 1998 edition of his
+%textbook that ``no practical applications of recursive query theory
+%have been found to date''~\cite{redbook98}. 
+
+
+% The hook: recursive queries are back, thanks to ``application pull''
+% from the outside.
+
+%Pitch for declarative networks.
+
+
+% Looks useful.  DB people should get excited.
+Our initial forays into declarative networking have been
+promising. First, in {\em declarative routing}~\cite{declareRoute}, we
+demonstrated that recursive queries can be used to express a variety
+of well-known wired and wireless routing protocols in a compact and
+clean fashion, typically in a handful of lines of program code.  We
+also showed that the declarative approach can expose fundamental connections: 
+for example, the query specifications for two well-known protocols -- one for
+wired networks and one for wireless -- differ only in the order of two
+predicates in a single rule body.
+% We further showed that there are no inherent overheads to expressing
+% standard routing protocols using a declarative query
+% language. 
+Moreover, higher-level routing concepts (\eg QoS
+constraints) can be achieved via simple modifications to the
+queries. Second, in {\em declarative overlays}~\cite{declareOverlays},
+we extended our framework to support more complex
+application-level overlay networks such as multicast overlays and
+distributed hash tables (DHTs). We demonstrated a working
+implementation of the Chord~\cite{chord} overlay lookup network
+specified in 47 Datalog-like rules, versus {\em thousands} of lines of
+C++ for the original version. 
+
+Our declarative approach to networking promises not only flexibility
+and compactness of specification, but also the potential to statically
+check network protocols for security and correctness
+properties~\cite{feamster05}. In addition, dynamic runtime checks to
+test distributed properties of the network can easily be expressed as
+declarative queries, providing a
+uniform framework for network specification, monitoring and
+debugging~\cite{singhEurosys}.
+
+%RR Cassandra citation info
+
+%Note: DataNets proposals have popped up.
+% 
+
+%save space
+\subsection{The Database Research Agenda}
+In our earlier declarative networking proposals, we focused primarily
+on addressing problems in networking and distributed systems. In doing
+so, we set aside important and challenging questions of language
+semantics, distributed execution strategies, and correctness under
+network dynamics, all of which are essential for the practical
+realization of declarative networks.
+
+In this paper, we explore several of these research issues from the
+database perspective. We implemented our ideas in the \Sys system, and
+present evaluations of many of our optimizations in realistic
+large-scale distributed experiments. Specifically, the main
+contributions of this paper are as follows:
+
+\begin{mylist}
+
+\item We motivate and formally define the \Dlog language for
+  declarative network specification.  \Dlog is a subset of Datalog
+  that makes explicit the link graph of the network and
+  the partitioning of data across nodes.  As part of \Dlog, we
+  introduce the concept of {\em link-restricted} rules, which guarantees
+  that all rules can be rewritten to be executed locally at individual nodes, and all
+  communication for each rewritten rule only involves sending messages
+  along links (Section~\ref{sec:queryModel}). 
+
+\item We introduce and prove correct relaxed versions of the
+      semi-\naive execution strategy called {\em buffered
+      semi-\naive} and {\em
+      pipe\-lined semi-\naive} evaluation.  These techniques overcome
+      fundamental problems of semi-\naive evaluation in an asynchro\-nous
+      distributed setting, and should be of independent interest outside the context of declarative
+      networking: they significantly increase the flexibility of
+      semi-\naive evaluation to order the derivation of facts
+      (Section~\ref{sec:queryPro}).
+
+\item In the declarative network setting, transactional isolation of updates from
+      concurrent queries is not useful; network protocols must incorporate concurrent updates
+      about the state of the network while they run. We address this
+      by formalizing 
+      the typical distributed systems notion of ``eventual consistency'' in our
+      context of derived data.  Using techniques from materialized
+      recursive view maintenance, we incorporate updates to base facts
+      {\em 
+      during} query execution, and still ensure well-defined
+      eventual consistency semantics.  This is of
+      independent interest beyond
+      the network setting when handling updates and long-running
+      recursive queries (Section~\ref{sec:dynamic}). 
+
+% We consider the dynamics of network state, and formalize
+%       the typical distributed systems notion of ``eventual consistency'' in our
+%       context of derived data.  Using techniques from materialized view maintenance
+%       for recursive queries, we are able to incorporate updates to base facts {\em
+%       during} the execution of queries, and still ensure well-defined
+%       eventual consistency semantics.  Again, this should be of
+%       independent interest, as a way to efficiently incorporate concurrent updates
+%       during long-running recursive queries.  (Section~\ref{sec:dynamic}.)
+
+\item We present a number of query optimization opportunities that
+  arise in the declarative networking context, including applications
+  of traditional techniques (\eg aggregate selections and magic-sets
+  rewriting), as well as new optimizations for work-sharing, caching, and cost-based optimizations based on graph
+  statistics.  Again, many of these ideas can be applied
+  outside the context of declarative networking or
+  distributed implementations (Section~\ref{sec:queryOpt}).
+
+
+\item We present evaluation results from a distributed deployment
+  involving 100 machines connected by the Emulab~\cite{emulab} network testbed,
+  running prototypes of our optimization techniques implemented as
+  modifications to the \Pitu declarative overlay system (Section~\ref{sec:expr}).
+\end{mylist}
+
+% Boring structure of the paper
+%% The organization of the paper is as follows.  In
+%% Section~\ref{sec:queryModel}, we start with a review of Datalog,
+%% introduce the query and data models of \Dlog, and demonstrate the use
+%% of a \Dlog query for implementing the well-known path vector network
+%% protocol. In Section~\ref{sec:queryPro}, we describe in details the
+%% steps required to generate a query execution plan. We then discuss
+%% query semantics in dynamic networks (Section~\ref{sec:dynamic}). We
+%% then propose a number of query optimization techniques in
+%% Section~\ref{sec:queryOpt}. We then present experimental results
+%% (Section~\ref{sec:expr}) and conclude.
+

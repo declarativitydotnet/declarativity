@@ -1,0 +1,290 @@
+\subsection{Sample Specification: PBFT}
+\begin{code}
+materialize (request, keys(1,3,4))\\
+materialize (acceptedRequests, keys(1,3,4))\\
+materialize (acceptedPrePrepares, keys(1,2,3))\\
+materialize (prepare, keys(1,2,3))\\
+materialize (pCert, keys(1,3,4))\\
+materialize (commit, keys(1,3,5))\\
+materialize (cCert, keys(1,5))\\
+materialize (replyLog, keys(1,4,7))\\
+materialize (currentSeqNum, keys(1))\\
+materialize (reply, keys(1,3,4,5))\\
+materialize (sCert, keys(1))\\
+materialize (watermark, keys(1))\\
+materialize (stateDigest, keys(1,2))\\
+materialize (checkpoint, keys(1,2,4))\\
+materialize (viewChanging, keys(1))\\
+\\
+StrongSaysRef(preprepare, request, 4)\\
+StrongSaysRef(pCert, prepare, 5)\\
+StrongSaysRef(sCert, checkpoint, 4)\\
+\\
+CP3: says(I, Me, 1, $U$) <prepare(@S, V, N, D)> :- \\
+\> \textbf{pCert*}(@Me, V, N, D, S), \\
+\> says(I, Me, 1, $U$) <prepare(@Me, V, N, D)>\\
+CS2: says(I, Me, 1, $U$) <checkpoint(@S, N, D)>:-\\
+\> \textbf{sCert*}(@Me, N, D, S),\\
+\> says(I, Me, 1, $U$) <checkpoint(@Me, N, D)>\\
+CR1: says(C, U, 1, $U$) <request(@D, O, T, C)>:-\\
+\> \textbf{preprepare*}(@S, N, D)\\
+\> says(I, Me, 1, $U$) <request(@Me, O, T, C)>\\
+\\
+R1: \textbf{acceptedRequests}(@Me, O, T, Client) :- \\
+\> says(Client, $\phi$, 1, Me) <request(@Me, O, \\
+\> T, Client)>, !acceptedRequests(@Me, O', T, Client),\\
+\> viewChanging(@Me, V', FALSE), O != O'\\
+PP1: \textbf{\em says(Me, Z, 1, U)}<preprepare(@Z, V, N, \&0)> :- \\
+\> myView(@Me, V, Total), primary(@Me, V\%Total, Me),\\
+\> acceptedRequests(@Me, O, T, Client), nodes(@Me, Z)\\
+PP2: \textbf{acceptedPrePrepares}(@Me, V, N, D):-\\
+\> myView(@Me, V, Total), watermark(@Me, L, H), \\
+\> says(Primary, Me, 1, $U$) <preprepare(@Me, V,\\
+\>  N, D)>, primary(@Me, V\%Total, Primary),\\
+\> L $\leq$ N, N $\leq$ H, viewChanging(@Me, V', FALSE),\\
+\> !acceptedPrePrepares(@Me, V, N, D'), D != D'\\
+P1: \textbf{\textit{says(Me, Z, 1, U)}}<prepare(@Z, V, N, D)>:-\\
+\> myView(@Me, V, T), nodes(@Me, Z)\\
+\> acceptedPrePrepares(@Me, V, N, D),\\
+\> viewChanging(@Me, V', FALSE)\\
+P3: \textbf{pCert*}(@Me, V, N, D, $\&0$):- \\
+\> watermark(@Me, L, H), faults(@Me, f)\\
+\> myView(@Me, V, Total), \\
+\> acceptedPrePrepares(@Me, V, N, D), \\
+\> viewChanging(@Me, V', FALSE),\\
+\> says($U$, Me, 2f+1, $U$) <prepare(@Me, V, N, D)>, \\
+\> L $\leq$ N, N $\leq$ H, !pCert(@Me, V, N, D', S')\\
+C1: \textbf{\textit{says(Me, Z, 1, $U$)}}<commit(@Z, V, N, D)>:- \\
+\> myView(@Me, V), nodes(@Me, Z), \\
+\> pCert(@Me, V, N, D, S), \\
+\> viewChanging(@Me, V', FALSE)\\
+C3: \textbf{cCert}(@Me, D, Client, V, N):-\\
+\> pCert(@Me, V, N, D, S), \\
+\> faults(@Me, f),viewChanging(@Me, V', FALSE), \\
+\> says($U$, Me, 2f+1, $U$) <commit(@Me, V, N, D)>\\
+\> !cCert(@Me, D', Client', V, N)\\
+E1: \textbf{replyLog}(@Me, V, O, N, T, Client, Me, Res):-\\
+\> CCert(@Me, D, Client, V, N),\\
+\> Res = f\_stateMachine(O), currentSeqNum(@Me, N),\\
+\> acceptedPrePrepares(@Me, V, N, D),\\
+\> says(Client, $\phi$, 1, Me) <request(@D, O, T, Client)>, \\
+\> viewChanging(@Me, V', FALSE), \\
+\> !replyLog(@Me, V', O', N, T', Client', Z, R')\\
+E2: \textbf{currentSeqNum}(@Me, N+1):-\\
+\> CCert(@Me, D, Client, V, N),\\
+\> currentSeqNum(@Me, N), \\
+\> viewChanging(@Me, V', FALSE)\\
+E3: \textbf{reply}(@Client, V, T, Client, Me, Res):-\\
+\> replyLog(@Me, V, O, N, T, Client, Me, Res),\\
+\> viewChanging(@Me, V', FALSE)\\
+S2: \textbf{sCert*}(@Me, N, D, $\&0$):- faults(@Me, f),\\
+\> says($U$, Me, 2f+1, $U$) <checkpoint(@Me, N, D, I)>, \\
+\> !sCert(@Me, N, D', S')\\
+S3: \textbf{watermark}(@Me, N, N + (H-L)):- \\
+\> sCert(@Me, N, D, T), watermark(@Me, L, H)\\
+S4: \textbf{\textit{says(Me, Z, 1, $U$}}<checkpoint(@Z, N, D, Me)>:-\\
+\> nodes(@Me, Z), currentSeqNum(@Me, N), \\
+\> stateDigest(@Me, N, D)\\
+S5: \textbf{stateDigest}(@Me, N, f\_hash<D>):- N\%K = 0,\\
+\> currentSeqNum(@Me, N), checkpointK(@Me, K), \\
+\> D = f\_hash(N', T, Res, Client), N' < N,\\
+\> replyLog(@Me, V, O, N', T, Client, Me, Res)\\
+\\
+{\bf VIEW CHANGE CODE}\\
+\\
+materialize (viewChange, keys(1,2,3,6))\\
+materialize (vcStable, keys(1,2,3,4))\\
+materialize (vcPrepare, keys(1,2,3,4,5,6))\\
+materialize (vcAccept, keys(1,2,3,4))\\
+materialize (vcStable, keys(1,2,3,4,5))\\
+materialize (vc, keys(1,2))\\
+materialize (minS, keys(1,2))\\
+materialize (maxP, keys(1,2))\\
+materialize (nvCount, keys(1,2))\\
+materialize (nvPreparesO, keys(1,2,3))\\
+materialize (nvPreparesN, keys(1,2,3))\\
+materialize (nv, keys(1,2))\\
+materialize (vcPreparesC, keys(1,2,3,4,5,6))\\
+materialize (vcStableC, keys(1,2,3,4))\\
+materialize (vcAcceptC, keys(1,2,3,4))\\
+materialize (minSC, keys(1,2))\\
+materialize (maxPC, keys(1,2))\\
+materialize (nvCountC, keys(1,2))\\
+materialize (nvPreparesC, keys(1,2,3))\\
+\\
+StrongSaysRef(viewChange, checkpoint, 5)\\
+StrongRef(viewChange, pCert, 7)\\
+StrongSaysRef(vcAccept, checkpoint, 6)\\
+StrongSaysRef(vcAccept, viewChange, 7)\\
+StrongRef(nv, nvPrePreparesO, 3)\\
+StrongRef(nv, nvPrePreparesN, 4)\\
+StrongSaysRef(nv, checkpoint, 5)\\
+StrongSaysRef(nv, viewChange, 6)\\
+\\
+CVC2: pCert(@S, R, P, V', N', D, S'):- V' <= V, \\
+\> \textbf{viewChange*}(@Z, V+1, N, SD, SCert, Me, S),\\
+\> pCert(@Me, R, P, V', N', D, S'), N' > N,\\
+\> sCert(@SCert, N, D', S''), nodes(@Me, Z)\\
+CVC7: says(Z, $\phi$, 1, Me) <viewChange(@VS, V, \\
+\> N, Sd, SCert, Z)>:-\\
+\> \textbf{vcAccept*}(@Me, V, N, Z, Sd, SCert, VS),\\
+\> vcStable(@Me, V, N, Z, Sd), says(Z, $\phi$, 1, \\
+\> Me) <viewChange(@Me, V, N, Sd, SCert, Z)>\\
+CNV111: nvPrePreparesO(@LO, V, N', D):-\\
+\> \textbf{nv*}(@Z, V, LO, LN, SCert, S>),\\
+\> vc(@Me, V), nodes(@Me, Z), \\
+\> nvPrePreparesO(@Me, V, N', D)\\
+CNV112: nvPrePreparesN(@LN, V, N', D):-\\
+\> \textbf{nv*}(@Z, V, LO, LN, SCert, S>),\\
+\> vc(@Me, V), nodes(@Me, Z), \\
+\> nvPrePreparesN(@Me, V, N', D)\\
+CNV113: says(Z, $\phi$, 1, Me) <viewChange(@S, V, N, \\
+\> Sd, SCert, Z')>:- \textbf{nv*}(@Z, V, LO, LN, SC, S>),\\
+\> vc(@Me, V), vcAccept(@Me, V, N, Z, Sd, SCert, S'),\\
+\> nodes(@Me, Z), says(Z, $\phi$, 1, Me) <viewChange \\
+\> (@Me,V, N, Sd, SCert, Z')>\\
+\\
+VC1: \textbf{\textit{says} viewChange}(@Z, V+1, N, StateDigest, \\
+\> SCert, Me, $\&0$):- \\
+\> sCert(@Me, N, StateDigest, SCert), \\
+\> nodes(@Me, Z), changeView(@Me, V)\\
+VC2: \textbf{vcPrepareCount}(@Me, V, N, Z, V', N', D, count<I>):-\\
+\> says(Z, $\phi$, 1, Me) <viewChange(@Me, V, N, Sd,  \\
+\> SCert, Z, S')>, pCert(@S', R, P, V', N', D, SP),\\
+\> says(I, $\phi$, 1, $U$) <prepare(@SP, V', N', D, I)>\\
+VC3: \textbf{vcPrepare}(@Me, V, N, Z, V', N', D):-\\
+\> vcPrepareCount(@Me, V, N, Z, V', N', D, Count),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f),\\
+\> !vcPrepare(@Me, V, N, Z, V', N', D')\\
+VC4: \textbf{vcStableCount}(@Me, V, N, Z, Sd, SCert, \\
+\> count<I>):- says(Z, $\phi$, 1, Me) <viewChange\\
+\> (@Me, V, N, Sd, SCert, Z, S')>,\\
+\> says(I, $\phi$, 1, $U$) <checkpoint(@SCert, N, Sd, I)>\\
+VC5: \textbf{vcStable}(@Me, V, N, Z, Sd, SCert):-\\
+\> vcStableCount(@Me, V, N, Z, SCert, Count),\\
+\> !vcStable(@Me, V', N, Z, Sd', SCert'),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f)\\
+VC6: \textbf{vcAccept*}(@Me, V, N, Z, Sd, SCert, $\&0$):-\\
+\> vcStable(@Me, V, N, Z, Sd), says(Z, $\phi$, 1, \\
+\> Me) <viewChange(@Me, V, N, Sd, SCert, Z)>,\\
+\> !vcAccept(@Me, V, N, Z, Sd', SCert', S')\\
+NV1: \textbf{vcCount}(@Me, V, count<Z>):-\\
+\> vcAccept(@Me, V, \_, Z, \_, \_, \_)\\
+NV2: \textbf{vc}(@Me, V):- vcCount(@Me, V, Count),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f)\\
+NV3: \textbf{minSCount}(@Me, V, max<N>, count<Z>):- \\
+\> vc(@Me, V),\\
+\> vcAccept(@Me, V, N, Z, Sd, SCert, \_)\\
+NV4: \textbf{minS}(@Me, V, N, Sd, SCert):- \\
+\> vc(@Me, V), Count > 2*f, faults(@Me, f),\\
+\> minSCount(@Me, V, N, Count), \\
+\> vcAccept(@Me, V, N, Z, Sd, SCert, \_)\\
+NV5: \textbf{maxPCount}(@Me, V, max<N'>, count<Z>):- \\
+\> vc(@Me, V),vcAccept(@Me, V, N, Z, Sd, SCert, S),\\
+\> says(Z, $\phi$, 1, Me) <viewChange(@Me, V, N, Sd, \\
+\> SCert, Z, S')>, pCert(@S', R, P, V', N', D, SP),\\
+\> vcPrepare(@Me, V, N, Z, V', N', D)\\
+NV6: \textbf{maxP}(@Me, V, N'):- faults(@Me, f),\\
+\> maxPCount(V, N', Count), Count > 2*f \\
+NV7: \textbf{nvCount}(@Me, V, Count):-\\
+\> minS(@Me, V, Count, \_, \_)\\
+NV8: \textbf{nvPrepareEvent}(V, Count):-\\
+\> nvCount(@Me, V, Count)\\
+NV9: \textbf{nvCount}(@Me, V, Count+1):-maxP(@Me, V, M), \\
+\> nvCount(@Me, V, Count), Count + 1 <= M, \\
+\> nvPrepareEvent(@Me, V, Count)\\
+NV10: \textbf{nvPrePreparesO}(@Me, V, N', D):-\\
+\> nvPrepareEvent(@Me, V, N'), \\
+\> vcPrepare(@Me, V, N, Z, V', N', D)\\
+NV11: \textbf{nvPrePreparesN}(@Me, V, N', ''dummy``):-\\
+\> nvPrepareEvent(@Me, V, N'), \\
+\> !vcPrepare(@Me, V, N, Z, V', N', D)\\
+NV12: \textbf{\textit{says(Me, Z, 1, U)}}<nv(@Z, V, $\&0$, $\&1$, S, \\
+\> $\&2$>)>:- nodes(@Me, Z), vc(@Me, V), \\
+\> nvPrepareEvent(@Me, V, C), maxP(@Me, V, C), \\
+\> minS(@Me, V, N, Sd, S)\\
+NVC1: \textbf{vcPrepareCountC}(@Me, V, N, Z, V', N', D, count<I>):-\\
+\> says(Z, $\phi$, 0, Me))<nv(@Me, V, LO, LN, SCert', S>)>,\\
+\> says(Z, $\phi$, 0, Me) <viewChange(@S, V, N, Sd, SCert, \\
+\> Z, S')>, pCert(@S', R, P, V', N', D, SP),\\
+\> says(I, $\phi$, 1, $U$) <prepare(@SP, V', N', D, I)>\\
+NVC2: \textbf{vcPrepareC}(@Me, V, N, Z, V', N', D):-\\
+\> vcPrepareCountC(@Me, V, N, Z, V', N', D, Count),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f),\\
+\> !vcPrepareC(@Me, V, N, Z, V', N', D')\\
+NVC3: \textbf{vcStableCountC}(@Me, V, N, Z, Sd, SCert, Count<I>):- \\
+\> says(Z, $\phi$, 0, $U$)<nv(@Me, V, LO, LN, SCert', S>)>,\\
+\> says(Z, $\phi$, 0, $U$) <viewChange(@S, V, N, Sd, SC, Z, S')>,\\
+\> says(I, $\phi$, 0, $U$) <checkpoint(@SC, N, Sd, I)>\\
+NVC4: \textbf{vcStableC}(@Me, V, N, Z, Sd, SCert):-\\
+\> vcStableCountC(@Me, V, N, Z, Sd, SCert, Count),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f),\\
+\> !vcStableC(@Me, V, N, Z, Sd', SCert')\\
+NVC5: \textbf{vcSCertSCountC}(@Me, V, N, Z, Sd, SCert, Count<I>):- \\
+\> says(Z, $\phi$, 0, Me))<nv(@Me, V, LO, LN, SCert, S>)>,\\
+\> says(I, $\phi$, 0, $U$) <checkpoint(@SCert, N, Sd, I)>\\
+NVC6: \textbf{vcSCertStableC}(@Me, V, N, Z, Sd, SCert):-\\
+\> vcStableCountC(@Me, V, N, Z, Sd, SCert, Count),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f),\\
+\> !vcSCertStableC(@Me, V, N, Z, Sd', SCert')\\
+NVC7: \textbf{vcAcceptC}(@Me, V, N, Z, Sd, SCert):-\\
+\> says(Z, $\phi$, 0, Me))<nv(@Me, V, LO, LN, SCert', S>)>,\\
+\> vcStableC(@Me, V, N, Z, Sd), says(Z, $\phi$, 0, \\
+\> Me) <viewChange(@S, V, N, Sd, SCert, Z)>,\\
+\> !vcAcceptC(@Me, V, N, Z, Sd', SCert', S')\\
+NVC8: \textbf{vcCountC}(@Me, V, count<Z>):-\\
+\> vcAcceptC(@Me, V, \_, Z, \_, \_, \_)\\
+NVC9: \textbf{vcC}(@Me, V):- vcCountC(@Me, V, Count),\\
+\> Count $\geq$ 2*f + 1, faults(@Me, f)\\
+NVC10: \textbf{minSCountC}(@Me, V, max<N>, count<Z>):- \\
+\> vcC(@Me, V),\\
+\> vcAcceptC(@Me, V, N, Z, Sd, SCert)\\
+NVC11: \textbf{minSC}(@Me, V, N, Sd, SCert):- \\
+\> vcC(@Me, V), Count > 2*f, faults(@Me, f),\\
+\> minSCountC(@Me, V, N, Sd, SCert, Count), \\
+\> vcAcceptC(@Me, V, N, Z, Sd, SCert):-\\
+NVC12: \textbf{maxPCountC}(@Me, V, max<N'>, count<Z>):- \\
+\> vcC(@Me, V),vcAcceptC(@Me, V, N, Z, Sd, SCert),\\
+\> says(Z, $\phi$, 0, Me))<nv(@Me, V, LO, LN, SCert', S>)>,\\
+\> says(Z, $\phi$, 1, Me) <viewChange(@S, V, N, Sd, \\
+\> SCert, Z, S')>, pCert(@S', R, P, V', N', D, S''),\\
+\> vcPrepareC(@Me, V, N, Z, V', N', D)\\
+NVC13: \textbf{maxPC}(@Me, V, N'):- \\
+\> \textbf{maxPCountC}(@Me, V, N', Count),\\
+\> Count > 2*f, faults(@Me, f)\\
+NVC14: \textbf{nvCountC}(@Me, V, Count):-\\
+\> minSC(@Me, V, Count, \_, \_)\\
+NVC15: \textbf{nvPrepareEventC}(@Me, V, Count):-\\
+\> nvCountC(@Me, V, Count)\\
+NVC16: \textbf{nvCountC}(@Me, V, Count+1):-\\
+\> maxP(@Me, V, MaxN), Count + 1 <= MaxN, \\
+\> nvCountC(@Me, V, Count), \\
+\> nvPrepareEventC(@Me, V, Count) \\
+NVC17: \textbf{nvPrePreparesC}(@Me, V, N', false):-\\
+\> nvPrepareEventC(@Me, V, N')\\
+\> vcPrepareC(@Me, V, N, Z, V', N', D),\\
+\> says@Me(Z, $\phi$, 0, Me))<nv(@L, V, LO, LN, \\
+\> SCert', S>)>, !nvPrePreparesO(@LO, V, N', D)\\
+NVC18: \textbf{nvPrePreparesC}(@Me, V, N', false):-\\
+\> !vcPrepareC(@Me, V, N, Z, V', N', D),\\
+\> says(Z, $\phi$, 0, Me))<nv(@Me, V, LO, LN, \\
+\> SCert', S>)>, nvPrepareEventC(V, N'), \\
+\> !nvPrePreparesN(@LN, V, N', ''dummy'')\\
+NVC19: \textbf{nvNAcceptTest}(@Me, V, L, or<Flag>, \\
+\> count<N'>, C):- minSC(@Me, V, C0, Sd, SCert), \\
+\> says(Z, $\phi$, 0, Me))<nv(@Me, V, LO, LN, SCert', \\
+\> S>)>, vcSCertStableC(@Me, V, N, Z, Sd, SCert')\\
+\> vcC(@Me, V), nodes(@Me, Z), C = C1-C0+1, \\
+\> vcStableC(@Me, V, N, Z, Sd, SCert), \\
+\> maxPC(@Me, V, C1), nvPreparesC(@Me, V, N', Flag)\\
+NVC20: \textbf{nvNAccept}(@Me, V, L):- \\
+\> nvNAcceptTest(@Me, V, L, Flag, Count, Total), \\
+\> Flag = true, Count = Total\\
+NVC21: \textbf{\textit{delete} changeView}(@Me, V):-\\
+\> nvNAccept(@Me, V', L), V <= V'\\
+NVC22: \textbf{\textit{delete} viewChanging}(@Me, V, FALSE):-\\
+\> nvNAccept(@Me, V', L), V <= V'\\
+NVC23: \textbf{myView}(@Me, V', Total):-\\
+\> nvNAccept(@Me, V', L),\\
+\> myView(@Me, V, Total), V > V'\\
+\end{code}

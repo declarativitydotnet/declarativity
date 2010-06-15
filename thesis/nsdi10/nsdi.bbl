@@ -1,0 +1,180 @@
+\begin{thebibliography}{10}
+
+\bibitem{borealis}
+{\sc Abadi, D.~J., Ahmad, Y., Balazinska, M., Cetintemel, U., Cherniack, M.,
+  Hwang, J.-H., Lindner, W., Maskey, A.~S., Rasin, A., Ryvkina, E., Tatbul, N.,
+  Xing, Y., and Zdonik, S.}
+\newblock The design of the {Borealis} stream processing engine.
+\newblock In {\em CIDR\/} (2005).
+
+\bibitem{eddies}
+{\sc Avnur, R., and Hellerstein, J.~M.}
+\newblock Eddies: Continuously adaptive query processing.
+\newblock In {\em SIGMOD\/} (2000).
+
+\bibitem{borealisFT}
+{\sc Balazinska, M., Balakrishnan, H., Madden, S., and Stonebraker, M.}
+\newblock Fault-tolerance in the {Borealis} distributed stream processing
+  system.
+\newblock In {\em SIGMOD\/} (2005).
+
+\bibitem{tcq-cidr}
+{\sc Chandrasekaran, S., Cooper, O., Deshpande, A., Franklin, M.~J.,
+  Hellerstein, J.~M., Hong, W., Krishnamurthy, S., Madden, S.~R., Raman, V.,
+  Reiss, F., and Shah, M.~A.}
+\newblock {TelegraphCQ}: Continuous dataflow processing for an uncertain world.
+\newblock In {\em CIDR\/} (2003).
+
+\bibitem{aster}
+{\sc Cieslewicz, J., Friedman, E., and Pawlowski, P.}
+\newblock {SQL/MapReduce}: A practical approach to self-describing,
+  polymorphic, and parallelizable user-defined functions.
+\newblock In {\em VLDB\/} (2009).
+
+\bibitem{mapreduce-osdi}
+{\sc Dean, J., and Ghemawat, S.}
+\newblock {MapReduce}: Simplified data processing on large clusters.
+\newblock In {\em OSDI\/} (2004).
+
+\bibitem{gibbons98new}
+{\sc Gibbons, P.~B., and Matias, Y.}
+\newblock New sampling-based summary statistics for improving approximate query
+  answers.
+\newblock In {\em SIGMOD\/} (1998).
+
+\bibitem{exchange}
+{\sc Graefe, G.}
+\newblock Encapsulation of parallelism in the {Volcano} query processing
+  system.
+\newblock In {\em SIGMOD\/} (1990).
+
+\bibitem{datacube}
+{\sc Gray, J., Chaudhuri, S., Bosworth, A., Layman, A., Reichart, D.,
+  Venkatrao, M., Pellow, F., and Pirahesh, H.}
+\newblock Data cube: A relational aggregation operator generalizing group-by,
+  cross-tab, and sub totals.
+\newblock {\em Data Min. Knowl. Discov. 1}, 1 (1997), 29--53.
+
+\bibitem{greenplum}
+Greenplum: A unified engine for {RDBMS} and {MapReduce}, Oct. 2008.
+\newblock Downloaded from
+  \url{http://www.greenplum.com/download.php?alias=register-map-reduce&file=Gr%
+eenplum-MapReduce-Whitepaper.pdf}.
+
+\bibitem{ieeecontrol}
+{\sc Hellerstein, J.~M., Avnur, R., Chou, A., Hidber, C., Olston, C., Raman,
+  V., Roth, T., and Haas, P.~J.}
+\newblock Interactive data analysis with {CONTROL}.
+\newblock {\em IEEE Computer 32}, 8 (Aug. 1999).
+
+\bibitem{onlineagg}
+{\sc Hellerstein, J.~M., Haas, P.~J., and Wang, H.~J.}
+\newblock Online aggregation.
+\newblock In {\em SIGMOD\/} (1997).
+
+\bibitem{dryad07}
+{\sc Isard, M., Budiu, M., Yu, Y., Birrell, A., and Fetterly, D.}
+\newblock Dryad: Distributed data-parallel programs from sequential building
+  blocks.
+\newblock In {\em EuroSys\/} (2007).
+
+\bibitem{jermaine-shuffle}
+{\sc Jermaine, C.}
+\newblock Online random shuffling of large database tables.
+\newblock {\em IEEE Trans. Knowl. Data Eng. 19}, 1 (2007), 73--84.
+
+\bibitem{dbo}
+{\sc Jermaine, C., Arumugam, S., Pol, A., and Dobra, A.}
+\newblock Scalable approximate query processing with the {DBO} engine.
+\newblock In {\em SIGMOD\/} (2007).
+
+\bibitem{logoyocum08}
+{\sc Logothetis, D., and Yocum, K.}
+\newblock Ad-hoc data processing in the cloud (demonstration).
+\newblock {\em Proc. VLDB Endow. 1}, 2 (2008).
+
+\bibitem{luo-ripple}
+{\sc Luo, G., Ellmann, C.~J., Haas, P.~J., and Naughton, J.~F.}
+\newblock A scalable hash ripple join algorithm.
+\newblock In {\em SIGMOD\/} (2002).
+
+\bibitem{stream}
+{\sc Motwani, R., Widom, J., Arasu, A., Babcock, B., Babu, S., Datar, M.,
+  Manku, G., Olston, C., Rosenstein, J., and Varma, R.}
+\newblock Query processing, resource management, and approximation in a data
+  stream management system.
+\newblock In {\em CIDR\/} (2003).
+
+\bibitem{olston-usenix08}
+{\sc Olston, C., Reed, B., Silberstein, A., and Srivastava, U.}
+\newblock Automatic optimization of parallel dataflow programs.
+\newblock In {\em USENIX Technical Conference\/} (2008).
+
+\bibitem{pig}
+{\sc Olston, C., Reed, B., Srivastava, U., Kumar, R., and Tomkins, A.}
+\newblock {Pig Latin}: a not-so-foreign language for data processing.
+\newblock In {\em SIGMOD\/} (2008).
+
+\bibitem{pavlo09}
+{\sc Pavlo, A., Paulson, E., Rasin, A., Abadi, D.~J., Dewitt, D.~J., Madden,
+  S., and Stonebraker, M.}
+\newblock A comparison of approaches to large-scale data analysis.
+\newblock In {\em SIGMOD\/} (2009).
+
+\bibitem{sbon}
+{\sc Pietzuch, P., Ledlie, J., Shneidman, J., Roussopoulos, M., Welsh, M., and
+  Seltzer, M.}
+\newblock Network-aware operator placement for stream-processing systems.
+\newblock In {\em ICDE\/} (2006).
+
+\bibitem{sawzall}
+{\sc Pike, R., Dorward, S., Griesemer, R., and Quinlan, S.}
+\newblock Interpreting the data: Parallel analysis with {Sawzall}.
+\newblock {\em Scientific Programming 13}, 4 (2005), 277--298.
+
+\bibitem{flux-ft}
+{\sc Shah, M.~A., Hellerstein, J.~M., and Brewer, E.~A.}
+\newblock Highly-available, fault-tolerant, parallel dataflows.
+\newblock In {\em SIGMOD\/} (2004).
+
+\bibitem{flux-lb}
+{\sc Shah, M.~A., Hellerstein, J.~M., Chandrasekaran, S., and Franklin, M.~J.}
+\newblock Flux: An adaptive partitioning operator for continuous query systems.
+\newblock In {\em ICDE\/} (2003).
+
+\bibitem{wikistats}
+{\sc Skomoroch, P.~N.}
+\newblock Wikipedia page traffic statistics, 2009.
+\newblock Downloaded from
+  \url{http://developer.amazonwebservices.com/connect/entry.jspa?externalID=25%
+96}.
+
+\bibitem{hive}
+{\sc Thusoo, A., Sarma, J.~S., Jain, N., Shao, Z., Chakka, P., Anthony, S.,
+  Liu, H., Wyckoff, P., and Murthy, R.}
+\newblock Hive --- a warehousing solution over a {Map-Reduce} framework.
+\newblock In {\em VLDB\/} (2009).
+
+\bibitem{seda}
+{\sc Welsh, M., Culler, D., and Brewer, E.}
+\newblock {SEDA}: An architecture for well-conditioned, scalable internet
+  services.
+\newblock In {\em SOSP\/} (2001).
+
+\bibitem{wu-vldb09}
+{\sc Wu, S., Jiang, S., Ooi, B.~C., and Tan, K.-L.}
+\newblock Distributed online aggregation.
+\newblock In {\em VLDB\/} (2009).
+
+\bibitem{sosp-mining}
+{\sc Xu, W., Huang, L., Fox, A., Patterson, D., and Jordan, M.~I.}
+\newblock Detecting large-scale system problems by mining console logs.
+\newblock In {\em SOSP\/} (2009).
+
+\bibitem{osprey-icde}
+{\sc Yang, C., Yen, C., Tan, C., and Madden, S.}
+\newblock Osprey: Implementing {MapReduce}-style fault tolerance in a
+  shared-nothing distributed database.
+\newblock In {\em ICDE\/} (2010).
+
+\end{thebibliography}

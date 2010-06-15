@@ -1,0 +1,142 @@
+\chapter[Dissertation Overview]{Dissertation Overview}
+\label{ch:overview}
+
+\section{Evita Raced}
+There has been renewed interest in recent years in applying declarative
+languages to a variety of applications outside the traditional
+boundaries of data management.  Examples include work on
+compilers~\cite{lam05context}, computer games~\cite{white-sigmod07}, security
+protocols~\cite{li-padl03}, and modular
+robotics~\cite{ashley-iros07}. Our own work in this area has focused on {\em Declarative Networking},
+as instantiated in the {\em P2} system for Internet overlays~\cite{p2:sosp, loo-sigmod06}, and 
+followed on by variety of recent related efforts~\cite{singh-eurosys06, chu-sensys07,abadi-netdb07,belaramani-sosp07,soule-sosp07}.
+
+There is a strong analogy between the Internet today, and database systems in the
+1960's. Network protocol implementations involve complex procedural code, and
+there is an increasing need to separate their specification from physical and logical
+changes to components underneath them: network fabrics and architectures are in
+a period of switch evolution~\cite{geni05}. Hence the lessons of Data Independence
+and declarative approaches are very timely in this domain~\cite{networkind}, and are
+reflected by recent interest in automatic network optimization and adaptation~\cite{grace-eurosys08}.
+Moreover, we have observed that many networking tasks are naturally described in recursive
+query languages like Datalog, because (a) they typically involve recursive graph traversals
+(e.g., shortest-path computations)~\cite{loo-sigcomm05}, and (b) the asynchronous messaging
+streams with "rendezvous" or "session" tables~\cite{p2:sosp, loo-sigmod06}.
+
+Given these intuitions, the P2 and DSN systems demonstrate the utility of the declarative
+approach with Datalog-based implementations of a host of network functionalities at
+various levels of the protocol stack. Both of these systems allow protocols to be expressed 
+as programs in a Datalog-like language, which are complied to dataflow runtime implementations
+reminiscent of traditional database query plans. We have found that using a declarative language
+often results in drastic reductions in code size ($100x$ and more) relative to procedural languages
+like C++. Perhaps more surprising, our declarative protocols are often quite intuitive: in many 
+cases they are almost line-for-line translations of published pseudocode, suggesting that 
+Datalog is indeed a good match for the application domain~\cite{chu-sensys07, p2:sosp}.
+
+\section{BOOM}
+
+% Cloud is the next platform
+Clusters of commodity hardware have become a standard architecture for
+datacenters over the last decade.
+% , and the major online services have
+% all invested heavily in cluster software infrastructure (e.g.,
+% \cite{brewer-giant,chubby,mapreduce-osdi,dynamo,gfs-sosp}).  These
+% distributed systems manage difficult
+% issues including parallelism, communication, failure, and system
+% resizing.  They provide the foundation for basic service operation, and also serve as key software development tools for in-house developers.
+The advent of \emph{cloud computing} promises to commoditize
+this architecture, enabling third-party
+developers to simply and economically build and host applications on managed clusters.  
+
+Today's cloud interfaces are convenient for launching multiple independent
+instances of traditional single-node services, but writing truly distributed
+software remains a significant challenge.  Distributed applications still
+require a developer to orchestrate concurrent computation and communication
+across machines, in a manner that is robust to delays and failures.  Writing and
+debugging such code is difficult even for experienced infrastructure
+programmers, and drives away many creative software designers who might
+otherwise have innovative uses for cloud computing platforms.
+
+
+%  impedes innovative uses of the
+% distributed potential of cloud platforms.
+
+% prevents most rank-and-file programmers from making innovative use of the
+% distributed potential of cloud platforms.
+
+%%The right programming model for the cloud remains an open question.
+
+Although distributed programming remains hard today, one important subclass is
+relatively well-understood by programmers: data-parallel computations expressed
+using interfaces like MapReduce~\cite{mapreduce-osdi}, Dryad~\cite{dryad}, and
+SQL\@.  These programming models substantially raise the level of abstraction
+for programmers: they mask the coordination of threads and events, and instead
+ask programmers to focus on applying functional or logical expressions to
+collections of data.  These expressions are then auto-parallelized via a
+dataflow runtime that partitions and shuffles the data across machines in the
+network. Although easy to learn, these programming models have traditionally
+been restricted to batch-oriented computations and data analysis tasks --- a
+rather specialized subset of distributed and parallel computing.
+
+We have recently begun the \emph{BOOM} (Berkeley Orders of Magnitude) research
+project, which aims to enable developers to build orders-of-magnitude more
+scalable software using orders-of-magnitude less code than the state of the
+art. We began this project with two hypotheses:
+\begin{enumerate}
+\item
+  Distributed systems benefit substantially from a \emph{data-centric} design
+  style that focuses the programmer's attention on carefully capturing all the
+  important state of the system as a family of collections (sets, relations,
+  streams, etc.)  Given such a model, the state of the system can be distributed
+  naturally and flexibly across nodes via familiar mechanisms like partitioning
+  and replication.
+\item The key behaviors of such systems can be naturally implemented using
+  \emph{declarative} programming languages that manipulate these collections,
+abstracting the programmer from
+  both the physical layout of the data and the fine-grained orchestration of
+  data manipulation.
+\end{enumerate}
+Taken together, these hypotheses suggest that traditionally difficult
+distributed programming tasks can be recast as data processing problems that are
+easy to reason about in a distributed setting and expressible in a high-level
+language.  In turn, this should provide significant reductions in code
+complexity and development overhead, and improve system evolution and program
+correctness.  We also conjecture that these hypotheses, taken separately, can
+offer design guidelines useful in a wide variety of programming models.
+
+%; we return to this notion in Section~\ref{sec:contributions}.
+
+% \nrc{Add a note here that ``data-centric'' is broader than declarative, or leave
+%   that for 1.2?}
+
+% We began the work we describe in this paper with a conjecture: that {\em the
+%   majority of distributed systems software can be mapped cleanly into a
+%   high-level, data-centric programming model}.  If true, this suggests that
+% tricky distributed programming tasks can be recast as much simpler distributed
+% data processing tasks. Our confidence in this conjecture was strengthened by
+% reading recent literature on datacenter infrastructure (e.g.,
+% \cite{chubby,gfs-sosp,dynamo,mapreduce-osdi}).  Most of the logic in these
+% efforts involves managing various forms of asynchronously-updated state
+% including sessions, protocols, and storage.  Few of the ideas in these systems
+% involve intricate, uninterrupted sequences of computational steps.
+
+% If complex distributed programs can be cast as partitioned data-parallel
+% computations, it should be possible to develop, debug and extend this code at a
+% far higher level of abstraction than is used in current practice.  And this
+% should in turn provide significant improvements in code simplicity, speed of
+% development, ease of system evolution, and program correctness.
+
+% 
+% % MapReduce is an early indicator
+% %% A notable counter-example to this phenomenon is 
+% The MapReduce framework popularized by Google~\cite{mapreduce-osdi} and Hadoop is
+% a step in this direction,  enabling a wide range of developers to easily coordinate large numbers of machines.  MapReduce raises the programming abstraction from a traditional von Neumann model to a functional dataflow model that can be easily auto-parallelized over a shared-storage architecture.   MapReduce programmers think in a {\em data-centric} fashion: they worry about handling sets of data records, rather than managing fine-grained threads, processes, communication and coordination.  
+% Move SQL to related work, it's not necessary for motivation.
+%MapReduce is similar in many ways to the shared-disk and shared-nothing architectures~\cite{stonebraker-sharedDB} prevalent in modern database systems, which also expose a high-level data-centric language to programmers.  Clearly neither MapReduce nor relational databases offer a general-purpose programming model for the cloud:  
+% MapReduce is targeted specifically at batch processing, and database  transaction processing is too heavyweight for building general-purpose distributed programs.  But they do seem to hold the promise of a more attractive programming model for datacenters, if they can be generalized and made more nimble.
+% MapReduce achieves its simplicity in part by constraining its usage to batch-processing tasks.  Although limited in this sense, it points suggestively toward more attractive programming models for datacenters.
+% 
+
+
+
+

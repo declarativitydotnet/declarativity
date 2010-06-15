@@ -1,0 +1,17 @@
+\newcommand{\etalchar}[1]{$^{#1}$}
+\begin{thebibliography}{LCG{\etalchar{+}}06}
+
+\bibitem[LCG{\etalchar{+}}06]{loo-sigmod06}
+Boon~Thau Loo, Tyson Condie, Minos Garofalakis, David~E. Gay, Joseph~M.
+  Hellerstein, Petros Maniatis, Raghu Ramakrishnan, Timothy Roscoe, and Ion
+  Stoica.
+\newblock Declarative networking with distributed recursive query processing.
+\newblock In {\em ACM SIGMOD International Conference on Management of Data},
+  June 2006.
+
+\bibitem[Loo06]{loothesis}
+Boon~Thau Loo.
+\newblock {\em The Design and Implementation of Declarative Networks}.
+\newblock PhD thesis, University of California, Berkeley, 2006.
+
+\end{thebibliography}

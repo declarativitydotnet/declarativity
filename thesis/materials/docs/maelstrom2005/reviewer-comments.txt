@@ -1,0 +1,226 @@
+> Reviewer #2
+> 1. The problem is relevant only when you have some mechanism to
+> tolerate Sybil attacks. If you use a certification authority (CA) for
+> Sybil, you can use the CA to address eclipse attacks as well. If you
+> use something like 3-way handshakes to prevent IP address spoofing
+> based Sybil attacks, you can use a similar mechanism for verifying DHT
+> ID veracity as well. Eg, everybody knows the hash function used to map
+> IP addresses to DHT IDs and uses 3-way handshakes to verify routing
+> table entries.
+
+We believe that the problem is relevant even in the absence of a mechanism to 
+tolerate Sybil attacks. This is because of an adversary's capability to eclipse 
+(intercept) application as well as "neighbor-selection" lookups (as described
+in Section 2.2). 
+
+3-way handshakes can be used to ensure the identity (IP and DHT identifier) 
+of the remote DHT-node is as advertised, however it cannot be used to
+verify if the remote node is not eclipsing the destination (i.e.,
+if the remote node is in-charge of the key we are looking for). To ensure this,
+in addition to a CA, Castro et al propose a failure detector that runs density
+checks on the neighbor-set of the remote node in order to verify if it is the
+one actually responsible for the key. As fallback the constrained
+routing-table is used.
+
+> 2. How does the proposed solution compare to approaches based on
+> detecting malicious nodes like the one above? Eg, every time a route
+> table entry is added, it's tested by routing a request to the a
+> destination using that entry and seeing if it is successful.
+
+If a malicious entry is added into the routing table, then a routing
+request to a destination using that entry will be immediately
+manipulable by the adversary.  This doesn't appear to be a good failure detector.
+
+> 3. The paper does not prove security properties and that relieves them
+> from having to carefully define what all a malicious node can do. The
+> experimental evaluation is based on a simulated synthetic workload.
+> Both make the evaluation weak.
+
+We do propose a mathematical model (in the appendix of the related
+technical report) that supports our claims. However, the reviewer is
+correct in pointing out we do not prove any security properties in this
+paper.  This is one of our agendas for the future work.
+
+ 
+> 4. The solution is not entirely decentralized as the authors claim in
+> the introduction.
+
+We have modified our introduction to point out that we wish to weaken
+the central components required by the mechanism and, in future work, to
+remove them if possible.
+
+As a part of our future work we are working on a distributed randomness
+service. We believe that even in the current state, the randomness
+server can easily be replicated as it does not perform heavy weight
+actions like the CA. We have not implemented our fully decentralized
+solution for induced churn yet, but our randomness service is much
+simpler, easy to audit and easy to replicate.
+
+ 
+> 5. A highly optimized structured overlay is not well suited to an
+> environment where nodes are untrusted and there isn't any central CA.
+> Unstructured overlays work better.
+
+That may well be the case.  However, structured overlays are still the
+best we have to obtain responses to unpopular lookups, so they remain an
+important class of overlays to study and to strengthen.
+
+ 
+> 6. 'k' is first used before it is actually defined in the next paragraph. 
+
+Fixed.
+
+
+
+ 
+> Reviewer #3
+
+> One of my main reservations about this paper is that while the idea of
+> the using induced churn is interesting, when coupled with rate
+> limiting on routing table optimization and maintenance updates, the
+> degree of optimality that the routing table can reach before being
+> flushed (as a result of the periodic churn) is not addressed. This
+> issue was not answered in either the evaluation or in the analysis,
+> and so does not provide any measure of optimality of a node's routing
+> table at the boundaries of a churn epoch.
+
+We now address this issue in the performance evaluation section (Section
+4.2).  From figure 8(e), we can see that the average number of neighbors
+in Maelstrom's routing table grows from 12 (for 2 min epoch) to ~30
+neighbors (for 64 min epochs), indicating indeed that optimized overlays
+are impacted by induced churn.  We also demonstrate the drop in routing
+efficiency when we compare the Lookup Latency for Maelstrom to that of
+Bamboo in Figure 8(a).
+
+
+> Additionally, it is shown that the proposed technique does not incur
+> significant delay and bandwidth overhead. However, figure (7) also
+> shows that a significant amount of lookup queries fail under the
+> proposed periodic churn, and with redundant routing lookup,
+> performance is significantly enhanced. What isn't shown though is the
+> lookup success rate when using only redundant routing [6] in that
+> experiment. What is the added value of the proposed periodic churn in
+> this regard? I suspect it would be minimal and as such, the efficacy
+> of this hybrid solution remains questionable.
+
+We have added a new graph to support our claim and to separate the
+benefits of redundancy from induced churn.
+
+Also, we have clarified what we mean by "successful lookup": avoiding
+adversarial interception.  Therefore, unsuccessful lookups are not those
+that fail overtly, but those that are intercepted by the adversary.
+
+
+> Furthermore, some overlay networks (see of example [RD01]) use
+> locality-aware routing optimization which optimizes the routing table
+> of a node to select neighbors within a topological proximity of that
+> node. This technique will potentially localize any poisoning activity
+> and limit its effect to the nodes within a close proximity to the
+> malicious node. Your proposed work should be compared with strategies
+> like in [RD01], or at least discussed.
+
+This is precisely why induced churn is needed.  Any method for
+identifying topological proximity can be an attack vector, via which the
+adversary can make her nodes preferable to the correct nodes to
+victims.  [RD01], as well as Bamboo, suffer from this problem, unless
+the proximity metric is maintained by a trusted third party (e.g., by a
+trusted Vivaldi service somewhere).  We seek to reduce the trusted
+computing base, not expand it with proximity services in this work.
+However, in some environments, relying on trust in a proximity service
+might be a workable solution.
+
+ 
+ 
+> Reviewer #4
+
+> It seems that the timed randomness service is the Achilles' heel
+> of the whole scheme. To work properly, the scheme requires that
+> the randomness service is always available, un-compromised, and
+> reachable with low latency from all nodes in a P2P network, so
+> that all nodes will obtain the same random number for each reset.
+> While the authors discuss a number of ways to improve the
+> availability, reachability, and trustworthiness of this service,
+> potential attacks against this service still exist. The simplest
+> attack is to DDoS the randomness service, which is open to the
+> public. Overlay nodes that are not able to obtain the random
+> number in time will be left out of the overlay network, affecting
+> both the functionality and performance of the overlay. The authors
+> will need to address the protection of the timed randomness
+> service and assess the impact on the overlay in the face of
+> intermittent unavailability or even compromise of the randomness
+> service.
+
+Indeed a DoS attack against the randomness service is a valid concern.
+However the randomness service is very light weight, and as
+described in Section 5, fairly straightforward to replicate.
+
+As a part of our future work, we are looking into ways of making
+this a fully distributed service.
+ 
+> The authors may wish to conduct a comparative study between
+> induced churn and approaches proposed in [6] and [23]. It is true
+> that both [6] and [23] adopt a stronger central certification
+> authority, which is more heavyweight than the timed randomness
+> service in induced churn. However, the schemes in [6] and [23] do
+> not require periodic routing table reset, thus incurring possibly
+> less performance degradation and service disruption in the
+> overlay. It would be interesting to compare induced churn with [6]
+> and [23], using the same five metrics in this paper and under the
+> same simulation and emulation setup. Although there may not be a
+> clear winner, useful observations may be obtained to guide the
+> selection of the right scheme under different security/performance
+> requirements.
+
+This is an excellent suggestion, and we can add it to our future work.
+ 
+> It would also be helpful to discuss the impact of induced churn on
+> the implementation of applications and services built on top of
+> the P2P overlay. It seems that the periodic change of node IDs
+> will not be transparent to the applications (e.g. Scribe) and
+> services (e.g. I3). If so, existing applications would have to be
+> modified to work properly in an overlay that implements induced
+> churn. The authors may wish to investigate a middleware layer
+> between the applications and the overlay to hide the dynamic
+> change of node IDs.
+
+It isn't obvious to us why churn is not transparent to services running
+on top of an overlay.  Group IDs in Scribe and triggers in i3 are
+"resources" floating on an otherwise anonymous overlay network.  When a
+node, previously holding an i3 trigger, moves so do the triggers it was
+holding.  The identity of the responsible node is not essential in those
+systems.
+
+Performance of such systems can be impacted due to induced churn,
+however.  We discuss the relevant trade-off in Section 5.3.
+
+ 
+> Both global and staggered churn will cause a portion of the nodes
+> transiently unavailable in the overlay network. This may affect
+> the functionality and/or performance of the applications running
+> on top of the overlay. The semantics of an application may have to
+> be modified to differentiate between a permanent node failure and
+> a transient node unresponsiveness due to churning. Moreover, the
+> application may have to implement additional adaptation mechanisms
+> in response to the fluctuating aggregate processing capacity of
+> the overlay network.
+ 
+We have added a paragraph in the discussion section to addresses the
+above (sections 5.3 and 5.4), and to sketch a possible optimization in
+the face of continuous data migration.
+
+> Considering the cost and performance penalty incurred by induced
+> churn, as well as its impact on the semantics and performance of
+> existing overlay-based applications, it might be more appropriate
+> to propose induced churn as an "emergency" mechanism in reaction
+> to a detected routing table poison attack, instead of as part of
+> the "normal" overlay network operations.
+
+Absolutely. However one of the central problem remains in detecting the
+onset of an "emergency" situation, i.e., how does one find out if
+his routing table has been poisoned beyond a certain extent? Addressing
+the problem with a proactive mechanism (induced churn), whose resource
+requirements can be budgeted, appears less open to adversarial tampering
+than using an explicit failure detector triggering the emergency
+mechanism.  Again, as with anything else in tolerating misbehavior, the
+cost of the solution may outweigh its benefit, and making the choice is
+a trade-off that a system designer must make.

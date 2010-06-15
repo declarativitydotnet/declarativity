@@ -1,0 +1,387 @@
+Reviews for Paper #219 Implementing Declarative Overlays
+
+Authors:
+Timothy Roscoe(Intel Research) :2150 Shattuck Avenue suite 1300 ,
+  Berkeley, CA USA +1 510 495 3086 
+Joseph Hellerstein(U.C.Berkeley)
+Boon Thau Loo(U.C.Berkeley)
+Tyson Condie(U.C.Berkeley)
+Ion Stoica(UC Berkeley)
+Petros Maniatis(Intel Research Berkeley)
+
+Reviews:
+Reviewer #1
+1: What are the strongest reasons that SOSP should accept this paper?:
+This paper describes a language and runtime to build overlays. The
+overlays are specified using prolog-like rules. These specifications
+can be surprisingly concise. The rules are compiled into a Click-like
+dataflow graph. They can specify a fairly complete variant of Chord in
+33 rules and achieve reasonable performance!
+
+
+2: What are the strongest reasons that SOSP should reject this paper?:
+This approach is very similar in its goals to Macedon[29] but the
+implementation is very different. It enables more concise definitions
+than Macedon but they are also less readable and less intuitive for
+most system programmers. There is no direct comparison with Macedon
+but the authors claim that their specification of Chord with 33 rules
+is more complete than a Macedon specification with 320 statements. I
+would like to see a more detailed comparison. I can read the Macedon
+specs I have seen better. 
+
+The performance evaluation does not compare this system with Chord or
+the Macedon version of Chord. The authors also acknowledge that they
+are unlikely to match Macedon's performance because they provide less
+control. This worries me. It would be another reason for me to prefer
+Macedon. 
+
+3: How original was this work?: Innovative
+4: How important is this work to the SOSP community?: Somewhat
+  important 
+5: Rate the quality of the experimental work or evaluation aspects of
+  this paper: Barely adequate 
+6: Rate the quality of writing: Adequate
+7: Overall rating: Borderline
+8: Your confidence in this review: I am comfortable reviewing papers
+  on this topic 
+9: Comments and suggestions for the authors:
+
+Reviewer #2
+1: What are the strongest reasons that SOSP should accept this paper?:
+
+This paper presents a datalog-based language for specifying
+overlay networks. To me the paper seems borderline, and more
+suitable for NSDI or SIGCOMM.
+
+Pros:
++ nicely written, good discussion, not oversold.
+
++ the descriptions, which can generate executable
+code are roughly the size of the non-runnable
+pseudo-code in varous overlay networking papers.
+
+Cons:
+- the generated code is significantly slower than hand
+crafted. they make the case that the language is
+mostly for prototyping, but still...
+
+- while i have a weakness for domain-specific languages,
+it's not super-clear to me that there are enough people
+writing overlay networks that we need a custom language
+to support them.
+
+- I know this is prudish, but even assuming such
+a language is needed, the weirdo prolog-language in
+the paper makes it a complete non-starter for me.
+It's just to hard to understand. Their model is
+that you use P2 to quickly, iteratively prototype
+your overlay network. However, the unusual syntax
+and semantics (any-order-eval logic vs imperative)
+will require that your "quick prototyping" includes a
+non-trivial up-front cost to learn the language (which
+no one else will understand and in turn have to learn).
+
+With all this said, I did like the paper, and I do not think
+it would be an embarassment. It just that I do not buy it as
+a viable approach.
+
+Is it really so hard to do this imperatively?
+
+Given the declarative specs the authors have, is it possible to
+write a "super-optimizer" (ala massalin) for overlay networks
+that could try out and discover bizarre ways to implementing a
+given spec that would trounce hand-coded?
+
+2: What are the strongest reasons that SOSP should reject this paper?:
+
+3: How original was this work?: Some new ideas
+4: How important is this work to the SOSP community?: Of interest
+5: Rate the quality of the experimental work or evaluation aspects of
+  this paper: Adequate 
+6: Rate the quality of writing: Adequate
+7: Overall rating: Borderline
+8: Your confidence in this review: I am comfortable reviewing papers
+  on this topic  
+9: Comments and suggestions for the authors:
+
+Reviewer #3
+1: What are the strongest reasons that SOSP should accept this paper?:
+Trying to build network protocols using a declarative approach
+is interesting.
+
+
+2: What are the strongest reasons that SOSP should reject this paper?:
+Even though the authors claim that "ease of specification and
+sharing/reuse of code" are the advantages of P2, it is not clear what
+one would use P2 for. One might think that P2 is primarily targeted
+to experiment and design new overlay algorithms. If so, a simulator
+which has much lower complexity achieves the same goals. If one uses
+P2 for actually implementing overlays to enable sharing/reuse of code,
+modular organization of the C++ code can provide many of the same
+benefits.
+
+Using declarative approach to build network protocols is interesting
+and the authors have done solid work in demonstrating the feasibility
+of the approach. Given that the declarative approach comes at the
+cost of increased system complexity compared to a library-based
+toolkit approach, the paper fails to demonstrate the potential of a
+declarative approach. There are only a handful of different overlays
+and most are not used. Most efforts in designing/building/deploying
+overlays are spent in understanding, optimizing and debugging their
+performances under churn, and perhaps less on the actual coding
+efforts. If the authors demonstrated how P2 can help out with those
+procedures instead of just implementing the published Overlay
+specification in fewer lines of code, the system would be much more
+convincing. Alternatively, if the authors can argue that there are
+truly numerous different Overlays needed, the coding effort savings by
+P2 are no doubt very valuable.
+
+3: How original was this work?: Some new ideas
+4: How important is this work to the SOSP community?: Of interest
+5: Rate the quality of the experimental work or evaluation aspects of
+  this paper: Barely adequate 
+6: Rate the quality of writing: Adequate
+7: Overall rating: Probable reject
+8: Your confidence in this review: I am very knowledgeable about the topic
+9: Comments and suggestions for the authors:
+In the Chord (similarly Narada) OverLog specification, there's no code
+on failure reporting/handling. It is interesting to know how OverLog
+handles those.
+
+An overlay node collects routing table entries from other nodes and
+merges them with its local routing table. It seems, at first glance,
+such a process is a lot like database joins. But there are many
+subtleties. A node wants to filter out old information in merging.
+For example, in Chord's successor list stabilization, updating
+existing successor list with the new successor list is not a simple
+matter of merging the two lists together, rather, one would argue that
+some successors in the old list need to be deleted if they are not
+found in the new successor list.
+
+It would be clearer to the reader if all built-in tables and terms are
+marked out differently.
+
+In the evaluations, we do not know what kind of lookup latency to
+expect given the experimental environment is minimally specified (e.g.
+the RTT of the system is not revealed.) It would be more useful to
+compare to the performance of the P2 system to that of the Chord
+implementation.
+
+Reviewer #4
+1: What are the strongest reasons that SOSP should accept this paper?:
+Very promising approach\u2026 allows very concise description of
+different kinds of overlay structures based on declarative
+constraints. 
+
+2: What are the strongest reasons that SOSP should reject this paper?:
+
+1) This implementation of the approach may not be usable by mere
+mortals. Its ultimately unclear if declarative syntax inherently
+produces overlay specifications that are difficult to understand or if
+this is an artifact of datalog. 
+
+2) A number of key issues (notably failure detection) do not seem well
+   addressed in this model. This appears to be somewhat inherent
+   since, while there are fewer lines of code, each is much more
+   complex and thus it is difficult to reason/specify its failure and
+   recovery properties. Is this really a tradeoff that programmers are
+   willing to make? 
+
+3: How original was this work?: Innovative
+4: How important is this work to the SOSP community?: Somewhat important
+5: Rate the quality of the experimental work or evaluation aspects of
+  this paper: Barely adequate 
+6: Rate the quality of writing: Adequate
+7: Overall rating: Borderline
+8: Your confidence in this review: I am comfortable reviewing papers
+  on this topic 
+9: Comments and suggestions for the authors:
+  I really like the idea behind this paper, but it begs a bunch of
+  questions 
+
+1. Can people write code in this style? Even you don't seem convinced
+of this (number of references to this point in the paper including the
+conclusions). 
+
+2. Their high-level specifications do not include constructs for
+failure detection or performance. Are programmers willing to give up
+robustness/performance to some degree to achieve fewer lines of code?
+There are a couple of key issues here. First, those lines of code may
+be fewer but each line is *much* more complex. Second, you do not
+quantify how much you give up in terms of performance and
+reliability. Given that there are publicly available implementations
+of other systems, it really is your responsibility to do the
+performance/reliability comparison. 
+
+3. What class of overlays is this work really appropriate for? Can it
+   handle layering (as is increasingly common with Overlays and of
+   course important to just about any networked service)? For
+   instance, SplitStream is layered on top of Scribe, which is in turn
+   layered on top of Pastry. How would this work with P2? Similarly, a
+   DHT might be layered on top of Chord (Ivy etc). How would this work
+   with Overlog? 
+
+
+- Bug? In the Narada implementation, you have T = T1 - T2. My gut says
+  it should be T2 - T1. 
+
+- It's not at all clear to me how P2 would ideally interface with an
+  application. I mean -- suppose you wanted to write a streaming app
+  over their Narada overlay. How does it send data? 
+
+- I would really like to see the last two rules for Narada. You're
+  trying to motivate the elegance of your system -- but I feel like
+  those last two rules will make it look more ugly.
+
+- Narada has some complexity in dealing with recovery from network
+  partitions so it\u2019d be interesting to understand how you deal
+  with this (I understand the interests of brevity, but this really
+  goes to the heart of the question about the merits/costs of the
+  declarative style) 
+
+- You talk about bringing the details of the transport much closer to
+  the programmer, rather than hiding it. But I don't see evidence of
+  that in your OverLog systems. 
+
+Section 2.4:
+
+- Scoping: This seems a bit contradictory. You observe that good
+  design can lead to well structured automata, you state that the lack
+  of design constraints makes things difficult to specify correctly
+  and understand. But doesn't this discount that good design keeps
+  things from being difficult to specify correctly and understand? 
+
+- Typing: I don't buy this at all. Yes -- the automata needs to handle
+  any message defined by the automata, but so what. "Receiving" a
+  message is just like a tuple appearing in a stream table. You say
+  potato (equijoin between a stream and a set of tables), I say potato
+  (receive a message in a given state and operate on variables as
+  necessary). [aside: One question is -- can there be multiple tuples
+  on the left hand side of a :-? What if on getting a response you
+  need to update two remote tuple streams?] 
+
+- Encapsulation and Reuse: I disagree with this too. Yes --
+  arbitrarily specified and hard to read automata are hard to reuse,
+  but won't that be true of OverLog too? At least its not demonstrated
+  that this isn\u2019t true in this model. 
+
+- I really liked the logging comment in 3.5.
+
+- In chord, the modulo math is pretty simple (even at 160 bits). I'm
+  curious what challenges writing pastry (which needs more complex
+  modulo math) would present. For example, in Chord -- your address
+  space is you to your pred. You can measure distances with a simple
+  modulo subtraction. But Pastry uses a signed difference to compute
+  address spaces and such. A+B/2 is what you'd like to write\u2026  
+
+Reviewer #5
+
+1: What are the strongest reasons that SOSP should accept this paper?:
+
+Describes a new way (P2) to generate p2p overlay protocols by
+compiling a high-level declarative specification in Datalog into an
+interpreted dataflow execution, using database query optimization-like
+framework. A prototype of the framework is used to specify and
+generate a reasonably performing, close to complete Chord protocol
+implementation. 
+
+Potentially, such framework promises to make it easier to build new
+protocols by composing specifications and better automatic way to
+optimize them. Database query optimization framework for network
+protocols is very impressive. 
+
+2: What are the strongest reasons that SOSP should reject this paper?:
+
+There already exist systems that provide some of the functionality of
+automatic protocol Generation but use a different specification
+approach (FSM-based MACEDON and OOPL-based Prolac). Compared to the
+existing approaches, P2 claims better support for protocol composition
+and more powerful optimizations that could result in better
+performance.  The problem is this paper does not explain or show this
+extra benefit. It only shows P2 can do what others can (Chord like
+MACEDON).  Without the extra benefits, in itself, a new way of
+specifying p2p protocols is not a very convincing case for SOSP.
+
+It seems plausible the declarative datalog specification could allow
+to graft onto the overlay Protocol rich querying capabilities like the
+ones provided by the Pier system, but this is not described here.
+Otherwise, I did not find the datalog specification particularly
+appealing or intuitive.  The promised software engineering benefits of
+software reuse depend on the abstraction and modularity properties of
+the high level datalog language and the low-level dataflow
+language. Neither is particularly known to have good support for
+abstraction.  In contrast, some of the state machine-based frameworks
+e.g. I/O automata work by Nancy Lynch have developed support for
+abstraction and modularity.
+
+
+3: How original was this work?: Innovative
+4: How important is this work to the SOSP community?: Of interest
+
+5: Rate the quality of the experimental work or evaluation aspects of
+this paper: Adequate 
+
+6: Rate the quality of writing: Adequate
+7: Overall rating: Borderline
+8: Your confidence in this review: I am comfortable reviewing papers
+on this topic 
+
+9: Comments and suggestions for the authors:
+
+Reviewer #6
+1: What are the strongest reasons that SOSP should accept this paper?:
+
+This paper proposes a concise language for describing overlays. The
+language is both protocol-centric, like MACEDON, and
+structure-centric, like graph theoretic description languages. The
+resulting system leads to concise specifications for several
+well-studied systems. The code generated by these approaches achieves
+performance comparable to that of hand-coded systems. 
+
+This is a very well-written paper, on a topic of great interest to the
+SOSP community. It is an incremental contribution compared to the
+MACEDON paper, but it enunciates the differences from the
+automaton-based MACEDON approach well. 
+
+Translating OverLog specifications to P2 dataflow elements, and
+generating systems from the dataflow elements is novel and
+interesting. 
+
+
+2: What are the strongest reasons that SOSP should reject this paper?:
+
+The OverLog language is described by example, and lacks a formal
+specification. 
+
+The paper mentions, but does not examine deeply, the benefits stemming
+from specifying systems in the OverLog language. A comparison to
+MACEDON would be useful. A mere reduction in the number of lines of
+specification does not seem like a sufficiently novel contribution -
+we have all seen obfuscated code entries that are inscrutable. An
+analysis of greater insights or analyses into the operation of systems
+expressed in OverLog is required to establish the choice of language. 
+
+In short, I wish there was a greater use for these concise
+specifications besides just generating the system code. We know how to
+implement Chord (and its many variants) in C all the way up to
+MACEDON. If we could, say, correctness-check the OverLog version, that
+would make a novel and significant improvement on the state of the
+art. 
+
+
+3: How original was this work?: Innovative
+4: How important is this work to the SOSP community?: Somewhat important
+5: Rate the quality of the experimental work or evaluation aspects of this paper: Adequate
+6: Rate the quality of writing: Adequate
+7: Overall rating: Could accept
+8: Your confidence in this review: I am comfortable reviewing papers on this topic
+9: Comments and suggestions for the authors:
+Nice work!
+
+The comparison of line-counts (13 rules versus 320) does not capture
+the true benefits of this approach - if anything, it misstates the
+contribution. Generating code from dataflow specifications could have
+much broader consequences than simply enabling more dense
+specifications. 
+
+

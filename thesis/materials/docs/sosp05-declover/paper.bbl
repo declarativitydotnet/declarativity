@@ -1,0 +1,216 @@
+\begin{thebibliography}{10}
+
+\bibitem{morpheus}
+M.~B. Abbott and L.~L. Peterson.
+\newblock A language-based approach to protocol implementation.
+\newblock {\em IEEE/ACM Transactions on Networking}, 1(1), Feb. 1993.
+
+\bibitem{alicebook}
+S.~Abiteboul, R.~Hull, and V.~Vianu.
+\newblock {\em Foundations of Databases}.
+\newblock Addison Wesley, 1995.
+
+\bibitem{anderson88rtag}
+D.~P. Anderson.
+\newblock Automated protocol implementation with {RTAG}.
+\newblock {\em IEEE Trans. Softw. Eng.}, 14(3):291--300, 1988.
+
+\bibitem{aurora}
+H.~Balakrishnan, M.~Balazinska, D.~Carney, U.~Cetintemel, M.~Cherniack,
+  C.~Convey, E.~Galvez, J.~Salz, M.~Stonebraker, N.~Tatbul, R.~Tibbetts, and
+  S.~Zdonik.
+\newblock Retrospective on {A}urora.
+\newblock {\em VLDB Journal}, 13(4), Dec. 2004.
+
+\bibitem{esterel}
+G.~Berry.
+\newblock {\em The Foundations of Esterel}, pages 425--454.
+\newblock MIT Press, 1998.
+
+\bibitem{fox}
+E.~Biagioni.
+\newblock A structured {TCP} in {S}tandard {ML}.
+\newblock In {\em Proc. SIGCOMM}, 1994.
+
+\bibitem{telegraphcq}
+S.~Chandrasekaran, O.~Cooper, A.~Deshpande, M.~J. Franklin, J.~M. Hellerstein,
+  W.~Hong, S.~Krishnamurthy, S.~Madden, V.~Raman, F.~Reiss, and M.~A. Shah.
+\newblock {TelegraphCQ}: Continuous dataflow processing for an uncertain world.
+\newblock In {\em CIDR}, 2003.
+
+\bibitem{chu00case}
+Y.-H. Chu, S.~G. Rao, and H.~Zhang.
+\newblock A case for end system multicast.
+\newblock In {\em Proc. of ACM SIGMETRICS}, pages 1--12, 2000.
+
+\bibitem{dabbous-sigcomm96}
+W.~Dabbous, S.~W. O'Malley, and C.~Castelluccia.
+\newblock Generating efficient protocol code from an abstract specification.
+\newblock In {\em Proc. SIGCOMM}, pages 60--72, 1996.
+
+\bibitem{dabek_nsdi04}
+F.~Dabek, J.~Li, E.~Sit, F.~Kaashoek, R.~Morris, and C.~Blake.
+\newblock Designing a {DHT} for low latency and high throughput.
+\newblock In {\em Proc. NSDI}, Month 2004.
+
+\bibitem{dvmrp}
+S.~Deering and D.~R. Cheriton.
+\newblock Multicast routing in datagram internetworks and extended {LAN}s.
+\newblock {\em ACM Transactions on Computer Systems}, 8(2):85--111, May 1990.
+
+\bibitem{gamma}
+D.~J. DeWitt, R.~H. Gerber, G.~Graefe, M.~L. Heytens, K.~B. Kumar, and
+  M.~Muralikrishna.
+\newblock Gamma - a high performance dataflow database machine.
+\newblock In {\em VLDB}, pages 228--237, 1986.
+
+\bibitem{estelle-success}
+M.~Fecko, M.~Uyar, P.~Amer, A.~Sethi, T.~Dzik, R.~Menell, and M.~McMahon.
+\newblock A success story of formal description techniques: Estelle
+  specification and test generation for {MIL-STD 188-220}.
+\newblock {\em Computer Communications (Special Edition on FDTs in Practice)},
+  23, 2000.
+
+\bibitem{graefe-sigmod90}
+G.~Graefe.
+\newblock Encapsulation of parallelism in the {V}olcano query processing
+  system.
+\newblock In {\em Proc. of the 1990 ACM SIGMOD International Conference on
+  Management of Data, Atlantic City, NJ, May 23-25, 1990}, pages 102--111. ACM
+  Press, 1990.
+
+\bibitem{handley05xorp}
+M.~Handley, A.~Ghosh, P.~Radoslavov, O.~Hodson, and E.~Kohler.
+\newblock Designing extensible {IP} router software.
+\newblock In {\em Proc. NSDI}, May 2005.
+
+\bibitem{pier-cidr}
+R.~Huebsch, B.~N. Chun, J.~M. Hellerstein, B.~T. Loo, P.~Maniatis, T.~Roscoe,
+  S.~Shenker, I.~Stoica, and A.~R. Yumerefendi.
+\newblock The architecture of {PIER}: an {I}nternet-scale query processor.
+\newblock In {\em CIDR}, pages 28--43, 2005.
+
+\bibitem{prolac}
+E.~Kohler, M.~F. Kaashoek, and D.~R. Montgomery.
+\newblock A readable {TCP} in the {P}rolac protocol language.
+\newblock In {\em Proc. SIGCOMM}, 1999.
+
+\bibitem{click-tocs}
+E.~Kohler, R.~Morris, B.~Chen, J.~Jannotti, and M.~F. Kaashoek.
+\newblock The {C}lick modular router.
+\newblock {\em ACM Trans. Comput. Syst.}, 18(3):263--297, 2000.
+
+\bibitem{leighton-book}
+F.~T. Leighton.
+\newblock {\em Introduction to Parallel Algorithms and Architectures: Arrays,
+  Trees, Hypercubes}.
+\newblock Morgan Kaufmann, San Mateo, CA, 1992.
+
+\bibitem{li04comparing}
+J.~Li, J.~Stribling, T.~Gil, R.~Morris, and F.~Kaashoek.
+\newblock Comparing the performance of distributed hash tables under churn.
+\newblock In {\em Proc. IPTPS}, 2004.
+
+\bibitem{loo-hotnets04}
+B.~T. Loo, J.~M. Hellerstein, and I.~Stoica.
+\newblock Customizable routing with declarative queries.
+\newblock In {\em Third Workshop on Hot Topics in Networks (HotNets-III)}, Nov.
+  2004.
+
+\bibitem{Maniatis2003thesis}
+P.~Maniatis.
+\newblock {\em {Historic Integrity in Distributed Systems}}.
+\newblock PhD thesis, Computer Science Department, Stanford University,
+  Stanford, {CA}, {USA}, Aug. 2003.
+
+\bibitem{symphony}
+G.~Manku, M.~Bawa, and P.~Raghavan.
+\newblock Symphony: Distributed hashing in a small world.
+\newblock In {\em Proc. USITS}, 2003.
+
+\bibitem{mazieres-usenix-2001}
+D.~Mazi\`eres.
+\newblock A toolkit for user-level file systems.
+\newblock In {\em Proc. of the 2001 USENIX Technical Conference}, June 2001.
+
+\bibitem{scout}
+D.~Mosberger and L.~L. Peterson.
+\newblock Making paths explicit in the {S}cout operating system.
+\newblock In {\em Proc. OSDI}, pages 153--167. ACM Press, 1996.
+
+\bibitem{stream}
+R.~Motwani, J.~Widom, A.~Arasu, B.~Babcock, S.~Babu, M.~Datar, G.~S. Manku,
+  C.~Olston, J.~Rosenstein, and R.~Varma.
+\newblock Query processing, approximation, and resource management in a data
+  stream management system.
+\newblock In {\em Proc. CIDR}, 2003.
+
+\bibitem{monsoon}
+G.~M. Papadopoulos and D.~E. Culler.
+\newblock Monsoon: An explicit token store architecture.
+\newblock In {\em Proc. ISCA}, May 1990.
+
+\bibitem{shankar-stems}
+V.~Raman, A.~Deshpande, and J.~M. Hellerstein.
+\newblock Using state modules for adaptive query processing.
+\newblock In {\em Proc. ICDE}, 2003.
+
+\bibitem{rhea_usenix_2004}
+S.~Rhea, D.~Geels, T.~Roscoe, and J.~Kubiatowicz.
+\newblock Handling {C}hurn in a {DHT}.
+\newblock In {\em Proc. of the 2004 USENIX Technical Conference, Boston, MA,
+  USA}, June 2004.
+
+\bibitem{rodriguez04macedon}
+A.~Rodriguez, C.~Killian, S.~Bhat, D.~Kostic, and A.~Vahdat.
+\newblock {MACEDON}: {M}ethodology for {A}utomatically {C}reating,
+  {E}valuating, and {D}esigning {O}verlay {N}etworks",.
+\newblock In {\em Proc. NSDI}, March 2004.
+
+\bibitem{selinger79}
+P.~G. Selinger, M.~M. Astrahan, D.~D. Chamberlin, R.~A. Lorie, and T.~G. Price.
+\newblock Access path selection in a relational database management system.
+\newblock In {\em SIGMOD Conference}, pages 23--34, 1979.
+
+\bibitem{sellis-mqo}
+T.~Sellis.
+\newblock {Multiple Query Optimization}.
+\newblock {\em ACM Transactions on Database Systems}, 13(1):23--52, Mar. 1988.
+
+\bibitem{i3}
+I.~Stoica, D.~Adkins, S.~Zhaung, S.~Shenker, and S.~Surana.
+\newblock Internet indirection infrastructure.
+\newblock {\em IEEE/ACM Transactions on Networking}, (2), Apr. 2004.
+
+\bibitem{chord}
+I.~Stoica, R.~Morris, D.~Liben-Nowell, D.~R. Karger, M.~F. Kaashoek, F.~Dabek,
+  and H.~Balakrishnan.
+\newblock Chord: a scalable peer-to-peer lookup protocol for internet
+  applications.
+\newblock {\em IEEE/ACM Trans. Netw.}, 11(1):17--32, 2003.
+
+\bibitem{fdt-book}
+K.~J. Turner, editor.
+\newblock {\em Using formal description techniques -- An Introduction to
+  {E}stelle, {LOTOS} and {SDL}}.
+\newblock Wiley, 1993.
+
+\bibitem{dataflowarch}
+A.~H. Veen.
+\newblock Dataflow machine architecture.
+\newblock {\em ACM Computing Surveys}, 18(4), Dec. 1986.
+
+\bibitem{vuong-estelle-tose88}
+S.~T. Vuong, A.~C. Lau, and R.~I. Chan.
+\newblock Semiautomatic implementation of protocols using an {E}stelle-{C}
+  compiler.
+\newblock {\em IEEE Transactions on Software Engineering}, 14(3), Mar. 1988.
+
+\bibitem{White+:osdi02}
+B.~White, J.~Lepreau, L.~Stoller, R.~Ricci, S.~Guruprasad, M.~Newbold,
+  M.~Hibler, C.~Barb, and A.~Joglekar.
+\newblock An integrated experimental environment for distributed systems and
+  networks.
+\newblock In {\em Proc.\ OSDI 2002}, Boston, MA, Dec. 2002.
+
+\end{thebibliography}

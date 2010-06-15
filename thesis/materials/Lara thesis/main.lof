@@ -1,0 +1,27 @@
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {2.1}{\ignorespaces An example of oversampling.}}{12}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Construction of codewords in $C(m_0+1)$ from codewords in $C(m_0)$.}}{21}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {6.1}{\ignorespaces Junction graph.}}{126}
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {8.1}{\ignorespaces An example of error floor.}}{136}
+\contentsline {figure}{\numberline {8.2}{\ignorespaces An example of a (4,4) absorbing set}}{139}
+\addvspace {10\p@ }
+\contentsline {figure}{\numberline {9.1}{\ignorespaces Illustration of the notation (a) Row and column groups in $H_{p,\gamma }$(b) $(j,k)$ column label. Shaded area corresponds to the submatrix $\sigma ^{ij}$.}}{145}
+\contentsline {figure}{\numberline {9.2}{\ignorespaces (Labelled) candidate (4,0) absorbing set}}{150}
+\contentsline {figure}{\numberline {9.3}{\ignorespaces Candidate (2,b) absorbing sets}}{152}
+\contentsline {figure}{\numberline {9.4}{\ignorespaces Candidate (3,1) absorbing sets}}{152}
+\contentsline {figure}{\numberline {9.5}{\ignorespaces (Labelled) candidate (3,3) absorbing set}}{153}
+\contentsline {figure}{\numberline {9.6}{\ignorespaces Candidate (3,3) absorbing set (solid circles), with an adjacent bit node (empty circle).}}{154}
+\contentsline {figure}{\numberline {9.7}{\ignorespaces Depiction of the candidate (4,4) set}}{157}
+\contentsline {figure}{\numberline {9.8}{\ignorespaces Depiction of the candidate (5,4) set}}{160}
+\contentsline {figure}{\numberline {9.9}{\ignorespaces Depiction of the candidate (6,2) sets.}}{164}
+\contentsline {figure}{\numberline {9.10}{\ignorespaces Depiction of the first candidate (6,4) set}}{180}
+\contentsline {figure}{\numberline {9.11}{\ignorespaces Depiction of the second candidate (6,4) set}}{180}
+\contentsline {figure}{\numberline {9.12}{\ignorespaces Depiction of the third candidate (6,4) set}}{181}
+\contentsline {figure}{\numberline {9.13}{\ignorespaces Experimental Results for $C_{47,4}$}}{204}

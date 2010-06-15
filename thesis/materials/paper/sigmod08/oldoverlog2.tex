@@ -1,0 +1,169 @@
+\eat{
+\subsection{Physical Plan Generation}
+\jmh{Discussion of PSN here is somewhat misleading, at least until we work out the mapping between PSN and our new local-fixpoint semantics.  I vote that we simply skip discussion of PSN here.  The danger with doing so is that the only DB paper on P2 is all about PSN, but that paper speaks of Network Datalog, not Overlog.}
+Our current Overlog parser is fairly conventional, implemented using
+\texttt{flex} and \texttt{bison}.  It converts Overlog text into a
+canonical form and produces data structures for rules and table
+definitions.  The current P2 planner takes these data
+structures and translates each rule into a {\em dataflow strand}: a
+directed graph of dataflow elements.  This is currently done in a
+manual (and fairly ad hoc) way as follows.  First, all the required
+tables and indices are created.  We create an index for every table's
+primary key, and secondary indices for table keys participating in
+equijoins.  Then, each rule is passed to a {\em localization rewrite}
+component that rewrites the rule into one or more new rules, each of
+which can be evaluated on a single machine, though its output may be
+sent remotely; it is shown in~\cite{loo-sigmod06} that this
+localization rewrite is always possible for well-formed Overlog.  The
+resulting localized rules are rewritten using the Pipelined Semi-Naive
+(PSN) technique described in that paper.  PSN converts each
+Overlog rule into a set of Event-Condition-Action rules, each of which
+listens for changes on a single table, propagates those changes
+through a dataflow strand of conditions (which often includes
+``equijoin'' table lookups), and generates tuple-derivation
+``actions'' that are translated into local table updates and/or
+network messages depending on the appropriate destination of the
+tuple.  In the end, the P2 dataflow runtime need only be able to
+handle these ECA strands.
+
+In addition to creating the relational operations described above, the
+planner also constructs the other areas of the dataflow graph: the
+networking stack, including multiplexing and demultiplexing tuples,
+marshaling, congestion control, etc.  As with Click, it also inserts
+explicit queue elements where there is a push/pull mismatch between
+two elements that need to be connected.
+
+\subsection{P2 Event Atomicity}
+
+The event-driven atomic fixed point evaluation model supported by
+P2 avoids the need for locking or transactional support. The system
+supports the atomic execution of a single event and all of its
+logical consequences on a local node. Locking and 
+transactional support is needed in order to support global event atomicity. 
+We could support local advisory locks and
+distributed transactions (using two-phase commit or Paxos) by building upon our 
+local atomic event primitive. For instance, a lock would be expressed 
+as row (tuple) in a relational table, and lock acquisition would perform its test 
+and set on this 
+state within a single atomic event. In this section, however, we focus on what is 
+supported by P2 today, which is executing a single local event atomically.
+
+\subsubsection{Overlog in a Nutshell}
+
+In order to understand what a local event looks like in the P2 world we must begin
+with a rough overview of our declarative language. 
+The Overlog language was developed in order to 
+specify network protocols as a Datalog program. Datalog programs 
+consist of a set of declarative {\em rules}. The right-hand-side
+of the rule represents a conjunctive predicate over relations in a
+database, and the left-hand side represents the deduction from that
+predicate. Overlog extends this language in two ways. The first is
+the addition of a location specifier or attribute in the schema of a
+predicate. The location attribute specifies whether the predicate is
+applied at a local site or at some remote site. The second addition is the inclusion
+of an event predicate in each rule. The event predicate triggers the 
+execution of the rule as well as specifies the attribute variable 
+of the local node. 
+
+\begin{figure}
+\centering
+\begin{boxedminipage}{\linewidth}
+\small{\tt
+{\bf E1: } action(@S,A,B,C) :- \\
+\datalogspace event(@S,A),condition1(@S,A,B), \\
+\datalogspace condition2(@S,B,C). \\
+{\bf E2: } action(@C,A,B) :- \\
+\datalogspace event(@S,A),condition(@S,A,B,C).
+}
+\small{\caption{\label{fig:datalogeg}\emph{\small Overlog example}.}}
+\end{boxedminipage}
+\end{figure}
+Figure~\ref{fig:datalogeg} provides three example Overlog rules.
+The left-hand-side of each rule is given the name {\em action},
+which can represent a side effect to the database or the occurrence of an event.
+Both the database side effect and event actions may occur either locally or 
+remotely depending on the location attribute.
+The right-hand-side contains an event followed by a set of conditions.
+Each predicate is represented as a tuple of values referenced by the
+predicate attributes. For example, in rule {\em E1} the {\em event(@S, A)}
+predicate will be represented by a tuple with two values, the first
+is the location of the local node and the second is some atomic value 
+referenced by the variable `A'. Upon receipt of a such an event tuple,
+the query engine will perform a join with the tables referenced by
+{\em condition1} and {\em condition2}. The join attributes are resolved
+by name. Therefore, the tuple $<event, @S, A>$ will be joined with 
+the tuple $<condition1, @S, A, B>$    
+along attributes $@S$ and $A$.  Results from that join will be joined with
+tuples in the table referenced by {\em condition2}, and results from that 
+join will be applied to the {\em action} portion of the rule.  If the rule {\em action}
+holds a different location specifier than the event and conjunctive predicate(s) 
+(right-hand-side) then the resulting tuples will be sent to a remote site and applied
+accordingly (as an event or database side effect). Rule {\em E2} in the 
+aforementioned example would result in a remote send action.
+
+\subsubsection{Fixed Point Event Atomicity}
+
+\begin{figure}
+\centering
+\begin{boxedminipage}{\linewidth}
+\small{\tt
+{\bf E3: } event2(@S,A,B,C) :- \\
+\datalogspace event1(@S,A), \\
+\datalogspace condition1(@S,A,B), \\
+\datalogspace condition2(@S,B,C). \\
+{\bf E4: } action(@C,A,B)  :- \\
+\datalogspace event2(@S,A),condition1(@S,A,B,C).
+}
+\small{\caption{\label{fig:datalogeg2}\emph{\small Internal event example}.}}
+\end{boxedminipage}
+\end{figure}
+
+Executing an event to fixed point requires a further distinction between two types
+of events. An {\em external} event occurs when a tuple arrives from the network
+or when there is a side effect to some table in the database.  For the purposes
+of this paper, we will only focus on events triggered by the arrival of some
+tuple over the network.  An {\em internal} event is triggered by the {\em action}
+portion of a rule, specifically when the action does not result in a table side effect
+or a remote send operation.  Figure~\ref{fig:datalogeg2} shows two example 
+rules named {\em E3} and {\em E4}.  The action portion of rule {\em E3} specifies 
+the assertion of an event named {\em event2}. That is, an event of type {\em event1} 
+will trigger rule {\em E3}, and any resulting tuples from that rule will generate events of 
+type {\em event2}, each of which will be triggers to rule {\em E4}. 
+
+\begin{definition}
+The fixed point evaluation of a single external event is the application
+of that event to all rules that reference it, and the transitive execution of
+all resulting internal events. 
+\end{definition}
+
+Given the above definition, the fixed point evaluation of {\em event1} in
+Figure~\ref{fig:datalogeg2} is the execution of rule {\em E3} followed 
+by the execution of rule {\em E4} for each tuple of type {\em event2} from
+rule {\em E3}.  If the action portion of rule {\em E4} is a remote send or
+a table side effect then the fixed point evaluation is complete. Otherwise, the
+internal events resulting from the action portion of rule {\em E4} will be
+applied to any rules that reference an event of its type.  Safety 
+checks have been put in place in order to ensure a fixed point evaluation
+strategy applied to a given set of rules and events does indeed terminate.  
+The fixed point evaluation of an event will always
+terminate so long as the right-hand-side contains no negated logic.  Termination
+can still be guaranteed when the right-hand-side contains negation so
+long as the rules can be stratified~\cite{loo-sigmod06}. 
+
+The execution of an external event and all consequential internal events 
+can cause table side effects and network messages to occur from the
+actions from some rules triggered within the fixed point evaluation.  The
+P2 system treats these actions as external side effects, or external events,
+and ensures that they are not visible until the end of the fixed point. The
+system internals will buffer all such actions in FIFO order until all internal events have 
+been transitively applied.  Once that occurs, the buffered (external) actions
+will be applied, potentially resulting in database side effects and remote
+send operations.  When all actions have been flushed, the P2 system 
+scheduler will begin another fixed point evaluation of the next external
+event.  This behavior is reminiscent of sieves, and guarantees that local 
+Overlog execution is deterministic. (Arbitrary Overlog computations are 
+non-deterministic due to external events such network delays and reordering.)
+
+\jmh{I don't know what a sieve is.  I'm also leery of promising guarantees about anything.  I think we're on firmest ground when we can lean on Datalog; beyond that let's just describe how things work, rather than any promises that may hold.}
+
+}

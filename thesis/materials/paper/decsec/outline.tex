@@ -1,0 +1,129 @@
+\section{Introduction}
+Para 1: current approach of system design sucks!
+
+Para 2: Vision: want a declarative approach to system building: highlight benefits
+
+Para 3: How is it different from earlier approaches: 
+
+Para 3.1 Security, 
+
+Para 3.2 Compound Tuples, 
+
+Para 3.3 environment based code transformations
+
+Para 3.4 Storage
+
+Para 4: The scope of this paper is...give precise problem definition
+
+Para 5: enumerate major contributions
+
+Para 6: Outline
+
+\section{Background}
+
+Para 1: P2
+
+Para 2: Overlog
+
+Para 3: Example
+
+Para 4: Events and rules
+
+Para 5: Fix point semantics
+
+\section{Motivation}
+
+Why do we add these primitives?
+
+\section{Language}
+
+\subsection{Syntactic Extensions: Primitives}
+
+\subsubsection{Security}
+
+Para 1: 
+constraints: 
+- want to have primitive that is general enough to capture a wide variety of encryption algorithms
+- 
+general applicability. 
+common usage scenarios. 
+
+Para 2: Describing the language extension: says primitive what it means
+motivating the choice of such a primitive: Illustrate general applicability through table
+
+\subssubection{Compound Tuples}
+
+Para 1: constraints: relational paradigm (why other approaches dealing with embedded data, and flattened tuples were not taken?)
+
+Para 2: syntactic correspondance to objects
+
+Para 3: Types of links: strong and weak
+
+\subsection{Semantics}
+
+\subsubsection{Security}
+
+Para 1: How primitives are used on rhs? i.e. verification 
+
+Para 2: How proofs are generated? i.e. creation of proofs
+
+Lead to authentication algebra
+
+\subsubsection{Authentication Algebra}
+
+Para 1: partial ordering
+
+Para 2: combination strategies
+
+\subssubsection{Compound Tuples}
+
+Para 1: How is it extracted?
+
+Para 2: How is it manufactured? 
+
+Para 3: semantics difference between weak and strong links, says and non-says links
+
+\section{Implementation}
+
+Para 1: High level description: rewrite based: securelog->overlog conversion
+
+\subsection{Security}
+
+Para 1: describe the rewrite for simple tuples
+Para 2: preserving the privacy of keys etc (change in localizer)
+
+\subsection{Authentication Algebra}
+
+Para 1: decribe the rule that does the algebra
+
+\subsection{Compound tuples}
+
+Para 1: describe the rewrite for compound tuples
+
+Para 2: Implementation ideas based on fix-point semantics
+
+\subsection{Secure links}
+
+Para 1: extending integrity checks through merkle tree: other options also possible
+
+\subsection{Optimizations}
+
+Para 1: Describe the optimizations done: 
+- fluid flow of information, 
+- change of the underlying encryption algorithm with the tweak of certain parameters
+- use different encryption according to different environment
+
+\section{Sample Specifications}
+
+PBFT
+
+S-BGP
+
+SIA
+
+\section{Evaluation}
+
+\section{Future Work}
+
+- information flow control
+- automatic algebra

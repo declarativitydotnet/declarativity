@@ -1,0 +1,141 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1038\cocoasubrtf250
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww22920\viewh19820\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\ql\qnatural\pardirnatural
+
+\f0\fs24 \cf0 Review #192A\
+\
+Review:\
+\pard\pardeftab720\ql\qnatural
+\cf0 I did not understand why fig 6(b) - took longer than Fig 6(a). Given in 5,\
+the benefit of pipelining is approximately 30% reductions in execution \
+time - I was sort of expecting to see the same in Fig. 6. I am guessing \
+that for the online aggregation, using HDFS to store the partial outputs \
+from the reduce phase is hurting you? Are you replicating these partial \
+files 3 times? How frequently were you writing the partial results out? \'a0\
+\
+Response:\
+We added a sentence to the first paragraph of Section 4.1.2 that indicates\
+we do replicate the online aggregation result three times.\
+We also added a sentence to the last paragraph of Section 4.1.2 that attributes\
+the performance hit to online aggregation. \
+\
+Review:\
+In Section 4.1.2 what was the testbed used? Why did you use a smaller data\
+set and number of tasks compared to the previous section? This seems to \
+favor you?\
+\
+Response:\
+Reviewer's point is valid: we plan to address this by the forthcoming new\
+experiments for online aggregation.\
+\
+============================================================\
+\
+Review #192B\
+\
+Review:\
+The reviewer is concerned with the performance implications of pipelining\
+for the most part. \
+\
+Response:\
+We have downplayed our performance contribution in this work, focusing on\
+the added features. We also moved the performance section to the back of the\
+paper. At the same time, we have worked hard to improve the performance\
+study, narrowing our evaluation to simple flow control management in a\
+producer/consumer environment. \
+\
+============================================================\
+Review #192C\
+\
+Review:\
+It would seem that while pipelining might speed up jobs, it could also\
+increase the intra-data center traffic between the map nodes and the\
+reduce nodes, for instance, because of diminished opportunities for\
+map-side combining. This aspect is not evaluated in the paper.\
+\
+Response:\
+We tried to address this by adding more detail on our adaptive flow control\
+mechanism, which uses combiner functions more aggressively when they\
+prove to be effective for a given job. The reviewer is right that we have not\
+attempted an exhaustive analysis of the various tradeoffs between pipelining and\
+blocking; given space limits, we think that is a topic for future work.\
+\
+Review:\
+I don't quite understand how/why snapshot-based online aggregation is able\
+to produce the top-K results so much faster. Is it that the early snapshots\
+are somehow biased towards the top-K words (in the example in Sec 4.1.2).\
+Also, even if the top-K results somehow become available early in the\
+process, do we know these are the final results and will not change as new\
+snapshots become available?\
+\
+Response:\
+We added the following sentence to the last paragraph of (now) Section 4.2.1:\
+The Wikipedia data set was biased toward these Top-K words (e.g., the, is, etc.), \
+which remained in their correct position throughout the lifetime of the job.\
+\
+Review:\
+Sec 4.2: At one place, the papers says that the output of the reduce\
+function is not monotonic. In the next paragraph it seems to say the\
+opposite. I am confused.\
+\
+Response:\
+This was really a great catch, and in response we modified the second mentioning\
+of monotonic to:\
+Since subsequent snapshots produced by j1 are taken from a superset of the\
+mapper output in j1, the next snapshot received by the restarted reduce task in j2 \
+will have a higher progress score. \
+\
+\
+============================================================\
+Review #192D\
+\
+Review:\
+o In many cases, some of the benefits of the pipelined implementation\
+can be achieved by using smaller map task sizes (so that instead of a\
+64 MB map task, you have 8 separate 8 MB map tasks, and the output of\
+the first map task gets transferred to the reduce worker(s) while the\
+next map tasks run). \'a0It would be good to compare this\
+finer-granularity map task approach to your pipeline implementation.\
+\
+Response:\
+We added a new performance experiment that moved the block size from 512MB down \
+to 32MB. At this size, the map tasks executed very fast. The performance did indeed\
+improve but not beyond the pipelining configuration using either block size. When\
+we tried using an even smaller block size (e.g. 8MB), job completion times did not\
+improve.\
+\
+Review:\
+o A common alternative approach to getting on-line estimates would be\
+to just run the MapReduce over a random sample of the input data, as\
+well as over the full data. \'a0You might evaluate that approach as an\
+alternative.\
+\
+Response:\
+We have added a paragraph (the last) to section 7.2 that address this \
+approach.\
+\
+Review:\
+o You might discuss how the pipelining approach interacts with backup\
+map workers (or backup reduce workers, as well). \'a0It should be pretty\
+straightforward, but I didn't see it mentioned in the paper.\
+\
+Response:\
+Backup map and reduce workers can be handled cleanly. We are planning\
+to update the discussion of fault tolerance (Sec. 3.3), and we plan to add a\
+discussion of backup tasks at that point.\
+\
+============================================================\
+Review #192E\
+\
+Review:\
+Evaluation is quite lengthy, but has almost zero wow factor, and while\
+well-written, it just feels like going through the motions. \'a0Are there\
+principled observations and research contributions that the authors want\
+the reader to take away from this section?\
+\
+Review:\
+We changed the experimental section quite a bit from the submission. Our\
+improved online aggregation results should hopefully emphasis orders of\
+magnitude early returns. Our performance evaluation should emphasis the\
+benefits (and need for) an adaptive pipelining policy.}

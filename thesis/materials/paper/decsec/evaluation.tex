@@ -1,0 +1,65 @@
+\section{Evaluation}
+
+\subsection{Messaging cost and Pattern}
+\bi
+\item Run PBFT protocol (normal case) for 4 nodes
+\item observe the sequence of msgs and compare it with the seq of messages in castro's PBFT
+\item cost model for castro's PBFT?
+\item find out the number of messages sent and bandwidth consumed and compare it with the predicted b/w according to the cost model
+\ei
+
+\subsection{Compound Tuples}
+Benefits occur because of 2 reasons:
+
+Data is never fetched (Pre-fetching vs demand-fetching)
+\bi
+\item Consider low latency, low b-w environment
+\item show the savings because of a pull based export policy
+\item need an application that doesn't always use all the data (i.e. sends redundant information in packets) 
+\ei
+
+few sub-graphs, which are part of several different graphs, are fetched just once.
+\bi
+\item I suspect that this is more common in practice (because the former seems more like a protocol in-efficiency)
+\item Use PBFT viewchange protocol to illustrate the benefits
+\item Give the result as the fraction of b/w saved by using compound tuples
+\item to get significant pull-benefits, we need to link through a root, root tuples won't get the benefit. 
+\ei
+
+
+\subsection{Conciseness and intutiveness of the code}
+\bi
+\item show pseudo code and syslog code for PBFT and highlight the equivalence between the two
+\item illustrate, why in general syslog code is going to be concise and intuitive
+\bi
+\item says is the natural way to express requirements in protocols and systems
+\item compound tuple graphs simplify program specification by
+\item adding structure to the otherwise ``flat'' program
+\item eliminating to export the data: pre-fetching vs demand-fetching becomes performance/liveness issue rather than safety issue
+\item simple yet powerful semantics
+\ei
+\ei
+
+\subsection{Avoiding design errors}
+
+General scenario: pseudo-code proven correct and safe but a lot of errors are introduced while transforming from proved pseudo-code to its ``equivalent'' implementation.
+\bi 
+\item leads to design and programming errors
+\item syslog much more abstract and concise, hence easier to get right and {\em prove correct}
+\item Quiet often, designers don't realize what is the precise security property their system requires: reason security properties and other important design aspects deeply hidden in the implementation and hence likely to go wrong.
+\item syslog makes those assumptions explicit and highlights the key design aspects without cluttering them with unnecessary details
+\ei
+
+\subsection{Safety in incorrect transformations}
+\bi
+\item E.g. PKI to MAC transformations: intuitive thing might not be right. (e.g. a PKI signature may not be equivalent a set of pair-wise MACs). Thus, syslog maintains safety in such implementations. Construct a concrete example from PBFT
+
+\item Alternatively, in some cases, a naive transformation might do more work than necessary. For eg sending pairwise MACs to everyone even when it suffices to send it to a few node. 
+\item In such cases, it's great to be able to use a system that does minimal work while providing requisitie guarantees
+\item Not sure if using syslog helps in this case, as to get performance benefits, the designer needs to find out the 'precise' set of nodes that need a message and send the message to them. Syslog doesn't help in this case.
+\ei
+
+Any other interesting and do-able experiments?
+
+
+
