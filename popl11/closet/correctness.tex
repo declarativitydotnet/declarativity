@@ -1,0 +1,24 @@
+\section{Correctness properties}
+
+\subsection{Safety}
+
+we need merely to show the base case, in which an invariant is established (in fact, this should \emph{always} be a valid 
+initial state, or the safety property isn't guaranteed to always hold), the existence of an inductive rule that ensures that every 
+subsequent step maintains the invariant, and the absence of any rule that can break the induction by deducing a del\_* rule.
+
+\subsection{Liveness}
+
+We cannot state a liveness property as an assertion, because doing so would involve quantifying over time,
+and time is an infinite sequence.  Instead, we must prove liveness properties, expressed as temporal logic
+formulae, given the rules of the program and any given safety properties as axioms.
+
+In many cases it will be possible to show that attempts to achieve liveness properties will occur infinitely often, and that
+these attempts have a nonzero probability of success.  We'd like to do better than this and provide realistic guarantees...
+
+\subsubsection{Deadlock}
+
+
+
+\subsubsection{Livelock}
+
+\subsection{Examples}

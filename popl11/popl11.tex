@@ -1,0 +1,146 @@
+\documentclass{sig-alternate}
+
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{times}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{url}
+\usepackage{amsmath, amssymb}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+\usepackage{alltt}
+\usepackage{appendix}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+\pdfinfo{/Title (Dedalus: Datalog in Time and Space)}
+
+\usepackage{txfonts}
+\newcommand{\Tau}{\mathcal{T}}
+\newcommand{\SDedalus}{\mathcal{S}}
+\newcommand{\Consts}{\mathcal{C}}
+\newcommand{\Vars}{\mathcal{A}}
+%\newcommand{\pos}{\protect{$_{pos}$}}
+%\newcommand{\nega}{\protect{$_{neg}$}}
+% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
+\newcommand{\pos}{\_pos}
+\newcommand{\nega}{\_neg}
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+\newtheorem{example}{Example}
+\newdef{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{observation}{Observation}
+
+%\def\slang{synchronous Dedalus\xspace}
+\def\lang{\textsc{Dedalus}\xspace}
+\def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
+%\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
+\newcommand{\naive}      {na\"{\i}ve\xspace}
+\newcommand{\Naive}      {Na\"{\i}ve\xspace}
+%dedalus environment for code
+
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+
+
+\begin{document}
+
+\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+\title{{\huge{\bf\lang}}:
+Datalog in Time and Space} 
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+\numberofauthors{6}
+
+\author{
+%
+Peter Alvaro$^\ast$ \quad William R. Marczak$^\ast$ \quad Neil
+Conway$^\ast$  \\
+Joseph M. Hellerstein$^\ast$ \quad 
+David Maier$^\dagger$ \quad Russell Sears$^\ast$ 
+\\\\
+%
+\fontsize{10}{10}\selectfont\itshape 
+%\vspace{0.05in}
+$^\ast$University of California, Berkeley \quad $^\dagger$Portland State
+University\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
+%
+\{palvaro,wrm,nrc,hellerstein,sears\}@cs.berkeley.edu \quad maier@cs.pdx.edu
+%
+}
+
+\toappear{}
+
+\maketitle
+
+\begin{abstract} 
+%
+Recent research has explored using Datalog-based
+languages to express a distributed system as a set of logical
+invariants~\cite{boom-techr,loo-sigmod06}.  Two properties of distributed
+systems proved difficult to model in Datalog.  First, the state of any such system
+evolves with its execution.  Second, deductions in these systems may be
+arbitrarily delayed, dropped, or reordered by the unreliable network links
+they must traverse.  Previous efforts addressed the former by extending
+Datalog to include updates, key constraints, persistence and events, and
+the latter by assuming ordered and reliable delivery while ignoring delay.
+These details have a semantics outside Datalog, which increases the complexity of
+the language or its interpretation, and forces programmers to
+think operationally.  We argue that the missing component from these previous
+languages is a notion of {\em time}.
+
+In this paper we present {\bf \lang}, a
+foundation language for programming and reasoning about distributed systems.
+\lang reduces to a subset of Datalog~\cite{ullmanbook} with negation, aggregate
+functions, successor and choice, and admits an explicit representation of time into the
+logic language.  
+We show that \lang provides a declarative foundation for the two signature features of 
+distributed systems: mutable state, and asynchronous processing and communication.
+Given these two features, we address three important properties of programs in 
+a domain-specific manner: a notion of {\em safety} appropriate to non-terminating computations, 
+{\em stratified} monotonic reasoning with negation over time, and efficient evaluation
+over time via a simple execution strategy.  We also provide conservative syntactic checks
+for our temporal notions of safety and stratification.  Our experience implementing 
+full-featured systems in variants of Datalog suggests that \lang is well-suited to the specification of
+rich distributed services and protocols, and provides both cleaner semantics and richer tests of correctness.
+\end{abstract}
+
+\input{intro}
+\input{motivation}
+\input{foundation}
+
+\input{constructs}
+\input{safety}
+%%\input{proofs}
+\input{update}
+\input{async}
+\input{broadcast}
+\input{idempotence}
+\input{relwork}
+\input{future}
+\input{acks}
+\bibliographystyle{abbrv}
+\bibliography{popl,declarativity}
+
+%%\appendix
+\input{appendix}
+
+%%\input{attic}
+
+\end{document}
