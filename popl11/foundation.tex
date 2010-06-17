@@ -1,0 +1,253 @@
+\section{\large \bf \slang}
+\label{sec:slang}
+
+%%We take as our foundation an augmented version of
+%%Datalog$\lnot$~\cite{ullmanbook} with aggregate function symbols akin to those
+%%of SQL (min, max, avg, stdev, count).  Henceforth, we will refer to this
+%%language as ``Datalog.'' 
+We take as our foundation the language Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with negated subgoals.  We will be interested in the
+classes of statically stratifiable 
+%,locally stratifiable~\cite{prz} 
+and modularly stratifiable~\cite{modular} programs, which we revisit below.  For conciseness, when we refer to ``Datalog'' below our intent is to admit negation --- i.e., Datalog$\lnot$.  
+
+%%In the latter sections of the paper, we will also use
+%%the \dedalus{choice} construct~\cite{greedychoice, eventchoice} to model
+%%nondeterministic selection of an element from a set.  
+%%\jmh{save the next sentence for later.  stay pure here.}
+%%In \dedalus, we will use this construct to
+%%model both the nondeterminism of message delay, and the semantics of key
+%%maintenance in prior deductive update models like Overlog~\cite{boon}.
+
+%%\jmh{Can't we borrow this from somebody else rather than define it ourselves?  ``As in Ullman, et al [FOO] we represent...''}
+As a matter of notation, we refer to a countably infinite universe of constants
+$\Consts$---in which $C_{1}, C_{2}, \ldots$ are representations of individual
+constants---and a countably infinite universe of variable symbols $\Vars = A_1,
+A_2, \ldots$.
+%, and a distinguished variable $\Tau$.
+% which may take on the values of any constants.   
+We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended beyond the fact that \dedalus{successor(x,y)} is true iff $y = x + 1$.
+%We consider the
+%standard strict total order $<$. We define the \dedalus{successor} relation,
+%where \dedalus{successor(i,j)} means that \dedalus{j} is the least element that
+%is greater than \dedalus{i}.
+
+
+\subsection{Syntactic Restrictions}
+\label{sec:syntaxrestrictions}
+
+%%$p(A_{1}, A_{2}, [...], A_{n})@S$
+\slang is a restricted sublanguage of Datalog.  Specifically, we restrict the
+admissible schemata and the form of rules with the four constraints that follow.
+
+\noindent{\bf Schema: }We require that the final attribute of every \slang
+predicate range over the domain $\mathbb{Z}$.  In a typical
+interpretation, \slang programs will use this final attribute to connote a
+``timestamp,'' so we refer to this attribute as the \emph{time suffix} of the
+corresponding predicate.
+
+\noindent{\bf Time Suffix: }
+%$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
+%our restrictions concern the well-formedness of \dedalus rules.
+%\begin{definition}
+%
+%An \emph{extensional} predicate in a \slang program $P$ is a predicate that
+%does not appear in the head of any rule in $P$.
+%
+%\end{definition} \wrm{we really want an inclusion constraint not just in the
+%set of integers, but in the set of all possible times, in case time is
+%finite}.  \jmh{I disagree, actually.  EDB facts can be sprinkled throughout
+%time without restriction, and the rule syntax below provides the restrictions
+%you want.  you're hinting at the reduction stuff below, but we can rewrite to
+%that.}
+In a well-formed \slang rule, every subgoal uses the same existential variable 
+$\Tau$
+%%$T$
+as its time suffix.  A well-formed
+\slang rule must also have a time suffix 
+$\SDedalus$ 
+%%$S$ 
+as its rightmost head attribute, which must be
+constrained in exactly one of the following two ways:
+\begin{enumerate}
+%
+\item The rule is said to be \emph{deductive} if $\SDedalus$ is bound to the
+value $\Tau$; that is, the body contains the subgoal \dedalus{$\SDedalus$ = $\Tau$}.
+%
+\item The rule is said to be {\em inductive} if $\SDedalus$ is the successor of
+$\Tau$; that is, the body contains the subgoal \dedalus{successor($\Tau$, $\SDedalus$)}.
+%
+\end{enumerate}
+
+In Section~\ref{sec:async} when we consider \lang---a superset of \slang---we will
+introduce a third kind of rule to capture asynchrony.
+
+\begin{example}
+The following are examples of well-formed deductive and inductive rules, respectively.
+\\
+deductive:
+\begin{Dedalus}
+p(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), \(\SDedalus\) = \(\Tau\);
+\end{Dedalus}
+\\
+inductive:
+\begin{Dedalus}
+q(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), successor(\(\Tau\), \(\SDedalus\));
+\end{Dedalus}
+\end{example}
+
+\noindent{\bf Positive and Negative Predicates: }
+For every extensional predicate \dedalus{r} in a \slang program $P$, we add to
+$P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same schema
+as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
+
+\begin{dedalus}
+r\pos($A_1,A_2$,[...],$A_n$,\(\SDedalus\)) \(\leftarrow\)
+\end{dedalus}
+
+\hspace{5mm}
+\begin{dedalus}
+   r($A_1,A_2$,[...],$A_n$,\(\Tau\)), \(S\)=\(\Tau\);
+\end{dedalus}
+
+That is, for every extensional predicate \dedalus{r} there is an intensional
+predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
+Intuitively, this rule allows extensional facts to serve as ground for
+\dedalus{r\pos}, while enabling other rules to derive additional \dedalus{r\pos} facts.
+
+The predicate \dedalus{r\pos} may be referenced in the body or head of any \slang rule.  
+We will make use of the predicate \dedalus{r\nega} later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
+Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rules is unrestricted.
+
+\vspace{1.2em}
+\noindent{\bf Guarded EDB: }
+No well-formed \slang rule may involve any extensional predicate, except for a rule of the form above.
+%%\paa{need another sentence, but not sure what it should be...}
+
+
+%%\jmh{I hate this -- can we nail it here?}
+
+
+\subsection{Abbreviated Syntax and Temporal Interpretation}
+
+\label{sec:abbrvsyntax}
+
+We have been careful to define \slang as a subset of Datalog; this inclusion allows us to take advantage of Datalog's
+well-known semantics and the rich literature on the language.
+
+\slang programs are intended to capture 
+temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
+suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
+%%Deductive
+%%rules can be seen as {\em atemporal} statements: they range over all values of
+%%the time suffix, and express deductions that are ``always'' valid. 
+Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
+predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
+what is known at that instant.
+ Inductive %%and asynchronous 
+ rules are {\em temporal}---their consequents are defined to
+be true ``at a different time'' than their antecedents. 
+
+
+
+To simplify \slang notation for this typical interpretation, we
+introduce some syntactic ``sugar'' as follows:
+
+\begin{itemize}
+%
+%why do we need this one??  \item {\em Time-suffix notation:}  Each predicate's
+%time suffix  time-suffix attribute of each predicate is placed after the
+%predicate's right parenthesis, separated by the symbol `@'.   For example, the
+%predicate \\ $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots,
+%A_{n})@S$.
+%
+\item {\em Implicit time-suffixes in body predicates:} Since each body
+predicate of a well-formed rule has an existential variable $\Tau$ in its
+time suffix, we optionally omit the time suffix from each body predicate and treat
+it as implicit.
+%%\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
+%%it's restricted because it appears in multiple atoms.}
+%
+\item {\em Temporal head annotation:} Since the time suffix in a head predicate
+may be either equal to $\Tau$, or equal to $\Tau$'s successor, we omit the time
+suffix from the head---and its relevant constraints from the body---and
+instead attach an identifier to the head predicate of each temporal rules, to indicate the change in
+time suffix.  A temporal head predicate is of the form:
+
+\dedalus{r($A_1$,$A_2$,[...],$A_n$)@next}
+
+The identifier \dedalus{@next} stands in for \dedalus{successor($\Tau$,S)} in
+the body.
+
+\item {\em Timestamped facts:} For notational consistency, we write the time suffix of facts (which
+must be given as a constant) outside the predicate.  For example:
+
+\dedalus{r($A_1$,$A_2$,[...],$A_n$)@$\Consts$}
+
+%
+%\begin{enumerate}
+%
+%item \emph{next} implies the rule is inductive, and stands in for
+%\linebreak\dedalus{successor($\Tau$,S)} in the body.
+%
+%\item \emph{async(N)} implies the rule is asynchronous, and stands in for
+%\dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,
+%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+%optionally referenced in the head.  \wrm{this seems ugly to me}
+%
+%\end{enumerate}
+%
+\end{itemize}
+
+%\wrm{the before stuff might be a bit to verbose and repetitive.}
+
+\begin{example}
+%%Sugared deductive and inductive rules.
+The following are ``sugared" versions of deductive and inductive rules from Example 1, and a temporal fact:
+\\
+deductive:
+\begin{Dedalus}
+p(A, B) \(\leftarrow\) e(A, B);
+\end{Dedalus}
+inductive:
+\begin{Dedalus}
+q(A, B)@next \(\leftarrow\) e(A, B);
+\end{Dedalus}
+fact:
+\begin{Dedalus}
+e(1, 2)@10;
+\end{Dedalus}
+
+%%asynchronous
+%%r(A, B)@async \(\leftarrow\) \wrm{inconsistency.  are we doing async(N)?}
+%%  e(A, B);
+\end{example}
+
+
+% \jmh{the following is redundant and can be omitted}
+% \lang facts are just datalog facts that conform to the schema constraint:  rule heads with empty bodies, and ground terms for all attributes including the time suffix.  To accommodate this in our notation,
+% we allow a fourth suffix for the special case of empty bodies: a constant integer.  A \lang fact thus has the form:
+% 
+% $r(C_1, C_2, [...], C_n)@CI$
+% 
+% where $CI$ is an integer constant.
+
+
+%Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
+%we have a uniquely defined pair of IDB predicates $r\pos$ and $r\nega$.  In a \lang program, we use $r$ as shorthand for $r\pos$ 
+
+%(recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\nega$.
+%%A deductive rule as defined above will hold for any assignment of a constant integer to the $N$-value in the suffix of each predicate.
+
+%%\subsection{Events}
+
+%%\newdef{definition}{Definition} 
+%%\begin{definition}
+%
+%%An \emph{event} in \lang is an EDB fact.
+%
+%%\end{definition}
+
+%%\jmh{Isn't the following simply a restatement of Datalog's use of EDB?}
+%%Since an extensional relation may not appear in a rule's head, events come from
+%%sources external to the evaluation of the \lang instance.
+

@@ -1,0 +1,59 @@
+\section{Related Work}
+
+\subsection{Updateable State}
+
+Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
+assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} retain a purely logical 
+interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
+across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
+First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
+Partly as a result of this, we are able to enforce stricter constraints on the allowable time suffixes in rules: a program may only specify what deductions are visible
+in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu et al.  Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges.''
+
+U-Datalog~\cite{udatalog-neg} addresses updates using syntax annotations that establish different interpretations for the set of updated 
+relations and the IDB, interpreting update atoms as constraints and using constraint logic programming techniques to test for inconsistent
+derivations.  Similarly, Timed Concurrent Constraint Programming (TCCP)~\cite{tdccp,tccp} handles nonmonotonic constructs in a CLP framework
+by outputting a new (possibly diminished) store and constraint program at each timestep.  
+
+Our temporal approach to representing state change most closely resembles the
+Statelog language~\cite{statelog}.  We were unaware of the Statelog work when formalizing the 
+notions of persistence via induction and temporal stratification, and were surprised
+(and encouraged) to observe very similar ideas in Statelog.  By contrast, our motivation is
+the logical specification and implementation of distributed systems, and our 
+principal contribution is the use of time to model both local state change and communication
+over unreliable networks.
+
+Lamport's TLA+~\cite{tla} is a language for specifying 
+concurrent systems in terms of constraints over valuations of state, and temporal logic that describes admissible transitions.  
+%%The notion of 
+%%\emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering'' is similar to our declarative definition 
+%%of table persistence.  
+Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (next and later), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
+
+\subsection{Distributed Systems}
+
+Significant recent work (\cite{boom-techr,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
+primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
+a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
+%%Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of %%fixpoints} interpretation.  All rules are expressed as 
+%%straightforward Datalog, and evaluation proceeds in three phases:
+%%\begin{enumerate}
+%%\item Input from the external world, including network messages, clock interrupts and host %%language calls, is collected.
+%%\item Time is frozen, the union of the local store and the batch of events is taken as EDB, and %%the program is run to fixpoint.
+%%\item The deductions that cause side effects (e.g., updates, messages and host language %%callbacks) are dealt with.  
+%%\end{enumerate}
+Existing distributed deductive languages like NDlog and Overlog adopt the \emph{chain of fixpoints} interpretation discussed in Section~\ref{sec:dsll}.
+
+%%\jmh{You're sidestepping Delete an key update.}\rcs{think I fixed it in item 3}
+Unfortunately, the language descriptions of systems following this ``observe, think, act'' model
+give no careful specification of how and when deletions and updates
+should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
+monotonicity properties (i.e., programs without negation or fact deletion)
+are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
+\emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
+Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
+\emph{event creation vs.\ effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
+the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao2009}.
+
+
+%%%Further background: \cite{constructivism,prz,tdccp,tccp}

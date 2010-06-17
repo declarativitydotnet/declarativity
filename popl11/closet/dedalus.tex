@@ -1,0 +1,343 @@
+\section{Dedalus}
+
+By reifying time as data in Dedalus, we can naturally express several important
+language concepts, such as persistence, key constraints, and atomicity.
+%Persistence is existence over time, key constraints are unique existence over
+%time, atomicity is multiple deductions occuring at the same time.
+
+Perhaps more importantly, 
+%the infinite sequence of abstract
+time gives us a way to reason about ordering, which is particularly difficult
+in a set-oriented language like Datalog.  For example, the ordering over any
+program inputs (e.g. message queues) can be represented as a mapping between
+the ordering domain of the input and the time relation.
+
+We consider a countably infinite Herbrand universe of constants $C = \{ C_{1},
+C_{2}, ... \}$, and a countably infinite universe of variable symbols $A$ which
+may take on the values of any constants.  \wrm{is this somehow different from
+regular Datalog?} 
+%
+We represent time in Dedalus by the union of set of integers $\mathbb{Z}$, with
+a special element $\infty$ that represents ``never''.  We consider the standard
+strict total order $<$, with the additional rule that $\forall i \in
+\mathbb{Z}: i < \infty$.  We call this order \dedalus{successor}.
+
+\subsection{Syntax}
+
+A Dedalus program is a Datalog program in which every predicate is annotated with a time suffix.  A Dedalus predicate has the following form:
+
+$p(A_{1}, A_{2}, [...], A_{n})@S$
+
+The predicate p() is a truth-valued function over its arguments $A_{1} - A_{n}$, which may be of any type, and S, which is an integer expression 
+referring to the logical clock time at which the predicate holds, taking one of the following four suffix forms:
+
+\begin{enumerate}
+\item $N$
+\item $N + 1$
+\item $r(N, A_{1}, A_{2}, [...], A_{n})$
+\item an integer
+\end{enumerate}
+
+The subset of body variables that appear in the head atom, as well as the time,
+comprise the arguments to $r$.  Facts and rules in Dedalus are 
+defined just as in Datalog, with the additional restrictions:
+
+\begin{itemize}
+\item Every body predicate may only have the suffix $N$.
+\item A head predicate may have any suffix except a constant integer.
+\item A fact must be posited at a constant time.
+\end{itemize}
+
+Rules with the head suffix $N$ are called \emph{deductive} or atemporal rules,
+and describe all the logical consequences of facts in a given timestep.  The
+set of deductive rules in a given timestep $T$ may be interpreted as a pure
+Datalog program, by ignoring the suffixes, and treating all facts that are true
+at $T$ as the Datalog EDB.
+
+Rules with the head suffix $N + 1$ are called \emph{inductive} temporal rules,
+and describe invariants across a timestep (the relationship between facts in
+the current timestep and their consequences in the immediate next timestep).
+Inductive rules allow us to atomically capture change in time, and to model
+persistent state.
+
+Rules with the head suffix $r(\_)$ are also temporal rules, but unlike
+inductive rules, they carry no guarantee as to in which timestep their
+consequences will be visible~\footnote{In fact, a fact derived in such a rule
+may be visible at a timestep previous to its antecedents.} Such rules, called
+{\em message rules}, allow us to model the delay associated with network
+messages between nodes: the nodes are likely to have different clock values,
+and messages may be lost or delayed arbitrarily in transit.
+
+
+\subsubsection{Events}
+
+Previous distributed variants of Datalog introduced {\em events}, intuitively
+facts that are instantaneously true.  Because these languages have no explicit
+language-level notion of time, reasoning about events requires a programmer to
+think operationally in terms of the evaluation of the language.  In Dedalus,
+an event corresponds to a Datalog fact.  It is a bodyless head clause with all 
+constant terms in the form
+
+
+$p(C_{1},C_{2},[...],C_{n})@I;$
+
+
+where the elements of C are constants of any type and I is an integer constant.
+
+Events provide ground for any logical inferences given by the deductive rules of the program, and may provide ground for inferences at 
+future time steps via inductive rules.
+
+\subsubsection{Persistence}
+
+Events are only true at a single timestep.  It might seem that we could express a persistent predicate as a Datalog fact with a free variable 
+for the time suffix.  The tuple would then be universally quantified over time:
+
+\begin{Dedalus}
+p(a, b)@N;
+\end{Dedalus}
+
+But clearly, because this must be interpreted as a rule head with an unbound variable, it produces an unsafe rule.  Instead, persistence is
+expressed by an inductive rule that projects a tuple into the next timestep:
+
+\begin{Dedalus}
+p(a, b)@N+1 \(\leftarrow\)
+  p(a, b)@N, 
+  \(\lnot\) del\_p(a, b)@N;
+\end{Dedalus}
+
+This rule, in turn, may be viewed as informally equivalent to a rule in which the inductive step is driven by an 
+explicit successor relation, and in which the time suffixes are attributes of their respective predicates:
+
+\begin{Dedalus}
+p(a, b, S) \(\leftarrow\)
+  p(a, b, N),
+  successor(N, S), 
+  \(\lnot\) del\_p(a, b, N);
+\end{Dedalus}
+
+The final negated subgoal \emph{del\_p} allows us to model overwriteable storage: without it, a tuple will be trivially true at every future timestep if it becomes true
+at any timestep.  Instead, the \emph{del\_p} event, true only at a single timestep, breaks the induction.
+
+Consider the following {\em trace} of events:
+
+\begin{Dedalus}
+p(1,2)@101;
+p(1,3)@102;
+p(1,?)@200;
+del_p(1,2)@300;
+p(1,?)@301;
+\end{Dedalus}
+
+It is easy to see that the results of the two queries are:
+
+
+\begin{Dedalus}
+p(1,2)@200;
+p(1,3)@200;
+p(1,3)@301;
+\end{Dedalus}
+
+\subsubsection{Traces}
+
+\newdef{definition}{Definition}
+\begin{definition}
+A \emph{trace} is a set of events.
+\end{definition}
+
+In the trace above, we omitted as uninteresting those events that were implied by the 
+inductive rules show above, such as:
+
+\begin{Dedalus}
+p(1,2)@200;
+p(1,3)@200;
+p(1,2)@201;
+p(1,3)@201;
+p(1,2)@202;
+p(1,3)@202;
+[...]
+\end{Dedalus}
+
+
+
+\begin{definition}
+A \emph{minimal trace} is a subset of a trace that excludes any events caused by inductive rules.
+\end{definition}
+
+\begin{definition}
+A \emph{reduced trace} is a projection of a minimal trace in which all event times are transformed
+to a normal form in which the trace starts with event time 1, respects the ordering of the original trace, as leaves no gaps in the sequence.
+\end{definition}
+
+A finite trace has only one reduced trace, but an infinite number of infinite traces have the same reduced trace: the reduced trace thus forms an 
+equivalence class among traces.  Not all reduced traces are finite.  The reduced trace of the trace instance given above is:
+
+\begin{Dedalus}
+p(1,2)@1;
+p(1,3)@2;
+p(1,?)@3;
+del_p(1,2)@4;
+p(1,?)5;
+\end{Dedalus}
+
+
+\paa{notes:}
+
+Some other things that we may want to say about traces (although probably not here) are:
+\begin{enumerate}
+\item a reduced trace represents a \emph{disentanglement} of a series of events and the local clock that existed in the original trace.
+\item we'd expect minimal traces of asynchronous systems to be fairly simple, and we'd expect to frequently find equivalences.
+The complexity added by physical clocks -- which are external events like messages -- is illustrated by the complexity of traces including
+clock events.  it is easy to show that we \emph{must} include clock events in a trace, because without them explicitly in the input data, two
+replays of the trace may have different results.  consider two machines running the trace, one with a slow clock.  it fires a timeout that 
+doesn't fire on the other machine, given the same input.
+\item if a particular property holds of a given trace, can we say that it holds of its minimal and reduced traces?
+\item 
+
+\end{enumerate}
+
+
+\subsubsection{State Change}
+
+In Dedalus, a database update is an atomic (due to the adjacent timestamps)
+pair of events with a deletion of the old value and assertion of the new, in
+the form:
+
+$p(C_{1},C_{2},[...],C_{n})@I+1;$
+\\
+$del\_p(C_{1},C_{2},[...],C_{n})@I;$
+
+For example:
+
+\begin{Dedalus}
+del\_p(1,2)@300; 
+p(1, 4)@301;
+\end{Dedalus}
+
+More generally, an update can be described by a pair of rules that, in effect,
+describe an invariant that holds between values in two adjacent timesteps.
+For example, an update to the second column of the predicate \dedalus{p} is
+expressed as:
+
+\begin{Dedalus}
+p(A, B)@N+1 \(\leftarrow\)
+  update_p(A, B)@N;
+  p(A, _)@N;
+  
+del_p(A, C)@N \(\leftarrow\)
+  p(A, C)@N,
+  update_p(A, _)@N;
+  
+\end{Dedalus}
+
+\subsubsection{Sequences}
+
+Database sequences, objects that retain and increment a counter value, can be
+represented with a pair of inductive rules.  One increments the current counter value when the
+trigger event is true, while the other persists the current value of the sequence only when the event is 
+not true.
+
+\begin{Dedalus}
+seq(Agent, S + 1)@N+1 \(\leftarrow\)
+  seq(Agent, S)@N, 
+  event(Agent)@N; 
+  
+seq(Agent, S)@N+1 \(\leftarrow\) 
+  seq(Agent, S)@N, 
+  \(\lnot\) event(Agent)@N;
+\end{Dedalus}
+
+\subsubsection{Queues}
+%%any tuple sent via a message rule is not sent to the indicated head p but to the builtin (as del\_p)
+%%m\_p.  
+
+\paa{it is here (at the m\_p relation) that is is assigned a timestamp which is consistent with r() at the sender, but which
+is really "now" (how do we talk about this, having banished now?)}
+
+Consider a relation that contains input from the external world, e.g. messages or tuple insertions from the host language.  
+Having defined persistence as induction over time, we can define \emph{external} inputs as any sources of tuples 
+that are not produced by an inductive rule.  This corresponds precisely to the concept of minimal traces that we have already
+defined.
+
+It will often be necessary to interpose some queueing discipline between an external table as defined above and any
+rules that read from them.  For instance, if the tuples represent non-idempotent commands, it may be necessary to dequeue
+the tuples in some data-dependent order, and to run the program to fixpoint before considering new tuples.  Consider a binary
+predicate \emph{balance\_update} that contains updates to a bank account and an integer indicating the order in which they
+should be executed.  If deductive rules are directly associated with \emph{balance\_update}, we must ensure at minimum that
+the rules cleanly handle cases is which multiple events occur in a single fixpoint.  Instead, we can ensure ordered delivery 
+of tuples to a program via a subprogram that defines a queueing discipline.
+
+In the program below, we define a table \emph{m\_p} that we use as a queue to feed \emph{p}.  The queue must persist across
+timesteps because it may take an unknown number of timesteps to drain it.  At each fixpoint, for each value of \textbf{A}, a single
+tuple is projected into \emph{p} and atomically deleted from \emph{m\_p}, changing the value of the aggregate calculated at the
+subsequent step:
+
+
+\begin{Dedalus}
+m\_p(A, B)@N+1 \(\leftarrow\)
+  m\_p(A, B)@N,
+  notin del\_m\_p(A, B)@N;
+
+omin(A, min<B>)@N \(\leftarrow\)
+  m\_p(A, B)@N;
+
+p(A, B)@N+1 \(\leftarrow\)
+  m\_p(A, B)@N,
+  omin(A, B)@N;
+
+del\_m\_p(A, B)@N \(\leftarrow\)
+  m\_p(A, B)@N,
+  omin(A, B)@N;
+\end{Dedalus}
+
+Under such a discipline, deductive rules that are predicated on \emph{p} are constrained to consider only one tuple per fixpoint
+per value of the variable \textbf{A}.  For example, if \textbf{A} contains the source address of a message and \textbf{B} is the ordering
+domain of messages for a given host, this code fragment
+expresses a per-host FIFO discipline.  To enforce a global FIFO ordering over \emph{p}, we may redefine \emph{omin} and any 
+dependent rules to exclude the \textbf{A} atttribute.
+
+As this example demonstrates, queues are not a language feature or a detail of the runtime system, but are themselves Dedalus programs
+characterized by programmatic interaction with time.
+
+
+\paa{there is still an operational element here: the assignment of the timestamps as tuples are inserted.  this is basically the 
+evaluation of the r() function.}
+
+\subsubsection{Lamport Clocks}
+
+Implementing a Lamport Clock~\cite{timeclocks} is a special case of a queueing discipline as defined above.
+Consider a predicate{m\_p} as defined above, but with an extra integer attribute that contains the logical transmission
+time of the sender (via a message rule) of a given tuple.  For example, the sender's rule will look like: 
+
+\begin{Dedalus}
+m\_p(A, B, N)@r(A, B, N) \(\leftarrow\)
+  send\_p(A, B)@N;
+\end{Dedalus}
+
+Note that the time suffix is projected into the last attribute of \emph{m\_p}.  This establishes an \emph{entanglement} between
+the sender's local clock and the program dataflow.  The queueing discipline that implements a
+Lamport clock is then:
+
+\begin{Dedalus}
+
+m\_p(A, B, C)@N+1 \(\leftarrow\)
+  m\_p(A, B, C)@N,
+  \(\lnot\) del\_m\_p(A, B, C)@N;
+
+omin(A, min<C>)@N \(\leftarrow\)
+  m\_p(A, B, C)@N;
+
+lmin(min<C>)@N \(\leftarrow\)
+  m\_p(_, _, C);
+
+p(A, B, C)@N+1 :-
+  m\_p(A, B, C)@N,
+  omin(B)@N,
+  lmax(L)@N,
+  N > L;
+
+del\_m\_p(A, B)@N :-
+  m\_p(A, B)@N,
+  omax(B)@N;
+  
+\end{Dedalus}
+

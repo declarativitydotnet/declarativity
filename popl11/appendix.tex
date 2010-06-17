@@ -1,0 +1,119 @@
+\appendix
+
+
+\subsection{Proof of Lemma~\ref{lemma:temp-strat-uniq}}
+
+\begin{proof}
+%
+{\bf Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
+deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
+thus it has a unique minimal model.
+
+{\bf Case 2:} $P$ consists of both deductive and inductive rules.  Assume that
+$P$ does not have a unique minimal model.  This implies that $P$ is not
+syntactically stratifiable.  Thus, there must exist some cycle through at least
+one predicate $q$ involving negation.
+%%or aggregation.  
+Furthermore, this cycle must involve an inductive rule, as $P$ is temporally
+stratified.
+
+Since the time suffix in the head of an inductive rule is strictly greater than
+the time suffix of its body, no atom may depend negatively on itself---it may
+only depend negatively on atoms in the previous timestep.  Thus, $P'$ is
+modularly stratified over time, using the definition of modular stratification
+according to Ross et al.~\cite{modular}.  This guarantees a unique minimal model
+achievable via standard bottom-up fixpoint execution.
+%
+%does not have a unique minimal model.  This implies that $P$ is not
+%syntactically stratifiable, thus there must exist some cycle through at least
+%one predicate $q$ involving a negation or aggregation edge in $P$'s predicate
+%dependency graph, and furthermore this cycle must include at least one
+%inductive rule.  Since an inductive rule has a time suffix $S := N+1$, where
+%$N$ is the timestamp of its body, and $P$'s deductive reduction is
+%syntactically stratifiable, we know that the aggregate or negation of $q$ must
+%always occur in a strictly earlier or later timestamp than that of the
+%positive $q$ atom.  Since the timestep in the cycle increases monotonically
+%with each iteration, $q$ will never, in practice, depend on a negation or
+%aggregate of itself.  Thus, $P$ is locally stratifiable, and by Lemma XXX
+%above, $P$ has a unique minimal model.  This contradicts our assumption that
+%$P$ does not have a unique minimal model.  Thus, $P$ has a unique minimal
+%model.
+%
+\end{proof}
+
+\section{Proof of Observation 1}
+
+\begin{proof}
+%%%\wrm{sightly ???}
+A \slang program admits only instantaneous and inductive rules, which derive
+new tuples at the same time as their ground tuples, or in the immediate next
+timestep.  Thus, the set of tuples true at time $T$ is completely determined by
+any tuples true at time $T-1$, and any EDB facts true at time $T$.  Observe
+that the integer value of the timestep does not influence the derivation.
+
+If the instance is quiescent at $T$, then given ${\bf A}$, the set of atoms
+with timestamp $T-1$, and the EDB at $T$, the program entails ${\bf
+A}$ at timestamp $T$.  Thus in the absence of EDB facts at $T+1$, it entails
+${\bf A}$ at $T+1$.
+%
+\end{proof}
+
+
+
+\section{Proof of Lemma~\ref{lemma:temp-safety}}
+
+
+
+
+
+\begin{proof}
+%
+Assume the program is temporally unsafe.  That is, there exists no time $T$
+such that $\forall U >= T$, the set of all atoms with timestamp $U$ is
+equivalent modulo time to the set of all atoms with timestamp $T-1$.  Let $E$
+be the maximum timestamp of any fact in the EDB.
+
+Observe that every rule $r$ of kind 3 may only entail a finite number
+of facts---as the EDB is finite---and thus may entail no facts at a
+timestamp greater than some maximum timestamp $V_r <= E+1 \in
+\mathbb{Z}$.  Since a \slang program has a finite set of rules we know
+$\exists V \in \mathbb{Z} : \forall r: V >= V_r$, and thus $V <= E+1$.
+
+We now consider times $T$ such that $T > E+1$.  By the above argument, no rules
+of kind 3 entail any facts with a timestamp greater than $E+1$.  Recall that
+no EDB atoms are true at any timestamp greater than $E$.  Thus, any facts with
+timestamp greater than $E+1$ are entailed by rules of kind 1 or 2.
+
+Consider the set of equivalence classes modulo time of all possible atoms, {\bf
+A}, given the Herbrand universe.  We know {\bf A} is finite, as the Herbrand
+Universe is finite.  Therefore, if the program is temporally unsafe, then {\bf B}, the
+set of atoms entailed by the program, both contains and excludes
+infinitely many members of at least one equivalence class in {\bf A} (i.e.,
+something ``infinitely oscillates in time'' between being true and false).
+Since the program has finitely many rules, at least one rule must entail
+infinitely many atoms (from at least one of the equivalence classes from {\bf
+A}). Thus, it is easy to see that there must be a cycle that contains some predicate $P$ and $\lnot P$.
+
+We show there exists such a cycle containing only rules of kind 1, which
+implies that the program is temporally unstratifiable.  In order for such a
+cycle to exist, $P$ must transitively depend on $\lnot P$, and $\lnot P$ must
+transitively depend on $P$.  Thus, the program contains a rule $J_1$ with
+$\lnot P$ in its body, and some predicate $R$ in its head, as well as a rule
+$J_2$ that is transitively dependent on $R$, with $P$ in its head.
+
+{\bf Case 1: }$P \neq R$.  In this case, $J_1$ must be of kind 1, as for any $Q
+\neq P$, a rule of kind 2 with $P$ in the head may not directly entail $Q$
+given $P$.  $J_2$ must also be of kind 1---if it is of kind 2, then it
+necessarily contains $P$ in its body, so it cannot entail $P$ unless $P$ is
+entailed by some other rule.  If $J_2$ contains $R$ in its body, then the
+program is syntactically unstratifiable.  But if $J_2$ does not contain $R$ in
+its body, then it contains some predicate $S$ transitively entailed by $R$;
+wlog the body contains $R$.  Thus, the program is syntactically unstratifiable.
+
+{\bf Case 2: }$P = R$.  In this case, $J_1$ and $J_2$ are the same rule: $P
+\leftarrow \lnot P$.  Thus, the program is syntactically unstratifiable.
+
+Thus, the program is temporally unstratifiable, which contradicts our
+assumption.
+%
+\end{proof}

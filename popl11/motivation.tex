@@ -1,0 +1,122 @@
+\section{Motivation}
+
+\subsection{Distributed Systems and Logic Languages}
+\label{sec:dsll}
+
+%%distributed logic languages are promising.  succinct executable specifications... programming %%with invariants... static checks... AOP...
+
+Distributed logic languages promise to significantly raise the level of abstraction
+at which distributed systems are currently implemented, allowing programmers to
+specify systems as a set of invariants over local state, and rules that describe how state changes and moves across a network.  This approach leads to succinct, executable specifications 
+whose faithfulness to the original pseudocode may be visually verified.  Moreover, the 
+first-order logic foundations of such languages, in which programs
+are expressed as a collection of logical implications, lends itself (at least in principle) to 
+powerful formal verification techniques~\cite{wang, wang2} and assertional
+reasoning~\cite{boom-techr}.  
+
+Although the original work in declarative networking was aimed at routing protocols for which soft state, best-effort messaging and eventually consistent semantics are acceptable, it wasn't
+long before researchers began attempting to exploit distributed logic languages to implement
+nontrivial systems that enforce distributed invariants~\cite{p2} or enforce transactional consistency or global ordering~\cite{netdb}.  In order to achieve atomic semantics with regard
+to side-effecting operations like disk writes and messages, the fully pipelined operation of P2
+was replaced with a \emph{chain of fixpoints} semantics.  All rules are expressed as 
+straightforward Datalog, and evaluation proceeds in three phases:
+
+\begin{enumerate}
+\item Input from the external world, including network messages, clock interrupts and host language calls, is collected.
+\item Time is frozen, the union of the local store and the batch of events is taken as EDB, and the program is run to fixpoint.
+\item The deductions that cause side effects (e.g., updates, messages and host language callbacks) are dealt with.  
+\end{enumerate}
+
+This ``framing'' of atomic deduction with imperative constructs exposes more clearly the 
+semantic distinction between the two extremes of \emph{events}, ephemeral tuples that 
+hold for exactly one timestep or fixpoint computation, \emph{hard state} or tuples that 
+persist in relations across timesteps, and the semantically ambiguous family of tuple types
+that exist between the two extremes. 
+
+Consider a distributed system in which participants announce their presence with 
+\emph{heartbeat} messages; participants that want to reason about who is present must
+remember the message content and the time of its arrival.  It is natural to represent the messages 
+themselves as events, and the log of messages and timestamps as a persistent table:
+
+\begin{Dedalus}
+heartbeat\_cache(@Host, Peer, Time) \(\leftarrow\) 
+  heartbeat(@Host, Peer), local\_time(Time);
+\end{Dedalus}
+
+ Although the Overlog language permits the transparent
+intermixing of the table types, their interaction is often unintuitive, and compromises the
+reading of rules as logical implications.  The state of the system after the arrival of some
+number of \emph{heartbeat} events is clearly not a minimal model of the given input database,
+which does not contain the events that (for one moment) caused the derivation of 
+\emph{heartbeat\_cache} tuples.
+
+
+%%Programming distributed systems requires many primitives that don't neatly fit into an
+%%LP paradigm.  One of the most insidious (and among the first to surface) is the notion of 
+%%different semantics associated with different types of relations: \emph{events} or ephemeral 
+%%tables on the one extreme, and persistent or \emph{hard state} tables on the other.  
+
+
+\subsection{Distributed Idioms}
+
+Despite their problematic logical interpretation, events and hard state tables are desirable 
+primitives for implementing distributed systems.  Network messages and timers are naturally represented as ephemeral tuples that are only instantaneously true, but which may be joined 
+with persistent state to deduce new tuples.  A notion of events makes it straightforward to
+represent many useful distributed programming idioms, including counters or \emph{sequences} and \emph{queues}, and the interaction of events and hard state allow the simulation of ``soft state'' useful for best-effort caching in network protocols and heartbeat messages in distributed systems.  For example,  an Overlog sequence might be specified in the following fashion:
+
+\begin{Dedalus}
+seq(To, X+1) \(\leftarrow\) 
+  seq(To, X), ping(To, From);
+\end{Dedalus}
+
+The structure and intent of the rule above are fairly obvious: when a \emph{ping} event
+occurs, the current value X of the sequence\emph{seq} should be incremented.  Upon
+closer inspection, however, we see that the rule has an unambiguous meaning only under
+an operational interpretation of the system's semantics: precisely because \emph{ping}
+is ephemeral, we know that the arrival of a \emph{ping} tuple will ``trigger'' the rule, and 
+the insertion of the new sequence value will not retrigger it, causing an infinite chain of
+deductions.  The queue pattern, which enables ordered processing of a set, is slightly 
+more complicated:
+
+\begin{Dedalus}
+r1
+min\_elmt(O) \(\leftarrow\)
+  queue(O, _);
+r2
+deq(Host, X) \(\leftarrow\) 
+  queue(O, X), min\_elmt(O), 
+  deq\_request(Host);
+r3
+delete queue(O, X) \(\leftarrow\) 
+  queue(O, X), min\_elmt(O), 
+  deq\_request(\_);
+\end{Dedalus}
+
+Again, the semantics are clear only because of the ephemerality of \emph{deq\_request}, and because it is either true or false -- either an item is atomically dequeued and deleted, or neither thing happens.  As in the sequence example, the operational interpretation of events as
+triggers is necessary to ensure that the rules do not represent a circular definition: the event 
+always drives the \emph{r2's} evaluation, and hence the result of \emph{r3's} evaluation 
+(a new min\_elmt tuple) does not cause another evaluation of \emph{r2}.  In order to 
+implement a construct that is ubiquitous in other languages, we found that we had to 
+forfeit the logical reading of rules.  It is no longer 
+the case that if the premises hold the conclusions must hold: instead, the above examples
+must be read as ECA (event, condition, action) rules, and their conclusions after the event's 
+disappearance (e.g., the value of the sequence or the contents of the queue at any arbitrary 
+point in time) are essentially groundless facts.
+
+\paa{notes}
+
+all three are well-intentioned examples, but the logical readings of all three are hopeless and the semantics are implementation-dependent.
+
+%%although you could (transparently) intermix the types, their interaction wasn't always intuitive %%and their semantics were strictly operational in a majority of cases.
+
+  in P2, event relations are implemented as queues, and as such enforced a discipline that 1.) the queue must be the driving or 'delta' relation in any join plan, and 2.) zero or or one tuple are dequeued from the event at a given fixpoint.  in JOL, this was relaxed and events, while true for only one fixpoint, are dequeued in batches, causing bugs in many P2 ports that relied on (2).  the semantic ambiguities persisted, however.
+
+finally, asynchrony.  in the global program we imagine that there is a rule:
+
+\begin{Dedalus}
+heartbeat(@Host, Peer, Time) \(\leftarrow\) master(@Peer, Host), timer(@Peer);
+\end{Dedalus}
+
+but clearly we cannot read this as logical implication or conclude anything wrt the timing of its arrival at Host.
+
+
