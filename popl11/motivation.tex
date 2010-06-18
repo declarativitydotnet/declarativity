@@ -62,7 +62,7 @@ which does not contain the events that (for one moment) caused the derivation of
 Despite their problematic logical interpretation, events and hard state tables are desirable 
 primitives for implementing distributed systems.  Network messages and timers are naturally represented as ephemeral tuples that are only instantaneously true, but which may be joined 
 with persistent state to deduce new tuples.  A notion of events makes it straightforward to
-represent many useful distributed programming idioms, including counters or \emph{sequences} and \emph{queues}, and the interaction of events and hard state allow the simulation of ``soft state'' useful for best-effort caching in network protocols and heartbeat messages in distributed systems.  For example,  an Overlog sequence might be specified in the following fashion:
+represent many useful distributed programming idioms, including counters or \emph{sequences} and \emph{queues}~\cite{netdb}, and the interaction of events and hard state allow the simulation of ``soft state'' useful for best-effort caching in network protocols and heartbeat messages in distributed systems~\cite{boom-techr}.  For example,  an Overlog sequence might be specified in the following fashion:
 
 \begin{Dedalus}
 seq(To, X+1) \(\leftarrow\) 
@@ -104,10 +104,6 @@ disappearance (e.g., the value of the sequence or the contents of the queue at a
 point in time) are essentially groundless facts.
 
 \paa{notes}
-
-all three are well-intentioned examples, but the logical readings of all three are hopeless and the semantics are implementation-dependent.
-
-%%although you could (transparently) intermix the types, their interaction wasn't always intuitive %%and their semantics were strictly operational in a majority of cases.
 
   in P2, event relations are implemented as queues, and as such enforced a discipline that 1.) the queue must be the driving or 'delta' relation in any join plan, and 2.) zero or or one tuple are dequeued from the event at a given fixpoint.  in JOL, this was relaxed and events, while true for only one fixpoint, are dequeued in batches, causing bugs in many P2 ports that relied on (2).  the semantic ambiguities persisted, however.
 
