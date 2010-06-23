@@ -1,4 +1,0 @@
-latex design
-latex design
-dvips -o design.ps design.dvi
-
