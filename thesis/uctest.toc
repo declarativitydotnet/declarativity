@@ -1,7 +1,0 @@
-\contentsline {chapter}{List of Figures}{iii}
-\contentsline {chapter}{List of Tables}{iv}
-\contentsline {part}{I\hspace {1em}First Part}{1}
-\contentsline {chapter}{\numberline {1}Introduction}{2}
-\contentsline {chapter}{\numberline {2}Previous Work}{4}
-\contentsline {chapter}{\numberline {3}Conclusion}{6}
-\contentsline {chapter}{\numberline {A}Some Ancillary Stuff}{7}
