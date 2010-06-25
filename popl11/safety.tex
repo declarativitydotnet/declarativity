@@ -3,15 +3,20 @@
 In the previous section we demonstrated that \slang can capture
 intuitive notions of persistence and mutability of state via a
 stylized use of Datalog.  However, the alert reader will note that
-even very simple \slang programs make for unusual Datalog: among other
-concerns, persistence rules produce derivations for an infinite number
+even very simple \slang programs make for unusual Datalog.
+%%: among other concerns, 
+To begin with, persistence rules are unsafe, as they produce derivations for an infinite number
 of values of the time suffix.  Traditional Datalog interpreters, which
 work against static databases, would attempt to enumerate these
 values, making this approach impractical.
+Equally worrisome is the fact that many common patterns for state update via mutable
+persistence entail unstratifiable constructs: predicates that syntactically depend on their
+own (possibly transitive) negation.  
 
 However, in the context of distributed systems and networks, the need
-for non-terminating ``services'' or ``protocols'' is very common.  In
-this section we show that expressing distributed systems properties
+for non-terminating ``services'' or ``protocols'' that continually update their
+state
+is very common.  In this section we show that expressing distributed systems properties
 such as persistence and mutable state in logic does not require
 dispensing with familiar notions of safety and stratification: we take
 traditional notions of acceptable Datalog programs, and extend them in
@@ -37,6 +42,8 @@ appear in a non-negated body subgoal.
 \item The EDB is finite.
 %
 \end{enumerate}
+
+\begin{comment}
 
 These constraints ensure that the Herbrand Universe is finite: any atom that
 may be deduced by a safe program may only take its attributes from the 
@@ -401,4 +408,4 @@ in \slang.
 %In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
 %fixpoint computation.  The complete program is safe if the EDB is finite.
 
-
+\end{comment}
