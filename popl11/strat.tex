@@ -11,14 +11,7 @@ checks for a broad class of temporal programs.
 
 %%this section has become cluttered, but for me the main results are the following:
 
-%%\begin{enumerate}
-%%\item Negation-, aggregation- and choice-free \lang programs have a unique minimal model (pure Datalog)
-%%\item stratifiable \lang programs have a unique minimal model (again, Datalog, but we need to show that the restrictions and syntactic transformations
-%%cannot introduce a cycle or add a negative edge to an existing cycle.)
-%%\item \emph{temporally stratified} \lang programs (w/o choice) force any cycles with negation to involve an inductive edge, forcing an ordering on the evaluation.
-%%we can show that in all such cases, the corresponding datalog program is modularly stratified (insofar as \emph{successor} is considered to be ``completely
-%%evaluated" in a lower module.)  since modularly stratified programs have a unique stable model, so do any temporally stratified \lang programs.
-%%\end{enumerate}
+
 
 \begin{lemma} \label{lemma:no-neg-unique}
 %
@@ -64,85 +57,12 @@ Datalog literature~\cite{ullmanbook}.
 %with each strongly connected component collapsed to a single node.
 It is easy to see that any syntactically stratified \slang instance has a
 unique minimal model because it is a syntactically stratified Datalog program.
-
-%\begin{lemma}
-%
-%A syntactically stratifiable \lang instance without choice has a unique
-%minimal model.  That is, there exists a function $D$ from syntactically
-%stratifiable \lang instances without choice to their minimal models.
-%
-%\end{lemma}
-
-%\begin{proof}
-%\wrm{todo: insert statement that this is obvious}
-%
-%We know that there exists a function $B$ from syntactically stratifiable
-%Datalog instances to their minimal models \wrm{cite?}.  Earlier, we introduced
-%\wrm{XXX: where?} a bijection \wrm{XXX: probably not a bijection} $A$ from the
-%set of \lang instances without choice to the set of Datalog instances, and a
-%bijection $C$ between minimal models of Datalog instances and minimal models of
-%\lang instances without choice.  We will show that $D = C \circ B \circ A$.
-
-%Thus, we need only prove that the restriction of $A$ to syntactically
-%stratifiable \lang instances without choice maps to a subset of syntactically
-%stratifiable Datalog instances.  But this is clear, as $A$ does not add any
-%rules to the instance, and may introduce only the non-negated EDB {\em
-%successor} relation to the body of an existing rule.  Thus, $A$ cannot
-%introduce any new cycle or add negation to any existing cycle in the instance's
-%predicate dependency graph.
-%
-%\end{proof}
+\paa{fix}
 
 However, many programs we are interested in expressing are not syntactically
 stratifiable.  Fortunately, we are able to define a syntactically checkable
 notion of {\em temporal stratifiability} of \slang programs that maps to a
 subset of {\em modularly stratifiable}~\cite{modular} Datalog programs.
-
-%Intuitively, a Datalog instance is modularly stratifiable if no EDB
-%element depends negatively on itself.
-
-%%\begin{example}
-%%Consider a predicate \emph{print} that corresponds to a print queue.  The program below
-%%states that if there is a message \{A, B\}, then there 
-%%\begin{Dedalus}
-%%print(A, B) \(\leftarrow\)
-%%  message(A, B),
-%%  \(\lnot\)print(A, B);
-%%\end{Dedalus}
-%%\end{example}
-
-%Peter said we might not need these formal definitions.  Experimenting without
-%\begin{definition}
-%
-%A Datalog program and EDB is \emph{locally stratifiable} if, after
-%instantiating the rules given the Herbrand saturation of the program and EDB,
-%there exists no cycle with a negation or aggregation edge in the dependency
-%graph of instantiated ground atoms.
-%
-%\end{definition}
-
-%We take the definition below from Ross~\cite{modular, ross-syntactic}.
-%\begin{definition}
-%
-%A Datalog instance is \emph{modularly stratifiable} if, and only if its
-%mutally recursive components are locally stratified once all instantiated rules
-%with a false subgoal that is defined in a ``lower" component are removed.
-%\end{definition}
-
-%\begin{lemma}
-%
-%A locally stratifiable \lang instance without choice has a unique
-%minimal model.  That is, there exists a function $E$ from locally
-%stratifiable \lang instances without choice to their minimal models.
-%
-%\end{lemma}
-
-%\begin{proof}
-%
-%\wrm{TODO}
-%
-%\end{proof}
-
 
 \begin{definition} 
 %
@@ -168,38 +88,38 @@ Any temporally stratifiable \slang instance $P$ has a unique minimal model.
 
 
 \begin{example}
-A simple temporally stratifiable \slang program that is not syntactically stratifiable.
+\label{ex:stratsafe}
+A simple temporally stratifiable and temporally safe \slang instance that is neither syntactically stratifiable nor safe.
 
 \begin{Dedalus}
-persist[p, 3]  
+persist[p, 2]  
   
 r1
-p(A, B, T) \(\leftarrow\)
-  insert\_p(A, B, T);
+p(A, B) \(\leftarrow\)
+  insert\_p\_req(A, B);
 
 r2  
-delete p(A, B, T) \(\leftarrow\)
-  p(A, B, T),
-  delete\_p(T);
-\end{Dedalus}
+delete p(A, B) \(\leftarrow\)
+  p(A, B),
+  del\_p\_req(A);
 
-In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are captured
+insert\_p(1, 2)@1;
+\end{Dedalus}
+\end{example}
+
+In the \slang program in Example~\ref{ex:stratsafe}, 
+\emph{insert\_p} and \emph{delete\_p} are captured
 in EDB relations.  This reasonable program is unstratifiable because $p \succ
 p\nega \land p\nega \succ p$.  But because the successor relation is
 constrained such that $\forall A,B, successor(A, B) \rightarrow B > A$, any
 such program is modularly stratified on \emph{successor}.  Therefore, we have
 $p_{n} \not\succ^* p\_neg_{n} \not\succ^* p_{n+1}$; informally, earlier values
 do not depend on later values.
-%%\paa{need to make the text better, but this old example probably makes sense here}
-\end{example}
 
-%%\begin{figure}[t]
-%%  \centering
-%%  \includegraphics[width=0.75\linewidth]{figures/dedalus_classes.pdf}
-%%  \label{fig:dedalus-classes}
-%%  \caption{Stratifiability classes.  $A \to B$ means that every program in $A$ is in $B$.}
-%%\vspace{-8pt}
-%%\end{figure}
+%%\paa{need to make the text better, but this old example probably makes sense here}
+%%\end{example}
+
+
 
 
 %%\paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
