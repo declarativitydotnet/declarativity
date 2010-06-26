@@ -30,7 +30,7 @@ and computer games~\cite{White:2007}.  The resulting languages have
 been promoted for their compact and natural representations of tasks
 in their respective domains, in many cases leading to code that is
 orders of magnitude shorter than equivalent imperative programs.
-Another stated advantage of these languages has been the ability to
+Another stated advantage of these languages is the ability to
 directly capture intuitive specifications of protocols and programs as
 executable code.
 
@@ -62,13 +62,14 @@ language called \lang\footnote{\small \lang is intended as a precursor
   Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus
   remains firmly grounded.  } that enables the specification of rich
 distributed systems concepts without recourse to operational
-constructs.  \lang is a subset of a language with well-studied
+constructs \wrm{assignment of timestamps is operational.  i think the point we want to make is that we elegantly minimize the operational semantics}.  \lang is a subset of a language with well-studied
 features: Datalog enhanced with negation, aggregate functions, choice,
-and a successor relation.  \lang provides a model-theoretic foundation
+and a successor relation.  \wrm{its not well studied, that's why we're studying it in this paper} \lang provides a model-theoretic foundation
 for the two key features of distributed systems: mutable state, and
 asynchronous processing and communication.  We show how these features
-are captured in \lang via a natural incorporation of {\em time} as an
-attribute of Datalog predicates.
+are captured in \lang using logical time. 
+%via a natural incorporation of {\em time} as an
+%attribute of Datalog predicates.
 
 Given the ability to express programs with these two features, we
 address three important properties of \lang programs: a temporal
@@ -84,7 +85,7 @@ Section~\ref{sec:stateupdate}, prove temporal safety and
 stratifiability properties of \slang in Section~\ref{sec:safety}, and
 describe a simple, efficient evaluation scheme
 (Section~\ref{sec:eval}). Finally, we introduce \lang by adding
-support for asynchrony to \slang in
+sfupport for asynchrony to \slang in
 Section~\ref{sec:async}. Throughout, we demonstrate the expressivity
 and practical utility of our work with specific examples, including a
 number of building-block routines from classical distributed

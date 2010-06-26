@@ -5,18 +5,25 @@
 
 %%distributed logic languages are promising.  succinct executable specifications... programming %%with invariants... static checks... AOP...
 
-Distributed logic languages promise to significantly raise the level of abstraction
-at which distributed systems are currently implemented, allowing programmers to
-specify systems as a set of invariants over local state, and rules that describe how state changes and moves across a network.  This approach leads to succinct, executable specifications 
-whose faithfulness to the original pseudocode may be visually verified.  Moreover, the 
-first-order logic foundations of such languages, in which programs
-are expressed as a collection of logical implications, lends itself (at least in principle) to 
-powerful formal verification techniques~\cite{wang, wang2} and assertional
-reasoning~\cite{boom-techr}.  
+Distributed logic languages promise to significantly raise the level of
+abstraction at which distributed systems are currently implemented, allowing
+programmers to specify systems as a set of invariants over local state \wrm{local isn't important, it's just a design choice of dedalus}, and
+rules that describe how state changes and moves across a network \wrm{again this detail isn't important, it's just a design choice of dedalus}.  This
+approach leads to succinct, executable specifications whose faithfulness to the original pseudocode may be visually verified \wrm{well...}.  Moreover, many 
+distributed logic languages are extensions of first-order logic enhanced with
+transitive closure, which lends itself to powerful
+formal verification techniques~\cite{wang, wang2} and assertional
+reasoning~\cite{boom-techr} \wrm{wat is assertional reasoning?}.
+
+\wrm{i don't think anyone except joe's students will care about the balance of this section.  it sounds
+like we're saying ``hey, previous work had highly technical problem X, and we're solving that in
+our work".  i think what we need is a bottom-up approach.  something like ``hey, wouldn't it be nice to do distributed Datalog?  well, here's the first thing
+you might think of (location specifiers), but oh wait, there are some problems
+(distributed joins?, distributed atomicity? mutable state? etc) (and btw previous work had these problems too) so let's solve them by adding atomicity and a notion of state update, but oh wait there are some more problems, and here's how we solve all of them.  then we can say, for a detailed account of the deficiencies of previous work, and our solutions, see tech report, or dedalus 2.0 paper. or something"}
 
 Although the original work in declarative networking was aimed at routing protocols for which soft state, best-effort messaging and eventually consistent semantics are acceptable, it wasn't
 long before researchers began attempting to exploit distributed logic languages to implement
-nontrivial systems that enforce distributed invariants~\cite{p2} or enforce transactional consistency or global ordering~\cite{netdb}.  In order to achieve atomic semantics with regard
+nontrivial systems that enforce distributed invariants~\cite{p2} or enforce transactional consistency or global ordering~\cite{netdb} \wrm{why are these things incompatible with soft-state, best-effort messaging, and eventual consistency?}.  In order to achieve atomic semantics with regard
 to side-effecting operations like disk writes and messages, the fully pipelined operation of P2
 was replaced with a \emph{chain of fixpoints} semantics.  All rules are expressed as 
 straightforward Datalog, and evaluation proceeds in three phases:
@@ -59,17 +66,38 @@ which does not contain the events that (for one moment) caused the derivation of
 
 \subsection{Distributed Idioms}
 
-Despite their problematic logical interpretation, events and hard state tables are desirable 
-primitives for implementing distributed systems.  Network messages and timers are naturally represented as ephemeral tuples that are only instantaneously true, but which may be joined 
-with persistent state to deduce new tuples.  A notion of events makes it straightforward to
-represent many useful distributed programming idioms, including counters or \emph{sequences} and \emph{queues}~\cite{netdb}, and the interaction of events and hard state allow the simulation of ``soft state'' useful for best-effort caching in network protocols and heartbeat messages in distributed systems~\cite{boom-techr}.  For example,  an Overlog sequence might be specified in the following fashion:
+Despite their problematic logical interpretation, events and hard state tables
+\wrm{maybe too technical -- we should say something like "any sensible system
+requires updatable state".  people will believe that.} are desirable primitives
+for implementing distributed systems.  Network messages and timers are
+naturally represented as ephemeral tuples that are only instantaneously true
+\wrm{i see this for timers, but i don't see it for network messages.  why can't
+network messages be persisted? also, i think the point we want to make here is
+that distribution == data partitioning, and remote derivation induces
+communication.}, but which may be joined with persistent state to deduce new
+tuples.  A notion of events makes it straightforward to represent many useful
+distributed programming idioms, including counters or \emph{sequences} and
+\emph{queues}~\cite{netdb} \wrm{``counters'' sound a bit dangerous to me.
+first, in general they require addition/entanglement, right?  also, i'm not
+sure if it's an idiom.  it seems like it might just be a common implementation
+trick (protocol) to express things like distributed universal quantification or
+distributed counting quantification. Datalog doesn't need ``counters'', because
+you can do universal quantification using stratified negation, and you can do
+counting quantification using the ``count'' aggregate.}, and the interaction of
+events and hard state allow the simulation of ``soft state'' \wrm{maybe it
+would be helpful to say that soft state is a special case of mutable persistence: you mutate after a given time (clock tuple)} useful for best-effort
+caching in network protocols and heartbeat messages in distributed
+systems~\cite{boom-techr}.  For example,  an Overlog sequence might be
+specified in the following fashion:
+
+\wrm{again, it seems like we're delving into a highly technical and domain-specific explanation of the flaws of previous work.  maybe we don't need to do this.}
 
 \begin{Dedalus}
 seq(To, X+1) \(\leftarrow\) 
   seq(To, X), ping(To, From);
 \end{Dedalus}
 
-The structure and intent of the rule above are fairly obvious: when a \emph{ping} event
+The structure and intent of the rule above are fairly obvious \wrm{a logician would have a different interpretation.  maybe you can cast this interpretation as intuitive by thinking of Datalog in an ECA-like way.}: when a \emph{ping} event
 occurs, the current value X of the sequence\emph{seq} should be incremented.  Upon
 closer inspection, however, we see that the rule has an unambiguous meaning only under
 an operational interpretation of the system's semantics: precisely because \emph{ping}
