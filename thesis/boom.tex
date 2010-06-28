@@ -152,7 +152,7 @@ Our initial goal was to port the Hadoop {\JT} code to Overlog.  We began by iden
 the key state maintained by the {\JT}.  This state includes both data structures
 to track the ongoing status of the system and transient state in the form of
 messages sent and received by the {\JT}.  We captured this information in four
-Overlog tables, shown in Table~\ref{tbl:hcatalog}.
+Overlog tables, shown in Table~\ref{ch:boom:tbl:hcatalog}.
 
 \begin{table}
 \ssp
@@ -167,7 +167,7 @@ taskTracker  & {\TT} state  & \underline{name}, hostname, state, \\
              &       & map\_count, reduce\_count, max\_map, max\_reduce\\ \hline
 \end{tabular}
 \caption{\BOOM-MR relations defining {\JT} state.}
-\label{tbl:hcatalog}
+\label{ch:boom:tbl:hcatalog}
 \end{table}
 
 The \emph{job} relation contains a single row for each job submitted to the
@@ -278,17 +278,17 @@ S4 {\bf mapTaskLocality}(TaskId, Tracker, Locality) :- \\
 \datalogspace \datalogspace \datalogspace Locality := 3; \\
 \datalogspace \}; \\
 	
-S5 {\bf scheduleMaps}(Tracker, bottomK$<$MapID, MapSlots$>$) :- \\
+S5 {\bf schedule}(Tracker, bottomK$<$MapID, MapSlots$>$) :- \\
 \datalogspace {\bf mapTaskLocality}(TaskId, Tracker, Locality), \\
 \datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, ReduceSlots), \\
 \datalogspace $MapSlots > 0$, \\
 \datalogspace MapID := new OrderedMapID(TaskId, Locality); \\
 
 \end{boxedminipage}
-\caption{\label{fig:schedulemaps} Map task locality priority scheduler.}
+\caption{\label{ch:boom:fig:schedule} Map task locality priority scheduler.}
 \end{figure}
 
-Figure~\ref{fig:schedulemaps} shows two rules that together implement the default Hadoop map task locality priority scheduler.
+Figure~\ref{ch:boom:fig:schedule} shows two rules that together implement the default Hadoop map task locality priority scheduler.
 When a \TT heartbeat is received, rule S4 assigns a locality metric to unscheduled tasks that belong to the highest priority job.
 This rule introduces some new syntax to the Overlog language. \JOL allows a subset of the Java language to be appended to the
 end of an Overlog rule body inside brackets. The Java code will only be passed tuples that are deduced from the rule's body predicates.
@@ -486,7 +486,7 @@ job and task statistics (5 rules). In total, \BOOM-MR consists of 22 Overlog rul
 code, and 1269 lines of Java. \BOOM-MR is based on Hadoop version 18.1; we estimate 
 that we removed 6,573 lines from Hadoop (out of 88,864). The removed code contained
 the core scheduling logic and the data structures that represent the
-components listed in Table~\ref{tbl:hcatalog}. The Overlog patch that
+components listed in Table~\ref{ch:boom:tbl:hcatalog}. The Overlog patch that
 replaces the original Hadoop scheduler contains an order of magnitude
 fewer lines of code.  The performance of \BOOM-MR is very similar to
 that of Hadoop MapReduce, as we discuss in Section~\ref{ch:boom:sec:eval}.
