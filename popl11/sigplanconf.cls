@@ -10,7 +10,7 @@
 % Author:       Paul C. Anagnostopoulos
 %               Windfall Software
 %               978 371-2316
-%               paul@windfall.com
+%               sigplan-style [atsign] acm.org
 %
 % Created:      12 September 2004
 %
@@ -20,7 +20,7 @@
 
 
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
-\ProvidesClass{sigplanconf}[2009/09/30 v2.3 ACM SIGPLAN Proceedings]
+\ProvidesClass{sigplanconf}[2010/05/24 v2.4 ACM SIGPLAN Proceedings]
 
 % The following few pages contain LaTeX programming extensions adapted
 % from the ZzTeX macro package.
@@ -1247,3 +1247,6 @@
 
 %  2009.09.30   PCA     2.3     Remove \softraggedright from thebibliography.  
 %                               Just include in the template.
+
+%  2010.05.24   PCA     2.4     Obfuscate author's email address.
+
