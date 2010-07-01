@@ -1,4 +1,4 @@
-\section{Dedalus Language}
+\section{\large \bf \slang}
 
 \begin{quote}
 %
@@ -8,9 +8,25 @@ University~\cite{scheme}.}
 %
 \end{quote} 
 
-\paa{hmmm, I guess I wasn't expecting violence to be done to this section: mostly just appends...}
+A Datalog$\lnot$~\cite{ullmanbook} {\em program} consists of a set of {\em rules}.  A Datalog$\lnot$ {\em rule} is a first-order logical formula, of the following form: \dedalus{p_0(\bf{X_0}) :- p_1(\bf{X_1}), ..., p_j(\bf{X_j}), !p_j+1(\bf{X_{j+1}}), ..., !p_k(\bf{X_k});}.  \dedalus{p_0, ..., p_k} are known as {\em predicates}.  Predicates that appear in the head of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{X_0}, ..., \bf{X_k}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.  The interpretation of a predicate in an instance is the set of facts in the predicate that are logically implied by the rules.  Thus, the way to read a Datalog rule is ``whenever the left-hand side is true, then the right-hand side is true.''
 
-\subsection{Syntax, blah  blah blah}
+In other words, a Datalog program is a set of first-order logic formulas (possibly with the least-fixpoint operator).
+\wrm{introduce minimal model here}  Datalog ensures finiteness of the minimal model by guaranteeing finiteness of the universe of constants (for example: restrictions on functions).
+
+Negation allows specification of two additional types of programs: programs that have no solution, i.e. have a a {\em contradiction} -- a fact that depends on its own negation -- and programs that have more than one solution.  
+
+%stratification
+
+%Note that negation allows the specification of a program that is contradictory, such as $p(X) :- q(X), !p(X);$.  The reason for the contradiction is that given an EDB where \dedalus{p \cap q} is non-empty, each \dedalus{p} fact with a corresponding \dedalus{q} fact depends on its own negation (is simultaneousy both false and true).  
+Contradictions are usually undesirable in logic programming.  Unfortunately, detecting that a program has a contradiction for at least one EDB is undecidable in general \wrm{cite}, so the logic programming community has devised a number of conservative conditions have been devised.  The conditions of particular interest to us are {\em syntactic stratification} and {\em modular stratification}.  The syntactic stratification condition excludes all programs where a predicate \dedalus{p} transitively depends on \dedalus{!p}, and the modular stratification condition excludes \wrm{...}
+
+%choice
+
+We are only interested in a subset of programs of the latter type: programs with a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by \wrm{cite greco and zaniolo} as the \dedalus{choice} construct.  If one admits programs with choice, a different interpretation is required: one chooses one of the equivalent interpretations non-deterministicaly.  Typically, \dedalus{choice} itself violates the conservative checks described above.  Thus, we often must explicitly admit \dedalus{choice} after ruling out certain program with negation.
+
+
+Dedalus is a subset of Datalog$\lnot$ with \dedalus{choice}, and a single infinite relation \dedalus{successor} which forms the basis of a stratification condition we call {\em temporal stratification}.  
+
 
 \subsection{Templates and programming Patterns}
 
