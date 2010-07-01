@@ -115,12 +115,23 @@ time.
 %
 We show that \lang provides a declarative foundation for the two signature
 features of distributed systems: mutable state, and asynchronous processing and
-communication.  Given these two features, we address three important properties
-of programs in a domain-specific manner: a notion of {\em safety} appropriate
-to non-terminating computations, {\em stratified} monotonic reasoning with
-negation over time, and efficient evaluation over time via a simple execution
-strategy.  We also provide conservative syntactic checks for our temporal
-notions of safety and stratification.  Our experience implementing
+communication.  
+%%Given these two features, we address three important properties
+%%of programs in a domain-specific manner: a notion of {\em safety} appropriate
+%%to non-terminating computations, {\em stratified} monotonic reasoning with
+%%negation over time, and efficient evaluation over time via a simple execution
+%%strategy.  
+Given these features, we illustrate how powerful verification techniques from the
+Datalog literature may be preserved or reinterpreted in the new domain, including 
+conservative syntactic checks for a notion of {\em safety} appropriate to 
+non-terminating computation, and {\em stratified} monotonic reasoning with negation 
+over time.
+%%We also provide conservative syntactic checks for our temporal
+%%notions of safety and stratification.  
+We also explore the use of similar static analysis techniques to verify properties unique 
+to systems with asynchronous communication, including commutativity and idempotence
+of in-flight messages.
+Our experience implementing
 full-featured systems in variants of Datalog suggests that \lang is well-suited
 to the specification of rich distributed services and protocols, and provides
 both cleaner semantics and richer tests of correctness.
@@ -137,7 +148,7 @@ both cleaner semantics and richer tests of correctness.
 \input{update}
 \input{async}
 %%\input{broadcast}
-\input{idempotence}
+\input{casestudy}
 \input{relwork}
 \input{future}
 \input{acks}
