@@ -4,7 +4,6 @@
 \subsection{Straw Man}
 
 \begin{Dedalus}
-
 persist[status, 3, del_status];
 r1
 status(Location, Session, CartObj) :-
@@ -21,7 +20,7 @@ response(#Client, Loc, Session, CartObj) :-
 
 // client code
 
-cart_update(L, S, C)@async :- {...}
+cart_update(L, S, C)@async :- update_event(L, S, C);
 
 \end{Dedalus}
 
@@ -36,12 +35,48 @@ with one another, we must address a subtle bug in the implementation.  Because {
 messages are sent over the network, we know that they appear in the head of an asynchronous 
 rule in the global program, and hence it is impossible to predict the assignment of timestamps
 to deduced tuples.  Even if the client deduces {\em cart\_update} tuples in a serial manner, it
-is possible for multiple tuples to appear at the receiver in the same timestep.  Thus rules {em r1} 
+is possible for multiple tuples to appear at the receiver in the same timestep.  Thus rules {\em r1} 
 and {\em r2}, which appear to describe how a single tuple in {\em status} representing a user
 session is updated when a tuple in {\em cart\_update} appears, may cause multiple records
 to appear in {\em status} for the same session (a violation of the implied primary key).
-
 To mitigate this bug, we must ensure that exactly one tuple (per session) is available for dequeue
 from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
 provides this capability.
+
+A simple syntactic analysis of the above program shows that {\em status} 
+is temporally but not syntactically stratifiable: the deletion rule and the expansion of the
+persistence template define {\em status} in terms of its own negation (in time).  The ``latest''
+such tuple ``wins;'' thus clearly {\em cart\_update} tuples do not commute with each other,
+and the program as given is unlikely to return the correct version of the cart in a {\em response}
+message.
+
+The difficult is precisely that the intended order corresponding to the serial order of updates
+at the client, while reflected in the assignment of timestamps to tuples from the client's
+local clock, is lost in the asynchronous derivations of {\em cart\_update}.  By \emph{entangling}
+the sender's time in rule  {\em r4}, we may communicate the desired total order over 
+the {\em cart\_update} tuples and process them in that order.  
+
+\begin{Dedalus}
+queue[cart_update, 4, 3];
+persist[status, 3, del_status];
+r1
+status(Location, Session, CartObj) :-
+    cart_update(Location,  Session, CartObj, _);
+    
+r2
+del_status(L, S, _) :-
+    status(L, U, S, C),
+    cart_update(L, U, S, _);
+
+response(#Client, Loc, Session, CartObj) :-
+    status(#Loc, Session, CartObj),
+    request(#Loc, Client, User, Session)
+
+// client code
+r4
+cart_update_queue(L, S, C, N)@async :- update_event(L, S, C)@N;
+
+\end{Dedalus}
+
+\subsection{ACID 2.0}
 
