@@ -20,7 +20,8 @@ response(#Client, Loc, Session, CartObj) :-
 
 // client code
 
-cart_update(L, S, C)@async :- update_event(L, S, C);
+cart_update(L, S, C)@async :- 
+    update_event(L, S, C);
 
 \end{Dedalus}
 
@@ -74,13 +75,14 @@ response(#Client, Loc, Session, CartObj) :-
 
 // client code
 r4
-cart_update_queue(L, S, C, N)@async :- update_event(L, S, C)@N;
+cart_update_queue(L, S, C, N)@async :- 
+    update_event(L, S, C)@N;
 
 \end{Dedalus}
 
 \subsection{ACID 2.0}
 
-Helland and other have advocated the design strategy of ensuring eventually-consistent 
+Helland and others have advocated the design strategy of ensuring eventually-consistent 
 semantics for replicated state by enforcing high-level algebraic 
 properties in the application logic (in particular, commutativity, associativity and 
 idempotence) rather than attempting to provide a RW storage substrate that can provide
