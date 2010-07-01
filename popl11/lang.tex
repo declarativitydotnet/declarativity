@@ -1,0 +1,36 @@
+\section{Dedalus Language}
+
+\begin{quote}
+%
+\emph{Time is a device that was invented to keep everything from
+happening at once.}\footnote{Graffiti on a wall at Cambridge
+University~\cite{scheme}.}
+%
+\end{quote} 
+
+\subsection{Syntax, blah  blah blah}
+
+\subsection{Templates and programming Patterns}
+
+The intuition behind \lang's \dedalus{successor} relation is that it models the
+passage of (logical) time.  In our discussion, we will say that ground atoms
+with lower time suffixes occur ``before'' atoms with higher ones.
+
+The constraints we imposed on \slang rules restrict how deductions may be made
+with respect to time.  First, rules may only refer to a single time suffix variable in
+their body, and hence {\em cannot join across different ``timesteps''}.  Practically, this guarantees that a fact at time $T$ can only interact with other facts at the same time.
+
+Second, rules may specify
+deductions that occur concurrently with their ground facts or in the next
+timestep, or at some unrelated time---in \lang, we rule out induction ``backwards'' in time or
+``skipping'' into the future.
+
+blah blah blah
+
+\subsubsection{mutable and naive persistence}
+
+
+\subsubsection{Sequences, queues}
+\subsubsection{Committed choice and state update (fd enforcement?)}
+\subsubsection{idempotence}
+\subsubsection{Map deduce}
