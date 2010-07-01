@@ -1,0 +1,47 @@
+\section{Case Study: Shopping Carts}
+
+
+\subsection{Straw Man}
+
+\begin{Dedalus}
+
+persist[status, 3, del_status];
+r1
+status(Location, Session, CartObj) :-
+    cart_update(Location,  Session, CartObj);
+    
+r2
+del_status(L, S, _) :-
+    status(L, U, S, C),
+    cart_update(L, U, S, _);
+
+response(#Client, Loc, Session, CartObj) :-
+    status(#Loc, Session, CartObj),
+    request(#Loc, Client, User, Session)
+
+// client code
+
+cart_update(L, S, C)@async :- {...}
+
+\end{Dedalus}
+
+The simplest imaginable shopping cart implementation behaves like a key-value store,
+and treats the cart as an opaque object that is repeatedly updated.  It is easy to see that
+in-flight {\em cart\_update} tuples are idempotent because they are persisted in their entirety
+in {\em status}.  Transmitting such a tuple can only affect the contents of {\em status} and tables that depend on it, and transitting it multiple times will not affect {\em status} because of set
+semantics.
+
+Before we address the whether messages bound for the shopping cart server commute 
+with one another, we must address a subtle bug in the implementation.  Because {\em cart\_update}
+messages are sent over the network, we know that they appear in the head of an asynchronous 
+rule in the global program, and hence it is impossible to predict the assignment of timestamps
+to deduced tuples.  Even if the client deduces {\em cart\_update} tuples in a serial manner, it
+is possible for multiple tuples to appear at the receiver in the same timestep.  Thus rules {em r1} 
+and {\em r2}, which appear to describe how a single tuple in {\em status} representing a user
+session is updated when a tuple in {\em cart\_update} appears, may cause multiple records
+to appear in {\em status} for the same session (a violation of the implied primary key).
+
+To mitigate this bug, we must ensure that exactly one tuple (per session) is available for dequeue
+from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
+provides this capability.
+
