@@ -235,7 +235,10 @@ though operations including join, till the next stratum boundary.
 
 but can we weaken the conditions?  in general it looks hard.  take (1): if we have indeed crossed a stratum boundary, we have in essence decided ``at some time'' that some predicate is closed to insertion, by universally quantifying over it (to assert its complement, summarize it, ship it, whatever).  recall p() from above.  a rule that negates p() in a subgoal could succeed between 
 two async insertions of p() tuples, which thus clearly do not commute.  the 'committed choice'
-pattern is a rudimentary illustration of 'sealing' a nonmonotonic consequence.
+pattern is a rudimentary illustration of 'sealing' a nonmonotonic consequence: log is defined 
+in terms of its own negation.  the 'assignment' pattern is a rudimentary example of... um, I guess a rule that isn't persistent (violates 2) b/c notin condition is clearly not "always true."  ditto the
+mutable state pattern.
+
 
 
 
