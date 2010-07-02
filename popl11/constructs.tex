@@ -47,12 +47,7 @@ A simple persistence rule of this form
 ensures that a $p$ fact true at time $i$ will be true $\forall j \in \mathbb{Z} : j >= i$.
 
 
-%\wrm{is there a point to this formula?  can't we just say ``a simple persistence
-%rule naturally encapsulates the ``always'' operator from temporal logic.  maybe
-%this should even be a footnote unless we're going to make a bigger deal about
-%\lang and temporal logics?}
-%\paa{umm, I just thought it was interesting.  feel free to strike it, footnote it, convert 
-%it to plain english, etc}
+
 \subsection{Mutable State}
 \label{sec:mutable}
 
@@ -137,9 +132,29 @@ inserting a new value.  Every update is {\em atomic across timesteps}, meaning
 that the old value ceases to exist at the same timestep in which the new value
 is derived---timestep $\DT+1$ in the above definition.
 
-\subsection{Assignment}
+\subsection{Assignment and Committed Choice}
 
-\subsection{Committed Choice}
+The assignment primitive provided by most imperative languages is a  special 
+case of update without deletion.  We may very simply model the (destructive) assignment 
+of values to keys in the following way:
+
+\begin{Dedalus}
+log(A, B)@next \(\leftarrow\) condition(A, B);
+log(A, B)@next \(\leftarrow\) log(A, B), \(\lnot\)condition(A, _);
+\end{Dedalus}
+
+Assuming that {\em condition(A, B)} respects the functional dependency $A \to B$, the pair 
+of rules above will cause {\em log} to associate with $A$ the ``most recent'' value of $B$
+appearing in {\em condition}.
+
+The mirror image of assignment is committed choice, which associates the ``first'' value
+of $B$ with $A$:
+
+\begin{Dedalus}
+log(A, B)@next \(\leftarrow\) log(A, B);
+log(A, B)@next \(\leftarrow\) condition(A, B), \(\lnot\)log(A, _);
+\end{Dedalus}
+
 
 
 \subsection{``At Most Once'' event relations}
