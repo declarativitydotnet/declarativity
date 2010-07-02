@@ -197,5 +197,38 @@ However, in this work, we regard the limit of the program as only those predicat
 
 um, commutativity.
 
+when can we say that the ND choice of timestamp in async rules does not affect the outcome
+of a computation?  in the general case, it almost always does (since 'outcome' implies finality,
+and thus rules out the possibility of choosing a timestamp after the outcome that could affect the outcome.
+
+we can reason, however, about order independence on a predicate-by-predicate basis, and this
+can significantly simplify how we reason about the replication/distribution of state in the
+global program.  informally, we say that any predicate all of whose possible derivations 
+do not transit across async rules is order-independent, but this is vacuous b/c those derivations
+are fundamentally unordered (well, order is hidden in the interpreter).  more substantively,
+we may say that by default, all event predicates (all predicates to a first approximation) 
+are order-dependent b/c the choice of timestamp determines all of their semantics.  
+can we restore order independence?  yes: perist the predicate.  now any tuple inserted will
+"be there at infinity" -- the only ordering detail of semantic significance is now the 1st 
+timestamp of peristence.  and even this matters only when program logic is nonmonotonic.
+
+a program with negation (aggregation, shipping, summarization) may decide at some time N
+that a predicate is false, and conclude stuff from it, only to have the predicate become
+true at some M > N.  this means conclusions exists that are inconsistent with valuations at
+infinity.  we know precisely the circumstances under which this may occur:
+
+consider a predicate p in a dedalus program and the subgraph of the program's RGG that 
+defines the predicate.  p's semantics are order-insensitive if:
+
+1. in the global graph from EDB facts, timers etc, there are no stratum boundaries save those encapsulated in the choice expansion.
+
+2. following each async rule, there is a simple persistence rule.  (we can generalize this some,
+but not a heck of a lot.  a predicate p is 'basically' persistent of there exists a cycle in the RGG 
+with exactly one inductive edge and all other edge (possibly 0) deductive, in which the 
+bindings of p are preserved from p (as premise) to p (as conclusion), and in which either no other predicates participate, or in which we can show that any participating predicate is always true.
+
+
+
+
 um, idempotence.
 
