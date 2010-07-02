@@ -110,35 +110,28 @@ The second scenario is achieved in \slang via the use of \dedalus{successor} for
 Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proofs of temporal stratification and Algorithm~\ref{alg:tsn} both apply.
 \wrm{end paste}
 
-\subsubsection{Operational Semantics of Timestamp Assignment}
+\subsubsection{Excluding Time Travel}
 
-Nothing in our definition of asynchronous rules prevents tuples
-in the head of a rule from having a timestamp that precedes the
-timestamp in the rule’s body. This may violate temporal stratification.
-On an intuitive level, it may also trouble us that rules can
-derive head tuples that exist ``before'' the body tuples on which they
-are grounded; this violates intuitive notions of causality and admits
-the possibility of temporal paradoxes.
+So far, we have not restricted asynchronous rules to prevent {\em time travel} -- a condition where an asynchronous rule gives rise to derivations that precede their antecedents in time.  While time travel is acceptable for monotonic logic, it is undesirable in general, as a fact may derive its own negation (intuitively, a ``temporal paradox.'')  Thus, an additional condition is required to exclude such contradictions.  In the following section, we will see how our design goals for \lang's distributed execution dictate a particular conservative condition.
 
-We have avoided restricting Dedalus to rule out such issues, as
-doing so would reduce its expressiveness. Recall that simple mono-
-tonic Datalog (without negation) is insensitive to the values in any
-particular attribute \paa{huh?  what do we mean by this?  insensitive to... ordering of
-deductions according to some attribute?  or what?} \wrm{no idea...just copied and pasted this ho.  maybe we can delete this sentence.}. Hence Dedalus programs without negation are
-also well-defined regardless of any ``temporal ordering'' of deduc-
-tions: in monotonic programs, even if tuples with timestamps ``in
-the future'' are used to derive tuples ``from the past,'' there is an un-
-ambiguous least minimal model.
+\subsubsection{Operational Semantics for Assigning Timestamps}
 
+Consider the the following Dedalus rule, shown in unsugared form with time suffixes: 
+\begin{Dedalus}
+p(X,\(\DS\)) :- q(X, \(\DT\)), !r(X, \(\DT\)), \(\DS\) == \(\DT\);
+\end{Dedalus}
+This rule cannot concude any \dedalus{p} facts until it has information about all \dedalus{r} facts that exist at a time, for example \dedalus{\(\DT\) == 3}. Because \lang admits distribution, it is possible that \dedalus{r} facts may be derived by remote nodes by async rules.  Since facts can be arbitrarily delayed (in real-time) during transmission, receivers may need to wait an arbitrary amount of time for \dedalus{r} facts at logical time 3.
 
-Since \dedalus{@async} does not preclude derivations that precede their antecedents in time, these programs may not be modularly stratified.  A simple way to fix this is to constrain the choice clause so that the head timestamp variable is only chosen from the set of times greater than the body timestamp variable.  Unfortunately, this fails to preserve temporal stratification in the distributed case, because different nodes' logical clocks may advance at different speeds, and due to the wall-clock time delay between the derivation and receipt of the message.  Because of this, the sender cannot choose the timestamp at which the receiver will receive a \dedalus{@async} fact in the distributed case. \wrm{i think this is obvious, but provide a proof?}
+This condition is clearly \wrm{not really that clear I guess?} suboptimal, as it impedes progress; we would like to rule out the need for such waiting.  A natural optimization is to allow the evaluation to conclude that if there are immediately (in real time) no \dedalus{r} facts at logical time 3, then there will never (in real time) be any \dedalus{r} fact at logical time 3.  This optimization requires receivers to assign their own timestamps, and thus maintain their own logical clocks.
 
-Thus~\paa{I feel we need to say something like 'in a practical implementation...'} \wrm{i'm pretty sure that this is the only possible way to do this.  i want to convince readers above that the sender fundamentally cannot assign the timestamp in a distributed computation.  even if we do the vector clocks trick, that still requires the "> now" trick for }, the receiver must set the timestamp on incoming \dedalus{@async} facts.  Can such a timestamp assignment rule be expressed in logic?  Clearly, the rule would not be a Dedalus rule, because Dedalus rules prohibit arbitrary modification of the head timestamp.  In fact, no such rule can be expressed in logic.  Such a rule would need to compute the ``next unused timestamp,'' \wrm{show this is necessary and sufficient} as new incoming facts would need to occur at a stricty higher timestamp than any existing program facts.  Assume there is a rule that models the ``next unused timestamp''.  Clearly, this rule must quantify over the current timestamps of all facts in all predicates.  As a transitive consequence, this rule will derive a new fact with a higher timestamp.  This derivation must happen at a timestamp that the original rule does not quantify over, otherwise the derivation will occur only at infinity.  However, if the original rule does not quantify over all time, it cannot produce a correct value for the ``next unused timestamp.'' 
-\paa{I believe that all of this is true (or mostly true) but am unsure what purpose it serves...}
+Can the maintenance of a logical clock, and assignment of timestamps be expressed in logic?  Clearly, this would involve non-Dedalus rules, as Dedalus rules prohibit arbitrary modification of the head timestamp.  Interestingly, these rules cannot be expressed in logic.  These rules would need to compute the ``next unused timestamp,'' \wrm{show this is necessary and sufficient} as new incoming facts would need to occur at a stricty higher timestamp than any existing facts.  Assume there is a rule that models the ``next unused timestamp''.  Clearly, this rule must quantify over the current timestamps of all facts in all predicates.  As a transitive consequence, this rule will derive a new fact with a higher timestamp.  This derivation must happen at a timestamp that the original rule does not quantify over, otherwise the derivation will occur only at infinity.  However, if the original rule does not quantify over all time, it cannot produce a correct value for the ``next unused timestamp.'' 
+\paa{I believe that all of this is true (or mostly true) but am unsure what purpose it serves...} \wrm{i think it's extremely important.  first, if hewitt or any actor model dudes read this, they'll be like "ha! extralogical stuff! great, this corresponds with what i know to be true! and isn't this neat, they've come up with another argument for why this thing i know to be true is true. but wow, even though there's extralogical stuff happening, this is relatively elegant and surprisingly intuitive.  and ah yes, though we can't logically assign timestamps, we can logically model the possible executions within the extent of a single node." instead of "this seems fishy, where are you hiding the extralogical stuff?".  also, if i were reading this paper i'd be curious about why we're throwing in operational semantics rather than describing this in a model-theoretic way.}
 
-Since timestamp assignment cannot be modeled in logic, we define an operational semantics of timestamp assignment: \wrm{put in fancy-pants figures?}  the receiver assigns the ``next unused timestamp'' to an incoming fact.~\paa{you sort of say it in the very next section,
-but perhaps want to emphasize that this 'opsem' is always going to be contained in the model, 
-but is more restrictive}
+Since timestamp assignment cannot be modeled in logic, we define an operational semantics of timestamp assignment: \wrm{put in fancy-pants figures?}  the receiver assigns the ``next unused timestamp'' to an incoming fact.  Of course, these operational semantics constrain the set of possible models.  We desire a model-theoretic restriction on \dedalus{@async} timestamp assignment that enables us to precisely capture these operational semantics in \lang.
+
+%~\paa{you sort of say it in the very next section,
+%but perhaps want to emphasize that this 'opsem' is always going to be contained in the model, 
+%but is more restrictive}
 
 \subsubsection{Reality Constraint}
 
