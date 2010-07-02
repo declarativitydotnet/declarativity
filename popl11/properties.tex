@@ -201,22 +201,23 @@ um, commutativity.
 when can we say that the ND choice of timestamp in async rules does not affect the outcome
 of a computation?  in the general case, it almost always does (since 'outcome' implies finality,
 and thus rules out the possibility of choosing a timestamp after the outcome that could affect the outcome.
+\wrm{huh?  the ND choice of timestamp doesn't affect the outcome if it ``doesn't affect the outcome'' (i.e. regardless of the choice value, i still get the same set of facts in the naively persistent relations, for all EDBs)  are you looking for some conservative syntactic condition?}
 
 we can reason, however, about order independence on a predicate-by-predicate basis, and this
 can significantly simplify how we reason about the replication/distribution of state in the
 global program.  informally, we say that any predicate all of whose possible derivations 
-do not transit across async rules is order-independent, but this is vacuous b/c those derivations
+do not transit across async rules is order-independent \wrm{a queue doesn't involve async, but it's order dependent}, but this is vacuous b/c those derivations
 are fundamentally unordered (well, order is hidden in the interpreter).  more substantively,
 we may say that by default, all event predicates (all predicates to a first approximation) 
 are order-dependent b/c the choice of timestamp determines all of their semantics.  
 can we restore order independence?  yes: perist the predicate.  now any tuple inserted will
 "be there at infinity" -- the only ordering detail of semantic significance is now the 1st 
-timestamp of peristence.  and even this matters only when program logic is nonmonotonic.
+timestamp of peristence.  and even this matters only when program logic is nonmonotonic. \wrm{you also need that the inputs are either transitively dependent on only EDB, or are persisted, right?}
 
 a program with negation (aggregation, shipping, summarization) may decide at some time N
 that a predicate is false, and conclude stuff from it, only to have the predicate become
-true at some M > N.  this means conclusions exists that are inconsistent with valuations at
-infinity.  we know precisely the circumstances under which this may occur:
+true at some M > N \wrm{don't see a problem here}.  this means conclusions exists that are inconsistent with valuations at
+infinity \wrm{don't know what this means}.  we know precisely the circumstances under which this may occur:
 
 consider a predicate p in a dedalus program and the subgraph of the program's RGG that 
 defines the predicate.  p's semantics are order-insensitive if:
