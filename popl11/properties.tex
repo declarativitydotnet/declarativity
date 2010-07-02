@@ -196,6 +196,7 @@ However, in this work, we regard the limit of the program as only those predicat
 \subsection{Properties of Asynchronous Derivations}
 
 um, commutativity.
+\paa{below are notes}
 
 when can we say that the ND choice of timestamp in async rules does not affect the outcome
 of a computation?  in the general case, it almost always does (since 'outcome' implies finality,
@@ -227,6 +228,14 @@ but not a heck of a lot.  a predicate p is 'basically' persistent of there exist
 with exactly one inductive edge and all other edge (possibly 0) deductive, in which the 
 bindings of p are preserved from p (as premise) to p (as conclusion), and in which either no other predicates participate, or in which we can show that any participating predicate is always true.
 
+we can see that these conditions imply order-insensitivity wrt ``in-flight'' tuples bound for p.
+any pair of tuples will end up in p and be there ``at some time'' if the network quiesces, at 
+which time we may consider the timestamp irrelevant.  and p is order-insensitive in this respect,
+though operations including join, till the next stratum boundary.
+
+but can we weaken the conditions?  in general it looks hard.  take (1): if we have indeed crossed a stratum boundary, we have in essence decided ``at some time'' that some predicate is closed to insertion, by universally quantifying over it (to assert its complement, summarize it, ship it, whatever).  recall p() from above.  a rule that negates p() in a subgoal could succeed between 
+two async insertions of p() tuples, which thus clearly do not commute.  the 'committed choice'
+pattern is a rudimentary illustration of 'sealing' a nonmonotonic consequence.
 
 
 
