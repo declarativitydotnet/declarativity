@@ -1,53 +1,50 @@
-\section{\large \bf \slang}
-\label{sec:slang}
+\section{Foundation}
+\label{sec:lang}
 
-
-We take as our foundation the language Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with negated subgoals.  We will be interested in the
-classes of statically stratifiable 
-and modularly stratifiable~\cite{modular} programs, which we revisit below.  For conciseness, when we refer to ``Datalog'' below our intent is to admit negation --- i.e., Datalog$\lnot$.  
-
-As a matter of notation, we refer to a countably infinite universe of constants
-$\Consts$---in which $C_{1}, C_{2}, \ldots$ are representations of individual
-constants---and a countably infinite universe of variable symbols $\Vars = A_1,
-A_2, \ldots$.
-We will capture time in \slang via an infinite relation \dedalus{successor} isomorphic to the successor relation on the integers; for convenience we will in fact refer to the domain $\mathbb{Z}$ when discussing time, though no specific interpretation of the symbols in $\mathbb{Z}$ is intended beyond the fact that \dedalus{successor(x,y)} is true iff $y = x + 1$.
+\lang is related to Datalog$\lnot$~\cite{ullmanbook}, hereinafter referred to as Datalog.  Below, we provide a brief review of Datalog, and subsequently detail our language in terms of Datalog.
 
 \subsection{Datalog}
 \label{sec:datalog}
 
-A Datalog$\lnot$~\cite{ullmanbook} {\em program} consists of a set of {\em rules}.  A Datalog$\lnot$ {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates}.  Predicates that appear in the head of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.  The interpretation of a predicate in an instance is the set of facts in the predicate that are logically implied by the rules.  Thus, the way to read a Datalog rule is ``whenever the left-hand side is true, then the right-hand side is true.''
+A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates}.  \wrm{quals?????? also talk about schema of a predicate} Predicates that appear in the head of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.  The interpretation of a predicate in an instance is the set of facts in the predicate that are logically implied by the rules.  Thus, the way to read a Datalog rule is ``whenever the right-hand side is true, then the left-hand side is true.''
 
 In other words, a Datalog program is a set of first-order logic formulas (possibly with the least-fixpoint operator).
 \wrm{introduce minimal model here}  Datalog ensures finiteness of the minimal model by guaranteeing finiteness of the universe of constants (for example: restrictions on functions).
 
 Negation allows specification of two additional types of programs: programs that have no solution, i.e. have a a {\em contradiction} -- a fact that depends on its own negation -- and programs that have more than one solution.  
 
-%stratification
-
+\subsubsection{Stratification}
 %Note that negation allows the specification of a program that is contradictory, such as $p(X) :- q(X), !p(X);$.  The reason for the contradiction is that given an EDB where \dedalus{p \cap q} is non-empty, each \dedalus{p} fact with a corresponding \dedalus{q} fact depends on its own negation (is simultaneousy both false and true).  
-Contradictions are usually undesirable in logic programming.  Unfortunately, detecting that a program has a contradiction for at least one EDB is undecidable in general \wrm{cite}, so the logic programming community has devised a number of conservative conditions have been devised.  The conditions of particular interest to us are {\em syntactic stratification} and {\em modular stratification}.  The syntactic stratification condition excludes all programs where a predicate \dedalus{p} transitively depends on \dedalus{!p}, and the modular stratification condition excludes \wrm{...}
+Contradictions are usually undesirable in logic programming.  Unfortunately, detecting that a program has a contradiction for at least one EDB is undecidable in general \wrm{cite}, so the logic programming community has devised a number of conservative conditions called {\em stratification conditions}.  The conditions of particular interest to us are {\em syntactic stratification} and {\em modular stratification}.  The syntactic stratification condition excludes all programs where a predicate \dedalus{p} transitively depends on \dedalus{!p}, and the modular stratification condition excludes \wrm{...}
 
-%choice
+\subsubsection{Choice}
+We are only interested in a subset of programs of the latter type: programs with a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by~\cite{greedychoice} as the \dedalus{choice} construct.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
+must have a multiplicity of stable models---that is it must be unstratifiable.  Greco and Zaniolo define 
+choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules, 
+and each possible choice is associated with a different model.  Each such model has a unique, non-deterministic assignment that
+respects the given functional dependencies.  In our discussion, it may be helpful to think of one such model chosen non-deterministically---a non-deterministic ``assignment of timestamps to tuples.''
+%If one admits programs with choice, a different interpretation is required: one chooses one of the equivalent interpretations non-deterministicaly.
+Typically, \dedalus{choice} itself violates the conservative checks described above.  Thus, we often must explicitly admit \dedalus{choice} after ruling out certain program with negation.
 
-We are only interested in a subset of programs of the latter type: programs with a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by \wrm{cite greco and zaniolo} as the \dedalus{choice} construct.  If one admits programs with choice, a different interpretation is required: one chooses one of the equivalent interpretations non-deterministicaly.  Typically, \dedalus{choice} itself violates the conservative checks described above.  Thus, we often must explicitly admit \dedalus{choice} after ruling out certain program with negation.
 
+\wrm{maybe move this stuff later?}
+Choice allows us to model the inherent nondeterminism in communication over unreliable
+networks that may delay, lose or reorder the results of logical deductions. 
+We also describe a syntactic convention to employ this communication model for ``horizontal partitions'' of relations on different machines.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of nondeterminism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 
-Dedalus is a subset of Datalog$\lnot$ with \dedalus{choice}, and a single infinite relation \dedalus{successor} which forms the basis of a stratification condition we call {\em temporal stratification}.  
+\wrm{introduce choice ruels?}
 
-
+\subsection{\lang}
+Dedalus is a subset of Datalog$\lnot$ with \dedalus{choice}, and a \dedalus{successor} relation that defines a dense order over a single countably infinite domain, \dedalus{time}.  \dedalus{successor} defines a total order, except it excludes a distinguished element $\top$ which is meant to model the time {\em never}.  We will see later how \dedalus{successor} forms the basis of a stratification condition that we call {\em temporal stratification}.  
 
 \subsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 
-%%$p(A_{1}, A_{2}, [...], A_{n})@S$
-\slang is a restricted sublanguage of Datalog.  Specifically, we restrict the
-admissible schemata and the form of rules with the four constraints that follow.
+Specifically, we restrict the admissible schemata and the form of rules with the four constraints that follow.
 
-\noindent{\bf Schema: }We require that the final attribute of every \slang
-predicate range over the domain $\mathbb{Z}$.  In a typical
-interpretation, \slang programs will use this final attribute to connote a
-``timestamp,'' so we refer to this attribute as the \emph{time suffix} of the
-corresponding predicate.
+\noindent{\bf Schema: }We require that the final attribute of every \lang predicate range over the \dedalus{time} domain.  
+%\lang considers this final attribute as a ``timestamp,'' so
+We refer to this attribute as the \emph{time suffix} of the corresponding predicate.
 
 \noindent{\bf Time Suffix: }
 %$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
@@ -63,54 +60,60 @@ corresponding predicate.
 %time without restriction, and the rule syntax below provides the restrictions
 %you want.  you're hinting at the reduction stuff below, but we can rewrite to
 %that.}
-In a well-formed \slang rule, every subgoal uses the same existential variable 
-$\Tau$
-%%$T$
-as its time suffix.  A well-formed
-\slang rule must also have a time suffix 
-$\SDedalus$ 
-%%$S$ 
-as its rightmost head attribute, which must be
-constrained in exactly one of the following two ways:
+In a well-formed \lang rule, every body predicate's time suffix is bound to the
+same variable symbol.  For ease of exposition, we henceforth assume that this
+variable symbol is named $\DT$.  A well-formed \lang rule must also bind the head
+predicate's time suffix to a variable symbol.  We will assume the name of this
+variable symbol is $\DS$.  $\DS$ may be constrained in exactly one of three ways:
+
 \begin{enumerate}
 %
-\item The rule is said to be \emph{deductive} if $\SDedalus$ is bound to the
-value $\Tau$; that is, the body contains the subgoal \dedalus{$\SDedalus$ = $\Tau$}.
+\item The rule is said to be {\em deductive} if $\DS$ is bound to the
+value $\DT$; that is, the body contains \dedalus{$\DS$ = $\DT$}.
 %
-\item The rule is said to be {\em inductive} if $\SDedalus$ is the successor of
-$\Tau$; that is, the body contains the subgoal \dedalus{successor($\Tau$, $\SDedalus$)}.
+\item The rule is said to be {\em inductive} if $\DS$ is the successor of
+$\DT$; that is, the body contains \dedalus{successor($\DT$, $\DS$)}.
 %
+\item The rule is said to be {\em asynchronous} if $\DS$ is unrelated to $\DT$;
+that is, the body contains \dedalus{time($\DS$), choose(($\bar{A}$), ($\DS$))}, where $\bar{A}$ is the set of variables occuring in the body, incuding $\DT$.
 \end{enumerate}
 
-In Section~\ref{sec:async} when we consider \lang---a superset of \slang---we will
-introduce a third kind of rule to capture asynchrony.
+We will study the utility of these three types of rules later: systems in general only require recourse to order for mutable state and communication.  Inductive and asynchronous rules model each of these cases respectively.  Deductive rules enable embarassingly parallel execution of all other aspects of distributed systems. \wrm{eliding negation within a timestamp here}
 
+Usage of $S$ or $T$ outside of the timestamp attributes is known as {\em entanglement}.  We will revisit this powerful construct in~\ref{sec:entangle}. 
+
+\wrm{we can cut this example if we're short on space}
 \begin{example}
-The following are examples of well-formed deductive and inductive rules, respectively.
+The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
 \\
 deductive:
 \begin{Dedalus}
-p(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), \(\SDedalus\) = \(\Tau\);
+p(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), \(\DS\) = \(\DT\);
 \end{Dedalus}
 \\
 inductive:
 \begin{Dedalus}
-q(A, B, S) \(\leftarrow\) e(A, B, \(\Tau\)), successor(\(\Tau\), \(\SDedalus\));
+q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), successor(\(\DT\), \(\DS\));
+\end{Dedalus}
+\\
+asynchronous:
+\begin{Dedalus}
+q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time\(\DS\), choose((\(\bar{A}\)), (\(\DS$\)));
 \end{Dedalus}
 \end{example}
 
 \noindent{\bf Positive and Negative Predicates: }
-For every extensional predicate \dedalus{r} in a \slang program $P$, we add to
+For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
 $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same schema
 as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
 
 \begin{dedalus}
-r\pos($A_1,A_2$,[...],$A_n$,\(\SDedalus\)) \(\leftarrow\)
+r\pos($\bar{A}$,\(\DS\)) \(\leftarrow\)
 \end{dedalus}
 
 \hspace{5mm}
 \begin{dedalus}
-   r($A_1,A_2$,[...],$A_n$,\(\Tau\)), \(S\)=\(\Tau\);
+   r($\bar{A}$,\(\DT\)), \(S\)=\(\DT\);
 \end{dedalus}
 
 That is, for every extensional predicate \dedalus{r} there is an intensional
@@ -118,20 +121,18 @@ predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
 Intuitively, this rule allows extensional facts to serve as ground for
 \dedalus{r\pos}, while enabling other rules to derive additional \dedalus{r\pos} facts.
 
-The predicate \dedalus{r\pos} may be referenced in the body or head of any \slang rule.  
+The predicate \dedalus{r\pos} may be referenced in the body or head of any \lang rule.  
 We will make use of the predicate \dedalus{r\nega} later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
 Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rules is unrestricted.
 
 \vspace{1.2em}
 \noindent{\bf Guarded EDB: }
-No well-formed \slang rule may involve any extensional predicate, except for a rule of the form above.
-
-
+No well-formed \lang rule may involve any extensional predicate, except for a rule of the form above.
 
 \subsection{Abbreviated Syntax and Temporal Interpretation}
 
 \label{sec:abbrvsyntax}
-
+\wrm{i don't see the importance of the next 2 paras (before bullet points).  cut it?}
 We have been careful to define \slang as a subset of Datalog; this inclusion allows us to take advantage of Datalog's
 well-known semantics and the rich literature on the language.
 
@@ -150,7 +151,7 @@ be true ``at a different time'' than their antecedents.
 
 
 
-To simplify \slang notation for this typical interpretation, we
+To simplify \lang notation for this typical interpretation, we
 introduce some syntactic ``sugar'' as follows:
 
 \begin{itemize}
@@ -162,24 +163,20 @@ introduce some syntactic ``sugar'' as follows:
 %A_{n})@S$.
 %
 \item {\em Implicit time-suffixes in body predicates:} Since each body
-predicate of a well-formed rule has an existential variable $\Tau$ in its
+predicate of a well-formed rule has an existential variable $\DT$ in its
 time suffix, we optionally omit the time suffix from each body predicate and treat
 it as implicit.
 %%\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
 %%it's restricted because it appears in multiple atoms.}
 %
-\item {\em Temporal head annotation:} Since the time suffix in a head predicate
-may be either equal to $\Tau$, or equal to $\Tau$'s successor, we omit the time
+\item {\em Temporal head annotation:} Since there are a finite number of binding
+possibilities (enumerated above) for the time suffix in a head predicate, we omit the time
 suffix from the head---and its relevant constraints from the body---and
 instead attach an identifier to the head predicate of each temporal rules, to indicate the change in
-time suffix.  A temporal head predicate is of the form:
+time suffix.  A temporal head predicate \dedalus{r} is of the form: \dedalus{r($\bar{A}$)@next},
+while an asynchronous head predicate \dedalus{r} is of the form \dedalus{r($\bar{A}$)@async}.
 
-\dedalus{r($A_1$,$A_2$,[...],$A_n$)@next}
-
-The identifier \dedalus{@next} stands in for \dedalus{successor($\Tau$,S)} in
-the body.
-
-\item {\em Timestamped facts:} For notational consistency, we write the time suffix of facts (which
+\item {\em Timestamped facts:} For notational consistency, we write the time suffixes of facts in the EDB (which
 must be given as a constant) outside the predicate.  For example:
 
 \dedalus{r($A_1$,$A_2$,[...],$A_n$)@$\Consts$}
@@ -188,11 +185,11 @@ must be given as a constant) outside the predicate.  For example:
 %\begin{enumerate}
 %
 %item \emph{next} implies the rule is inductive, and stands in for
-%\linebreak\dedalus{successor($\Tau$,S)} in the body.
+%\linebreak\dedalus{successor($\DTau$,S)} in the body.
 %
 %\item \emph{async(N)} implies the rule is asynchronous, and stands in for
 %\dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,
-%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
+%corresponding to the time suffix $\DTau$ of all predicates in the rule body and
 %optionally referenced in the head.  \wrm{this seems ugly to me}
 %
 %\end{enumerate}
@@ -201,6 +198,7 @@ must be given as a constant) outside the predicate.  For example:
 
 %\wrm{the before stuff might be a bit to verbose and repetitive.}
 
+\wrm{again we can cut this if we're out of space}
 \begin{example}
 %%Sugared deductive and inductive rules.
 The following are ``sugared" versions of deductive and inductive rules from Example 1, and a temporal fact:
@@ -212,6 +210,10 @@ p(A, B) \(\leftarrow\) e(A, B);
 inductive:
 \begin{Dedalus}
 q(A, B)@next \(\leftarrow\) e(A, B);
+\end{Dedalus}
+asynchronous:
+\begin{Dedalus}
+q(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 fact:
 \begin{Dedalus}

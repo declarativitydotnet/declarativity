@@ -27,7 +27,7 @@ timestep---in \slang, we rule out induction ``backwards'' in time or
 
 This notion of time allows us to consider the contents of the EDB---and hence
 a minimal model of the IDB---with respect to an ``instant in time'': we simply
-bind the time suffixes ($\Tau$) of all body predicates to a constant.  Because
+bind the time suffixes ($\DT$) of all body predicates to a constant.  Because
 this produces a sequence of models (one per timestep), it gives us an intuitive
 and unambiguous way to declaratively express persistence and state changes
 across time.  In this section, we give examples of language constructs
@@ -35,8 +35,8 @@ that capture state-oriented motifs such as persistent relations,
 deletion and update, sequences, and queues.
 
 \subsection{Simple Persistence}
-A fact in predicate $p$ at time $\Tau$ may provide ground for deductive rules
-at time $\Tau$, as well as ground for deductive rules in timesteps greater than $\Tau$,
+A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules
+at time $\DT$, as well as ground for deductive rules in timesteps greater than $\DT$,
 provided there exists a {\em simple persistence rule} of the form:
 
 \dedalus{p\pos($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
@@ -119,15 +119,15 @@ appears before \emph{p} in the head, which are replaced with \emph{p\_neg}.  For
 \dedalus{p\_pos} persistence rule may be equivalently specified as
 \dedalus{persist[p,  2]}.
 
-Mutable persistence rules enable {\em updates}.  For some time $\Tau$, an
+Mutable persistence rules enable {\em updates}.  For some time $\DT$, an
 update is any pair of facts:
 
 \begin{dedalus}
-p\nega($C_1,C_2,[...],C_n)@\Tau;$
+p\nega($C_1,C_2,[...],C_n)@\DT;$
 \end{dedalus}
 
 \begin{dedalus}
-p\pos($D_1,D_2,[...],D_n)@\Tau+1$;
+p\pos($D_1,D_2,[...],D_n)@\DT+1$;
 \end{dedalus}
 
 
@@ -135,7 +135,7 @@ p\pos($D_1,D_2,[...],D_n)@\Tau+1$;
 Intuitively, an update represents deleting an old value of a tuple and
 inserting a new value.  Every update is {\em atomic across timesteps}, meaning
 that the old value ceases to exist at the same timestep in which the new value
-is derived---timestep $\Tau+1$ in the above definition.
+is derived---timestep $\DT+1$ in the above definition.
 
 \subsection{Assignment}
 
@@ -258,3 +258,89 @@ attribute.
 A queue establishes a mapping between \slang's timesteps
 and the priority-ordering attribute of the input relation. By doing so, we take advantage of the monotonic property of timestamps to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.  We return to this idea in our discussion of temporal ``entanglement'' Section~\ref{sec:entangle}.
+
+\wrm{greco and zaniolo also have a take on priority queues.  cite them here.}
+
+\subsection{Distribution}
+
+The choice construct will capture the non-determinism of multiple communicating agents in a distributed system, but we want to use it in a stylized way to model typical notions of distribution.  To this end \lang adopts the ``horizontal partitioning'' convention introduced by Loo et al.\ and used in many subsequent efforts~\cite{Loo:2005}.
+To represent a distributed system, we consider some number of agents,
+each running a copy of the same program against a disjoint subset ({\em
+  horizontal partition}) of each predicate's contents.  We require one
+attribute in each predicate to be used to identify the
+partitioning for tuples in that predicate. We call such an
+attribute a {\em location specifier}, and prefix it with a
+\dedalus{\#} symbol in Dedalus.
+
+Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  We now proceed to our model of the asynchrony of this communication, which is captured in a syntactic constraint on the heads of communication rules.
+
+As a syntactic constraint of \lang, the {\em communication rules} introduced in the previous section (rules that differ in head and body location specifiers) are required to be asynchronous.
+This restricts our model of communication between agents in two important ways.
+First, by restricting bodies to a single agent, the only communication
+modeled in \lang occurs via communication rules.  Second, because
+all communication rules are asynchronous, agents may only learn about
+time values at another agent by receiving messages (with unbounded
+delay) from that agent.  Note that this model says nothing about the
+relationship between the agents' clocks; they could be
+non-monotonically increasing, or they could respect a global order.
+
+\subsection{Entanglement}
+\label{sec:entangle}
+Consider the asynchronous rule below:
+
+\begin{Dedalus}
+p(A, B, N)@async \(\leftarrow\)
+  q(A, B)@N;
+\end{Dedalus}
+\noindent
+Due to the \dedalus{async} keyword in the rule head, each \emph{p} tuple will take some unspecified time suffix value.
+Note however that the time suffix $N$ of the rule body appears also in an attribute of \emph{p} other than the time suffix, recording a 
+binding of both the time value of the deduction and the time value of its consequence.  We call such a binding
+an \emph{entanglement}.   Note that in order
+to write the rule it was necessary to not sugar away the time suffix in the rule body.  
+
+Entanglement is a powerful construct.  It allows a rule
+to reference the logical clock time of the deduction that produced one
+(or more) of its subgoals; this supports protocols that reason about partial ordering of time across machines.  More generally, it exposes the infinite \dedalus{successor} relation to attributes other than the time suffix, allowing us to express concepts such as infinite sequences.
+
+
+\subsection{Lamport Clocks}
+\label{sec:lamport}
+
+Recall that \lang allows program executions to order message timestamps arbitrarily, violating intuitive notions of causality by allowing deductions to ``affect the past.''
+This section explains how to implement Lamport
+clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
+temporal monotonicity by reestablishing a causal order
+despite derivations that flow backwards through time.
+
+Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
+rewriting it to:
+
+\begin{Dedalus}
+persist[p, 2]
+p\_wait(A, B, N)@async \(\leftarrow\) q(A, B)@N;
+p\_wait(A, B, N)@next \(\leftarrow\) p\_wait(A, B, N)@M, N \(\ge\) M;
+p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
+\end{Dedalus}
+\noindent
+we place the derived tuple in a new relation \dedalus{p\_wait} that
+stores any tuples that were ``sent from the future'' with their sending time ``entangled''; these tuples stay in the \dedalus{p\_wait} predicate  until the point in
+time at which they were derived.  Conceptually, this causes the system
+to evaluate a potentially large number of timesteps (if N is
+significantly less than the timestamp of the system when the tuple
+arrives).  However, if the runtime is able to efficiently evaluate
+timesteps when the database is quiescent, then
+instead of ``waiting'' by evaluating timesteps, it will simply
+increase its logical clock to match that of the sender.  In contrast,
+if the tuple is ``sent into the future,'' then it is processed using
+the timestep that receives it.
+
+This manipulation of timesteps and clock values is equivalent to
+conventional descriptions of Lamport clocks, except that our Lamport
+clock implementation effectively ``advances the clock'' by preventing derivations until the clock is sufficiently advanced, by temporarily store incoming tuples
+in the \dedalus{p\_wait} relation.
+
+We gloss over one detail here: Lamport clocks rely
+upon a ``tie-breaking'' function to ensure that no two events have the
+same timestamp.  In \lang, such a function could be implemented via another use of \dedalus{choice}, or by a program convention like
+appending a unique node identifier to each timestamp to prevent ``ties.''
