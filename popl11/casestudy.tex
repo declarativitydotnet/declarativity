@@ -27,7 +27,8 @@ cart_update(L, S, C)@async :-
 
 The simplest imaginable shopping cart implementation behaves like a key-value store,
 and treats the cart as an opaque object that is repeatedly updated.  It is easy to see that
-in-flight {\em cart\_update} tuples are idempotent \wrm{wait a minute, they're not quite idempotent.  if i send cart_update(Amazon.com, Ses1, $400)@1, then cart_update(Amazon.com, Ses1, $300)@2, then I retransmit cart_update(Amazon.com, Ses1, $400)@3, the $400 update will be reapplied.  also, i'm not sure why status and cart_update suddenly have 4 arguments in r2}
+in-flight {\em cart\_update} tuples are idempotent \wrm{wait a minute, they're not quite idempotent.  if i send cart\_update(Amazon.com, Ses1, \$400)@1, then cart\_update(Amazon.com, Ses1, \$300)@2, then I retransmit cart\_update(Amazon.com, Ses1, \$400)@3, the \$400 update will be reapplied.  also, i'm not sure why status and cart\_update suddenly have 4 arguments in r2}
+\paa{1st thing -- you're right, I'll cut.  2nd thing -- typo}
 because they are persisted in their entirety
 in {\em status}.  Transmitting such a tuple can only affect the contents of {\em status} and tables that depend on it, and transitting it multiple times will not affect {\em status} because of set
 semantics.

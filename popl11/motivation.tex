@@ -77,10 +77,11 @@ while concurrency is achieved by duplicating the sequential control structures a
 to run in an interleaved fashion.  By contrast, declarative languages constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
 parallelism~\cite{podskey}.
 
-
+\paa{story: admitting order (that is, time) into logic is tricky, and retaining a purely logical interpretation for how the order is established and respected is downright hard.  as you'll see in the next section, nearly all of the useful idioms for DS construction are problematic/ambiguous precisely because they describe composite operations across timesteps, without the vocabulary to make clear what things co-occur atomically.}
 
 \subsection{Distributed Idioms}
 
+\paa{make me 1/4 the size}
 Despite their problematic logical interpretation, events and hard state tables
 \wrm{maybe too technical -- we should say something like "any sensible system
 requires updatable state".  people will believe that.} are desirable primitives
