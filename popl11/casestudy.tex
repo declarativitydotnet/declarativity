@@ -59,24 +59,21 @@ such tuple ``wins;'' thus clearly {\em cart\_update} tuples do not commute with 
 and the program as given is unlikely to return the correct version of the cart in a {\em response}
 message.
 
-The difficult is precisely that the intended order corresponding to the serial order of updates
-at the client, while reflected in the assignment of timestamps to tuples from the client's
-local clock \wrm{this is confusing me, the problem is precisely because the order is not reflected in cart\_update tuples}, is lost in the asynchronous derivations of {\em cart\_update}.  By \emph{entangling}
+The difficulty is precisely that the intended order corresponding to the serial order of updates
+at the client is lost in the asynchronous derivations of {\em cart\_update}.  By \emph{entangling}
 the sender's time in rule  {\em r4}, we may communicate the desired total order over 
-the {\em cart\_update} tuples and process them in that order.  \wrm{well, if we assume that the order of the body tuples captures the order we want}
+the {\em cart\_update} tuples and process them in that order.  
 
 \begin{Dedalus}
 queue[cart_update, 4, 3];
-\wrm{is queue a min queue by default? maybe we should name it ``min_queue''}
 persist[status, 3, del_status];
 r1
 status(Location, Session, CartObj) :-
     cart_update(Location,  Session, CartObj, _);
     
 r2
-del_status(L, S, _) :-
-    status(L, U, S, C),
-    cart_update(L, U, S, _);
+delete status(L, S, _) :-
+    status(L, U, S, C), cart_update(L, U, S, _);
 
 response(#Client, Loc, Session, CartObj) :-
     status(#Loc, Session, CartObj),
@@ -86,8 +83,14 @@ response(#Client, Loc, Session, CartObj) :-
 r4
 cart_update_queue(L, S, C, N)@async :- 
     update_event(L, S, C)@N;
-
 \end{Dedalus}
+
+This approach overcomes the nondeterministic ordering implied by asynchronous 
+communication with brute force: a totally-ordered protocol.  This is simple and inexpensive 
+in this case because it is centralized at the client, obviating the need for an expensive consensus computation, but the approach has certain limitations.  First, the client
+must guarantee that only one {\em update\_event} is processed per timstep in order to totally
+order the {\em cart\_update\_queue} tuples: that is, it must serialize {\em update\_event} with
+a queue also.  The matching queues at client and server impose a synchronization barrier: both sides of the computation must ``spend time'' proportional to the number of tuples.
 
 \subsection{ACID 2.0}
 
