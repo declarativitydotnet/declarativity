@@ -4,73 +4,9 @@ blah blah blah
 
 \subsection{Temporal Stratification}
 
-\wrm{begin paste -- find a new home}
-We first turn our attention to the semantics of
-programs with negation.  As we will see, the inclusion of time introduces a
-``source of monotonicity'' in programs that allows for clean minimal model
-semantics in some surprising cases, and enables purely syntactic monotonicity
-checks for a broad class of temporal programs.
+In our earlier discussion of Datalog, we discussed the undesirability of a logical contradiction -- a situation where a fact depends on its own negation.  We avoid this in \lang by introducing a propety of programs called {\em temporal stratification}, defined in terms of a program's {\em predicate dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct predicate $P_i$ used in the program, and an edge $(N_i, N_j)$ if $P_i$ appears in the head of a rule with $P_j$ in its body.  The edge is anotated with a $\lnot$ if at least one rule with head $P_i$ has $\lnot P_j$ in its body.  The edge is anotated with a $+$ if all rules with head $P_i$ and $P_j$ in their bodies are either inductive or async.  A \lang program is {\em temporally stratifiable} if all loops in the PDG with an $\lnot$ edge also have a $+$ edge.
 
-\begin{lemma} \label{lemma:no-neg-unique}
-%
-A \slang program without negation 
-has a unique minimal model.
-%
-\end{lemma}
-
-\begin{proof} 
-%
-A \slang program without negation 
-is a pure Datalog
-program.  Every pure Datalog program has a unique minimal model. 
-%
-\end{proof}
-
-We define syntactic stratification of a \slang program the same way it is
-defined for a Datalog program:
-
-\begin{definition}
-%
-A \slang program is \emph{syntactically stratifiable} if there
-exists no cycle with a negative edge 
-in the program's
-predicate dependency graph.
-%
-\end{definition}
-
-We may evaluate such a program in {\em stratum order} as described in the
-Datalog literature~\cite{ullmanbook}.
-It is easy to see that any syntactically stratified \slang instance has a
-unique minimal model because it is a syntactically stratified Datalog program.
-\paa{fix}
-
-However, many programs we are interested in expressing are not syntactically
-stratifiable.  Fortunately, we are able to define a syntactically checkable
-notion of {\em temporal stratifiability} of \slang programs that maps to a
-subset of {\em modularly stratifiable}~\cite{modular} Datalog programs.
-
-\begin{definition} 
-%
-The \emph{deductive reduction} of a \slang program $P$ is
-the subset of $P$ consisting of exactly the deductive rules in $P$.
-%
-\end{definition}
-
-\begin{definition} 
-%
-A \slang program is \emph{temporally stratifiable} if its deductive
-reduction is syntactically stratifiable.
-%
-\end{definition}
-
-%%\newtheorem{theorem}{Theorem}
-\begin{lemma}
-\label{lemma:temp-strat-uniq}
-%
-Any temporally stratifiable \slang instance $P$ has a unique minimal model.
-%
-\end{lemma} 
-
+The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at some later time.  The careful reader will note that so far, we have not restricted asynchronous rules to prevent {\em time travel} -- a condition where an asynchronous rule gives rise to derivations that precede their antecedents in time.  While time travel is acceptable for programs where it cannot ever cause a contradiction (such as programs without negation), it is undesirable in general, as a fact may derive its own negation (intuitively, a ``temporal paradox.'')  Thus, an additional condition is required to exclude such contradictions.  However, we note that in a practical asynchronous distributed system, nodes are assumed to have their own clocks, which may run at any arbitrary speed.  Nodes assign a timestamp to an incoming fact that is greater than the timestamp of any existing fact.  Note that this condition excudes time travel.
 
 \begin{example}
 \label{ex:stratsafe}
@@ -101,18 +37,14 @@ such program is modularly stratified on \emph{successor}.  Therefore, we have
 $p_{n} \not\succ^* p\_neg_{n} \not\succ^* p_{n+1}$; informally, earlier values
 do not depend on later values.
 
-Given this discussion, in practice we are interested in three asynchronous scenarios: (a) monotonic programs (even with non-monotonicity in time), (b) non-monotonic programs whose semantics guarantee monotonicity of time suffixes  and (c) non-monotonic programs where we have domain knowledge guaranteeing monotonicity of time suffixes.  Each represents practical scenarios of interest.
+%Given this discussion, in practice we are interested in three asynchronous scenarios: (a) monotonic programs (even with non-monotonicity in time), (b) non-monotonic programs whose semantics guarantee monotonicity of time suffixes  and (c) non-monotonic programs where we have domain knowledge guaranteeing monotonicity of time suffixes.  Each represents practical scenarios of interest.
 
-The first category captures the spirit of many simple distributed implementations that are built atop unreliable asynchronous substrates.  For example, in some Internet publishing applications (weblogs, online fora), it is possible due to caching or failure that a ``thread'' of discussion arrives out of order, with responses appearing before the comments they reference.  In many cases a monotonic ``bag semantics'' for the comment program is considered a reasonable interface for readers, and the ability to tolerate temporal anomalies simplifies the challenge of scaling a system through distribution.
+%The first category captures the spirit of many simple distributed implementations that are built atop unreliable asynchronous substrates.  For example, in some Internet publishing applications (weblogs, online fora), it is possible due to caching or failure that a ``thread'' of discussion arrives out of order, with responses appearing before the comments they reference.  In many cases a monotonic ``bag semantics'' for the comment program is considered a reasonable interface for readers, and the ability to tolerate temporal anomalies simplifies the challenge of scaling a system through distribution.
 
-The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the literature of distributed computing, this is known as a {\em causal ordering} and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
+%The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the literature of distributed computing, this is known as a {\em causal ordering} and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
 
-Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proofs of temporal stratification and Algorithm~\ref{alg:tsn} both apply.
-\wrm{end paste}
-
-So far, we have not restricted asynchronous rules to prevent {\em time travel} -- a condition where an asynchronous rule gives rise to derivations that precede their antecedents in time.  While time travel is acceptable for monotonic logic, it is undesirable in general, as a fact may derive its own negation (intuitively, a ``temporal paradox.'')  Thus, an additional condition is required to exclude such contradictions.
-
-In an asynchronous distributed system, nodes are assumed to have their own clocks, which may run at any arbitrary speed.  Nodes assign a timestamp to an incoming fact that is greater than the timestamp of any existing fact.  Note that this condition excudes time travel.
+%Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proofs of temporal stratification and Algorithm~\ref{alg:tsn} both apply.
+%\wrm{end paste}
 
 %\dedalus{@async} is clearly more liberal than our operational semantics defined above.  One of our goals is formal verification of distributed systems.  Thus, for the particular use-case of distributed execution with the above operational semantics, we need to discover a logical condition that results in a set of models that exhibit the same set of behaviors.  It is  necessary and sufficient for each fact to carry an entangled timestamp from each node.  Timestamps must be propagated through derivations \wrm{explain}.  When a node receives a fact, it will need to delay processing of the fact until its current time is greater than its entangled timestamp.  Note that this scheme employs vector clocks.
 
@@ -121,76 +53,72 @@ In an asynchronous distributed system, nodes are assumed to have their own clock
 
 \subsection{Temporal Safety}
 
-\wrm{begin paste}
-In the previous section we demonstrated that \slang can capture
-intuitive notions of persistence and mutability of state via a
-stylized use of Datalog.  However, the alert reader will note that
-even very simple \slang programs make for unusual Datalog.
+%\wrm{begin paste}
+%In the previous section we demonstrated that \slang can capture
+%intuitive notions of persistence and mutability of state via a
+%stylized use of Datalog.  However, the alert reader will note that
+%even very simple \slang programs make for unusual Datalog.
 %%: among other concerns, 
-To begin with, persistence rules are unsafe, as they produce derivations for an infinite number
-of values of the time suffix.  Traditional Datalog interpreters, which
-work against static databases, would attempt to enumerate these
-values, making this approach impractical.
-Equally worrisome is the fact that many common patterns for state update via mutable
-persistence entail unstratifiable constructs: predicates that syntactically depend on their
-own (possibly transitive) negation.  
+%To begin with, Persistence rules are {\em unsafe}, meaning they produce derivations for an infinite number
+%of values of the time suffix.  Traditional Datalog interpreters, which
+%work against static databases, would attempt to enumerate these
+%values, making this approach impractical.
+%Equally worrisome is the fact that many common patterns for state update via mutable
+%persistence entail unstratifiable constructs: predicates that syntactically depend on their
+%own (possibly transitive) negation.  
 
-However, in the context of distributed systems and networks, the need
-for non-terminating ``services'' or ``protocols'' that continually update their
-state
-is very common.  In this section we show that expressing distributed systems properties
-such as persistence and mutable state in logic does not require
-dispensing with familiar notions of safety and stratification: we take
-traditional notions of acceptable Datalog programs, and extend them in
-a way that admits sensible non-terminating programs.
+%However, in the context of distributed systems and networks, the need
+%for non-terminating ``services'' or ``protocols'' that continually update their
+%state
+%is very common.  In this section we show that expressing distributed systems properties
+%such as persistence and mutable state in logic does not require
+%dispensing with familiar notions of safety and stratification: we take
+%traditional notions of acceptable Datalog programs, and extend them in
+%a way that admits sensible non-terminating programs.
+
+%\subsection{Temporal Safety}
+%Next we consider the issue of infinite results raised in the introduction to this section.
+%In traditional Datalog, this is a well-studied concern.
+%A Datalog program is considered {\em safe} if it has a finite minimal model, and hence has
+%a finite execution.  Safety in Datalog is traditionally ensured
+%through the following syntactic constraints:
+
+%\begin{enumerate}
+%%
+%\item No functions are allowed.
+%
+%\item Variables are \emph{range restricted}: all attributes of the head goal
+%appear in a non-negated body subgoal.
+%
+%\item The EDB is finite.
+%
+%\end{enumerate}
+%\wrm{end paste}
 
 \subsection{Temporal Safety}
-Next we consider the issue of infinite results raised in the introduction to this section.
-In traditional Datalog, this is a well-studied concern.
-A Datalog program is considered {\em safe} if it has a finite minimal model, and hence has
-a finite execution.  Safety in Datalog is traditionally ensured
-through the following syntactic constraints:
 
-\begin{enumerate}
-%
-\item No functions are allowed.
-%
-\item Variables are \emph{range restricted}: all attributes of the head goal
-appear in a non-negated body subgoal.
-%
-\item The EDB is finite.
-%
-\end{enumerate}
-
-
-\wrm{end paste}
-
-Next we consider the issue of infinite results.  In traditional Datalog, a Datalog program is considered safe if it has a finite
-minimal model, and hence has a finite execution. Safety in Datalog is ensured by requiring a finite universe of constants \wrm{cite}.
-
-In Dedalus, the program's result is the limit of the program as time goes to infinity.  Nonconvergence is a special case that we handle in the style of a {\em partial fixpoint}: nonconvergent facts are considered to be false.  Other work has proposed the use of infinite objects to represent nonconvergent results \wrm{cite chomicki}.  Absent entanglement, the set of convergent facts is always finite and can be efficiently computed \wrm{cite the paper that has the algorithm for this}.  Additionaly, we presented conservative syntactic conditions in previous work to guarantee convergence for all EDBs \wrm{cite tech report}.
-
-However, in this work, we regard the limit of the program as only those predicates declared {\em naively persistent}.  \wrm{how do we ensure finiteness????}
+Next we consider the issue of infinite results.  In Datalog, programs with infinite results are traditionally ruled out, as Datalog's evaluation algorithms fail to terminate on such programs.  Similarly, for \lang, we desire to rule out programs that fail to terminate, given any bounded number of messages.  We can apply a result of Chomicki et al. \wrm{cite} to prove that using traditional Datalog-style safety restrictions (no functions, no entanglement, finite EDB, range-restricted variables), we can always efficiently compute a {\em partial fixpoint} of a \lang program.  A partial fixpoint includes all {\em convergent} (forever persisted) derivations, and excludes all {\em nonconvergent} (nonpersistent, or nontrivially periodic derivations).  Other work has proposed the use of infinite objects to represent nonconvergent derivations \wrm{cite chomicki}.  Additionally, we presented conservative syntactic conditions in previous work to guarantee the non-existence of nontrivially periodic derivations in a program for all EDBs \wrm{cite tech report}.
 
 \subsection{Properties of Asynchronous Derivations}
 
 Having ensured, via variants on traditional Datalog techniques, that there will always exist 
-stable models of \lang programs that are free of contradictions and which will quiesce in the absence of input, we now turn to a problem that is specific to the domain of asynchronous
+stable models \wrm{if we use this word, remember to insert def earlier} of \lang programs that are free of contradictions and which will quiesce in the absence of input, we now turn to a problem that is specific to the domain of asynchronous
 distributed systems: the effects of delay, loss and reordering of messages. We would like to
 characterize a class of \lang programs that have the same semantics regardless of
 the nondeterminism in {\em async} rules.  We clearly cannot rely on naive equality of stable
 models, as models of the same program with different {\em async} rule applications will differ
-(at least) in the timstamps of tuples.  
+(at least) in the timstamps of tuples.
 
 \paa{I don't know how to say this 'at infinity' stuff; I am back at max...}
 \begin{definition}
 Consider the stable model $M$ resulting from a fixpoint evaluation of a \lang program P over a finite input trace.  The \emph{ultimate model} $U$ of $M$ is the model obtained by selecting only the tuples of $M$ with the highest timestamp in $M$, dropping the timestamp attribute,
 and removing duplicate tuples
 \end{definition}
+\wrm{i think we want to say ``the maximum timestamp is the timestamp at which the program is forever quiescent'' or something}
 
 In other words, we may obtain the ultimate model of a \lang execution from one of its stable
 models by {\em selecting} tuples corresponding to the ``end of time,'' and projecting out time.
-If all stable models of a \lang program and trace produce the same ultimate model, we say that the program and trace are \emph{trace confluent}, and if a program is trace confluent for all traces we say that the program is \emph{confluent}.
+If all stable models of a \lang program and trace produce the same ultimate model, we say that the program and trace are \emph{trace confluent}, and if a program is trace confluent for all EDBs we say that the program is \emph{confluent}.
 
 We can immediately identify a subset of the class of confluent programs:
 the class $D$ of negation-free \lang programs in which all predicates have basic 
