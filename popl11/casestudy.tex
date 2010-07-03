@@ -38,12 +38,7 @@ cart_update(L, S, C)@async :-
 \end{Dedalus}
 
 The simplest imaginable shopping cart implementation behaves like a key-value store,
-and treats the cart as an opaque object that is repeatedly updated.  It is easy to see that
-in-flight {\em cart\_update} tuples are idempotent \wrm{wait a minute, they're not quite idempotent.  if i send cart\_update(Amazon.com, Ses1, \$400)@1, then cart\_update(Amazon.com, Ses1, \$300)@2, then I retransmit cart\_update(Amazon.com, Ses1, \$400)@3, the \$400 update will be reapplied.  also, i'm not sure why status and cart\_update suddenly have 4 arguments in r2}
-\paa{1st thing -- you're right, I'll cut.  2nd thing -- typo}
-because they are persisted in their entirety
-in {\em status}.  Transmitting such a tuple can only affect the contents of {\em status} and tables that depend on it, and transitting it multiple times will not affect {\em status} because of set
-semantics.
+and treats the cart as an opaque object that is repeatedly updated.  
 
 Before we address the whether messages bound for the shopping cart server commute 
 with one another, we must address a subtle bug in the implementation.  Because {\em cart\_update}
@@ -101,8 +96,65 @@ Helland and others have advocated the design strategy of ensuring eventually-con
 semantics for replicated state by enforcing high-level algebraic 
 properties in the application logic (in particular, commutativity, associativity and 
 idempotence) rather than attempting to provide a RW storage substrate that can provide
-such guarantees in general~\cite{quicksand, beyond}.  While Dynamo is a RW storage system
+such guarantees in general~\cite{quicksand, beyond}.  While Dynamo~\cite{dynamo} 
+is a RW storage system
 and as such needs to provide versioning and conflict resolution capabilities, the shopping
 cart application that sits atop it is able to easily reconcile conflicts that occur due to inconsistency of global state, because the application logic is fundamentally order-insensitive.
 The final state of the shopping cart is guaranteed to be the union of all the operations on
-that state.
+that state.  In the case of Dynamo, the application logic and not the storage system controls
+cart merging logic.
+
+Following this reasoning, if our implementation in \lang could be altered in such a way that
+{\em cart\_update} tuples commute with one another,  we could dispense with the total
+ordering of tuples.  Instead of replacing the opaque object as a read/write system would,
+we'd like to expose the (fundamentally commutative) operation of cart-union to distributed
+system.
+
+\begin{Dedalus}
+persist[cart_action, 5, _];
+action_cnt(Location, Session, Item, Type, count<ReqId>) :-
+    cart_action(Location, Client, Session, Item, Type, ReqId),
+    checkout(Location, Client, Session);
+
+status(L, Session, Item, Cnt) :-
+    action_cnt(L, Session, Item, "Add", Cnt),
+    notin action_cnt(L, Session, Item, "Del", _);
+
+status(L, User, Session, Item, Acnt - Dcnt) :-
+    action_cnt(L, Session, Item, "Add", Acnt),
+    action_cnt(L, Session, Item, "Del", Dcnt);
+
+commitfirst[log, 5, 4];
+log(L, Session, Item, Cnt) :- 
+    status(L, User, Session, Item, Cnt);
+
+publish(#Client, Session, Item, Amt)@async :-
+    log_event(#Location, Session, Item, Amt),
+    checkout(#Location, Client, Session);
+
+cart_action(#R, S, I, T, Ri)@async :-
+    cart_action(#L, S, I, T, Ri),
+    replicas(#L, S, R);
+\end{Dedalus}
+
+
+... and the client code, just to have it all in here:
+
+\begin{Dedalus}
+commitfirst[publish, 4, 3];
+
+sequence[s, cart_action_stage, 5];
+cart_action_stage(#Server, Client, Session, Item, Type, ReqId) :-
+    action(#Client, Session, Type, ReqId),
+    best_replica(#Client, Session, Server);
+    s(ReqId);
+
+cart_action(#L, S, I, T, R)@async :- 
+    cart_action_stage(L, #C, S, I, T, R);
+
+checkout(#Server, Client, Session) :-
+    checkout_req(#Client, Session),
+    best_replica(#Client, Session, Server);
+\end{Dedalus}
+
+
