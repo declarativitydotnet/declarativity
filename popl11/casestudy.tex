@@ -22,9 +22,8 @@ status(Location, Session, CartObj) :-
     cart_update(Location,  Session, CartObj);
     
 r2
-del_status(L, S, _) :-
-    status(L, U, S, C),
-    cart_update(L, U, S, _);
+delete status(L, S, _) :-
+    status(L, U, S, C), cart_update(L, U, S, _);
 
 response(#Client, Loc, Session, CartObj) :-
     status(#Loc, Session, CartObj),
