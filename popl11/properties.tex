@@ -211,7 +211,14 @@ In negation-free dedalus programs
 is always semantically insignificant?  yes, these are the monotonic dedalus programs which persist their async inputs.}
 
 In practice, however, programs that monotonically accumulate information and never \emph{do} 
-anything with it are rare in the distributed systems domain.  
+anything with it are rare in the distributed systems domain.  Summarization of state in 
+general will imply universal quantification over that state, whether it involves aggregation (e.g., computing a sum), negation (e.g., asserting that some fact does \emph{not} hold because 
+the fact does not exist in our model) or shipping a ``final'' version of a relation to another 
+location, and in \lang, such constructs can only be expressed with syntactically transparent
+nonmonotonic constructs.  
+
+The utility of syntactic monotonicity checks lies in the ability to identify monotonic 
+\emph{components} of a nonmonotonic program.
 
 
 \paa{below are notes}
