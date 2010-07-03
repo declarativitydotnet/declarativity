@@ -16,8 +16,9 @@ This approach leads to succinct, executable specifications whose faithfulness to
 Moreover, many 
 distributed logic languages are extensions of first-order logic enhanced with
 transitive closure, which lends itself to powerful
-formal verification techniques~\cite{wang, wang2} and assertional
-reasoning~\cite{boom-techr} \wrm{wat is assertional reasoning?}.
+formal verification techniques~\cite{wang, wang2}.
+%% and assertional
+%%reasoning~\cite{boom-techr} \wrm{wat is assertional reasoning?}.
 
 \begin{comment}
 %%*************************************************************
@@ -133,12 +134,10 @@ min\_elmt(O) \(\leftarrow\)
   queue(O, _);
 r2
 deq(Host, X) \(\leftarrow\) 
-  queue(O, X), min\_elmt(O), 
-  deq\_request(Host);
+  queue(O, X), min\_elmt(O), deq\_request(Host);
 r3
 delete queue(O, X) \(\leftarrow\) 
-  queue(O, X), min\_elmt(O), 
-  deq\_request(\_);
+  queue(O, X), min\_elmt(O), deq\_request(\_);
 \end{Dedalus}
 
 Again, the semantics are clear only because of the ephemerality of \emph{deq\_request}, and because it is either true or false -- either an item is atomically dequeued and deleted, or neither thing happens.  As in the sequence example, the operational interpretation of events as

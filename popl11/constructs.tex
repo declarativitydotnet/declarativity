@@ -253,14 +253,12 @@ omin(A, min<C>) \(\leftarrow\)
 % feed p in the next step 
 % with the items of min priority
 priority_queue(A, B, C)@next \(\leftarrow\)
-  m\_priority\_queue(A, B, C),
-  omin(A, C);
+  m\_priority\_queue(A, B, C), omin(A, C);
 
 % delete from the next step 
 % those items of min priority
 delete m\_priority\_queue(A, B, C) \(\leftarrow\)
-  m\_priority\_queue(A, B, C),
-  omin(A, C);
+  m\_priority\_queue(A, B, C), omin(A, C);
 \end{Dedalus}
 
 Under such a queueing discipline, deductive rules that depend on
