@@ -134,7 +134,7 @@ is derived---timestep $\DT+1$ in the above definition.
 
 \subsection{Assignment and Committed Choice}
 
-The assignment primitive provided by most imperative languages is a  special 
+The assignment primitive provided by most imperative languages is a special 
 case of update without deletion.  We may very simply model the (destructive) assignment 
 of values to keys in the following way:
 
@@ -355,5 +355,7 @@ in the \dedalus{p\_wait} relation.
 
 We gloss over one detail here: Lamport clocks rely
 upon a ``tie-breaking'' function to ensure that no two events have the
-same timestamp.  In \lang, such a function could be implemented via another use of \dedalus{choice}, or by a program convention like
-appending a unique node identifier to each timestamp to prevent ``ties.''
+same timestamp.  
+\wrm{why can't we just combo a Lamport clock with a priority queue?  i don't think we need choice here, so i commented it out.}
+%In \lang, such a function could be implemented via another use of \dedalus{choice}, or by a program convention like
+%appending a unique node identifier to each timestamp to prevent ``ties.''
