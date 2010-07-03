@@ -52,8 +52,9 @@ To mitigate this bug, we must ensure that exactly one tuple (per session) is ava
 from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
 provides this capability.
 
+
 A simple syntactic analysis of the above program shows that {\em status} 
-is temporally but not syntactically stratifiable \wrm{i don't think we need to say ``not syntactically stratifiable'', or provide hte rest of the sentence, we explained persistence earlier}: the deletion rule and the expansion of the
+is temporally but not syntactically stratifiable: the deletion rule and the expansion of the
 persistence template define {\em status} in terms of its own negation (in time).  The ``latest''
 such tuple ``wins;'' thus clearly {\em cart\_update} tuples do not commute with each other,
 and the program as given is unlikely to return the correct version of the cart in a {\em response}
@@ -62,25 +63,11 @@ message.
 The difficulty is precisely that the intended order corresponding to the serial order of updates
 at the client is lost in the asynchronous derivations of {\em cart\_update}.  By \emph{entangling}
 the sender's time in rule  {\em r4}, we may communicate the desired total order over 
-the {\em cart\_update} tuples and process them in that order.  
+the {\em cart\_update} tuples and process them in that order.  The rest of the code is unchanged,
+except that this causes {\em cart\_update} to have a higher arity.
 
 \begin{Dedalus}
 queue[cart_update, 4, 3];
-persist[status, 3, del_status];
-r1
-status(Location, Session, CartObj) :-
-    cart_update(Location,  Session, CartObj, _);
-    
-r2
-delete status(L, S, _) :-
-    status(L, U, S, C), cart_update(L, U, S, _);
-
-response(#Client, Loc, Session, CartObj) :-
-    status(#Loc, Session, CartObj),
-    request(#Loc, Client, User, Session)
-
-// client code
-r4
 cart_update_queue(L, S, C, N)@async :- 
     update_event(L, S, C)@N;
 \end{Dedalus}
