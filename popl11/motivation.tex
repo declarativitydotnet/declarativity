@@ -76,7 +76,15 @@ which does not contain the events that (for one moment) caused the derivation of
 We conjecture that logic languages are a better fit for the specification of concurrent and distributed systems than traditional imperative approaches.  In imperative languages, whose instructions are built up from applications of a sequencing primitive and whose state is commonly stored in data structures like lists and trees, ordering is implicit and ubiquitous, 
 while concurrency is achieved by duplicating the sequential control structures and allowing them
 to run in an interleaved fashion.  By contrast, declarative languages constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
-parallelism~\cite{podskey}.
+parallelism~\cite{podskey}.  Instead of reasoning about the possible interleavings of sequential
+instructions or the serial order of message arrival as one must when writing threaded or 
+event-driven code, respectively, a distributed logic language allows the programmer to focus
+on the admissible, atomic transformations over state that can in general be carried out in
+parallel.
+
+Sometimes order -- ordering of data elements, as well as ordered computational steps -- 
+is required by an algorithm, and in a logic language this order by be explicitly specified and 
+managed.  Previous languages 
 
 \paa{story: admitting order (that is, time) into logic is tricky, and retaining a purely logical interpretation for how the order is established and respected is downright hard.  as you'll see in the next section, nearly all of the useful idioms for DS construction are problematic/ambiguous precisely because they describe composite operations across timesteps, without the vocabulary to make clear what things co-occur atomically.}
 
@@ -84,23 +92,23 @@ parallelism~\cite{podskey}.
 
 \paa{make me 1/4 the size}
 Despite its problematic logical interpretation, updatable and ephemeral state is a requirement
-for any practical distributed system.  Network messages and timers are
+for any practical distributed system.  The \emph{event}, or predicate that is ``instantaneously''
+true for only one computation step, is an extreme example of mutable state that is nearly
+ubiquitous in reactive and concurrent systems such as distributed protocols, realtime systems
+and user interfaces~\cite{prologevents}.
+Network messages, timers and GUI actions are
 naturally represented as ephemeral tuples that are only instantaneously true, 
 but which may be joined with persistent state to deduce new
 tuples.  A notion of events makes it straightforward to represent many useful
-distributed programming idioms, including counters or \emph{sequences} and
+programming idioms, including counters or \emph{sequences} and
 \emph{queues}~\cite{netdb}.
-\paa{cite event-driven prolog stuff here too}
-%% and the interaction of
-%%events and persistent tables or ``hard state'' allow the simulation of ``soft state'' %%\wrm{maybe it
-%%would be helpful to say that soft state is a special case of mutable persistence: you mutate %%after a given time (clock tuple)} 
 ``Soft state'' -- a special case of mutable state dependent on a wall clock -- 
 is  useful for best-effort
 caching in network protocols and heartbeat messages in distributed
 systems~\cite{boom-techr}.  
 
 Unfortunately, updatable state -- that is, program state that changes partly as a result of the 
-sequence of computational steps, and which frequently requires that certain subsequences be executed atomically -- is difficult to model in logic, which is inherently order-independent.  
+sequence of computational steps, and which frequently requires that certain subsequences be executed atomically -- is difficult to model in logic, precisely because of its inherent order-independence.  
 
 
 \begin{comment}
