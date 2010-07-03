@@ -174,7 +174,38 @@ However, in this work, we regard the limit of the program as only those predicat
 
 \subsection{Properties of Asynchronous Derivations}
 
-um, commutativity.
+Having ensured, via variants on traditional Datalog techniques, that there will always exist 
+stable models of \lang programs that are free of contradictions and which will quiesce in the absence of input, we now turn to a problem that is specific to the domain of asynchronous
+distributed systems: the effects of delay, loss and reordering of messages. We would like to
+characterize a class of \lang programs that have the same semantics regardless of
+the nondeterminism in {\em async} rules.  We clearly cannot rely on naive equality of stable
+models, as models of the same program with different {\em async} rule applications will differ
+(at least) in the timstamps of tuples.  
+
+\paa{I don't know how to say this 'at infinity' stuff; I am back at max...}
+\begin{definition}
+Consider the stable model $M$ resulting from a fixpoint evaluation of a \lang program P over a finite input trace.  The \emph{ultimate model} $U$ of $M$ is the model obtained by selecting only the tuples of $M$ with the highest timestamp in $M$, dropping the timestamp attribute,
+and removing duplicate tuples
+\end{definition}
+
+In other words, we may obtain the ultimate model of a \lang execution from one of its stable
+models by {\em selecting} tuples corresponding to the ``end of time,'' and projecting out time.
+If all stable models of a \lang program and trace produce the same ultimate model, we say that the program and trace are \emph{trace confluent}, and if a program is trace confluent for all traces we say that the program is \emph{confluent}.
+
+We can immediately identify a subset of the class of confluent programs:
+the negation-free dedalus programs in which all predicates have basic persistence rules
+associated with them.  
+
+\begin{definition}
+The \emph{atemporal reduction} P' of a \lang program P is the program obtained by replacing 
+the unified time variable in all rule bodies with a unique variable per predicate.  \paa{special case for inductive and async rules}
+\end{definition}
+
+
+
+
+
+
 \paa{below are notes}
 
 when can we say that the ND choice of timestamp in async rules does not affect the outcome
