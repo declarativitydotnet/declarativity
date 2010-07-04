@@ -97,6 +97,12 @@
 
 \begin{abstract} 
 %
+\wrm{Imperative programming languages are {\em ordered} by default, and require programmers to explicitly specify exclude order to support parallelism.  Well-known prior work has equated various computational complexity classes with logics, implying a correspondence between computation and deduction.  In logic, certain formulas may lead to contradictions, such as $p$ if $\lnot p$.  We observe that adding a notion of {\em order} to such formulas prevents the contradiction, by explicitly excluding coincidence of $p$ and $\lnot p$.  However, a large class of logical statements are non-contradictory even in the absence of order.  We propose a programming paradigm where computation is unordered (embarassingly parallel) by default, and conservative syntactic checks force the imposition of order to avoid contradiction.  
+
+We observe that broadly, recourse to order is only needed to model two features of asynchronous systems: {\em mutable state} and {\em asynchrony}.  As asynchrony corresponds to non-determinism in order, this non-determinism may influence the results of the computation -- clearly an undesirable result if we wish to build asynchronous systems that are eventually deterministic (i mean Pete's confluence thing later).  Using \lang, we build many common abstractions for distributed systems, such as queues, etc.  We then compose these constructs to define programming styles that ensure determinism, and study this programming style in a case study of a shopping cart.}
+
+
+
 Recent research has explored using Datalog-based
 languages to express a distributed system as a set of logical
 invariants~\cite{boom-eurosys,loo-sigmod06}.  Two properties of distributed
@@ -113,8 +119,7 @@ languages is a notion of {\em time}.
 
 In this paper we present {\bf \lang}, a foundation language for programming and
 reasoning about distributed systems.  \lang reduces to a subset of
-Datalog~\cite{ullmanbook} with negation, aggregate functions, successor \wrm{is
-``successor" specific enough? should we say ``infinite dense order''} and
+Datalog~\cite{ullmanbook} with negation, aggregate functions, successor and
 choice \wrm{cite?}.  \lang also admits an explicit representation of logical
 time.
 %
