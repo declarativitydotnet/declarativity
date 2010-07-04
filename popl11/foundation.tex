@@ -229,7 +229,7 @@ $q_1$
 ($A_1, \ldots, A_{n}, A_{n+1}), \ldots, q_m(A_1, \ldots, A_{n}, A_{n+m}$);
 \end{dedalus}
 
-According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$ --- akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.}
+According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$ --- akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.
 
 \subsection{Distribution, Asynchrony and Choice}
 \lang enables the modeling of {\em asynchronous} distributed systems.  A distributed system comprises multiple communicating agents, which are represented by identifiers.  \lang adopts the {\em horizontal partitioning} convention introduced by Loo et al.\ and used in many subsequent efforts~\cite{Loo:2005}, where all agents execute the same rules, but predicates are partitioned based on the value of the {\em location specifier}: a column of every relation that stores an agent's identifier.  We constrain \lang rules so that the location specifier variable in each body predicate be the same.  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  Note that by restricting bodies to a single agent, the only communication modeled in \lang occurs via communication rules.  Derivation of a fact with another agent's identifier implies sending the fact to the agent.  Syntactically, location specifiers are prefixed with a \dedalus{\#} symbol in Dedalus.
