@@ -1,10 +1,8 @@
 \section{Case Study: Shopping Carts}
 
 In this section, we build an app with replicated state, and reason about the degree to which
-it is ``eventually consistent.'' \wrm{do we want to introduce ``determinism'' earlier, and explain that eventual consistency is a subset of this more generic notion?}
-
-\subsection{Eventual Consistency}
-
+it is ``eventually consistent.'' 
+\wrm{do we want to introduce ``determinism'' earlier, and explain that eventual consistency is a subset of this more generic notion?}  
 In common usage, a system with replicated state is considered to be ``eventually consistent'' 
 if the following conditions are met:
 
@@ -17,31 +15,33 @@ if the following conditions are met:
 
 \begin{Dedalus}
 persist[status, 3, del_status];
+queue[cart_update, 3, 2];
 r1
-status(Location, Session, CartObj) :-
+status(Location, Session, CartObj) \(\leftarrow\)
     cart_update(Location,  Session, CartObj);
     
 r2
-delete status(L, S, _) :-
-    status(L, U, S, C), cart_update(L, U, S, _);
-    \wrm{there's still a typo here.  you removed my previous comment without justification}
-
-response(#Client, Loc, Session, CartObj) :-
+delete status(L, S, _) \(\leftarrow\)
+    status(L, S, C), cart_update(L, S, _);
+  
+response(#Client, Loc, Session, CartObj) \(\leftarrow\)
     status(#Loc, Session, CartObj),
-    request(#Loc, Client, User, Session)
+    request(#Loc, Client, User, Session);
 
 // client code
 
-cart_update(L, S, C)@async :- 
+cart_update(L, S, C)@async \(\leftarrow\) 
     update_event(L, S, C);
 
 \end{Dedalus}
 
 The simplest imaginable shopping cart implementation behaves like a key-value store,
-and treats the cart as an opaque object that is repeatedly updated.  
+and treats the cart as an opaque object that is repeatedly updated.  Note that 
+{\em cart\_update} is declared using the {\em queue} macro, which expands to
+a program fragment that ensures that tuples corresponding to only one $CartObj$
+are processed in a single fixpoint.
 
-Before we address the whether messages bound for the shopping cart server commute 
-with one another, we must address a subtle bug in the implementation.  Because {\em cart\_update}
+Consider the behavior of the program without the queue.  Because {\em cart\_update}
 messages are sent over the network, we know that they appear in the head of an asynchronous 
 rule in the global program, and hence it is impossible to predict the assignment of timestamps
 to deduced tuples.  Even if the client deduces {\em cart\_update} tuples in a serial manner, it
@@ -49,14 +49,16 @@ is possible for multiple tuples to appear at the receiver in the same timestep \
 and {\em r2}, which appear to describe how a single tuple in {\em status} representing a user
 session is updated when a tuple in {\em cart\_update} appears, may cause multiple records
 to appear in {\em status} for the same session (a violation of the implied primary key) \wrm{implied primary key?  we should say earlier ``intuitively we want a primary key'' or something}.
-To mitigate this bug, we must ensure that exactly one tuple (per session) is available for dequeue
-from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
-provides this capability.
+%%To mitigate this bug, we must ensure that exactly one tuple (per session) is available for %%dequeue
+%%from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
+%%provides this capability.
 
 
 A simple syntactic analysis of the above program shows that {\em status} 
-is temporally but not syntactically stratifiable \wrm{why we brinin' up syntactic stratifiability?}: the deletion rule and the expansion of the
-persistence template define {\em status} in terms of its own negation (in time) \wrm{this shouldn't be a surprise to anyone, all the constructs we've presented have this property, and we've been harping on this for the previous 2 sections at length}.  The ``latest''
+is temporally but not syntactically stratifiable: the deletion rule and the expansion of the
+persistence template define {\em status} in terms of its own negation (in time) 
+%%\wrm{this shouldn't be a surprise to anyone, all the constructs we've presented have this %%property, and we've been harping on this for the previous 2 sections at length}.  
+The ``latest''
 such tuple ``wins;'' thus clearly {\em cart\_update} tuples do not commute with each other,
 and the program as given is unlikely to return the correct version of the cart in a {\em response}
 message.
@@ -65,11 +67,10 @@ The difficulty is precisely that the intended order corresponding to the serial 
 at the client is lost in the asynchronous derivations of {\em cart\_update}.  By entangling
 the sender's time in rule  {\em r4}, we may communicate the desired total order over 
 the {\em cart\_update} tuples and process them in that order.  The rest of the code is unchanged,
-except that an additional argument must be added to {\em cart\_update}.
+except that an additional argument must be added to {\em cart\_update}:
 
 \begin{Dedalus}
-queue[cart_update, 4, 3];
-cart_update_queue(L, S, C, N)@async :- 
+cart_update_queue(L, S, C, N)@async \(\leftarrow\)
     update_event(L, S, C)@N;
 \end{Dedalus}
 
@@ -98,33 +99,61 @@ Following this reasoning, if our implementation in \lang could be altered in suc
 {\em cart\_update} tuples commute with one another,  we could dispense with the total
 ordering of tuples.  Instead of replacing the opaque object as a read/write system would,
 we'd like to expose the (fundamentally commutative) operation of cart-union to distributed
-system.
+system.  If this logic were expressed as a user-defined function in the style of SQL databases,
+we could replace {\em r1} and {\em r2} above with:
 
 \begin{Dedalus}
-persist[cart_action, 5, _];
-action_cnt(Location, Session, Item, Type, count<ReqId>) :-
+persist[cart_update, 3, _];
+status(Location, Session, cartunion<CartObj>) \(\leftarrow\)
+    cart_update(Location, Session, CartObj);
+\end{Dedalus}
+
+But it is only slightly more complicated to hoist the application logic into
+the server code explicitly.  To a first approximation, an update to a shopping cart
+can be represented as a tuple containing a server and client address, a session identifier,
+an item identifier corresponding to goods, a type field that indicates whether this action
+is an addition or a deletion, and a request identifier to allow idempotent retry.  The contents
+of a shopping cart at checkout time are, for each item referenced in the cart update history, 
+the difference between the number of additions and deletions of that item.
+
+\begin{Dedalus}
+persist[cart_action, 6, _];
+persist[checkout, 3, _];
+action_cnt(Location, Session, Item, Type, count<ReqId>) \(\leftarrow\)
     cart_action(Location, Client, Session, Item, Type, ReqId),
     checkout(Location, Client, Session);
 
-status(L, Session, Item, Cnt) :-
+status(L, Session, Item, Cnt) \(\leftarrow\)
     action_cnt(L, Session, Item, "Add", Cnt),
     notin action_cnt(L, Session, Item, "Del", _);
 
-status(L, User, Session, Item, Acnt - Dcnt) :-
+status(L, User, Session, Item, Acnt - Dcnt) \(\leftarrow\)
     action_cnt(L, Session, Item, "Add", Acnt),
     action_cnt(L, Session, Item, "Del", Dcnt);
 
-commitfirst[log, 5, 4];
-log(L, Session, Item, Cnt) :- 
-    status(L, User, Session, Item, Cnt);
+\end{Dedalus}
 
-publish(#Client, Session, Item, Amt)@async :-
-    log_event(#Location, Session, Item, Amt),
-    checkout(#Location, Client, Session);
 
+Our tests show that cart\_action is part of a monotonic component, so we can simply and inexpensively replicate it:
+
+\begin{Dedalus}
 cart_action(#R, S, I, T, Ri)@async :-
     cart_action(#L, S, I, T, Ri),
     replicas(#L, S, R);
+\end{Dedalus}
+
+
+Sealing log so that we never send a different response tuple for a given checkout request. 
+
+\begin{Dedalus}
+
+commitfirst[log, 5, 4];
+log(L, Session, Item, Cnt) \(\leftarrow\) 
+    status(L, User, Session, Item, Cnt);
+
+response(#Client, Session, Item, Amt)@async \(\leftarrow\)
+    log_event(#Location, Session, Item, Amt),
+    checkout(#Location, Client, Session);
 \end{Dedalus}
 
 
@@ -134,15 +163,15 @@ cart_action(#R, S, I, T, Ri)@async :-
 commitfirst[publish, 4, 3];
 
 sequence[s, cart_action_stage, 5];
-cart_action_stage(#Server, Client, Session, Item, Type, ReqId) :-
+cart_action_stage(#Server, Client, Session, Item, Type, ReqId) \(\leftarrow\)
     action(#Client, Session, Type, ReqId),
     best_replica(#Client, Session, Server);
     s(ReqId);
 
-cart_action(#L, S, I, T, R)@async :- 
+cart_action(#L, S, I, T, R)@async \(\leftarrow\) 
     cart_action_stage(L, #C, S, I, T, R);
 
-checkout(#Server, Client, Session) :-
+checkout(#Server, Client, Session) \(\leftarrow\)
     checkout_req(#Client, Session),
     best_replica(#Client, Session, Server);
 \end{Dedalus}
