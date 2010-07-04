@@ -9,7 +9,7 @@ Distributed logic languages promise to significantly raise the level of
 abstraction at which distributed systems are currently implemented, allowing
 programmers to specify systems as a set of invariants over local state,
 %% \wrm{local isn't important, it's just a design choice of dedalus}
-and rules that describe how state changes and moves across a network 
+and rules that describe how state changes and moves across a network. 
 %%\wrm{again this detail isn't important, it's just a design choice of dedalus}.  
 This approach leads to succinct, executable specifications whose faithfulness to the original pseudocode may be visually verified.
 %% \wrm{well...}.  
@@ -75,7 +75,7 @@ which does not contain the events that (for one moment) caused the derivation of
 
 We conjecture that logic languages are a better fit for the specification of concurrent and distributed systems than traditional imperative approaches.  In imperative languages, whose instructions are built up from applications of a sequencing primitive and whose state is commonly stored in data structures like lists and trees, ordering is implicit and ubiquitous, 
 while concurrency is achieved by duplicating the sequential control structures and allowing them
-to run in an interleaved fashion.  By contrast, declarative languages constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
+to run in an interleaved fashion.  In contrast, declarative language constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
 parallelism~\cite{podskey}.  Instead of reasoning about the possible interleavings of sequential
 instructions or the serial order of message arrival as one must when writing threaded or 
 event-driven code, respectively, a distributed logic language allows the programmer to focus
@@ -134,7 +134,15 @@ more complicated:
 
 \end{comment}
 
+\paa{old text below.  we probably want to use only the queue example here (one example,
+in any case.  we haven't introduced datalog yet...}
 
+\paa{the purpose of this section is to show that events and mutable state, both desirable,
+and not naturally represented in logic b/c their representation requires explicit order in the
+form of before and after states (eg, primed variables in TLA) of atomic changes.  to 'say'
+a queue in logic, we are forced to 'say' a contradiction: something is in the queue if it isn't. ditto
+counters: something is X+1 if it's X.  and events, of course, cause us to derive conclusions
+which, as soon as they are true, are unfounded.}  
 
 \begin{Dedalus}
 r1
