@@ -105,7 +105,7 @@ Next we consider the issue of infinite results.  In Datalog, programs with infin
 Having ensured, via variants on traditional Datalog techniques, that there will always exist 
 stable models \wrm{if we use this word, remember to insert def earlier} of \lang programs that are free of contradictions and which will quiesce in the absence of input, we now turn to a problem that is specific to the domain of asynchronous
 distributed systems: the effects of delay, loss and reordering of messages. We would like to
-characterize a class of \lang programs that have the same semantics regardless of
+characterize a class of asynchronous \lang programs that have the same semantics regardless of
 the nondeterminism in {\em async} rules.  We clearly cannot rely on naive equality of stable
 models, as models of the same program with different {\em async} rule applications will differ
 (at least) in the timestamps of tuples.
@@ -113,31 +113,48 @@ models, as models of the same program with different {\em async} rule applicatio
 \paa{I don't know how to say this 'at infinity' stuff; I am back at max...}
 \begin{definition}
 Consider the stable model $M$ resulting from a fixpoint evaluation of a \lang program P over a finite input trace.  The \emph{ultimate model} $U$ of $M$ is the model obtained by selecting only the tuples of $M$ with the highest timestamp in $M$, dropping the timestamp attribute,
-and removing duplicate tuples
+and removing duplicate tuples.
 \end{definition}
 \wrm{i think we want to say ``the maximum timestamp is the timestamp at which the program is forever quiescent'' or something}
 
 In other words, we may obtain the ultimate model of a \lang execution from one of its stable
 models by {\em selecting} tuples corresponding to the ``end of time,'' and projecting out time.
-If all stable models of a \lang program and trace produce the same ultimate model, we say that the program and trace are \emph{trace confluent}, and if a program is trace confluent for all EDBs we say that the program is \emph{confluent}.
+If all stable models of a \lang program and EDB trace produce the same ultimate model, we say that the program and trace are \emph{trace confluent}, and if a program is trace confluent for all EDBs we say that the program is \emph{confluent}.
 
 We can immediately identify a subset of the class of confluent programs:
-the class $D$ of negation-free \lang programs in which all predicates have basic 
-persistence rules associated with them.  
+the class $D$ of monotonic (negation- and aggregation-free) \lang programs, all of 
+whose predicates are defined with basic persistence rules.  Intuitively, any program in $D$
+has a single ultimate model for any input trace, and this model corresponds exactly to the
+minimal model of the Datalog program obtained by converting all {\em async} rules into deductive rules and evaluating a single Datalog fixpoint.  While deductions via {\em async} 
+rules introduce nondeterminism into the time suffixes of predicates in any particular model, 
+the inductive persistence of all predicates ensures that for some value of the time suffixes, 
+all deductions that can be made will be made, and the program's monotonicity ensures that
+no deductions will ever be retracted.  
 
-\begin{definition}
-The \emph{atemporal reduction} P' of a \lang program P is the program obtained by replacing 
-the unified time variable in all rule bodies with a unique variable per predicate.  \paa{special case for inductive and async rules}
-\end{definition}
+It is easy to see that nonmonotonic programs are not necessarily confluent even when all
+predicates are persisted.  In the program shown below (which excludes for the sake of space 
+basic persistence rules for all predicates), the nondeterminism implied by the {\em async}
+definitions of {\em p} and {\em q} leads to different ultimate models for the same EDB
+(valuations of {\em e} and {\em f}), precisely because {\em p} and {\em q} tuples do not
+commute given that {\em q} appears in a negated subgoal.  All the orderings in which {\em p}
+precedes {\em q} lead to models in which {\em r} holds, while in the other orderings the subgoal
+$\lnot q(A)$ fails and produces models with {\em r} false.
 
-We say a \lang program is \
+\begin{Dedalus}
+r(A, B) \(\leftarrow\) 
+    p(A, B), \(\lnot\) q(A);
 
-\begin{lemma}
-In negation-free dedalus programs
-\end{lemma}
+q(A)@async :- e(A);
+p(A, B)@async :- f(A, B);
+\end{Dedalus} 
 
-\paa{having trouble, return to this.  the point is, are there dedalus programs for which async
-is always semantically insignificant?  yes, these are the monotonic dedalus programs which persist their async inputs.}
+In either case, nonmontonic reasoning (which is easily spotted in a logic program)
+entails applying the \emph{closed world assumption} to a predicate which, if it transitively 
+depends upon an {\em async} derivation, is never really closed.
+
+\subsubsection{monotonic components}
+
+\paa{identification of monotonic components that cross network boundaries}
 
 In practice, however, programs that monotonically accumulate information and never \emph{do} 
 anything with it are rare in the distributed systems domain.  Summarization of state in 
