@@ -6,10 +6,9 @@
 \subsection{Datalog}
 \label{sec:datalog}
 
-A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates}.  Each predicate has a {\em schema}: a fixed arity and an assignment of types (string, int) to each argument~\paa{not sure I like this.  the interpreter is
-bound to have some type system, but our formalism is untyped: set-theoretic, right?} \wrm{yeah, i just don't want people to be worrying later when we introduce <, > etc, "huh, what if i'm comparing a string and an integer"}.  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  In addition to atoms, a rule's body may also contain {\em dense~\paa{recall that 'dense' is not correct; it implies continuous} order constraints} \wrm{weird...  levy/sagiv et al refer to these as ``dense order constraints'', presumably to distinguish them from ``gap order constraints''??  anyway, the terminology appears to be ambiguosly used in the literature, maybe we should stick with ``order constraints'' } , $=, \geq, >, \leq < \neq$, which restrict the values of variables.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.  \paa{what happened to "if the right-hand side is true...?} \wrm{i took this out because it didn't flow.  i can stick it back later}
+A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  In addition to atoms, a rule's body may also contain {\em dense~\paa{recall that 'dense' is not correct; it implies continuous} order constraints} \wrm{weird...  levy/sagiv et al refer to these as ``dense order constraints'', presumably to distinguish them from ``gap order constraints''??  anyway, the terminology appears to be ambiguosly used in the literature, maybe we should stick with ``order constraints'' } , $=, \geq, >, \leq < \neq$, which restrict the values of variables.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.  \paa{what happened to "if the right-hand side is true...?} \wrm{i took this out because it didn't flow.  i can stick it back later}
 
-In certain cases, a Datalog instance has a unique {\em model} \wrm{cite} -- a minimal set of facts in all predicates implied by the EDB given the program.  Adding netation to Datalog programs increases expressivity, but creates the possibility of  two additional types of programs: programs with no model, i.e. programs with a {\em contradiction} -- a fact that depends on its own negation -- and programs that have a multiplicity of models \wrm{cite sacca and zaniolo}.  The computation of the model of a Datalog program is an iterative procedure, where each iteration determines new facts.  Datalog ensures termination of this procedure (and finiteness of the model) by guaranteeing finiteness of the universe of constants (for example: restrictions on functions).
+In certain cases, a Datalog instance has a unique {\em model} \wrm{cite} -- a minimal set of facts in all predicates implied by the EDB given the program.  Adding netation to Datalog programs increases expressivity, but creates the possibility of two additional types of programs: programs with no model, i.e. programs with a {\em contradiction} -- a fact that depends on its own negation -- and programs that have a multiplicity of models \wrm{cite sacca and zaniolo}.  The computation of the model of a Datalog program is an iterative procedure, where each iteration determines new facts.  Datalog ensures termination of this procedure (and finiteness of the model) by guaranteeing finiteness of the universe of constants (for example: restrictions on functions).
 
 
 \subsubsection{Stratification}
@@ -21,26 +20,14 @@ same argument for why we always choose soundness over completeness.} \wrm{3-valu
   Unfortunately, detecting that a program is contradiction-free for all EDBs is undecidable in general \wrm{cite}, so the logic programming community has devised a number of conservative conditions called {\em stratification conditions} that guarantee freedom from contradiction and the existence of a model.  One popular condition is known as {\em syntactic stratification}, which excludes all programs where a predicate \dedalus{p} transitively depends on \dedalus{!p}.  We will see later how syntactic stratification is too conservative for our needs, and we will intrduce a more liberal stratification condition called {\em temporal stratification}.
 
 \subsubsection{Choice}
-Having ruled out single-solution programs with contradiction, we are interested in programs that have a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by~\cite{greedychoice} as the \dedalus{choice} construct.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
-must have a multiplicity of stable models--that is it must be unstratifiable.  Greco and Zaniolo define 
-choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules~\paa{we need to simplify this for the audience}, 
-and each possible choice is associated with a different model.  Each such model has a unique, non-deterministic assignment that
-respects the given functional dependencies.  In our discussion, it may be helpful to think of one such model chosen non-deterministically--a non-deterministic ``assignment of timestamps to tuples.'' \paa{this statement comes out of nowhere and isn't motivated.  we need to shift some of 
-this text to the introduction of async, to give intuition for how we use choice in dedalus}
-\wrm{i hear you man, i just copied this from the PODS paper}
-%If one admits programs with choice, a different interpretation is required: one chooses one of the equivalent interpretations non-deterministicaly.
-Typically, \dedalus{choice} itself violates the conservative checks described above.  Thus, we often must explicitly admit \dedalus{choice} after ruling out certain program with negation.
+Having ruled out single-solution programs with contradiction, we are interested in programs that have a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by~\cite{greedychoice} as the \dedalus{choice} construct.  \dedalus{choice} allows the specification of a functional dependency in a rule.  For example, \dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expesses that for each value that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on a single value.  If \dedalus{q} contains more than one \dedalus{Y} value for an \dedalus{X}, then the instance has multiple models: one corresponding to each choice of \dedalus{Y} for each \dedalus{X}.  Operationally, the answer to a Datalog program with choice corresponds to a {\em non-deterministic choice} of one of the models.
 
+See~\cite{greedychoice} for the details on how \dedalus{choice} is expanded into Datalog rules.  For many stratification conditions, this expansion is {\em unstratfiable}, meaning it violates the conditions.  Thus, we often must explicitly admit programs with \dedalus{choice} after ruling out certain unstratified programs.
 
-\wrm{maybe move this stuff later?}
-Choice allows us to model the inherent nondeterminism in communication over unreliable
-networks that may delay, lose or reorder the results of logical deductions. 
-We also describe a syntactic convention to employ this communication model for ``horizontal partitions'' of relations on different machines.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of nondeterminism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
-
-\wrm{introduce choice ruels?}
+We will use choice to model the inherent nondeterminism associated with communication in {\em asynchronous} distributed systems.  For example, messages may be lost or arbitrarily delayed, and a receiver cannot decide whether a sender will never send a message \wrm{find some better way to say this last point}.
 
 \subsection{\lang}
-Dedalus is a subset of Datalog$\lnot$ with \dedalus{choice}, and a \dedalus{successor} relation that defines a dense order over a single countably infinite domain, \dedalus{time}.  \dedalus{successor} defines a total order, except it excludes a distinguished element $\top$ which is meant to model the time {\em never}.  We will see later how \dedalus{successor} forms the basis of a stratification condition that we call {\em temporal stratification}.  
+Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite \dedalus{time} relation $(\mathbb{N} \cup \top)$, and a \dedalus{successor} relation, which is isomorphic to $+1$ on $\mathbb{N}$.  Intuitively, $\top$ is meant to model the time {\em never}.  We will see later how \dedalus{successor} forms the basis of a stratification condition that we call {\em temporal stratification}.
 
 \subsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
@@ -137,24 +124,23 @@ No well-formed \lang rule may involve any extensional predicate, except for a ru
 \subsection{Abbreviated Syntax and Temporal Interpretation}
 
 \label{sec:abbrvsyntax}
-\wrm{i don't see the importance of the next 2 paras (before bullet points).  cut it?}
-We have been careful to define \slang as a subset of Datalog; this inclusion allows us to take advantage of Datalog's
-well-known semantics and the rich literature on the language.
 
-\slang programs are intended to capture 
-temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
-suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
+%\wrm{i don't see the importance of the next 2 paras (before bullet points).  cut it?}
+%We have been careful to define \lang as a subset of Datalog; this inclusion allows us to take advantage of Datalog's
+%well-known semantics and the rich literature on the language.
+
+%\lang programs are intended to capture 
+%temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
+%suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
 %%Deductive
 %%rules can be seen as {\em atemporal} statements: they range over all values of
 %%the time suffix, and express deductions that are ``always'' valid. 
-Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
-predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
-what is known at that instant.
- Inductive %%and asynchronous 
- rules are {\em temporal}---their consequents are defined to
-be true ``at a different time'' than their antecedents. 
-
-
+%Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
+%predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
+%what is known at that instant.
+% Inductive %%and asynchronous 
+% rules are {\em temporal}---their consequents are defined to
+%be true ``at a different time'' than their antecedents. 
 
 To simplify \lang notation for this typical interpretation, we
 introduce some syntactic ``sugar'' as follows:
