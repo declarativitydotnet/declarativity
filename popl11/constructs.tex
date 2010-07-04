@@ -13,7 +13,7 @@ University~\cite{scheme}.}
 
 Given our definition of \lang, we now address the persistence and mutability
 of data across time---one of the two signature features of distributed systems
-for which we provide a model-theoretic foundation.
+for which we provide a model-theoretic foundation. \wrm{we need to sync this up with the intro}
 
 The intuition behind \lang's \dedalus{successor} relation is that it models the
 passage of (logical) time.  In our discussion, we will say that ground atoms
@@ -23,10 +23,10 @@ with respect to time.  First, rules may only refer to a single time suffix varia
 their body, and hence {\em cannot join across different ``timesteps''}.  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
 timestep---in \lang, we rule out induction ``backwards'' in time or
-``skipping'' into the future.
+``skipping'' into the future. \wrm{async stuff skips into the future}
 
 This notion of time allows us to consider the contents of the EDB---and hence
-a minimal model of the IDB---with respect to an ``instant in time'': we simply
+a minimal model of the IDB \wrm{IDB not defined}---with respect to an ``instant in time'': we simply
 bind the time suffixes ($\DT$) of all body predicates to a constant.  Because
 this produces a sequence of models (one per timestep), it gives us an intuitive
 and unambiguous way to declaratively express persistence and state changes
@@ -38,25 +38,23 @@ deletion and update, sequences, and queues.
 
 \subsubsection{Simple Persistence}
 A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules
-at time $\DT$, as well as ground for deductive rules in timesteps greater than $\DT$,
-provided there exists a {\em simple persistence rule} of the form:
+at time $\DT$, but may only provide ground for deductive rules in timesteps greater than $\DT$,
+if it is persisted.  One way to persist all facts in a predicate $p$ is to use a {\em simple persistence rule}:
 
 \dedalus{p\pos($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
 p\pos($A_1$,$A_2$,[...],$A_n$);}
 
 \noindent
-A simple persistence rule of this form
-ensures that a $p$ fact true at time $i$ will be true $\forall j \in \mathbb{Z} : j >= i$.
-
+A rule of this form ensures that a $p$ fact true at time $i$ will be true $\forall j \in \mathbb{N} : j >= i$.
 
 
 \subsubsection{Mutable State}
 \label{sec:mutable}
 
-To model deletions and updates of a fact, it is necessary to break the induction
-in a simple persistence rule.  Adding a \dedalus{p\nega} subgoal to the body of a
-simple persistence rule accomplishes this:
-
+Simple persistence rules cannot model deletions and updates of a fact, because
+they express an unbroken induction over time.  One way to allow the induction to be
+broken is to add a \dedalus{p\nega} subgoal to the body of a
+simple persistence rule:
 
 \begin{dedalus}
 p\_pos($A_1,A_2,[...],A_n$)@next $\leftarrow$
@@ -73,21 +71,17 @@ $\lnot$
 p\_neg($A_1,A_2,[...],A_n$);
 \end{dedalus}
 
-%%\begin{definition}
-%
-%%A rule of the above form is known as a {\em mutable persistence rule}.
-%
-%%\end{definition}
 \noindent
 If, at any time $k$, we have a fact
-\dedalus{p\nega($C_1$,$C_2$,[...],$C_n$)@k}, then we do not deduce a
-\dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@k+1} fact.  By induction, we do not
-deduce a \dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@j} fact for any $j > k$, unless
+\dedalus{p\nega($\bar{C}$)@k}, then we do not deduce a
+\dedalus{p\pos($\bar{C}$)@k+1} fact.  By induction, we do not
+deduce a \dedalus{p\pos($\bar{C}$)@j} fact for any $j > k$, unless
 this \dedalus{p\pos} fact is re-derived at some timestep $j > k$ by another
 rule.  This corresponds to the intuition that a persistent fact, once stated,
-is true until it is retracted.  
+is true until it is retracted.
 
 %%\newtheorem{example}{Example}
+\wrm{we can cut this example if we're out of space}
 \begin{example}
 Consider the following \lang program and ground facts:
 
@@ -105,13 +99,14 @@ It is easy to see that the following facts are true: \dedalus{p(1,2)@200},
 false because it was ``deleted'' at timestep \dedalus{300}.
 \end{example}
 
+\wrm{is ``macro'' the right term?  seems a bit hacky}
 Since mutable persistence occurs frequently in practice, we provide the {\em
 persist} macro, which takes 
 two arguments: a predicate name and its arity. 
 The macro
 expands to the corresponding mutable persistence rule, and rewrites the current program
 in such a way that any references to the given predicate (say \emph{p}) in rule bodies or heads are replaced by references
-to its positive relation (e.g. \emph{p\_pos}), except for rules in which the keyword \emph{delete}
+to its positive relation (e.g. \emph{p\_pos}), except for rules in which the keyword \emph{delete} \wrm{we need to explain this better}
 appears before \emph{p} in the head, which are replaced with \emph{p\_neg}.  For example, the above
 \dedalus{p\_pos} persistence rule may be equivalently specified as
 \dedalus{persist[p,  2]}.
@@ -120,11 +115,11 @@ Mutable persistence rules enable {\em updates}.  For some time $\DT$, an
 update is any pair of facts:
 
 \begin{dedalus}
-p\nega($C_1,C_2,[...],C_n)@\DT;$
+p\nega($\bar{C})@\DT;$
 \end{dedalus}
 
 \begin{dedalus}
-p\pos($D_1,D_2,[...],D_n)@\DT+1$;
+p\pos($\bar{D})@\DT+1$;
 \end{dedalus}
 
 
@@ -138,18 +133,18 @@ is derived---timestep $\DT+1$ in the above definition.
 
 The assignment primitive provided by most imperative languages is a special 
 case of update without deletion.  We may very simply model the (destructive) assignment 
-of values to keys in the following way:
+of sets of values to keys in the following way:
 
 \begin{Dedalus}
 log(A, B)@next \(\leftarrow\) condition(A, B);
 log(A, B)@next \(\leftarrow\) log(A, B), \(\lnot\)condition(A, _);
 \end{Dedalus}
 
-Assuming that {\em condition(A, B)} respects the functional dependency $A \to B$, the pair 
-of rules above will cause {\em log} to associate with $A$ the ``most recent'' value of $B$
-appearing in {\em condition}.
+The pair of rules above will cause {\em log} to associate with $A$ the ``most recent'' set of
+$B$ values appearing in {\em condition}.  If {\em condition(A, B)} respects the functional dependency $A \to B$, then
+\dedalus{log} will associate only the ``most recent'' $B$ value with each $A$.
 
-The mirror image of assignment is committed choice, which associates the ``first'' value
+The mirror image of assignment is committed choice, which associates the first value(s)
 of $B$ with $A$:
 
 \begin{Dedalus}
@@ -158,60 +153,18 @@ log(A, B)@next \(\leftarrow\) condition(A, B), \(\lnot\)log(A, _);
 \end{Dedalus}
 %%\subsection{``At Most Once'' event relations}
 
-Committed choice uses a fundamentally nonmonotonic construct -- self-negation --
+Committed choice uses a fundamentally nonmonotonic \wrm{we never define monotonic vs non-mnotonic!!} construct -- self-negation --
 to ``seal'' the value of $B$ such that ``future'' insertions into {\em condition} cannot
 cause new rows with the same $A$ value to be inserted.  But perhaps surprisingly,
 ``closing a world'' in this fashion ensures that {\em log} has strictly monotonic 
-behavior in all models.
-
-\subsubsection{Sequences}
-One may represent a database sequence---an object that retains and monotonically increases a counter value---with a pair of inductive rules.  One rule increments the current counter value when some condition is 
-true, while the other persists the value of the sequence when the condition is false.  We can capture the increase
-of the sequence value without using arithmetic, because the infinite series of \dedalus{successor} has the monotonicity
-property we require:
-
-\begin{Dedalus}
-seq(B)@next \(\leftarrow\) seq(A), successor(A,B), event(_);  
-seq(A)@next \(\leftarrow\) seq(A), \(\lnot\)event(_);
-\end{Dedalus}
-
-\noindent
-Note that these two rules produce only a single value of \dedalus{seq} at each timestep, but they do so in a manner slightly different than our standard persistence template.
-
-The use of sequences is often fairly canonical, so as a shorthand we provide the {\em sequence}
-macro, which takes three arguments (sequence name, a ``trigger'' predicate which, when true, 
-should cause the sequence to be incremented, and the trigger's arity) and expands them to a pair 
-of definitions of a unary predicate like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}.
+behavior in all models \wrm{thsi might confuse people without precise definitions}.
 
 \subsubsection{Queues}
 
 \paa{shorten this section}
 While sequences are useful constructs for generating or imposing an ordering on tuples, programs will in some cases require that tuples
-are processed in a particular (partial) order associated with specific timesteps.   To this end, we introduce a queue template, which employs 
-inductive persistence and aggregate functions in rule heads to process tuples according to a data-dependent order, rather than as a set.
-
-Aggregate functions simplify our discussion of queues.  Mumick and Shmueli observe correspondences in the expressivity of Datalog with stratified negation and stratified aggregation functions~\cite{mumickshmueli}.  Adding aggregation to our language does not affect its expressive power, but is useful for writing natural constructs for distributed computing including queues and ordering.  
-
-In \lang we will allow
-aggregate functions $\rho_1 - \rho_n$ to appear
-in the head of a deductive rule of the form:
-
-%%\dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
-
-\begin{dedalus}
-p($A_1, \ldots, A_n, \rho_1(A_{n+1}), \ldots, \rho_m(A_{n+m})) \leftarrow$
-\end{dedalus}
-%%\linebreak
-
-\hspace{5mm}
-$q_1$
-\begin{dedalus}
-($A_1, \ldots, A_{n}, A_{n+1}), \ldots, q_m(A_1, \ldots, A_{n}, A_{n+m}$);
-\end{dedalus}
-
-According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$ --- akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.
-
-
+are processed in a particular (partial) order.  To this end, we introduce a queue template, which employs 
+inductive persistence and aggregate functions in rule heads to process tuples according to a data-dependent order, rather than as a set.  Aggregate functions simplify our discussion of queues.  
 
 Consider a predicate \dedalus{priority\_queue} that represents a series of tasks to be performed in some predefined order.  Its attributes are a string representing a user, a job, and an integer
 indicating the priority of the job in the queue:
@@ -266,61 +219,53 @@ delete m\_priority\_queue(A, B, C) \(\leftarrow\)
 
 Under such a queueing discipline, deductive rules that depend on
 \dedalus{priority\_queue} are constrained to consider only min-priority tuples at each timestep
-per value of the variable \textbf{A}, thus implementing a per-user FIFO
+per value of the variable \textbf{A}, thus implementing a per-user \wrm{whats a user?} FIFO
 discipline.  To enforce a global FIFO ordering over \dedalus{priority\_queue}, we
 may redefine \dedalus{omin} and any dependent rules to exclude the \textbf{A}
 attribute.
 
 A queue establishes a mapping between \lang's timesteps
 and the priority-ordering attribute of the input relation. By doing so, we take advantage of the monotonic property of timestamps to enforce an ordering property over our input that is otherwise 
-very difficult to express in a logic language.  We return to this idea in our discussion of temporal ``entanglement'' Section~\ref{sec:entangle}.
+very difficult to express in a logic language.  
+We return to this idea in our discussion of temporal ``entanglement'' Section~\ref{sec:entangle}.  \wrm{improve hte connection with entanglement}
 
 \wrm{greco and zaniolo also have a take on priority queues.  cite them here.}
 
-\subsection{Asynchrony}
-
-
-\paa{do I belong in foundations?}
-The choice construct will capture the non-determinism of multiple communicating agents in a distributed system, but we want to use it in a stylized way to model typical notions of distribution.  To this end \lang adopts the ``horizontal partitioning'' convention introduced by Loo et al.\ and used in many subsequent efforts~\cite{Loo:2005}.
-To represent a distributed system, we consider some number of agents,
-each running a copy of the same program against a disjoint subset ({\em
-  horizontal partition}) of each predicate's contents.  We require one
-attribute in each predicate to be used to identify the
-partitioning for tuples in that predicate. We call such an
-attribute a {\em location specifier}, and prefix it with a
-\dedalus{\#} symbol in Dedalus.
-
-Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  We now proceed to our model of the asynchrony of this communication, which is captured in a syntactic constraint on the heads of communication rules.
-
-As a syntactic constraint of \lang, the {\em communication rules} introduced in the previous section (rules that differ in head and body location specifiers) are required to be asynchronous.
-This restricts our model of communication between agents in two important ways.
-First, by restricting bodies to a single agent, the only communication
-modeled in \lang occurs via communication rules.  Second, because
-all communication rules are asynchronous, agents may only learn about
-time values at another agent by receiving messages (with unbounded
-delay) from that agent.  Note that this model says nothing about the
-relationship between the agents' clocks; they could be
-non-monotonically increasing, or they could respect a global order.
-
 \subsubsection{Entanglement}
 \label{sec:entangle}
-Consider the asynchronous rule below:
+It is sometimes necessary to {\em entangle} the \dedalus{successor} relation with attributes
+other than the time suffix, for example to express unbounded sequences, or to establish
+a global order (such as through Lamport Clocks).  Consider the asynchronous rule below:
 
 \begin{Dedalus}
 p(A, B, N)@async \(\leftarrow\)
   q(A, B)@N;
 \end{Dedalus}
 \noindent
+
 Due to the \dedalus{async} keyword in the rule head, each \emph{p} tuple will take some unspecified time suffix value.
 Note however that the time suffix $N$ of the rule body appears also in an attribute of \emph{p} other than the time suffix, recording a 
 binding of both the time value of the deduction and the time value of its consequence.  We call such a binding
 an \emph{entanglement}.   Note that in order
-to write the rule it was necessary to not sugar away the time suffix in the rule body.  
+to write the rule it is necessary to not sugar away the time suffix in the rule body.  
 
-Entanglement is a powerful construct.  It allows a rule
-to reference the logical clock time of the deduction that produced one
-(or more) of its subgoals; this supports protocols that reason about partial ordering of time across machines.  More generally, it exposes the infinite \dedalus{successor} relation to attributes other than the time suffix, allowing us to express concepts such as infinite sequences.
+\subsubsection{Sequences}
+One may represent a sequence--an object that maintains a monotonically increasing a counter value--with a pair of inductive rules.  One rule increments the current counter value when some condition is 
+true, while the other persists the value of the sequence when the condition is false.  We can capture the increase
+of the sequence value without using arithmetic, by entangling \dedalus{successor}:
 
+\begin{Dedalus}
+seq(B)@next \(\leftarrow\) seq(A), successor(A,B), event(_);  
+seq(A)@next \(\leftarrow\) seq(A), \(\lnot\)event(_);
+\end{Dedalus}
+
+\noindent
+Note that these two rules produce only a single value of \dedalus{seq} at each timestep -- assuming that the sequence was originally instantiated with a single value -- but they do so in a manner slightly different than our standard persistence template.
+
+The use of sequences is often fairly canonical, so as a shorthand we provide the {\em sequence}
+macro, which takes three arguments (sequence name, a ``trigger'' predicate which, when true, 
+should cause the sequence to be incremented, and the trigger's arity) and expands them to a pair 
+of definitions of a unary predicate like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}.
 
 \subsubsection{Lamport Clocks}
 \label{sec:lamport}
@@ -330,6 +275,7 @@ This section explains how to implement Lamport
 clocks~\cite{timeclocks} atop \lang, which allows programs to ensure
 temporal monotonicity by reestablishing a causal order
 despite derivations that flow backwards through time.
+\wrm{we haven't yet introduced stratification and all that.  maybe there's some better way to write the above, like ``it is often nice to have a global partial order for X reasons''.  then later, we can say ``aha! a majorly important utility of a global partial order is to avoid contradiction.}
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
 rewriting it to:
@@ -342,17 +288,18 @@ p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
 \end{Dedalus}
 \noindent
 we place the derived tuple in a new relation \dedalus{p\_wait} that
-stores any tuples that were ``sent from the future'' with their sending time ``entangled''; these tuples stay in the \dedalus{p\_wait} predicate  until the point in
+stores any tuples that were ``sent from the future,'' according to their entangled time; these tuples stay in the \dedalus{p\_wait} predicate until the point in
 time at which they were derived.  Conceptually, this causes the system
 to evaluate a potentially large number of timesteps (if N is
 significantly less than the timestamp of the system when the tuple
 arrives).  However, if the runtime is able to efficiently evaluate
 timesteps when the database is quiescent, then
 instead of ``waiting'' by evaluating timesteps, it will simply
-increase its logical clock to match that of the sender.  In contrast,
+increase its logical clock to match that of the sender.  \wrm{don't think we need to be getting into the efficiency of evaluation of the language this early...} In contrast,
 if the tuple is ``sent into the future,'' then it is processed using
 the timestep that receives it.
 
+\wrm{yes!  we delete the above thing about efficiency, and just keep the below}
 This manipulation of timesteps and clock values is equivalent to
 conventional descriptions of Lamport clocks, except that our Lamport
 clock implementation effectively ``advances the clock'' by preventing derivations until the clock is sufficiently advanced, by temporarily store incoming tuples
