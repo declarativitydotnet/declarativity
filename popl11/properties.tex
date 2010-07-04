@@ -112,7 +112,7 @@ models, as models of the same program with different {\em async} rule applicatio
 
 \paa{I don't know how to say this 'at infinity' stuff; I am back at max...}
 \begin{definition}
-Consider the stable model $M$ resulting from a fixpoint evaluation of a \lang program P over a finite input trace.  The \emph{ultimate model} $U$ of $M$ is the model obtained by selecting only the tuples of $M$ with the highest timestamp in $M$, dropping the timestamp attribute,
+Consider a stable model $M$ resulting from a fixpoint evaluation of a \lang program P over a finite input trace.  The \emph{ultimate model} $U$ of $M$ is the model obtained by selecting only the tuples of $M$ with the highest timestamp in $M$, dropping the timestamp attribute,
 and removing duplicate tuples.
 \end{definition}
 \wrm{i think we want to say ``the maximum timestamp is the timestamp at which the program is forever quiescent'' or something}
@@ -160,6 +160,9 @@ depends upon an {\em async} derivation, is never really closed.
 
 \paa{identification of monotonic components that cross network boundaries}
 
+The previous section showed that it is quite simple to conservatively test whether a program
+is confluent: it suffices to show that it is monotonic and that any asychrony is guarded with
+persistence rules.
 In practice, however, programs that monotonically accumulate information and never \emph{do} 
 anything with it are rare in the distributed systems domain.  Summarization of state in 
 general will imply universal quantification over that state, whether it involves aggregation (e.g., computing a sum), negation (e.g., asserting that some fact does \emph{not} hold because 
@@ -168,7 +171,22 @@ location, and in \lang, such constructs can only be expressed with syntactically
 nonmonotonic constructs.  
 
 The utility of syntactic monotonicity checks lies in the ability to identify monotonic 
-\emph{components} of a nonmonotonic program.
+\emph{components} of a nonmonotonic program.  Stratification already divides
+a Datalog program into an ordered list of such monotonic components, separated by 
+nonmonotonic constructs like negation.  Within each such component or \emph{stratum}, rules
+may be evaluated without ordering or coordination, but the strata must be evaluated in order and 
+\emph{sealed} before downstream strata that depend nonmonotonically on them may 
+begin evaluation.  
+
+Our use of choice in asynchronous rules uses (ambiguous) negation to represent indeterminacy
+in timestamp assignment by entailing a multiplicity of models, and hence on the surface
+represents a stratum boundary in the global
+program.  Under this naive interpretation, communication always occurs between, and never
+within, monotonic program components: that is to say, communication always occurs at a 
+coordination boundary, and it is not safe to process messages off the wire unless the 
+computation that produced them is complete.  To avoid this undesirable barrier, and allow 
+pipelining of the results of an ongoing computation across network (and hence temporal)
+boundaries, 
 
 
 \paa{below are notes}
