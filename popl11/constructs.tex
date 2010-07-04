@@ -154,12 +154,13 @@ of $B$ with $A$:
 log(A, B)@next \(\leftarrow\) log(A, B);
 log(A, B)@next \(\leftarrow\) condition(A, B), \(\lnot\)log(A, _);
 \end{Dedalus}
+%%\subsection{``At Most Once'' event relations}
 
-
-
-\subsection{``At Most Once'' event relations}
-
-
+Committed choice uses a fundamentally nonmonotonic construct -- self-negation --
+to ``seal'' the value of $B$ such that ``future'' insertions into {\em condition} cannot
+cause new rows with the same $A$ value to be inserted.  But perhaps surprisingly,
+``closing a world'' in this fashion ensures that {\em log} has strictly monotonic 
+behavior in all models.
 
 \subsection{Sequences}
 One may represent a database sequence---an object that retains and monotonically increases a counter value---with a pair of inductive rules.  One rule increments the current counter value when some condition is 

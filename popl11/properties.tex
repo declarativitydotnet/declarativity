@@ -129,7 +129,7 @@ minimal model of the Datalog program obtained by converting all {\em async} rule
 rules introduce nondeterminism into the time suffixes of predicates in any particular model, 
 the inductive persistence of all predicates ensures that for some value of the time suffixes, 
 all deductions that can be made will be made, and the program's monotonicity ensures that
-no deductions will ever be retracted.  
+no deductions will ever be retracted.   \paa{oh brother}
 
 It is easy to see that nonmonotonic programs are not necessarily confluent even when all
 predicates are persisted.  In the program shown below (which excludes for the sake of space 
@@ -137,8 +137,8 @@ basic persistence rules for all predicates), the nondeterminism implied by the {
 definitions of {\em p} and {\em q} leads to different ultimate models for the same EDB
 (valuations of {\em e} and {\em f}), precisely because {\em p} and {\em q} tuples do not
 commute given that {\em q} appears in a negated subgoal.  All the orderings in which {\em p}
-precedes {\em q} lead to models in which {\em r} holds, while in the other orderings the subgoal
-$\lnot q(A)$ fails and produces models with {\em r} false.
+precedes {\em q} lead to models in which {\em r(1, 2)} holds, while in the other orderings the subgoal
+$\lnot q(A)$ fails and produces models with {\em r(1, 2)} false.
 
 \begin{Dedalus}
 r(A, B) \(\leftarrow\) 
@@ -146,6 +146,10 @@ r(A, B) \(\leftarrow\)
 
 q(A)@async :- e(A);
 p(A, B)@async :- f(A, B);
+
+e(1)@10;
+f(1, 2)@4;
+f(3, 4)@11; 
 \end{Dedalus} 
 
 In either case, nonmontonic reasoning (which is easily spotted in a logic program)
