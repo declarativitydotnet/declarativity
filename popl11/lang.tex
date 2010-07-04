@@ -22,7 +22,7 @@ Contradictions are usually undesirable in logic programming.  Unfortunately, det
 
 %choice
 
-We are only interested in a subset of programs of the latter type: programs with a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by \wrm{cite greco and zaniolo} as the \dedalus{choice} construct.  If one admits programs with choice, a different interpretation is required: one chooses one of the equivalent interpretations non-deterministicaly.  Typically, \dedalus{choice} itself violates the conservative checks described above.  Thus, we often must explicitly admit \dedalus{choice} after ruling out certain program with negation.
+We are only interested in a subset of programs of the latter type: programs with a multiplicity of solutions, where no solution has a contradiction.  This notion was formalized by \wrm{cite greco and zaniolo} as the \dedalus{choice} construct.  If one admits programs with choice, a different interpretation is required: one chooses one of the equivalent interpretations non-deterministically.  Typically, \dedalus{choice} itself violates the conservative checks described above.  Thus, we often must explicitly admit \dedalus{choice} after ruling out certain program with negation.
 
 
 Dedalus is a subset of Datalog$\lnot$ with \dedalus{choice}, and a single infinite relation \dedalus{successor} which forms the basis of a stratification condition we call {\em temporal stratification}.  

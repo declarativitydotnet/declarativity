@@ -4,9 +4,9 @@ blah blah blah
 
 \subsection{Temporal Stratification}
 
-In our earlier discussion of Datalog, we discussed the undesirability of a logical contradiction -- a situation where a fact depends on its own negation.  We avoid this in \lang by introducing a propety of programs called {\em temporal stratification}, defined in terms of a program's {\em predicate dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct predicate $P_i$ used in the program, and an edge $(N_i, N_j)$ if $P_i$ appears in the head of a rule with $P_j$ in its body.  The edge is anotated with a $\lnot$ if at least one rule with head $P_i$ has $\lnot P_j$ in its body.  The edge is anotated with a $+$ if all rules with head $P_i$ and $P_j$ in their bodies are either inductive or async.  A \lang program is {\em temporally stratifiable} if all loops in the PDG with an $\lnot$ edge also have a $+$ edge.
+In our earlier discussion of Datalog, we discussed the undesirability of a logical contradiction -- a situation where a fact depends on its own negation.  We avoid this in \lang by introducing a property of programs called {\em temporal stratification}, defined in terms of a program's {\em predicate dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct predicate $P_i$ used in the program, and an edge $(N_i, N_j)$ if $P_i$ appears in the head of a rule with $P_j$ in its body.  The edge is annotated with a $\lnot$ if at least one rule with head $P_i$ has $\lnot P_j$ in its body.  The edge is annotated with a $+$ if all rules with head $P_i$ and $P_j$ in their bodies are either inductive or async.  A \lang program is {\em temporally stratifiable} if all loops in the PDG with an $\lnot$ edge also have a $+$ edge.
 
-The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at some later time.  The careful reader will note that so far, we have not restricted asynchronous rules to prevent {\em time travel} -- a condition where an asynchronous rule gives rise to derivations that precede their antecedents in time.  While time travel is acceptable for programs where it cannot ever cause a contradiction (such as programs without negation), it is undesirable in general, as a fact may derive its own negation (intuitively, a ``temporal paradox.'')  Thus, an additional condition is required to exclude such contradictions.  However, we note that in a practical asynchronous distributed system, nodes are assumed to have their own clocks, which may run at any arbitrary speed.  Nodes assign a timestamp to an incoming fact that is greater than the timestamp of any existing fact.  Note that this condition excudes time travel.
+The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at some later time.  The careful reader will note that so far, we have not restricted asynchronous rules to prevent {\em time travel} -- a condition where an asynchronous rule gives rise to derivations that precede their antecedents in time.  While time travel is acceptable for programs where it cannot ever cause a contradiction (such as programs without negation), it is undesirable in general, as a fact may derive its own negation (intuitively, a ``temporal paradox.'')  Thus, an additional condition is required to exclude such contradictions.  However, we note that in a practical asynchronous distributed system, nodes are assumed to have their own clocks, which may run at any arbitrary speed.  Nodes assign a timestamp to an incoming fact that is greater than the timestamp of any existing fact.  Note that this condition excludes time travel.
 
 \begin{example}
 \label{ex:stratsafe}
@@ -107,7 +107,7 @@ distributed systems: the effects of delay, loss and reordering of messages. We w
 characterize a class of \lang programs that have the same semantics regardless of
 the nondeterminism in {\em async} rules.  We clearly cannot rely on naive equality of stable
 models, as models of the same program with different {\em async} rule applications will differ
-(at least) in the timstamps of tuples.
+(at least) in the timestamps of tuples.
 
 \paa{I don't know how to say this 'at infinity' stuff; I am back at max...}
 \begin{definition}
@@ -163,9 +163,9 @@ do not transit across async rules is order-independent \wrm{a queue doesn't invo
 are fundamentally unordered (well, order is hidden in the interpreter).  more substantively,
 we may say that by default, all event predicates (all predicates to a first approximation) 
 are order-dependent b/c the choice of timestamp determines all of their semantics.  
-can we restore order independence?  yes: perist the predicate.  now any tuple inserted will
+can we restore order independence?  yes: persist the predicate.  now any tuple inserted will
 "be there at infinity" -- the only ordering detail of semantic significance is now the 1st 
-timestamp of peristence.  and even this matters only when program logic is nonmonotonic. \wrm{you also need that the inputs are either transitively dependent on only EDB, or are persisted, right?}
+timestamp of persistence.  and even this matters only when program logic is nonmonotonic. \wrm{you also need that the inputs are either transitively dependent on only EDB, or are persisted, right?}
 
 a program with negation (aggregation, shipping, summarization) may decide at some time N
 that a predicate is false, and conclude stuff from it, only to have the predicate become
