@@ -80,7 +80,10 @@ parallelism~\cite{podskey}.  Instead of reasoning about the possible interleavin
 instructions or the serial order of message arrival as one must when writing threaded or 
 event-driven code, respectively, a distributed logic language allows the programmer to focus
 on the admissible, atomic transformations over state that can in general be carried out in
-parallel.
+parallel.  This inversion of concerns -- implicit concurrency and explicit order, instead of
+implicit order and explicit concurrency -- can both ease the programmer's cognitive burden as
+concurrency and parallelism increase, and help to highlight the hopefully few (but critical) 
+portions of a distributed algorithm for which order is essential to correctness. 
 
 Sometimes order -- ordering of data elements, as well as ordered computational steps -- 
 is required by an algorithm, and in a logic language this order by be explicitly specified and 
