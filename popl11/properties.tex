@@ -184,9 +184,19 @@ represents a stratum boundary in the global
 program.  Under this naive interpretation, communication always occurs between, and never
 within, monotonic program components: that is to say, communication always occurs at a 
 coordination boundary, and it is not safe to process messages off the wire unless the 
-computation that produced them is complete.  To avoid this undesirable barrier, and allow 
+computation that produced them is complete.  
+
+To avoid this undesirable barrier, and allow 
 pipelining of the results of an ongoing computation across network (and hence temporal)
-boundaries, 
+boundaries, we propose an extension of stratification analysis that identifies when 
+monotonic program components cross network boundaries. 
+
+\paa{the idea is simple: perform a normal stratification analysis, then collapse pairs of strata
+that are separated only b/c of an async rule (and it's implied NM choice expansion), when we can
+show that the async consequences are "protected" by a persistence rule.  the result is a new
+strata graph with fewer vertices, and some of whose vertices tolerate fully pipelined 
+communication in addition to parallel/unordered evaluation.}
+
 
 
 \paa{below are notes}
