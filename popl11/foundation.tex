@@ -6,35 +6,11 @@
 \subsection{Datalog}
 \label{sec:datalog}
 
-A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  In addition to atoms, a rule's body may also contain {\em dense~\paa{recall that 'dense' is not correct; it implies continuous} order constraints} \wrm{weird...  levy/sagiv et al refer to these as ``dense order constraints'', presumably to distinguish them from ``gap order constraints''??  anyway, the terminology appears to be ambiguosly used in the literature, maybe we should stick with ``order constraints'' } , $=, \geq, >, \leq < \neq$, which restrict the values of variables.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.  \paa{what happened to "if the right-hand side is true...?} \wrm{i took this out because it didn't flow.  i can stick it back later}
+A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  In addition to atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >, \leq < \neq$, which restrict the values of variables.  The way to read a Datalog rule is ``whenever the right-hand side is true, then the left hand side is true.''
 
-\wrm{say something like:  Traditionally, people doing data processing have found it useful to have shorthand for some commonly-used operations that associate a value with a set, called aggregates.  We allow {\em exemplary} aggregates, which cannot be used to expand the universe of constants.
-
-paste from constructs--
-
-Mumick and Shmueli observe correspondences in the expressivity of Datalog with stratified negation and stratified aggregation functions~\cite{mumickshmueli}.  Adding aggregation to our language does not affect its expressive power, but is useful for writing natural constructs for distributed computing including queues and ordering.  
-
-In \lang we will allow
-aggregate functions $\rho_1 - \rho_n$ to appear
-in the head of a deductive rule of the form:
-
-%%\dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
-
-\begin{dedalus}
-p($A_1, \ldots, A_n, \rho_1(A_{n+1}), \ldots, \rho_m(A_{n+m})) \leftarrow$
-\end{dedalus}
-%%\linebreak
-
-\hspace{5mm}
-$q_1$
-\begin{dedalus}
-($A_1, \ldots, A_{n}, A_{n+1}), \ldots, q_m(A_1, \ldots, A_{n}, A_{n+m}$);
-\end{dedalus}
-
-According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$ --- akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.}
+If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.
 
 In certain cases, a Datalog instance has a unique {\em model} \wrm{cite} -- a minimal set of facts in all predicates implied by the EDB given the program.  Adding netation to Datalog programs increases expressivity, but creates the possibility of two additional types of programs: programs with no model, i.e. programs with a {\em contradiction} -- a fact that depends on its own negation -- and programs that have a multiplicity of models \wrm{cite sacca and zaniolo}.  The computation of the model of a Datalog program is an iterative procedure, where each iteration determines new facts.  Datalog ensures termination of this procedure (and finiteness of the model) by guaranteeing finiteness of the universe of constants (for example: restrictions on functions).
-
 
 \subsubsection{Stratification}
 %Note that negation allows the specification of a program that is contradictory, such as $p(X) :- q(X), !p(X);$.  The reason for the contradiction is that given an EDB where \dedalus{p \cap q} is non-empty, each \dedalus{p} fact with a corresponding \dedalus{q} fact depends on its own negation (is simultaneousy both false and true).  
@@ -239,6 +215,21 @@ e(1, 2)@10;
 %%  e(A, B);
 \end{example}
 
+\subsubsection{Aggregates}
+As a shorthand for complex operations, one often admits {\em aggregation} into Datalog -- a special type of function that takes a set as input and computes a scalar output.  Mumick and Shmueli observe that adding stratified aggregation to Datalog does not affect its expressive power~\cite{mumickshmueli}.  In \lang we will allow aggregate functions $\rho_1 - \rho_n$ to appear in the head of a deductive rule of the form:
+
+\begin{dedalus}
+p($A_1, \ldots, A_n, \rho_1(A_{n+1}), \ldots, \rho_m(A_{n+m})) \leftarrow$
+\end{dedalus}
+%%\linebreak
+
+\hspace{5mm}
+$q_1$
+\begin{dedalus}
+($A_1, \ldots, A_{n}, A_{n+1}), \ldots, q_m(A_1, \ldots, A_{n}, A_{n+m}$);
+\end{dedalus}
+
+According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$ --- akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.}
 
 \subsection{Distribution, Asynchrony and Choice}
 \lang enables the modeling of {\em asynchronous} distributed systems.  A distributed system comprises multiple communicating agents, which are represented by identifiers.  \lang adopts the {\em horizontal partitioning} convention introduced by Loo et al.\ and used in many subsequent efforts~\cite{Loo:2005}, where all agents execute the same rules, but predicates are partitioned based on the value of the {\em location specifier}: a column of every relation that stores an agent's identifier.  We constrain \lang rules so that the location specifier variable in each body predicate be the same.  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  Note that by restricting bodies to a single agent, the only communication modeled in \lang occurs via communication rules.  Derivation of a fact with another agent's identifier implies sending the fact to the agent.  Syntactically, location specifiers are prefixed with a \dedalus{\#} symbol in Dedalus.
