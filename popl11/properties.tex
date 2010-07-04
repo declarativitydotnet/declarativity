@@ -180,10 +180,10 @@ begin evaluation.
 
 Our use of choice in asynchronous rules uses (ambiguous) negation to represent indeterminacy
 in timestamp assignment by entailing a multiplicity of models, and hence on the surface
-represents a stratum boundary in the global
+always represents a stratum boundary in the global
 program.  Under this naive interpretation, communication always occurs between, and never
 within, monotonic program components: that is to say, communication always occurs at a 
-coordination boundary, and it is not safe to process messages off the wire unless the 
+coordination boundary, and it is not safe to process messages ``off the wire'' unless the 
 computation that produced them is complete.  
 
 To avoid this undesirable barrier, and allow 
