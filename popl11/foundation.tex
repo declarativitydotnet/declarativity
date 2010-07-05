@@ -31,7 +31,7 @@ Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite \dedalus{time
 \subsubsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 
-Specifically, we restrict the admissible schemata and the form of rules with the four constraints that follow.
+Specifically, we restrict the admissible schemata \wrm{fix this} and the form of rules with the four constraints that follow.
 
 \noindent{\bf Schema: }We require that the final attribute of every \lang predicate range over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
@@ -89,7 +89,8 @@ q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), successor(\(\DT\), \(\DS\));
 \\
 asynchronous:
 \begin{Dedalus}
-q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)), choose(A,B,\(\DT\)), (\(\DS\)));
+r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
+   choose(A,B,\(\DT\)), (\(\DS\)));
 \end{Dedalus}
 \end{example}
 
@@ -152,12 +153,9 @@ introduce some syntactic ``sugar'' as follows:
 %predicate \\ $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots,
 %A_{n})@S$.
 %
-\item {\em Implicit time-suffixes in body predicates:} Since each body
-predicate of a well-formed rule has an existential variable $\DT$ in its
-time suffix, we optionally omit the time suffix from each body predicate and treat
+\item {\em Implicit time-suffixes in body predicates:} Since the binding pattern
+for time suffixes in a rule body is constrained, we omit the time suffix from each body predicate and treat
 it as implicit.
-%%\wrm{it's not a free variable unless there's only one body atom, right?  otherwise
-%%it's restricted because it appears in multiple atoms.}
 %
 \item {\em Temporal head annotation:} Since there are a finite number of binding
 possibilities (enumerated above) for the time suffix in a head predicate, we omit the time
@@ -169,7 +167,7 @@ while an asynchronous head predicate \dedalus{r} is of the form \dedalus{r($\ove
 \item {\em Timestamped facts:} For notational consistency, we write the time suffixes of facts in the EDB (which
 must be given as a constant) outside the predicate.  For example:
 
-\dedalus{r($A_1$,$A_2$,[...],$A_n$)@$\Consts$}
+\dedalus{r($\overline{A}$)@$\Consts$}
 
 %
 %\begin{enumerate}
@@ -203,7 +201,7 @@ q(A, B)@next \(\leftarrow\) e(A, B);
 \end{Dedalus}
 asynchronous:
 \begin{Dedalus}
-q(A, B)@async \(\leftarrow\) e(A, B);
+r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 fact:
 \begin{Dedalus}
