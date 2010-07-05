@@ -73,9 +73,9 @@ p\_neg($A_1,A_2,[...],A_n$);
 
 \noindent
 If, at any time $k$, we have a fact
-\dedalus{p\nega($\bar{C}$)@k}, then we do not deduce a
-\dedalus{p\pos($\bar{C}$)@k+1} fact.  By induction, we do not
-deduce a \dedalus{p\pos($\bar{C}$)@j} fact for any $j > k$, unless
+\dedalus{p\nega($\overline{C}$)@k}, then we do not deduce a
+\dedalus{p\pos($\overline{C}$)@k+1} fact.  By induction, we do not
+deduce a \dedalus{p\pos($\overline{C}$)@j} fact for any $j > k$, unless
 this \dedalus{p\pos} fact is re-derived at some timestep $j > k$ by another
 rule.  This corresponds to the intuition that a persistent fact, once stated,
 is true until it is retracted.
@@ -115,11 +115,11 @@ Mutable persistence rules enable {\em updates}.  For some time $\DT$, an
 update is any pair of facts:
 
 \begin{dedalus}
-p\nega($\bar{C})@\DT;$
+p\nega($\overline{C})@\DT;$
 \end{dedalus}
 
 \begin{dedalus}
-p\pos($\bar{D})@\DT+1$;
+p\pos($\overline{D})@\DT+1$;
 \end{dedalus}
 
 
