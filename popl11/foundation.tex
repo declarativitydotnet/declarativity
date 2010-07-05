@@ -6,7 +6,7 @@
 \subsection{Datalog}
 \label{sec:datalog}
 
-A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0$(\bf{$X_0$}) :- $p_1$(\bf{$X_1$}), ..., $p_j$(\bf{$X_j$}), $!p_j+1$(\bf{$X_{j+1}$}), ..., $!p_k$(\bf{$X_k$});}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of \dedalus{\bf{$X_0$}, ..., \bf{$X_k$}} are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  In addition to atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >, \leq < \neq$, which restrict the values of variables.  The way to read a Datalog rule is ``whenever the right-hand side is true, then the left hand side is true.''
+A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0(\overline{X_0})$ :- $p_1(\overline{X_1})$, ..., $p_j(\overline{X_j})$, $!p_{j+1}(\overline{X_{j+1}})$, ..., $!p_k(\overline{X_k})$;}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  In addition to atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >, \leq < \neq$, which restrict the values of variables.  The way to read a Datalog rule is ``whenever the right-hand side is true, then the left hand side is true.''
 
 If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.
 
@@ -66,7 +66,7 @@ value $\DT$; that is, the body contains \dedalus{$\DS$ = $\DT$}.
 $\DT$; that is, the body contains \dedalus{successor($\DT$, $\DS$)}.
 %
 \item The rule is said to be {\em asynchronous} if $\DS$ is unrelated to $\DT$;
-that is, the body contains \dedalus{time($\DS$), choose(($\bar{A}$), ($\DS$))}, where $\bar{A}$ is the set of variables occuring in the body, incuding $\DT$.
+that is, the body contains \dedalus{time($\DS$), choose(($\overline{A}$), ($\DS$))}, where $\overline{A}$ is the set of variables occuring in the body, incuding $\DT$.
 \end{enumerate}
 
 We will study the utility of these three types of rules later: systems in general only require recourse to order for mutable state and communication.  Inductive and asynchronous rules model each of these cases respectively.  Deductive rules enable embarassingly parallel execution of all other aspects of distributed systems. \wrm{eliding negation within a timestamp here}
@@ -99,12 +99,12 @@ $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the s
 as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
 
 \begin{dedalus}
-r\pos($\bar{A}$,\(\DS\)) \(\leftarrow\)
+r\pos($\overline{A}$,\(\DS\)) \(\leftarrow\)
 \end{dedalus}
 
 \hspace{5mm}
 \begin{dedalus}
-   r($\bar{A}$,\(\DT\)), \(S\)=\(\DT\);
+   r($\overline{A}$,\(\DT\)), \(S\)=\(\DT\);
 \end{dedalus}
 
 That is, for every extensional predicate \dedalus{r} there is an intensional
@@ -163,8 +163,8 @@ it as implicit.
 possibilities (enumerated above) for the time suffix in a head predicate, we omit the time
 suffix from the head---and its relevant constraints from the body---and
 instead attach an identifier to the head predicate of each temporal rules, to indicate the change in
-time suffix.  A temporal head predicate \dedalus{r} is of the form: \dedalus{r($\bar{A}$)@next},
-while an asynchronous head predicate \dedalus{r} is of the form \dedalus{r($\bar{A}$)@async}.
+time suffix.  A temporal head predicate \dedalus{r} is of the form: \dedalus{r($\overline{A}$)@next},
+while an asynchronous head predicate \dedalus{r} is of the form \dedalus{r($\overline{A}$)@async}.
 
 \item {\em Timestamped facts:} For notational consistency, we write the time suffixes of facts in the EDB (which
 must be given as a constant) outside the predicate.  For example:
