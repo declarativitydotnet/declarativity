@@ -6,7 +6,7 @@
 \subsection{Datalog}
 \label{sec:datalog}
 
-A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0(\overline{X_0})$ :- $p_1(\overline{X_1})$, ..., $p_j(\overline{X_j})$, $!p_{j+1}(\overline{X_{j+1}})$, ..., $!p_k(\overline{X_k})$;}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  In addition to atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >, \leq < \neq$, which restrict the values of variables.  The way to read a Datalog rule is ``whenever the right-hand side is true, then the left hand side is true.''
+A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is a first-order logical formula, of the following form: \dedalus{$p_0(\overline{X_0})$ :- $p_1(\overline{X_1})$, ..., $p_j(\overline{X_j})$, $!p_{j+1}(\overline{X_{j+1}})$, ..., $!p_k(\overline{X_k})$;}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em predicates} (each predicate has a fixed arity).  Predicates that appear on the left-hand side of some rule in the program are called {\em intensional} predicates -- the rest are called {\em extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of arguments (existentially quantified variables or constants).  An application of a predicate to a list of arguments is called an {\em atom} (note that predicates are of a fixed arity).  The single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and the set of atoms to the right is the rule's {\em body}.  In addition to atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >, \leq, <, \neq$, which restrict the values of variables.  The way to read a Datalog rule is ``whenever the right-hand side is true, then the left hand side is true.''
 
 If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.
 
@@ -28,7 +28,7 @@ See~\cite{greedychoice} for the details on how \dedalus{choice} is expanded into
 \subsection{\lang}
 Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite \dedalus{time} relation $(\mathbb{N} \cup \top)$, and a \dedalus{successor} relation, which is isomorphic to $+1$ on $\mathbb{N}$.  Intuitively, $\top$ is meant to model the time {\em never}.  We will see later how \dedalus{successor} forms the basis of a stratification condition that we call {\em temporal stratification}.
 
-\subsection{Syntactic Restrictions}
+\subsubsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 
 Specifically, we restrict the admissible schemata and the form of rules with the four constraints that follow.
@@ -120,7 +120,7 @@ Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rul
 \noindent{\bf Guarded EDB: }
 No well-formed \lang rule may involve any extensional predicate, except for a rule of the form above.
 
-\subsection{Abbreviated Syntax and Temporal Interpretation}
+\subsubsection{Abbreviated Syntax and Temporal Interpretation}
 
 \label{sec:abbrvsyntax}
 
