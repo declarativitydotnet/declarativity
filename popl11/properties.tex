@@ -6,7 +6,7 @@ In our earlier discussion of Datalog, we discussed the undesirability of a logic
 
 The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at some later time.  The careful reader will note that so far, we have not restricted asynchronous rules to prevent {\em time travel} -- a condition where an asynchronous rule gives rise to derivations that precede their antecedents in time.  While time travel is acceptable for programs where it cannot ever cause a contradiction (such as programs without negation), it is undesirable in general, as a fact may derive its own negation (intuitively, a ``temporal paradox.'')  Thus, an additional condition is required to exclude such contradictions.
 %~\paa{in asynchronous programs}
-However, we note that in a practical asynchronous distributed system, nodes are assumed to have their own clocks, which may run at any arbitrary speed.  Nodes assign a timestamp to an incoming fact that is greater than the timestamp of any existing fact.  Note that this condition excludes time travel in any possible execution.
+However, we note that in a practical asynchronous distributed system, nodes are assumed to have their own clocks, which may run at any arbitrary speed \wrm{move this defnition of async distr system earlier}.  Nodes assign a timestamp to an incoming fact that is greater than the timestamp of any existing fact.  Note that this condition excludes time travel in any possible execution.
 
 \begin{example}
 \label{ex:stratsafe}
