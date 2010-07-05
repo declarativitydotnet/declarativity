@@ -76,7 +76,9 @@ which does not contain the events that (for one moment) caused the derivation of
 
 We conjecture that logic languages are a better fit for the specification of concurrent and distributed systems than traditional imperative approaches.  In imperative languages, whose instructions are built up from applications of a sequencing primitive and whose state is commonly stored in data structures like lists and trees, ordering is implicit and ubiquitous, 
 while concurrency is achieved by duplicating the sequential control structures and allowing them
-to run in an interleaved fashion \wrm{what about concurrent data structures?  maybe we cut the ``concurrency is achieved...'' and replace it with ``the programmer must take specific steps to achieve concurrency''}.  In contrast, declarative language constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
+to run in an interleaved fashion.
+%\wrm{what about concurrent data structures?  maybe we cut the ``concurrency is achieved...'' and replace it with ``the programmer must take specific steps to achieve concurrency''}.   whoops -- thought you said "data structures" instead of "control structures"
+In contrast, declarative language constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
 parallelism~\cite{podskey}.  Instead of reasoning about the possible interleavings of sequential
 instructions or the serial order of message arrival as one must when writing threaded or 
 event-driven code, respectively, a distributed logic language allows the programmer to focus
