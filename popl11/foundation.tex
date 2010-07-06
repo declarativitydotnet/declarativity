@@ -10,6 +10,11 @@ A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule} is
 
 If the head predicate also appears in the rule's body, the rule is called {\em recursive}.  If an atom's argument list is solely comprised of constants, it is called a {\em fact}.  A possibly empty set of facts for the extensional predicates is known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a program together with an EDB.
 
+\wrm{reminder: talk about tuples, traces, relations}
+\wrm{talk about non-monotonicity in terms of universal quantification
+Non-monotonic operations in general imply universal quantification, such as aggregation (e.g., computing a sum) and negation
+(determining the non-existence of a fact).}
+
 In certain cases, a Datalog instance has a unique {\em model} \wrm{cite} -- the minimal set of facts in intensional predicates implied by the EDB given the program, or the intensional data base ({\em IDB}).  Adding netation to Datalog programs increases expressivity, but creates the possibility of two additional types of programs: programs with no model, i.e. programs with a {\em contradiction} -- a fact that depends on its own negation -- and programs that have a multiplicity of models \wrm{cite sacca and zaniolo}.  The computation of the model of a Datalog program is an iterative procedure, where each iteration determines new facts.  Datalog ensures termination of this procedure (and finiteness of the model) by guaranteeing finiteness of the universe of constants (for example: restrictions on functions).  A Datalog program is called {\em monotonic} if the addition of facts to the EDB never causes facts from the IDB to be retracted.
 
 \subsubsection{Stratification}
