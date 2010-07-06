@@ -55,5 +55,18 @@ Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key am
 \emph{event creation vs.\ effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
 the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao2009}.
 
+\subsection{Greedy Algorithms in Datalog}
+
+Work in expressing centralized greedy algorithms in
+Datalog~\cite{greedybychoice} introduces {\em stage variables}, which may be
+arguments to predicates; stage variables are akin to our time suffixes.  The
+paper also defines {\em stage stratification}, similar to our {\em temporal
+stratification}, and implements a number of constructs such as priority queues
+using stage-stratified queries with \dedalus{choice}.  Intuitively,
+\dedalus{choice} is used to establish a per-queue one-to-one mapping between
+dequeued elements and stages, and one can modify the usage of \dedalus{choice}
+to affect the order of dequeueing.  We note that their solution is not targeted
+at distributed algorithms.
+
 
 %%%Further background: \cite{constructivism,prz,tdccp,tccp}
