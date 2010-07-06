@@ -1,15 +1,43 @@
 \section{Case Study: Shopping Carts}
 
-In this section, we build an app with replicated state, and reason about the degree to which
-it is ``eventually consistent.'' 
-\wrm{do we want to introduce ``determinism'' earlier, and explain that eventual consistency is a subset of this more generic notion?}  
-In common usage, a system with replicated state is considered to be ``eventually consistent'' 
+In applications with replicated state, one often speaks about {\em eventual
+consistency}.  Broadly, a system with replicated state is eventually consistent
 if the following conditions are met:
 
 \begin{enumerate}
-\item Replication is \emph{asynchronous}, in that servers and clients do not wait until global consistency is established.  It follows from this requirement that such systems are ``coordination-free,'' as in general coordination entails synchrony. \wrm{need to define coordination earlier}
-\item If at some time messaging quiesces and all messages are delivered, all replicas will have the same state.
+%
+\item If at some time the system quiesces and all messages are delivered, all
+replicas will have the same state.
+%
+\item Replication of state is \emph{asynchronous}: servers and clients do not
+need to wait, or coordinate, to achieve the first condition.
+%It follows from this requirement that such systems are ``coordination-free,''
+%as in general coordination entails synchrony.
+%
 \end{enumerate}
+
+It is not hard to see that eventually consistent programs are a subset of
+confluent programs.  First, if coordination is disallowed, then the program
+must be monotonic -- thus, commutative.  Second, the program must be
+associative, because two replicas, one where a pair of messages is received in
+a single timestamp, and one not, must achieve the same answer.
+
+In this section, we build a shopping cart application with replicated state,
+and reason about the degree to which it is ``eventually consistent.''
+%In common usage, a system with replicated state is considered to be
+%``eventually consistent'' if the following conditions are met:
+
+%\begin{enumerate}
+%
+%\item Replication is \emph{asynchronous}, in that servers and clients do not
+%wait until global consistency is established.  It follows from this
+%requirement that such systems are ``coordination-free,'' as in general
+%coordination entails synchrony. \wrm{need to define coordination earlier}
+%
+%\item If at some time messaging quiesces and all messages are delivered, all
+%replicas will have the same state.
+%
+%\end{enumerate}
 
 \subsection{Straw Man}
 
