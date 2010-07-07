@@ -3,7 +3,10 @@
 
 \lang is related to Datalog$\lnot$~\cite{ullmanbook}, hereinafter referred to
 as Datalog.  Datalog is first order logic enhanced with a {\em least-fixpoint
-operator}.  Below, we provide a brief review of Datalog, and subsequently
+operator}.  
+\paa{Datalog doesn't have a LFP 'operator' -- it implies LFP with syntactic recursion.
+you mean it's equivalent to FO(LFP)?}
+Below, we provide a brief review of Datalog, and subsequently
 detail our language in terms of Datalog.
 
 \subsection{Datalog}
@@ -28,7 +31,8 @@ atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >,
 \leq, <, \neq$, which restrict the values of variables.  The way to read a
 Datalog rule is ``for each satisfying assignment of constants to variables on
 the right-hand side, derive a corresponding fact in the left-hand side
-predicate.''
+predicate.'' \paa{why quoted?  also -- "for each assignment of the body, given the 
+model -- right?}
 
 If the head predicate also appears in the rule's body, the rule is called {\em
 recursive}.  If an atom's argument list is solely comprised of constants, it is

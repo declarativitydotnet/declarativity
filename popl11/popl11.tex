@@ -99,7 +99,11 @@
 %
 Imperative programming languages are {\em ordered} by default, and often
 require programmers to explicitly duplicate sequential control structures to
-support parallelism.  Unfortunately, much of this order is {\em false order} --
+support parallelism. 
+\paa{I think 'concurrency' is the core issue that is addressed by our contribution.
+'parallelism' is a correllary -- right?
+Unfortunately, much of this order is {\em false order} --
+\paa{why false?  the point is it's overspecified in the order domain.}
 order that is not semantically meaningful to the computation, or obscures
 opportunities for parallelism.  We argue for an inversion in design -- parallel
 by default, and programmer-defined order only when required for correctness.
