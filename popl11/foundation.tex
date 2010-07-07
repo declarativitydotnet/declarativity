@@ -34,7 +34,9 @@ If the head predicate also appears in the rule's body, the rule is called {\em
 recursive}.  If an atom's argument list is solely comprised of constants, it is
 called a {\em fact}, {\em tuple}, or {\em row}.  A possibly empty set of facts
 for the extensional predicates is known as an {\em EDB} or extensional data
-base.  A Datalog {\em instance} is a program together with an EDB.
+base.  A Datalog {\em instance} is a program together with an EDB.  All
+constants in the EDB are contained in the {\em universe of constants} of the
+instance.
 
 \subsubsection{Aggregation}
 
@@ -67,8 +69,12 @@ model, i.e. programs with a {\em contradiction} -- a fact that depends on its
 own negation -- and programs that have a multiplicity of
 models~\cite{sacca-zaniolo}.  The computation of the model of a Datalog program
 is an iterative procedure, where each iteration determines new facts.  Datalog
-ensures termination of this procedure (and finiteness of the model) by
-guaranteeing finiteness of the universe of constants (for example: restrictions
+ensures termination of this procedure -- and finiteness of the model -- by
+guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
+by ensuring the EDB is finite, and restricting the use of constructs that can
+expand the universe of constants such as non-exemplary functions.
+
+(for example: restrictions
 on functions).  A Datalog program is called {\em monotonic} if the addition of
 facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
 programs that exclude negation and aggregation are monotonic; the presence of
@@ -137,25 +143,29 @@ programs that violate the stratification condition.
 \subsection{\lang}
 
 Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite
-\dedalus{time} relation $(\mathbb{N} \cup \top)$, and a \dedalus{successor}
-relation, which is isomorphic to $+1$ on $\mathbb{N}$.  Intuitively, $\top$ is
-meant to model the time {\em never}.  We will see later how \dedalus{successor}
-forms the basis of a stratification condition that we call {\em temporal
-stratification}.
+\dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
+%$(\mathbb{N} \cup \top)$
+relation, which is isomorphic to $+1$ on $\mathbb{N}$.  If we wish to model
+possible message loss, we may admit a special element $\top$ into
+\dedalus{time}.  We exclude message loss in this paper to simplify the
+discussion, by implicitly assuming that some protocol exists between the client
+and server to ensure reliable delivery.  \wrm{timers? cite overlog? boom?}
+%Intuitively, $\top$ is meant to model the time {\em never}.
+We will see later how \dedalus{successor} forms the basis of a stratification
+condition that we call {\em temporal stratification}.
 
 \subsubsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 
-Specifically, we restrict the admissible schemata \wrm{fix this} and the form
-of rules with the four constraints that follow.
+Specifically, we restrict the forom of predicates and rules in the following ways:
 
-\noindent{\bf Schema: }We require that the final attribute of every \lang
+\noindent{\bf Time Suffix: }We require that the final attribute of every \lang
 predicate range over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
 We refer to this attribute as the \emph{time suffix} of the corresponding
-predicate.
+predicate, and we speak of the {\em timestamp} of a fact.
 
-\noindent{\bf Time Suffix: }
+\noindent{\bf Unification on Time: }
 %$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
 %our restrictions concern the well-formedness of \dedalus rules.
 %\begin{definition}
@@ -194,10 +204,10 @@ incuding $\DT$.
 We will study the utility of these three types of rules later: systems in
 general only require recourse to order for mutable state and communication.
 Inductive and asynchronous rules model each of these cases respectively.
-Deductive rules enable embarassingly parallel execution of all other aspects of
-distributed systems. \wrm{eliding negation within a timestamp here}
+%Deductive rules enable embarassingly parallel execution of all other aspects of
+%distributed systems.
 
-Usage of $S$ or $T$ outside of the timestamp attributes is known as {\em
+Usage of $S$ or $T$ outside of the time suffixes is known as {\em
 entanglement}.  We will revisit this powerful construct in~\ref{sec:entangle}. 
 
 \wrm{we can cut this example if we're short on space}
@@ -223,7 +233,7 @@ r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
 
 \noindent{\bf Positive and Negative Predicates: }
 For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
-$P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same schema
+$P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same arity
 as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
 
 \begin{dedalus}
@@ -280,19 +290,22 @@ introduce some syntactic ``sugar'' as follows:
 %predicate \\ $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots,
 %A_{n})@S$.
 %
-\item {\em Implicit time-suffixes in body predicates:} Since the binding pattern
-for time suffixes in a rule body is constrained, we omit the time suffix from each body predicate and treat
-it as implicit.
-%
-\item {\em Temporal head annotation:} Since there are a finite number of binding
-possibilities (enumerated above) for the time suffix in a head predicate, we omit the time
-suffix from the head---and its relevant constraints from the body---and
-instead attach an identifier to the head predicate of each temporal rules, to indicate the change in
-time suffix.  A temporal head predicate \dedalus{r} is of the form: \dedalus{r($\overline{A}$)@next},
-while an asynchronous head predicate \dedalus{r} is of the form \dedalus{r($\overline{A}$)@async}.
+\item {\em Implicit time-suffixes in body predicates:} Since the binding
+pattern for time suffixes in a rule body is constrained, we omit the time
+suffix from each body predicate and treat it as implicit.
 
-\item {\em Timestamped facts:} For notational consistency, we write the time suffixes of facts in the EDB (which
-must be given as a constant) outside the predicate.  For example:
+\item {\em Temporal head annotation:} Since there are a finite number of
+binding possibilities (enumerated above) for the time suffix in a head
+predicate, we omit the time suffix from the head---and its relevant constraints
+from the body---and instead attach an identifier to the head predicate of each
+temporal rules, to indicate the change in time suffix.  A temporal head
+predicate \dedalus{r} is of the form: \dedalus{r($\overline{A}$)@next}, while
+an asynchronous head predicate \dedalus{r} is of the form
+\dedalus{r($\overline{A}$)@async}.
+
+\item {\em Timestamped facts:} For notational consistency, we write the
+timestamps of facts in the EDB outside the predicate.  Note that timestamps
+must be constants.  For example:
 
 \dedalus{r($\overline{A}$)@$\Consts$}
 
@@ -362,7 +375,12 @@ may be lost or arbitrarily delayed, and a receiver cannot infer that a message
 will never be sent based solely on his non-receipt of the message.  To this
 end, we require that any communication rules be \dedalus{@async} rules.
 
-\wrm{however, in this paper we assume bounded message delivery time, in other words top is ruled out of time. (note that this can be ensured in logic by admitting timers and doing retries)}
+We call the set of facts, including their timestamps, derived by communication
+rules during a particular execution a {\em trace} of the program.  It is easy
+to see that each {\em trace} is associated with exactly one model of the
+program.
+
+%\wrm{however, in this paper we assume bounded message delivery time, in other words top is ruled out of time. (note that this can be ensured in logic by admitting timers and doing retries)}
 
 %Note that this model says nothing about the
 %relationship between the agents' clocks; they could be
@@ -396,5 +414,5 @@ end, we require that any communication rules be \dedalus{@async} rules.
 %%Since an extensional relation may not appear in a rule's head, events come from
 %%sources external to the evaluation of the \lang instance.
 
-\wrm{define trace}
+%\wrm{define trace}
 

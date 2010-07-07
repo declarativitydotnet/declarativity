@@ -152,33 +152,70 @@ p_{n+1}$; informally, earlier values do not depend on later values.
 
 Next we consider the issue of infinite results.  In Datalog, programs with
 infinite results are traditionally ruled out, as Datalog's evaluation
-algorithms fail to terminate on such programs.  Similarly, for \lang, we desire
-to rule out programs that fail to terminate, given any bounded number of
-messages.  We can apply a result of Chomicki et al. \wrm{cite} to prove that
-using traditional Datalog-style safety restrictions (no functions, no
-entanglement, finite EDB, range-restricted variables), we can always
-efficiently compute a {\em partial fixpoint} of a \lang program.  A partial
-fixpoint includes all {\em convergent} (forever persisted) derivations, and
-excludes all {\em nonconvergent} (nonpersistent, or nontrivially periodic
-derivations).  Other work has proposed the use of infinite objects to represent
-nonconvergent derivations \wrm{cite chomicki}.  Additionally, \wrm{cite}
-presents conservative syntactic conditions to guarantee the non-existence of
-nontrivially periodic derivations in a program for all EDBs.
+algorithms fail to terminate on such programs.  Similarly, for \lang, we want
+to somehow constrain programs that fail to terminate, given any bounded trace.
+Given a finite universe of constants -- i.e., restricting entanglement and
+non-exemplary aggregates -- it is clear that modulo time, a \lang program can
+only compute a finite model.  The only possible termination issue then is that
+a set of facts may exhibit {\em non-convergence}: oscillation in time.  Given
+that the finiteness of the universe implies finite period of oscillation, we
+can either compute a finite representation of these non-convergent derivations
+in the style of Chomicki et al.~\cite{chomicki-infinite} or a {\em partial
+fixpoint}~\cite{abiteboul-vianu}, which regards non-convergent derivations as
+false.
+
+If finiteness of the univese cannot be guaranteed, we can fall back on
+conservative syntactic conditions presented in~\cite{dedalus-techr} that
+guarantee the existence of a finite model.
+
+In the general case, we are not interested in the full model of a trace of an
+instance: facts that are only ephemorally true represent events, or
+intermediate computations, which intuitively should not be considered as part
+of the output of the program.  We are only interested in the program's {\em
+ultimate model} -- the eventual contents of the simply persisted relations
+(ignoring timestamps).
+
+%\begin{definition}
+%
+%The eventual model of a Dedalus instance is the eventual contents of the simply
+%persisted relations (ignoring timestamps)
+%
+%\end{definition}
+
+
+%guarantee the non-existence of
+%nontrivially periodic derivations in a program for all EDBs.
+%But what
+%exactly is the result of a \lang program?  For Datalog programs, the result is
+%the program's model.  However, in \lang, the program's model includes 
+
+%We can apply a result of Chomicki et al. \wrm{cite} to prove that
+%using traditional Datalog-style safety restrictions (no functions, no
+%entanglement, finite EDB, range-restricted variables), we can always
+%efficiently compute a {\em partial fixpoint} of a \lang program.  A partial
+%fixpoint includes all {\em convergent} (forever persisted) derivations, and
+%excludes all {\em nonconvergent} (nonpersistent, or nontrivially periodic
+%derivations).  Other work has proposed the use of infinite objects to represent
+%nonconvergent derivations \wrm{cite chomicki}.  Additionally, \wrm{cite}
+%presents conservative syntactic conditions to guarantee the non-existence of
+%nontrivially periodic derivations in a program for all EDBs.
 
 \subsection{Properties of Asynchronous Derivations}
 
-Having ensured that there will always exist finite models of \lang programs,
-given finite input, we now turn to a problem that is specific to the domain of
-asynchronous distributed systems: the effects of delay, loss and reordering of
-messages. We would like to characterize a class of asynchronous \lang programs
-that are deterministic in the face of this non-determinism.  We clearly cannot
-rely on equality of models over all time, as models of the same program with
-different {\em async} rule applications will likely differ (at least) in the
-timestamps of tuples.  However, we would like to say that these differences do
-not matter, and define determinism based on the {\em eventual} equivalence of
-models at some timestamp.
+Having ensured that the finiteness of the ultimate model for any trace of a
+finite \lang instance, we now turn to a problem that is specific to the domain
+of asynchronous distributed systems: the effects of delay
+%,loss
+and reordering of messages. We would like to characterize a class of
+asynchronous \lang programs that are deterministic in the face of this
+non-determinism.
+%We clearly cannot rely on equality of models over all time, as models of the
+%same program with different {\em async} rule applications will likely differ
+%(at least) in the timestamps of tuples.  However, we would like to say that
+%these differences do not matter, and define determinism based on the {\em
+%eventual} equivalence of models at some timestamp.
 
-\begin{definition}
+%\begin{definition}
 %Consider a stable model $M$ resulting from a fixpoint evaluation of a \lang
 %program P over a finite input trace.  In other words, we may obtain the
 %eventual model of a \lang execution from one of its stable models by {\em
@@ -187,19 +224,19 @@ models at some timestamp.
 %ultimate model, we say that the program and trace are \emph{trace confluent},
 %and if a program is trace confluent for all EDBs we say that the program is
 %\emph{confluent}.
-The \emph{eventual model} of a \lang instance is the eventual contents of the
-simply persisted relations (ignoring timestamps).
+%The \emph{eventual model} of a \lang instance is the eventual contents of the
+%simply persisted relations (ignoring timestamps).
 %
-\end{definition}
+%\end{definition}
 
-Every safe \lang program has a finite eventual model, and there is a well-known
-decision procedure for calculating the model \wrm{cite chomikci, partial
-fixpoint stuff}. \wrm{In practice, due to magic sets, this isn't horribly
-inefficient}~\cite{magic} If all traces \wrm{define trace} of a a \lang
-instance produce the same ultimate model, then we call the instance {\em trace
-confluent}.  If every instance of a program is trace confluent, then we say the
-program is {\em confluent}.  Note that every non-contradictory Datalog program
-without \dedalus{choice} is confluent.
+%Every safe \lang program has a finite eventual model, and there is a
+%well-known decision procedure for calculating the model \wrm{cite chomikci,
+%partial fixpoint stuff}. \wrm{In practice, due to magic sets, this isn't
+%horribly inefficient}~\cite{magic}
+If all traces of a a \lang instance produce the same ultimate model, then we
+call the instance {\em trace confluent}.  If every instance of a program is
+trace confluent, then we say the program is {\em confluent}.  Note that every
+non-contradictory Datalog program without \dedalus{choice} is confluent.
 
 \wrm{this para sounds a bit wishy washy.  but if we can say that ``assoc + comm
 '' == deterministic, or point to a proof of this, then we can just say
@@ -411,4 +448,4 @@ explaining why this test is good.  that paragraph isn't coming to me now...}
 
 %um, idempotence.
 \wrm{idempotence}
-%um, efficient lazy evaluation?  \cite{magic}
+um, efficient lazy evaluation?  \cite{magic}
