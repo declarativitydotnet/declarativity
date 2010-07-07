@@ -98,30 +98,32 @@
 \begin{abstract} 
 %
 Imperative programming languages are {\em ordered} by default, and often
-require programmers to explicitly duplicate sequential control structures to
-support parallelism. 
-\paa{I think 'concurrency' is the core issue that is addressed by our contribution.
-'parallelism' is a correllary -- right?
-Unfortunately, much of this order is {\em false order} --
-\paa{why false?  the point is it's overspecified in the order domain.}
-order that is not semantically meaningful to the computation, or obscures
-opportunities for parallelism.  We argue for an inversion in design -- parallel
-by default, and programmer-defined order only when required for correctness.
-To this end, we propose \lang, a {\em logic} language, and study it in the
-context of distributed asynchronous systems. \lang is based on the well-studied
+require programmers to explicitly implement concurrency, such as through
+duplication of sequential control structures.
+%concurrency.  \paa{I think 'concurrency' is the core issue that is addressed
+%by our contribution.  'parallelism' is a correllary -- right?}
+Unfortunately, this programming style leads to an overspecification of order,
+much of which %much of this order is {\em overspecified} --
+%\paa{why false?  the point is it's overspecified in the order domain.}
+may obscure parallelism, or not be semantically meaningful to the computation
+%, or obscures parallelism. 
+We argue for an inversion in design -- parallel by default, and
+programmer-defined order only when required for correctness.  To this end, we
+propose \lang, a {\em logic} language, and study it in the context of
+distributed asynchronous systems. \lang is based on the well-studied
 Datalog~\cite{ullmanbook} language, which exposes a single operator to the user
 -- {\em logical implication}, and a single data structure -- the set.
 
 We observe that broadly, recourse to order is only needed to express two
 features of asynchronous systems: {\em mutable state} and deterministic results
-in the face of {\em asynchrony}, or non-determinism in temporal order.  To this
-end, we build a library of ordered constructs in \lang that encode a variety of
-useful ordered structures.  We also extend static analyses from the Datalog
-domain, including a surprisingly powerful analysis that can indicate locations
-in the program where a programmer may need to enforce order to maintain
-determinism in the face of asynchrony.  We illustrate the benefits of our
-proposed programming style through a case study of a shopping cart application
-with replicated state.
+in the face of {\em asynchrony}, or non-determinism in temporal order.  We
+build a library of ordered constructs in \lang that encode a variety of useful
+ordered structures.  We also extend static analyses from the Datalog domain,
+including a surprisingly powerful analysis that can indicate locations in the
+program where a programmer may need to enforce order to maintain determinism in
+the face of asynchrony.  We illustrate the benefits of our proposed programming
+style through a case study of a shopping cart application with replicated
+state.
 
 %and require programmers to explicitly specify exclude order to support parallelism.  Well-known prior work has equated various computational complexity classes with logics, implying a correspondence between computation and deduction.  In logic, certain formulas may lead to contradictions, such as $p$ if $\lnot p$.  We observe that adding a notion of {\em order} to such formulas prevents the contradiction, by explicitly excluding coincidence of $p$ and $\lnot p$.  However, a large class of logical statements are non-contradictory even in the absence of order.  We propose a programming paradigm where computation is unordered (embarassingly parallel) by default, and conservative syntactic checks force the imposition of order to avoid contradiction.  
 
