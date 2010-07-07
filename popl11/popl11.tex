@@ -97,54 +97,82 @@
 
 \begin{abstract} 
 %
-\wrm{Imperative programming languages are {\em ordered} by default, and require programmers to explicitly specify exclude order to support parallelism.  Well-known prior work has equated various computational complexity classes with logics, implying a correspondence between computation and deduction.  In logic, certain formulas may lead to contradictions, such as $p$ if $\lnot p$.  We observe that adding a notion of {\em order} to such formulas prevents the contradiction, by explicitly excluding coincidence of $p$ and $\lnot p$.  However, a large class of logical statements are non-contradictory even in the absence of order.  We propose a programming paradigm where computation is unordered (embarassingly parallel) by default, and conservative syntactic checks force the imposition of order to avoid contradiction.  
+Imperative programming languages are {\em ordered} by default, and often
+require programmers to explicitly duplicate sequential control structures to
+support parallelism.  Unfortunately, much of this order is {\em false order} --
+order that is not semantically meaningful to the computation, or obscures
+opportunities for parallelism.  We argue for an inversion in design -- parallel
+by default, and programmer-defined order only when required for correctness.
+To this end, we propose \lang, a {\em logic} language, and study it in the
+context of distributed asynchronous systems. \lang is based on the well-studied
+Datalog~\cite{ullmanbook} language, which exposes a single operator to the user
+-- {\em logical implication}, and a single data structure -- the set.
 
-We observe that broadly, recourse to order is only needed to model two features of asynchronous systems: {\em mutable state} and {\em asynchrony}.  As asynchrony corresponds to non-determinism in order, this non-determinism may influence the results of the computation -- clearly an undesirable result if we wish to build asynchronous systems that are eventually deterministic (i mean Pete's confluence thing later).  Using \lang, we build many common abstractions for distributed systems, such as queues, etc.  We then compose these constructs to define programming styles that ensure determinism, and study this programming style in a case study of a shopping cart.}
+We observe that broadly, recourse to order is only needed to express two
+features of asynchronous systems: {\em mutable state} and deterministic results
+in the face of {\em asynchrony}, or non-determinism in temporal order.  To this
+end, we build a library of ordered constructs in \lang that encode a variety of
+useful ordered structures.  We also extend static analyses from the Datalog
+domain, including a surprisingly powerful analysis that can indicate locations
+in the program where a programmer may need to enforce order to maintain
+determinism in the face of asynchrony.  We illustrate the benefits of our
+proposed programming style through a case study of a shopping cart application
+with replicated state.
 
+%and require programmers to explicitly specify exclude order to support parallelism.  Well-known prior work has equated various computational complexity classes with logics, implying a correspondence between computation and deduction.  In logic, certain formulas may lead to contradictions, such as $p$ if $\lnot p$.  We observe that adding a notion of {\em order} to such formulas prevents the contradiction, by explicitly excluding coincidence of $p$ and $\lnot p$.  However, a large class of logical statements are non-contradictory even in the absence of order.  We propose a programming paradigm where computation is unordered (embarassingly parallel) by default, and conservative syntactic checks force the imposition of order to avoid contradiction.  
 
+%We observe that broadly, recourse to order is only needed to model two features
+%of asynchronous systems: {\em mutable state} and {\em asynchrony}.  As
+%asynchrony corresponds to non-determinism in order, this non-determinism may
+%influence the results of the computation -- clearly an undesirable result if we
+%wish to build asynchronous systems that are eventually deterministic (i mean
+%Pete's confluence thing later).  Using \lang, we build many common abstractions
+%for distributed systems, such as queues, etc.  We then compose these constructs
+%to define programming styles that ensure determinism, and study this
+%programming style in a case study of a shopping cart.}
 
-Recent research has explored using Datalog-based
-languages to express a distributed system as a set of logical
-invariants~\cite{boom-eurosys,loo-sigmod06}.  Two properties of distributed
-systems proved difficult to model in Datalog.  First, the state of any such system
-evolves with its execution.  Second, deductions in these systems may be
-arbitrarily delayed, dropped, or reordered by the unreliable network links
-they must traverse.  Previous efforts addressed the former by extending
-Datalog to include updates, key constraints, persistence and events, and
-the latter by assuming ordered and reliable delivery while ignoring delay.
-These details have a semantics outside Datalog, which increases the complexity of
-the language or its interpretation, and forces programmers to
-think operationally.  We argue that the missing component from these previous
-languages is a notion of {\em time}.
+%Recent research has explored using Datalog-based
+%languages to express a distributed system as a set of logical
+%invariants~\cite{boom-eurosys,loo-sigmod06}.  Two properties of distributed
+%systems proved difficult to model in Datalog.  First, the state of any such system
+%evolves with its execution.  Second, deductions in these systems may be
+%arbitrarily delayed, dropped, or reordered by the unreliable network links
+%they must traverse.  Previous efforts addressed the former by extending
+%Datalog to include updates, key constraints, persistence and events, and
+%the latter by assuming ordered and reliable delivery while ignoring delay.
+%These details have a semantics outside Datalog, which increases the complexity of
+%the language or its interpretation, and forces programmers to
+%think operationally.  We argue that the missing component from these previous
+%languages is a notion of {\em time}.
 
-In this paper we present {\bf \lang}, a foundation language for programming and
-reasoning about distributed systems.  \lang reduces to a subset of
-Datalog~\cite{ullmanbook} with negation, aggregate functions, successor and
-choice \wrm{cite?}.  \lang also admits an explicit representation of logical
-time.
+%In this paper we present {\bf \lang}, a foundation language for programming and
+%reasoning about distributed systems.  \lang reduces to a subset of
+%Datalog~\cite{ullmanbook} with negation, aggregate functions, successor and
+%choice \wrm{cite?}.  \lang also admits an explicit representation of logical
+%time.
 %
-We show that \lang provides a declarative foundation for the two signature
-features of distributed systems: mutable state, and asynchronous processing and
-communication.  
+%We show that \lang provides a declarative foundation for the two signature
+%features of distributed systems: mutable state, and asynchronous processing and
+%communication.  
 %%Given these two features, we address three important properties
 %%of programs in a domain-specific manner: a notion of {\em safety} appropriate
 %%to non-terminating computations, {\em stratified} monotonic reasoning with
 %%negation over time, and efficient evaluation over time via a simple execution
 %%strategy.  
-Given these features, we illustrate how powerful verification techniques from the
-Datalog literature may be preserved or reinterpreted in the new domain, including 
-conservative syntactic checks for a notion of {\em safety} appropriate to 
-non-terminating computation, and {\em stratified} monotonic reasoning with negation 
-over time.
+%Given these features, we illustrate how powerful verification techniques from the
+%Datalog literature may be preserved or reinterpreted in the new domain, including 
+%conservative syntactic checks for a notion of {\em safety} appropriate to 
+%non-terminating computation, and {\em stratified} monotonic reasoning with negation 
+%over time.
 %%We also provide conservative syntactic checks for our temporal
 %%notions of safety and stratification.  
-We also explore the use of similar static analysis techniques to verify properties unique 
-to systems with asynchronous communication, including commutativity and idempotence
-of in-flight messages.
-Our experience implementing
-full-featured systems in variants of Datalog suggests that \lang is well-suited
-to the specification of rich distributed services and protocols, and provides
-both cleaner semantics and richer tests of correctness.
+%We also explore the use of similar static analysis techniques to verify properties unique 
+%to systems with asynchronous communication, including commutativity and idempotence
+%of in-flight messages.
+%Our experience implementing
+%full-featured systems in variants of Datalog suggests that \lang is well-suited
+%to the specification of rich distributed services and protocols, and provides
+%both cleaner semantics and richer tests of correctness.
 
 \end{abstract}
 
