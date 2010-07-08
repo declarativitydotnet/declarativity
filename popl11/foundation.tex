@@ -153,11 +153,14 @@ programs that violate the stratification condition.
 Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite
 \dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
 %$(\mathbb{N} \cup \top)$
-relation, which is isomorphic to $+1$ on $\mathbb{N}$.  If we wish to model
-possible message loss, we may admit a special element $\top$ into
-\dedalus{time}.  We exclude message loss in this paper to simplify the
-discussion, by implicitly assuming that some protocol exists between the client
-and server to ensure reliable delivery.  \wrm{timers? cite overlog? boom?}
+relation, which is isomorphic to $+1$ on $\mathbb{N}$.  The intuition behind
+\lang's \dedalus{successor} relation is that it models the passage of logical
+time.  In our discussion, we will say that facts with lower time suffixes occur
+``before'' atoms with higher ones.  If we wish to model possible message loss,
+we may admit a special element $\top$ into \dedalus{time}.  We exclude message
+loss in this paper to simplify the discussion, by implicitly assuming that some
+protocol exists between the client and server to ensure reliable delivery.
+\wrm{timers? cite overlog? boom?}
 %Intuitively, $\top$ is meant to model the time {\em never}.
 We will see later how \dedalus{successor} forms the basis of a stratification
 condition that we call {\em temporal stratification}.
@@ -288,8 +291,7 @@ No well-formed \lang rule may involve any extensional predicate, except for a ru
 % rules are {\em temporal}---their consequents are defined to
 %be true ``at a different time'' than their antecedents. 
 
-To simplify \lang notation for this typical interpretation, we
-introduce some syntactic ``sugar'' as follows:
+To simplify \lang notation, we introduce some syntactic ``sugar'' as follows:
 
 \begin{itemize}
 %

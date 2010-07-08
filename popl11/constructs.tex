@@ -1,4 +1,4 @@
-\section{State in Logic}
+\section{Order in Logic}
 \label{sec:stateupdate}
 
 %%\linebreak
@@ -10,30 +10,42 @@ University~\cite{scheme}.}
 %
 \end{quote} 
 
-Given our definition of \lang, we now address the persistence and mutability
-of data across time: a signature feature of distributed systems---and systems
-in general---for which we provide a model-theoretic foundation.
+%Recall that by an event, we mean a \lang fact.
+%The transitive consequences
+%(via deductive rules) of events are likewise events and hold atomically in the
+%same timestep with their premises.  However, 
 
-The intuition behind \lang's \dedalus{successor} relation is that it models the
-passage of (logical) time.  In our discussion, we will say that facts with
-lower time suffixes occur ``before'' atoms with higher ones.  The constraints
-we imposed on \lang rules restrict how deductions may be made with respect to
-time.  First, rules may only refer to a single time suffix variable in their
-body, and hence {\em cannot join across different ``timesteps''}.  Second,
-rules may specify deductions that occur concurrently with their ground facts,
-\wrm{define ground fact somewhere} in the next timestep, or at some arbitrary
-time, including times before their ground facts.
+In an asynchronous system, the programmer will in general not be able to
+predict when, or in what order, events arrive from other nodes.  Additionally,
+some events may need to be handled over time, requiring state-oriented motifs
+such as persistence and mutability.  In this section, we construct a library of
+\lang constructs to capture these two uses of order.
 
-This notion of time allows us to consider the contents of the EDB---and hence
-a model of an instance---with respect to an ``instant in time'': we simply
-bind the time suffixes ($\DT$) of all body predicates to a constant.  Because
-this produces a sequence of models (one per timestep), it gives us an intuitive
-and unambiguous way to declaratively express persistence and state changes
-across time.  In this section, we give examples of language constructs
-that capture state-oriented motifs such as persistent relations,
-deletion and update, sequences, and queues.
+%Given our definition of \lang, we now address the persistence and mutability
+%of data across time: a signature feature of distributed systems---and systems
+%in general.
+%---for which we provide a model-theoretic foundation.
 
-\subsection{Order}
+%The intuition behind \lang's \dedalus{successor} relation is that it models the
+%passage of (logical) time.  In our discussion, we will say that facts with
+%lower time suffixes occur ``before'' atoms with higher ones.  The constraints
+%we imposed on \lang rules restrict how deductions may be made with respect to
+%time.  First, rules may only refer to a single time suffix variable in their
+%body, and hence {\em cannot join across different ``timesteps''}.  Second,
+%rules may specify deductions that occur concurrently with their ground facts,
+%\wrm{define ground fact somewhere} in the next timestep, or at some arbitrary
+%time, including times before their ground facts.
+
+%This notion of time allows us to consider the contents of the EDB---and hence
+%a model of an instance---with respect to an ``instant in time'': we simply
+%bind the time suffixes ($\DT$) of all body predicates to a constant.  Because
+%this produces a sequence of models (one per timestep), it gives us an intuitive
+%and unambiguous way to declaratively express persistence and state changes
+%across time.  In this section, we give examples of language constructs
+%that capture state-oriented motifs such as persistent relations,
+%deletion and update, sequences, and queues.
+
+%\subsection{Order}
 
 %\subsubsection{Events}
 
@@ -42,13 +54,13 @@ deletion and update, sequences, and queues.
 %are  {\em events} \wrm{comment out, because we're defining events == facts
 %earlier} predicates which hold for exactly one timestep or fixpoint
 %computation.  
-Recall that by an event, we mean a \lang fact.  The transitive consequences
-(via deductive rules) of events are likewise events and hold atomically in the
-same timestep with their premises.  However, in an asynchronous system, the
-programmer will in general not be able to predict when events arrive from other
-nodes.  Additionally, some events may need to be handled over time, requiring
-their persistence.  In this section, we construct a library of \lang constructs
-to capture these two requirements for order.
+%Recall that by an event, we mean a \lang fact.  The transitive consequences
+%(via deductive rules) of events are likewise events and hold atomically in the
+%same timestep with their premises.  However, in an asynchronous system, the
+%programmer will in general not be able to predict when events arrive from other
+%nodes.  Additionally, some events may need to be handled over time, requiring
+%their persistence.  In this section, we construct a library of \lang constructs
+%to capture these two requirements for order.
 
 \subsubsection{Simple Persistence}
 %
