@@ -125,7 +125,7 @@ cart merging logic.
 Following this reasoning, if our implementation in \lang could be altered in such a way that
 {\em cart\_update} tuples commute with one another,  we could dispense with the total
 ordering of tuples.  Instead of replacing the opaque object as a read/write system would,
-we'd like to expose the (fundamentally commutative) operation of cart-union to distributed
+we'd like to expose the (fundamentally commutative) operation of cart-union to the distributed
 system.  If this logic were expressed as a user-defined function in the style of SQL databases,
 we could replace {\em r1} and {\em r2} above with:
 
