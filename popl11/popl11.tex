@@ -110,32 +110,35 @@
 %for correctness.  \paa{alternate text: 
 Distributed systems are traditionally implemented in imperative languages using
 a threaded or event-driven programming style, and inherit these languages'
-implicit ordering of both data and control structures.  Concurrency is achieved
-by duplication of sequential control structures, and reasoning about the
-behavior of such systems requires explicit consideration of the interleaving of
-instructions and the arrival order of messages.  We observe that in general
-such order is overspecified,
-%and not semantically meaningful
-and argue for an inversion of design for programming distributed systems:
+implicit ordering of both data and control structures.
+%Concurrency is achieved by duplication of sequential control structures, and
+%reasoning about the behavior of such systems requires explicit consideration
+%of the interleaving of instructions and the arrival order of messages.
+%Concurrency must be explicitly achieved through programmer intervention,
+We believe that much of this order is not meaningful to the overall goal that
+the programmer wants to achieve, and reasoning about it unnecessarily
+complicates the task of programming distributed systems.
+%because the abstractions exposed by imperative programming are inappropriate
+%for programming distributed systems.
+We argue for an inversion of design:
+%for programming distributed systems
 unordered and concurrent by default, with explicit, programmer-defined order
-only when 
-%order is
-required for correctness.  To this end, we propose \lang, a {\em logic}
-language, and study it in the context of distributed asynchronous systems.
-\lang is based on the well-studied Datalog~\cite{ullmanbook} language, which
-exposes a single operator to the user -- {\em logical implication}, and a
-single data structure -- the set.
+only when required for correctness.  To this end, we propose \lang, a {\em
+logic} language, and study it in the context of distributed asynchronous
+systems.  \lang is based on the well-studied Datalog~\cite{ullmanbook}
+language, which exposes a single operator---{\em logical implication}, and a
+single data structure---the set.
 
 In \lang, it is easy to observe that recourse to order is only needed to
 express two features of asynchronous systems: {\em mutable state} and
 deterministic results in the face of {\em asynchrony}, or non-determinism in
-temporal order.  We build a library of ordered constructs in \lang that encode
-a variety of useful ordered structures.  We also extend static analyses from
-the Datalog domain, including a surprisingly powerful analysis that can
-indicate locations in the program where a programmer may need to enforce order
-to maintain determinism in the face of asynchrony.  We illustrate the benefits
-of our proposed programming style through a case study of a shopping cart
-application with replicated state.
+temporal order.  To capture these uses of order, we build a library of ordered
+constructs in \lang, including persistence, queues, and Lamport clocks.  We
+also extend static analyses from the Datalog domain, including a surprisingly
+powerful analysis that can indicate locations in a program where a programmer
+may need to enforce order to maintain determinism in the face of asynchrony.
+We illustrate the benefits of our proposed programming style through a case
+study of a shopping cart application with replicated state.
 
 %and require programmers to explicitly specify exclude order to support parallelism.  Well-known prior work has equated various computational complexity classes with logics, implying a correspondence between computation and deduction.  In logic, certain formulas may lead to contradictions, such as $p$ if $\lnot p$.  We observe that adding a notion of {\em order} to such formulas prevents the contradiction, by explicitly excluding coincidence of $p$ and $\lnot p$.  However, a large class of logical statements are non-contradictory even in the absence of order.  We propose a programming paradigm where computation is unordered (embarassingly parallel) by default, and conservative syntactic checks force the imposition of order to avoid contradiction.  
 
