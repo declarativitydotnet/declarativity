@@ -117,7 +117,7 @@ contradiction if all {\em derivations} are acyclic.  Additional conditions,
 such as {\em local stratification}~\cite{local-strat}, {\em universal
 constraint stratification}~\cite{ross-syntactic}, {\em modular
 stratification}~\cite{modular}, and {\em weak stratification}~\cite{weak-strat}
-are inceasingly less conservative.  Later we will introduce our own condition,
+are increasingly less conservative.  Later we will introduce our own condition,
 {\em temporal stratification}, which allows such syntactic cycles as long as
 the program encodes the condition that \dedalus{p} occurs at a {\em later time}
 than \dedalus{\(\lnot\)p}.
@@ -131,7 +131,7 @@ asynchronous distributed systems.  The correspondence between multiple
 solutions and non-determinism was formalized by Sacc\`{a} and
 Zaniolo~\cite{sacca-zaniolo} as the \dedalus{choice} construct.  Intuitively,
 \dedalus{choice} allows the specification of a functional dependency in a rule.
-For example, \dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expesses that for
+For example, \dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expresses that for
 each value that variable \dedalus{X} takes on, variable \dedalus{Y} may only
 take on a single value.  If \dedalus{q} contains more than one \dedalus{Y}
 value for an \dedalus{X}, then the instance has multiple models: one
@@ -163,7 +163,7 @@ condition that we call {\em temporal stratification}.
 \subsubsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 
-Specifically, we restrict the forom of predicates and rules in the following ways:
+Specifically, we restrict the form of predicates and rules in the following ways:
 
 \noindent{\bf Time Suffix: }We require that the final attribute of every \lang
 predicate range over the \dedalus{time} domain.  
@@ -202,8 +202,8 @@ $\DT$; that is, the body contains \dedalus{successor($\DT$, $\DS$)}.
 %
 \item The rule is said to be {\em asynchronous} if $\DS$ is unrelated to $\DT$;
 that is, the body contains \dedalus{time($\DS$), choose(($\overline{A}$),
-($\DS$))}, where $\overline{A}$ is the set of variables occuring in the body,
-incuding $\DT$.
+($\DS$))}, where $\overline{A}$ is the set of variables occurring in the body,
+including $\DT$.
 %
 \end{enumerate}
 
