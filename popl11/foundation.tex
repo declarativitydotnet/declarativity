@@ -2,12 +2,12 @@
 \label{sec:lang}
 
 \lang is related to Datalog$\lnot$~\cite{ullmanbook}, hereinafter referred to
-as Datalog.  Datalog is first order logic enhanced with a {\em least-fixpoint
-operator}.  
-\paa{Datalog doesn't have a LFP 'operator' -- it implies LFP with syntactic recursion.
-you mean it's equivalent to FO(LFP)?}
-Below, we provide a brief review of Datalog, and subsequently
-detail our language in terms of Datalog.
+as Datalog.
+%Datalog is first order logic enhanced with a {\em least-fixpoint operator}.
+%\paa{Datalog doesn't have a LFP 'operator' -- it implies LFP with syntactic
+%recursion.  you mean it's equivalent to FO(LFP)?}
+Below, we provide a brief review of Datalog, and subsequently detail our
+language in terms of Datalog.
 
 \subsection{Datalog}
 \label{sec:datalog}
@@ -26,22 +26,24 @@ a predicate to a list of arguments is called an {\em atom}.  The same variable
 symbol may appear in multiple atoms -- in this case, we say that the the atoms
 are {\em unified} on the arguments that contain the duplicated variable.  The
 single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head},
-and the set of atoms to the right is the rule's {\em body}.  In addition to
-atoms, a rule's body may also contain the {\em order constraints}: $=, \geq, >,
-\leq, <, \neq$, which restrict the values of variables.  The way to read a
-Datalog rule is ``for each satisfying assignment of constants to variables on
-the right-hand side, derive a corresponding fact in the left-hand side
-predicate.'' \paa{why quoted?  also -- "for each assignment of the body, given the 
-model -- right?}
+and the set of atoms to the right is the rule's {\em body}.  If the head
+predicate also appears in the rule's body, the rule is called {\em recursive}.
+In addition to atoms, a rule's body may also contain the {\em order
+constraints}: $=, \geq, >, \leq, <, \neq$, which restrict the values of
+variables.  
+%\paa{why quoted?  also -- "for each assignment of the body, given the model --
+%right?}
 
-If the head predicate also appears in the rule's body, the rule is called {\em
-recursive}.  If an atom's argument list is solely comprised of constants, it is
-called a {\em fact}, {\em tuple}, or {\em row}.  A possibly empty set of facts
-for the extensional predicates is known as an {\em EDB} or extensional data
-base.  A Datalog {\em instance} is a program together with an EDB.  All
-constants in the EDB are contained in the {\em universe of constants} of the
-instance.
-
+The logical meaning of a Datalog rule is that for each satisfying assignment of
+constants to variables on the right-hand side, derive a corresponding
+assignment of constants in the left-hand side predicate.  An assignment of
+constants to all arguments in a predicate is known as a {\em fact}---also
+called a {\em tuple} or {\em row}---and we often speak of ``the facts in a
+predicate,'' meaning the satisfying assignment of constants to the predicate's
+arguments.  A possibly empty set of facts for the extensional predicates is
+known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a
+program together with an EDB.  All constants in the EDB are contained in the
+{\em universe of constants} of the instance.
 
 \subsubsection{Aggregation}
 
@@ -52,6 +54,7 @@ in both {\em exemplary} aggregates -- which return a value from the input set
 -- such as \dedalus{max} and \dedalus{min}, and {\em non-exemplary} aggregates
 like \dedalus{count}.
 \paa{doesn't this notation seem to mean that only one aggregate per rule is allowed?}
+\wrm{yes, but we only ever use one agg per rule in the paper}
 %In general, aggregation involves universal quantification over a set, thus it
 %is a non-monotonic construct.  Mumick and Shmueli observe that adding
 %stratified aggregation to Datalog does not affect its expressive
@@ -80,8 +83,7 @@ guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
 by ensuring the EDB is finite, and restricting the use of constructs that can
 expand the universe of constants such as non-exemplary functions.
 
-(for example: restrictions
-on functions).  A Datalog program is called {\em monotonic} if the addition of
+A Datalog program is called {\em monotonic} if the addition of
 facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
 programs that exclude negation and aggregation are monotonic; the presence of
 negation or aggregation may imply that the program is non-monotonic.
@@ -169,7 +171,8 @@ Specifically, we restrict the form of predicates and rules in the following ways
 predicate range over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
 We refer to this attribute as the \emph{time suffix} of the corresponding
-predicate, and we speak of the {\em timestamp} of a fact.
+predicate, and we speak of a the {\em timestamp} of a fact---we also refer to
+facts as {\em events}.
 
 \noindent{\bf Unification on Time: }
 %$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
@@ -302,16 +305,16 @@ suffix from each body predicate and treat it as implicit.
 
 \item {\em Temporal head annotation:} Since there are a finite number of
 binding possibilities (enumerated above) for the time suffix in a head
-predicate, we omit the time suffix from the head---and its relevant constraints
-from the body---and instead attach an identifier to the head predicate of each
-temporal rule, to indicate the change in time suffix.  A temporal \nrc{Don't you mean ``inductive'', not ``temporal''?} head
+predicate, we omit the time suffix from the head--and its relevant constraints
+from the body--and instead attach an identifier to the head predicate of each
+temporal rule, to indicate the change in time suffix.  An inductive head
 predicate \dedalus{r} is of the form: \dedalus{r($\overline{A}$)@next}, while
 an asynchronous head predicate \dedalus{r} is of the form
 \dedalus{r($\overline{A}$)@async}.
 
 \item {\em Timestamped facts:} For notational consistency, we write the
-timestamps of facts in the EDB outside the predicate.  Note that timestamps
-must be constants.  For example:
+timestamps of facts, in the EDB outside the
+predicate.  Note that timestamps must be constants.  For example:
 
 \dedalus{r($\overline{A}$)@$\Consts$}
 
@@ -377,9 +380,11 @@ Dedalus.
 
 We use choice to model the inherent nondeterminism associated with
 communication in {\em asynchronous} distributed systems.  For example, messages
-may be lost or arbitrarily delayed, and a receiver cannot infer that a message
-will never be sent based solely on his non-receipt of the message.\nrc{Sec 2.2 says that we don't discuss message loss in this paper.}  To this
-end, we require that any communication rules be \dedalus{@async} rules.
+may be arbitrarily delayed, and a receiver cannot infer that a message will
+never be sent based solely on his non-receipt of the message (it may arrive
+arbitrarily far in the future).
+%\nrc{Sec 2.2 says that we don't discuss message loss in this paper.}
+To this end, we require that any communication rules be \dedalus{@async} rules.
 
 We call the set of facts, including their timestamps, derived by communication
 rules during a particular execution a {\em trace} of the program.

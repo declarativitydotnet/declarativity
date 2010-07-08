@@ -1,8 +1,6 @@
 \section{State in Logic}
 \label{sec:stateupdate}
 
-\wrm{DINGDINGDINGDING: define events}
-
 %%\linebreak
 \begin{quote}
 %
@@ -13,8 +11,8 @@ University~\cite{scheme}.}
 \end{quote} 
 
 Given our definition of \lang, we now address the persistence and mutability
-of data across time: a signature feature of distributed systems -- and systems
-in general -- for which we provide a model-theoretic foundation.
+of data across time: a signature feature of distributed systems---and systems
+in general---for which we provide a model-theoretic foundation.
 
 The intuition behind \lang's \dedalus{successor} relation is that it models the
 passage of (logical) time.  In our discussion, we will say that facts with
@@ -22,11 +20,12 @@ lower time suffixes occur ``before'' atoms with higher ones.  The constraints
 we imposed on \lang rules restrict how deductions may be made with respect to
 time.  First, rules may only refer to a single time suffix variable in their
 body, and hence {\em cannot join across different ``timesteps''}.  Second,
-rules may specify deductions that occur concurrently with their ground facts or
-in the next timestep---in \lang, we rule out induction ``backwards'' in time.\nrc{@async rules allow backward inductions.}
+rules may specify deductions that occur concurrently with their ground facts,
+\wrm{define ground fact somewhere} in the next timestep, or at some arbitrary
+time, including times before their ground facts.
 
-This notion of time allows us to consider the contents of the EDB -- and hence
-a model of an instance -- with respect to an ``instant in time'': we simply
+This notion of time allows us to consider the contents of the EDB---and hence
+a model of an instance---with respect to an ``instant in time'': we simply
 bind the time suffixes ($\DT$) of all body predicates to a constant.  Because
 this produces a sequence of models (one per timestep), it gives us an intuitive
 and unambiguous way to declaratively express persistence and state changes
@@ -36,19 +35,20 @@ deletion and update, sequences, and queues.
 
 \subsection{Order}
 
-\subsubsection{Events}
+%\subsubsection{Events}
 
-All attributes in a Datalog fact must be fully instantiated with constants.
-Because every well-formed \lang predicate includes a timestamp, 
-all facts are  {\em events}:
-predicates which hold for exactly one timestep or fixpoint computation.  
-The transitive consequences (via deductive
-rules) of events are likewise events and hold atomically in the same timestep with their premises.
-Thus in asynchronous programs, while the programmer will in general not be able to control
-or predict when events occur, he can often use deductive rules to control which events co-occur.
-\paa{flaky}
-All \lang constructs are built from the basic primitive of events.
-
+%All attributes in a Datalog fact must be fully instantiated with constants.
+%Because every well-formed \lang fact includes a constant timestamp, all facts
+%are  {\em events} \wrm{comment out, because we're defining events == facts
+%earlier} predicates which hold for exactly one timestep or fixpoint
+%computation.  
+Recall that by an event, we mean a \lang fact.  The transitive consequences
+(via deductive rules) of events are likewise events and hold atomically in the
+same timestep with their premises.  However, in an asynchronous system, the
+programmer will in general not be able to predict when events arrive from other
+nodes.  Additionally, some events may need to be handled over time, requiring
+their persistence.  In this section, we construct a library of \lang constructs
+to capture these two requirements for order.
 
 \subsubsection{Simple Persistence}
 %
@@ -288,10 +288,9 @@ deduction and the time value of its consequence.  We call such a binding an
 not sugar away the time suffix in the rule body.  
 
 \subsubsection{Sequences}
-
-\wrm{Maybe somehow work in the fact that sequences are really about preserving
-an already-established order (at a sender) through asynchrony at the receiver.
-Connect to entanglement}
+%\wrm{Maybe somehow work in the fact that sequences are really about preserving
+%an already-established order (at a sender) through asynchrony at the receiver.
+%Connect to entanglement}
 
 One may represent a sequence--an object that maintains a monotonically
 increasing counter value--with a pair of inductive rules.  One rule
@@ -310,28 +309,29 @@ seq(A)@next \(\leftarrow\) seq(A), \(\lnot\)event(_);
 instantiated with a single value -- but they do so in a manner slightly
 different than our standard persistence template.
 
-The use of sequences is often fairly canonical, so as a shorthand we provide
-the {\em sequence} macro, which takes three arguments (sequence name, a
-``trigger'' predicate which, when true, should cause the sequence to be
-incremented, and the trigger's arity) and expands them to a pair of definitions
-of a unary predicate like the one defined above (e.g., \dedalus{sequence[seq,
-event, 1]}).
+Sequences are useful in general for preserving an established ordering on a set
+when communicating between nodes.  As a shorthand we provide the {\em sequence}
+macro, which takes three arguments (sequence name, a ``trigger'' predicate
+which, when true, should cause the sequence to be incremented, and the
+trigger's arity) and expands them to a pair of definitions of a unary predicate
+like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}).
 
 \subsubsection{Lamport Clocks}
 \label{sec:lamport}
-
-\wrm{Clean this up and make it jibe better with sec 5}
-
-Recall that \lang allows program executions to order message timestamps
-arbitrarily, violating intuitive notions of causality by allowing deductions to
-``affect the past.'' This section explains how to implement Lamport
-clocks~\cite{timeclocks} atop \lang, which allows programs to ensure temporal
-monotonicity by reestablishing a causal order despite derivations that flow
-backwards through time.  \wrm{we haven't yet introduced stratification and all
-that.  maybe there's some better way to write the above, like ``it is often
-nice to have a global partial order for X reasons''.  then later, we can say
-``aha! a majorly important utility of a global partial order is to avoid
-contradiction.}
+%\wrm{Clean this up and make it jibe better with sec 5}
+%Recall that asynchrony allows program executions to order message timestamps
+%arbitrarily, violating intuitive notions of causality by allowing deductions to
+%``affect the past.'' This section explains how to implement Lamport
+%clocks~\cite{timeclocks} atop \lang, which allows programs to ensure temporal
+%monotonicity by reestablishing a causal order despite derivations that flow
+%backwards through time.  \wrm{we haven't yet introduced stratification and all
+%that.  maybe there's some better way to write the above, like ``it is often
+%nice to have a global partial order for X reasons''.  then later, we can say
+%``aha! a majorly important utility of a global partial order is to avoid
+%contradiction.}
+It is often necessary to ensure some loose synchronization between clocks of
+different nodes in an asynchronous distributed system.  One way to do this is
+through Lamport clocks~\cite{timeclocks}.
 
 Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By rewriting it
 to:
@@ -346,27 +346,30 @@ p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
 \noindent we place the derived tuple in a new relation \dedalus{p\_wait} that
 stores any tuples that were ``sent from the future,'' according to their
 entangled time; these tuples stay in the \dedalus{p\_wait} predicate until the
-point in time at which they were derived.  Conceptually, this causes the system
-to evaluate a potentially large number of timesteps (if N is significantly less
-than the timestamp of the system when the tuple arrives).  However, if the
-runtime is able to efficiently evaluate timesteps when the database is
-quiescent, then instead of ``waiting'' by evaluating timesteps, it will simply
-increase its logical clock to match that of the sender.  \wrm{don't think we
-need to be getting into the efficiency of evaluation of the language this
-early...} In contrast, if the tuple is ``sent into the future,'' then it is
-processed using the timestep that receives it.
-
-\wrm{yes!  we delete the above thing about efficiency, and just keep the below}
+point in time at which they were derived.  
+%Conceptually, this causes the system to evaluate a potentially large number of
+%timesteps (if N is significantly less than the timestamp of the system when
+%the tuple arrives).  However, if the runtime is able to efficiently evaluate
+%timesteps when the database is quiescent, then instead of ``waiting'' by
+%evaluating timesteps, it will simply increase its logical clock to match that
+%of the sender.  \wrm{don't think we need to be getting into the efficiency of
+%evaluation of the language this early...} In contrast, if the tuple is ``sent
+%into the future,'' then it is processed using the timestep that receives it.
+%\wrm{yes!  we delete the above thing about efficiency, and just keep the
+%below}
 This manipulation of timesteps and clock values is equivalent to conventional
 descriptions of Lamport clocks, except that our Lamport clock implementation
 effectively ``advances the clock'' by preventing derivations until the clock is
 sufficiently advanced, by temporarily store incoming tuples in the
-\dedalus{p\_wait} relation.
+\dedalus{p\_wait} relation~\footnote{For ease of exposition, we elide one
+detail here: Lamport clocks rely upon a ``tie-breaking'' function to ensure
+that no two events have the same timestamp.  We can implement such a discipline
+using queues.}.
 
-We gloss over one detail here: Lamport clocks rely upon a ``tie-breaking''
-function to ensure that no two events have the same timestamp.  \wrm{why can't
-we just combo a Lamport clock with a priority queue?  i don't think we need
-choice here, so i commented it out.}
+
+%\wrm{why can't
+%we just combo a Lamport clock with a priority queue?  i don't think we need
+%choice here, so i commented it out.}
 %In \lang, such a function could be implemented via another use of
 %\dedalus{choice}, or by a program convention like appending a unique node
 %identifier to each timestamp to prevent ``ties.''
