@@ -105,7 +105,7 @@ duplication of sequential control structures.
 Unfortunately, this programming style leads to an overspecification of order,
 much of which %much of this order is {\em overspecified} --
 %\paa{why false?  the point is it's overspecified in the order domain.}
-may obscure parallelism, or not be semantically meaningful to the computation
+may obscure parallelism, or not be semantically meaningful to the computation.
 %, or obscures parallelism. 
 We argue for an inversion in design -- parallel by default, and
 programmer-defined order only when required for correctness.  
@@ -116,7 +116,7 @@ implicit ordering of both data and control structures.  Concurrency is achieved 
 duplication of sequential instructions, and reasoning about the behavior of such systems 
 requires explicit consideration of the interleaving of instructions and the arrival order of
 messages.  We observe that in general such order is overspecified and not semantically 
-meaninful, and argue for an inversion of design for programming distributed systems: unordered and concurrent by default, 
+meaningful, and argue for an inversion of design for programming distributed systems: unordered and concurrent by default, 
 with explicit, programmer-defined order only when order is required for correctness.
 }
 To this end, we
