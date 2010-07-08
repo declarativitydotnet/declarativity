@@ -141,7 +141,7 @@ non-deterministic choice of one of the models.
 
 See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
 into Datalog rules that employ cyclic negation.  Although \dedalus{choice}
-cannot cause a contradiction, its expansion is violates many stratification
+cannot cause a contradiction, its expansion violates many stratification
 conditions.  Thus, we often must explicitly admit programs with
 \dedalus{choice} after ruling out certain {\em unstratified} programs --
 programs that violate the stratification condition.
@@ -304,7 +304,7 @@ suffix from each body predicate and treat it as implicit.
 binding possibilities (enumerated above) for the time suffix in a head
 predicate, we omit the time suffix from the head---and its relevant constraints
 from the body---and instead attach an identifier to the head predicate of each
-temporal rules, to indicate the change in time suffix.  A temporal head
+temporal rule, to indicate the change in time suffix.  A temporal \nrc{Don't you mean ``inductive'', not ``temporal''?} head
 predicate \dedalus{r} is of the form: \dedalus{r($\overline{A}$)@next}, while
 an asynchronous head predicate \dedalus{r} is of the form
 \dedalus{r($\overline{A}$)@async}.
@@ -335,7 +335,7 @@ must be constants.  For example:
 \wrm{again we can cut this if we're out of space}
 \begin{example}
 %%Sugared deductive and inductive rules.
-The following are ``sugared" versions of deductive and inductive rules from Example 1, and a temporal fact:
+The following are ``sugared" versions of deductive, inductive and asynchronous rules from Example 1, and a temporal fact:
 \\
 deductive:
 \begin{Dedalus}
