@@ -108,7 +108,18 @@ much of which %much of this order is {\em overspecified} --
 may obscure parallelism, or not be semantically meaningful to the computation
 %, or obscures parallelism. 
 We argue for an inversion in design -- parallel by default, and
-programmer-defined order only when required for correctness.  To this end, we
+programmer-defined order only when required for correctness.  
+\paa{alternate text: 
+Distributed systems are traditionally implemented in imperative languages
+using a threaded or event-driven programming style, and inherit these languages'
+implicit ordering of both data and control structures.  Concurrency is achieved by
+duplication of sequential instructions, and reasoning about the behavior of such systems 
+requires explicit consideration of the interleaving of instructions and the arrival order of
+messages.  We observe that in general such order is overspecified and not semantically 
+meaninful, and argue for an inversion of design for programming distributed systems: unordered and concurrent by default, 
+with explicit, programmer-defined order only when order is required for correctness.
+}
+To this end, we
 propose \lang, a {\em logic} language, and study it in the context of
 distributed asynchronous systems. \lang is based on the well-studied
 Datalog~\cite{ullmanbook} language, which exposes a single operator to the user
