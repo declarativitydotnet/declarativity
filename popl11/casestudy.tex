@@ -105,7 +105,7 @@ cart_update_queue(L, S, C, N)@async \(\leftarrow\)
 This approach overcomes the nondeterministic ordering implied by asynchronous 
 communication with brute force: a totally-ordered protocol.  This is simple and inexpensive 
 in this case because it is centralized at the client, obviating the need for an expensive consensus computation, but the approach has certain limitations.  First, the client
-must guarantee that only one {\em update\_event} is processed per timstep in order to totally
+must guarantee that only one {\em update\_event} is processed per timestep in order to totally
 order the {\em cart\_update\_queue} tuples: that is, it must serialize {\em update\_event} with
 a queue also.  The matching queues at client and server impose a synchronization barrier: both sides of the computation must ``spend time'' proportional to the number of tuples.
 
