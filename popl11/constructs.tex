@@ -62,7 +62,7 @@ such as persistence and mutability.  In this section, we construct a library of
 %their persistence.  In this section, we construct a library of \lang constructs
 %to capture these two requirements for order.
 
-\subsubsection{Simple Persistence}
+\subsection{Simple Persistence}
 %
 A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules at
 time $\DT$, but may only provide ground for deductive rules in timesteps
@@ -76,7 +76,7 @@ p\pos($A_1$,$A_2$,[...],$A_n$);}
 true $\forall j \in \mathbb{N} : j >= i$.
 
 
-\subsubsection{Mutable State}
+\subsection{Mutable State}
 \label{sec:mutable}
 
 Simple persistence rules cannot model deletions and updates of a fact, because
@@ -153,7 +153,7 @@ and inserting a new value.  Every update is {\em atomic across timesteps},
 meaning that the old value ceases to exist at the same timestep in which the
 new value is derived---timestep $\DT+1$ in the above definition.
 
-\subsubsection{Assignment and Committed Choice}
+\subsection{Assignment and Committed Choice}
 
 The assignment primitive provided by most imperative languages is a special
 case of update without deletion.  We may very simply model the (destructive)
@@ -187,7 +187,7 @@ insertions into \dedalus{condition} cannot cause new rows with the same
 %monotonic behavior in all models
 %\wrm{commenting out fancy pants diction, so neil doesn't have to}
 
-\subsubsection{Queues}
+\subsection{Queues}
 
 %\paa{shorten this section} While a sequence is a useful construct for
 %generating or imposing an ordering on tuples \wrm{seems a bit fishy.  seems
@@ -277,7 +277,7 @@ very difficult to express in a logic language.
 
 %Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
 
-\subsubsection{Entanglement}
+\subsection{Entanglement}
 \label{sec:entangle}
 
 It is sometimes necessary to {\em entangle} the \dedalus{successor} relation
@@ -299,7 +299,7 @@ deduction and the time value of its consequence.  We call such a binding an
 {\em entanglement}.   Note that in order to write the rule it is necessary to
 not sugar away the time suffix in the rule body.  
 
-\subsubsection{Sequences}
+\subsection{Sequences}
 %\wrm{Maybe somehow work in the fact that sequences are really about preserving
 %an already-established order (at a sender) through asynchrony at the receiver.
 %Connect to entanglement}
@@ -328,7 +328,7 @@ which, when true, should cause the sequence to be incremented, and the
 trigger's arity) and expands them to a pair of definitions of a unary predicate
 like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}).
 
-\subsubsection{Lamport Clocks}
+\subsection{Lamport Clocks}
 \label{sec:lamport}
 %\wrm{Clean this up and make it jibe better with sec 5}
 %Recall that asynchrony allows program executions to order message timestamps
