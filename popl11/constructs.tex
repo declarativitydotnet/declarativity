@@ -36,6 +36,20 @@ deletion and update, sequences, and queues.
 
 \subsection{Order}
 
+\subsubsection{Events}
+
+All attributes in a Datalog fact must be fully instantiated with constants.
+Because every well-formed \lang predicate includes a timestamp, 
+all facts are  {\em events}:
+predicates which hold for exactly one timestep or fixpoint computation.  
+The transitive consequences (via deductive
+rules) of events are likewise events and hold atomically in the same timestep with their premises.
+Thus in asynchronous programs, while the programmer will in general not be able to control
+or predict when events occur, he can often use deductive rules to control which events co-occur.
+\paa{flaky}
+All \lang constructs are built from the basic primitive of events.
+
+
 \subsubsection{Simple Persistence}
 %
 A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules at
