@@ -12,7 +12,7 @@ in the head of a rule with $P_j$ in its body.  The edge is annotated with a
 $\lnot$ if at least one rule with head $P_i$ has $\lnot P_j$ in its body.  The
 edge is annotated with a $+$ if all rules with head $P_i$ and $P_j$ in their
 bodies are either inductive or async.  A \lang program is {\em temporally
-stratifiable} if all loops in the PDG with an $\lnot$ edge also have a $+$
+stratifiable} if all cycles in the PDG with an $\lnot$ edge also have a $+$
 edge.
 
 The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at
@@ -158,7 +158,7 @@ Given a finite universe of constants -- i.e., restricting entanglement and
 non-exemplary aggregates -- it is clear that modulo time, a \lang program can
 only compute a finite model.  The only possible termination issue then is that
 a set of facts may exhibit {\em non-convergence}: oscillation in time.  Given
-that the finiteness of the universe implies finite period of oscillation, we
+that the finiteness of the universe implies a finite period of oscillation, we
 can either compute a finite representation of these non-convergent derivations
 in the style of Chomicki et al.~\cite{chomicki-infinite} or a {\em partial
 fixpoint}~\cite{abiteboul-vianu}, which regards non-convergent derivations as
@@ -233,7 +233,7 @@ non-determinism.
 %well-known decision procedure for calculating the model \wrm{cite chomikci,
 %partial fixpoint stuff}. \wrm{In practice, due to magic sets, this isn't
 %horribly inefficient}~\cite{magic}
-If all traces of a a \lang instance produce the same ultimate model, then we
+If all traces of a \lang instance produce the same ultimate model, then we
 call the instance {\em trace confluent}.  If every instance of a program is
 trace confluent, then we say the program is {\em confluent}.  Note that every
 non-contradictory Datalog program without \dedalus{choice} is confluent.
@@ -249,9 +249,9 @@ monotonic programs, the only issue that can arise is that some derivations may
 not be {\em associative} -- the assignment of the same timestamp to two facts
 may cause a different result than the assignment of a distinct timestamp to
 each fact.  Intuitively, this is because we force unification on time suffixes
-in the body.  Persistence of async relations solves this by making all
+in the body.  Persistence of async relations \nrc{Don't you mean ``rules'', not ``relations''?} solves this by making all
 derivations associative: there will eventually be a timestamp where all async
-derivations ever received are coincidentally true.
+derivations ever received are coincidentally true.\nrc{Don't grok this.}
 \wrm{provide example here?}
 
 %We can immediately identify a subset of the class of confluent \lang programs:
