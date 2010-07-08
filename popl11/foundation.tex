@@ -378,13 +378,12 @@ Dedalus.
 We use choice to model the inherent nondeterminism associated with
 communication in {\em asynchronous} distributed systems.  For example, messages
 may be lost or arbitrarily delayed, and a receiver cannot infer that a message
-will never be sent based solely on his non-receipt of the message.  To this
+will never be sent based solely on his non-receipt of the message.\nrc{Sec 2.2 says that we don't discuss message loss in this paper.}  To this
 end, we require that any communication rules be \dedalus{@async} rules.
 
 We call the set of facts, including their timestamps, derived by communication
-rules during a particular execution a {\em trace} of the program.  It is easy
-to see that each {\em trace} is associated with exactly one model of the
-program.
+rules during a particular execution a {\em trace} of the program.
+Each trace is associated with exactly one model of the program.
 
 %\wrm{however, in this paper we assume bounded message delivery time, in other words top is ruled out of time. (note that this can be ensured in logic by admitting timers and doing retries)}
 
