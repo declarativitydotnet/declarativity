@@ -9,7 +9,7 @@ if the following conditions are met:
 replicas will have the same state.
 %
 \item Replication of state is \emph{asynchronous}: servers and clients do not
-need to wait, or coordinate, to achieve the first condition.\nrc{I don't see that this is a requirement for EC at all. EC is just a loose consistency model; an implementation that is consistent with that model may or may not involve asynchrony. E.g., a strongly consistent system is trivially also ``eventually consistent.''}
+need to wait, or coordinate, to achieve the first condition.\nrc{I don't see that this is a requirement for EC at all. EC is just a loose consistency model; an implementation that is consistent with that model may or may not involve asynchrony. E.g., a strongly consistent system is trivially also ``eventually consistent.''} \wrm{fair enough, although Joe sez that coordination ``violates the spirit'' of eventual consistency.  so we need to find some way to work this point in.}
 %It follows from this requirement that such systems are ``coordination-free,''
 %as in general coordination entails synchrony.
 %
