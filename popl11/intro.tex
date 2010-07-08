@@ -1,25 +1,35 @@
 \section{Introduction}
-%Our research is motivated by two hard problems in distributed systems.  First,
-%\wrm{show examples of the problems (not necessarily code) -- evolving state and unreliable communication}
-%\wrm{bill to rewrite introduction...}
 
-%Distributing any system introduces nondeterminism.  For example, one may
-%distribute a computation over many inexpensive, but unreliable, commodity
-%machines (e.g. RAID).  The status of internet links and widely distributed
-%nodes is inherently more unreliable than multiple cores on a single die, or
-%multiple CPUs in a single computer.  
+Distributed logic languages \wrm{cite stuff here, to make it clear that what we mean by a ``distibuted logic language'' are the following instances of prior work} promise to significantly raise the level of
+abstraction at which distributed systems are currently implemented, allowing
+programmers to specify systems as a set of invariants over local state,
+\wrm{okay, maybe say ``commonly'' or ``one popular design choice'' or something before ``these languages allow programs to specify systems as invariants over local state and rules that describe how state changes and moves across a network,'' because i think we all would consider something to be a distirbuted logic language that defines invariants over global or remote state}
+%% \wrm{local isn't important, it's just a design choice of dedalus}
+and rules that describe how state changes and moves across a network. 
+%%\wrm{again this detail isn't important, it's just a design choice of dedalus}.  
+This approach leads to succinct, executable specifications whose faithfulness to the original pseudocode may be visually verified.
+%% \wrm{well...}.  
+Moreover, many 
+distributed logic languages are extensions of first-order logic enhanced with
+a {\em least fixpoint operator}, which lends itself to powerful
+formal verification techniques~\cite{wang, wang2}.
 
-%We present {\bf \lang}, a foundation language for programming and
-%reasoning about distributed systems.  
+We conjecture that logic languages are a better fit for the specification of concurrent and distributed systems than traditional imperative approaches.  In imperative languages, whose instructions are built up from applications of a sequencing primitive and whose state is commonly stored in data structures like lists and trees, ordering is implicit and ubiquitous, 
+while concurrency is achieved by duplicating the sequential control structures and allowing them
+to run in an interleaved fashion.
+%\wrm{what about concurrent data structures?  maybe we cut the ``concurrency is achieved...'' and replace it with ``the programmer must take specific steps to achieve concurrency''}.   whoops -- thought you said "data structures" instead of "control structures"
+In contrast, declarative language constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
+parallelism~\cite{podskey}.  Instead of reasoning about the possible interleavings of sequential
+instructions or the serial order of message arrival as one must when writing threaded or 
+event-driven code, respectively, a distributed logic language allows the programmer to focus
+on the admissible, atomic transformations over state that can in general be carried out in
+parallel.  This inversion of concerns -- implicit concurrency and explicit order, instead of
+implicit order and explicit concurrency -- can both ease the programmer's cognitive burden as
+concurrency and parallelism increase, and help to highlight the hopefully few (but critical) 
+portions of a distributed algorithm for which order is essential to correctness. 
 
-%We correct deficiencies in earlier attempts, and introduce a compelling notion
-%of non-determinism in the language.  We specifically use non-determinism to
-%reason about {\em when} a deduction becomes visible, including the possibility
-%that the deduction will never be visible.  Programmers can constrain this
-%non-determinism by using well-studied techniques in distributed systems, such as
-%Lamport Clocks 
 
-%\jmh{Here's my take on an intro outline.}
+
 In recent years, there has been a resurgence of interest in Datalog as
 the foundation for applied, domain-specific languages in a wide
 variety of areas, including networking~\cite{Loo2009-CACM},
@@ -93,6 +103,13 @@ computing, such as sequences, queues, distributed clocks, and reliable
 broadcast.  We also discuss the correspondence between \lang and our
 prior work implementing full-featured distributed services in somewhat
 more operational Datalog variants~\cite{boom-eurosys,Loo2009-CACM}.
+
+Sometimes order -- ordering of data elements, as well as ordered computational steps -- 
+is required by an algorithm, and in a logic language this order by be explicitly specified and 
+managed.  Previous languages 
+
+\paa{story: admitting order (that is, time) into logic is tricky, and retaining a purely logical interpretation for how the order is established and respected is downright hard.  as you'll see in the next section, nearly all of the useful idioms for DS construction are problematic/ambiguous precisely because they describe composite operations across timesteps, without the vocabulary to make clear what things co-occur atomically.}
+
 
 % Traditional database systems are based on declarative query languages that
 % specify transformations as dataflows over an updatable store.
