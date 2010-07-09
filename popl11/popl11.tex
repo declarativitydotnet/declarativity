@@ -115,9 +115,12 @@ implicit ordering of both data and control structures.
 %reasoning about the behavior of such systems requires explicit consideration
 %of the interleaving of instructions and the arrival order of messages.
 %Concurrency must be explicitly achieved through programmer intervention,
-We believe that much of this order is not meaningful to the overall goal that
-the programmer wants to achieve, and reasoning about it unnecessarily
-complicates the task of programming distributed systems.
+%We believe that much of this order is not meaningful to the overall goal that
+%the programmer wants to achieve, and reasoning about it unnecessarily
+%complicates the task of programming distributed systems.
+In practice, this frequently leads to overspecification of such systems, insofar as 
+many different orderings of instructions and data structures lead to the same 
+result in a distributed computation.
 %because the abstractions exposed by imperative programming are inappropriate
 %for programming distributed systems.
 We argue for an inversion of design:
@@ -129,8 +132,12 @@ systems.  \lang is based on the well-studied Datalog~\cite{ullmanbook}
 language, which exposes a single operator---{\em logical implication}, and a
 single data structure---the set.
 
-In \lang, it is easy to observe that recourse to order is only needed to
-express two features of asynchronous systems: {\em mutable state} and
+%%In \lang, it is easy to observe 
+\paa{stronger:} 
+By abstracting away irrelevant orders while providing explicit control of sequencing, \lang
+focuses the programmer's attention on
+the two features of distributed systems for which recourse to order is unavoidable: 
+{\em mutable state} and
 deterministic results in the face of {\em asynchrony}, or non-determinism in
 temporal order.  To capture these uses of order, we build a library of ordered
 constructs in \lang, including persistence, queues, and Lamport clocks.  We
