@@ -133,12 +133,12 @@ language, which exposes a single operator---{\em logical implication}, and a
 single data structure---the set.
 
 %%In \lang, it is easy to observe 
-\paa{stronger:} 
+%%\paa{stronger:} 
 By abstracting away irrelevant orders while providing explicit control of sequencing, \lang
 focuses the programmer's attention on
 the two features of distributed systems for which recourse to order is unavoidable: 
-{\em mutable state} and
-deterministic results in the face of {\em asynchrony}, or non-determinism in
+implementing {\em mutable state} and ensuring
+deterministic results in the face of {\em asynchrony} -- that is, non-determinism in
 temporal order.  To capture these uses of order, we build a library of ordered
 constructs in \lang, including persistence, queues, and Lamport clocks.  We
 also extend static analyses from the Datalog domain, including a surprisingly
