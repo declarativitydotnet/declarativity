@@ -2,13 +2,29 @@
 
 \subsection{Updateable State}
 
-Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
-assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} retain a purely logical 
-interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
-across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
-First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
-Partly as a result of this, we are able to enforce stricter constraints on the allowable time suffixes in rules: a program may only specify what deductions are visible
-in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu et al.  Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges.''
+Many deductive database systems, including LDL~\cite{ldl} and
+Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates
+using an assignment primitive.  In contrast, languages proposed by Cleary and
+Liu~\cite{harmful,deductiveupdates,starlog} retain a purely logical
+interpretation, and represent assignment or update as a composite operation
+across timesteps rather than a primitive.  Like us, \cite{deductiveupdates}
+adds time suffixes to tuples, and defines an equivalent notion of temporal
+stratification.  Our language is more restrictive than theirs -- we require
+unification on the body time suffix and enforce strict constraints on the
+relationship between the body suffixes -- yes we can still represent persistence
+and updates.
+%We follow the
+%latter approach, but differ in several significant ways.  First, we model
+%persistence explicitly in our language, so that like updates, it is specified
+%as a composite operation across timesteps.  Partly as a result of this, we are
+%able to enforce stricter constraints on the allowable time suffixes in rules: a
+%program may only specify what deductions are visible in the current timestep,
+%the immediate next timestep, and \emph{some} future timestep, as opposed to the
+%free use of intervals allowed in rules in Liu et al.
+%Our simple inductive
+%approach to persistence obviates the need to evaluate stabbing queries on time
+%``ranges.'' \wrm{commented out, because this would actually be a much more
+%efficient way to execute Dedalus rather than eager derivation}
 
 U-Datalog~\cite{udatalog-neg} addresses updates using syntax annotations that establish different interpretations for the set of updated 
 relations and the IDB, interpreting update atoms as constraints and using constraint logic programming techniques to test for inconsistent
@@ -16,7 +32,9 @@ derivations.  Similarly, Timed Concurrent Constraint Programming (TCCP)~\cite{td
 by outputting a new (possibly diminished) store and constraint program at each timestep.  
 
 Our temporal approach to representing state change most closely resembles the
-Statelog language~\cite{statelog}.  We were unaware of the Statelog work when formalizing the 
+Statelog language~\cite{statelog}.  \wrm{really? i think it most closely
+resembles datalog/ut.}
+We were unaware of the Statelog work when formalizing the 
 notions of persistence via induction and temporal stratification, and were surprised
 (and encouraged) to observe very similar ideas in Statelog.  By contrast, our motivation is
 the logical specification and implementation of distributed systems, and our 
@@ -42,15 +60,22 @@ a data store that changes over time, so any useful implementation of such a lang
 %%\item Time is frozen, the union of the local store and the batch of events is taken as EDB, and %%the program is run to fixpoint.
 %%\item The deductions that cause side effects (e.g., updates, messages and host language %%callbacks) are dealt with.  
 %%\end{enumerate}
-Existing distributed deductive languages like NDlog and Overlog adopt the \emph{chain of fixpoints} interpretation discussed in Section~\ref{sec:dsll}.
+%Existing distributed deductive languages like NDlog and Overlog adopt the \emph{chain of fixpoints} interpretation discussed in Section~\ref{sec:dsll}. \wrm{we don't discuss this in the paper, so commenting out.}
 
 %%\jmh{You're sidestepping Delete an key update.}\rcs{think I fixed it in item 3}
-Unfortunately, the language descriptions of systems following this ``observe, think, act'' model
-give no careful specification of how and when deletions and updates
-should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
-monotonicity properties (i.e., programs without negation or fact deletion)
-are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
-\emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
+%Unfortunately, the language descriptions of systems following this ``observe, think, act'' model
+Unfortunately, these languages modeled state update via operational extensions
+to the language, causing some ambguities about when state changes become
+visible.  
+%give no careful specification of how and when deletions and updates
+%should be made visible, so the third step is a ``black box.''
+Nevertheless, Loo et al.~\cite{loo-sigmod06} proved that monotonic programs (i.e., programs
+without negation or state update) are confluent in asynchronous systems, and
+their ultimate model is equivalent to the ultimate model generated by a
+synchronous evaluation.
+%monotonicity properties (i.e., programs without negation or fact deletion)
+%are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
+%\emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
 Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
 \emph{event creation vs.\ effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
 the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao2009}.
