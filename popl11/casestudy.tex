@@ -48,7 +48,7 @@ status(Location, Session, CartObj) \(\leftarrow\)
     cart_update(Location,  Session, CartObj);
     
 r2
-delete status(L, S, _) \(\leftarrow\)
+delete status(L, S, C) \(\leftarrow\)
     status(L, S, C), cart_update(L, S, _);
   
 response(#Client, Loc, Session, CartObj) \(\leftarrow\)
