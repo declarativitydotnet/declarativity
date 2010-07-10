@@ -35,7 +35,9 @@ variables.
 %right?}
 
 The logical meaning of a Datalog rule is that for each satisfying assignment of
-constants to variables on the right-hand side, derive a corresponding
+constants to variables on the right-hand side, there exists
+%%derive 
+a corresponding
 assignment of constants in the left-hand side predicate.  An assignment of
 constants to all arguments in a predicate is known as a {\em fact}---also
 called a {\em tuple} or {\em row}---and we often speak of ``the facts in a
@@ -47,14 +49,21 @@ program together with an EDB.  All constants in the EDB are contained in the
 
 \subsubsection{Aggregation}
 
-As a shorthand for common operations involving a number of rules, one often
-admits {\em aggregation} into Datalog -- a special type of function that takes
-a set as input and computes a scalar output.  In particular, we are interested
+%%As a shorthand for common operations involving a number of rules, one often
+%%admits {\em aggregation} into Datalog -- a special type of function that takes
+%%a set as input and computes a scalar output.  
+Datalog is commonly extended with {\em aggregate functions} -- special functions that
+take sets as input and compute a scalar output -- as a shorthand for common operations
+involving a number of rules.
+In particular, we are interested
 in both {\em exemplary} aggregates -- which return a value from the input set
 -- such as \dedalus{max} and \dedalus{min}, and {\em non-exemplary} aggregates
 like \dedalus{count}.
 \paa{doesn't this notation seem to mean that only one aggregate per rule is allowed?}
 \wrm{yes, but we only ever use one agg per rule in the paper}
+\paa{reads strange.  "in particular, we are interested in foo things, and also non-foo things...
+I see though that in 2.1.2 we need to have introduced exemplary functions}
+
 %In general, aggregation involves universal quantification over a set, thus it
 %is a non-monotonic construct.  Mumick and Shmueli observe that adding
 %stratified aggregation to Datalog does not affect its expressive
@@ -88,8 +97,11 @@ facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
 programs that exclude negation and aggregation are monotonic; the presence of
 negation or aggregation may imply that the program is non-monotonic.
 
-One intuition is that negation and aggregation require {\em universal
-quantification} -- that is they in general need to consider all elements in the
+%%One intuition is that 
+Negation and aggregation require {\em universal
+quantification}:
+%%-- that is they 
+in general, they need to consider all elements in the
 set that they operate over.  It is easy to see that addition of facts to the
 EDB may cause set-wise properties to become untrue, which may lead to IDB
 retractions.  On the other hand, adding a fact to the EDB can never cause an
@@ -159,8 +171,7 @@ time.  In our discussion, we will say that facts with lower time suffixes occur
 ``before'' atoms with higher ones.  If we wish to model possible message loss,
 we may admit a special element $\top$ into \dedalus{time}.  We exclude message
 loss in this paper to simplify the discussion, by implicitly assuming that some
-protocol exists between the client and server to ensure reliable delivery.
-\wrm{timers? cite overlog? boom?}
+protocol exists between the client and server to ensure reliable delivery~\cite{dedalus-tr, netdb}.
 %Intuitively, $\top$ is meant to model the time {\em never}.
 We will see later how \dedalus{successor} forms the basis of a stratification
 condition that we call {\em temporal stratification}.
