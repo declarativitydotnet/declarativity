@@ -66,47 +66,76 @@ The simplest imaginable shopping cart implementation behaves like a key-value st
 and treats the cart as an opaque object that is repeatedly updated.  Note that 
 {\em cart\_update} is declared using the {\em queue} macro, which expands to
 a program fragment that ensures that tuples corresponding to only one $CartObj$
-are processed in a single fixpoint.
+are processed in a single fixpoint. \wrm{note that we desire a primary key...}
 
-Consider the behavior of the program without the queue.  Because {\em cart\_update}
-messages are sent over the network, we know that they appear in the head of an asynchronous 
-rule in the global program \nrc{What's a ``global program''?}, and hence it is impossible to predict the assignment of timestamps
-to deduced tuples.  Even if the client deduces {\em cart\_update} tuples in a serial manner, it
-is possible for multiple tuples to appear at the receiver in the same timestep \wrm{in other words the bug is that the program isn't correct under associativity of messages}.  Thus rules {\em r1} 
-and {\em r2}, which appear to describe how a single tuple in {\em status} representing a user
-session is updated when a tuple in {\em cart\_update} appears, may cause multiple records
-to appear in {\em status} for the same session (a violation of the implied primary key) \wrm{implied primary key?  we should say earlier ``intuitively we want a primary key'' or something}.
+Consider the behavior of the program without the queue.  Because {\em
+cart\_update} appears in the head of an asynchronous rule,
+\dedalus{cart\_update} tuples may be assigned arbitrary timestamps, and some
+\dedalus{cart\_update} facts may be assigned the same timestamp, even though
+they were derived serially at the sender.  \wrm{this causes some issue because
+we have a logic bug in our program...}
+
+%rule in the global program \nrc{What's a ``global program''?}, and hence it is impossible to predict the assignment of timestamps
+%to deduced tuples.  Even if the client deduces {\em cart\_update} tuples in a serial manner, it
+%is possible for multiple tuples to appear at the receiver in the same timestep \wrm{in other words the bug is that the program isn't correct under associativity of messages}.  Thus rules {\em r1} 
+%and {\em r2}, which appear to describe how a single tuple in {\em status} representing a user
+%session is updated when a tuple in {\em cart\_update} appears, may cause multiple records
+%to appear in {\em status} for the same session (a violation of the implied primary key) \wrm{implied primary key?  we should say earlier ``intuitively we want a primary key'' or something}.
 %%To mitigate this bug, we must ensure that exactly one tuple (per session) is available for %%dequeue
 %%from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
 %%provides this capability.
 
 
-A simple syntactic analysis of the above program shows that {\em status} 
-is temporally but not syntactically stratifiable: the deletion rule and the expansion of the
-persistence template define {\em status} in terms of its own negation (in time) 
+%replace fancy pants diction -wrm A simple syntactic analysis of the above
+%program shows that {\em status} is temporally stratifiable.  but not
+%syntactically stratifiable: the deletion rule and the expansion of the
+%persistence template define {\em status} in terms of its own negation (in
+%time)
 %%\wrm{this shouldn't be a surprise to anyone, all the constructs we've presented have this %%property, and we've been harping on this for the previous 2 sections at length}.  
-The ``latest''
-such tuple ``wins;'' thus clearly {\em cart\_update} tuples do not commute with each other,
-and the program as given is unlikely to return the correct version of the cart in a {\em response}
+Looking at the above program, we can see that {\em status} is defined by the
+state update pattern (Section whatever) on {\em cart\_update} -- recall that
+the state update pattern means that the ``latest'' tuple ''wins.'' Thus clearly
+{\em cart\_update} tuples do not commute with each other, and the program as
+given is unlikely to return the correct version of the cart in a {\em response}
 message.
 
-The difficulty is precisely that the intended order corresponding to the serial order of updates
-at the client is lost in the asynchronous derivations of {\em cart\_update}.  By entangling
-the sender's time in rule  {\em r4}, we may communicate the desired total order over 
-the {\em cart\_update} tuples and process them in that order.  The rest of the code is unchanged,
-except that an additional argument must be added to {\em cart\_update}:
+Considering the {\em cart\_update} tuples in the client's order would solve
+this problem.  However, the client's order of the updates is lost through the
+asynchronous derivations of {\em cart\_update}, which may arbitrarily reorder
+updates.  In Section whatever, we identified the concept of entanglement as a
+way to preserve an order in the face of asynchrony.  We can communicate the
+desired order from client to server by entangling the sender's time in rule
+\dedalus{r4}, and having the server process updates in this order.
+%serial order of updates at the client is lost in the asynchronous derivations
+%of {\em cart\_update}.  By entangling the sender's time in rule  {\em r4}, we
+%may communicate the desired total order over the {\em cart\_update} tuples and
+%process them in that order.
+The rest of the code is unchanged, except that an additional argument must be
+added to {\em cart\_update}:
 
 \begin{Dedalus}
 cart_update_queue(L, S, C, N)@async \(\leftarrow\)
     update_event(L, S, C)@N;
 \end{Dedalus}
 
-This approach overcomes the nondeterministic ordering implied by asynchronous 
-communication with brute force: a totally-ordered protocol.  This is simple and inexpensive 
-in this case because it is centralized at the client, obviating the need for an expensive consensus computation, but the approach has certain limitations.  First, the client
-must guarantee that only one {\em update\_event} is processed per timestep in order to totally
-order the {\em cart\_update\_queue} tuples: that is, it must serialize {\em update\_event} with
-a queue also.  The matching queues at client and server impose a synchronization barrier: both sides of the computation must ``spend time'' proportional to the number of tuples.
+\wrm{the high level point here is that we've made some bad design choices that
+result in us having to over-specify the order.  clearly, a shopping cart doesn't
+need this much order because it's commutative, and indeed, we can write it in a
+much simpler way.  rusty will insert some points here about how distributing
+this naive example results in tons of ugliness (e.g. paxos), and explain that
+yes, we could do that in the language if we want (cite netdb).  this will be a
+nice contrast with later examples which can be distributed much more easily
+because they have much less order and larger monotonic sections.  home run!}
+This approach overcomes the nondeterministic ordering implied by asynchronous
+communication with brute force: a totally-ordered protocol. This is simple and
+inexpensive in this case because it is centralized at the client, obviating the
+need for an expensive consensus computation, but the approach has certain
+limitations.  First, the client must guarantee that only one {\em
+update\_event} is processed per timestep in order to totally order the {\em
+cart\_update\_queue} tuples: that is, it must serialize {\em update\_event}
+with a queue also.  The matching queues at client and server impose a
+synchronization barrier: both sides of the computation must ``spend time''
+proportional to the number of tuples.
 
 \subsection{ACID 2.0}
 
