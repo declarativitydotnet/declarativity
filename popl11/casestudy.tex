@@ -1,25 +1,36 @@
 \section{Case Study: Shopping Carts}
 Applications with replicated state are often concerned with {\em eventual
-consistency}.  Broadly, a system with replicated state is eventually consistent
-if the following conditions are met:
+consistency}.  
+%%Broadly, a system with replicated state is eventually consistent
+%%if the following conditions are met:
+%%\item I
+%%Given a system with replicated state, 
+%%A system with replicates state is called eventually consistent if we can assert that
+Eventually consistent systems are those distributed programs with replicated state for which,
+if at some time the system quiesces and all 
+messages are delivered, all replicas will have the same state.
+In practice, this loose consistency model is desirable because it allows for \emph{asynchronous}
+state replication: servers and clients do not
+need to wait, or coordinate, to eventually converge to the same state.
 
-\begin{enumerate}
-%
-\item If at some time the system quiesces and all messages are delivered, all
-replicas will have the same state.
-%
-\item Replication of state is \emph{asynchronous}: servers and clients do not
-need to wait, or coordinate, to achieve the first condition.\nrc{I don't see that this is a requirement for EC at all. EC is just a loose consistency model; an implementation that is consistent with that model may or may not involve asynchrony. E.g., a strongly consistent system is trivially also ``eventually consistent.''} \wrm{fair enough, although Joe sez that coordination ``violates the spirit'' of eventual consistency.  so we need to find some way to work this point in.}
+%%nrc{I don't see that this is a requirement for EC at all. EC is just a loose consistency model; an 
+%%implementation that is consistent with that model may or may not involve asynchrony. E.g., a 
+%%strongly consistent system is trivially also ``eventually consistent.''} \wrm{fair enough, 
+%%although Joe sez that coordination ``violates the spirit'' of eventual consistency.  so we need 
+%%to find some way to work this point in.}
 %It follows from this requirement that such systems are ``coordination-free,''
 %as in general coordination entails synchrony.
 %
-\end{enumerate}
+%\end{enumerate}
 
 It is not hard to see that eventually consistent programs are a subset of
-confluent programs.  First, if coordination is disallowed, then the program
-must be monotonic -- thus, commutative.  Second, the program must be
-associative, because two replicas, one where a pair of messages is received in
-a single timestamp, and one not, must achieve the same answer.
+confluent programs.  First, if coordination is disallowed, 
+%%then the program
+a program with asynchronously replicated state is either monotonic (commutative, and hence
+insensitive to message ordering)
+or incorrect.  Second, such a program must be
+associative, because two replicas, of which one received a pair of messages in
+a single timestamp and the other did not, must achieve the same answer.
 
 In this section, we build a shopping cart application with replicated state,
 and reason about the degree to which it is ``eventually consistent.''
