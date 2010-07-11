@@ -47,22 +47,22 @@ known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a
 program together with an EDB.  All constants in the EDB are contained in the
 {\em universe of constants} of the instance.
 
-\subsubsection{Aggregation}
+\subsection{Aggregation}
 
 %%As a shorthand for common operations involving a number of rules, one often
 %%admits {\em aggregation} into Datalog -- a special type of function that takes
 %%a set as input and computes a scalar output.  
-Datalog is commonly extended with {\em aggregate functions} -- special functions that
-take sets as input and compute a scalar output -- as a shorthand for common operations
-involving a number of rules.
-In particular, we are interested
-in both {\em exemplary} aggregates -- which return a value from the input set
--- such as \dedalus{max} and \dedalus{min}, and {\em non-exemplary} aggregates
-like \dedalus{count}.
-\paa{doesn't this notation seem to mean that only one aggregate per rule is allowed?}
-\wrm{yes, but we only ever use one agg per rule in the paper}
-\paa{reads strange.  "in particular, we are interested in foo things, and also non-foo things...
-I see though that in 2.1.2 we need to have introduced exemplary functions}
+Datalog is commonly extended with {\em aggregate functions} -- special
+functions that take sets as input and compute a scalar output -- as a shorthand
+for common operations involving a number of rules.  We are interested in both
+{\em exemplary} aggregates -- which return a value from the input set -- such
+as \dedalus{max} and \dedalus{min}, and {\em summary} aggregates like
+\dedalus{count}.
+%\paa{doesn't this notation seem to mean that only one aggregate per rule is
+%allowed?} \wrm{yes, but we only ever use one agg per rule in the paper}
+%\paa{reads strange.  "in particular, we are interested in foo things, and also
+%non-foo things...  I see though that in 2.1.2 we need to have introduced
+%exemplary functions}
 
 %In general, aggregation involves universal quantification over a set, thus it
 %is a non-monotonic construct.  Mumick and Shmueli observe that adding
@@ -72,11 +72,12 @@ I see though that in 2.1.2 we need to have introduced exemplary functions}
 
 Aggregation may only be used in the head of a rule.  A head atom
 \dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an aggregate function symbol,
-indicates that predicate \dedalus{p} contains one row for each assignment of
-$\bar{A}$ that satisfies the rule's body -- akin to the distinct ``groups'' of
-SQL's ``GROUP BY'' notation.
+indicates that predicate \dedalus{p} contains one row for each satisfying
+assignment of $\bar{A}$ -- akin to the distinct ``groups'' of SQL's ``GROUP
+BY'' notation.  This row contains the value of the aggregate function on the
+set of assignments to $B$ for the given value of $A$.
 
-\subsubsection{Contradictions}
+\subsection{Contradictions}
 
 A Datalog instance without negation or aggregation has a unique {\em
 model}~\cite{ullmanbook}-- the minimal set of facts in intensional predicates
@@ -107,7 +108,7 @@ EDB may cause set-wise properties to become untrue, which may lead to IDB
 retractions.  On the other hand, adding a fact to the EDB can never cause an
 existential quantification to become false.
 
-\subsubsection{Stratification}
+\subsection{Stratification}
 
 %Note that negation allows the specification of a program that is
 %contradictory, such as $p(X) :- q(X), !p(X);$.  The reason for the
@@ -122,10 +123,10 @@ Contradictions are undesirable in logic programming.
 Unfortunately, detecting that a program is contradiction-free for all EDBs is
 undecidable in general~\cite{papa-yanna}, so the logic programming community
 has devised a number of conservative conditions called {\em stratification
-conditions}, which unsoundly but completely ensure acyclicity of derivations
-through negation.  One condition is known as {\em syntactic stratification},
-which excludes all programs where a predicate \dedalus{p} transitively depends
-on \dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
+conditions}, which ensure acyclicity of derivations through negation.  One
+condition is known as {\em syntactic stratification}, which excludes all
+programs where a predicate \dedalus{p} transitively depends on
+\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
 programs, because such a syntactic cycle may in practice never lead to a
 contradiction if all {\em derivations} are acyclic.  Additional conditions,
 such as {\em local stratification}~\cite{local-strat}, {\em universal
@@ -136,22 +137,22 @@ are increasingly less conservative.  Later we will introduce our own condition,
 the program encodes the condition that \dedalus{p} occurs at a {\em later time}
 than \dedalus{\(\lnot\)p}.
 
-\subsubsection{Choice}
+\subsection{Choice}
 
-Having ruled out single-solution programs with contradiction, we are interested
-in programs that have a multiplicity of solutions because such programs can be
-used to model non-determinism; we wish to model the inherent non-determinism in
+Having ruled out programs with contradiction, we are interested in programs
+that have a multiplicity of solutions because such programs can be used to
+model non-determinism; we wish to model the inherent non-determinism in
 asynchronous distributed systems.  The correspondence between multiple
 solutions and non-determinism was formalized by Sacc\`{a} and
 Zaniolo~\cite{sacca-zaniolo} as the \dedalus{choice} construct.  Intuitively,
 \dedalus{choice} allows the specification of a functional dependency in a rule.
 For example, \dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expresses that for
 each value that variable \dedalus{X} takes on, variable \dedalus{Y} may only
-take on a single value.  If \dedalus{q} contains more than one \dedalus{Y}
-value for an \dedalus{X}, then the instance has multiple models: one
-corresponding to each choice of \dedalus{Y} for each \dedalus{X}.
-Operationally, the answer to a Datalog program with choice corresponds to a
-non-deterministic choice of one of the models.
+take on a single {\em non-deteministically chosen} value. If \dedalus{q}
+contains more than one \dedalus{Y} value for an \dedalus{X}, then the instance
+has multiple models: one corresponding to each choice of \dedalus{Y} for each
+\dedalus{X}.  Operationally, the answer to a Datalog program with choice
+corresponds to a non-deterministic choice of one of the models.
 
 See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
 into Datalog rules that employ cyclic negation.  Although \dedalus{choice}
@@ -160,7 +161,7 @@ conditions.  Thus, we often must explicitly admit programs with
 \dedalus{choice} after ruling out certain {\em unstratified} programs --
 programs that violate the stratification condition.
 
-\subsection{\lang}
+\section{\lang}
 
 Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite
 \dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
@@ -176,7 +177,7 @@ protocol exists between the client and server to ensure reliable delivery~\cite{
 We will see later how \dedalus{successor} forms the basis of a stratification
 condition that we call {\em temporal stratification}.
 
-\subsubsection{Syntactic Restrictions}
+\subsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 
 Specifically, we restrict the form of predicates and rules in the following ways:
@@ -281,7 +282,7 @@ Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rul
 \noindent{\bf Guarded EDB: }
 No well-formed \lang rule may involve any extensional predicate, except for a rule of the form above.
 
-\subsubsection{Abbreviated Syntax and Temporal Interpretation}
+\subsection{Abbreviated Syntax and Temporal Interpretation}
 
 \label{sec:abbrvsyntax}
 
@@ -375,7 +376,7 @@ e(1, 2)@10;
 %%  e(A, B);
 \end{example}
 
-\subsubsection{Distribution, Asynchrony and Choice}
+\subsection{Distribution, Asynchrony and Choice}
 
 \lang adopts the {\em horizontal partitioning} convention introduced by Loo et
 al.~\cite{Loo:2005}, where all agents execute the same rules, but predicates
