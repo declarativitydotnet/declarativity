@@ -53,13 +53,24 @@ and reason about the degree to which it is ``eventually consistent.''
 
 
 \subsection{Straw Man}
-these are hideous looking at this time.
+
+What's missing: draw a bold line every place where you see a (-) (negation or aggregation)
+or a half-arrow(unguarded asynchrony).  these are the global stratum boundaries, at which
+we must either coordinate or commit to a defeasible conclusion to proceed.
+crow's feet indicate persistence-guarded asynchrony.  though crow's feet dependencies
+may cross network boundaries, they are intra-stratum.
 
 straw man:
 
 
-\includegraphics[width=0.9\linewidth]{vizza_straw.png}
+\includegraphics[width=0.65\linewidth]{vizza_straw.png}
 
+
+
+wooden man (straw instrumented with a queue to handle 'coincidence'):
+
+
+\includegraphics[width=1.2\linewidth]{vizza_wood.png}
 
 
 
