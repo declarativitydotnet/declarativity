@@ -3,28 +3,30 @@
 \subsection{Temporal Stratification}
 
 In our earlier discussion of Datalog, we discussed the undesirability of a
-logical contradiction -- a situation where a fact depends on its own negation.
+logical contradiction---a situation where a fact depends on its own negation.
 We avoid this in \lang by introducing a property of programs called {\em
-temporal stratification}, defined in terms of a program's {\em predicate
-dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct
+  temporal stratification}, defined in terms of a program's {\em predicate
+  dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct
 predicate $P_i$ used in the program, and an edge $(N_i, N_j)$ if $P_i$ appears
 in the head of a rule with $P_j$ in its body.  The edge is annotated with a
 $\lnot$ if at least one rule with head $P_i$ has $\lnot P_j$ in its body.  The
 edge is annotated with a $+$ if all rules with head $P_i$ and $P_j$ in their
 bodies are either inductive or async.  A \lang program is {\em temporally
-stratifiable} if all cycles in the PDG with an $\lnot$ edge also have a $+$
+  stratifiable} if all cycles in the PDG with an $\lnot$ edge also have a $+$
 edge.
 
 The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at
 some later time.  The careful reader will note that so far, we have not
-restricted asynchronous rules to prevent {\em time travel} -- a condition where
+restricted asynchronous rules to prevent {\em time travel}---a condition where
 an asynchronous rule gives rise to derivations that precede their antecedents
 in time.  While time travel is acceptable for programs where it cannot ever
 cause a contradiction (such as programs without negation), it is undesirable in
 general, as a fact may derive its own negation (intuitively, a ``temporal
-paradox.'')  Thus, an additional condition is required to exclude such
+paradox'').  Thus, an additional condition is required to exclude such
 contradictions.
-%~\paa{in asynchronous programs}
+\nrc{Not sure the remainder of this para is useful: yes, real systems
+  can't allow a temporal paradox. Seems like it
+  goes without saying.}
 However, we note that in a practical asynchronous distributed system, nodes are
 assumed to have their own clocks, which may run at any arbitrary speed
 \wrm{move this defnition of async distr system earlier}.  Nodes assign a
@@ -153,9 +155,10 @@ p_{n+1}$; informally, earlier values do not depend on later values.
 Next we consider the issue of infinite results.  In Datalog, programs with
 infinite results are traditionally ruled out, as Datalog's evaluation
 algorithms fail to terminate on such programs.  Similarly, for \lang, we want
-to somehow constrain programs that fail to terminate, given any bounded trace.
-Given a finite universe of constants -- i.e., restricting entanglement and
-non-exemplary aggregates -- it is clear that modulo time, a \lang program can
+to somehow constrain programs that fail to terminate, given any bounded
+trace\nrc{Is the use of ``trace'' consistent here?}.
+Given a finite universe of constants---i.e., restricting entanglement and
+non-exemplary aggregates---it is clear that modulo time, a \lang program can
 only compute a finite model.  The only possible termination issue then is that
 a set of facts may exhibit {\em non-convergence}: oscillation in time.  Given
 that the finiteness of the universe implies a finite period of oscillation, we
@@ -169,11 +172,11 @@ conservative syntactic conditions presented in~\cite{dedalus-techr} that
 guarantee the existence of a finite model.
 
 In the general case, we are not interested in the full model of a trace of an
-instance: facts that are only ephemerally true represent events, or
-intermediate computations, which intuitively should not be considered as part
-of the output of the program.  We are only interested in the program's {\em
-ultimate model} -- the eventual contents of the simply persisted relations
-(ignoring timestamps).
+instance: facts that are only ephemerally true represent events, or intermediate
+computations, which intuitively should not be considered as part of the output
+of the program.  We are only interested in the program's {\em ultimate
+  model}---the eventual contents of the simply persisted relations (ignoring
+timestamps).
 
 %\begin{definition}
 %
@@ -329,7 +332,7 @@ domain.
 %constructs.  
 
 How do we maintain confluence in the presence of non-monotonicity?  We must
-introduce {\em coordination} into our program -- logic that preserves
+introduce {\em coordination} into our program---logic that preserves
 commutativity even in the face of non-monotonicity.  One simple type of
 coordination involves guarding the universal quantification with a data
 dependency that cannot be fulfilled until the entire set quantified over has
@@ -338,13 +341,13 @@ been computed.
 This notion of ``waiting for a data dependency to be satisfied'' is similar to
 the waiting in centralized evaluation of a Datalog program.  First, some
 dependency graph of the program or instance, such as a PDG, is analyzed to
-identify and collapse {\em monotonic components} -- subgraphs that contain no
+identify and collapse {\em monotonic components}---subgraphs that contain no
 negated edges.  The Datalog program is evaluated in the topological order of
 its collapsed dependency graph.  Later monotonic components ``wait'' for
 computation to be completed in earlier monotonic components.  
 
 In \lang, we can leverage this same analysis to identify all {\em loci of
-coordination} -- all places where the programmer may need to instrument his code
+coordination}---all places where the programmer may need to instrument his code
 with coordination to ensure confluence.  These are exactly the edges connecting
 monotonic components.  Note that this analysis ignores the non-monotonicity in
 \dedalus{choice} for the reasons outlined above.  Note also that we still

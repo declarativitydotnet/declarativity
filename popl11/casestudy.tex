@@ -129,7 +129,7 @@ we have a logic bug in our program...}
 %%\wrm{this shouldn't be a surprise to anyone, all the constructs we've presented have this %%property, and we've been harping on this for the previous 2 sections at length}.  
 Looking at the above program, we can see that {\em status} is defined by the
 state update pattern (Section whatever) on {\em cart\_update} -- recall that
-the state update pattern means that the ``latest'' tuple ''wins.'' Thus clearly
+the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
 {\em cart\_update} tuples do not commute with each other, and the program as
 given is unlikely to return the correct version of the cart in a {\em response}
 message.
@@ -181,18 +181,18 @@ Helland and others have advocated the design strategy of ensuring eventually-con
 semantics for replicated state by enforcing high-level algebraic 
 properties in the application logic (in particular, commutativity, associativity and 
 idempotence) rather than attempting to provide a RW storage substrate that can provide
-such guarantees in general~\cite{quicksand, beyond}.  While Dynamo~\cite{dynamo} 
+such guarantees in general~\cite{quicksand, beyond}.  For example, Dynamo~\cite{dynamo} 
 is a RW storage system
 and as such needs to provide versioning and conflict resolution capabilities, the shopping
 cart application that sits atop it is able to easily reconcile conflicts that occur due to inconsistency of global state, because the application logic is fundamentally order-insensitive.
-The final state of the shopping cart is guaranteed to be the union of all the operations on
-that state.  In the case of Dynamo, the application logic and not the storage system controls
+The eventual state of the shopping cart is guaranteed to be the union of all the operations on
+the cart.  In the case of Dynamo, the application logic and not the storage system controls
 cart merging logic.
 
 Following this reasoning, if our implementation in \lang could be altered in such a way that
 {\em cart\_update} tuples commute with one another,  we could dispense with the total
 ordering of tuples.  Instead of replacing the opaque object as a read/write system would,
-we'd like to expose the (fundamentally commutative) operation of cart-union to the distributed
+we would like to expose the (fundamentally commutative) operation of cart-union to the distributed
 system.  If this logic were expressed as a user-defined function in the style of SQL databases,
 we could replace {\em r1} and {\em r2} above with:
 
@@ -224,7 +224,6 @@ status(L, Session, Item, Cnt) \(\leftarrow\)
 status(L, User, Session, Item, Acnt - Dcnt) \(\leftarrow\)
     action_cnt(L, Session, Item, "Add", Acnt),
     action_cnt(L, Session, Item, "Del", Dcnt);
-
 \end{Dedalus}
 
 
@@ -236,11 +235,9 @@ cart_action(#R, S, I, T, Ri)@async :-
     replicas(#L, S, R);
 \end{Dedalus}
 
-
 Sealing log so that we never send a different response tuple for a given checkout request. 
 
 \begin{Dedalus}
-
 commitfirst[log, 5, 4];
 log(L, Session, Item, Cnt) \(\leftarrow\) 
     status(L, User, Session, Item, Cnt);
@@ -270,5 +267,3 @@ checkout(#Server, Client, Session) \(\leftarrow\)
     checkout_req(#Client, Session),
     best_replica(#Client, Session, Server);
 \end{Dedalus}
-
-
