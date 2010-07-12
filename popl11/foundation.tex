@@ -19,11 +19,11 @@ $p_j(\overline{X_j})$, $\lnot p_{j+1}(\overline{X_{j+1}})$, ..., $\lnot
 p_k(\overline{X_k})$;}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em
 predicates}.  Each predicate, also called a {\em relation} or {\em table}, has
 a fixed arity.  Predicates that appear on the left-hand side of some rule in
-the program are called {\em intensional} predicates -- the rest are called {\em
+the program are called {\em intensional} predicates---the rest are called {\em
 extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of
 arguments (existentially quantified variables or constants).  An application of
 a predicate to a list of arguments is called an {\em atom}.  The same variable
-symbol may appear in multiple atoms -- in this case, we say that the the atoms
+symbol may appear in multiple atoms---in this case, we say that the atoms
 are {\em unified} on the arguments that contain the duplicated variable.  The
 single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head},
 and the set of atoms to the right is the rule's {\em body}.  If the head
@@ -52,10 +52,9 @@ program together with an EDB.  All constants in the EDB are contained in the
 %%As a shorthand for common operations involving a number of rules, one often
 %%admits {\em aggregation} into Datalog -- a special type of function that takes
 %%a set as input and computes a scalar output.  
-Datalog is commonly extended with {\em aggregate functions} -- special
-functions that take sets as input and compute a scalar output -- as a shorthand
-for common operations involving a number of rules.  We are interested in both
-{\em exemplary} aggregates -- which return a value from the input set -- such
+Datalog is commonly extended with {\em aggregate functions}: special
+functions that take sets as input and compute a scalar output.  We are interested in both
+{\em exemplary} aggregates---which return a value from the input set---such
 as \dedalus{max} and \dedalus{min}, and {\em summary} aggregates like
 \dedalus{count}.
 %\paa{doesn't this notation seem to mean that only one aggregate per rule is
@@ -73,22 +72,22 @@ as \dedalus{max} and \dedalus{min}, and {\em summary} aggregates like
 Aggregation may only be used in the head of a rule.  A head atom
 \dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an aggregate function symbol,
 indicates that predicate \dedalus{p} contains one row for each satisfying
-assignment of $\bar{A}$ -- akin to the distinct ``groups'' of SQL's ``GROUP
+assignment of $\bar{A}$---akin to the distinct ``groups'' of SQL's ``GROUP
 BY'' notation.  This row contains the value of the aggregate function on the
 set of assignments to $B$ for the given value of $A$.
 
 \subsection{Contradictions}
 
-A Datalog instance without negation or aggregation has a unique {\em
-model}~\cite{ullmanbook}-- the minimal set of facts in intensional predicates
-implied by the EDB given the program, or the intensional data base ({\em IDB}).
-Adding negation or aggregation to Datalog programs increases expressivity, but
-creates the possibility of two additional types of programs: programs with no
-model, i.e. programs with a {\em contradiction} -- a fact that depends on its
-own negation -- and programs that have a multiplicity of
+A Datalog instance without negation or aggregation has a unique {\em model}: the
+minimal set of facts in intensional predicates implied by the EDB given the
+program, or the intensional data base ({\em IDB})~\cite{ullmanbook}.  Adding
+negation or aggregation to Datalog programs increases expressivity, but creates
+the possibility of two additional types of programs: programs with no model,
+i.e., programs with a {\em contradiction}---a fact that depends on its own
+negation---and programs that have a multiplicity of
 models~\cite{sacca-zaniolo}.  The computation of the model of a Datalog program
 is an iterative procedure, where each iteration determines new facts.  Datalog
-ensures termination of this procedure -- and finiteness of the model -- by
+ensures termination of this procedure---and finiteness of the model---by
 guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
 by ensuring the EDB is finite, and restricting the use of constructs that can
 expand the universe of constants such as non-exemplary functions.
@@ -157,9 +156,9 @@ corresponds to a non-deterministic choice of one of the models.
 See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
 into Datalog rules that employ cyclic negation.  Although \dedalus{choice}
 cannot cause a contradiction, its expansion violates many stratification
-conditions.  Thus, we often must explicitly admit programs with
-\dedalus{choice} after ruling out certain {\em unstratified} programs --
-programs that violate the stratification condition.
+conditions.  Thus, we often must explicitly admit programs with \dedalus{choice}
+after ruling out certain {\em unstratified} programs---programs that violate
+the stratification condition.
 
 \section{\lang}
 
@@ -212,13 +211,13 @@ three ways:
 
 \begin{enumerate}
 %
-\item The rule is said to be {\em deductive} if $\DS$ is bound to the value
+\item The rule is {\em deductive} if $\DS$ is bound to the value
 $\DT$; that is, the body contains \dedalus{$\DS$ = $\DT$}.
 %
-\item The rule is said to be {\em inductive} if $\DS$ is the successor of
+\item The rule is {\em inductive} if $\DS$ is the successor of
 $\DT$; that is, the body contains \dedalus{successor($\DT$, $\DS$)}.
 %
-\item The rule is said to be {\em asynchronous} if $\DS$ is unrelated to $\DT$;
+\item The rule is {\em asynchronous} if $\DS$ is unrelated to $\DT$;
 that is, the body contains \dedalus{time($\DS$), choose(($\overline{A}$),
 ($\DS$))}, where $\overline{A}$ is the set of variables occurring in the body,
 including $\DT$.
@@ -261,15 +260,15 @@ $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the s
 as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
 
 \begin{dedalus}
-r\pos($\overline{A}$,\(\DS\)) \(\leftarrow\)
+r\pos($\overline{A}$,\(\DS\)) \(\leftarrow\) r($\overline{A}$,\(\DT\)), \(S\)=\(\DT\);
 \end{dedalus}
 
-\hspace{5mm}
-\begin{dedalus}
-   r($\overline{A}$,\(\DT\)), \(S\)=\(\DT\);
-\end{dedalus}
+% \hspace{5mm}
+% \begin{dedalus}
+   
+% \end{dedalus}
 
-That is, for every extensional predicate \dedalus{r} there is an intensional
+\noindent{}That is, for every extensional predicate \dedalus{r} there is an intensional
 predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
 Intuitively, this rule allows extensional facts to serve as ground for
 \dedalus{r\pos}, while enabling other rules to derive additional \dedalus{r\pos} facts.
