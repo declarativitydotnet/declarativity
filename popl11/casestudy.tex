@@ -76,7 +76,7 @@ wooden man (straw instrumented with a queue to handle 'coincidence'):
 
 
 \begin{Dedalus}
-persist[status, 3, del_status];
+persist[status, 3];
 queue[cart_update, 3, 2];
 r1
 status(Location, Session, CartObj) \(\leftarrow\)
@@ -197,7 +197,7 @@ system.  If this logic were expressed as a user-defined function in the style of
 we could replace {\em r1} and {\em r2} above with:
 
 \begin{Dedalus}
-persist[cart_update, 3, _];
+persist[cart_update, 3];
 status(Location, Session, cartunion<CartObj>) \(\leftarrow\)
     cart_update(Location, Session, CartObj);
 \end{Dedalus}
@@ -211,8 +211,8 @@ of a shopping cart at checkout time are, for each item referenced in the cart up
 the difference between the number of additions and deletions of that item.
 
 \begin{Dedalus}
-persist[cart_action, 6, _];
-persist[checkout, 3, _];
+persist[cart_action, 6];
+persist[checkout, 3];
 action_cnt(Location, Session, Item, Type, count<ReqId>) \(\leftarrow\)
     cart_action(Location, Client, Session, Item, Type, ReqId),
     checkout(Location, Client, Session);
