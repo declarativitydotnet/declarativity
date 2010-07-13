@@ -7,7 +7,7 @@ programmers to specify systems as a set of invariants over local state,
 %% \wrm{local isn't important, it's just a design choice of dedalus}
 and rules that describe how state changes and moves across a network. 
 %%\wrm{again this detail isn't important, it's just a design choice of dedalus}.  
-This approach leads to succinct, executable specifications whose faithfulness to the original pseudocode may be visually verified.\nrc{Which ``original pseudocode'' are you referring to? Seems like a much crisper pitch for distributed logic langs should be possible.}
+This approach leads to succinct, executable specifications whose faithfulness to the original pseudocode may be visually verified.\nrc{Which ``original pseudocode'' are you referring to? Seems like a much crisper pitch for distributed logic langs should be possible.}\rcs{This would be a good place to say that we're a bridge between easily-verifiable languages like TLA, and efficiently executable languages like datalog}
 %% \wrm{well...}.  
 Moreover, many 
 distributed logic languages are extensions of first-order logic enhanced with
@@ -16,7 +16,7 @@ formal verification techniques~\cite{wang, wang2}.
 
 We conjecture that logic languages are a better fit for the specification of concurrent and distributed systems than traditional imperative approaches.  In imperative languages, whose instructions are built up from applications of a sequencing primitive and whose state is commonly stored in data structures like lists and trees, ordering is implicit and ubiquitous, 
 while concurrency is achieved by duplicating the sequential control structures and allowing them
-to run in an interleaved fashion.\nrc{I don't follow what ``duplicating the sequential control structures'' means.}
+to run in an interleaved fashion.\nrc{I don't follow what ``duplicating the sequential control structures'' means.}\rcs{Two options: something about duplicating the stack, or ``... by explicitly partitioning computation across CPUs, and allowing them to ...''}
 %\wrm{what about concurrent data structures?  maybe we cut the ``concurrency is achieved...'' and replace it with ``the programmer must take specific steps to achieve concurrency''}.   whoops -- thought you said "data structures" instead of "control structures"
 In contrast, declarative language constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations\nrc{This seems a confusing claim: the programmer must also ``reason about ordering of data elements and operations'' in an imperative language}, but in return allowing a high degree of concurrency and often ``embarrassing'' 
 parallelism~\cite{podskey}. \nrc{People usually speak of ``embarrassing parallelism'' as a property of a particular problem/algorithm, not a language.} Instead of reasoning about the possible interleavings of sequential
@@ -57,7 +57,7 @@ in the context of networking and other distributed systems, both
 because we have considerable practical experience with these
 languages~\cite{boom-eurosys,Loo2009-CACM}, and because others have
 examined the semantic ambiguities of these languages in some
-depth~\cite{Mao2009,navarro}.
+depth~\cite{Mao2009,navarro}.\rcs{Furthermore, a wide range of network protocols have already been proven correct in higher level logic languages, such as TLA.  Unfortuntately, while these languages are ``executable'' in some sense, they include constructs that cannot be automatically mapped into efficient implementations.}
 
 In this paper we reconsider declarative programming for distributed
 systems from a model-theoretic perspective. We introduce a declarative
@@ -72,9 +72,9 @@ language called \lang\footnote{\small \lang is intended as a precursor
   Icarus.  Unlike Overlog, which flew too close to the sun, Dedalus
   remains firmly grounded.  } that enables the specification of rich
 distributed systems concepts without recourse to operational
-constructs \wrm{assignment of timestamps is operational.  i think the point we want to make is that we elegantly minimize the operational semantics}.  \lang is a subset of a language with well-studied
+constructs \wrm{assignment of timestamps is operational.  i think the point we want to make is that we elegantly minimize the operational semantics}.  \lang is a subset of \rcs{Equivalent to?} a language with well-studied
 features: Datalog enhanced with negation, aggregate functions, choice,
-and a successor relation.  \wrm{its not well studied, that's why we're studying it in this paper} \lang provides a model-theoretic foundation
+and a successor relation.  \wrm{its not well studied, that's why we're studying it in this paper} \lang provides a model-theoretic \rcs{what does this mean?  Are we just dropping buzzwords here?} foundation
 for the two key features of distributed systems: mutable state and
 asynchronous processing and communication.  We show how these features
 are captured in \lang using logical time. 

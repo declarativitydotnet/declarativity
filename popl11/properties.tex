@@ -26,7 +26,7 @@ paradox'').  Thus, an additional condition is required to exclude such
 contradictions.
 \nrc{Not sure the remainder of this para is useful: yes, real systems
   can't allow a temporal paradox. Seems like it
-  goes without saying.}
+  goes without saying.} \rcs{also, it sounds like we need to actually run the lamport clock at runtime in order to avoid temporal paradoxes in execution traces...  It should be more clear that these are model theoretic issues.  I tried to clean things up a bit in the lamport clock section, and tie these ideas to serializability below.  Hopefully serializability will ground the discussion without resorting to relativistic arguments about causality and simultanaity...}
 However, we note that in a practical asynchronous distributed system, nodes are
 assumed to have their own clocks, which may run at any arbitrary speed
 \wrm{move this defnition of async distr system earlier}.  Nodes assign a
@@ -37,7 +37,7 @@ execution.
 \begin{example}
 \label{ex:stratsafe}
 A simple temporally stratifiable and temporally safe \slang instance that is
-neither syntactically stratifiable nor safe.
+neither syntactically stratifiable nor syntactically\rcs{?} safe.
 
 \begin{Dedalus}
 persist[p, 2]  
@@ -171,6 +171,8 @@ If finiteness of the universe cannot be guaranteed, we can fall back on
 conservative syntactic conditions presented in~\cite{dedalus-techr} that
 guarantee the existence of a finite model.
 
+\rcs{wrm agreed the following paragraph needs to be moved/rewritten, but I forget where.  Note that the following only holds for analyses of confluence.  We might want to check other properties, such as invariants over a trace that we collect and process at runtime.  Such analyses are probably more interested in network events than the ultimate model.  Other analyses probably want to check other things...}
+
 In the general case, we are not interested in the full model of a trace of an
 instance: facts that are only ephemerally true represent events, or intermediate
 computations, which intuitively should not be considered as part of the output
@@ -241,6 +243,8 @@ call the instance {\em trace confluent}.  If every instance of a program is
 trace confluent, then we say the program is {\em confluent}.  Note that every
 non-contradictory Datalog program without \dedalus{choice} is confluent.
 
+\subsubsection{Associativity and Serializabilty}
+
 \wrm{this para sounds a bit wishy washy.  but if we can say that ``assoc + comm
 '' == deterministic, or point to a proof of this, then we can just say
 ``hey, comm isn't a problem here, so the only problem could be assoc,
@@ -255,7 +259,43 @@ each fact.  Intuitively, this is because we force unification on time suffixes
 in the body.  Persistence of async relations \nrc{Don't you mean ``rules'', not ``relations''?} solves this by making all
 derivations associative: there will eventually be a timestamp where all async
 derivations ever received are coincidentally true.\nrc{Don't grok this.}
-\wrm{provide example here?}
+
+\wrm{provide example here?}  Concretely, consider the committed choice
+example in Section~\ref{sec:assignment-and-committed-choice}, which
+inserts the first value of \dedalus{condition(A,\_)} into \dedalus{log}.
+Careful readers may have noticed that, if multiple conflicting
+\dedalus{condition} tuples appear in the same timestamp, multiple
+conflicting values will be inserted into the \dedalus{log} relation.
+An associativity analysis would automatically detect such bugs.
+Furthermore, non-associative rules can always be transformed \rcs{true, right?}
+into associative rules by introducing {\em tie breaking} predicates
+and aggregates; in the committed choice example, we would simply
+replace the left hand side of the second rule
+(\dedalus{log(A,B)@next}) with \dedalus{log(A,min<B>)@next}.
+
+Alternatively, we can avoid the need for such rewrites by restricting
+the set of permissible executions, just as we did to disallow temporal
+pardoxes.  From a pragmatic perspective, we have found that it is
+convenient to process each arriving event atomically before processing
+the next.  Doing so ensures that our programs are trivially
+associative; two events will never arrive simultanesously.  This
+greatly simplifies our programs.
+
+From a model theoretic perspective, we apply a compile-time rewrite
+that duplicates each \dedalus{@next} rule, leaving one copy intact,
+and replacing the head of the other with \dedalus{busy(1)@next}.
+Instead of delivering tuples directly, \dedalus{@async}'s choice
+construct inserts the tuples into a queue, as in
+Section~\ref{sec:priority-queues}.  For each timestemp \dedalus{T}
+where \dedalus{busy(1)@T} is not defined, we dequeue and deliver
+exactly one tuple.\rcs{bill had some nice things to say about this approach regarding analysability, etc...}
+
+From an operational perspective, this allows \lang programs to
+leverage large bodies of existing work in database concurrency control
+and compiler optimization techniques that automatically parallelize
+code, strengthen loops, and so on.\rcs{cite two textbooks?}  \rcs{Naturally, programs that make use of imperative constructs will complicate such techniques; such issues existed in overlog, and led to semantic ambiguities that complicated earlier research.  We believe that \lang's foundation in logic will largely avoid such issues.  -- (Not sure we want so say this, or that we can back it up)}
+
+
 
 %We can immediately identify a subset of the class of confluent \lang programs:
 %the class $D$ of monotonic \lang programs, where all predicates have simple
@@ -266,6 +306,8 @@ derivations ever received are coincidentally true.\nrc{Don't grok this.}
 %async rules introduce nondeterminism into the time suffixes of predicates.
 %However, the simple persistence of all predicates ensures that for
 %some value of the time suffixes, all deductions that can be made will be made.
+
+\subsubsection{Commutativity}
 
 It is easy to see that non-monotonic programs are not necessarily confluent,
 even when async predicates are simply persisted.  The intuitive issue now is
