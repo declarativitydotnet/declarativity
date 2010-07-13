@@ -34,37 +34,132 @@ a single timestamp and the other did not, must achieve the same answer.
 
 In this section, we build a shopping cart application with replicated state,
 and reason about the degree to which it is ``eventually consistent.''
-%In common usage, a system with replicated state is considered to be
-%``eventually consistent'' if the following conditions are met:
 
-%\begin{enumerate}
-%
-%\item Replication is \emph{asynchronous}, in that servers and clients do not
-%wait until global consistency is established.  It follows from this
-%requirement that such systems are ``coordination-free,'' as in general
-%coordination entails synchrony. \wrm{need to define coordination earlier}
-%
-%\item If at some time messaging quiesces and all messages are delivered, all
-%replicas will have the same state.
-%
-%\end{enumerate}
+
+
+\subsection{ACID 2.0}
+
+
+Helland and others have advocated the design strategy of ensuring eventually-consistent 
+semantics for replicated state by enforcing high-level algebraic 
+properties in the application logic (in particular, commutativity, associativity and 
+idempotence) rather than attempting to provide a RW storage substrate that can provide
+such guarantees in general~\cite{quicksand, beyond}.  For example, Dynamo~\cite{dynamo} 
+is a RW storage system
+and as such needs to provide versioning and conflict resolution capabilities, the shopping
+cart application that sits atop it is able to easily reconcile conflicts that occur due to inconsistency of global state, because the application logic is fundamentally order-insensitive.
+The eventual state of the shopping cart is guaranteed to be the union of all the operations on
+the cart.  In the case of Dynamo, the application logic and not the storage system controls
+cart merging logic.
+
+%%Following this reasoning, if our implementation in \lang could be altered in such a way that
+%%{\em cart\_update} tuples commute with one another,  we could dispense with the total
+%%ordering of tuples.  
+Instead of replacing an opaque object as a read/write system would,
+we would like to expose the (fundamentally commutative) operation of cart-union to the distributed system.  
+%%If this logic were expressed as a user-defined function in the style of SQL databases,
+%%we could replace {\em r1} and {\em r2} above with:
+%%\begin{Dedalus}
+%%persist[cart_update, 3];
+%%status(Location, Session, cartunion<CartObj>) \(\leftarrow\)
+%%    cart_update(Location, Session, CartObj);
+%%\end{Dedalus}
+%%But it is only slightly more complicated to hoist the application logic into
+%%the server code explicitly.  
+To a first approximation, an update to a shopping cart
+can be represented as a tuple containing a server and client address, a session identifier,
+an item identifier corresponding to goods, a type field that indicates whether this action
+is an addition or a deletion, and a request identifier to allow idempotent retry.  The contents
+of a shopping cart at checkout time are, for each item referenced in the cart update history, 
+the difference between the number of additions and deletions of that item.
+
+\begin{Dedalus}
+persist[cart_action, 6];
+action_cnt(Location, Session, Item, Type, count<ReqId>) \(\leftarrow\)
+    cart_action(Location, Client, Session, Item, Type, ReqId),
+    checkout(Location, Client, Session);
+
+status(L, Session, Item, Cnt) \(\leftarrow\)
+    action_cnt(L, Session, Item, "Add", Cnt),
+    notin action_cnt(L, Session, Item, "Del", _);
+
+status(L, User, Session, Item, Acnt - Dcnt) \(\leftarrow\)
+    action_cnt(L, Session, Item, "Add", Acnt),
+    action_cnt(L, Session, Item, "Del", Dcnt);
+\end{Dedalus}
+
+
+
+\includegraphics[width=0.75\linewidth]{vizza_brick.png}
+\wrm{change to PDF when peter commits the shopping cart code to hg}
+
+Our tests immediately show us that the program is not necessarily confluent: 
+{\em action\_cnt} falls at a non-local stratification boundary, so it and all tables that
+depend on it may be affected by the arrival order of tuples to {\em cart\_action} and
+{\em checkout}.  This is not surprising: even though both relations are persisted monotonically,
+the arrival of a {\em checkout} tuple may cause us to universally quantify over {\em cart\_action}
+at some time $N$, only to have a latecomer {\em cart\_action} tuple arrive at some $M > N$.
+There are several options available to the programmer depending on the business rules.
+If it is acceptable to ignore the latecomers, the program must merely ensure that they do not 
+cause the recalculation of {\em action\_cnt} and transmission of conflicting {\em response} 
+tuples.  We can achieve this by using the ``at most once'' pattern, which ``seals'' the value
+of $Cnt$ in {\em log} at the first insertion, and ensures that {\em log\_event} occurs once.
+
+\begin{Dedalus}
+commitfirst[log, 5, 4];
+log(L, Session, Item, Cnt) \(\leftarrow\) 
+    status(L, User, Session, Item, Cnt);
+
+response(#Client, Session, Item, Amt)@async \(\leftarrow\)
+    log_event(#Location, Session, Item, Amt),
+    checkout(#Location, Client, Session);
+\end{Dedalus}
+
+
+If, on the other hand, 
+
+In addition to illustrating where in our program coordination may be necessary, our
+analysis also illustrates where is is unecessary.
+The predicate {\em cart\_action}, representing the stored state 
+of the cart program,  is part of a monotonic component that includes {\em cart_action_stage}, 
+so we can simply and inexpensively replicate it:
+
+\begin{Dedalus}
+cart_action(#R, S, I, T, Ri)@async :-
+    cart_action(#L, S, I, T, Ri),
+    replicas(#L, S, R);
+\end{Dedalus}
 
 
 
 
 \subsection{Straw Man}
 
+\paa{
 What's missing: draw a bold line every place where you see a (-) (negation or aggregation)
 or a half-arrow(unguarded asynchrony).  these are the global stratum boundaries, at which
 we must either coordinate or commit to a defeasible conclusion to proceed.
 crow's feet indicate persistence-guarded asynchrony.  though crow's feet dependencies
 may cross network boundaries, they are intra-stratum.
+}
 
 straw man:
 
 
 \includegraphics[width=0.65\linewidth]{vizza_straw.png}
 \wrm{change to PDF when peter commits the shopping cart code to hg}
+
+
+what does the analysis tell us?
+
+cart\_update (upon which all other predicates depend) is at a stratum boundary (which 
+correponds exactly to a network boundary).  any conclusions drawn from cart\_update
+are affected by ND ordering in the channel.  the 'mutability' of cart\_update tuples is
+handled via the update pattern (a "TS" instance of nonmonotonicity).  request()s are likewise order-sensitive.  
+
+it is clearly not confluent.  
+
+
 
 
 wooden man (straw instrumented with a queue to handle 'coincidence'):
@@ -174,81 +269,13 @@ proportional to the number of tuples.
 
 \rcs{This might be a good place to cite BFS, sherpa, etc.  The para would go something like this (1) if you want to extend the above to multiple writers, then the ordering construct needs to move to the server side.  (2) Once ordering moves to a master node, you need paxos.  (3) in order to replicate you need to allow replicas to send updates to each other.  If you've settled on per-tuple masters, this probably means some sort of log shippinh protocol (a'la our queue, above).  Between the primitives described here and in the bfs/paxos work, you can implement this.  Such systems have been implemented in the past, and are currently in production (CITE PNUTS).  However, such approaches are overkill for shopping carts, and don't show off our nice handling of commutative updates, so:}
 
-\subsection{ACID 2.0}
-
-\includegraphics[width=0.75\linewidth]{vizza_brick.png}
-\wrm{change to PDF when peter commits the shopping cart code to hg}
-
-Helland and others have advocated the design strategy of ensuring eventually-consistent 
-semantics for replicated state by enforcing high-level algebraic 
-properties in the application logic (in particular, commutativity, associativity and 
-idempotence) rather than attempting to provide a RW storage substrate that can provide
-such guarantees in general~\cite{quicksand, beyond}.  For example, Dynamo~\cite{dynamo} 
-is a RW storage system
-and as such needs to provide versioning and conflict resolution capabilities, the shopping
-cart application that sits atop it is able to easily reconcile conflicts that occur due to inconsistency of global state, because the application logic is fundamentally order-insensitive.
-The eventual state of the shopping cart is guaranteed to be the union of all the operations on
-the cart.  In the case of Dynamo, the application logic and not the storage system controls
-cart merging logic.
-
-Following this reasoning, if our implementation in \lang could be altered in such a way that
-{\em cart\_update} tuples commute with one another,  we could dispense with the total
-ordering of tuples.  Instead of replacing the opaque object as a read/write system would,
-we would like to expose the (fundamentally commutative) operation of cart-union to the distributed
-system.  If this logic were expressed as a user-defined function in the style of SQL databases,
-we could replace {\em r1} and {\em r2} above with:
-
-\begin{Dedalus}
-persist[cart_update, 3];
-status(Location, Session, cartunion<CartObj>) \(\leftarrow\)
-    cart_update(Location, Session, CartObj);
-\end{Dedalus}
-
-But it is only slightly more complicated to hoist the application logic into
-the server code explicitly.  To a first approximation, an update to a shopping cart
-can be represented as a tuple containing a server and client address, a session identifier,
-an item identifier corresponding to goods, a type field that indicates whether this action
-is an addition or a deletion, and a request identifier to allow idempotent retry.  The contents
-of a shopping cart at checkout time are, for each item referenced in the cart update history, 
-the difference between the number of additions and deletions of that item.
-
-\begin{Dedalus}
-persist[cart_action, 6];
-persist[checkout, 3];
-action_cnt(Location, Session, Item, Type, count<ReqId>) \(\leftarrow\)
-    cart_action(Location, Client, Session, Item, Type, ReqId),
-    checkout(Location, Client, Session);
-
-status(L, Session, Item, Cnt) \(\leftarrow\)
-    action_cnt(L, Session, Item, "Add", Cnt),
-    notin action_cnt(L, Session, Item, "Del", _);
-
-status(L, User, Session, Item, Acnt - Dcnt) \(\leftarrow\)
-    action_cnt(L, Session, Item, "Add", Acnt),
-    action_cnt(L, Session, Item, "Del", Dcnt);
-\end{Dedalus}
 
 
-Our tests show that cart\_action is part of a monotonic component, so we can simply and inexpensively replicate it:
 
-\begin{Dedalus}
-cart_action(#R, S, I, T, Ri)@async :-
-    cart_action(#L, S, I, T, Ri),
-    replicas(#L, S, R);
-\end{Dedalus}
 
-Sealing log so that we never send a different response tuple for a given checkout request. 
 
-\begin{Dedalus}
-commitfirst[log, 5, 4];
-log(L, Session, Item, Cnt) \(\leftarrow\) 
-    status(L, User, Session, Item, Cnt);
 
-response(#Client, Session, Item, Amt)@async \(\leftarrow\)
-    log_event(#Location, Session, Item, Amt),
-    checkout(#Location, Client, Session);
-\end{Dedalus}
-
+\subsection{foo}
 
 ... and the client code, just to have it all in here:
 \paa{maybe the complete code should just go in an appendix...}
