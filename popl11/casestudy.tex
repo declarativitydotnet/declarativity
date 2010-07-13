@@ -33,7 +33,15 @@ associative, because two replicas, of which one received a pair of messages in
 a single timestamp and the other did not, must achieve the same answer.
 
 In this section, we build a shopping cart application with replicated state,
-and reason about the degree to which it is ``eventually consistent.''
+and reason about the degree to which it is ``eventually consistent.''  Our first 
+shopping cart is implemented in a set-oriented style: in the first phase of computation,
+changes to the cart are monotonically accumulated and replicated, while in the second
+(checkout), the monotonic store is summarized and sealed.  The second shopping cart
+is implemented in an imperative, overwriting stytle: as updates are received, the current copy 
+is replaced with the new copy.  We then analyze both implementations to identify montonic 
+components and state which can be replicated without waiting, and to identify possible
+loci of coordination.
+
 
 
 
@@ -144,7 +152,12 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 
 If, on the other hand, ignoring late {\em  cart\_update} tuples is not acceptable,
 some data dependency between them and {\em checkout} tuples must be established
-to ensure that the deduction of {\em action\_cnt} tuples {\em waits}.  
+to ensure that the deduction of {\em action\_cnt} tuples must {\em wait}.  
+The ordered queue pattern introduced in (constructs) is one means of achieving such an 
+ordering, as is sending a manifest (e.g., a count of total {\em cart\_action} tuples
+sent) in the {\em checkout} message.
+
+
 
 
 In addition to illustrating where in our program coordination may be necessary, our
@@ -165,7 +178,7 @@ abstracted away.  Hence asynchronous replication of {\em cart\_update} is conflu
 up to any nonmonotonic operations on the table.
 
 
-\subsection{Straw Man}
+\subsection{Mutable State}
 
 \begin{comment}
 What's missing: draw a bold line every place where you see a (-) (negation or aggregation)
@@ -175,15 +188,16 @@ crow's feet indicate persistence-guarded asynchrony.  though crow's feet depende
 may cross network boundaries, they are intra-stratum.
 \end{comment}
 
+%%wooden man (straw instrumented with a queue to handle 'coincidence'):
+%%\includegraphics[width=1.2\linewidth]{vizza_wood.png}
+%%\wrm{change to PDF when peter commits the shopping cart code to hg}
 
 
 
-
-wooden man (straw instrumented with a queue to handle 'coincidence'):
-\includegraphics[width=1.2\linewidth]{vizza_wood.png}
-\wrm{change to PDF when peter commits the shopping cart code to hg}
-
-
+The simplest imaginable shopping cart implementation behaves like a key-value store,
+and treats the cart as an opaque object that is repeatedly updated.    Because we have not
+attempted to hoist, as we did in the previous example, application logic about cart merging
+into the server code, this implementation is superficially more terse and simple.
 
 \begin{Dedalus}
 persist[status, 3];
@@ -207,12 +221,11 @@ cart_update(L, S, C)@async \(\leftarrow\)
 
 \end{Dedalus}
 
-The simplest imaginable shopping cart implementation behaves like a key-value store,
-and treats the cart as an opaque object that is repeatedly updated.  Note that 
+\paa{no longer sure whether the discussion in the below para is worth the space...}
+Note that 
 {\em cart\_update} is declared using the {\em queue} macro, which expands to
 a program fragment that ensures that tuples corresponding to only one $CartObj$
 are processed in a single fixpoint. \wrm{note that we desire a primary key...}
-
 Consider the behavior of the program without the queue.  Because {\em
 cart\_update} appears in the head of an asynchronous rule,
 \dedalus{cart\_update} tuples may be assigned arbitrary timestamps, and some
@@ -245,6 +258,7 @@ we have a logic bug in our program...}
 they are separated by an async rule that is NOT ``guarded'' by a persistence rule
 associated with its head predicate}
 
+\begin{comment}
 what does the analysis tell us?
 
 cart\_update (upon which all other predicates depend) is at a stratum boundary (which 
@@ -253,16 +267,20 @@ are affected by ND ordering in the channel.  the 'mutability' of cart\_update tu
 handled via the update pattern (a "TS" instance of nonmonotonicity).  request()s are likewise order-sensitive.  
 
 it is clearly not confluent.  
-
+\end{comment}
 
 
 
 Looking at the above program, we can see that {\em status} is defined by the
 state update pattern (Section whatever) on {\em cart\_update} -- recall that
 the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
-{\em cart\_update} tuples do not commute with each other, and the program as
+{\em cart\_update} tuples do not commute with each other
+%%, the program is not confluent, 
+and the program as
 given is unlikely to return the correct version of the cart in a {\em response}
-message.
+message.  Our PDG analysis confirms this: a stratum boundary separates the client state
+(at {\em update} from the server state ({\em cart\_update}), upon which all other 
+predicates in the program, including {\em response}, depend.
 
 Considering the {\em cart\_update} tuples in the client's order would solve
 this problem.  However, the client's order of the updates is lost through the
@@ -270,7 +288,9 @@ asynchronous derivations of {\em cart\_update}, which may arbitrarily reorder
 updates.  In Section whatever, we identified the concept of entanglement as a
 way to preserve an order in the face of asynchrony.  We can communicate the
 desired order from client to server by entangling the sender's time in rule
-\dedalus{r4}, and having the server process updates in this order.
+\dedalus{r4}, and having the server process updates in this order~\footnote{
+We could also have used a sequence, if we wanted more control over the range of ordered
+values}.
 %serial order of updates at the client is lost in the asynchronous derivations
 %of {\em cart\_update}.  By entangling the sender's time in rule  {\em r4}, we
 %may communicate the desired total order over the {\em cart\_update} tuples and
