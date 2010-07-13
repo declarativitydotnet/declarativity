@@ -152,7 +152,7 @@ Zaniolo~\cite{sacca-zaniolo} as the \dedalus{choice} construct.  Intuitively,
 \dedalus{choice} allows the specification of a functional dependency in a rule.
 For example, \dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expresses that for
 each value that variable \dedalus{X} takes on, variable \dedalus{Y} may only
-take on a single {\em non-deteministically chosen} value. If \dedalus{q}
+take on a single {\em non-deterministically chosen} value. If \dedalus{q}
 contains more than one \dedalus{Y} value for an \dedalus{X}, then the instance
 has multiple models: one corresponding to each choice of \dedalus{Y} for each
 \dedalus{X}.  Operationally, the answer to a Datalog program with choice
