@@ -37,8 +37,8 @@ and reason about the degree to which it is ``eventually consistent.''  Our first
 shopping cart is implemented in a set-oriented style: in the first phase of computation,
 changes to the cart are monotonically accumulated and replicated, while in the second
 (checkout), the monotonic store is summarized and sealed.  The second shopping cart
-is implemented in an imperative, overwriting stytle: as updates are received, the current copy 
-is replaced with the new copy.  We then analyze both implementations to identify montonic 
+is implemented in an imperative, overwriting style: as updates are received, the current copy 
+is replaced with the new copy.  We then analyze both implementations to identify monotonic 
 components and state which can be replicated without waiting, and to identify possible
 loci of coordination.
 
@@ -161,7 +161,7 @@ sent) in the {\em checkout} message.
 
 
 In addition to illustrating where in our program coordination may be necessary, our
-analysis also illustrates where is is unecessary.
+analysis also illustrates where is is unnecessary.
 The predicate {\em cart\_action}, representing the stored state 
 of the cart program,  is part of a monotonic component that includes {\em cart\_action\_stage}, 
 so we can simply and inexpensively replicate it:
@@ -262,7 +262,7 @@ associated with its head predicate}
 what does the analysis tell us?
 
 cart\_update (upon which all other predicates depend) is at a stratum boundary (which 
-correponds exactly to a network boundary).  any conclusions drawn from cart\_update
+corresponds exactly to a network boundary).  any conclusions drawn from cart\_update
 are affected by ND ordering in the channel.  the 'mutability' of cart\_update tuples is
 handled via the update pattern (a "TS" instance of nonmonotonicity).  request()s are likewise order-sensitive.  
 
