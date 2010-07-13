@@ -109,7 +109,7 @@ until it is retracted.
 
 %%\newtheorem{example}{Example}
 \begin{example}
-Consider the following \lang instance:
+Consider the following \lang instance:\rcs{introduce p predicate?}
 
 %%p\pos(A, B) \(\leftarrow\) p(A, B);
 \begin{Dedalus}
@@ -148,13 +148,14 @@ p\pos($\overline{D})@\DT+1$;
 \end{dedalus}
 
 
-\noindent Intuitively, an update represents deleting an old value of a tuple
-and inserting a new value.  Every update is {\em atomic across timesteps},
-meaning that the old value ceases to exist at the same timestep in which the
-new value is derived---timestep $\DT+1$ in the above definition.
+\noindent Intuitively, an update represents deleting an old value of a
+tuple and inserting a new value.  Every update is {\em atomic across
+  timesteps}, meaning that the old value exists during timestep $\DT$
+when the new value is derived.  During the evaluation of timestep
+$\DT+1$ the new value exists, and the old does not.
 
 \subsection{Assignment and Committed Choice}
-
+\rcs{this is analagous to the old systems mainstays: ``first writer wins'' and ``last writer wins''.  We should mention those terms, both for context, and because I think they're a more intuitive way to think about it}
 The assignment primitive provided by most imperative languages is a special case
 of update without deletion.  We can model the (destructive) assignment of sets
 of values to keys in the following way:
@@ -187,7 +188,7 @@ insertions into \dedalus{condition} cannot cause new rows with the same
 %monotonic behavior in all models
 %\wrm{commenting out fancy pants diction, so neil doesn't have to}
 
-\subsection{Queues}
+\subsection{Prioritiy Queues}
 
 %\paa{shorten this section} While a sequence is a useful construct for
 %generating or imposing an ordering on tuples \wrm{seems a bit fishy.  seems
@@ -299,6 +300,8 @@ deduction and the time value of its consequence.  We call such a binding an
 {\em entanglement}.   Note that in order to write the rule it is necessary to
 not sugar away the time suffix in the rule body.  
 
+\rcs{the above discussion obscures a crucial detail: entanglement doesn't allow arbitrary access to the timestamp.  Instead, it provides a one way information flow ``out of'' the timestamp field}
+
 \subsection{Sequences}
 %\wrm{Maybe somehow work in the fact that sequences are really about preserving
 %an already-established order (at a sender) through asynchrony at the receiver.
@@ -377,6 +380,19 @@ sufficiently advanced, by temporarily storing incoming tuples in the
 detail here: Lamport clocks rely upon a ``tie-breaking'' function to ensure
 that no two events have the same timestamp.  We can implement such a discipline
 using queues.}
+
+Although annotating a program execution with logical clock values has
+a number of practical runtime applications (such as debugging), in our
+setting it is primarily useful as a way to reconcile physical
+constraints (a given program execution on real hardware will obey
+causality) with our expressive language model (which is able to model
+temporal paradoxes).  Crucually, we do so in a purely logical manner,
+without resorting to imperative constructs outside of Datalog.  In
+Section~\rcs{sec:fixme}, we take this idea a step further, and explain
+how \lang programs can be restricted to treat events as serializable
+transactions.  This allows us to model well-studied runtime
+optimizations such as parallelizing compilers and database lock
+managers with little additional complexity.
 
 
 %\wrm{why can't

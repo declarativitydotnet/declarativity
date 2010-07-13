@@ -1,7 +1,7 @@
 \section{Foundation}
 \label{sec:lang}
 
-\lang is related to Datalog$\lnot$~\cite{ullmanbook}, hereinafter referred to
+\lang is related to Datalog with negation (Datalog$\lnot$)~\cite{ullmanbook},hereinafter referred to
 as Datalog.
 %Datalog is first order logic enhanced with a {\em least-fixpoint operator}.
 %\paa{Datalog doesn't have a LFP 'operator' -- it implies LFP with syntactic
@@ -15,7 +15,7 @@ language in terms of Datalog.\nrc{I think there is too much background stuff:
 \label{sec:datalog}
 
 A Datalog {\em program} comprises a set of {\em rules}.  A Datalog {\em rule}
-is a first-order logical formula, of the following form:
+is a first-order logical formula of the following form:
 \dedalus{$p_0(\overline{X_0})$ :- $p_1(\overline{X_1})$, ...,
 $p_j(\overline{X_j})$, $\lnot p_{j+1}(\overline{X_{j+1}})$, ..., $\lnot
 p_k(\overline{X_k})$;}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em
@@ -23,28 +23,28 @@ predicates}.  Each predicate, also called a {\em relation} or {\em table}, has
 a fixed arity.  Predicates that appear on the left-hand side of some rule in
 the program are called {\em intensional} predicates---the rest are called {\em
 extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of
-arguments (existentially quantified variables or constants).  An application of
+arguments (constants or existentially quantified variables).  An application of
 a predicate to a list of arguments is called an {\em atom}.  The same variable
 symbol may appear in multiple atoms---in this case, we say that the atoms
 are {\em unified} on the arguments that contain the duplicated variable.  The
 single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head},
 and the set of atoms to the right is the rule's {\em body}.  If the head
-predicate also appears in the rule's body, the rule is called {\em recursive}.
+predicate also appears in the rule's body, the rule is called {\em recursive}.\rcs{bad definition of recursion; misses recursion through two rules / predicates}
 In addition to atoms, a rule's body may also contain the {\em order
 constraints}: $=, \geq, >, \leq, <, \neq$, which restrict the values of
 variables.  
 %\paa{why quoted?  also -- "for each assignment of the body, given the model --
 %right?}
 
-The logical meaning of a Datalog rule is that for each satisfying assignment of
-constants to variables on the right-hand side, there exists
-%%derive 
-a corresponding
-assignment of constants in the left-hand side predicate.  An assignment of
+An assignment of
 constants to all arguments in a predicate is known as a {\em fact}---also
 called a {\em tuple} or {\em row}---and we often speak of ``the facts in a
 predicate,'' meaning the satisfying assignment of constants to the predicate's
-arguments.  A possibly empty set of facts for the extensional predicates is
+arguments.
+The logical meaning of a Datalog rule is that for each satisfying assignment of
+constants to variables on the right-hand side, the tuple with the
+corresponding assignment of constants in the left-hand side predicate exists.\rcs{satisfies the lhs?}
+A possibly empty set of facts for the extensional predicates is
 known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a
 program together with an EDB.  All constants in the EDB are contained in the
 {\em universe of constants} of the instance.
@@ -94,7 +94,7 @@ is an iterative procedure, where each iteration determines new facts.  Datalog
 ensures termination of this procedure---and finiteness of the model---by
 guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
 by ensuring the EDB is finite, and restricting the use of constructs that can
-expand the universe of constants such as non-exemplary functions.
+expand the universe of constants such as non-exemplary functions and non-exemplary aggregates.
 
 A Datalog program is called {\em monotonic} if the addition of
 facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
@@ -126,7 +126,8 @@ Contradictions are undesirable in logic programming.
 Unfortunately, detecting that a program is contradiction-free for all EDBs is
 undecidable in general~\cite{papa-yanna}, so the logic programming community
 has devised a number of conservative conditions called {\em stratification
-conditions}, which ensure acyclicity of derivations through negation.  One
+conditions}, which ensure acyclicity of derivations through negation, but exclude some contradiction-free programs.  
+One
 condition is known as {\em syntactic stratification}, which excludes all
 programs where a predicate \dedalus{p} transitively depends on
 \dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
@@ -142,7 +143,7 @@ than \dedalus{\(\lnot\)p}.
 
 \subsection{Choice}
 
-Having ruled out programs with contradiction, we are interested in programs
+Having ruled out programs with contradiction, \rcs{confusing.  we don't disallow all contradictions, since we allow aggregates, negation, functions, etc...} we are interested in programs
 that have a multiplicity of solutions because such programs can be used to
 model non-determinism; we wish to model the inherent non-determinism in
 asynchronous distributed systems.  The correspondence between multiple
@@ -173,9 +174,8 @@ relation, which is isomorphic to $+1$ on $\mathbb{N}$.  The intuition behind
 \lang's \dedalus{successor} relation is that it models the passage of logical
 time.  In our discussion, we will say that facts with lower time suffixes occur
 ``before'' atoms with higher ones.  If we wish to model possible message loss,
-we may admit a special element $\top$ into \dedalus{time}.  We exclude message
-loss in this paper to simplify the discussion, by implicitly assuming that some
-protocol exists between the client and server to ensure reliable delivery~\cite{dedalus-techr, netdb}.
+we may admit a special element $\infty$ \rcs{was $\top$ which is confusing, (and wrong, unless we decide that time is a lattice, which might be a useful model of lamport clocks, parallelism, etc, but is not how we present time in this paper...)} into \dedalus{time}.  We exclude message
+loss and node failure in this paper to simplify the discussion, though we explicitly deal with such issues in other work~\cite{dedalus-techr, netdb}. \rcs{this used to claim we had some implicit protocol, which was distractiong/misleading.  plus, not even paxos can rule out message loss for all execution traces (such as the ones with too many node failures...)}
 %Intuitively, $\top$ is meant to model the time {\em never}.
 We will see later how \dedalus{successor} forms the basis of a stratification
 condition that we call {\em temporal stratification}.
@@ -189,8 +189,8 @@ Specifically, we restrict the form of predicates and rules in the following ways
 predicate range over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
 We refer to this attribute as the \emph{time suffix} of the corresponding
-predicate, and we speak of a the {\em timestamp} of a fact---we also refer to
-facts as {\em events}.
+predicate, and we speak of the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
+facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
 \noindent{\bf Unification on Time: }
 %$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
@@ -229,15 +229,15 @@ including $\DT$.
 \end{enumerate}
 
 We will study the utility of these three types of rules later: systems in
-general only require recourse to order for mutable state and communication.
-Inductive and asynchronous rules model each of these cases respectively.
+general only require such to ordering primitives for mutable state and communication.
+Inductive and asynchronous rules model these cases respectively.
 %Deductive rules enable embarassingly parallel execution of all other aspects of
 %distributed systems.
 
 Usage of $S$ or $T$ outside of the time suffixes is known as {\em
 entanglement}.  We will revisit this powerful construct in~\ref{sec:entangle}. 
 
-\wrm{we can cut this example if we're short on space}
+\wrm{we can cut this example if we're short on space}\rcs{merge with example 2, which is just the sugar corresponding to this example}
 \begin{example}
 The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
 \\
@@ -257,11 +257,11 @@ r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
    choose(A,B,\(\DT\)), (\(\DS\)));
 \end{Dedalus}
 \end{example}
-
+\rcs{We use the following syntactic sugar for clarity, and to syntactically preclude the use of entanglement: ... ex 2 stuff ... }
 \noindent{\bf Positive and Negative Predicates: }
 For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
 $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same arity
-as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:
+as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:\rcs{this leads to akwardness later.  perhaps we should define an \dedalus{r} and an \dedalus{r edb}}
 
 \begin{dedalus}
 r\pos($\overline{A}$,\(\DS\)) \(\leftarrow\) r($\overline{A}$,\(\DT\)), \(S\)=\(\DT\);
