@@ -140,7 +140,7 @@ tuples.  We can achieve this by using the ``at most once'' pattern, which ``seal
 of $Cnt$ in {\em log} at the first insertion, and ensures that {\em log\_event} occurs once.
 \paa{note: introduce the commitfirst macro in the committed choice section of constructs}
 \begin{Dedalus}
-commitfirst[log, 5, 4];
+commitfirst[log, 4, 3];
 log(L, Session, Item, Cnt) \(\leftarrow\) 
     status(L, User, Session, Item, Cnt);
 
