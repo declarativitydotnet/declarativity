@@ -116,7 +116,10 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 \end{Dedalus}
 
 
-If, on the other hand, 
+If, on the other hand, ignoring late {\em  cart\_update} tuples is not acceptable,
+some data dependency between them and {\em checkout} tuples must be established
+to ensure that the deduction of {\em action\_cnt} tuples {\em waits}.  
+
 
 In addition to illustrating where in our program coordination may be necessary, our
 analysis also illustrates where is is unecessary.
@@ -130,7 +133,10 @@ cart_action(#R, S, I, T, Ri)@async :-
     replicas(#L, S, R);
 \end{Dedalus}
 
-
+Because {\em cart\_update} is persisted monotonically, it has set semantics over time: at
+{\em some} time, when all tuples are received, the order in which they were received is
+abstracted away.  Hence asynchronous replication of {\em cart\_update} is confluent,
+up to any nonmonotonic operations on the table.
 
 
 \subsection{Straw Man}
