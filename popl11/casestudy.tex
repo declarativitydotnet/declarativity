@@ -83,15 +83,41 @@ status(L, Session, Item, Cnt) \(\leftarrow\)
     action_cnt(L, Session, Item, "Add", Cnt),
     notin action_cnt(L, Session, Item, "Del", _);
 
-status(L, User, Session, Item, Acnt - Dcnt) \(\leftarrow\)
+status(L, Session, Item, Acnt - Dcnt) \(\leftarrow\)
     action_cnt(L, Session, Item, "Add", Acnt),
     action_cnt(L, Session, Item, "Del", Dcnt);
 \end{Dedalus}
 
+The client code generates {\em cart\_action} and {\em checkout} messages in response
+to local events.  A sequence is used to uniquely identify {\em cart\_action} requests.
+
+\begin{Dedalus}
+// client code
+sequence[s, cart_action_stage, 6];
+cart_action_stage(Server, Client, Session, Item, Type, ReqId) :-
+  action(Client, Session, Item, Type, ReqId),
+  best_replica(Client, Session, Server),
+  s(ReqId);
+
+cart_action(L, C, S, I, T, R)@async :-
+  cart_action_stage(L, C, S, I, T, R);
+
+checkout(Server, Client, Session)@async :-
+  checkout_req(Client, Session),
+  best_replica(Client, Session, Server);
+
+\end{Dedalus}
 
 
-\includegraphics[width=0.75\linewidth]{vizza_brick.png}
-\wrm{change to PDF when peter commits the shopping cart code to hg}
+
+\includegraphics[width=1.0\linewidth]{vizza_brick.pdf}
+
+\paa{note that when the graph generation is bug-free, cart\_action should be in the same
+stratum as cart\_action\_stage -- that is, the stratum crosses a network boundary b/c the
+async-derived relation cart\_action is naively persisted.  note also that something is
+jacked up about unicode encoding of $\lnot$.}
+
+%%\wrm{change to PDF when peter commits the shopping cart code to hg}
 
 Our tests immediately show us that the program is not necessarily confluent: 
 {\em action\_cnt} falls at a non-local stratification boundary, so it and all tables that
@@ -104,7 +130,7 @@ If it is acceptable to ignore the latecomers, the program must merely ensure tha
 cause the recalculation of {\em action\_cnt} and transmission of conflicting {\em response} 
 tuples.  We can achieve this by using the ``at most once'' pattern, which ``seals'' the value
 of $Cnt$ in {\em log} at the first insertion, and ensures that {\em log\_event} occurs once.
-
+\paa{note: introduce the commitfirst macro in the committed choice section of constructs}
 \begin{Dedalus}
 commitfirst[log, 5, 4];
 log(L, Session, Item, Cnt) \(\leftarrow\) 
@@ -141,36 +167,19 @@ up to any nonmonotonic operations on the table.
 
 \subsection{Straw Man}
 
-\paa{
+\begin{comment}
 What's missing: draw a bold line every place where you see a (-) (negation or aggregation)
 or a half-arrow(unguarded asynchrony).  these are the global stratum boundaries, at which
 we must either coordinate or commit to a defeasible conclusion to proceed.
 crow's feet indicate persistence-guarded asynchrony.  though crow's feet dependencies
 may cross network boundaries, they are intra-stratum.
-}
+\end{comment}
 
-straw man:
-
-
-\includegraphics[width=0.65\linewidth]{vizza_straw.png}
-\wrm{change to PDF when peter commits the shopping cart code to hg}
-
-
-what does the analysis tell us?
-
-cart\_update (upon which all other predicates depend) is at a stratum boundary (which 
-correponds exactly to a network boundary).  any conclusions drawn from cart\_update
-are affected by ND ordering in the channel.  the 'mutability' of cart\_update tuples is
-handled via the update pattern (a "TS" instance of nonmonotonicity).  request()s are likewise order-sensitive.  
-
-it is clearly not confluent.  
 
 
 
 
 wooden man (straw instrumented with a queue to handle 'coincidence'):
-
-
 \includegraphics[width=1.2\linewidth]{vizza_wood.png}
 \wrm{change to PDF when peter commits the shopping cart code to hg}
 
@@ -228,6 +237,26 @@ we have a logic bug in our program...}
 %persistence template define {\em status} in terms of its own negation (in
 %time)
 %%\wrm{this shouldn't be a surprise to anyone, all the constructs we've presented have this %%property, and we've been harping on this for the previous 2 sections at length}.  
+
+
+\includegraphics[width=0.65\linewidth]{vizza_straw.pdf}
+
+\paa{another bug: update and cart\_update should be in different strata, b/c
+they are separated by an async rule that is NOT ``guarded'' by a persistence rule
+associated with its head predicate}
+
+what does the analysis tell us?
+
+cart\_update (upon which all other predicates depend) is at a stratum boundary (which 
+correponds exactly to a network boundary).  any conclusions drawn from cart\_update
+are affected by ND ordering in the channel.  the 'mutability' of cart\_update tuples is
+handled via the update pattern (a "TS" instance of nonmonotonicity).  request()s are likewise order-sensitive.  
+
+it is clearly not confluent.  
+
+
+
+
 Looking at the above program, we can see that {\em status} is defined by the
 state update pattern (Section whatever) on {\em cart\_update} -- recall that
 the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
