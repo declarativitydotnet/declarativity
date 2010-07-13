@@ -399,6 +399,11 @@ associativity. \wrm{talk about relaxing this?}
 \wrm{write a paragraph extolling the virtues of logic programming here, and
 explaining why this test is good.  that paragraph isn't coming to me now...} 
 
+\paa{need a formal description of the new (or special-cased) stratification algorithm.
+regular strat, except any async rule is a stratum boundary \emph{unless} the 
+target predicate is naively persisted, with ``p is naively persisted'' conservatively defined
+as $\exists$ a rule with $p$ in the head,  p in the body with 'the same bindings', and the rest of the body always satisfied or empty}
+
 %Centralized evaluation of a logic program ensures confluence considering the
 %program's PDG, and collapsing {\em monotonic components} -- subgraphs of the
 %PDG with no negation -- and evaluating the program in topological order of the
