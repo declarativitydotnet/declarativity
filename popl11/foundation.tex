@@ -1,15 +1,15 @@
 \section{Foundation}
 \label{sec:lang}
 
-\lang is related to Datalog with negation (Datalog$\lnot$)~\cite{ullmanbook},hereinafter referred to
-as Datalog.
+\lang is related to Datalog with negation and aggregation
+(Datalog$\lnot$)~\cite{ullmanbook},hereinafter referred to as Datalog.
 %Datalog is first order logic enhanced with a {\em least-fixpoint operator}.
 %\paa{Datalog doesn't have a LFP 'operator' -- it implies LFP with syntactic
 %recursion.  you mean it's equivalent to FO(LFP)?}
 Below, we provide a brief review of Datalog, and subsequently detail our
-language in terms of Datalog.\nrc{I think there is too much background stuff:
-  get to the good stuff faster. A competent reviewer should know this anyway;
-  either cut or move to an appendix?}
+language in terms of Datalog.%\nrc{I think there is too much background stuff:
+%  get to the good stuff faster. A competent reviewer should know this anyway;
+%  either cut or move to an appendix?}
 
 \subsection{Datalog}
 \label{sec:datalog}
@@ -23,44 +23,55 @@ predicates}.  Each predicate, also called a {\em relation} or {\em table}, has
 a fixed arity.  Predicates that appear on the left-hand side of some rule in
 the program are called {\em intensional} predicates---the rest are called {\em
 extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of
-arguments (constants or existentially quantified variables).  An application of
-a predicate to a list of arguments is called an {\em atom}.  The same variable
-symbol may appear in multiple atoms---in this case, we say that the atoms
-are {\em unified} on the arguments that contain the duplicated variable.  The
-single atom to the left of the \dedalus{:-} delimeter is the rule's {\em head},
-and the set of atoms to the right is the rule's {\em body}.  If the head
-predicate also appears in the rule's body, the rule is called {\em recursive}.\rcs{bad definition of recursion; misses recursion through two rules / predicates}
+arguments (constants or existentially quantified variables).
+$p_0(\overline{X_0})$, ..., $p_k(\overline{X_K})$ are {\em atoms} -- an atom is
+a list of arguments prefixed with a predicate.  The same variable symbol may
+appear in multiple atoms---in this case, we say that the atoms are {\em
+unified} on the arguments that contain the duplicated variable.  The single
+atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and
+the set of atoms to the right is the rule's {\em body}.  We say that the rule's
+head predicate {\em depends on} each of its body predicates.  If a predicate
+\dedalus{p} depends on a predicate \dedalus{q}, we write \dedalus{p} $\succ$
+\dedalus{q}.  A predicate \dedalus{p} transitively depends on apredicate
+\dedalus{q} -- written \dedalus{p} $\succ^*$ \dedalus{q} -- if \dedalus{p}
+$\succ$ \dedalus{q}, or if \dedalus{p} $\succ$ \dedalus{r} $\succ^*$
+\dedalus{q}.  If \dedalus{p} $\succ^*$ \dedalus{p}, then we say that \dedalus{p}
+is {\em recursive} or {\em recursively defined}.
+%If the head predicate also appears in the rule's body, the rule is called {\em
+%recursive}.\rcs{bad definition of recursion; misses recursion through two
+%rules / predicates}
+
 In addition to atoms, a rule's body may also contain the {\em order
-constraints}: $=, \geq, >, \leq, <, \neq$, which restrict the values of
-variables.  
+constraints}: $=, \geq, >, \leq, <, \neq$.  Order constraints are binary
+operators that may be applied either to constants, or variables used in the
+rule's body atoms.
 %\paa{why quoted?  also -- "for each assignment of the body, given the model --
 %right?}
 
-An assignment of
-constants to all arguments in a predicate is known as a {\em fact}---also
-called a {\em tuple} or {\em row}---and we often speak of ``the facts in a
-predicate,'' meaning the satisfying assignment of constants to the predicate's
-arguments.
-The logical meaning of a Datalog rule is that for each satisfying assignment of
-constants to variables on the right-hand side, the tuple with the
-corresponding assignment of constants in the left-hand side predicate exists.\rcs{satisfies the lhs?}
-A possibly empty set of facts for the extensional predicates is
-known as an {\em EDB} or extensional data base.  A Datalog {\em instance} is a
-program together with an EDB.  All constants in the EDB are contained in the
-{\em universe of constants} of the instance.
+An assignment of constants to all arguments in a predicate is known as a {\em
+fact} -- also called a {\em tuple} or {\em row} -- and we often speak of ``the
+facts in a predicate,'' meaning the satisfying assignment of constants to the
+predicate's arguments.  The logical meaning of a Datalog rule is that for each
+satisfying assignment of constants to variables on the right-hand side, there
+exists a tuple with the corresponding satisfying assignment of constants in the
+left-hand side predicate.
+%\rcs{satisfies the lhs?}
+A possibly empty set of facts for the extensional predicates is known as an
+{\em EDB} or extensional data base.  A Datalog {\em instance} is a program
+together with an EDB.  All constants in the EDB are contained in the {\em
+universe of constants} of the instance.
 
 \subsection{Aggregation}
 
 %%As a shorthand for common operations involving a number of rules, one often
 %%admits {\em aggregation} into Datalog -- a special type of function that takes
 %%a set as input and computes a scalar output.  
-Datalog is commonly extended with {\em aggregate functions}: special
-functions that take sets as input and compute a scalar output. Typical aggregate
-functions include \dedalus{max}, \dedalus{min}, and \dedalus{count}.
-%   We are interested in both
-% {\em exemplary} aggregates---which return a value from the input set---such
-% as \dedalus{max} and \dedalus{min}, and {\em summary} aggregates like
-% \dedalus{count}.
+Datalog is commonly extended with {\em aggregate functions}: special functions
+that take sets as input and compute a scalar output. %Typical aggregate
+%functions include \dedalus{max}, \dedalus{min}, and \dedalus{count}.
+We are interested in both {\em exemplary} aggregates---which return a value
+from the input set---such as \dedalus{max} and \dedalus{min}, and {\em summary}
+aggregates like \dedalus{count}.
 %\paa{doesn't this notation seem to mean that only one aggregate per rule is
 %allowed?} \wrm{yes, but we only ever use one agg per rule in the paper}
 %\paa{reads strange.  "in particular, we are interested in foo things, and also
@@ -72,98 +83,148 @@ functions include \dedalus{max}, \dedalus{min}, and \dedalus{count}.
 %stratified aggregation to Datalog does not affect its expressive
 %power~\cite{mumickshmueli}.  \wrm{non-exemplary aggs affect our expressive
 %power}
-
 Aggregation may only be used in the head of a rule.  A head atom
 \dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an aggregate function symbol,
 indicates that predicate \dedalus{p} contains one row for each satisfying
 assignment of $\bar{A}$.  This row contains the value of the aggregate function
-on the set of assignments to $B$ for the given value of $\bar{A}$. \nrc{Mention
-  the relationship between negation and aggs?}
+on the set of assignments to $B$ for the given value of $\bar{A}$.
+%\nrc{Mention  the relationship between negation and aggs?}
 
-\subsection{Contradictions}
+\subsection{Non-Monotonicity}
 
-A Datalog instance without negation or aggregation has a unique {\em model}: the
-minimal set of facts in intensional predicates implied by the EDB given the
-program, or the intensional data base ({\em IDB})~\cite{ullmanbook}.  Adding
-negation or aggregation to Datalog programs increases expressivity, but creates
-the possibility of two additional types of programs: programs with no model,
-i.e., programs with a {\em contradiction}---a fact that depends on its own
-negation---and programs that have a multiplicity of
-models~\cite{sacca-zaniolo}.  The computation of the model of a Datalog program
-is an iterative procedure, where each iteration determines new facts.  Datalog
-ensures termination of this procedure---and finiteness of the model---by
-guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
-by ensuring the EDB is finite, and restricting the use of constructs that can
-expand the universe of constants such as non-exemplary functions and non-exemplary aggregates.
+A Datalog instance without negation or aggregation always has a unique {\em
+minimal model}: the minimal set of facts in intensional predicates implied by
+the EDB given the program, or the intensional data base ({\em
+IDB})~\cite{ullmanbook}.  We call programs that always have a unique minimal
+model {\em monotonic} programs.  Adding negation or aggregation to Datalog
+programs increases expressivity\wrm{cite}, but removes the guarantee of a
+unique minimal model -- we call these {\em non-monotonic} programs.  When
+admitting negation or aggregation, one possibility is that a {\em
+contradiction} may arise -- a fact that depends on its own negation.  Consider
+the Datalog program below, which represents a game where player \dedalus{X}
+wins if has a move, and player \dedalus{Y} does not have a move:
 
-A Datalog program is called {\em monotonic} if the addition of
-facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
-programs that exclude negation and aggregation are monotonic; the presence of
-negation or aggregation may imply that the program is non-monotonic.
+\begin{Dedalus}
+win(X) :- move(X,Y), \lnot win(Y);
+\end{Dedalus}
+
+Consider the following EDB:
+
+\begin{Dedalus}
+move(1,1)
+\end{Dedalus}
+
+This instance has no minimal model, because \dedalus{move(1,1)} implies
+\dedalus{win(1)}, but \dedalus{win(1)} depends on its own negation.  However,
+there are a few easy things we could do to make the above program
+contradiction-free.  First, we could require that $X < Y$.  Or, we could
+require that \dedalus{move} is acyclic.  We desire such a conservative
+condition, because detecting whether a program is contradiction-free for all
+EDBs is undecidable~\cite{papa-yanna}.  The logic programming community has
+devised a number of increasingly less-conservative conditions called {\em
+stratification conditions}~\cite{local-strat, ross-syntactic, modular,
+weak-strat}, which ensure acyclicity of derivations through negation, but
+exclude some contradiction-free programs.  If a program meets a particular
+stratification condition, we say the program is {\em stratified}.  One
+condition is known as {\em syntactic stratification}, which excludes all
+programs where a predicate \dedalus{p} transitively depends on
+\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
+programs, because such a syntactic cycle may in practice never lead to a
+contradiction.  The semantics presented in~\cite{wellfounded} define a unique
+model for any stratified program.
+
+%creates the possibility of two additional types of programs: programs with no model, i.e., programs with a 
+%{\em contradiction}---a fact that depends on its own negation---and programs 
+%that have a multiplicity of
+%models~\cite{sacca-zaniolo}.  The computation of the model of a Datalog program
+%is an iterative procedure, where each iteration determines new facts.  Datalog
+%ensures termination of this procedure---and finiteness of the model---by
+%guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
+%by ensuring the EDB is finite, and restricting the use of constructs that can
+%expand the universe of constants such as non-exemplary functions and
+%non-exemplary aggregates.
+
+%A Datalog program is called {\em monotonic} if the addition of
+%facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
+%programs that exclude negation and aggregation are monotonic; the presence of
+%negation or aggregation may imply that the program is non-monotonic.
 
 %%One intuition is that 
-Negation and aggregation require {\em universal
-quantification}:
+Negation and aggregation are set-wise operations -- they require {\em universal
+quantification} over the set that they operate.  It is well known that universal
+and existential quantification do not commute, so the meaning of the program
+depends on the order in which rules are evaluated.
 %%-- that is they 
-in general, they need to consider all elements in the
-set that they operate over.  It is easy to see that addition of facts to the
-EDB may cause set-wise properties to become untrue, which may lead to IDB
-retractions.  On the other hand, adding a fact to the EDB can never cause an
-existential quantification to become false.
+%in general, they need to consider all elements in the set that they operate
+%over.  It is easy to see that addition of facts to the EDB may cause set-wise
+%properties to become untrue, which may lead to IDB retractions.  On the other
+%hand, adding a fact to the EDB can never cause an existential quantification
+%to become false.
 
-\subsection{Stratification}
+\subsection{Safety}
+
+Finiteness of the model for a Datalog program -- called {\em safety} -- is
+guaranteed by ensuring finiteness of the universe of constants.  Commonly, this
+involves restricting the use of constructs that can expand the universe of
+constants such as non-exemplary aggregates or functions.
+
+%\subsection{Stratification}
 
 %Note that negation allows the specification of a program that is
 %contradictory, such as $p(X) :- q(X), !p(X);$.  The reason for the
 %contradiction is that given an EDB where \dedalus{p \cap q} is non-empty, each
 %\dedalus{p} fact with a corresponding \dedalus{q} fact depends on its own
 %negation (is simultaneousy both false and true).  
-Contradictions are undesirable in logic programming. 
+%Contradictions are undesirable in logic programming. 
 %\paa{usually?  it seems to me they are always undesirable, b/c in logic, I can
 %use a constradictory premise to prove any arbitrary conclusion (rendering the
 %language rather useless).  this is the same argument for why we always choose
 %soundness over completeness.} \wrm{3-valued logic}
-Unfortunately, detecting that a program is contradiction-free for all EDBs is
-undecidable in general~\cite{papa-yanna}, so the logic programming community
-has devised a number of conservative conditions called {\em stratification
-conditions}, which ensure acyclicity of derivations through negation, but exclude some contradiction-free programs.  
-One
-condition is known as {\em syntactic stratification}, which excludes all
-programs where a predicate \dedalus{p} transitively depends on
-\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
-programs, because such a syntactic cycle may in practice never lead to a
-contradiction if all {\em derivations} are acyclic.  Additional conditions,
-such as {\em local stratification}~\cite{local-strat}, {\em universal
-constraint stratification}~\cite{ross-syntactic}, {\em modular
-stratification}~\cite{modular}, and {\em weak stratification}~\cite{weak-strat}
-are increasingly less conservative.  Later we will introduce our own condition,
-{\em temporal stratification}, which allows such syntactic cycles as long as
-the program encodes the condition that \dedalus{p} occurs at a {\em later time}
-than \dedalus{\(\lnot\)p}.
+%Unfortunately, detecting that a program is contradiction-free for all EDBs is
+%undecidable in general~\cite{papa-yanna}, so the logic programming community
+%has devised a number of conservative conditions called {\em stratification
+%conditions}, which ensure acyclicity of derivations through negation, but exclude some contradiction-free programs.  
+%One
+%condition is known as {\em syntactic stratification}, which excludes all
+%programs where a predicate \dedalus{p} transitively depends on
+%\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
+%programs, because such a syntactic cycle may in practice never lead to a
+%contradiction if all {\em derivations} are acyclic.  Additional conditions,
+%such as {\em local stratification}~\cite{local-strat}, {\em universal
+%constraint stratification}~\cite{ross-syntactic}, {\em modular
+%stratification}~\cite{modular}, and {\em weak stratification}~\cite{weak-strat}
+%are increasingly less conservative.  Later we will introduce our own condition,
+%{\em temporal stratification}, which allows such syntactic cycles as long as
+%the program encodes the condition that \dedalus{p} occurs at a {\em later time}
+%than \dedalus{\(\lnot\)p}.
 
 \subsection{Choice}
 
-Having ruled out programs with contradiction, \rcs{confusing.  we don't disallow all contradictions, since we allow aggregates, negation, functions, etc...} we are interested in programs
-that have a multiplicity of solutions because such programs can be used to
-model non-determinism; we wish to model the inherent non-determinism in
-asynchronous distributed systems.  The correspondence between multiple
-solutions and non-determinism was formalized by Sacc\`{a} and
-Zaniolo~\cite{sacca-zaniolo} as the \dedalus{choice} construct.  Intuitively,
-\dedalus{choice} allows the specification of a functional dependency in a rule.
-For example, \dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expresses that for
-each value that variable \dedalus{X} takes on, variable \dedalus{Y} may only
-take on a single {\em non-deterministically chosen} value. If \dedalus{q}
-contains more than one \dedalus{Y} value for an \dedalus{X}, then the instance
-has multiple models: one corresponding to each choice of \dedalus{Y} for each
-\dedalus{X}.  Operationally, the answer to a Datalog program with choice
-corresponds to a non-deterministic choice of one of the models.
+%Having ruled out programs with contradiction, \rcs{confusing.  we don't disallow all contradictions, since we allow aggregates, negation, functions, etc...} we are interested in programs
+
+One of our goals for \lang is to model the inherent non-determinism of network
+delay in asynchronous distributed systems.  Non-determinism in Datalog was
+formalized by Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} in their
+\dedalus{choice} construct.  
+%Intuitively, \dedalus{choice} allows the
+%specification of a functional dependency in a rule.
+For example,
+\dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expresses that for each value
+that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on a
+single {\em non-deterministically chosen} value. 
+%If \dedalus{q} contains more
+%than one \dedalus{Y} value for an \dedalus{X}, then the instance has multiple
+%models: one corresponding to each choice of \dedalus{Y} for each \dedalus{X}.
+%Operationally, the answer to a Datalog program with choice corresponds to a
+%non-deterministic choice of one of the models.
 
 See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
-into Datalog rules that employ cyclic negation.  Although \dedalus{choice}
-cannot cause a contradiction, its expansion violates many stratification
-conditions.  Thus, we often must explicitly admit programs with \dedalus{choice}
-after ruling out certain {\em unstratified} programs---programs that violate
-the stratification condition.
+into Datalog rules that employ cyclic negation.  
+%Although \dedalus{choice}
+%cannot cause a contradiction, its expansion violates many stratification
+%conditions.  Thus, we often must explicitly admit programs with \dedalus{choice}
+%after ruling out certain {\em unstratified} programs---programs that violate
+%the stratification condition.
 
 \section{\lang}
 
@@ -174,8 +235,16 @@ relation, which is isomorphic to $+1$ on $\mathbb{N}$.  The intuition behind
 \lang's \dedalus{successor} relation is that it models the passage of logical
 time.  In our discussion, we will say that facts with lower time suffixes occur
 ``before'' atoms with higher ones.  If we wish to model possible message loss,
-we may admit a special element $\infty$ \rcs{was $\top$ which is confusing, (and wrong, unless we decide that time is a lattice, which might be a useful model of lamport clocks, parallelism, etc, but is not how we present time in this paper...)} into \dedalus{time}.  We exclude message
-loss and node failure in this paper to simplify the discussion, though we explicitly deal with such issues in other work~\cite{dedalus-techr, netdb}. \rcs{this used to claim we had some implicit protocol, which was distractiong/misleading.  plus, not even paxos can rule out message loss for all execution traces (such as the ones with too many node failures...)}
+we may admit a special element $\infty$ 
+%\rcs{was $\top$ which is confusing, (and wrong, unless we decide that time is
+%a lattice, which might be a useful model of lamport clocks, parallelism, etc,
+%but is not how we present time in this paper...)}
+into \dedalus{time}.  We exclude message loss and node failure in this paper to
+simplify the discussion, though we explicitly deal with such issues in other
+work~\cite{dedalus-techr, netdb}. \rcs{this used to claim we had some implicit
+protocol, which was distractiong/misleading.  plus, not even paxos can rule out
+message loss for all execution traces (such as the ones with too many node
+failures...)}
 %Intuitively, $\top$ is meant to model the time {\em never}.
 We will see later how \dedalus{successor} forms the basis of a stratification
 condition that we call {\em temporal stratification}.
@@ -189,7 +258,7 @@ Specifically, we restrict the form of predicates and rules in the following ways
 predicate range over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
 We refer to this attribute as the \emph{time suffix} of the corresponding
-predicate, and we speak of the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
+predicate, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
 facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
 \noindent{\bf Unification on Time: }
@@ -206,7 +275,7 @@ facts as {\em events}.''  We need to talk about async before talking about event
 %time without restriction, and the rule syntax below provides the restrictions
 %you want.  you're hinting at the reduction stuff below, but we can rewrite to
 %that.}
-In a well-formed \lang rule, every body predicate's time suffix is bound to the
+In a well-formed \lang rule, every body predicate's time suffix contains the
 same variable symbol.  For ease of exposition, we henceforth assume that this
 variable symbol is named $\DT$.  A well-formed \lang rule must also bind the
 head predicate's time suffix to a variable symbol.  We will assume the name of
@@ -229,7 +298,7 @@ including $\DT$.
 \end{enumerate}
 
 We will study the utility of these three types of rules later: systems in
-general only require such to ordering primitives for mutable state and communication.
+general only require recourse to ordering primitives for mutable state and communication.
 Inductive and asynchronous rules model these cases respectively.
 %Deductive rules enable embarassingly parallel execution of all other aspects of
 %distributed systems.
@@ -254,7 +323,7 @@ q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), successor(\(\DT\), \(\DS\));
 asynchronous:
 \begin{Dedalus}
 r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
-   choose(A,B,\(\DT\)), (\(\DS\)));
+   choose((A,B,\(\DT\)), (\(\DS\)));
 \end{Dedalus}
 \end{example}
 \rcs{We use the following syntactic sugar for clarity, and to syntactically preclude the use of entanglement: ... ex 2 stuff ... }
@@ -322,12 +391,12 @@ suffix from each body predicate and treat it as implicit.
 
 \item {\em Temporal head annotation:} Since there are a finite number of
 binding possibilities (enumerated above) for the time suffix in a head
-predicate, we omit the time suffix from the head--and its relevant constraints
-from the body--and instead attach an identifier to the head predicate of each
-temporal rule, to indicate the change in time suffix.  An inductive head
-predicate \dedalus{r} is of the form: \dedalus{r($\overline{A}$)@next}, while
-an asynchronous head predicate \dedalus{r} is of the form
-\dedalus{r($\overline{A}$)@async}.
+predicate, we omit the time suffix from the head -- and its relevant
+\dedalus{successor} and \dedalus{choose} constraints from the body--and instead
+attach an identifier to the head predicate of each temporal rule, to indicate
+the change in time suffix.  An inductive head predicate \dedalus{r} is of the
+form: \dedalus{r($\overline{A}$)@next}, while an asynchronous head predicate
+\dedalus{r} is of the form \dedalus{r($\overline{A}$)@async}.
 
 \item {\em Timestamped facts:} For notational consistency, we write the
 timestamps of facts, in the EDB outside the
@@ -382,17 +451,17 @@ e(1, 2)@10;
 \subsection{Distribution, Asynchrony and Choice}
 
 \lang adopts the {\em horizontal partitioning} convention introduced by Loo et
-al.~\cite{Loo:2005}, where all agents execute the same rules but predicates
-are partitioned based on the value of the {\em location specifier}: a column of
+al.~\cite{Loo:2005}, where all agents execute the same rules but predicates are
+partitioned based on the value of the {\em location specifier}: a column of
 every relation that stores an agent's identifier. In \lang, we require that all
-atoms in the body of a single rule use the same location specifier. If the location
-specifier of a rule's head is bound to the body's location specifier, then we
-call the rule {\em local}.  Otherwise, we call the rule a {\em communication rule}.
-Note that by restricting rule bodies to a single agent, the only communication
-modeled in \lang occurs via communication rules.  Derivation of a fact with
-another agent's identifier implies sending the fact to the agent.
-Syntactically, location specifiers are prefixed with a \dedalus{\#} symbol in
-Dedalus.
+atoms in the body of a single rule use the same variable name in the location
+specifier. If the location specifier of a rule's head is bound to the body's
+location specifier, then we call the rule {\em local}.  Otherwise, we call the
+rule a {\em communication rule}.  Note that by restricting rule bodies to a
+single agent, the only communication modeled in \lang occurs via communication
+rules.  Derivation of a fact with another agent's identifier implies sending
+the fact to the agent.  Syntactically, location specifiers are prefixed with a
+\dedalus{\#} symbol in Dedalus.
 
 We use choice to model the inherent nondeterminism associated with
 communication in {\em asynchronous} distributed systems.  For example, messages
