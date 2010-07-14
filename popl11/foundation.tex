@@ -200,7 +200,6 @@ We can sugar away the time suffixes in the head and body, and the
 the body, and the equality constraints, and instead attach an identifier to the head of each
 temporal rule, to indicate the change in time suffix.  In each, the sugared example appears
 below.  We may also represent facts by attaching a constant time suffix, as shown below.
-
 \\
 deductive:
 \begin{Dedalus}
@@ -219,7 +218,9 @@ asynchronous:
 r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
    choose((A,B,\(\DT\)), (\(\DS\)));
 r(A, B)@async \(\leftarrow\) e(A, B);
+\end{Dedalus}
 \\
+\begin{Dedalus}
 fact:
 e(1,2)@3;
 \end{Dedalus}
