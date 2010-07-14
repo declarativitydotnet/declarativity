@@ -72,13 +72,7 @@ hide a {\em queue} which ensures that only one message (perhaps arbitrarily chos
 even of simultaneous receipt) is returned by each call.
 
 
-
-
-
-
-\paa{rest are notes}
-
-In a distributed logic language like Overlog~\cite{boomanalytics}, the entire program 
+In a distributed logic language like Overlog~\cite{boom-eurosys}, the entire program 
 can be expressed with a pair of rules describing how clients send {\em cart\_action}
 messages to a server and how servers multicast such tuples to other replicas, and 
 a declaration that defined {\em cart\_action} as a persisted table:
@@ -94,13 +88,23 @@ cart\_action(#Remote, C, S,S, I, T) :-
   replicas(#Local, C, S, Remote);
 \end{Dedalus}
 
+As is common in logic programming languages, each line is read as a backwards
+implication ($\rightarrow$); if there is a satisfying assignment of tuples to each of
+the predicates appearing in the body (with ``,'' read as conjunction), 
+then there is a tuple in the head with the same bindings.
 Note that the distributed system is expressed as a single, global program.
 Because messages are themselves deductions, there are opportunities to 
 analyze server and client code together.  We can analyze the program to 
 show that cart\_action, a set that is persitently and immutably
-stored, is insensitive to the arrival order of messages \wrm{i thought it's an
-associativity thing, not a commutativity thing}. Moreover, the code 
+stored, is insensitive to the arrival order of messages 
+\wrm{i thought it's an
+associativity thing, not a commutativity thing}
+and to the co-occurrence of multiple messages simultaneously
+. Moreover, the code 
 itself is succinct and straightforward. 
+
+
+
 
 When we consider the case of multiple messages with the same values for
 {\em client, session, item}, and {\em type} (e.g. adding two of the same items to a cart)
@@ -124,9 +128,21 @@ s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
 
 \end{Dedalus}
 
+
 The intent of the rule defining {\em s} is that s contains an integer, initialized to
 zero, which should be incremented by one whenever an {\em action} event occurs,
 regardless of its values.  Many distributed logic languages allow rules of this kind,
-but its semantics are unclear.
+but its semantics are unclear.  Though on the surface the rule says that if {\em action} is true
+the value of {\em s} should be infinitely incremented, this pattern is common enough
+that many interpreters provide the intended semantics, at the cost of losing a logical
+interpretation of the implication statement.  Equally problematic is the second rule above,
+an implication which induces communication, for it is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true whenever the antecedent is
+true.  
 
-etc, etc, we need to incorporate explicit time into the language.
+In both cases, what is missing is a notion of time.  The incremented sequence value should
+be ``true'' at the {\em next} visible state of the system, and the deduced {\em cart\_action}
+tuple should (ignoring message loss) be true at {\em some} unspecified future time.
+In the remainded of the paper, we present \lang, which restores a logical interpretation to
+both state change and asynchrony.  We will return to the shopping cart example in more detail 
+in section~\ref{sec:casestudy}.
+
