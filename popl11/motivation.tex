@@ -14,8 +14,13 @@ server component.  The client converts user input into messages sent to
 the server which describe updates to the cart.   
 
 \begin{Dedalus}
-while(in = client_input()) do
-  send(server, in);
+class Request
+  string server, client, session, item, type;
+  [...]
+end
+
+while(in = (Request)client_input()) do
+  send(best_replica(), in);
 done
 \end{Dedalus}
 
@@ -24,6 +29,18 @@ and forwards them to replicas which provide fault-tolerance for the cart state:
 
 
 \begin{Dedalus}
+class Cartobj
+  string server, client, session, item, type;
+  method init(Request r)
+    server = r.server;
+    client = r.client;
+    [...]
+  end
+  method union
+    [...]
+  end
+end
+
 cart_state = new Hash;
 while (req = recv()) do
   if (cart_state.has_key(req.session)) 
@@ -44,15 +61,42 @@ Suppose that we wish to verify whether this implementation possesses the desirab
 properties that, in spite of message reordering and the possibility of the simultaneous
 receipt of multiple messages, all executions of the client code for the same series of
 input will produce the same state on all replicas.  Several difficulties present themselves.
+First, it is not obvious from a static analysis of the code that the client and server are
+part of a single distributed system, so we must analyze each of the agents individually.
+If we assume conservatively that repeated calls to {\em recv} will return messages in
+arbitrary order, verifying the first property (essentially, order-independence of messages)
+is tantamount to showing that the {\em union} method of a {\em Cartobj} object is
+order-insensitive, which could in principle be inferred from annotations associated
+with the class.
+In this imperative approach, we happen to also know that the semantics of {\em recv}
+hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
+even of simultaneous receipt) is returned by each call.
+
+\paa{rest are notes}
+
+
+The distributed logic approach:
 
 \begin{Dedalus}
 persist[cart_action, 5];
-cart_action(#Server, Client, Session, Item, Type)@async :-
-  action(Client, Session, Item, Type, ReqId),
-  best_replica(Client, Session, Server);
+cart_action(#Server, Client, Session, Item, Type) :-
+  action(#Client, Session, Item, Type, ReqId),
+  best_replica(#Client, Session, Server);
 \end{Dedalus}
 
+the program is global -- server and client code can be co-analyzed, b/c messages are deductions.
 
+we can analyze the program to show that cart\_action, a set that is persitently and immutably
+stored, is insensitive to the order of messages.
+
+the code is succinct and straightforward. 
+
+but we need to deal with the case of multiple messages with the same values for
+(client, session, item, type) -- e.g. adding two of the same items to a cart.  the set semantics
+of union in the first implementation and the implicit union in the second rule this out,
+so we need to uniquely identify each message.
+
+this is trivial in an imperative language (++) but difficult to express in a logic language:
 
 \begin{Dedalus}
 // client code
@@ -65,7 +109,9 @@ cart_action_stage(Server, Client, Session, Item, Type, ReqId) :-
 cart_action(#L, C, S, I, T, R) :-
   cart_action_stage(L, #C, S, I, T, R);
 
-s(X+1)@next \(\leftarrow\)  s(X), action(_, _, _, _, _);
-
-
+s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
 \end{Dedalus}
+
+the idea is, add one to seq() whenever action is true.
+
+etc, etc, we need to incorporate explicit time into the language.
