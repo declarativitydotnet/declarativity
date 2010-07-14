@@ -46,6 +46,17 @@ portions of a distributed algorithm for which order is essential to correctness.
 \paa{briefly deal with the shortcomings of previous logic languages.  text from
 outline: ``they get squirrelly when you introduce events, which you NEED to do so to implement constructs that express mutable state (eg state machines, update) or preserve or reestablish order in the face of asynchrony (eg sequences, queues).  dedalus admits such ordered constructs (via reification of time) without sacrificing powerful static analysis capabilities -- in fact, it admits new analysis that are unique to the asynchronous domain''}
 
+In order to support mutable state (for example, to express state transitions) and 
+sequencing constructs (to restore the order lost by asynchronous communication),
+many previous distributed logic languages introduced a small set of operational
+features that are familiar in the domain, such as events, counters or sequences, 
+and implicit queues.  
+These operational aspects often lead to semantic ambiguitities when combined
+with the underlying declarative constructs: while the resulting languages {\em looked}
+like Datalog, it was usually not possible to leverage the rich set of static analyses 
+available in a ``pure'' logic language.
+
+
 In this paper we reconsider declarative programming for distributed
 systems from a model-theoretic perspective. We introduce a declarative
 language called \lang
@@ -63,7 +74,9 @@ language called \lang
 \end{comment}
 that enables the specification of rich
 distributed systems concepts without recourse to operational
-constructs \wrm{assignment of timestamps is operational.  i think the point we want to make is that we elegantly minimize the operational semantics}.  \lang is a subset of
+constructs.
+\wrm{assignment of timestamps is operational.  i think the point we want to make is that we elegantly minimize the operational semantics}
+\lang is a subset of
 Datalog, enhanced with negation, aggregate functions, choice,
 and a successor relation.  
 %%\wrm{its not well studied, that's why we're studying it in this paper} 
@@ -74,22 +87,22 @@ for the two key features of distributed systems: mutable state and
 asynchronous processing and communication.  We show how these features
 are captured in \lang using logical time. 
 
-%%Given the ability to express programs with these two features, we
-%%address three important properties of \lang programs: a temporal
-%%notion of {\em safety} appropriate to long-running services and
-%%protocols, {\em stratified} monotonic reasoning with negation over
-%%time, and efficient evaluation via a simple execution strategy.  We
-%%also provide conservative syntactic checks for our temporal notions of
-%%safety and stratification.
-
-%%We begin by defining \slang, a restricted sublanguage of Datalog
-%%(Section~\ref{sec:slang}). We show how \slang supports state update in
-%%Section~\ref{sec:stateupdate}, prove temporal safety and
-%%stratifiability properties of \slang in Section~\ref{sec:safety}, and
-%%describe a simple, efficient evaluation scheme
-%%(Section~\ref{sec:eval}). Finally, we introduce \lang by adding
-%%support for asynchrony to \slang in
-%%Section~\ref{sec:async}. 
+\paa{three features: default unordered, order analysis and flex, reconfigurability}.
+\lang makes three principal contributions to the implementation and analysis
+of distributed systems.  First, like other logic languages, it presents an
+alternative to the traditional sequential programming model,  encouraging
+programmers to compose expressions that are order-independent and hence admit
+both parallel execution and rewrite-based optimizations.
+Second, \lang provides static analyses that can detect where in a distributed system
+order constructs may be necessary to overcome indeterminacy caused by arbitrary
+communication delay.  \lang is expressive enough to implement a rich set of ordering
+constructs, including events, sequences, queues
+and distributed clocks,
+which may be employed to restore necessary orders to such systems.
+Because the explicit inclusion of time allows a purely logical interpretation of 
+these constructs, their incorporation in \lang does not force us to sacrifice 
+the many powerful analyses from the Datalog literature.
+In combination, these features lead to ... \paa{how to sell reconfigurability?}
 
 Throughout, we demonstrate the expressivity
 and practical utility of our work with specific examples, including a
