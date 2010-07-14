@@ -11,77 +11,80 @@ though we will explore the latter option in more detail in section~\ref{sec:case
 
 Our shopping cart application will consist of a client and a (distributed)
 server component.  The client converts user input into messages sent to
-the server which describe updates to the cart.   
+the server which describe updates to the cart, and the server stores these 
+messages.  
+A practical shopping cart would provide a mechanism to {\em check out}; that is,
+summarize the cart contents, but we will postpone this discussion until later.
+To make the application fault-tolerant and to increase availability, 
+we will need to replicate the stored state to server replicas.  Ideally, however,
+this state replication can occur asynchronously, as wait-free message handling
+will decrease request latency and increase availability.  This cheap communication
+cannot come at the cost of consistency -- all replicas should eventually reach
+the same state -- but we may be willing to wait a long time for such convergence.
+
+Therefore we wish to reason about whether our implementation possesses the desirable 
+properties that, in spite of message reordering and the possibility of the simultaneous
+receipt of multiple messages, all executions of the client code for the same series of
+input will produce the same state on all replicas.  
+
+
+Client pseudocode:
 
 \begin{Dedalus}
-class Request
-  string server, client, session, item, type;
-  [...]
-end
-
-while(in = (Request)client_input()) do
+while(in = client_input()) do
   send(best_replica(), in);
 done
 \end{Dedalus}
 
-The server stores these messages
-and forwards them to replicas which provide fault-tolerance for the cart state:
-
-
 \begin{Dedalus}
-class Cartobj
-  string server, client, session, item, type;
-  method init(Request r)
-    server = r.server;
-    client = r.client;
-    [...]
-  end
-  method union
-    [...]
-  end
-end
-
-cart_state = new Hash;
-while (req = recv()) do
-  if (cart_state.has_key(req.session)) 
-    curr = cart_state.get(req.session)
-    curr.union(req);
+initialize hash cart_state
+while (req = receive message) do
+  if cart_state has key req.session then
+     cart_state[req.session] =  (req \(\cup\) cart_state[req.session]) 
   else 
-    cart_state.put(req.session, new Cartobj(req));
+    cart_state[req.session] = { req } 
   endif
   foreach r in replicas do
     send(r, req);
   done
 done
 \end{Dedalus}
-A practical shopping cart would provide a mechanism to {\em check out}; that is,
-summarize the cart contents, but we will postpone this discussion until later.
 
-Suppose that we wish to verify whether this implementation possesses the desirable 
-properties that, in spite of message reordering and the possibility of the simultaneous
-receipt of multiple messages, all executions of the client code for the same series of
-input will produce the same state on all replicas.  Several difficulties present themselves.
+
+
+
+Several difficulties present themselves.
 First, it is not obvious from a static analysis of the code that the client and server are
 part of a single distributed system, so we must analyze each of the agents individually.
-If we assume conservatively that repeated calls to {\em recv} will return messages in
+If we assume conservatively that repeated calls to {\em receive message} will return messages in
 arbitrary order, verifying the first property (essentially, order-independence of messages)
-is tantamount to showing that the {\em union} method of a {\em Cartobj} object is
+is tantamount to showing that the {\em union} operation is
 order-insensitive, which could in principle be inferred from annotations associated
-with the class.
-In this imperative approach, we happen to also know that the semantics of {\em recv}
+with the operator.
+In this imperative approach, we happen to also know that the semantics of {\em receive message}
 hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
 even of simultaneous receipt) is returned by each call.
 
+
+
+
+
+
 \paa{rest are notes}
 
-
-The distributed logic approach:
+In a distributed logic language like Overlog~\cite{boomanalytics}, the entire program 
+can be expressed with a pair of rules describing how clients send {\em cart\_action}
+messages to a server and how servers multicast such tuples to other replicas.
 
 \begin{Dedalus}
 persist[cart_action, 5];
-cart_action(#Server, Client, Session, Item, Type) :-
+cart\_action(#Server, Client, Session, Item, Type) :-
   action(#Client, Session, Item, Type, ReqId),
   best_replica(#Client, Session, Server);
+
+cart\_action(Remote, C, S,S, I, T) :-
+  cart\_action(#Local, C, S, I, T),
+  replicas(#Local, C, S, Remote);
 \end{Dedalus}
 
 the program is global -- server and client code can be co-analyzed, b/c messages are deductions.
