@@ -3,13 +3,8 @@
 
 \lang is related to Datalog with negation and aggregation
 (Datalog$\lnot$)~\cite{ullmanbook},hereinafter referred to as Datalog.
-%Datalog is first order logic enhanced with a {\em least-fixpoint operator}.
-%\paa{Datalog doesn't have a LFP 'operator' -- it implies LFP with syntactic
-%recursion.  you mean it's equivalent to FO(LFP)?}
 Below, we provide a brief review of Datalog, and subsequently detail our
-language in terms of Datalog.%\nrc{I think there is too much background stuff:
-%  get to the good stuff faster. A competent reviewer should know this anyway;
-%  either cut or move to an appendix?}
+language in terms of Datalog.
 
 \subsection{Datalog}
 \label{sec:datalog}
@@ -37,16 +32,11 @@ head predicate {\em depends on} each of its body predicates.  If a predicate
 $\succ$ \dedalus{q}, or if \dedalus{p} $\succ$ \dedalus{r} $\succ^*$
 \dedalus{q}.  If \dedalus{p} $\succ^*$ \dedalus{p}, then we say that \dedalus{p}
 is {\em recursive} or {\em recursively defined}.
-%If the head predicate also appears in the rule's body, the rule is called {\em
-%recursive}.\rcs{bad definition of recursion; misses recursion through two
-%rules / predicates}
 
 In addition to atoms, a rule's body may also contain the {\em order
 constraints}: $=, \geq, >, \leq, <, \neq$.  Order constraints are binary
 operators that may be applied either to constants, or variables used in the
 rule's body atoms.
-%\paa{why quoted?  also -- "for each assignment of the body, given the model --
-%right?}
 
 An assignment of constants to all arguments in a predicate is known as a {\em
 fact} -- also called a {\em tuple} or {\em row} -- and we often speak of ``the
@@ -63,32 +53,17 @@ universe of constants} of the instance.
 
 \subsection{Aggregation}
 
-%%As a shorthand for common operations involving a number of rules, one often
-%%admits {\em aggregation} into Datalog -- a special type of function that takes
-%%a set as input and computes a scalar output.  
 Datalog is commonly extended with {\em aggregate functions}: special functions
-that take sets as input and compute a scalar output. %Typical aggregate
-%functions include \dedalus{max}, \dedalus{min}, and \dedalus{count}.
+that take sets as input and compute a scalar output.
 We are interested in both {\em exemplary} aggregates---which return a value
 from the input set---such as \dedalus{max} and \dedalus{min}, and {\em summary}
 aggregates like \dedalus{count}.
-%\paa{doesn't this notation seem to mean that only one aggregate per rule is
-%allowed?} \wrm{yes, but we only ever use one agg per rule in the paper}
-%\paa{reads strange.  "in particular, we are interested in foo things, and also
-%non-foo things...  I see though that in 2.1.2 we need to have introduced
-%exemplary functions}
 
-%In general, aggregation involves universal quantification over a set, thus it
-%is a non-monotonic construct.  Mumick and Shmueli observe that adding
-%stratified aggregation to Datalog does not affect its expressive
-%power~\cite{mumickshmueli}.  \wrm{non-exemplary aggs affect our expressive
-%power}
 Aggregation may only be used in the head of a rule.  A head atom
 \dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an aggregate function symbol,
 indicates that predicate \dedalus{p} contains one row for each satisfying
 assignment of $\bar{A}$.  This row contains the value of the aggregate function
 on the set of assignments to $B$ for the given value of $\bar{A}$.
-%\nrc{Mention  the relationship between negation and aggs?}
 
 \subsection{Non-Monotonicity}
 
@@ -133,33 +108,10 @@ programs, because such a syntactic cycle may in practice never lead to a
 contradiction.  The semantics presented in~\cite{wellfounded} define a unique
 model for any stratified program.
 
-%creates the possibility of two additional types of programs: programs with no model, i.e., programs with a 
-%{\em contradiction}---a fact that depends on its own negation---and programs 
-%that have a multiplicity of
-%models~\cite{sacca-zaniolo}.  The computation of the model of a Datalog program
-%is an iterative procedure, where each iteration determines new facts.  Datalog
-%ensures termination of this procedure---and finiteness of the model---by
-%guaranteeing finiteness of the universe of constants.  Finiteness is guaranteed
-%by ensuring the EDB is finite, and restricting the use of constructs that can
-%expand the universe of constants such as non-exemplary functions and
-%non-exemplary aggregates.
-
-%A Datalog program is called {\em monotonic} if the addition of
-%facts to the EDB never causes facts from the IDB to be retracted.  All Datalog
-%programs that exclude negation and aggregation are monotonic; the presence of
-%negation or aggregation may imply that the program is non-monotonic.
-
-%%One intuition is that 
 Negation and aggregation are set-wise operations -- they require {\em universal
 quantification} over the set that they operate.  It is well known that universal
 and existential quantification do not commute, so the meaning of the program
 depends on the order in which rules are evaluated.
-%%-- that is they 
-%in general, they need to consider all elements in the set that they operate
-%over.  It is easy to see that addition of facts to the EDB may cause set-wise
-%properties to become untrue, which may lead to IDB retractions.  On the other
-%hand, adding a fact to the EDB can never cause an existential quantification
-%to become false.
 
 \subsection{Safety}
 
@@ -168,84 +120,32 @@ guaranteed by ensuring finiteness of the universe of constants.  Commonly, this
 involves restricting the use of constructs that can expand the universe of
 constants such as non-exemplary aggregates or functions.
 
-%\subsection{Stratification}
-
-%Note that negation allows the specification of a program that is
-%contradictory, such as $p(X) :- q(X), !p(X);$.  The reason for the
-%contradiction is that given an EDB where \dedalus{p \cap q} is non-empty, each
-%\dedalus{p} fact with a corresponding \dedalus{q} fact depends on its own
-%negation (is simultaneousy both false and true).  
-%Contradictions are undesirable in logic programming. 
-%\paa{usually?  it seems to me they are always undesirable, b/c in logic, I can
-%use a constradictory premise to prove any arbitrary conclusion (rendering the
-%language rather useless).  this is the same argument for why we always choose
-%soundness over completeness.} \wrm{3-valued logic}
-%Unfortunately, detecting that a program is contradiction-free for all EDBs is
-%undecidable in general~\cite{papa-yanna}, so the logic programming community
-%has devised a number of conservative conditions called {\em stratification
-%conditions}, which ensure acyclicity of derivations through negation, but exclude some contradiction-free programs.  
-%One
-%condition is known as {\em syntactic stratification}, which excludes all
-%programs where a predicate \dedalus{p} transitively depends on
-%\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
-%programs, because such a syntactic cycle may in practice never lead to a
-%contradiction if all {\em derivations} are acyclic.  Additional conditions,
-%such as {\em local stratification}~\cite{local-strat}, {\em universal
-%constraint stratification}~\cite{ross-syntactic}, {\em modular
-%stratification}~\cite{modular}, and {\em weak stratification}~\cite{weak-strat}
-%are increasingly less conservative.  Later we will introduce our own condition,
-%{\em temporal stratification}, which allows such syntactic cycles as long as
-%the program encodes the condition that \dedalus{p} occurs at a {\em later time}
-%than \dedalus{\(\lnot\)p}.
-
-\subsection{Choice}
-
-%Having ruled out programs with contradiction, \rcs{confusing.  we don't disallow all contradictions, since we allow aggregates, negation, functions, etc...} we are interested in programs
-
-One of our goals for \lang is to model the inherent non-determinism of network
-delay in asynchronous distributed systems.  Non-determinism in Datalog was
-formalized by Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} in their
-\dedalus{choice} construct.  
-%Intuitively, \dedalus{choice} allows the
-%specification of a functional dependency in a rule.
-For example,
-\dedalus{p(X,Y) :- q(X,Y), choice( (X), (Y) );} expresses that for each value
-that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on a
-single {\em non-deterministically chosen} value. 
-%If \dedalus{q} contains more
-%than one \dedalus{Y} value for an \dedalus{X}, then the instance has multiple
-%models: one corresponding to each choice of \dedalus{Y} for each \dedalus{X}.
-%Operationally, the answer to a Datalog program with choice corresponds to a
-%non-deterministic choice of one of the models.
-
-See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
-into Datalog rules that employ cyclic negation.  
-%Although \dedalus{choice}
-%cannot cause a contradiction, its expansion violates many stratification
-%conditions.  Thus, we often must explicitly admit programs with \dedalus{choice}
-%after ruling out certain {\em unstratified} programs---programs that violate
-%the stratification condition.
 
 \section{\lang}
 
-Dedalus is a subset of Datalog, with \dedalus{choice}, an infinite
+We now explain how \lang's relation to Datalog.  One of our goals for \lang is to model the inherent non-determinism of network
+delay in asynchronous distributed systems.  Non-determinism in Datalog was
+formalized by Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} in their
+\dedalus{choice} construct.  For example,
+\dedalus{p(X,Y) :- q(X,Y), choice((X), (Y));} expresses that for each value
+that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on a
+single {\em non-deterministically chosen} value. 
+See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
+into Datalog rules that employ cyclic negation.
+
+\lang is a subset of Datalog, with \dedalus{choice}, an infinite
 \dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
 %$(\mathbb{N} \cup \top)$
 relation, which is isomorphic to $+1$ on $\mathbb{N}$.  The intuition behind
 \lang's \dedalus{successor} relation is that it models the passage of logical
 time.  In our discussion, we will say that facts with lower time suffixes occur
-``before'' atoms with higher ones.  If we wish to model possible message loss,
-we may admit a special element $\infty$ 
-%\rcs{was $\top$ which is confusing, (and wrong, unless we decide that time is
-%a lattice, which might be a useful model of lamport clocks, parallelism, etc,
-%but is not how we present time in this paper...)}
-into \dedalus{time}.  We exclude message loss and node failure in this paper to
+``before'' atoms with higher ones.  
+%If we wish to model possible message loss,
+%we may admit a special element $\infty$ 
+%into \dedalus{time}.
+We exclude message loss and node failure in this paper to
 simplify the discussion, though we explicitly deal with such issues in other
-work~\cite{dedalus-techr, netdb}. \rcs{this used to claim we had some implicit
-protocol, which was distractiong/misleading.  plus, not even paxos can rule out
-message loss for all execution traces (such as the ones with too many node
-failures...)}
-%Intuitively, $\top$ is meant to model the time {\em never}.
+work~\cite{dedalus-techr, netdb}.
 We will see later how \dedalus{successor} forms the basis of a stratification
 condition that we call {\em temporal stratification}.
 
@@ -262,22 +162,10 @@ predicate, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we
 facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
 \noindent{\bf Unification on Time: }
-\wrm{locality in time intuition}
-%$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
-%our restrictions concern the well-formedness of \dedalus rules.
-%\begin{definition}
-%
-%An \emph{extensional} predicate in a \slang program $P$ is a predicate that
-%does not appear in the head of any rule in $P$.
-%
-%\end{definition} \wrm{we really want an inclusion constraint not just in the
-%set of integers, but in the set of all possible times, in case time is
-%finite}.  \jmh{I disagree, actually.  EDB facts can be sprinkled throughout
-%time without restriction, and the rule syntax below provides the restrictions
-%you want.  you're hinting at the reduction stuff below, but we can rewrite to
-%that.}
+
 In a well-formed \lang rule, every body predicate's time suffix contains the
-same variable symbol.  For ease of exposition, we henceforth assume that this
+same variable symbol.  This corresponds to the intuition that rules must
+operate in a given time, and cannot operate across time.  For ease of exposition, we henceforth assume that this
 variable symbol is named $\DT$.  A well-formed \lang rule must also bind the
 head predicate's time suffix to a variable symbol.  We will assume the name of
 this variable symbol is $\DS$.  $\DS$ may be constrained in exactly one of
@@ -301,33 +189,43 @@ including $\DT$.
 We will study the utility of these three types of rules later: systems in
 general only require recourse to ordering primitives for mutable state and communication.
 Inductive and asynchronous rules model these cases respectively.
-%Deductive rules enable embarassingly parallel execution of all other aspects of
-%distributed systems.
 
 Usage of $S$ or $T$ outside of the time suffixes is known as {\em
 entanglement}.  We will revisit this powerful construct in~\ref{sec:entangle}. 
 
-\wrm{we can cut this example if we're short on space}\rcs{merge with example 2, which is just the sugar corresponding to this example}
 \begin{example}
 The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
+We can sugar away the time suffixes in the head and body, and the
+\dedalus{successor}, \dedalus{time} and \dedalus{choice} clauses in
+the body, and the equality constraints, and instead attach an identifier to the head of each
+temporal rule, to indicate the change in time suffix.  In each, the sugared example appears
+below.  We may also represent facts by attaching a constant time suffix, as shown below.
+
 \\
 deductive:
 \begin{Dedalus}
 p(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), \(\DS\) = \(\DT\);
+p(A, B) \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \\
 inductive:
 \begin{Dedalus}
 q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), successor(\(\DT\), \(\DS\));
+q(A, B)@next \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \\
 asynchronous:
 \begin{Dedalus}
 r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
    choose((A,B,\(\DT\)), (\(\DS\)));
+r(A, B)@async \(\leftarrow\) e(A, B);
+\\
+fact:
+e(1,2)@3;
 \end{Dedalus}
 \end{example}
-\rcs{We use the following syntactic sugar for clarity, and to syntactically preclude the use of entanglement: ... ex 2 stuff ... }
+
+
 \noindent{\bf Positive and Negative Predicates: }
 For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
 $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same arity
@@ -355,99 +253,6 @@ Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rul
 \noindent{\bf Guarded EDB: }
 No well-formed \lang rule may involve any extensional predicate, except for a rule of the form above.
 
-\subsection{Abbreviated Syntax and Temporal Interpretation}
-
-\label{sec:abbrvsyntax}
-
-%\wrm{i don't see the importance of the next 2 paras (before bullet points).  cut it?}
-%We have been careful to define \lang as a subset of Datalog; this inclusion allows us to take advantage of Datalog's
-%well-known semantics and the rich literature on the language.
-
-%\lang programs are intended to capture 
-%temporal semantics.  For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
-%suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
-%%Deductive
-%%rules can be seen as {\em atemporal} statements: they range over all values of
-%%the time suffix, and express deductions that are ``always'' valid. 
-%Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
-%predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
-%what is known at that instant.
-% Inductive %%and asynchronous 
-% rules are {\em temporal}---their consequents are defined to
-%be true ``at a different time'' than their antecedents. 
-
-To simplify \lang notation, we introduce some syntactic ``sugar'' as follows:
-
-\begin{itemize}
-%
-%why do we need this one??  \item {\em Time-suffix notation:}  Each predicate's
-%time suffix  time-suffix attribute of each predicate is placed after the
-%predicate's right parenthesis, separated by the symbol `@'.   For example, the
-%predicate \\ $r(A_{1}, \ldots, A_{n}, S)$ is rewritten as $r(A_{1}, \ldots,
-%A_{n})@S$.
-%
-\item {\em Implicit time-suffixes in body predicates:} Since the binding
-pattern for time suffixes in a rule body is constrained, we omit the time
-suffix from each body predicate and treat it as implicit.
-
-\item {\em Temporal head annotation:} Since there are a finite number of
-binding possibilities (enumerated above) for the time suffix in a head
-predicate, we omit the time suffix from the head -- and its relevant
-\dedalus{successor} and \dedalus{choose} constraints from the body--and instead
-attach an identifier to the head predicate of each temporal rule, to indicate
-the change in time suffix.  An inductive head predicate \dedalus{r} is of the
-form: \dedalus{r($\overline{A}$)@next}, while an asynchronous head predicate
-\dedalus{r} is of the form \dedalus{r($\overline{A}$)@async}.
-
-\item {\em Timestamped facts:} For notational consistency, we write the
-timestamps of facts, in the EDB outside the
-predicate.  Note that timestamps must be constants.  For example:
-
-\dedalus{r($\overline{A}$)@$\Consts$}
-
-%
-%\begin{enumerate}
-%
-%item \emph{next} implies the rule is inductive, and stands in for
-%\linebreak\dedalus{successor($\DTau$,S)} in the body.
-%
-%\item \emph{async(N)} implies the rule is asynchronous, and stands in for
-%\dedalus{successor(\_, S), choose((\_), (S))} in the body.  $N$ is a variable,
-%corresponding to the time suffix $\DTau$ of all predicates in the rule body and
-%optionally referenced in the head.  \wrm{this seems ugly to me}
-%
-%\end{enumerate}
-%
-\end{itemize}
-
-%\wrm{the before stuff might be a bit to verbose and repetitive.}
-
-\wrm{again we can cut this if we're out of space}
-\begin{example}
-%%Sugared deductive and inductive rules.
-The following are ``sugared" versions of deductive, inductive and asynchronous rules from Example 1, and a temporal fact:
-\\
-deductive:
-\begin{Dedalus}
-p(A, B) \(\leftarrow\) e(A, B);
-\end{Dedalus}
-inductive:
-\begin{Dedalus}
-q(A, B)@next \(\leftarrow\) e(A, B);
-\end{Dedalus}
-asynchronous:
-\begin{Dedalus}
-r(A, B)@async \(\leftarrow\) e(A, B);
-\end{Dedalus}
-fact:
-\begin{Dedalus}
-e(1, 2)@10;
-\end{Dedalus}
-
-%%asynchronous
-%%r(A, B)@async \(\leftarrow\) \wrm{inconsistency.  are we doing async(N)?}
-%%  e(A, B);
-\end{example}
 
 \subsection{Distribution, Asynchrony and Choice}
 
@@ -469,46 +274,197 @@ communication in {\em asynchronous} distributed systems.  For example, messages
 may be arbitrarily delayed, and a receiver cannot infer that a message will
 never be sent based solely on his non-receipt of the message (it may arrive
 arbitrarily far in the future).
-%\nrc{Sec 2.2 says that we don't discuss message loss in this paper.}
 To this end, we require that any communication rules be \dedalus{@async} rules.
 
 We call the set of facts, including their timestamps, derived by communication
 rules during a particular execution a {\em trace} of the program.
-Each trace is associated with exactly one model of the program.
+%Each trace is associated with exactly one model of the program.
 
-%\wrm{however, in this paper we assume bounded message delivery time, in other words top is ruled out of time. (note that this can be ensured in logic by admitting timers and doing retries)}
+\subsection{Temporal Stratification}
 
-%Note that this model says nothing about the
-%relationship between the agents' clocks; they could be
-%non-monotonically increasing, or they could respect a global order.
+We avoid contradictions in \lang by introducing a stratification condition called {\em
+temporal stratification}, defined in terms of a program's {\em predicate
+dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct
+predicate $P_i$ used in the program, and an edge $(N_i, N_j)$ if $P_i \succ P_j$.
+The edge is annotated with a
+$\lnot$ if $P_i \succ \lnot P_j$.  The
+edge is annotated with a $+$ if all rules with head $P_i$ and $P_j$ in their
+bodies are either inductive or async.  A \lang program is temporally
+stratified if all cycles in the PDG with an $\lnot$ edge also have a $+$
+edge.
 
-% \jmh{the following is redundant and can be omitted}
-% \lang facts are just datalog facts that conform to the schema constraint:  rule heads with empty bodies, and ground terms for all attributes including the time suffix.  To accommodate this in our notation,
-% we allow a fourth suffix for the special case of empty bodies: a constant integer.  A \lang fact thus has the form:
-% 
-% $r(C_1, C_2, [...], C_n)@CI$
-% 
-% where $CI$ is an integer constant.
+The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at
+some later time.  
+%Note that while it is possible for an \dedalus{@async} rule to
+%support a fact at an earlier time, this behavior cannot occur in real distributed
+%systems. 
 
+%The careful reader will note that so far, we have not
+%restricted asynchronous rules to prevent {\em time travel} -- a condition where
+%an asynchronous rule gives rise to derivations that precede their antecedents
+%in time.  While time travel is acceptable for programs where it cannot ever
+%cause a contradiction (such as programs without negation), it is undesirable in
+%general, as a fact may derive its own negation (intuitively, a ``temporal
+%paradox'').  Thus, an additional condition is required to exclude such
+%contradictions.
+%\nrc{Not sure the remainder of this para is useful: yes, real systems
+%  can't allow a temporal paradox. Seems like it
+%  goes without saying.} \rcs{also, it sounds like we need to actually run the lamport clock at runtime in order to avoid temporal paradoxes in execution traces...  It should be more clear that these are model theoretic issues.  I tried to clean things up a bit in the lamport clock section, and tie these ideas to serializability below.  Hopefully serializability will ground the discussion without resorting to relativistic arguments about causality and simultanaity...}
+%However, we note that in a practical asynchronous distributed system, nodes are
+%assumed to have their own clocks, which may run at any arbitrary speed
+%\wrm{move this defnition of async distr system earlier}.  Nodes assign a
+%timestamp to an incoming fact that is greater than the timestamp of any
+%existing fact.  Note that this condition excludes time travel in any possible
+%execution.
 
-%Finally, we define the following shorthand for referring to the special IDB relations defined above.  Recall that for every EDB predicate $r$
-%we have a uniquely defined pair of IDB predicates $r\pos$ and $r\nega$.  In a \lang program, we use $r$ as shorthand for $r\pos$ 
+%\begin{example}
+%\label{ex:stratsafe}
+%A simple temporally stratifiable and temporally safe \slang instance that is
+%neither syntactically stratifiable nor syntactically\rcs{?} safe.
 
-%(recall that the true EDB predicate $r$ cannot be referenced by any rules) and $delete$ $r$ as shorthand for $r\nega$.
-%%A deductive rule as defined above will hold for any assignment of a constant integer to the $N$-value in the suffix of each predicate.
+%\begin{Dedalus}
+%persist[p, 2]  
+  
+%r1
+%p(A, B) \(\leftarrow\)
+%  insert\_p\_req(A, B);
 
-%%\subsection{Events}
+%r2  
+%delete p(A, B) \(\leftarrow\)
+%  p(A, B),
+%  del\_p\_req(A);
 
-%%\newdef{definition}{Definition} 
-%%\begin{definition}
+%insert\_p(1, 2)@1;
+%\end{Dedalus}
+%\end{example}
+
+%In the \slang program in Example~\ref{ex:stratsafe}, \emph{insert\_p} and
+%\emph{delete\_p} are captured in EDB relations.  This reasonable program is
+%unstratifiable because $p \succ p\nega \land p\nega \succ p$.  But because the
+%successor relation is constrained such that $\forall A,B, successor(A, B)
+%\rightarrow B > A$, any such program is modularly stratified on
+%\emph{successor}.  Therefore, we have $p_{n} \not\succ^* p\_neg_{n} \not\succ^*
+%p_{n+1}$; informally, earlier values do not depend on later values.
+%\paa{shouldn't it be $p_{n} \succ^* p\_neg_{n} \not\succ^* p_{n+1}$ ?}
+
+%Given this discussion, in practice we are interested in three asynchronous
+%scenarios: (a) monotonic programs (even with non-monotonicity in time), (b)
+%non-monotonic programs whose semantics guarantee monotonicity of time suffixes
+%and (c) non-monotonic programs where we have domain knowledge guaranteeing
+%monotonicity of time suffixes.  Each represents practical scenarios of
+%interest.
+
+%The first category captures the spirit of many simple distributed
+%implementations that are built atop unreliable asynchronous substrates.  For
+%example, in some Internet publishing applications (weblogs, online fora), it
+%is possible due to caching or failure that a ``thread'' of discussion arrives
+%out of order, with responses appearing before the comments they reference.  In
+%many cases a monotonic ``bag semantics'' for the comment program is considered
+%a reasonable interface for readers, and the ability to tolerate temporal
+%anomalies simplifies the challenge of scaling a system through distribution.
+
+%The second scenario is achieved in \slang via the use of \dedalus{successor}
+%for the time suffix. The asynchronous rules of \lang require additional
+%program logic to guarantee monotonic increases in time for predicates with
+%dependencies.  In the literature of distributed computing, this is known as a
+%{\em causal ordering} and is enforced by distributed clock protocols.  We
+%review one classic protocol in the \lang context in Section~\ref{sec:lamport};
+%including this protocol into \lang programs ensures temporal monotonicity.
+
+%Finally, certain computational substrates guarantee monotonicity in both
+%timestamps and message ordering---for example, some multiprocessor cache
+%coherency protocols achieve this.  When temporal monotonicity is given, the
+%proofs of temporal stratification and Algorithm~\ref{alg:tsn} both apply.
+%\wrm{end paste}
+
+%\dedalus{@async} is clearly more liberal than our operational semantics
+%defined above.  One of our goals is formal verification of distributed
+%systems.  Thus, for the particular use-case of distributed execution with the
+%above operational semantics, we need to discover a logical condition that
+%results in a set of models that exhibit the same set of behaviors.  It is
+%necessary and sufficient for each fact to carry an entangled timestamp from
+%each node.  Timestamps must be propagated through derivations \wrm{explain}.
+%When a node receives a fact, it will need to delay processing of the fact
+%until its current time is greater than its entangled timestamp.  Note that
+%this scheme employs vector clocks.
+
+%Note that the use of Lamport clocks enforces additional constraints by ruling
+%out more possible interleavings of events than the operational semantics for
+%timestamp assignment. \wrm{check if this is true} \paa{we'll put the lamport
+%clock discussion here, then?}
+
+%\subsection{Temporal Safety}
+
+%\wrm{begin paste} In the previous section we demonstrated that \slang can
+%capture intuitive notions of persistence and mutability of state via a
+%stylized use of Datalog.  However, the alert reader will note that even very
+%simple \slang programs make for unusual Datalog.
+%%: among other concerns, 
+%To begin with, Persistence rules are {\em unsafe}, meaning they produce
+%derivations for an infinite number of values of the time suffix.  Traditional
+%Datalog interpreters, which work against static databases, would attempt to
+%enumerate these values, making this approach impractical.  Equally worrisome
+%is the fact that many common patterns for state update via mutable persistence
+%entail unstratifiable constructs: predicates that syntactically depend on
+%their own (possibly transitive) negation.  
+
+%However, in the context of distributed systems and networks, the need for
+%non-terminating ``services'' or ``protocols'' that continually update their
+%state is very common.  In this section we show that expressing distributed
+%systems properties such as persistence and mutable state in logic does not
+%require dispensing with familiar notions of safety and stratification: we take
+%traditional notions of acceptable Datalog programs, and extend them in a way
+%that admits sensible non-terminating programs.
+
+%\subsection{Temporal Safety} Next we consider the issue of infinite results
+%raised in the introduction to this section.  In traditional Datalog, this is a
+%well-studied concern.  A Datalog program is considered {\em safe} if it has a
+%finite minimal model, and hence has a finite execution.  Safety in Datalog is
+%traditionally ensured through the following syntactic constraints:
+
+%\begin{enumerate}
+%%
+%\item No functions are allowed.
 %
-%%An \emph{event} in \lang is an EDB fact.
+%\item Variables are \emph{range restricted}: all attributes of the head goal
+%appear in a non-negated body subgoal.
 %
-%%\end{definition}
+%\item The EDB is finite.
+%
+%\end{enumerate} \wrm{end paste}
 
-%%\jmh{Isn't the following simply a restatement of Datalog's use of EDB?}
-%%Since an extensional relation may not appear in a rule's head, events come from
-%%sources external to the evaluation of the \lang instance.
+\subsection{Temporal Safety}
 
-%\wrm{define trace}
+Next we consider the issue of infinite results.  In Datalog, programs with
+infinite results are traditionally ruled out, as Datalog's evaluation
+algorithms fail to terminate on such programs.  Similarly, for \lang, we want
+to somehow constrain programs that fail to terminate, given any bounded EDB.
+Given a finite universe of constants -- i.e., restricting entanglement and
+summary aggregates -- it is clear that modulo time, a \lang program can
+only compute a finite model.  The only possible termination issue then is that
+a set of facts may exhibit {\em non-convergence}: oscillation in time.  Given
+that the finiteness of the universe implies a finite period of oscillation, we
+can either compute a finite representation of these non-convergent derivations
+in the style of Chomicki et al.~\cite{chomicki-infinite} or a {\em partial
+fixpoint}~\cite{abiteboul-vianu}, which regards non-convergent derivations as
+false.
 
+If finiteness of the universe cannot be guaranteed, we can fall back on
+conservative syntactic conditions presented in~\cite{dedalus-techr} that
+guarantee the existence of a finite model.
+
+\rcs{wrm agreed the following paragraph needs to be moved/rewritten, but I forget where.  Note that the following only holds for analyses of confluence.  We might want to check other properties, such as invariants over a trace that we collect and process at runtime.  Such analyses are probably more interested in network events than the ultimate model.  Other analyses probably want to check other things...}
+
+\begin{definition}
+
+The ultimate model of a Dedalus instance is the eventual contents of the simply
+persisted relations (ignoring timestamps)
+
+\end{definition}
+
+In the general case, we are not interested in the full model of a trace of an
+instance: facts that are only ephemerally true represent events, or intermediate
+computations, which intuitively should not be considered as part of the output
+of the program.  We are only interested in the program's {\em ultimate
+  model}---the eventual contents of the simply persisted relations (ignoring
+timestamps).
