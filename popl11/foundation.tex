@@ -64,6 +64,16 @@ satisfying assignment of $\bar{A}$.  This row contains the value of the
 aggregate function over the set of assignments to $B$ for the given value of 
 $\bar{A}$.
 
+For example, implementing a checkout functionality in the shopping cart example
+will require carrying out some aggregations over the {\em cart\_action} table.
+One such aggregation involves counting the number of additions and deletions 
+of each item:
+
+\begin{Dedalus}
+status(Serv, Cli, Session, Item, Type, count<ReqId>) :- 
+  cart action(Serv, Cli, Session, Item, Type, ReqId);
+\end{Dedalus}
+
 \subsection{Non-Monotonicity}
 
 A Datalog instance without negation or aggregation always has a unique {\em
