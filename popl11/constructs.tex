@@ -1,4 +1,4 @@
-\section{Order in Logic}
+\section{State and Order in Logic}
 \label{sec:stateupdate}
 
 %%\linebreak
@@ -45,7 +45,11 @@ such as persistence and mutability.  In this section, we construct a library of
 %that capture state-oriented motifs such as persistent relations,
 %deletion and update, sequences, and queues.
 
-%\subsection{Order}
+\subsection{State}
+
+\paa{some intro text; logic naturally models the accumulation of information via deduction,
+but systems programming often requires modeling information that may disappear
+or change over time.}
 
 %\subsubsection{Events}
 
@@ -62,7 +66,7 @@ such as persistence and mutability.  In this section, we construct a library of
 %their persistence.  In this section, we construct a library of \lang constructs
 %to capture these two requirements for order.
 
-\subsection{Simple Persistence}
+\subsubsection{Simple Persistence}
 %
 A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules at
 time $\DT$, but may only provide ground for deductive rules in timesteps
@@ -76,7 +80,7 @@ p\pos($A_1$,$A_2$,[...],$A_n$);}
 true $\forall j \in \mathbb{N} : j >= i$.
 
 
-\subsection{Mutable State}
+\subsubsection{Mutable State}
 \label{sec:mutable}
 
 Simple persistence rules cannot model deletions and updates of a fact, because
@@ -154,7 +158,7 @@ tuple and inserting a new value.  Every update is {\em atomic across
 when the new value is derived.  During the evaluation of timestep
 $\DT+1$ the new value exists, and the old does not.
 
-\subsection{Assignment and Committed Choice}
+\subsubsection{Assignment and Committed Choice}
 \rcs{this is analagous to the old systems mainstays: ``first writer wins'' and ``last writer wins''.  We should mention those terms, both for context, and because I think they're a more intuitive way to think about it}
 The assignment primitive provided by most imperative languages is a special case
 of update without deletion.  We can model the (destructive) assignment of sets
@@ -192,7 +196,13 @@ insertions into \dedalus{condition} cannot cause new rows with the same
 present the macro, which expands to a table (say foo), a log (foo\_log) and an
 event (foo\_event) which occurs once if foo occurs at all.}
 
-\subsection{Priority Queues}
+\subsection{Order in Logic}
+
+\paa{some intro text: pure logic has no notion of order.  distributed systems programming
+frequently requires ordering constructs to cope with indeterminacy in message ordering
+and to achieve synchronization}
+
+\subsubsection{Priority Queues}
 
 %\paa{shorten this section} While a sequence is a useful construct for
 %generating or imposing an ordering on tuples \wrm{seems a bit fishy.  seems
@@ -282,7 +292,7 @@ very difficult to express in a logic language.
 
 %Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
 
-\subsection{Entanglement}
+\subsubsection{Entanglement}
 \label{sec:entangle}
 
 It is sometimes necessary to {\em entangle} the \dedalus{successor} relation
@@ -306,7 +316,7 @@ not sugar away the time suffix in the rule body.
 
 \rcs{the above discussion obscures a crucial detail: entanglement doesn't allow arbitrary access to the timestamp.  Instead, it provides a one way information flow ``out of'' the timestamp field}
 
-\subsection{Sequences}
+\subsubsection{Sequences}
 %\wrm{Maybe somehow work in the fact that sequences are really about preserving
 %an already-established order (at a sender) through asynchrony at the receiver.
 %Connect to entanglement}
@@ -335,7 +345,7 @@ which, when true, should cause the sequence to be incremented, and the
 trigger's arity) and expands them to a pair of definitions of a unary predicate
 like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}).
 
-\subsection{Lamport Clocks}
+\subsubsection{Lamport Clocks}
 \label{sec:lamport}
 %\wrm{Clean this up and make it jibe better with sec 5}
 %Recall that asynchrony allows program executions to order message timestamps
