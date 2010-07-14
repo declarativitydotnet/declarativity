@@ -1,195 +1,71 @@
-\section{Motivation}
+\section{Challenge: Correct, Distributed Shopping Carts}
 
-\wrm{motivation should define asynchronous distributed systems, introduce the ``agent'' terminology}
+Consider a simple distributed application that provides a fault-tolerant
+``shopping cart'' service for commercial websites.  While it is common in
+practice to implement such applications above a key-value store tier that
+provides a read/write interface to objects, such a separation of tiers limits
+the ability of the storage substrate to exploit application-level semantics.
+Hence a design decision needs to be made: should the application provide 
+its own storage or use a store?  Our motivating example will do the former,
+though we will explore the latter option in more detail in section~\ref{sec:casestudy}.
 
-\subsection{Distributed Systems and Logic Languages}
-\label{sec:dsll}
-
-%%distributed logic languages are promising.  succinct executable specifications... programming %%with invariants... static checks... AOP...
-
-Distributed logic languages \wrm{cite stuff here, to make it clear that what we mean by a ``distributed logic language'' are the following instances of prior work} promise to significantly raise the level of
-abstraction at which distributed systems are currently implemented, allowing
-programmers to specify systems as a set of invariants over local state,
-\wrm{okay, maybe say ``commonly'' or ``one popular design choice'' or something before ``these languages allow programs to specify systems as invariants over local state and rules that describe how state changes and moves across a network,'' because i think we all would consider something to be a distributed logic language that defines invariants over global or remote state}
-%% \wrm{local isn't important, it's just a design choice of dedalus}
-and rules that describe how state changes and moves across a network. 
-%%\wrm{again this detail isn't important, it's just a design choice of dedalus}.  
-This approach leads to succinct, executable specifications whose faithfulness to the original pseudocode may be visually verified.
-%% \wrm{well...}.  
-Moreover, many 
-distributed logic languages are extensions of first-order logic enhanced with
-a {\em least fixpoint operator}, which lends itself to powerful
-formal verification techniques~\cite{wang, wang2}.
-%% and assertional
-%%reasoning~\cite{boom-eurosys} \wrm{wat is assertional reasoning?}.
-
-\begin{comment}
-%%*************************************************************
-\wrm{i don't think anyone except joe's students will care about the balance of this section.  it sounds
-like we're saying ``hey, previous work had highly technical problem X, and we're solving that in
-our work".  i think what we need is a bottom-up approach.  something like ``hey, wouldn't it be nice to do distributed Datalog?  well, here's the first thing
-you might think of (location specifiers), but oh wait, there are some problems
-(distributed joins?, distributed atomicity? mutable state? etc) (and btw previous work had these problems too) so let's solve them by adding atomicity and a notion of state update, but oh wait there are some more problems, and here's how we solve all of them.  then we can say, for a detailed account of the deficiencies of previous work, and our solutions, see tech report, or dedalus 2.0 paper. or something"}
-
-Although the original work in declarative networking was aimed at routing protocols for which soft state, best-effort messaging and eventually consistent semantics are acceptable, it wasn't
-long before researchers began attempting to exploit distributed logic languages to implement
-nontrivial systems that enforce distributed invariants~\cite{p2} or enforce transactional consistency or global ordering~\cite{netdb} \wrm{why are these things incompatible with soft-state, best-effort messaging, and eventual consistency?}.  In order to achieve atomic semantics with regard
-to side-effecting operations like disk writes and messages, the fully pipelined operation of P2
-was replaced with a \emph{chain of fixpoints} semantics.  All rules are expressed as 
-straightforward Datalog, and evaluation proceeds in three phases:
-
-\begin{enumerate}
-\item Input from the external world, including network messages, clock interrupts and host language calls, is collected.
-\item Time is frozen, the union of the local store and the batch of events is taken as EDB, and the program is run to fixpoint.
-\item The deductions that cause side effects (e.g., updates, messages and host language callbacks) are dealt with.  
-\end{enumerate}
-
-This ``framing'' of atomic deduction with imperative constructs exposes more clearly the 
-semantic distinction between the two extremes of \emph{events}, ephemeral tuples that 
-hold for exactly one timestep or fixpoint computation, \emph{hard state} or tuples that 
-persist in relations across timesteps, and the semantically ambiguous family of tuple types
-that exist between the two extremes. 
-
-Consider a distributed system in which participants announce their presence with 
-\emph{heartbeat} messages; participants that want to reason about who is present must
-remember the message content and the time of its arrival.  It is natural to represent the messages 
-themselves as events, and the log of messages and timestamps as a persistent table:
+Our shopping cart application will consist of a client and a (distributed)
+server component.  The client converts user input into messages sent to
+the server which describe updates to the cart.   
 
 \begin{Dedalus}
-heartbeat\_cache(@Host, Peer, Time) \(\leftarrow\) 
-  heartbeat(@Host, Peer), local\_time(Time);
+while(in = client_input()) do
+  send(server, in);
+done
 \end{Dedalus}
 
- Although the Overlog language permits the transparent
-intermixing of the table types, their interaction is often unintuitive, and compromises the
-reading of rules as logical implications.  The state of the system after the arrival of some
-number of \emph{heartbeat} events is clearly not a minimal model of the given input database,
-which does not contain the events that (for one moment) caused the derivation of 
-\emph{heartbeat\_cache} tuples.
+The server stores these messages
+and forwards them to replicas which provide fault-tolerance for the cart state:
 
-
-%%Programming distributed systems requires many primitives that don't neatly fit into an
-%%LP paradigm.  One of the most insidious (and among the first to surface) is the notion of 
-%%different semantics associated with different types of relations: \emph{events} or ephemeral 
-%%tables on the one extreme, and persistent or \emph{hard state} tables on the other.  
-
-%% ***********************************************************
-\end{comment}
-
-We conjecture that logic languages are a better fit for the specification of concurrent and distributed systems than traditional imperative approaches.  In imperative languages, whose instructions are built up from applications of a sequencing primitive and whose state is commonly stored in data structures like lists and trees, ordering is implicit and ubiquitous, 
-while concurrency is achieved by duplicating the sequential control structures and allowing them
-to run in an interleaved fashion.
-%\wrm{what about concurrent data structures?  maybe we cut the ``concurrency is achieved...'' and replace it with ``the programmer must take specific steps to achieve concurrency''}.   whoops -- thought you said "data structures" instead of "control structures"
-In contrast, declarative language constructs, built up from the implication primitive and abstracting program state into relations, are in general order-independent, forcing the programmer to explicitly reason about ordering of data elements or operations, but in return allowing a high degree of concurrency and often ``embarrassing'' 
-parallelism~\cite{podskey}.  Instead of reasoning about the possible interleavings of sequential
-instructions or the serial order of message arrival as one must when writing threaded or 
-event-driven code, respectively, a distributed logic language allows the programmer to focus
-on the admissible, atomic transformations over state that can in general be carried out in
-parallel.  This inversion of concerns -- implicit concurrency and explicit order, instead of
-implicit order and explicit concurrency -- can both ease the programmer's cognitive burden as
-concurrency and parallelism increase, and help to highlight the hopefully few (but critical) 
-portions of a distributed algorithm for which order is essential to correctness. 
-
-Sometimes order -- ordering of data elements, as well as ordered computational steps -- 
-is required by an algorithm, and in a logic language this order by be explicitly specified and 
-managed.  Previous languages 
-
-\paa{story: admitting order (that is, time) into logic is tricky, and retaining a purely logical interpretation for how the order is established and respected is downright hard.  as you'll see in the next section, nearly all of the useful idioms for DS construction are problematic/ambiguous precisely because they describe composite operations across timesteps, without the vocabulary to make clear what things co-occur atomically.}
-
-\subsection{Distributed Idioms}
-
-\paa{make me 1/4 the size}
-Despite its problematic logical interpretation, updatable and ephemeral state is a requirement
-for any practical distributed system \wrm{i'd say this is a requiement for any system of sufficient complexity, whether centralized (synchronous) or distributed (asynchronous)}.  The \emph{event}, or predicate that is ``instantaneously''
-true for only one computation step, is an extreme example of mutable state that is nearly
-ubiquitous in reactive and concurrent systems such as distributed protocols, realtime systems
-and user interfaces~\cite{prologevents}.
-Network messages, timers and GUI actions are
-naturally represented as ephemeral tuples that are only instantaneously true, 
-but which may be joined with persistent state to deduce new
-tuples.  A notion of events makes it straightforward to represent many useful
-programming idioms, including counters or \emph{sequences} and
-\emph{queues}~\cite{netdb}.
-``Soft state'' -- a special case of mutable state dependent on a wall clock -- 
-is  useful for best-effort
-caching in network protocols and heartbeat messages in distributed
-systems~\cite{boom-eurosys}.  
-
-Unfortunately, updatable state -- that is, program state that changes partly as a result of the 
-sequence of computational steps, and which frequently requires that certain subsequences be executed atomically -- is difficult to model in logic, precisely because of its inherent order-independence.  
-
-
-\begin{comment}
-For example,  an Overlog sequence might be
-specified in the following fashion:
-
-\wrm{again, it seems like we're delving into a highly technical and domain-specific explanation of the flaws of previous work.  maybe we don't need to do this.}
 
 \begin{Dedalus}
-seq(To, X+1) \(\leftarrow\) 
-  seq(To, X), ping(To, From);
+cart_state = new Hash;
+while (req = recv()) do
+  if (cart_state.has_key(req.session)) 
+    curr = cart_state.get(req.session)
+    curr.union(req);
+  else 
+    cart_state.put(req.session, new Cartobj(req));
+  endif
+  foreach r in replicas do
+    send(r, req);
+  done
+done
 \end{Dedalus}
+A practical shopping cart would provide a mechanism to {\em check out}; that is,
+summarize the cart contents, but we will postpone this discussion until later.
 
-The structure and intent of the rule above are fairly obvious \wrm{a logician would have a different interpretation.  maybe you can cast this interpretation as intuitive by thinking of Datalog in an ECA-like way.}: when a \emph{ping} event
-occurs, the current value X of the sequence\emph{seq} should be incremented.  Upon
-closer inspection, however, we see that the rule has an unambiguous meaning only under
-an operational interpretation of the system's semantics: precisely because \emph{ping}
-is ephemeral, we know that the arrival of a \emph{ping} tuple will ``trigger'' the rule, and 
-the insertion of the new sequence value will not retrigger it, causing an infinite chain of
-deductions.  The queue pattern, which enables ordered processing of a set, is slightly 
-more complicated:
+Suppose that we wish to verify whether this implementation possesses the desirable 
+properties that, in spite of message reordering and the possibility of the simultaneous
+receipt of multiple messages, all executions of the client code for the same series of
+input will produce the same state on all replicas.  Several difficulties present themselves.
 
-
-\end{comment}
-
-\paa{old text below.  we probably want to use only the queue example here (one example,
-in any case.  we haven't introduced datalog yet...}
-
-\paa{the purpose of this section is to show that events and mutable state, both desirable,
-and not naturally represented in logic b/c their representation requires explicit order in the
-form of before and after states (eg, primed variables in TLA) of atomic changes.  to 'say'
-a queue in logic, we are forced to 'say' a contradiction: something is in the queue if it isn't. ditto
-counters: something is X+1 if it's X.  and events, of course, cause us to derive conclusions
-which, as soon as they are true, are unfounded.}  
+\begin{Dedalus}
+persist[cart_action, 5];
+cart_action(#Server, Client, Session, Item, Type)@async :-
+  action(Client, Session, Item, Type, ReqId),
+  best_replica(Client, Session, Server);
+\end{Dedalus}
 
 
 
 \begin{Dedalus}
-r1
-min\_elmt(O) \(\leftarrow\)
-  queue(O, _);
-r2
-deq(Host, X) \(\leftarrow\) 
-  queue(O, X), min\_elmt(O), deq\_request(Host);
-r3
-delete queue(O, X) \(\leftarrow\) 
-  queue(O, X), min\_elmt(O), deq\_request(\_);
+// client code
+
+cart_action_stage(Server, Client, Session, Item, Type, ReqId) :-
+  action(Client, Session, Item, Type),
+  best_replica(Client, Session, Server),
+  s(ReqId);
+
+cart_action(#L, C, S, I, T, R) :-
+  cart_action_stage(L, #C, S, I, T, R);
+
+s(X+1)@next \(\leftarrow\)  s(X), action(_, _, _, _, _);
+
+
 \end{Dedalus}
-
-Again, the semantics are clear only because of the ephemerality of \emph{deq\_request}, and because it is either true or false -- either an item is atomically dequeued and deleted, or neither thing happens.  As in the sequence example, the operational interpretation of events as
-triggers is necessary to ensure that the rules do not represent a circular definition: the event 
-always drives the \emph{r2's} evaluation, and hence the result of \emph{r3's} evaluation 
-(a new min\_elmt tuple) does not cause another evaluation of \emph{r2}.  In order to 
-implement a construct that is ubiquitous in other languages, we found that we had to 
-forfeit the logical reading of rules.  It is no longer 
-the case that if the premises hold the conclusions must hold: instead, the above examples
-must be read as ECA (event, condition, action) rules, and their conclusions after the event's 
-disappearance (e.g., the value of the sequence or the contents of the queue at any arbitrary 
-point in time) are essentially groundless facts.
-
-
-
-\begin{comment}
-\paa{notes}
-
-  in P2, event relations are implemented as queues, and as such enforced a discipline that 1.) the queue must be the driving or 'delta' relation in any join plan, and 2.) zero or or one tuple are dequeued from the event at a given fixpoint.  in JOL, this was relaxed and events, while true for only one fixpoint, are dequeued in batches, causing bugs in many P2 ports that relied on (2).  the semantic ambiguities persisted, however.
-
-finally, asynchrony.  in the global program we imagine that there is a rule:
-
-\begin{Dedalus}
-heartbeat(@Host, Peer, Time) \(\leftarrow\) master(@Peer, Host), timer(@Peer);
-\end{Dedalus}
-
-but clearly we cannot read this as logical implication or conclude anything wrt the timing of its arrival at Host.
-\end{comment}
-
