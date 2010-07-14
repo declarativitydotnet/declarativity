@@ -1,14 +1,48 @@
 \section{Challenge: Correct, Distributed Shopping Carts}
 
-Consider a simple distributed application that provides a fault-tolerant
-``shopping cart'' service for commercial websites.  While it is common in
-practice to implement such applications above a key-value store tier that
-provides a read/write interface to objects, such a separation of tiers limits
-the ability of the storage substrate to exploit application-level semantics.
-Hence a design decision needs to be made: should the application provide its
-own storage or use a store?  \wrm{okay i'm lost here.} Our motivating example
-will do the former, though we will explore the latter option in more detail in
-section~\ref{sec:casestudy}.
+Consider a simple distributed application that provides a scalable,
+fault-tolerant ``shopping cart'' service for commercial websites.
+Such systems are typically built atop a storage tier that provides a
+read/write interfaces to objects.  In order to provide scalabilty and
+fault-tolerance, such storage tiers provide weaker semantics than
+those provided by local storage systems.  Specifically, for fault
+tolerance, such systems store multiple (and therefore sometimes
+inconsistent) copies of each data item.  Also, in order to scale, such
+systems avoid computing a total order of the updates to the entire
+database.
+
+Two sets of semantics that are of particular interest are {\em
+  per-tuple ordering}\rcs{better name?}, in which updates to a given piece of data are
+always applied in the same order, and {\em eventual consistency},
+which guarantees that each copy of a piece of data will agree once the
+system quiesces.
+
+The operations performed by our shopping cart are special in two ways.
+First, it is possible to specify them in a way that is {\em
+  commutative}; if each replica can guarantee that each operation
+against the cart is applied exactly once (but in some arbitrary order)
+the system will provide eventual consistency.  Second, because
+shopping carts are updated by a single client at a time, the client
+can impose a total ordering of the updates to its cart.  Again, once
+each update reaches each replica (and is applied in the correct
+order), the system will be consistent.
+
+Our motivating example will order the updates at the client; ordering
+updates at the server is more complex, though our group has
+implemented the necessary machinery atop distributed logic languages
+in the past~\cite{bfs-paxos}.  For completeness, Section~\ref{sec:casestudy}
+sketches an approach based upon commutative writes.
+
+\rcs{wrm and I were confused by the old text. does the new text above make sense?}
+
+%While it is common in
+%practice to implement such applications above a key-value store tier that
+%provides a read/write interface to objects, such a separation of tiers limits
+%the ability of the storage substrate to exploit application-level semantics.
+%Hence a design decision needs to be made: should the application provide its
+%own storage or use a store?  \wrm{okay i'm lost here.} Our motivating example
+%will do the former, though we will explore the latter option in more detail in
+%section~\ref{sec:casestudy}.
 
 Our shopping cart application will consist of a client and a (distributed)
 server component.  The client converts user input into messages sent to
