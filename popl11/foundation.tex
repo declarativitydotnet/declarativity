@@ -105,7 +105,7 @@ the Datalog program below, which represents a game where player \dedalus{X}
 wins if has a move, and player \dedalus{Y} does not have a move:
 
 \begin{Dedalus}
-win(X) :- move(X,Y), \lnot win(Y);
+win(X) :- move(X,Y), \(\lnot\) win(Y);
 \end{Dedalus}
 
 Consider the following EDB:
@@ -262,6 +262,7 @@ predicate, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we
 facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
 \noindent{\bf Unification on Time: }
+\wrm{locality in time intuition}
 %$p(C_{1},C_{2},[...],C_{n}, i) |  i \in \mathbb{Z} \cup \top$ The balance of
 %our restrictions concern the well-formedness of \dedalus rules.
 %\begin{definition}
