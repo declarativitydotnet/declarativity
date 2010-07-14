@@ -26,20 +26,21 @@ unified} on the arguments that contain the duplicated variable.  The single
 atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and
 the set of atoms to the right is the rule's {\em body}.  We say that the rule's
 head predicate {\em depends on} each of its body predicates.  If a predicate
-\dedalus{p} depends on a predicate \dedalus{q}, we write \dedalus{p} $\succ$
-\dedalus{q}.  A predicate \dedalus{p} transitively depends on apredicate
-\dedalus{q} -- written \dedalus{p} $\succ^*$ \dedalus{q} -- if \dedalus{p}
-$\succ$ \dedalus{q}, or if \dedalus{p} $\succ$ \dedalus{r} $\succ^*$
-\dedalus{q}.  If \dedalus{p} $\succ^*$ \dedalus{p}, then we say that \dedalus{p}
-is {\em recursive} or {\em recursively defined}.
+(resp. fact) \dedalus{p} depends on a predicate (resp. fact) \dedalus{q}, we
+write \dedalus{p} $\succ$ \dedalus{q}.  A predicate (resp. fact) \dedalus{p}
+transitively depends on apredicate (resp. fact) \dedalus{q} -- written
+\dedalus{p} $\succ^*$ \dedalus{q} -- if \dedalus{p} $\succ$ \dedalus{q}, or if
+\dedalus{p} $\succ$ \dedalus{r} $\succ^*$ \dedalus{q}.  If \dedalus{p}
+$\succ^*$ \dedalus{p}, then we say that \dedalus{p} is {\em recursive} or {\em
+cyclic}.
 
 In addition to atoms, a rule's body may also contain the {\em order
-constraints}: $=, \geq, >, \leq, <, \neq$.  Order constraints are binary
-operators that may be applied either to constants, or variables used in the
+constraints}: $=, \geq, >, \leq, <, \neq$.  An order constraint is a binary
+operator that may be applied either to constants, or variables used in the
 rule's body atoms.
 
 An assignment of constants to all arguments in a predicate is known as a {\em
-fact} -- also called a {\em tuple} or {\em row} -- and we often speak of ``the
+fact} -- also called a {\em tuple} or {\em row} -- and we often refer to ``the
 facts in a predicate,'' meaning the satisfying assignment of constants to the
 predicate's arguments.  The logical meaning of a Datalog rule is that for each
 satisfying assignment of constants to variables on the right-hand side, there
@@ -53,17 +54,15 @@ universe of constants} of the instance.
 
 \subsection{Aggregation}
 
-Datalog is commonly extended with {\em aggregate functions}: special functions
-that take sets as input and compute a scalar output.
-We are interested in both {\em exemplary} aggregates---which return a value
-from the input set---such as \dedalus{max} and \dedalus{min}, and {\em summary}
-aggregates like \dedalus{count}.
-
-Aggregation may only be used in the head of a rule.  A head atom
-\dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an aggregate function symbol,
-indicates that predicate \dedalus{p} contains one row for each satisfying
-assignment of $\bar{A}$.  This row contains the value of the aggregate function
-on the set of assignments to $B$ for the given value of $\bar{A}$.
+{\em Aggregates} are functions from sets to constants.
+We are interested in both {\em exemplary} aggregates -- which return a value
+from the input set -- such as \dedalus{max} and \dedalus{min}, and {\em summary}
+aggregates like \dedalus{count}.  An aggregate may only be applied in the head
+of a rule; a head atom \dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an 
+aggregate, indicates that predicate \dedalus{p} contains one row for each 
+satisfying assignment of $\bar{A}$.  This row contains the value of the 
+aggregate function over the set of assignments to $B$ for the given value of 
+$\bar{A}$.
 
 \subsection{Non-Monotonicity}
 
@@ -83,43 +82,56 @@ wins if has a move, and player \dedalus{Y} does not have a move:
 win(X) :- move(X,Y), \(\lnot\) win(Y);
 \end{Dedalus}
 
-Consider the following EDB:
+\noindent{}Consider the following EDB for the above program:
 
 \begin{Dedalus}
 move(1,1)
 \end{Dedalus}
 
-This instance has no minimal model, because \dedalus{move(1,1)} implies
-\dedalus{win(1)}, but \dedalus{win(1)} depends on its own negation.  However,
-there are a few easy things we could do to make the above program
-contradiction-free.  First, we could require that $X < Y$.  Or, we could
-require that \dedalus{move} is acyclic.  We desire such a conservative
-condition, because detecting whether a program is contradiction-free for all
-EDBs is undecidable~\cite{papa-yanna}.  The logic programming community has
-devised a number of increasingly less-conservative conditions called {\em
-stratification conditions}~\cite{local-strat, ross-syntactic, modular,
-weak-strat}, which ensure acyclicity of derivations through negation, but
-exclude some contradiction-free programs.  If a program meets a particular
-stratification condition, we say the program is {\em stratified}.  One
-condition is known as {\em syntactic stratification}, which excludes all
-programs where a predicate \dedalus{p} transitively depends on
-\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
-programs, because such a syntactic cycle may in practice never lead to a
-contradiction.  The semantics presented in~\cite{wellfounded} define a unique
-model for any stratified program.
+This instance has no minimal model, because it has a contradiction:
+\dedalus{move(1,1)} and \dedalus{\(\lnot\) win(1)} implies \dedalus{win(1)},
+and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
+we required \dedalus{p} $\not\succ$ \dedalus{\(\lnot\) p} for all predicates
+\dedalus{p}, a contradiction could never arise in any instance of any program
+-- this is known as {\em syntactic stratification}.  It is known that detecting
+whether a program is contradiction-free for all EDBs is
+undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
+of other {\em stratification conditions}~\cite{local-strat, ross-syntactic,
+modular, weak-strat} assure acyclicity of facts through negation -- but exclude
+some contradiction-free programs -- in an increasingly less conservative
+fashion. For example, adding the condition \dedalus{X < Y} to the above rule
+would rule out contradictions.  Less conservatively, adding a condition to
+ensure \dedalus{move} is acyclic would also exclude contradictions.  If a
+program satisfies a particular stratification condition, then we call the
+program {\em stratified}.
 
-Negation and aggregation are set-wise operations -- they require {\em universal
-quantification} over the set that they operate.  It is well known that universal
-and existential quantification do not commute, so the meaning of the program
-depends on the order in which rules are evaluated.
+%The logic programming community has
+%devised a number of increasingly less-conservative conditions called {\em
+%stratification conditions}~\cite{local-strat, ross-syntactic, modular,
+%weak-strat}, which ensure acyclicity of derivations through negation, but
+%exclude some contradiction-free programs.  If a program meets a particular
+%stratification condition, we say the program is {\em stratified}.  One
+%condition is known as {\em syntactic stratification}, which excludes all
+%programs where a predicate \dedalus{p} transitively depends on
+%\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
+%programs, because such a syntactic cycle may in practice never lead to a
+%contradiction.
+%The semantics presented in~\cite{wellfounded} define a unique
+%model for any stratified program.
+Negation -- non-existence in a set -- and aggregates -- functions defined over
+sets -- require the input set to be fully determined in order to produce a
+correct answer.  In other words, they require {\em universal quantification}
+over the set that they operate.  Stratification conditions order application of
+rules to ensure that this universal quantification is always applied after the
+input set is fully determined.  This ordering induces a unique model, under
+the semantics presented in~\cite{wellfounded}.
 
 \subsection{Safety}
 
-Finiteness of the model for a Datalog program -- called {\em safety} -- is
-guaranteed by ensuring finiteness of the universe of constants.  Commonly, this
-involves restricting the use of constructs that can expand the universe of
-constants such as non-exemplary aggregates or functions.
-
+To ensure that Datalog programs are always effectively computable, the universe
+of constants -- and thus the model -- is restricted to be finite.  This is
+achieved by making the program {\em safe} -- restricting the use of constructs
+that can expand the universe of constructs, such as summary aggregates.
 
 \section{\lang}
 
