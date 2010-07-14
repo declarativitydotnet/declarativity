@@ -5,9 +5,10 @@ Consider a simple distributed application that provides a fault-tolerant
 practice to implement such applications above a key-value store tier that
 provides a read/write interface to objects, such a separation of tiers limits
 the ability of the storage substrate to exploit application-level semantics.
-Hence a design decision needs to be made: should the application provide 
-its own storage or use a store?  Our motivating example will do the former,
-though we will explore the latter option in more detail in section~\ref{sec:casestudy}.
+Hence a design decision needs to be made: should the application provide its
+own storage or use a store?  \wrm{okay i'm lost here.} Our motivating example
+will do the former, though we will explore the latter option in more detail in
+section~\ref{sec:casestudy}.
 
 Our shopping cart application will consist of a client and a (distributed)
 server component.  The client converts user input into messages sent to
@@ -97,7 +98,8 @@ Note that the distributed system is expressed as a single, global program.
 Because messages are themselves deductions, there are opportunities to 
 analyze server and client code together.  We can analyze the program to 
 show that cart\_action, a set that is persitently and immutably
-stored, is insensitive to the arrival order of messages. Moreover, the code 
+stored, is insensitive to the arrival order of messages \wrm{i thought it's an
+associativity thing, not a commutativity thing}. Moreover, the code 
 itself is succinct and straightforward. 
 
 When we consider the case of multiple messages with the same values for
