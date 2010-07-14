@@ -1,4 +1,5 @@
-\section{Challenge: Correct, Distributed Shopping Carts}
+\section{Consistent, Distributed Shopping Carts}
+\label{sec:motivation}
 
 Consider a simple distributed application that provides a scalable,
 fault-tolerant ``shopping cart'' service for commercial websites.
@@ -189,8 +190,10 @@ interpretation of the implication statement.  Equally problematic is the second 
 an implication which induces communication, for it is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true whenever the antecedent is
 true.  
 
-In both cases, what is missing is a notion of time.  The incremented sequence value should
-be ``true'' at the {\em next} visible state of the system, and the deduced {\em cart\_action}
+In both cases, what is missing is a notion of time.  When {\em action} is ``true,'',
+the incremented sequence value should
+hold at the {\em next} visible state of the system (and if action is false, its current
+value should be retained at the next state), and the deduced {\em cart\_action}
 tuple should (ignoring message loss) be true at {\em some} unspecified future time.  In \lang,
 the three different kinds of semantics are captured by annotations (or their absence) 
 associated with rule conclusions.  The second two rules of the above program would be
