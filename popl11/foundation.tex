@@ -311,55 +311,49 @@ the change in time suffix.
 
 
 \subsection{Distribution, Asynchrony and Choice}
-\jmh{I don't think we need to require all agents execute the same rules.}
+
 \lang adopts the {\em horizontal partitioning} convention introduced by Loo et
-al.~\cite{Loo:2005}, where all agents execute the same rules but predicates are
-partitioned based on the value of the {\em location specifier}: a column of
-every relation that stores an agent's identifier.
-\jmh{let's clarify that it's a schema-level decision, not a rule-level decision (despite the redundant Overlog-style syntax).}
- In \lang, we require that all
-atoms in the body of a single rule use the same variable name in the location
-specifier. If the location specifier of a rule's head is bound to the body's
-location specifier, then we call the rule {\em local}.  Otherwise, we call the
-rule a {\em communication rule}.  Note that by restricting rule bodies to a
-single agent, the only communication modeled in \lang occurs via communication
-rules.  
-\paa{maybe we can say something about, "enforcing locality in space just as we 
-enforced locality in time."  locality in space corresponds to a "scope of atomicity",
-as neil pointed out in his talk}
-Derivation of a fact with another agent's identifier implies sending
-the fact to the agent.  Syntactically, location specifiers are prefixed with a
-\dedalus{\#} symbol in Dedalus.
+al.~\cite{Loo:2005}, where each predicate is partitioned on the value of its
+{\em location specifier}: a column of the predicate that stores an agent's
+identifier.  In \lang, we require that all atoms in the body of a single rule
+use the same variable name in the location specifier, enforcing locality in
+space, just as \lang forces locality in time.  If the location specifier of a
+rule's head is bound to the body's location specifier, then we call the rule
+{\em local}.  Otherwise, we call the rule a {\em communication rule}.  Note
+that by restricting rule bodies to a single agent, the only communication
+modeled in \lang occurs via communication rules.  Derivation of a fact with
+another agent's identifier implies sending the fact to the agent.
+Syntactically, location specifiers are prefixed with a \dedalus{\#} symbol in
+Dedalus.
 
 We use choice to model the inherent temporal nondeterminism associated with
 communication in {\em asynchronous} distributed systems.  For example, messages
 may be arbitrarily delayed, and a receiver cannot infer that a message will
 never be sent based solely on his non-receipt of the message (it may arrive
-arbitrarily far in the future).
-To this end, we require that any communication rules be \dedalus{@async} rules.
+arbitrarily far in the future).  To this end, we require that any communication
+rules be \dedalus{async} rules.  
 
-%We call the set of facts, 
-%\paa{ground atoms?}
-%including their timestamps, derived by communication
-%rules during a particular execution a {\em trace} of the program.
+\subsection{Temporal Stratification}
 
-\jmh{the following is floating free right now}
+We desire a stratification condition for \lang that corresponds to our
+intuitive interpretation of time.  Note that contradictions in a \lang program
+can always be avoided by rewriting the program to spread out the contradictory
+values over time.  \wrm{this is a pretty poor motivation, someone please help}
+
+If predicate \dedalus{p} depends on predicate \dedalus{q} through only
+inductive rules, then we write $\dedalus{p} \gets \dedalus{q}$.  $\dedalus{p}
+\gets^+ \dedalus{q}$ if $\dedalus{p} \gets \dedalus{q}$ or $\dedalus{p} \gets
+\dedalus{r} \gets^+ \dedalus{q}$.
+
 \begin{definition}
 %
-For a \lang instance and a particular series of non-deterministic choices, the
-set of all facts in \dedalus{async} relations, including their timestamps,
-comprise a trace of the instance.
+A \lang program is temporally stratified if for all predicates \dedalus{p}:
+$\dedalus{p} \succ^+ \nega \dedalus{p} \implies \dedalus{p} \gets^+ \nega
+\dedalus{p}$.
 %
 \end{definition}
 
-%Each trace is associated with exactly one model of the program.
 
-\subsection{Temporal Stratification}
-\jmh{this section needs a bit of intro}
-We avoid contradictions in \lang by introducing a stratification condition called {\em
-temporal stratification}, defined in terms of a program's {\em predicate
-dependency graph} (PDG).  The PDG contains a node $N_i$ for each distinct
-predicate $P_i$ used in the program, and an edge $(N_i, N_j)$ if $P_i \succ P_j$.
 The edge is annotated with a
 $\lnot$ if $P_i \succ \lnot P_j$.  The
 edge is annotated with a $+$ if all rules with head $P_i$ and $P_j$ in their
@@ -370,143 +364,6 @@ edge.
 The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at
 some later time.  
 \paa{for more details and a proof see the TR}
-%Note that while it is possible for an \dedalus{@async} rule to
-%support a fact at an earlier time, this behavior cannot occur in real distributed
-%systems. 
-
-%The careful reader will note that so far, we have not
-%restricted asynchronous rules to prevent {\em time travel}---a condition where
-%an asynchronous rule gives rise to derivations that precede their antecedents
-%in time.  While time travel is acceptable for programs where it cannot ever
-%cause a contradiction (such as programs without negation), it is undesirable in
-%general, as a fact may derive its own negation (intuitively, a ``temporal
-%paradox'').  Thus, an additional condition is required to exclude such
-%contradictions.
-%\nrc{Not sure the remainder of this para is useful: yes, real systems
-%  can't allow a temporal paradox. Seems like it
-%  goes without saying.} \rcs{also, it sounds like we need to actually run the lamport clock at runtime in order to avoid temporal paradoxes in execution traces...  It should be more clear that these are model theoretic issues.  I tried to clean things up a bit in the lamport clock section, and tie these ideas to serializability below.  Hopefully serializability will ground the discussion without resorting to relativistic arguments about causality and simultanaity...}
-%However, we note that in a practical asynchronous distributed system, nodes are
-%assumed to have their own clocks, which may run at any arbitrary speed
-%\wrm{move this defnition of async distr system earlier}.  Nodes assign a
-%timestamp to an incoming fact that is greater than the timestamp of any
-%existing fact.  Note that this condition excludes time travel in any possible
-%execution.
-
-%\begin{example}
-%\label{ex:stratsafe}
-%A simple temporally stratifiable and temporally safe \slang instance that is
-%neither syntactically stratifiable nor syntactically\rcs{?} safe.
-
-%\begin{Dedalus}
-%persist[p, 2]  
-  
-%r1
-%p(A, B) \(\leftarrow\)
-%  insert\_p\_req(A, B);
-
-%r2  
-%delete p(A, B) \(\leftarrow\)
-%  p(A, B),
-%  del\_p\_req(A);
-
-%insert\_p(1, 2)@1;
-%\end{Dedalus}
-%\end{example}
-
-%In the \slang program in Example~\ref{ex:stratsafe}, \emph{insert\_p} and
-%\emph{delete\_p} are captured in EDB relations.  This reasonable program is
-%unstratifiable because $p \succ p\nega \land p\nega \succ p$.  But because the
-%successor relation is constrained such that $\forall A,B, successor(A, B)
-%\rightarrow B > A$, any such program is modularly stratified on
-%\emph{successor}.  Therefore, we have $p_{n} \not\succ^* p\_neg_{n} \not\succ^*
-%p_{n+1}$; informally, earlier values do not depend on later values.
-%\paa{shouldn't it be $p_{n} \succ^* p\_neg_{n} \not\succ^* p_{n+1}$ ?}
-
-%Given this discussion, in practice we are interested in three asynchronous
-%scenarios: (a) monotonic programs (even with non-monotonicity in time), (b)
-%non-monotonic programs whose semantics guarantee monotonicity of time suffixes
-%and (c) non-monotonic programs where we have domain knowledge guaranteeing
-%monotonicity of time suffixes.  Each represents practical scenarios of
-%interest.
-
-%The first category captures the spirit of many simple distributed
-%implementations that are built atop unreliable asynchronous substrates.  For
-%example, in some Internet publishing applications (weblogs, online fora), it
-%is possible due to caching or failure that a ``thread'' of discussion arrives
-%out of order, with responses appearing before the comments they reference.  In
-%many cases a monotonic ``bag semantics'' for the comment program is considered
-%a reasonable interface for readers, and the ability to tolerate temporal
-%anomalies simplifies the challenge of scaling a system through distribution.
-
-%The second scenario is achieved in \slang via the use of \dedalus{successor}
-%for the time suffix. The asynchronous rules of \lang require additional
-%program logic to guarantee monotonic increases in time for predicates with
-%dependencies.  In the literature of distributed computing, this is known as a
-%{\em causal ordering} and is enforced by distributed clock protocols.  We
-%review one classic protocol in the \lang context in Section~\ref{sec:lamport};
-%including this protocol into \lang programs ensures temporal monotonicity.
-
-%Finally, certain computational substrates guarantee monotonicity in both
-%timestamps and message ordering---for example, some multiprocessor cache
-%coherency protocols achieve this.  When temporal monotonicity is given, the
-%proofs of temporal stratification and Algorithm~\ref{alg:tsn} both apply.
-%\wrm{end paste}
-
-%\dedalus{@async} is clearly more liberal than our operational semantics
-%defined above.  One of our goals is formal verification of distributed
-%systems.  Thus, for the particular use-case of distributed execution with the
-%above operational semantics, we need to discover a logical condition that
-%results in a set of models that exhibit the same set of behaviors.  It is
-%necessary and sufficient for each fact to carry an entangled timestamp from
-%each node.  Timestamps must be propagated through derivations \wrm{explain}.
-%When a node receives a fact, it will need to delay processing of the fact
-%until its current time is greater than its entangled timestamp.  Note that
-%this scheme employs vector clocks.
-
-%Note that the use of Lamport clocks enforces additional constraints by ruling
-%out more possible interleavings of events than the operational semantics for
-%timestamp assignment. \wrm{check if this is true} \paa{we'll put the lamport
-%clock discussion here, then?}
-
-%\subsection{Temporal Safety}
-
-%\wrm{begin paste} In the previous section we demonstrated that \slang can
-%capture intuitive notions of persistence and mutability of state via a
-%stylized use of Datalog.  However, the alert reader will note that even very
-%simple \slang programs make for unusual Datalog.
-%%: among other concerns, 
-%To begin with, Persistence rules are {\em unsafe}, meaning they produce
-%derivations for an infinite number of values of the time suffix.  Traditional
-%Datalog interpreters, which work against static databases, would attempt to
-%enumerate these values, making this approach impractical.  Equally worrisome
-%is the fact that many common patterns for state update via mutable persistence
-%entail unstratifiable constructs: predicates that syntactically depend on
-%their own (possibly transitive) negation.  
-
-%However, in the context of distributed systems and networks, the need for
-%non-terminating ``services'' or ``protocols'' that continually update their
-%state is very common.  In this section we show that expressing distributed
-%systems properties such as persistence and mutable state in logic does not
-%require dispensing with familiar notions of safety and stratification: we take
-%traditional notions of acceptable Datalog programs, and extend them in a way
-%that admits sensible non-terminating programs.
-
-%\subsection{Temporal Safety} Next we consider the issue of infinite results
-%raised in the introduction to this section.  In traditional Datalog, this is a
-%well-studied concern.  A Datalog program is considered {\em safe} if it has a
-%finite minimal model, and hence has a finite execution.  Safety in Datalog is
-%traditionally ensured through the following syntactic constraints:
-
-%\begin{enumerate}
-%%
-%\item No functions are allowed.
-%
-%\item Variables are \emph{range restricted}: all attributes of the head goal
-%appear in a non-negated body subgoal.
-%
-%\item The EDB is finite.
-%
-%\end{enumerate} \wrm{end paste}
 
 \subsection{Temporal Safety}
 
@@ -531,6 +388,15 @@ conservative syntactic conditions presented in~\cite{dedalus-techr} that
 guarantee the existence of a finite model.
 
 \rcs{wrm agreed the following paragraph needs to be moved/rewritten, but I forget where.  Note that the following only holds for analyses of confluence.  We might want to check other properties, such as invariants over a trace that we collect and process at runtime.  Such analyses are probably more interested in network events than the ultimate model.  Other analyses probably want to check other things...}
+
+\begin{definition}
+%
+For a \lang instance and a particular series of non-deterministic choices, the
+set of all facts implied by \dedalus{async} rules, including their timestamps,
+comprise a trace of the instance.
+%
+\end{definition}
+
 
 \wrm{tie in this def better}
 \begin{definition}
@@ -559,3 +425,7 @@ timestamps).
 \paa{sort of.  but those ephemeral tuples provide ground for future inductive deductions, no?}
 \paa{also (unrelated to previous comment) perhaps make reference to the correspondence with eventual consistency
 (if it has been introduced yet}
+
+Since non-determinism (\dedalus{choice}) is restrited to \dedalus{async} rules, we ca
+
+
