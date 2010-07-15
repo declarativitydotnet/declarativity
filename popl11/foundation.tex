@@ -29,9 +29,9 @@ head predicate {\em depends on} each of its body predicates.  If a predicate
 (resp. fact) \dedalus{p} depends on a predicate (resp. fact) \dedalus{q}, we
 write \dedalus{p} $\succ$ \dedalus{q}.  A predicate (resp. fact) \dedalus{p}
 transitively depends on apredicate (resp. fact) \dedalus{q} -- written
-\dedalus{p} $\succ^*$ \dedalus{q} -- if \dedalus{p} $\succ$ \dedalus{q}, or if
-\dedalus{p} $\succ$ \dedalus{r} $\succ^*$ \dedalus{q}.  If \dedalus{p}
-$\succ^*$ \dedalus{p}, then we say that \dedalus{p} is {\em recursive} or {\em
+\dedalus{p} $\succ^+$ \dedalus{q} -- if \dedalus{p} $\succ$ \dedalus{q}, or if
+\dedalus{p} $\succ$ \dedalus{r} $\succ^+$ \dedalus{q}.  If \dedalus{p}
+$\succ^+$ \dedalus{p}, then we say that \dedalus{p} is {\em recursive} or {\em
 cyclic}.
 
 In addition to atoms, a rule's body may also contain the {\em order
@@ -67,7 +67,8 @@ $\bar{A}$.
 For example, implementing a checkout functionality in the shopping cart example
 will require carrying out some aggregations over the {\em cart\_action} table.
 One such aggregation involves counting the number of additions and deletions 
-of each item:
+of each item.  The rule below will group by the first five attributes, and associate the
+count of unique ReqId values with the last attribute:
 
 \begin{Dedalus}
 status(Serv, Cli, Session, Item, Type, count<ReqId>) :- 
@@ -79,7 +80,9 @@ status(Serv, Cli, Session, Item, Type, count<ReqId>) :-
 A Datalog instance without negation or aggregation always has a unique {\em
 minimal model}: the minimal set of facts in intensional predicates implied by
 the EDB given the program, or the intensional data base ({\em
-IDB})~\cite{ullmanbook}.  We call programs that always have a unique minimal
+IDB})~\cite{ullmanbook}.  
+\paa{the model is EDB $\cup$ IDB, right?}
+We call programs that always have a unique minimal
 model {\em monotonic} programs.  Adding negation or aggregation to Datalog
 programs increases expressivity\wrm{cite}, but removes the guarantee of a
 unique minimal model -- we call these {\em non-monotonic} programs.  When
@@ -108,7 +111,9 @@ whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
 of other {\em stratification conditions}~\cite{local-strat, ross-syntactic,
 modular, weak-strat} assure acyclicity of facts through negation -- but exclude
-some contradiction-free programs -- in an increasingly less conservative
+some contradiction-free programs -- in an increasingly less 
+\paa{um, decreasingly?}
+conservative
 fashion. For example, adding the condition \dedalus{X < Y} to the above rule
 would rule out contradictions.  Less conservatively, adding a condition to
 ensure \dedalus{move} is acyclic would also exclude contradictions.  If a
@@ -128,13 +133,15 @@ program {\em stratified}.
 %contradiction.
 %The semantics presented in~\cite{wellfounded} define a unique
 %model for any stratified program.
-Negation -- non-existence in a set -- and aggregates -- functions defined over
-sets -- require the input set to be fully determined in order to produce a
+Negation (non-existence in a set) and aggregates (functions defined over
+sets) require the input set to be fully determined in order to produce a
 correct answer.  In other words, they require {\em universal quantification}
 over the set that they operate.  Stratification conditions order application of
 rules to ensure that this universal quantification is always applied after the
 input set is fully determined.  This ordering induces a unique model, under
 the semantics presented in~\cite{wellfounded}.
+
+\paa{good!}
 
 \subsection{Safety}
 
@@ -142,6 +149,8 @@ To ensure that Datalog programs are always effectively computable, the universe
 of constants -- and thus the model -- is restricted to be finite.  This is
 achieved by making the program {\em safe} -- restricting the use of constructs
 that can expand the universe of constructs, such as summary aggregates.
+\paa{I want badly to add here ", infinite relations, or arbitrary scalar functions", 
+but assume there is a reason why you didn't?}
 
 \section{\lang}
 
@@ -150,10 +159,13 @@ to model the inherent non-determinism of network delay in asynchronous
 distributed systems.  Non-determinism in Datalog was formalized by Sacc\`{a}
 and Zaniolo~\cite{sacca-zaniolo} in their \dedalus{choice} construct.  For
 example, \dedalus{p(X,Y) :- q(X,Y), choice((X), (Y));} expresses that for each
-value that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on
+value that variable \dedalus{X} assumes, variable \dedalus{Y} may only take on
 a single {\em non-deterministically chosen} value.  See~\cite{sacca-zaniolo}
 for the details on how \dedalus{choice} is expanded into Datalog rules that
 employ cyclic negation.
+
+\paa{the above para is jarringly out of place here.  what was the rationale for
+moving it from the previous section?}
 
 \lang is a subset of Datalog, with \dedalus{choice}, an infinite
 \dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
@@ -187,7 +199,9 @@ facts as {\em events}.''  We need to talk about async before talking about event
 
 In a well-formed \lang rule, every body predicate's time suffix contains the
 same variable symbol.  This corresponds to the intuition that rules must
-operate in a given time, and cannot operate across time.  For ease of exposition, we henceforth assume that this
+operate in a given time, and cannot operate across time.  
+\paa{``operate in a given time'' is awkward, but not sure what to suggest}
+For ease of exposition, we henceforth assume that this
 variable symbol is named $\DT$.  A well-formed \lang rule must also bind the
 head predicate's time suffix to a variable symbol.  We will assume the name of
 this variable symbol is $\DS$.  $\DS$ may be constrained in exactly one of
@@ -208,7 +222,8 @@ including $\DT$.
 %
 \end{enumerate}
 
-We will study the utility of these three types of rules later: systems in
+We will study the utility of these three types of rules later, but briefly observe here
+that systems in
 general only require recourse to ordering primitives for mutable state and communication.
 Inductive and asynchronous rules model these cases respectively.
 
@@ -252,6 +267,7 @@ e(1,2)@3;
 for the above}
 
 \noindent{\bf Positive and Negative Predicates: }
+\paa{joe thinks we could probably footnote a digest of all or most of this section}
 For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
 $P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same arity
 as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:\rcs{this leads to akwardness later.  perhaps we should define an \dedalus{r} and an \dedalus{r edb}}
@@ -290,7 +306,11 @@ specifier. If the location specifier of a rule's head is bound to the body's
 location specifier, then we call the rule {\em local}.  Otherwise, we call the
 rule a {\em communication rule}.  Note that by restricting rule bodies to a
 single agent, the only communication modeled in \lang occurs via communication
-rules.  Derivation of a fact with another agent's identifier implies sending
+rules.  
+\paa{maybe we can say something about, "enforcing locality in space just as we 
+enforced locality in time."  locality in space corresponds to a "scope of atomicity",
+as neil pointed out in his talk}
+Derivation of a fact with another agent's identifier implies sending
 the fact to the agent.  Syntactically, location specifiers are prefixed with a
 \dedalus{\#} symbol in Dedalus.
 
@@ -301,7 +321,9 @@ never be sent based solely on his non-receipt of the message (it may arrive
 arbitrarily far in the future).
 To this end, we require that any communication rules be \dedalus{@async} rules.
 
-We call the set of facts, including their timestamps, derived by communication
+We call the set of facts, 
+\paa{ground atoms?}
+including their timestamps, derived by communication
 rules during a particular execution a {\em trace} of the program.
 %Each trace is associated with exactly one model of the program.
 
@@ -320,6 +342,7 @@ edge.
 
 The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at
 some later time.  
+\paa{for more details and a proof see the TR}
 %Note that while it is possible for an \dedalus{@async} rule to
 %support a fact at an earlier time, this behavior cannot occur in real distributed
 %systems. 
@@ -503,5 +526,6 @@ computations, which intuitively should not be considered as part of the output
 of the program.  We are only interested in the program's {\em ultimate
   model}---the eventual contents of the simply persisted relations (ignoring
 timestamps).
-\paa{perhaps make reference to the correspondence with eventual consistency
+\paa{sort of.  but those ephemeral tuples provide ground for future inductive deductions, no?}
+\paa{also (unrelated to previous comment) perhaps make reference to the correspondence with eventual consistency
 (if it has been introduced yet}
