@@ -3,30 +3,32 @@
 
 Consider a simple distributed application that provides a fault-tolerant
 ``shopping cart'' service for an e-commerce website. In this design, a client
-sends messages describing shopping cart updates to a collection of server
-processes. To tolerate process failures, shopping cart state will be replicated
+sends messages describing shopping cart updates to a server.
+To tolerate process failures, shopping cart state will be replicated
 at multiple servers.
 
 Several strategies are possible for performing updates of replicated state. A
 conservative design might employ a consensus protocol (e.g., Paxos\cite{part-time})
-to ensure that each update is successfully received by a quorum of servers. This
-ensures that the state of the server processes remains consistent.
+to ensure that each update is successfully received by a quorum of servers \wrm{before the update can be viewed?}. This
+ensures that the state of the servers remains consistent \wrm{don't know what this means.  can we define consistency?}.
 
 An alternative approach trades some degree of consistency for reduced update
-latency and improved availability. In an \emph{eventually consistent}
+latency and improved availability \wrm{how is availability affected?  maybe i'm misunderstanding what availability is.  should have a definition}. In an \emph{eventually consistent}
 system~\cite{quicksand,beyond}, the state of any two replicas may be
-inconsistent at any given time; however, after the system has quiesced and all
+inconsistent at any given time \wrm{there's no global clock in an async distr system}; however, after the system has quiesced and all
 pending messages have been delivered, all replicas will have the same final
-state. This weaker consistency model reduces the need for coordination among the
-server processes~\cite{dynamo}.
+state \wrm{eventually}. This weaker consistency model reduces the need for coordination among the server processes~\cite{dynamo}.
 
+\wrm{I don't understand why this paragraph begins the way it does.  For both
+cases you described abve, we'd like to ensure that order doesn't matter.  It seems to me like the
+correctness criterion of confluence is independent of any design decisions.}
 To analyze the correctness of a protocol for achieving eventual consistency, we
 would like to prove that for any possible sequence of client input, all
 replicas will eventually reach the same state, despite the possibility of
 message reordering and arbitrary delay.
 
-We begin by considering an ``imperative'' implementation of this design. Each
-server process accepts a message, updates its local shopping cart state, and
+We begin by considering an ``imperative'' \wrm{maybe ``serial'' would be a better term here} implementation of this design. Each
+server accepts a message, updates its local shopping cart state, and
 then propagates the message to the other replicas:
 
 %While it is common in
@@ -84,16 +86,17 @@ while true do
   done
 done
 \end{Dedalus}
+\wrm{is initialize cart\_state the name of a procedure, or a program statement?}
 
 Several difficulties present themselves when we attempt to reason about whether
-this implementation is insensitive to message reordering and simultaneous receipt.
+this implementation is insensitive to message reordering and simultaneous receipt of messages. \wrm{we need to mention earlier that we're concerned about this}
 First, it is not obvious from a static analysis of the code that the client and server are
-part of a single distributed system, so we must analyze each of the agents individually.
+part of a single distributed system \wrm{not seeing any client code?}, so we must analyze each of the agents individually \wrm{well, at least we need to analyze the client separately from the server}.
 If we assume conservatively that repeated calls to {\em receive message} will return messages in
 arbitrary order, verifying the first property (essentially, order-independence of messages)
 is tantamount to showing that the {\em union} operation is
 order-insensitive, which could in principle be inferred from annotations associated
-with the operator.
+with the operator \wrm{domain knowledge about the operator?}.
 In this imperative approach, we happen to also know that the semantics of {\em receive message}
 hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
 event of simultaneous receipt) is returned by each call.
@@ -104,13 +107,14 @@ In logic, we may describe the same program (abstracting away distribution)
 as a pair of implications, describing how clients send {\em cart\_action}
 messages to a server and how servers multicast such tuples to other replicas:
 
-$(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
-\land best\_replica(Client, Session, Server) ) \Rightarrow cart\_action(Server, Client, Session, Item, Type)) $
+%comment out these ``integrity constraints'' and replace with deductive rules
+%$(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
+%\land best\_replica(Client, Session, Server) ) \Rightarrow cart\_action(Server, Client, Session, Item, Type)) $
+%$(\forall Remote, C, S, I, T, Local . (cart\_action(Local, C, S, I, T) \land
+%replicas(Local, C, S, Remote) \Rightarrow cart\_action(Remote, C, S, I, T))
+%$
 
-
-$(\forall Remote, C, S, I, T, Local . (cart\_action(Local, C, S, I, T) \land
-replicas(Local, C, S, Remote) \Rightarrow cart\_action(Remote, C, S, I, T))
-$
+$\dedalus{cart\_action(Server, Client, Session, Item, Type)} \equiv $
 
 A distributed logic language would express the pair of implications above as rules
 (backwards implications) in the style of Prolog.  Expressing distribution and communication
