@@ -78,6 +78,26 @@ A \lang program is confluent if and only if it is associative and commutative.
 
 \subsubsection{Associativity}
 
+\begin{definition}
+%
+We say that two traces $T_1, T_2$ of a \lang instance have the same {\em
+associativity grouping} if $\forall t \in$ \dedalus{time} $\forall i,j \in
+\{1,2\} \forall F \subset \mathcal{H} (F@t \subset T_i \land F \subset T_i \cap
+T_j \implies F@t \subset T_j)$.
+%
+\end{definition}
+
+\begin{definition}
+%
+A {\em support} of fact $F$ in a \lang instance is a set of facts $E_1, \ldots,
+E_n$, such that $\forall i \in 1 \ldots n (E_i \succ F)$.  If $E_1, \ldots, E_n$
+are all non-negated, then we call it a {\em positive support}.
+%
+\end{definition}
+
+It is clear that all facts in all incremental models of a monotonic \lang
+instance have a positive support.
+
 \begin{lemma}
 %
 A monotonic \lang program is confluent if and only if it is associative.
@@ -87,18 +107,13 @@ A monotonic \lang program is confluent if and only if it is associative.
 \begin{proof}
 %
 It is clear that the confluence of a monotonic \lang program implies its
-associativity.
+associativity, so we need only consider the other direction.
 
-Consider two traces of a \lang program, ordered by timestamp.  We say a prefix
-of the two traces {\em agree modulo timestamp} if the prefixes are identical
-except for the time suffix.  
+Let $T_1, T_2$ be two traces of a monotonic \lang instance with the same
+associativity grouping.  Consider the ultimate models $U_1, U_2$ of the traces.
 
-\wrm{proof realy messy and bad, but general outline -- committed because i'm about to fall asleep}
 
-Call a fact \dedalus{F}'s {\em support} the set of all sets of facts that are
-logically equivalent to \dedalus{F} given a \lang instance.  Note that in a
-non-monotonic program, some facts have no support -- i.e., they are derived
-based on universal quantification.  Before the point of divergence, program
+Before the point of divergence, program
 $P_1$ must have some support that program $P_2$ will never have.  Where did this
 support come from?  If it was derived solely from the EDB, then both programs
 will have this support.  Thus, it must have been derived at least partly from
