@@ -1,34 +1,35 @@
 \section{Consistent, Distributed Shopping Carts}
 \label{sec:motivation}
 
-Consider a simple distributed application that provides a fault-tolerant
+Consider a simple distributed application that provides a fault-tolerant, load-balanced
 ``shopping cart'' service for an e-commerce website. In this design, a client
-sends messages describing shopping cart updates to a server.
-To tolerate process failures, shopping cart state will be replicated
-at multiple servers.
+sends messages describing shopping cart updates to one or more members of a collection of server
+processes. To tolerate process failures and enable load-balancing, shopping cart state will be replicated
+at multiple servers; each client message in a single session may be delivered to a different server process.
 
 Several strategies are possible for performing updates of replicated state. A
 conservative design might employ a consensus protocol (e.g., Paxos\cite{part-time})
-to ensure that each update is successfully received by a quorum of servers \wrm{before the update can be viewed?}. This
-ensures that the state of the servers remains consistent \wrm{don't know what this means.  can we define consistency?}.
+to ensure that each update is successfully replicated across a quorum of servers \wrm{before the update can be viewed?}. This
+ensures that the state of the server processes remains consistent \wrm{don't know what this means.  can we define consistency?}.
 
 An alternative approach trades some degree of consistency for reduced update
 latency and improved availability \wrm{how is availability affected?  maybe i'm misunderstanding what availability is.  should have a definition}. In an \emph{eventually consistent}
-system~\cite{quicksand,beyond}, the state of any two replicas may be
+protocol~\cite{quicksand,beyond}, the state of any two replicas may be
 inconsistent at any given time \wrm{there's no global clock in an async distr system}; however, after the system has quiesced and all
 pending messages have been delivered, all replicas will have the same final
-state \wrm{eventually}. This weaker consistency model reduces the need for coordination among the server processes~\cite{dynamo}.
+state \wrm{eventually}. This weaker consistency model reduces the need for coordination among the
+server processes~\cite{dynamo}.
 
-\wrm{I don't understand why this paragraph begins the way it does.  For both
-cases you described abve, we'd like to ensure that order doesn't matter.  It seems to me like the
-correctness criterion of confluence is independent of any design decisions.}
+\wrm{I don't understand why this paragraph begins the way it does.  For both> cases you described abve, we'd like to ensure that order doesn't matter.  It s
+eems to me like the
+> correctness criterion of confluence is independent of any design decisions.}
 To analyze the correctness of a protocol for achieving eventual consistency, we
 would like to prove that for any possible sequence of client input, all
 replicas will eventually reach the same state, despite the possibility of
 message reordering and arbitrary delay.
 
-We begin by considering an ``imperative'' \wrm{maybe ``serial'' would be a better term here} implementation of this design. Each
-server accepts a message, updates its local shopping cart state, and
+We begin by considering an ``imperative'' \wrm{maybe ``serial'' would be a better term here} implementation of this design. A
+server process accepts a message, updates its local shopping cart state, and
 then propagates the message to the other replicas:
 
 %While it is common in
@@ -88,10 +89,13 @@ done
 \end{Dedalus}
 \wrm{is initialize cart\_state the name of a procedure, or a program statement?}
 
+\jmh{Why do you use cart\_state above, and cart\_action later?  Should we unify?}
 Several difficulties present themselves when we attempt to reason about whether
-this implementation is insensitive to message reordering and simultaneous receipt of messages. \wrm{we need to mention earlier that we're concerned about this}
+this implementation is insensitive to message reordering and simultaneous receipt of messages.  \wrm{we need to mention earlier that we're concerned about this}
+
 First, it is not obvious from a static analysis of the code that the client and server are
-part of a single distributed system \wrm{not seeing any client code?}, so we must analyze each of the agents individually \wrm{well, at least we need to analyze the client separately from the server}.
+part of a single distributed system \wrm{not seeing any client code?}, so we must analyze each of the agents individually \wrm{well, at least we need to analyze the client separately from the server}. 
+\jmh{I found the preceding sentence surprising and distracting.  I thought the above was only server code; why are you complaining about the client here?}
 If we assume conservatively that repeated calls to {\em receive message} will return messages in
 arbitrary order, verifying the first property (essentially, order-independence of messages)
 is tantamount to showing that the {\em union} operation is
@@ -101,13 +105,13 @@ In this imperative approach, we happen to also know that the semantics of {\em r
 hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
 event of simultaneous receipt) is returned by each call.
 
-% \paa{an attempt at ``logic pseudocode''.  bill: HELP!}
+%\paa{an attempt at ``logic pseudocode''.  bill: HELP!}
 
 In logic, we may describe the same program (abstracting away distribution)
 as a pair of implications, describing how clients send {\em cart\_action}
 messages to a server and how servers multicast such tuples to other replicas:
 
-%comment out these ``integrity constraints'' and replace with deductive rules
+ %comment out these ``integrity constraints'' and replace with deductive rules
 %$(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
 %\land best\_replica(Client, Session, Server) ) \Rightarrow cart\_action(Server, Client, Session, Item, Type)) $
 %$(\forall Remote, C, S, I, T, Local . (cart\_action(Local, C, S, I, T) \land
@@ -120,7 +124,7 @@ A distributed logic language would express the pair of implications above as rul
 (backwards implications) in the style of Prolog.  Expressing distribution and communication
 is commonly achieved in such systems~\cite{loo-sigmod06} by annotating the variables that 
 contain network addresses: if the variable in the conclusion is distinct from the variables in
-the body, the deduction should cross node boundaries.
+the body, the deduction should cross node boundaries.  \jmh{The preceding sentence is too vague: in addition to fixing it, ground it in the example below (and don't forget to mention your \# syntax!)}
 
 \begin{Dedalus}
 cart\_action(#Server, Client, Session, Item, Type) :-
@@ -134,8 +138,8 @@ cart\_action(#Remote, C, S,S, I, T) :-
 
 As is common in logic programming languages, each line is read as a backwards
 implication ($\leftarrow$); if there is a satisfying assignment of tuples to each of
-the predicates appearing in the body (with ``,'' read as conjunction), 
-then there is a tuple in the head with the same bindings.
+the predicates appearing in the right-hand-side (with ``,'' read as conjunction), 
+then there is a tuple in the left-hand-side with the same bindings.
 Note that the distributed system is expressed as a single, global program.
 Because messages are themselves deductions, there are opportunities to 
 analyze server and client code together.  We can analyze the program to 
@@ -143,7 +147,7 @@ show that {\em cart\_action}, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
 %%\wrm{i thought it's an associativity thing, not a commutativity thing}
 and to the co-occurrence of multiple messages simultaneously, without relying
-on semantics provided by external or hidden library calls. Moreover, the code 
+on semantics provided by external or hidden library calls.  \jmh{how?  are you saying that accumulation into a set is commutative and associative?  why is this easier than the U symbol in the pseudocode?} Moreover, the code 
 itself is succinct and straightforward. 
 
 
@@ -153,9 +157,11 @@ When we consider the case of multiple messages with the same values for
 {\em client, session, item}, and {\em type} (e.g., adding two of the same items to a cart)
 we see that both the imperative and logical implementations are underspecified.
 The set semantics of $\cup$ in the first implementation and the implicit union 
-in the second rule this out, so we need some way of uniquely identifying each message.
-Of course, this is trivial in an imperative language (and so common that many such languages
-provide a shorthand like $++$ for self-increment), but difficult to express in a logic language:
+in the second specification rule this out, so we need some way of uniquely identifying each message.
+Of course, this is trivial in an imperative language by incrementing a sequence number (often aided by a built-in operator like $++$).
+% the operation is so common that many such languages
+% provide a shorthand like $++$ for self-increment), 
+But this standard imperative kernel is difficult to express in a logic language:
 
 \begin{Dedalus}
 ca_stage(Server, Client, Session, Item, Type, ReqId) :-
@@ -171,26 +177,26 @@ s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
 \end{Dedalus}
 
 
-The intent of the rule defining {\em s} is that \emph{s} contains an integer, initialized to
+The intent of the rules defining {\tt s} is that {\tt s} contains an integer, initialized to
 zero, which should be incremented by one whenever an {\em action} event occurs,
 regardless of its values (here an underscore indicates that the binding of the variable
 is irrelevant because its value is not used).  
 Many distributed logic languages allow rules of this kind,
-but their semantics are unclear.  Though on the surface the rule says that if {\em action} is true
-the value of {\em s} should be infinitely incremented, this pattern is common enough
-that many interpreters provide the intended semantics, at the cost of losing a logical
-interpretation of the implication statement.  Equally problematic is the second rule above,
-an implication which induces communication.  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} the antecedent is
-true.  
+but their semantics can often appear unclear.  On the surface the rule says that if {\em action} is true
+the value of {\tt s} should be infinitely incremented, but this pattern is common enough
+that many of these languages (and their interpreters) provide the intended semantics of increment-per-action, at the cost of muddying the logical
+interpretation of the implication statement.  Equally problematic is the second of the four rules above,
+an implication which induces communication (note that the \# is on different variables in the left- and right-hand-sides).  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} the antecedent is
+true; some network delay is inevitable.
 
-In both cases, what is missing from the language is a notion of time.  When {\em action} is ``true'',
+In both cases, what is missing from the language is a notion of time.  When {\em action} is ``true'' in the fourth rule,
 the incremented sequence value should
 hold at the {\em next} visible state of the system, and if action is false, its current
-value should be retained at the next state.  Given the communication rule, 
+value should be retained at the next state.  In the second rule expressing communication, 
 the deduced {\em cart\_action}
 tuple should (ignoring message loss) be true at {\em some} unspecified future time.  In \lang,
-the three different kinds of semantics are captured by annotations (or their absence) 
-associated with rule conclusions.  Peeking ahead, the second two rules of the above program would be written in \lang as:
+three different temporal semantics of deduction---now, next, and asynchronous---are captured by annotations (or their absence) 
+associated with rule conclusions.  To give a flavor of our subsequent discussion, the second two rules of the above program would be written in \lang as:
 
 \begin{Dedalus}
 cart_action(#L, C, S, I, T, R)@async :-
@@ -202,6 +208,6 @@ s(X)@next \(\leftarrow\)  s(X), \(\lnot\) action(_, _, _, _, _);
 \end{Dedalus}
 
 In the remainder of the paper, we present \lang, which restores a logical interpretation to
-both state change and asynchrony.  We will return to the shopping cart example in more detail 
+both state change and asynchrony.  We will return to the shopping cart example throughout, and focus on it in detail 
 in Section~\ref{sec:casestudy}.
 
