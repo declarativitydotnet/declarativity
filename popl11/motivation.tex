@@ -139,7 +139,7 @@ itself is succinct and straightforward.
 
 
 When we consider the case of multiple messages with the same values for
-{\em client, session, item}, and {\em type} (e.g. adding two of the same items to a cart)
+{\em client, session, item}, and {\em type} (e.g., adding two of the same items to a cart)
 we see that both the imperative and logical implementations are underspecified.
 The set semantics of $\cup$ in the first implementation and the implicit union 
 in the second rule this out, so we need some way of uniquely identifying each message.
@@ -161,7 +161,7 @@ s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
 \end{Dedalus}
 
 
-The intent of the rule defining {\em s} is that s contains an integer, initialized to
+The intent of the rule defining {\em s} is that \emph{s} contains an integer, initialized to
 zero, which should be incremented by one whenever an {\em action} event occurs,
 regardless of its values (here an underscore indicates that the binding of the variable
 is irrelevant because its value is not used).  
@@ -183,18 +183,15 @@ the three different kinds of semantics are captured by annotations (or their abs
 associated with rule conclusions.  Peeking ahead, the second two rules of the above program would be written in \lang as:
 
 \begin{Dedalus}
-
 cart_action(#L, C, S, I, T, R)@async :-
   ca_stage(L, #C, S, I, T, R);
 
 s(0);
 s(X+1)@next \(\leftarrow\)  s(X), action(_, _, _, _, _);
 s(X)@next \(\leftarrow\)  s(X), \(\lnot\) action(_, _, _, _, _);
-
 \end{Dedalus}
-
 
 In the remainder of the paper, we present \lang, which restores a logical interpretation to
 both state change and asynchrony.  We will return to the shopping cart example in more detail 
-in section~\ref{sec:casestudy}.
+in Section~\ref{sec:casestudy}.
 
