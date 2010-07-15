@@ -35,7 +35,7 @@ the server describing updates to the cart, and the server stores these
 messages.  
 A practical shopping cart would provide a mechanism to {\em check out}; that is,
 summarize the cart contents, but we will postpone this discussion until later.
-To make the application fault-tolerant, 
+To make the application fault-tolerant,
 we will need to replicate the stored state to server replicas.  Ideally, however,
 this state replication can occur asynchronously, as wait-free message handling
 will decrease request latency and increase availability.  This cheap communication
@@ -128,7 +128,7 @@ then there is a tuple in the head with the same bindings.
 Note that the distributed system is expressed as a single, global program.
 Because messages are themselves deductions, there are opportunities to 
 analyze server and client code together.  We can analyze the program to 
-show that cart\_action, a set that is persitently and immutably
+show that cart\_action, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
 \wrm{i thought it's an
 associativity thing, not a commutativity thing}
@@ -195,7 +195,7 @@ s(X)@next \(\leftarrow\)  s(X), \(\lnot\) action(_, _, _, _, _);
 \end{Dedalus}
 
 
-In the remainded of the paper, we present \lang, which restores a logical interpretation to
+In the remainder of the paper, we present \lang, which restores a logical interpretation to
 both state change and asynchrony.  We will return to the shopping cart example in more detail 
 in section~\ref{sec:casestudy}.
 
