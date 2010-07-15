@@ -29,18 +29,18 @@ and ordering at the storage tier is confusing b/c we implement no such app.}
 %will do the former, though we will explore the latter option in more detail in
 %section~\ref{sec:casestudy}.
 
-Our shopping cart application will consist of a client and a (distributed)
-server component.  The client converts user input into messages sent to
-the server which describe updates to the cart, and the server stores these 
+Our shopping cart application consists of a client and a (distributed)
+server component.  The client sends messages to
+the server describing updates to the cart, and the server stores these 
 messages.  
 A practical shopping cart would provide a mechanism to {\em check out}; that is,
 summarize the cart contents, but we will postpone this discussion until later.
-To make the application fault-tolerant and to increase availability, 
+To make the application fault-tolerant, 
 we will need to replicate the stored state to server replicas.  Ideally, however,
 this state replication can occur asynchronously, as wait-free message handling
 will decrease request latency and increase availability.  This cheap communication
-cannot come at the cost of consistency -- all replicas should eventually reach
-the same state -- but we may be willing to wait a long time for such convergence.
+cannot come at the cost of consistency --- all replicas should eventually reach
+the same state --- but we may be willing to wait a long time for such convergence.
 
 Therefore we wish to reason about whether our implementation possesses the desirable 
 properties that, in spite of message reordering and the possibility of the simultaneous
