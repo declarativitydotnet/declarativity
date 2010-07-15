@@ -128,7 +128,7 @@ We argue for an inversion of design:
 %for programming distributed systems
 unordered and concurrent by default, with explicit, programmer-defined order
 only when required for correctness.  To this end, we propose \lang, a logic
-programming language, and study it in the context of distributed asynchronous
+programming language, and study it in the context of asynchronous distributed
 systems.  \lang is based on the well-studied Datalog~\cite{ullmanbook}
 language, which exposes a single operator---{\em logical implication}, and a
 single data structure---the set.
@@ -139,7 +139,7 @@ By abstracting away irrelevant orders while providing explicit control of sequen
 focuses the programmer's attention on
 the two features of distributed systems for which recourse to order is unavoidable: 
 implementing {\em mutable state} and ensuring
-deterministic results in the face of {\em asynchrony} -- that is, non-determinism in
+deterministic results in the face of {\em asynchrony}---that is, non-determinism in
 temporal order.  To capture these uses of order, we build a library of ordered
 constructs in \lang, including persistence, queues, and Lamport clocks.  We
 also extend static analyses from the Datalog domain, including a surprisingly

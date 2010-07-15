@@ -118,7 +118,6 @@ cart_action(L, C, S, I, T, R)@async :-
 checkout(Server, Client, Session)@async :-
   checkout_req(Client, Session),
   best_replica(Client, Session, Server);
-
 \end{Dedalus}
 
 
@@ -157,20 +156,17 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 \end{Dedalus}
 
 
-If, on the other hand, ignoring late {\em  cart\_update} tuples is not acceptable,
+If, on the other hand, ignoring late {\em cart\_update} tuples is not acceptable,
 some data dependency between them and {\em checkout} tuples must be established
 to ensure that the deduction of {\em action\_cnt} tuples must {\em wait}.  
 The ordered queue pattern introduced in (constructs) is one means of achieving such an 
 ordering, as is sending a manifest (e.g., a count of total {\em cart\_action} tuples
 sent) in the {\em checkout} message.
 
-
-
-
 In addition to illustrating where in our program coordination may be necessary, our
 analysis also illustrates where is is unnecessary.
 The predicate {\em cart\_action}, representing the stored state 
-of the cart program,  is part of a monotonic component that includes {\em cart\_action\_stage}, 
+of the cart program, is part of a monotonic component that includes {\em cart\_action\_stage}, 
 so we can simply and inexpensively replicate it:
 
 \begin{Dedalus}
