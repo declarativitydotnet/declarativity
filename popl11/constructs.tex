@@ -206,6 +206,14 @@ and to achieve synchronization}
 
 \subsubsection{Priority Queues}
 
+\paa{whack this ponderous subsection.  present instead \emph{serializers},
+which do what so-called queues below do: enforce 'associativity' by preventing
+more that one tuple from being considered per fixpoint.  then present
+\emph{ordered queues} (or perhaps the same thing with a better name)
+after the discussion of sequences (since OQs use sequences), as a mechanism
+for maintaining ordering across async boundaries (familiar from TCP, fifo broadcast,
+etc)}
+
 %\paa{shorten this section} While a sequence is a useful construct for
 %generating or imposing an ordering on tuples \wrm{seems a bit fishy.  seems
 %like it might only be useful for transferring a given order thru async,
