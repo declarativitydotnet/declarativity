@@ -162,39 +162,40 @@ Herbrand Universe.
 
 \section{\lang}
 
-\lang is a subset of Datalog, with \dedalus{choice}, an infinite
-\dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
+\lang is a subset of Datalog, with \dedalus{choice}, an infinite \dedalus{time}
+relation $\mathbb{N}$, and a \dedalus{successor}
 %$(\mathbb{N} \cup \top)$
 relation, which is isomorphic to $+1$ on $\mathbb{N}$.  We will carefully
-restrict the use of \dedalus{time} and \dedalus{successor}
+restrict the use of \dedalus{time} and \dedalus{successor} to ensure safety,
+and \dedalus{successor} will serve as the basis for a stratification condition
+that we call {\em temporal stratification}.
 
-The intuition behind
-\lang's \dedalus{successor} relation is that it models the passage of logical
-time.  In our discussion, we will say that facts with lower time suffixes occur
-``before'' atoms with higher ones.  
-%If we wish to model possible message loss,
-%we may admit a special element $\infty$ 
-%into \dedalus{time}.
-We exclude message loss and node failure in this paper to
-simplify the discussion, though we explicitly deal with such issues in other
+The intuition behind \lang's \dedalus{successor} relation is that it models the
+passage of logical time.  In our discussion, we will say that facts with lower
+time suffixes occur ``before'' facts with higher ones.  
+%If we wish to model possible message loss, we may admit a special element
+%$\infty$ into \dedalus{time}.
+We exclude message loss and node failure in this paper to simplify the
+discussion, though we explicitly deal with such issues in other
 work~\cite{dedalus-techr, netdb}.
-We will see later how \dedalus{successor} forms the basis of a stratification
-condition that we call {\em temporal stratification}.
 
 \subsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
 In \lang, the form of predicates and rules are restricted in the following ways:
 
 \noindent{\bf Time Suffix: } The final attribute of every \lang
-predicate must range over the \dedalus{time} domain.  
+predicate must range over the \dedalus{time} domain. 
 %\lang considers this final attribute as a ``timestamp,'' so
-We refer to this attribute as the predicate's \emph{time suffix}, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
-facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
+We refer to this attribute as the predicate's \emph{time suffix}, and we talk about the {\em timestamp} of a fact. 
+%\rcs{Removed:''---we also refer to
+%facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
-\noindent{\bf Unification on Time: } The time suffix of every predicate in the body of a rule must contain the same variable symbol.  Hence, each rule body refers to a single logical time, and hence to the same database state.\nrc{Is this better?} For ease of exposition, we henceforth assume that this
-variable symbol is named $\DT$.  A well-formed \lang rule must also bind the
-head predicate's time suffix to a variable symbol.  We will assume the name of
-this variable symbol is $\DS$. $\DS$ must be constrained in one of
+\noindent{\bf Unification on Time: } The time suffix of every predicate in the
+body of a rule must contain the same variable symbol.  Hence, each rule body
+refers to a single logical time.  For ease of exposition, we henceforth assume
+that this variable symbol is named $\DT$.  A well-formed \lang rule must also
+bind the head predicate's time suffix to a variable symbol.  We will assume the
+name of this variable symbol is $\DS$. $\DS$ must be constrained in one of
 three ways:
 
 \begin{enumerate}
@@ -212,46 +213,40 @@ including $\DT$.
 %
 \end{enumerate}
 
-We will study the utility of these three types of rules later, but briefly observe here
-that systems in
-general only require recourse to ordering primitives for mutable state and communication.
-Inductive and asynchronous rules model these cases respectively.
+The use of \dedalus{successor}, \dedalus{time}, and \dedalus{choice} are
+otherwise prohibited.  We will study the utility of these three types of rules
+later, but briefly observe here that systems in general only require recourse
+to ordering primitives for mutable state and communication.  Inductive and
+asynchronous rules model these cases respectively.
 
 Usage of $S$ or $T$ outside of the time suffixes is known as {\em
-entanglement}.  We will revisit this powerful construct in Section~\ref{sec:entangle}. 
+entanglement}.  We will revisit this powerful construct in
+Section~\ref{sec:entangle}. 
 
-\begin{example}
-The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
-We can sugar away the time suffixes in the head and body, the
-\dedalus{successor}, \dedalus{time} and \dedalus{choice} clauses in
-the body, and the equality constraints, and instead attach a keyword to the head of each
-temporal rule to indicate the change in time suffix.  In each, the sugared example appears
-below.  We may also represent facts by attaching a constant time suffix, as shown below.  \jmh{We need to find an easier-to-read formatting -- perhaps side-by-side in a figure, or in a \\tabular environment that separates things out.}
-\\
-deductive:
-\begin{Dedalus}
-p(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), \(\DS\) = \(\DT\);
-p(A, B) \(\leftarrow\) e(A, B);
-\end{Dedalus}
-\\
-inductive:
-\begin{Dedalus}
-q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), successor(\(\DT\), \(\DS\));
-q(A, B)@next \(\leftarrow\) e(A, B);
-\end{Dedalus}
-\\
-asynchronous:
-\begin{Dedalus}
-r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)),
-   choose((A,B,\(\DT\)), (\(\DS\)));
-r(A, B)@async \(\leftarrow\) e(A, B);
-\end{Dedalus}
-\\
-\begin{Dedalus}
-fact:
-e(1,2)@3;
-\end{Dedalus}
-\end{example}
+\begin{table*}[t]
+\begin{center}
+\begin{tabular}{l | l | l}
+& \lang code & sugared \lang code \\
+\hline
+deductive & \dedalus{p(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), \(\DS\) = \(\DT\);} & \dedalus{p(A, B) \(\leftarrow\) e(A, B);} \\
+\hline
+inductive & \dedalus{q(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), successor(\(\DT\), \(\DS\));} & \dedalus{q(A, B)@next \(\leftarrow\) e(A, B);} \\
+\hline
+async & \dedalus{r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\)), choice((A,B,\(\DT\)), (\(\DS\)));} & \dedalus{r(A, B)@async \(\leftarrow\) e(A, B);} \\
+\hline
+fact & \dedalus{e(1, 2, 3)} & \dedalus{e(1, 2)@3}
+\end{tabular}
+\end{center}
+\caption{Well-formed deductive, inductive, and asynchronous rules, and sugared versions}
+\label{tbl:rules}
+\end{table*}
+
+Table~\ref{tbl:rules} shows an example of each kind of well-formed \lang
+rule---deductive, inductive, and asynchronous---as well as a \lang fact.  The
+table also presents a sugared syntax, which elides the time suffixes in the
+head and body, and replaces the \dedalus{successor}, \dedalus{time} and
+\dedalus{choice} clauses in temporal rules with a head keyword that indicates
+the change in time suffix.
 
 %\paa{consider using shopping cart examples (with shorter attr names)
 %for the above}
@@ -282,33 +277,33 @@ e(1,2)@3;
 %
 %\paa{better (modulo formatting)?}
 
-\noindent{\bf Positive and Negative Predicates: }
-\paa{joe thinks we could probably footnote a digest of all or most of this section} \jmh{postpone p\_neg until you need it, and ignore p\_pos (you could footnote that when you talk IDB vs. EDB if you like.)  Assume this is not a language feature, it's just a design pattern you'll use.}
-For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
-$P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same arity
-as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:\rcs{this leads to akwardness later.  perhaps we should define an \dedalus{r} and an \dedalus{r edb}}
+%\noindent{\bf Positive and Negative Predicates: }
+%\paa{joe thinks we could probably footnote a digest of all or most of this section} \jmh{postpone p\_neg until you need it, and ignore p\_pos (you could footnote that when you talk IDB vs. EDB if you like.)  Assume this is not a language feature, it's just a design pattern you'll use.}
+%For every extensional predicate \dedalus{r} in a \lang program $P$, we add to
+%$P$ two distinguished predicates \dedalus{r\pos} and \dedalus{r\nega} with the same arity
+%as \dedalus{r}.  We define \dedalus{r\pos} using the following rule:\rcs{this leads to akwardness later.  perhaps we should define an \dedalus{r} and an \dedalus{r edb}}
 
-\begin{dedalus}
-r\pos($\overline{A}$,\(\DS\)) \(\leftarrow\) r($\overline{A}$,\(\DT\)), \(S\)=\(\DT\);
-\end{dedalus}
+%\begin{dedalus}
+%r\pos($\overline{A}$,\(\DS\)) \(\leftarrow\) r($\overline{A}$,\(\DT\)), \(S\)=\(\DT\);
+%\end{dedalus}
 
 % \hspace{5mm}
 % \begin{dedalus}
    
 % \end{dedalus}
 
-\noindent{}That is, for every extensional predicate \dedalus{r} there is an intensional
-predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
-Intuitively, this rule allows extensional facts to serve as ground for
-\dedalus{r\pos}, while enabling other rules to derive additional \dedalus{r\pos} facts.
+%\noindent{}That is, for every extensional predicate \dedalus{r} there is an intensional
+%predicate \dedalus{r\pos} that contains at least the contents of \dedalus{r}.
+%Intuitively, this rule allows extensional facts to serve as ground for
+%\dedalus{r\pos}, while enabling other rules to derive additional \dedalus{r\pos} facts.
 
-The predicate \dedalus{r\pos} may be referenced in the body or head of any \lang rule.  
-We will make use of the predicate \dedalus{r\nega} later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
-Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rules is unrestricted.
+%The predicate \dedalus{r\pos} may be referenced in the body or head of any \lang rule.  
+%We will make use of the predicate \dedalus{r\nega} later to capture the notion of mutable state; we return to it in Section~\ref{sec:mutable}. 
+%Like \dedalus{r\pos}, the use of \dedalus{r\nega} in the heads and bodies of rules is unrestricted.
 
-\vspace{1.2em}
-\noindent{\bf Guarded EDB: }
-No well-formed \lang rule may involve any extensional predicate, except for a rule of the form above.
+%\vspace{1.2em}
+%\noindent{\bf Guarded EDB: }
+%No well-formed \lang rule may involve any extensional predicate, except for a rule of the form above.
 
 
 \subsection{Distribution, Asynchrony and Choice}

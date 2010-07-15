@@ -75,6 +75,7 @@ A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules at
 time $\DT$, but may only provide ground for deductive rules in timesteps
 greater than $\DT$ if it is persisted.  One way to persist all facts in a
 predicate $p$ is to use a {\em simple persistence rule}:
+\wrm{p\_pos not defined}
 
 \dedalus{p\pos($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
 p\pos($A_1$,$A_2$,[...],$A_n$);}
@@ -88,7 +89,7 @@ true $\forall j \in \mathbb{N} : j >= i$.
 
 Simple persistence rules cannot model deletions and updates of a fact, because
 they express an unbroken induction over time.  One way to allow the induction
-to be broken is to add a \dedalus{p\nega} subgoal to the body of a simple
+to be broken is to add a \dedalus{p\nega} \wrm{\dedalus{p\nega} not defined} subgoal to the body of a simple
 persistence rule:
 
 \begin{dedalus}
