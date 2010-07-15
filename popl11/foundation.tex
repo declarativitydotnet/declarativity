@@ -22,10 +22,13 @@ arguments (constants or existentially quantified variables).
 $p_0(\overline{X_0})$, ..., $p_k(\overline{X_K})$ are {\em atoms}---an atom is
 a list of arguments prefixed with a predicate.  The same variable symbol may
 appear in multiple atoms; in this case, we say that the atoms are {\em
-unified} on the arguments that contain the duplicated variable.  The single
+unified} on the arguments that contain the duplicated variable.  An assignment of constants to all arguments in a predicate is known as a {\em
+fact}---also called a {\em tuple} or {\em row}---and we often refer to ``the
+facts in a predicate,'' meaning the satisfying assignment of constants to the
+predicate's arguments.  The single
 atom to the left of the \dedalus{:-} delimeter is the rule's {\em head}, and
 the set of atoms to the right is the rule's {\em body}.  We say that the rule's
-head predicate {\em depends on} each of its body predicates.  \jmh{Need to introduce facts here.}  If a predicate
+head predicate {\em depends on} each of its body predicates.   If a predicate
 (resp. fact) \dedalus{p} depends on a predicate (resp. fact) \dedalus{q}, we
 write \dedalus{p} $\succ$ \dedalus{q}.  A predicate (resp. fact) \dedalus{p} transitively depends on a predicate (resp. fact) \dedalus{q}---denoted
 \dedalus{p} $\succ^+$ \dedalus{q}---if \dedalus{p} $\succ$ \dedalus{q}, or if
@@ -34,26 +37,24 @@ $\succ^+$ \dedalus{p}, then we say that \dedalus{p} is {\em recursive} or {\em
 cyclic}.
 
 In addition to atoms, a rule's body may also contain the {\em order
-constraints}: $=, \geq, >, \leq, <, \neq$.  An order constraint is a binary
-operator that may be applied either to constants, or variables used in the
-rule's body atoms.\jmh{I don't like this definition or the use of the word ``operator''.  Can't we refer to these as a set of built-in infinite relations, and mention a standard program check to ensure that their infinity does not leading to an infinite model for the program.}
+constraints}: $=, \geq, >, \leq, <, \neq$.  An order constraint is an infinite
+binary relation that may be applied either to constants, or variables used in
+the rule's body atoms.
 
-An assignment of constants to all arguments in a predicate is known as a {\em
-fact}---also called a {\em tuple} or {\em row}---and we often refer to ``the
-facts in a predicate,'' meaning the satisfying assignment of constants to the
-predicate's arguments.  The logical meaning of a Datalog rule is that for each
+The logical meaning of a Datalog rule is that for each
 satisfying assignment of constants to variables on the right-hand side, there
 exists a tuple with the corresponding satisfying assignment of constants in the
 left-hand side predicate.
 %\rcs{satisfies the lhs?}
 A (possibly empty) set of facts for the extensional predicates is known as an
 {\em EDB} or extensional data base.  A Datalog {\em instance} is a program
-together with an EDB.  All constants in the EDB are contained in the {\em
-universe of constants} of the instance.  \jmh{The preceding sentence was pulled out of a hat.  What is a ``universe of constants of an instance''??}
+together with an EDB.  
+
+The {\em Herband Universe} of an instance, written $\mathcal{H}$ is the set of all constants in the EDB and IDB.
 
 \subsection{Aggregation}
 
-{\em Aggregates} are functions from sets to constants \jmh{scalar values?  You don't mean constants, at least not in the C sense.}.
+{\em Aggregates} are functions from sets to scalar values.
 We are interested in both {\em exemplary} aggregates like \dedalus{max} and \dedalus{min} that return a value
 from the input set, and {\em summary} aggregates like \dedalus{count}.  An aggregate may only appear in the head
 of a rule; a head atom \dedalus{p($\bar{A}, \rho<B>$)}, where $\rho$ is an 
@@ -65,11 +66,14 @@ $\bar{A}$.
 As a concrete example, consider implementing the ``checkout'' functionality for shopping carts: this requires carrying out some aggregations over the {\tt cart\_action} table.
 A typical implementation counts the number of additions and deletions 
 of each item.  The rule below will group by the first five attributes, and associate the
-count of unique {\tt ReqId} values with the last attribute: \jmh{is it clear that Type is one of ``insert'' or ``delete''?}
+count of unique {\tt ReqId} values with the last attribute: 
+%\jmh{is it clear that Type is one of ``insert'' or ``delete''?}
 
+\noindent{}
 \begin{Dedalus}
-status(Serv, Cli, Session, Item, Type, count<ReqId>) :- 
-  cart action(Serv, Cli, Session, Item, Type, ReqId);
+
+status(Serv, Cli, Ses, Item, Type, count<ReqId>) :- 
+  cart\_action(Serv, Cli, Ses, Item, Type, ReqId);
 \end{Dedalus}
 
 \subsection{Non-Monotonicity}
@@ -138,7 +142,7 @@ rules to ensure that this universal quantification is always applied after the
 input set is fully determined.  This ordering induces a unique model, under
 the semantics presented in~\cite{wellfounded}.
 
-\paa{good!}
+%\paa{good!}
 
 \subsection{Safety}
 
