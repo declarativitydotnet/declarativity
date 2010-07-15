@@ -229,7 +229,7 @@ with a queue also.  The matching queues at client and server impose a
 synchronization barrier: both sides of the computation must ``spend time''
 proportional to the number of tuples.
 
-\rcs{This might be a good place to cite BFS, sherpa, etc.  The para would go something like this (1) if you want to extend the above to multiple writers, then the ordering construct needs to move to the server side.  (2) Once ordering moves to a master node, you need paxos.  (3) in order to replicate you need to allow replicas to send updates to each other.  If you've settled on per-tuple masters, this probably means some sort of log shippinh protocol (a'la our queue, above).  Between the primitives described here and in the bfs/paxos work, you can implement this.  Such systems have been implemented in the past, and are currently in production (CITE PNUTS).  However, such approaches are overkill for shopping carts, and don't show off our nice handling of commutative updates, so:}
+\rcs{This might be a good place to cite BFS, sherpa, etc.  The para would go something like this (1) if you want to extend the above to multiple writers, then the ordering construct needs to move to the server side.  (2) Once ordering moves to a master node, you need paxos.  (3) in order to replicate you need to allow replicas to send updates to each other.  If you've settled on per-tuple masters, this probably means some sort of log shipping protocol (a'la our queue, above).  Between the primitives described here and in the bfs/paxos work, you can implement this.  Such systems have been implemented in the past, and are currently in production (CITE PNUTS).  However, such approaches are overkill for shopping carts, and don't show off our nice handling of commutative updates, so:}
 
 
 
