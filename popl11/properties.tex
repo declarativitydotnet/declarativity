@@ -55,22 +55,76 @@ call the instance {\em trace confluent}.  If every instance of a program is
 trace confluent, then we say the program is {\em confluent}.  Note that every
 non-contradictory Datalog program without \dedalus{choice} is confluent.
 
-\subsubsection{Associativity and Serializabilty}
+\begin{definition}
+%
+We say that a \lang program is {\em associative} if the
+ultimate model is invariant under the operation of exchanging subsets between
+adjacent timestamps.
+%
+\end{defnition}
 
-\wrm{this para sounds a bit wishy washy.  but if we can say that ``assoc + comm
-'' == deterministic, or point to a proof of this, then we can just say
-``hey, comm isn't a problem here, so the only problem could be assoc,
-and yes here's an example where it's a problem.}
+\begin{defintion}
+%
+We say that a \lang program is {\em commutative} if the ultimate model is
+invariant under the operation of exchanging two timestamps.
+%
+\end{definition}
 
-Since we do not consider the time suffix as part of the ultimate model, how can
-non-determinism in time suffixes affect the ultimate model?  In purely
-monotonic programs, the only issue that can arise is that some derivations may
-not be {\em associative} -- the assignment of the same timestamp to two facts
-may cause a different result than the assignment of a distinct timestamp to
-each fact.  Intuitively, this is because we force unification on time suffixes
-in the body.  Persistence of async relations \nrc{Don't you mean ``rules'', not ``relations''?} solves this by making all
-derivations associative: there will eventually be a timestamp where all async
-derivations ever received are coincidentally true.\nrc{Don't grok this.}
+\begin{lemma}
+%
+A \lang program is confluent if and only if it is associative and commutative.
+%
+\end{lemma}
+
+\subsubsection{Associativity}
+
+\begin{lemma}
+%
+A monotonic \lang program is confluent if and only if it is associative.
+%
+\end{lemma}
+%
+\begin{proof}
+%
+It is clear that the confluence of a monotonic \lang program implies its
+associativity.
+
+Consider two traces of a \lang program, ordered by timestamp.  We say a prefix
+of the two traces {\em agree modulo timestamp} if the prefixes are identical
+except for the time suffix.  
+
+\wrm{proof realy messy and bad, but general outline -- committed because i'm about to fall asleep}
+
+Call a fact \dedalus{F}'s {\em support} the set of all sets of facts that are
+logically equivalent to \dedalus{F} given a \lang instance.  Note that in a
+non-monotonic program, some facts have no support -- i.e., they are derived
+based on universal quantification.  Before the point of divergence, program
+$P_1$ must have some support that program $P_2$ will never have.  Where did this
+support come from?  If it was derived solely from the EDB, then both programs
+will have this support.  Thus, it must have been derived at least partly from
+the trace.  Given that $P_1$ and $P_2$ \wrm{change to instances} have the same
+associativity grouping, everything coincidentally true in $P_1$ will be
+coincidentally true in $P_2$ (proof).  Since a support must be coincidentally
+true, the eventual models of $P_1$ and $P_2$ are equivalent.
+%
+\end{proof}
+
+Note that a simple way to ensure associativity of a monotonic program is to
+persist all relations that appear in the head of an \dedalus{@async} rule.
+This is because this ensures eventual associativity of the program, which is
+equivalent to associativity for monotonic programs.
+
+However, eventual associativity is not good enough for non-monotonic programs.
+
+%Since we do not consider the time suffix as part of the ultimate model, how can
+%non-determinism in time suffixes affect the ultimate model?  In purely
+%monotonic programs, the only issue that can arise is that some derivations may
+%not be {\em associative} -- the assignment of the same timestamp to two facts
+%may cause a different result than the assignment of a distinct timestamp to
+%each fact.  Intuitively, this is because we force unification on time suffixes
+%in the body.  Persistence of async relations \nrc{Don't you mean ``rules'', not ``relations''?} solves this by making all
+%derivations associative: there will eventually be a timestamp where all async
+%derivations ever received are coincidentally true.\nrc{Don't grok this.}
 
 \wrm{provide example here?}  Concretely, consider the committed choice
 example in Section~\ref{sec:assignment-and-committed-choice}, which

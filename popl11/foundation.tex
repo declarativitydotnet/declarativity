@@ -145,15 +145,15 @@ that can expand the universe of constructs, such as summary aggregates.
 
 \section{\lang}
 
-We now explain how \lang's relation to Datalog.  One of our goals for \lang is to model the inherent non-determinism of network
-delay in asynchronous distributed systems.  Non-determinism in Datalog was
-formalized by Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} in their
-\dedalus{choice} construct.  For example,
-\dedalus{p(X,Y) :- q(X,Y), choice((X), (Y));} expresses that for each value
-that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on a
-single {\em non-deterministically chosen} value. 
-See~\cite{sacca-zaniolo} for the details on how \dedalus{choice} is expanded
-into Datalog rules that employ cyclic negation.
+One of our goals for \lang is
+to model the inherent non-determinism of network delay in asynchronous
+distributed systems.  Non-determinism in Datalog was formalized by Sacc\`{a}
+and Zaniolo~\cite{sacca-zaniolo} in their \dedalus{choice} construct.  For
+example, \dedalus{p(X,Y) :- q(X,Y), choice((X), (Y));} expresses that for each
+value that variable \dedalus{X} takes on, variable \dedalus{Y} may only take on
+a single {\em non-deterministically chosen} value.  See~\cite{sacca-zaniolo}
+for the details on how \dedalus{choice} is expanded into Datalog rules that
+employ cyclic negation.
 
 \lang is a subset of Datalog, with \dedalus{choice}, an infinite
 \dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
