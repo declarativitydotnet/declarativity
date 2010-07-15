@@ -60,7 +60,7 @@ utilization by performing pre-aggregation before
 communication. We discuss how the HOP design addresses this issue in
 Section~\ref{ch:hop:sec:intra-pipe}.  Finally, pipelining requires that producers and
 consumers are co-scheduled intelligently; we discuss our initial work on this
-issue in Section~\ref{ch:hop:sec:pipeline-sched}.
+issue in Section~\ref{ch:hop:sec:jolport}.
 
 We develop the design of HOP's pipelining scheme in Section~\ref{ch:hop:sec:pipelining}, keeping the
 focus on traditional batch processing tasks.  In Section~\ref{ch:hop:sec:online} we
@@ -169,8 +169,8 @@ traffic can often be substantially reduced. Eagerly pipelining each
 record as it is produced prevents the use of map-side combiners.
 
 A related problem is that eager pipelining moves some of the sorting
-work from the mapper to the reducer. Recall that in the blocking
-architecture, map tasks generate sorted spill files: all the reduce
+work from the mapper to the reducer. Recall from Section~\ref{ch:mrback:sec:maptask}
+that in the blocking architecture, map tasks generate sorted spill files: all the reduce
 task must do is merge together the pre-sorted map output for each
 partition. In the na\"{\i}ve pipelining design, map tasks send output
 records in the order in which they are generated, so the reducer must
@@ -184,7 +184,7 @@ Section~\ref{ch:hop:sec:pipe-refine}. Instead of sending the buffer contents to
 reducers directly, we wait for the buffer to grow to a threshold
 size. The mapper then applies the combiner function, sorts the output by
 partition and reduce key, and writes the buffer to disk using the spill file
-format described in Section~\ref{ch:mrback:sec:maptask}.
+format described in Figure~\ref{ch:mrback:fig:mapoutput}.
 
 Next, we arranged for the {\TT} at each node to handle pipelining data to reduce
 tasks. Map tasks register spill files with the {\TT} via RPCs. If the reducers
@@ -335,9 +335,11 @@ speculative execution of ``backup'' tasks~\cite{mapreduce-osdi}.
 \label{fig:wc3}
 \end{figure*}
 
-A thorough performance comparison between pipelining and blocking is beyond the
-scope of this paper. In this section, we instead demonstrate that pipelining can
-reduce job completion times in some configurations.
+A thorough performance comparison between pipelining and blocking is not the
+focus of this dissertation. Nevertheless, as future work we plan to investigate a rule-based (e.g., Evita Raced)
+optimizer for Hadoop MapReduce that considers pipelined plans in its search strategy. In this 
+section, we demonstrate that pipelining can reduce job completion times in some configurations
+and should be considered by any such optimizer. 
 
 We report performance using both large (512MB) and small (32MB) HDFS block sizes
 using a single workload (a wordcount job over randomly-generated text). Since
@@ -982,30 +984,30 @@ management.
 \label{ch:hop:sec:boom}
 
 In this section we describe our port of the declarative scheduling framework
-for MapReduce described in Chapter~\ref{ch:boom} to our Hadoop Online Prototype (HOP). The purpose
+described in Chapter~\ref{ch:boom} to our Hadoop Online Prototype (HOP). The purpose
 of this port is to enable the development of better scheduling policies through the use of a high level
 declarative language and the monitoring system described in Section~\ref{ch:hop:sec:monitor}. HOP is
 based on Hadoop version 19.2, which has a new interface to the task scheduler.
 In Section~\ref{ch:hop:sec:jolport}, we describe the port of \JOL to this new scheduler interface. 
 Section~\ref{ch:hop:sec:jolmonitor} describes the interface between the monitoring system and \JOL, 
 which enables the use of the monitoring results in declarative scheduling logic. 
-In Section~\ref{ch:hop:sec:speculation}, we present an Overlog rule that monitors tasks for anomalous behavior, spawning
+In Section~\ref{ch:hop:sec:speculation}, we present an \OVERLOG rule that monitors tasks for anomalous behavior, spawning
 a backup/speculative task when alerted to a potential issue. This work was presented as a demo at Sigmod 2010.
 
 \subsection{Scheduling HOP with \JOL}
 \label{ch:hop:sec:jolport}
 
 A feature of Hadoop 19.2, that did not exist in prior versions, is the ability to implement alternative task schedulers
-in the \JT. Since HOP is a branch of Hadoop 19.2, the port of \JOL to the HOP \JT was less invasive and required 
-minimal changes to the declarative scheduling rules described in Chapter~\ref{ch:boom}. We did alter the job
-relation (described in Table~\ref{ch:boom:tbl:hcatalog}) to include an attribute that reflects the MapReduce job type -- 
-pipelining/blocking job, online aggregation job, and continuous job. We also added scheduling policy rules that are 
-specific to online aggregation and continuous jobs. In the remainder of this section, we describe the Java port of \JOL 
-to HOP and the changes to the declarative scheduler, which includes an additional policy for scheduling online aggregation 
-and continuous MapReduce jobs.
+in the \JT. This made the port of \JOL to the HOP \JT less invasive, tossing only a couple thousand lines of code
+that made up the default scheduler and replacing it with the declarative scheduling rules (around $156$ lines of \OVERLOG) 
+described in Chapter~\ref{ch:boom}. We did alter the job relation (described in Table~\ref{ch:boom:tbl:hcatalog}) to include an attribute 
+that reflects the MapReduce job type -- pipelining/blocking job, online aggregation job, or a continuous job. We also added three
+scheduling policy rules that are specific to online aggregation and continuous jobs. In the remainder of this section, we describe the 
+Java port of \JOL to HOP and the changes to the scheduler rules, which includes additional policies for online aggregation and 
+continuous jobs.
 
 \subsubsection{\JOL port}
-\begin{figure*}[t]
+\begin{figure*}
 \ssp
 \begin{minipage}{\linewidth}
 \centering
@@ -1029,10 +1031,10 @@ method {\em assignTasks} that takes a \TT status object as its argument and retu
 scheduled. This method is called by the \JT during a {\em heartbeat} exchange with a \TT.  
 
 Our implementation of the {\em assignTasks} method transforms the \TT status object into a tuple that updates the
-{\em taskTracker} relation in Table~\ref{ch:boom:tbl:hcatalog}. In response to this update, the scheduling rules enter a 
+\ol{taskTracker} relation in Table~\ref{ch:boom:tbl:hcatalog}. In response to this update, the scheduling rules enter a 
 fixpoint computation that may assign task attempts on the given \TT. Any updates to the {\em schedule} relation 
 (see rule S5 in Figure~\ref{ch:boom:fig:schedule}) will trigger a Java listener that translates the update into a {\em Task} 
-object, which the {\em assignTasks} method accumulates in the {\em List} object returned at the end of the Overlog fixpoint. 
+object, which the {\em assignTasks} method accumulates in a {\em List} object that is returned at the end of an \OVERLOG fixpoint. 
 
 \subsubsection{Job submission interface}
 
@@ -1085,31 +1087,32 @@ a reduce task in advance of the map tasks can result in significant bias results
 aggregation case and significant memory pressure in the continuous job case. 
 
 Figure~\ref{ch:hop:fig:schedmaps} shows three rules that together determine when a job is allowed
-to schedule map tasks. For each job, rule H1 counts the number of reduce tasks currently scheduled.
-The job relation includes the number of reduce tasks and, as part of the HOP port, the job type. If
-the job type is either "online" or "continuous" then rule H2 will indicate that map tasks can be scheduled
+to schedule map tasks. A separate admission controller rule ensures that the number of reduce tasks for an
+online aggregation or continuous job fits within the current cluster-wide slot capacity. For each job, rule H1 counts the 
+number of reduce tasks currently scheduled. The job relation includes the number of reduce tasks and, as part of the HOP 
+port, the job type. If the job type is either "online" or "continuous" then rule H2 will indicate that map tasks can be scheduled
 when the scheduled reduce task count is equal to the number of reduce tasks in the job. Rule H3 applies
 to all other job types, and it simply asserts that map tasks can be scheduled for the corresponding job. 
-The {\bf canScheduleMaps} predicate is added to rules that determine the scheduling of map tasks 
+The \ol{canScheduleMaps} predicate is added to rules that determine the scheduling of map tasks 
 (e.g., rule S4 in Figure~\ref{ch:boom:fig:schedule}).
 
-\subsection{Real-time monitoring with \JOL}
+\section{Real-time monitoring with \JOL}
 \label{ch:hop:sec:jolmonitor}
 
-In this section, we look at building scheduler policies around the real-time monitoring information supplied by a
-monitoring job. In order to do this, we must first import the results of our MapReduce monitoring job to \JOL, where
-it is accessible by the declarative scheduler. In the remainder of this section, we describe the MapReduce job that
+With the port \BOOM-MR to HOP in place, we began building scheduler policies around the real-time monitoring information supplied by our
+monitoring job. In order to do this, we needed to import the results of our MapReduce monitoring job into \JOL, where
+it is accessible by the declarative scheduler. In the remainder of this section, we further describe the MapReduce job that
 continuously monitors HOP and the interface between it and \JOL. We then describe an alert system that detects outlier measurements in map and 
-reduce task attempts. We conclude with a new task speculation policy that is based on the alert system.
+reduce task execution attempts. We conclude our discussion with a new task speculation policy that is based on the alert system.
 
-\subsubsection{MapReduce monitoring job}
+\subsection{MapReduce monitoring job}
 
 \begin{table}
 \ssp
 \centering
 \begin{tabular}{|l|l|l|} \hline
 \textit{Measure}    & \textit{Description}                 & \textit{Source} \\ \hline \hline
-COMP\_EST        & Task estimated completion time  & Overlog \\ \hline
+COMP\_EST        & Task estimated completion time  & \OVERLOG \\ \hline
 USER\_CPU        & User CPU usage                   & /proc/stat, /proc/[pid]/stat \\ \hline
 SYS\_CPU           & System CPU usage              & /proc/stat, /proc/[pid]/stat \\ \hline
 RSS                       & Resident set memory size   & /proc/[pid]/stat   \\ \hline
@@ -1128,23 +1131,23 @@ PAGE\_IN           & Pages in                                 & /proc/vmstat \\ 
 \end{table}
 
 The MapReduce job that monitors HOP is scheduled during the system bootstrap. The job will execute
-a single map task on each \TT in the cluster. Some number of reduce tasks will also be scheduled for this 
-job. For instance, we could schedule a single reduce task per rack, which aggregates the results of all
-map tasks running on machines local to the rack. 
+a single map task on each \TT in the cluster and some number (based on the size of the cluster) of reduce tasks that group machine and
+rack level statistics. For example, we could schedule a single reduce task per rack that aggregates the statistics gathered on that rack. 
 
 Table~\ref{ch:hop:tbl:measure} lists the common measurements that we have considered. The 
-measurement name is given in the first column, followed by the description. The last column
-identifies the location under '/proc' where the measurement is taken. Process level measurements 
-reside under '/proc/[pid]', where pid is the process identifier. All other measurements refer to machine
-level measurements with the exception of the estimated completion time, which is derived in the scheduler.
+measurement name is given in the first column, followed by a description of the measurement. The last column
+identifies the location under \ol{/proc} where the measurement is taken. Process level measurements 
+reside under \ol{/proc/[pid]/}, where pid represents the process identifier. All other measurements outside of \ol{/proc/[pid]/} 
+refer to machine level measurements with the exception of the estimated completion time, which is derived from task level
+statistics in the \JT.
 
-A map task gathers measurements by periodically reading the source location from the local file system. 
+A map task gathers measurements by periodically reading the source location (last column in Table~\ref{ch:hop:tbl:measure}) from the local file system. 
 For each measurement, the map task will output a record $<$host name, time stamp, pid, measurement name, measurement value$>$.
-For machine statistics, the map task will set the PID field to $0$ e.g., $<$boom.cs.berkeley.edu, 12348234, 0, NET\_OUT, 101$>$.
-The record key for all map output records will be the host name or, if available, the name of the rack on which the 
-host resides.
+For machine statistics, the map task will set the $PID$ field to $0$ e.g., $<$boom.cs.berkeley.edu, 12348234, 0, NET\_OUT, 101$>$.
+The record key for all map outputs is the identifier of the rack to which the machine belongs. If the cluster does not contain racks then 
+the host name is used instead. This ensures that a single reduce task will see all measurements from a given rack and machine boundary. 
 
-\subsubsection{Monitoring with Overlog}
+\subsection{Monitoring with \OVERLOG}
 
 \begin{table}
 \ssp
@@ -1162,19 +1165,17 @@ alert                   & Outlier task alerts   & \underline{TaskId}, \underline
 \label{ch:hop:tbl:monitorCatalog}
 \end{table}
 
-The output of the monitoring job is sent directly to the \JOL instance running on the \JT. There it will be translated into \JOL
+The output of the monitoring job is sent directly to the \JOL instance running on the \JT. There, it is translated into \JOL
 tuples and inserted into monitoring relations defined in \JOL. Table~\ref{ch:hop:tbl:monitorCatalog} defines these monitoring 
-relations. The {\em machineStat} ($pid == 0$) and {\em processStat} tables hold the output of the monitoring jobs. The {\em jobStat} 
-and {\em taskStat} tables maintain statistics for jobs and tasks respectively, and their values are derived from within the scheduler.  
-The {\em alert} table contains outlier task measurements, which depending on the severity can result in corrective action e.g., execute
-a speculative task. 
-
+relations. The \ol{machineStat} and \ol{processStat} tables directly hold the output of the monitoring jobs. The \ol{jobStat} 
+and \ol{taskStat} tables maintain statistics for jobs and tasks respectively, the values for which are derived by rules within the scheduler.  
+The \ol{alert} table contains outlier task measurements, which depending on the severity can result in corrective action e.g., execute
+a speculative task (Section~\ref{ch:hop:sec:speculation}). 
 
 \begin{figure}
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-
 // Correlate process measurements to the actual map/reduce task \\
 TS1 {\bf taskStat}(TaskId.getJobID(), TaskId, Measure, TaskType, TimeStamp, Value) :- \\
 \datalogspace {\bf taskAttempt}(TaskId, ... , TaskState.RUNNING, Pid), \\
@@ -1188,16 +1189,19 @@ TS2 {\bf taskStat}(JobId, TaskId, COMP\_EST, TaskType, TimeStamp, CompEst) :- \\
 \datalogspace Type := TaskId.isMap() ? "map" : "reduce", \\
 \datalogspace CompEst := ProgressRate == 0 ? infinity : (1f - Progress) / ProgressRate, \\
 \datalogspace TimeStamp := java.lang.System.currentTimeMillis(); \\
-
 \end{boxedminipage}
 \caption{\label{ch:hop:fig:taskstat} Rules for maintaining the taskStat table.}
 \end{figure}
 
-Figure~\ref{ch:hop:fig:taskstat} shows the rules for maintaining the taskStat table. The taskAttempt
-table was extended to include the task process identifier ($Pid$). This allows us to correlate 
-a task attempt with its process level measurements, as shown in rule TS1. A task's estimated
-completion time is based on its progress and progress rate. Rule TS2, maintains the COMP\_EST
-measurement in the taskStat table. 
+Figure~\ref{ch:hop:fig:taskstat} contains two rules that together maintain the \ol{taskStat} table. 
+The \ol{taskAttempt} table was extended to include the task process identifier ($Pid$), which is supplied
+by the \TT executing the task attempt. The process identifier allows us to correlate a task in the \ol{taskAttempt} 
+table with process level measurements in the \ol{processStat} table, as shown by rule TS1. 
+A task's estimated completion time is based on its current progress and progress rate. The progress rate
+is based on the change in progress between task status updates performed during \TT heartbeats. 
+Using the current progress and progress rate, rule TS2 computes a rough estimate on the remaining time
+it will take for the task to complete, which we have denoted as the COMP\_EST measurement in the 
+\ol{taskStat} table. 
 
 \begin{figure}
 \ssp
@@ -1215,17 +1219,17 @@ JS2 {\bf jobStat}(JobId, TaskType, Measure, SC) :- \\
 \caption{\label{ch:hop:fig:jobstat} Rules for maintaining the jobStat relation.}
 \end{figure}
 
-Figure~\ref{ch:hop:fig:jobstat} contains the rules for maintaining the jobStat table. 
-The {\em taskStats} maintained by rule JS1 provides a list of measurement values 
-for each job identifier, task type, and measurement name. The jobStat table maintains
+Figure~\ref{ch:hop:fig:jobstat} contains the rules for maintaining the \ol{jobStat} table. 
+The \ol{taskStats} table, maintained by rule JS1, provides a list of measurement values 
+for each job identifier, task type, and measurement name. The \ol{jobStat} table groups
 measurement values belonging to the same job, task type, and measurement name. 
 A special Java object called {\em StatContainer} is used to store each group of measurements. 
 The {\em StatContainer} class defines methods for computing various metrics (e.g., mean, median, stddev, etc.)
-from its list of measurement values. Rule JS2 maintains the jobStat table by initializing a {\em StatContainer} object from the aggregated measurement 
-values in the taskStats table.
+from its list of measurement values. Rule JS2 maintains the jobStat table by initializing a {\em StatContainer} object 
+for each group of aggregated measurement values.
 
 
-\subsubsection{Outlier detection} 
+\subsection{Task alerts} 
 
 \begin{figure}
 \ssp
@@ -1243,74 +1247,88 @@ values in the taskStats table.
 \end{figure}
 
 Figure~\ref{ch:hop:fig:outlier} contains a single rule that detects outlier task by correlating the
-task measurement with information in the jobStat table. We compare the measurements of
-tasks that belong to the same category -- job and are of the same task type (map or reduce). 
-The JobStat ({\em StatContainer}) object for a given category determines if a task belonging
-to that category is an outlier based on some metric e.g., k deviations from the mean. 
-The JobStat object also provides a description and severity of the alert tuple. 
+task measurement with information in the jobStat table. We compare the measurements from
+tasks that belong to the same category -- job and task type (map or reduce). 
+The $JobStat$ variable references a {\em StatContainer} object for a given category, and it
+is used to determine if a task belonging to that category is an outlier based on some 
+metric e.g., k deviations from the mean. The $JobStat$ variable is also used to provide a 
+description and severity of outlier measurement. 
 
-\subsection{Task speculation policy} 
+\subsection{Alert based speculation policy} 
 \label{ch:hop:sec:speculation}
 
 \begin{figure}
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
+\begin{enumerate} \itemsep0pt
 
-{\bf schedule}(Tracker, list$<$TaskId, MapSlots$>$) :- \\
-\datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, \_),  $MapSlots > 0$, \\
-\datalogspace {\bf alert}(TaskId, AlertTime, Measure, Desc, Severity), \\
-\datalogspace $Severity == "Critical"$,  /* The alert is critical */ \\
-\\
-\datalogspace /* Ensure the alert is not too old (alert time $<$ 10 seconds ago). */ \\
-\datalogspace $(java.lang.System.currentTimeMillis() - AlertTime) < 10000$,  \\
-\\
-\datalogspace /* Ensure we're looking at the most recent alert for this measure.*/ \\
-\datalogspace {\bf alert}(TaskId, AT2, Measure, ...), $AT2 <= AlertTime$, \\
-\\
-\datalogspace  /* The task's estimated time to completion is very high */ \\
-\datalogspace {\bf taskStat}(JobId, TaskId, COMP\_EST, TaskType, TimeStamp, TaskStat), \\
-\datalogspace {\bf jobStat}(JobId, TaskType, COMP\_EST, JobStat),  \\
-\datalogspace $TaskStat < JobStat.percentile(0.25)$,  \\
-\\
-\datalogspace /* Schedule backup if host has split or task has not splits (e.g., reduce) \\
-\datalogspace  \xspace and no backup task is yet scheduled */ \\
-\datalogspace {\bf task}(JobId, TaskId, ..., Splits, ...), TaskId.isMap(), \\
-\datalogspace {\bf taskAttemptCount}(TaskId, Count), $Count == 1$, \\
-\datalogspace $InputSplits.contains(TrackerStatus.getHost())$; \\
+\item {\bf schedule}(Tracker, list$<$TaskId, MapSlots$>$) :-
+\item \label{tsp:heartbeat} \datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, \_),  \\
+					\datalogspace $MapSlots > 0$, \\
+
+\item \label{tsp:alert} \datalogspace {\bf alert}(TaskId, AlertTime, Measure, Desc, Severity), \\
+				 \datalogspace $Severity == "Critical"$,  /* The alert is critical */  \\
+
+\item  \label{tsp:recent} \datalogspace /* Ensure the alert is not too old (alert time $<$ 10 seconds ago). */  \\
+					\datalogspace $(java.lang.System.currentTimeMillis() - AlertTime) < 10000$,  \\
+
+\item \label{tsp:up2date} \datalogspace /* Ensure we're looking at the most recent alert for this measure.*/ \\
+				       \datalogspace {\bf alert}(TaskId, AT2, Measure, ...), $AT2 <= AlertTime$, \\
+
+\item \label{tsp:compest}  \datalogspace  /* The task's estimated time to completion is very high */ \\
+				         \datalogspace {\bf taskStat}(JobId, TaskId, COMP\_EST, TaskType, TimeStamp, TaskStat), \\
+					\datalogspace {\bf jobStat}(JobId, TaskType, COMP\_EST, JobStat),  \\
+					\datalogspace $TaskStat < JobStat.percentile(0.25)$,  \\
+
+\item \label{tsp:backup} \datalogspace /* Schedule backup if host has split or task has not splits (e.g., reduce) \\
+          \datalogspace  \xspace and no backup task is yet scheduled */ \\
+	\datalogspace {\bf task}(JobId, TaskId, ..., Splits, ...), TaskId.isMap(), \\
+	\datalogspace {\bf taskAttemptCount}(TaskId, Count), $Count == 1$, \\
+	\datalogspace $InputSplits.contains(TrackerStatus.getHost())$; \\
+\end{enumerate}
 \end{boxedminipage}
 \caption{\label{ch:hop:fig:speculation} Rule for map task speculation based on alert system data. Reduce task 
 speculation rule is similar and therefore omitted. }
 \end{figure}    
    
-We are now ready to describe our rule for task speculation based on real-time monitoring information. 
-Figure~\ref{ch:hop:fig:speculation} contains a rule that will schedule all map tasks with "critical" alerts
-that recently occurred. The rule is evaluated whenever a {\em heartbeat} exchange is performed by
-some \TT. The {\bf heartbeat} predicate includes the name of the \TT, its status, and spare map slot capacity, which
-the rule ensure is greater than zero. The rule then joins with all "critical" alerts that occurred within the last
-ten seconds and represent the most recent alert of its kind. As an extra precaution, we check that the alerted task's
-estimated completion time is very high relative to other tasks in its category. Finally we ensure that a speculative
-task has not already been scheduled and that the \TT contains the maps input data. 
+Figure~\ref{ch:hop:fig:speculation} contains a rule that schedules map tasks with any "Critical" alerts
+that occurred recently. The rule is evaluated whenever a {\emph heartbeat} exchange occurs between the \JT
+and some \TT. The \ol{heartbeat} predicate includes the name of the \TT, its status, and its spare map slot capacity, which
+the rule ensures is greater than zero (line~\ref{tsp:heartbeat}). The rule joins the \ol{heartbeat} with all "Critical" alerts (line~\ref{tsp:alert}) 
+that occurred within the last ten seconds (line~\ref{tsp:recent}), ensuring that alert is the most recent of its kind (line~\ref{tsp:up2date}). 
+As an extra precaution, we check that the alerted task's estimated completion time is high relative to other tasks in its category (line~\ref{tsp:compest}). 
+Finally, we ensure that the task has not already been speculated and that the \TT contains the maps input data (line~\ref{tsp:backup}). 
 
 
-\subsubsection{Evaluation}
+\subsection{Evaluation}
 
-\begin{figure*}[t]
+\begin{figure*}[ht]
 \ssp
-\begin{minipage}{0.5\linewidth}
   \centering
-        \includegraphics[width=0.90\linewidth]{figures/taskSpecPolicy_vanilla}
-\end{minipage}
-\begin{minipage}{0.5\linewidth}
-  \centering
-        \includegraphics[width=0.90\linewidth]{figures/taskSpecPolicy_hop}
-\end{minipage}
-\caption{CDF of map task completion times for initial and backup task execution.}
+  \subfloat[][Hadoop 19.2 task speculation policy]{\label{fig:spec-hadoop}\includegraphics[width=0.48\linewidth]{figures/taskSpecPolicy_vanilla}}
+  \subfloat[][HOP alert based task speculation policy]{\label{fig:spec-hop}\includegraphics[width=0.48\linewidth]{figures/taskSpecPolicy_hop}}
+  \caption{Compares speculation policies by plotting the starting point and progress of the faulty task (first task) and speculative task (second task).}
 \label{fig:taskSpecPolicy}
 \end{figure*}
 
-We compared our speculation policy with the baseline policy of stock Hadoop by injecting a faulty 
-map task in a wordcount job. 
+We compared our alert based speculation policy with the speculation policy implemented in unmodified Hadoop 19.2.
+Our experiment executed a wordcount job that contained a single faulty map task that would execute normally for
+a minute before stalling out by sleeping for one second intervals between map function invocations. The input to the
+wordcount was 10GB of randomly generated words, yielding 20 map tasks total. We executed this job on a 20 node
+EC2 cluster and compared the time it took to initiate a speculative task using our policy to the policy in unmodified Hadoop.
+
+Figure~\ref{fig:taskSpecPolicy} shows the result of this experiment by plotting the launch time and progress of the original (first) task 
+and the backup (second) task. HOP's alert based speculation policy is able to detect the faulty map task and execute a backup task 
+in half the time of unmodified Hadoop. In unmodified Hadoop, a task is speculated based on its rate of progress 
+(relative to other tasks in its category). We are able to further extend this policy by including machine and process 
+level statistics as further evidence to speculate. Indeed, our choice to speculate was not only based on a high 
+estimated time to completion but also a critically low "user CPU" value and a critically low I/O activity. 
+
+The astute reader will notice however that the rate of progress for the second task in HOP is less than that 
+of unmodified Hadoop. The reason for this is that our monitoring jobs do add some extra load to the cluster. 
+Nevertheless, in this instance, the overall job response time was slightly less (a few seconds) in HOP due to 
+the faster turn around time in our speculation policy.
 
 
 \section{Related Work}
@@ -1335,19 +1353,15 @@ dataflow stages by default, breaking pipelines.  The Dryad paper describes
 support for optionally ``encapsulating'' multiple asynchronous stages into a
 single process so they can pipeline, but this requires a more complicated
 programming interface.
-%The paper does not describe how fault tolerance works in this setting, but presumably when these encapsulated stages fail they restart in their entirety.  
-The Dryad paper explicitly mentions that the system is targeted at batch processing, and not at scenarios like continuous queries.  
-%By contrast, our work preserves the MapReduce checkpoint/restart fault-tolerance behavior between stages, while also providing pipelining features to support continuous queries, online aggregation, and related interactive functionalities.
 
 It has been noted that parallel database systems have long provided partitioned
 dataflow frameworks~\cite{pavlo09}, and recent commercial databases have begun
-to offer MapReduce programming models on top of those
-frameworks~\cite{aster,greenplum}.  Most parallel database systems can provide
-pipelined execution akin to our work here, but they use a more tightly coupled
-iterator and \emph{Exchange} model that keeps producers and consumers
-rate-matched via queues, spreading the work of each dataflow stage across all
-nodes in the cluster~\cite{exchange}.  This provides less scheduling flexibility
-than MapReduce and typically offers no tolerance to mid-query worker
+to offer MapReduce programming models on top of those frameworks~\cite{aster,greenplum}.  
+Most parallel database systems can provide pipelined execution akin to our work here, 
+but they use a more tightly coupled iterator and \emph{Exchange} model that keeps 
+producers and consumers rate-matched via queues, spreading the work of each dataflow 
+stage across all nodes in the cluster~\cite{exchange}.  This provides less scheduling 
+flexibility than MapReduce and typically offers no tolerance to mid-query worker
 faults. Yang et al.\ recently proposed a scheme to add support for mid-query
 fault tolerance to traditional parallel databases, using a middleware-based
 approach that shares some similarities with MapReduce~\cite{osprey-icde}.
@@ -1397,8 +1411,6 @@ MapReduce. The downside of these techniques is that they do not allow users to
 choose the query stopping points or time/accuracy trade-offs
 dynamically~\cite{ieeecontrol}.
 
-%Unlike much of the work on online aggregation, we do not focus here on statistical guarantees because of the flexibility of the MapReduce programming model.  These guarantees are crafted for specific SQL aggregates like SUMs, COUNTs, and AVERAGEs, and modified to account for processing techniques like the join algorithms used.  The focus of our work here is architectural: to provide ``early returns'' interactions within the powerful scalability and fault tolerance facilities of MapReduce frameworks.  The statistical guarantees from the literature only apply to SQL-style reduce functions; statistical guarantees for other online reducers would need to be developed in a case-by-case basis.  We expect that in many cases users will settle for simply observing changes in the output of a job over time, and make their own decisions about whether early returns are sufficient.
-
 \subsection{Continuous Queries}
 In the last decade there was a great deal of work in the database research
 community on the topic of continuous queries over data streams, including
@@ -1426,4 +1438,27 @@ burden on the continuous query programmer of the sort we describe in
 Section~\ref{ch:hop:sec:continuous}.  On the other hand, the FLuX protocol is far more
 complex and resource-intensive than our pipelined adaptation of Google's
 checkpoint/restart tolerance model.
+
+\section{Summary}
+
+In this chapter, we extended the batch-oriented execution model of MapReduce to 
+support pipelining between operators. This enables a new suite of MapReduce jobs
+that are able to perform online aggregation and continuous like queries. Unlike much of the work on 
+online aggregation, we do not focus here on statistical guarantees because of the 
+flexibility of the MapReduce programming model.  These guarantees are crafted for specific 
+SQL aggregates like SUMs, COUNTs, and AVERAGEs, and modified to account for processing 
+techniques like the join algorithms used.  The focus of our work here is architectural: to provide 
+``early returns'' interactions within the powerful scalability and fault tolerance facilities of MapReduce 
+frameworks.  The statistical guarantees from the literature only apply to SQL-style reduce functions; 
+statistical guarantees for other online reducers would need to be developed in a case-by-case basis.  
+We expect that in many cases users will settle for simply observing changes in the output of a job over 
+time, and make their own decisions about whether early returns are sufficient.
+
+We leveraged our ability to run continuous MapReduce jobs in HOP by developing a monitoring
+framework that provides near real-time machine and process level statistics. Our monitoring framework
+enabled new scheduling opportunities that are based on such statistics. Porting the declarative scheduler to HOP
+allowed us to quickly prototype alternative policies in \OVERLOG where, in many cases, adding new scheduling 
+constraints translated into adding/removing a few rule predicates. 
+
+
 
