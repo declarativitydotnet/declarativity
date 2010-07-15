@@ -228,15 +228,12 @@ occurrences of the {\em status} event for the same group will never fire the sec
 %monotonic behavior in all models
 %\wrm{commenting out fancy pants diction, so neil doesn't have to}
 
-\paa{introduce 'at most once' as a specialization of committed choice, and
+\paa{
 present the macro, which expands to a table (say foo), a log (foo\_log) and an
 event (foo\_event) which occurs once if foo occurs at all.}
 
 \subsection{Order in Logic}
 
-\paa{some intro text: pure logic has no notion of order.  distributed systems programming
-frequently requires ordering constructs to cope with indeterminacy in message ordering
-and to achieve synchronization}
 
 \noindent{}In an asynchronous system, the programmer will in general not be able to
 predict when, or in what order, events arrive from other nodes.  When the timing and 
