@@ -142,8 +142,6 @@ application of rules to ensure that this universal quantification is always
 applied after the input set is fully determined.  This ordering induces a
 unique model, under the semantics presented in~\cite{wellfounded}.
 
-%\paa{good!}
-
 \subsection{Safety}
 
 To ensure that Datalog programs are always effectively computable, the Herbrand
@@ -151,26 +149,26 @@ Universe---and thus the model---is restricted to be finite.  This is
 achieved by making the program {\em safe}---restricting the use of constructs
 that can expand the Herbrand Universe, such as summary aggregates.
 
-\section{\lang}
-
-One of our goals for \lang is
-to model the inherent non-determinism of network delay in asynchronous
-distributed systems.  Non-determinism in Datalog was formalized by Sacc\`{a}
-and Zaniolo~\cite{sacca-zaniolo} in their \dedalus{choice} construct.  For
-example, consider the rule \dedalus{p(X,Y) :- q(X,Y), choice((X), (Y));} this expresses that for each
+One of our goals for \lang is to model the inherent non-determinism of network
+delay in asynchronous distributed systems.  Sacc\`{a} and
+Zaniolo~\cite{sacca-zaniolo} formalized non-determinism in Datalog in their
+\dedalus{choice} construct.  Consider the rule \dedalus{p(X,Y) :- q(X,Y),
+choice((X), (Y));} The \dedalus{choice((X),(Y))} clause means that For each
 value that variable \dedalus{X} assumes, variable \dedalus{Y} may only take on
-a single {\em non-deterministically chosen} value.  Sacc\`{a} and Zaniolo provide a model-theoretic definition for \dedalus{choice} (based on cycles through negation) that preserves our ability to analyze programs using tools from Datalog. 
-%   See~\cite{sacca-zaniolo}
-% for the details on how \dedalus{choice} is expanded into Datalog rules that
-% employ cyclic negation.
+a single {\em non-deterministically chosen} value.  \dedalus{choice} has a
+model-theoretic definition based on cycles through negation.  \dedalus{choice}
+never causes a contradiction, and is safe, because it does not expand the
+Herbrand Universe.
 
-\paa{the above para is jarringly out of place here.  what was the rationale for
-moving it from the previous section?}
+\section{\lang}
 
 \lang is a subset of Datalog, with \dedalus{choice}, an infinite
 \dedalus{time} relation $\mathbb{N}$, and a \dedalus{successor}
 %$(\mathbb{N} \cup \top)$
-relation, which is isomorphic to $+1$ on $\mathbb{N}$.  The intuition behind
+relation, which is isomorphic to $+1$ on $\mathbb{N}$.  We will carefully
+restrict the use of \dedalus{time} and \dedalus{successor}
+
+The intuition behind
 \lang's \dedalus{successor} relation is that it models the passage of logical
 time.  In our discussion, we will say that facts with lower time suffixes occur
 ``before'' atoms with higher ones.  
