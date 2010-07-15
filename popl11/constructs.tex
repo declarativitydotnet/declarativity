@@ -243,6 +243,60 @@ ordering of message arrival affects program results, it may be necessary to inst
 programs with constructs that preserve or restore order at communication boundaries,
 or to ensure that simultaneous arrival of messages has the same effect as serial arrival.
 
+
+\subsubsection{Serializers}
+
+Some programs will require tuples to be processed in a particular (partial)
+data-dependent order, rather than all-at-once, as a set.  Moreover, it is 
+common for distributed programs that process messages to be written in
+a style that expects only a single message to be received at a time.   This 
+is not an issue for imperative languages that use a {\em recv} primitive
+provided by an operating system, as such primitives hide a queue data structure
+that provides these semantics automatically.  In distributed logic languages,
+failure to account for the (often rare) possibility of simultaneous receipt of messages
+can be the source of bugs.
+
+One of the design goals of \lang is to make all semantics manifest and analyzable.
+Consider the following program fragment, whose intent is to model the replacement of the 
+current {\em status} value with the new values in {\em cart\_action}:
+\begin{Dedalus}
+status(Location, Session, CartObj) \(\leftarrow\)
+    cart_update(Location,  Session, CartObj);
+    
+delete status(L, S, C) \(\leftarrow\)
+    status(L, S, C), cart_update(L, S, _);
+\end{Dedalus}
+
+If multiple {\em cart\_action} tuples may be received in a single timestep with the same
+values for $L$ and $S$, the intended behavior of updating {\em status} will not be met:
+instead, multiple rows with the same values will appear.  Restoring the expected behavior
+requires a \emph{serializer}: a program fragment that rules out coincidence in logical time 
+for a given predicate.  For example, if we assume that $CartObj$ values are unique to each
+tuple and that they come from an ordered domain, we may express a serializer as follows:
+
+\begin{Dedalus}
+persist[update_queue, 3]
+omin(L, S, min<C>) \(\leftarrow\)
+  update_queue(L, S, C);
+
+update_queue_out(L, S, C)@next \(\leftarrow\)
+  update_queue(L, S, C), omin(A, C);
+
+delete update_queue(L, S, C) \(\leftarrow\)
+  update_queue(L, S, C), omin(A, C);
+\end{Dedalus}
+
+In the program fragment above, we indirect {\em cart\_update} tuples through the relation
+{\em update\_queue}, which stores the current contents of the ``queue''  at 
+any given time.  The predicate must persist across timesteps, as multiple steps may be
+necessary to drain it.  At each timestep, the tuple with the minimum value for $Cartobj$
+is placed in {\em update\_queue\_out} and atomically removed from {\em update\_queue}.
+This changes the value computed by the {\em min} aggregate at the next timestep.
+A serializer thus takes advantage of the monotonic property of timestamps to enforce the
+orderly processing of external inputs.
+
+
+\begin{comment}
 \subsubsection{Priority Queues}
 
 \paa{whack this ponderous subsection.  present instead \emph{serializers},
@@ -252,54 +306,6 @@ more that one tuple from being considered per fixpoint.  then present
 after the discussion of sequences (since OQs use sequences), as a mechanism
 for maintaining ordering across async boundaries (familiar from TCP, fifo broadcast,
 etc)}
-
-%\paa{shorten this section} While a sequence is a useful construct for
-%generating or imposing an ordering on tuples \wrm{seems a bit fishy.  seems
-%like it might only be useful for transferring a given order thru async,
-%assuming the tuples are already ordered at sender. plus, seqs appears after
-%this now}, 
-
-\wrm{i think this might be the wrong way to present queues.  queues don't
-necessarily guarantee that ``all things of priority X happen before all things
-of priority Y>X''.  the two high order bits of queues are: they prevent things
-of different priorities from simultaneously executing, and they enforce kind of
-a loose order ``dequeue the lowest priority thing i have thus far''.  ordering
-by itself isn't a high-order bit though, because i can sort in one stratum.
-it's more this ``online loose order'' which is important.  didn't want to do
-too much damage to this section, so i didn't rewrite it yet to conform with
-this.}
-
-Some programs will require tuples to be processed in a particular (partial)
-data-dependent order, rather than all-at-once, as a set.  For example,
-consider a predicate \dedalus{priority\_queue} that represents a series of
-tasks.
-%to be performed in some predefined order.
-Its attributes are two strings---a user and a job---and an integer indicating
-the priority of the job in the queue:
-
-\begin{Dedalus}
-priority\_queue('bob', 'bash', 200)@123;
-priority\_queue('eve', 'ls', 1)@123;
-priority\_queue('alice', 'ssh', 204)@123;
-priority\_queue('bob', 'ssh', 205)@123;
-\end{Dedalus}
-
-A program may desire to serialize the jobs, despite the coincidence of the
-\dedalus{priority\_queue} events in logical time.
-
-%Depending on the program that implements the balance update, several behaviors
-%are possible.
-%Given this schema, we note that a program would likely want to process
-%\dedalus{priority\_queue} events individually in a data-dependent order, in
-%spite of their coincidence in logical time.  
-
-%%It is difficult to express general
-%%in-order tuple processing in Datalog, in part because the language does not
-%%admit sequences.  \jmh{Huh?  I don't see the last clause there.  Maybe say simply that Datalog is set-oriented, but what we want here is precisely to impose an ordering on the elements of the set, which seems unnatural.  There's maybe a connection to expressibility and aggregation or arithmetic or something, but let's not try to sort that out for now.}
-%above is really what we want to say, right? -wrm
-%has so
-%notion of order of evaluation (except the implicit ordering implied by
-%stratification).
 
 In the program below, \dedalus{priority\_queue} stores the current contents of
 the queue at any given time.  The queue must persist across timesteps, as
@@ -337,7 +343,42 @@ from \dedalus{omin}.
 
 By doing so, we take advantage of the monotonic property of timestamps to enforce an ordering property over our input that is otherwise 
 very difficult to express in a logic language.
-%We return to this idea in our discussion of temporal ``entanglement'' Section~\ref{sec:entangle}.
+
+\end{comment}
+\subsubsection{Ordered Queues}
+\paa{what is a good name for this?}
+
+In a completely local execution, the serializer pattern is sufficient to implement a
+priority queue:  items inserted into {\em update\_queue} will be dequeued 
+according to the data-dependent ordering induced by the $Cartobj$ values.
+Maintaining such orderly queueing across asynchronous boundaries is another
+matter.  To ensure that a set of tuples sent across the network (and hence potentially 
+``scattered'' in logical time) are processed in the correct order requires some synchronization
+between sender and receiver.  In the style of FIFO messaging in network protocols, 
+we may use a sequence at the receiver to ensure that it ``waits'' 
+the necessary amount \paa{awk, sorry} to ensure totally ordered processing.  Because
+sequences operate over integers, we add an integer column to all relations to represent 
+the sender's ``intended'' order:
+
+\begin{Dedalus}
+persist[update_queue, 4];
+sequence[update_seq, del_update_queue, 4);
+update_seq(B) \(\leftarrow\) bottom(B);
+
+update(L, S, C, I) \(\leftarrow\)
+  update_queue(L, S, C, I),
+  update_seq(I);
+
+delete update_queue(L, S, C, I) \(\leftarrow\)
+  update(L, S, C, I);
+\end{Dedalus}
+
+Note that the sender is thus required not only to establish the ordering of tuples, but
+to inform the receiver of the ``bottom'' element, in order to seed the sequence.
+Tuples persist in {\em update\_queue} until such time as their $I$ value matches the 
+sequence value, at which point they are dequeued, atomically with the incrementation
+of the sequence and deletion from the queue relation.  This simple example illustrates
+a more general pattern of order preservation across network boundaries.
 
 %Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
 
