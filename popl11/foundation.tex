@@ -16,10 +16,10 @@ $p_j(\overline{X_j})$, $\lnot p_{j+1}(\overline{X_{j+1}})$, ..., $\lnot
 p_k(\overline{X_k})$;}.  \dedalus{$p_0$, ..., $p_k$} are known as {\em
 predicates}.  Each predicate, also called a {\em relation} or {\em table}, has
 a fixed arity.  Predicates that appear on the left-hand side of some rule in
-the program are called {\em intensional} predicates---the rest are called {\em
+the program are called {\em intensional} predicates; the rest are called {\em
 extensional}.  Each of $\overline{X_0}, ..., \overline{X_k}$ are lists of
 arguments (constants or existentially quantified variables).
-$p_0(\overline{X_0})$, ..., $p_k(\overline{X_K})$ are {\em atoms}---an atom is
+$p_0(\overline{X_0})$, ..., $p_k(\overline{X_K})$ are {\em atoms}: an atom is
 a list of arguments prefixed with a predicate.  The same variable symbol may
 appear in multiple atoms; in this case, we say that the atoms are {\em
 unified} on the arguments that contain the duplicated variable.  An assignment of constants to all arguments in a predicate is known as a {\em
@@ -47,12 +47,12 @@ corresponding satisfying assignment of constants in the left-hand side
 predicate.
 %\rcs{satisfies the lhs?}
 A (possibly empty) set of facts for the extensional predicates is known as an
-{\em EDB} or extensional data base.  A Datalog {\em instance} is a program
+{\em extensional data base} (EDB).  A Datalog {\em instance} is a program
 together with an EDB.  The set of facts in intensional predicates implied by
-the EDB given the program is the intensional data base {\em IDB} of the
+the EDB given the program is the {\em intensional data base} (IDB) of the
 instance.
 
-The {\em Herband Universe} of an instance, written $\mathcal{H}$ is the set of
+The {\em Herband Universe} of an instance, written $\mathcal{H}$, is the set of
 all constants in the EDB and IDB.
 
 \subsection{Aggregation}
@@ -87,8 +87,8 @@ EDB given the program~\cite{ullmanbook}.  Programs without negation or
 aggregation are always {\em monotonic}.  A program is monotonic if, when
 evaluated on two EDBs $E \subset F$, the model of the instance of $P$ with EDB
 $E$ is a subset of the model of the instance of $P$ with EDB $F$.  In practice,
-monotonic logic is not expressive enough to capture intersting programs --
-computation can never happen over an unbounded set.
+monotonic logic is not expressive enough to capture intersting programs---computation
+can never happen over an unbounded set.
 
 One achieves non-monotonicity by adding negation or aggregation.  When
 admitting negation or aggregation, one possibility is that a {\em
@@ -110,8 +110,8 @@ This instance has no minimal model, because it has a contradiction:
 \dedalus{move(1,1)} and \dedalus{\(\lnot\) win(1)} implies \dedalus{win(1)},
 and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
 we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
-\dedalus{p}, a contradiction could never arise in any instance of any program
--- this is called {\em syntactic stratification}.  It is known that detecting
+\dedalus{p}, a contradiction could never arise in any instance of any program---this
+is called {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
 of decreasingly consevative {\em stratification conditions}~\cite{local-strat,
