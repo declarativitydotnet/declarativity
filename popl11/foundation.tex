@@ -41,16 +41,19 @@ constraints}: $=, \geq, >, \leq, <, \neq$.  An order constraint is an infinite
 binary relation that may be applied either to constants, or variables used in
 the rule's body atoms.
 
-The logical meaning of a Datalog rule is that for each
-satisfying assignment of constants to variables on the right-hand side, there
-exists a tuple with the corresponding satisfying assignment of constants in the
-left-hand side predicate.
+The logical meaning of a Datalog rule is that for each satisfying assignment of
+constants to variables on the right-hand side, there exists a tuple with the
+corresponding satisfying assignment of constants in the left-hand side
+predicate.
 %\rcs{satisfies the lhs?}
 A (possibly empty) set of facts for the extensional predicates is known as an
 {\em EDB} or extensional data base.  A Datalog {\em instance} is a program
-together with an EDB.  
+together with an EDB.  The set of facts in intensional predicates implied by
+the EDB given the program is the intensional data base {\em IDB} of the
+instance.
 
-The {\em Herband Universe} of an instance, written $\mathcal{H}$ is the set of all constants in the EDB and IDB.
+The {\em Herband Universe} of an instance, written $\mathcal{H}$ is the set of
+all constants in the EDB and IDB.
 
 \subsection{Aggregation}
 
@@ -77,17 +80,17 @@ status(Serv, Cli, Ses, Item, Type, count<ReqId>) :-
 \end{Dedalus}
 
 \subsection{Non-Monotonicity}
-\jmh{A little intro would be nice here: monotonic programs can be useful, but often are not expressive enough to capture program semantics.  Going beyond monotonicity involves the use of negation/aggregation, but this needs to be addressed carefully.}
-A Datalog instance without negation or aggregation always has a unique {\em
-minimal model}: the minimal set of facts in intensional predicates implied by
-the EDB given the program, or the intensional data base ({\em
-IDB})~\cite{ullmanbook}.  
-\paa{the model is EDB $\cup$ IDB, right?}
-We call programs that always have a unique minimal model {\em monotonic} programs.
 
-\jmh{I think that's defining a corollary of montonicity, no?  Or are you trying to capture non-syntactic monotonicity here?  I suspect this is a dangerous way to do that...} Adding negation or aggregation to Datalog
-programs increases expressivity\wrm{cite}, but removes the guarantee of a
-unique minimal model---we call these {\em non-monotonic} programs.  \jmh{already you're in trouble, since this is not symmetric with the definition of montonicity.  the way you've stated things requires a proof}  When
+A Datalog instance without negation or aggregation always has a unique {\em
+minimal model}: the mininimal sets of facts in all predicates, implied by the
+EDB given the program~\cite{ullmanbook}.  Programs without negation or
+aggregation are always {\em monotonic}.  A program is monotonic if, when
+evaluated on two EDBs $E \subset F$, the model of the instance of $P$ with EDB
+$E$ is a subset of the model of the instance of $P$ with EDB $F$.  In practice,
+monotonic logic is not expressive enough to capture intersting programs --
+computation can never happen over an unbounded set.
+
+One achieves non-monotonicity by adding negation or aggregation.  When
 admitting negation or aggregation, one possibility is that a {\em
 contradiction} may arise---a fact that depends on its own negation.  Consider
 the Datalog program below, which represents a game where player \dedalus{X}
@@ -111,48 +114,42 @@ we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
 -- this is called {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
-of other {\em stratification conditions}~\cite{local-strat, ross-syntactic,
-modular, weak-strat} that assure acyclicity of all facts through negation---but exclude
-some contradiction-free programs---in an increasingly less 
-\paa{um, decreasingly?}
-conservative
-fashion.  \jmh{the preceding is slightly awkward} For example, adding the condition \dedalus{X < Y} to the above rule
-would rule out contradictions.  Alternatively, adding a condition to
-ensure that \dedalus{move} is acyclic would also exclude contradictions.  If a
-program satisfies a particular stratification condition, then we call the
-program {\em stratified}.
+of decreasingly consevative {\em stratification conditions}~\cite{local-strat,
+ross-syntactic, modular, weak-strat} that assure acyclicity of all facts
+through negation---but exclude some contradiction-free programs. For example,
+adding the condition \dedalus{X < Y} to the above rule would rule out
+contradictions.  Alternatively, adding a condition to ensure that
+\dedalus{move} is acyclic would also exclude contradictions.  If a program
+satisfies a particular stratification condition, then we call the program {\em
+stratified}.
 
-%The logic programming community has
-%devised a number of increasingly less-conservative conditions called {\em
-%stratification conditions}~\cite{local-strat, ross-syntactic, modular,
-%weak-strat}, which ensure acyclicity of derivations through negation, but
-%exclude some contradiction-free programs.  If a program meets a particular
-%stratification condition, we say the program is {\em stratified}.  One
-%condition is known as {\em syntactic stratification}, which excludes all
-%programs where a predicate \dedalus{p} transitively depends on
-%\dedalus{\(\lnot\)p}.  Clearly, this condition may exclude many useful
-%programs, because such a syntactic cycle may in practice never lead to a
-%contradiction.
-%The semantics presented in~\cite{wellfounded} define a unique
-%model for any stratified program.
-Negation (non-existence in a set) and aggregates (functions defined over
-sets) require their input set to be fully determined in order to produce a
-correct answer.  In other words, they require {\em universal quantification}
-over the set on which they are defined.  Stratification conditions impose order on the application of
-rules to ensure that this universal quantification is always applied after the
-input set is fully determined.  This ordering induces a unique model, under
-the semantics presented in~\cite{wellfounded}.
+%The logic programming community has devised a number of increasingly
+%less-conservative conditions called {\em stratification
+%conditions}~\cite{local-strat, ross-syntactic, modular, weak-strat}, which
+%ensure acyclicity of derivations through negation, but exclude some
+%contradiction-free programs.  If a program meets a particular stratification
+%condition, we say the program is {\em stratified}.  One condition is known as
+%{\em syntactic stratification}, which excludes all programs where a predicate
+%\dedalus{p} transitively depends on \dedalus{\(\lnot\)p}.  Clearly, this
+%condition may exclude many useful programs, because such a syntactic cycle may
+%in practice never lead to a contradiction.  The semantics presented
+%in~\cite{wellfounded} define a unique model for any stratified program.
+Negation (non-existence in a set) and aggregates (functions defined over sets)
+require their input set to be fully determined in order to produce a correct
+answer.  In other words, they require {\em universal quantification} over the
+set on which they are defined.  Stratification conditions impose order on the
+application of rules to ensure that this universal quantification is always
+applied after the input set is fully determined.  This ordering induces a
+unique model, under the semantics presented in~\cite{wellfounded}.
 
 %\paa{good!}
 
 \subsection{Safety}
 
-To ensure that Datalog programs are always effectively computable, the universe
-of constants---and thus the model---is restricted to be finite.  This is
+To ensure that Datalog programs are always effectively computable, the Herbrand
+Universe---and thus the model---is restricted to be finite.  This is
 achieved by making the program {\em safe}---restricting the use of constructs
-that can expand the universe of constants, such as summary aggregates.
-\paa{I want badly to add here ", infinite relations, or arbitrary scalar functions", 
-but assume there is a reason why you didn't?}  \jmh{Said differently, the above is an example, not a definition.  Also, it raises but does not address the obvious question of how we'll deal with Safety in Dedalus.}
+that can expand the Herbrand Universe, such as summary aggregates.
 
 \section{\lang}
 
