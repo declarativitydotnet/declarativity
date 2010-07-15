@@ -149,7 +149,7 @@ cart\_action(#Server, Client, Session, Item, Type) :-
   action(#Client, Session, Item, Type, ReqId),
   best_replica(#Client, Session, Server);
 
-cart\_action(#Remote, C, S, S, I, T) :-
+cart\_action(#Remote, C, S, I, T) :-
   cart\_action(#Local, C, S, I, T),
   replicas(#Local, C, S, Remote);
 \end{Dedalus}
