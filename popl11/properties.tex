@@ -55,23 +55,26 @@ future work.
 %well-known decision procedure for calculating the model \wrm{cite chomikci,
 %partial fixpoint stuff}. \wrm{In practice, due to magic sets, this isn't
 %horribly inefficient}~\cite{magic}
+
+\jmh{I'd prefer if any other basic terminology used here was  defined with similar formality and formatting when first introduced.  It makes jumping into the formal stuff much quicker -- you can more easily find all the necessary defs from before.  So far I think all that's missing is the definition for `instance'}
 \begin{definition}
 %
 If all traces of a \lang instance produce the same ultimate model, then we call
-the instance trace confluent.
+the instance {\em trace confluent}.
 %
 \end{definition}
 
 \begin{definition}
 %
 If every instance of a program is trace confluent, then we say the program is
-confluent.
+{\em confluent}.
 %
 \end{definition}
 
-\noindent{}Note that every monotonic Datalog program (without \dedalus{choice})
+\noindent{}It is easy to show that every monotonic Datalog program (without \dedalus{choice})
 is confluent.
 
+\jmh{In the next two definitions, I'm uncomfortable with the notion of ``operations on timestamps''.  You need to define that, maybe with terminology about equivalence of timestamp ``histories'': two histories that differ only in a certain way.  I wanted to use the word `trace' rather than `history' in the previous sentence, but the current definition of `trace' is too narrow to let you talk about arbitrary timestamps.  There is of course a deterministic mapping from trace to `history', but your definition takes it from the `history' side.  I wonder if you could define assoc. and commute. in terms of trace equivalence -- that might be simpler to reason about. And it would arguably be nicer: the discussion of timestamp ``history'' feels more operational.}
 \begin{definition}
 %
 We say that a \lang program is {\em associative} if the ultimate model is
@@ -102,17 +105,17 @@ invariant under the operation of swapping timestamps on two adjacent timestamps.
 \begin{definition}
 %
 A support of fact $f$ in a \lang instance is a set of facts $E$, such
-that $\forall e \in E (F \succ E_i)$.  If all $e$ in $E$ are non-negated, then
+that $\forall e \in E (F \succ E_i)$. \jmh{don't you want to talk about the ``complete'' support?  I.e. define the support so that $E$ contains any fact $e$ in the incremental model sucj that  $f \succ e$?  Come to think of it, you probably need to scope this discussion to a particular timestep, so that you discuss facts $f_t$ at time $t$.} If all $e$ in $E$ are non-negated, then
 we call $E$ a positive support.  If some $e$ in $E$ are negated, or are the
-output of an aggregate, then we call $E$ a negative support.
+output of an aggregate, then we call $E$ a negative support.  \jmh{What is a negated fact?  Do you mean that facts derived from rules with negation include the complement of some predicate in their support?  I.e. supports can be infinite/unsafe?}
 %
 \end{definition}
 
 It is clear that every fact in all incremental models of a trace of a monotonic
 \lang instance has a positive support.  In a trace of a non-monotonic \lang
-instance, some facts necessarily have only negative supports.  Note that
+instance, some facts necessarily have only negative supports. \jmh{you don't mean ``only''---range restriction means that support must include positive facts.} Note that
 because of the syntactic restrictions of \lang, negative supports always have a
-timestamp associated with them.
+timestamp associated with them.  \jmh{I don't see why pos support can get away without timestamps.  And you need a formalism for the idea of ``associating'' a timestamp with a support.}
 
 \begin{lemma}
 %
@@ -123,18 +126,22 @@ A monotonic \lang program is confluent if and only if it is associative.
 \begin{proof}
 %
 It is clear that the confluence of a monotonic \lang program implies its
-associativity, so we need only consider the other direction.
+associativity \jmh{no it's not -- you need to knit together traces and ``histories'' to make this argument}, so we need only consider the other direction.
 
 If a \lang instance is not trace confluent, we will show the \lang program is
 not associative.  Assume there exists a non-trace-confluent \lang instance $I$
-with an associative program.  That is, there are two traces $R_1, R_2$ for $I$,
+with an associative program.  
+\jmh{The below is unnecessarily hard to read.  Just say that $R_1$ has the first constraint, and $R_2$ has the second.}
+That is, there are two traces $R_1, R_2$ for $I$,
 such that 
 %$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
 %\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
 %the $f$ that no 
 $\exists i,j \in \{1,2\}: i \neq j \land f \in \bigcup_{t \in \text{time}}
 \mathcal{M}_{I,T}(R_i) \land f \not\in \bigcup_{t \in \text{time}}
-\mathcal{M}_{I,T}(R_j)$.  Let $g$ be the ``first'' such $f$, that is the $f$
+\mathcal{M}_{I,T}(R_j)$.  
+\jmh{"first" in what sense: lowest timestamp? the next sentence is plain hard to parse.}
+Let $g$ be the ``first'' such $f$, that is the $f$
 such that no transitive support of $f$ is also in the set \wrm{note that
 transitive support is acyclic}.  The entire contents of $g$'s transitive
 support clearly is in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_i)$
@@ -149,13 +156,13 @@ than the lemma}
 \end{proof}
 
 Note that a simple way to ensure associativity of a monotonic program is to
-persist all relations that appear in the head of an \dedalus{@async} rule.
-This ensures that all support will always be coincidentally true.  However,
+persist all relations that appear in the head of an \dedalus{@async} rule.  
+This ensures that all support will always be coincidentally true \jmh{``coincidentally'' is annoyingly overloaded; say what you mean explicitly in terms of timestamps}.  However,
 this does not ensure associativity of a non-monotonic program, because the
 support for some derivations is necessarily not positive \wrm{explain better}.  
 Another way to ensure associativity of a monotonic program is to use a
 queue-like construct to only consider one fact derived in an \dedalus{@async}
-predicate per timestamp.
+predicate per timestamp.  \jmh{but then the program is not monotonic.  and why are bothering to make this point?}
 
 %Since we do not consider the time suffix as part of the ultimate model, how can
 %non-determinism in time suffixes affect the ultimate model?  In purely
@@ -220,6 +227,7 @@ predicate per timestamp.
 
 \subsubsection{Commutativity}
 
+\jmh{Too much prose before the example.  Pop the example in the middle (``consider the following example'') and then discuss it.  Or put it up in a Figure.}
 It is easy to see that non-monotonic programs are not necessarily confluent,
 even when async predicates are simply persisted.  In addition to associativity,
 {\em commutativity} is now an issue: if we swap the timestamps of two messages,
@@ -264,7 +272,7 @@ backward direction.
 
 If a \lang instance is not trace confluent, we will show the \lang program is
 not associative or not commutative.  Assume there exists a non-trace-confluent 
-\lang instance $I$ with an associative and commutative program.  That is, there
+\lang instance $I$ with an associative and commutative program.  \jmh{Again, simplify the below to just defint $R_1$ and $R_2$}.  That is, there
 are two traces $R_1, R_2$ for $I$, such that
 %$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
 %\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
@@ -288,7 +296,9 @@ when i get some inspiration}
 %than the lemma}
 %
 \end{proof}
+\jmh{wasn't that a verbatim copy of the previous proof?}
 
+\jmh{the next paragraph needs more time ... introduce the concern more carefully, and I think it's worth formally making the argument as a lemma, since the mode of reasoning here is important to a lot of our notions of fine-grained monotonicity.  and I don't think it's ``easy to see'' since we never explained the Sacca/Zaniolo choice thing in detail.}
 At this stage, the careful reader may be concerned that our ``monotonic''
 programs permit async rules, as async rules use the \dedalus{choice} construct,
 which makes use of negation.  However, it is easy to see that the universal
@@ -303,7 +313,7 @@ is always fully defined.  In other words, universal quantification of
 %clarify}.
 
 \subsection{Identifying Points of Order}
-
+\jmh{tighten up this para}
 The previous section provided a conservative test for confluence: all monotonic
 programs with simply persisted asynchronous predicates are confluent.  In
 practice, however, programs that monotonically accumulate information and never
@@ -331,6 +341,7 @@ introduce points of order into our program.
 %quantified over has been computed.  This notion of ``waiting for a data
 %dependency to be satisfied'' is similar to the ordered application of rules
 %required for stratification.  
+\jmh{You already defined the PDG (rather too tersely) in the section on Temporal Strat}
 Fortunately, we can leverage the concept of a program's {\em predicate
 dependency graph} (PDG) from the Datalog literature to construct an analysis
 that can tell a programmer where points of order may be required to ensure
@@ -350,7 +361,7 @@ and all \dedalus{async} predicates simply persisted.
 
 Points of order can only ever be necessary on edges between monotonic
 components, because a monotonic program, considered as a \lang program, is
-confluent.  We have expressed this test in our \lang interpreter, using a
+confluent.  We have expressed this test \jmh{What test?!  You skipped the main point!  Please highlight the specific contribution here!  The next sentence is also too terse and insider (meta-model is not common parlance, I don't think)}  in our \lang interpreter, using a
 meta-model to treat rules as data.  Later, we present graphs of programs that
 identify monotonic components.  The data for these graphs was generated by our
 \lang code that expresses this test.
