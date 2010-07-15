@@ -105,7 +105,7 @@ invariant under the operation of swapping timestamps on two adjacent timestamps.
 \begin{definition}
 %
 A support of fact $f$ in a \lang instance is a set of facts $E$, such
-that $\forall e \in E (F \succ E_i)$. \jmh{don't you want to talk about the ``complete'' support?  I.e. define the support so that $E$ contains any fact $e$ in the incremental model sucj that  $f \succ e$?  Come to think of it, you probably need to scope this discussion to a particular timestep, so that you discuss facts $f_t$ at time $t$.} If all $e$ in $E$ are non-negated, then
+that $\forall e \in E (F \succ E_i)$. \jmh{don't you want to talk about the ``complete'' support?  I.e. define the support so that $E$ contains any fact $e$ in the incremental model such that  $f \succ e$?  Come to think of it, you probably need to scope this discussion to a particular timestep, so that you discuss facts $f_t$ at time $t$.} If all $e$ in $E$ are non-negated, then
 we call $E$ a positive support.  If some $e$ in $E$ are negated, or are the
 output of an aggregate, then we call $E$ a negative support.  \jmh{What is a negated fact?  Do you mean that facts derived from rules with negation include the complement of some predicate in their support?  I.e. supports can be infinite/unsafe?}
 %
@@ -347,7 +347,7 @@ dependency graph} (PDG) from the Datalog literature to construct an analysis
 that can tell a programmer where points of order may be required to ensure
 confluence.  A PDG is a directed graph that has one node per predicate in the
 program.  A PDG has an edge from \dedalus{p} to \dedalus{q} if $p \succ q$.
-The edge has three possible anotations: $+$ indicating that $p \succ q$ only in
+The edge has three possible annotations: $+$ indicating that $p \succ q$ only in
 \dedalus{@next} rules, $\lnot$ indicating that $p \succ q$ in at least one rule
 where $q$ appears negated in the body, and $@$, indicating that $p \succ q$
 only in \dedalus{@async} rules.
