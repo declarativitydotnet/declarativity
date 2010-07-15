@@ -2,23 +2,32 @@
 \label{sec:motivation}
 
 Consider a simple distributed application that provides a fault-tolerant
-``shopping cart'' service for commercial websites.  While it is common in
-practice to implement such applications above a key-value store tier that
-provides a read/write interface to objects, such a separation of tiers limits
-the ability of the storage substrate to exploit application-level semantics.
-%%Hence a design decision needs to be made: should the application provide its
-%%own storage or use a store?  \wrm{okay i'm lost here.} 
-To take advantage of such semantics and for ease of exposition,
-our motivating example will store and replicate its own state rather
-than using a distributed store.
-%%do the former, 
-%%though we will explore the latter option in more detail in
-%%section~\ref{sec:casestudy}.
-\paa{rusty, I had to revert your change because our case study is not about 
-KV stores but about shopping carts (and the main example is a shopping cart 
-that 'does its own storage.')  the para above, which is perhaps not well
-written, is coming clean about that.  removing it and talking about commutativity
-and ordering at the storage tier is confusing b/c we implement no such app.}
+``shopping cart'' service for an e-commerce website. In this design, a client
+sends messages describing shopping cart updates to a collection of server
+processes. To tolerate process failures, shopping cart state will be replicated
+at multiple servers.
+
+Several strategies are possible for performing updates of replicated state. A
+conservative design might employ a consensus protocol (e.g., Paxos\cite{part-time})
+to ensure that each update is successfully received by a quorum of servers. This
+ensures that the state of the server processes remains consistent.
+
+An alternative approach trades some degree of consistency for reduced update
+latency and improved availability. In an \emph{eventually consistent}
+protocol~\cite{quicksand,beyond}, the state of any two replicas may be
+inconsistent at any given time; however, after the system has quiesced and all
+pending messages have been delivered, all replicas will have the same final
+state. This weaker consistency model reduces the need for coordination among the
+server processes~\cite{dynamo}.
+
+To analyze the correctness of a protocol for achieving eventual consistency, we
+would like to prove that for any possible sequence of client inputs, all
+replicas will eventually reach the same state, despite the possibility of
+message reordering and arbitrary delay.
+
+We begin by considering an ``imperative'' implementation of this design. Each
+server process accepts a message, updates its local shopping cart state, and
+then propagates the message to the other replicas:
 
 %While it is common in
 %practice to implement such applications above a key-value store tier that
@@ -29,40 +38,39 @@ and ordering at the storage tier is confusing b/c we implement no such app.}
 %will do the former, though we will explore the latter option in more detail in
 %section~\ref{sec:casestudy}.
 
-Our shopping cart application consists of a client and a (distributed)
-server component.  The client sends messages to
-the server describing updates to the cart, and the server stores these 
-messages.  
-A practical shopping cart would provide a mechanism to {\em check out}; that is,
-summarize the cart contents, but we will postpone this discussion until later.
-To make the application fault-tolerant,
-we will need to replicate the stored state to server replicas.  Ideally, however,
-this state replication can occur asynchronously, as wait-free message handling
-will decrease request latency and increase availability.  This cheap communication
-cannot come at the cost of consistency --- all replicas should eventually reach
-the same state --- but we may be willing to wait a long time for such convergence.
+% Our shopping cart application consists of a client and a (distributed)
+% server component.  The client sends messages to
+% the server describing updates to the cart, and the server stores these 
+% messages.  
+% A practical shopping cart would provide a mechanism to {\em check out}; that is,
+% summarize the cart contents, but we will postpone this discussion until later.
+% To make the application fault-tolerant,
+% we will need to replicate the stored state to server replicas.  Ideally, however,
+% this state replication can occur asynchronously, as wait-free message handling
+% will decrease request latency and increase availability.  This cheap communication
+% cannot come at the cost of consistency --- all replicas should eventually reach
+% the same state --- but we may be willing to wait a long time for such convergence.
 
-Therefore we wish to reason about whether our implementation possesses the desirable 
-properties that, in spite of message reordering and the possibility of the simultaneous
-receipt of multiple messages, all executions of the client code for the same series of
-input will produce the same state on all replicas.  
+% Therefore we wish to reason about whether our implementation possesses the desirable 
+% properties that, in spite of message reordering and the possibility of the simultaneous
+% receipt of multiple messages, all executions of the client code for the same series of
+% input will produce the same state on all replicas.  
 
-The imperative pseudocode for the client component is trivial: we assume the existence
-of a function {\em best\_replica} that will return the address of a server replica.
+% The imperative pseudocode for the client component is trivial: we assume the existence
+% of a function {\em best\_replica} that will return the address of a server replica.
+
+% \begin{Dedalus}
+% while(in = client_input()) do
+%   send(best_replica(), in);
+% done
+% \end{Dedalus}
+
+% The pseudocode for the server component processes incoming messages one
+% at a time.  The values in the hash {\em cart\_state} (keyed on the session identifiers) 
+% are the union of the received cart update messages:
 
 \begin{Dedalus}
-while(in = client_input()) do
-  send(best_replica(), in);
-done
-\end{Dedalus}
-
-
-The pseudocode for the server component processes incoming messages one
-at a time.  The values in the hash {\em cart\_state} (keyed on the session identifiers) 
-are the union of the received cart update messages:
-
-\begin{Dedalus}
-initialize hash cart_state
+initialize cart_state
 while true do
   req = receive message
   if defined cart_state[req.session] then
@@ -76,7 +84,6 @@ while true do
   done
 done
 \end{Dedalus}
-
 
 Several difficulties present themselves when we attempt to reason about whether
 this implementation is insensitive to message reordering and simultaneous receipt.
@@ -107,7 +114,7 @@ $
 
 A distributed logic language would express the pair of implications above as rules
 (backwards implications) in the style of Prolog.  Expressing distribution and communication
-is commonly achieved in such systems~\cite{Loo} by annotating the variables that 
+is commonly achieved in such systems~\cite{loo-sigmod06} by annotating the variables that 
 contain network addresses: if the variable in the conclusion is distinct from the variables in
 the body, the deduction should cross node boundaries.
 
@@ -157,7 +164,6 @@ cart_action(#L, C, S, I, T, R) :-
 
 s(0);
 s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
-
 \end{Dedalus}
 
 
