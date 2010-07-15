@@ -62,34 +62,31 @@ non-contradictory Datalog program without \dedalus{choice} is confluent.
 \begin{definition}
 %
 We say that a \lang program is {\em associative} if the
-ultimate model is invariant under the operation of exchanging subsets between
-adjacent timestamps.
+ultimate model is invariant under the operations of combining two adjacent
+timestamps, or splitting a timestamp into two separate timestamps.
 %
 \end{definition}
 
 \begin{definition}
 %
 We say that a \lang program is {\em commutative} if the ultimate model is
-invariant under the operation of exchanging two timestamps.
+invariant under the operation of swapping timestamps on two adjacent timestamps.
 %
 \end{definition}
-
-\begin{lemma}
-%
-A \lang program is confluent if and only if it is associative and commutative.
-%
-\end{lemma}
 
 \subsubsection{Associativity}
 
 \begin{definition}
 %
-We say that two traces $T_1, T_2$ of a \lang instance have the same {\em
-associativity grouping} if $\forall t \in$ \dedalus{time} $\forall i,j \in
-\{1,2\} \forall F \subset \mathcal{H} (F@t \subset T_i \land F \subset T_i \cap
-T_j \implies F@t \subset T_j)$.
+We say that two traces $R_1, R_2$ of a \lang instance have the same
+associativity grouping if $\forall t \in$ \dedalus{time} $\forall i,j \in
+\{1,2\} \forall F \subset \mathcal{H} \exists s \in$ \dedalus{time} $: F@t \subset T_i \land F \subset T_i \cap T_j \implies F@s \subset T_j$.
 %
 \end{definition}
+
+%Clearly, all traces of an associative \lang instance e the same associativity 
+%grouping
+%iff the instance is associative.
 
 \begin{definition}
 %
@@ -113,28 +110,32 @@ A monotonic \lang program is confluent if and only if it is associative.
 It is clear that the confluence of a monotonic \lang program implies its
 associativity, so we need only consider the other direction.
 
-Let $R_1, R_2$ be two traces of a monotonic \lang instance $I$ with the same
-associativity grouping.  Assume $\mathcal{U}_{I}(R_1) \neq
-\mathcal{U}_{I}(R_2)$. Consider the minimum $T$ such that $\exists i \in
-\{1,2\} \exists f \in \mathcal{PM}_{I,T}(R_i) (f \not\in \mathcal{U}_{I}(R_j)
-\land j\neq i)$.  Consider a
-support $E$ for $f$.  Note that because of the syntactic restrictions on \lang
-rules, it is necessarily the case that $E \subset \mathcal{M}_{I,S}(R_i)$, with
-no restriction on the relation between $S$ and $T$.  This implies that $E 
-\not\subset \mathcal{M}_{I,S}(R_j)$.  Additionally, since $R_1$ and $R_2$ have
-the same associativity grouping, this also implies that $E \not\subset 
-\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_j)$.  But how can this be the
-case?  Clearly, at least one fact in $E$ must be partially supported by the
-trace, rather than the EDB.  \wrm{to continue}
+Assume the other direction is false.  This implies that for $R_1, R_2$ traces
+of a monotonic \lang instance $I$ with the same associativity grouping,
+$\exists i,j \in \{1,2\}: i \neq j \land f \in \bigcup_{t \in \text{time}}
+\mathcal{M}_{I,T}(R_i) \land f \not\in \bigcup_{t \in \text{time}}
+\mathcal{M}_{I,T}(R_j)$.  Let $g$ be the ``first'' such $f$, that is the $f$
+such that no transitive support of $f$ is also in the set \wrm{note that
+transitive support is acyclic}.  The entire contents of $g$'s transitive
+support clearly is in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_i)$
+\wrm{fix this} (although possibly at different times),
+because if it were not, then $g$ would not be the ``first'' such $f$.  The fact
+that both traces have the same associativity grouping is important, because
+of \lang's syntactic restriction that rules must unify on time.  Thus, even
+under different assignment of timestamps, $g$'s transitive support still derives
+$g$ in $R_i$.  Thus, we have reached a contradiction.
+\wrm{toughen up, note that we have proven something stronger than the lemma}
 %
 \end{proof}
 
 Note that a simple way to ensure associativity of a monotonic program is to
 persist all relations that appear in the head of an \dedalus{@async} rule.
-This is because this ensures eventual associativity of the program, which is
-equivalent to associativity for monotonic programs.
-
-However, eventual associativity is not good enough for non-monotonic programs.
+This ensures that all support will always be coincidentally true.  However,
+this does not ensure associativity of a non-monotonic program, because the
+support for some derivations is necessarily not positive \wrm{explain better}.  
+Another way to ensure associativity of a monotonic program is to use a
+queue-like construct to only consider one fact derived in an \dedalus{@async}
+predicate per timestamp.
 
 %Since we do not consider the time suffix as part of the ultimate model, how can
 %non-determinism in time suffixes affect the ultimate model?  In purely
@@ -146,40 +147,44 @@ However, eventual associativity is not good enough for non-monotonic programs.
 %derivations associative: there will eventually be a timestamp where all async
 %derivations ever received are coincidentally true.\nrc{Don't grok this.}
 
-\wrm{provide example here?}  Concretely, consider the committed choice
-example in Section~\ref{sec:assignment-and-committed-choice}, which
-inserts the first value of \dedalus{condition(A,\_)} into \dedalus{log}.
-Careful readers may have noticed that, if multiple conflicting
-\dedalus{condition} tuples appear in the same timestamp, multiple
-conflicting values will be inserted into the \dedalus{log} relation.
-An associativity analysis would automatically detect such bugs.
-Furthermore, non-associative rules can always be transformed \rcs{true, right?}
-into associative rules by introducing {\em tie breaking} predicates
-and aggregates; in the committed choice example, we would simply
-replace the left hand side of the second rule
-(\dedalus{log(A,B)@next}) with \dedalus{log(A,min<B>)@next}.
+% peter got freaked out by this, so i commented it out -wrm
+%\wrm{provide example here?}  Concretely, consider the committed choice
+%example in Section~\ref{sec:assignment-and-committed-choice}, which
+%inserts the first value of \dedalus{condition(A,\_)} into \dedalus{log}.
+%Careful readers may have noticed that, if multiple conflicting
+%\dedalus{condition} tuples appear in the same timestamp, multiple
+%conflicting values will be inserted into the \dedalus{log} relation.
+%An associativity analysis would automatically detect such bugs.
+%Furthermore, non-associative rules can always be transformed \rcs{true, right?}
+%into associative rules by introducing {\em tie breaking} predicates
+%and aggregates; in the committed choice example, we would simply
+%replace the left hand side of the second rule
+%(\dedalus{log(A,B)@next}) with \dedalus{log(A,min<B>)@next}.
 
-Alternatively, we can avoid the need for such rewrites by restricting
-the set of permissible executions, just as we did to disallow temporal
-paradoxes.  From a pragmatic perspective, we have found that it is
-convenient to process each arriving event atomically before processing
-the next.  Doing so ensures that our programs are trivially
-associative; two events will never arrive simultaneously.  This
-greatly simplifies our programs.
+%joe got freaked out by this, so commenting it out -wrm
+%Alternatively, we can avoid the need for such rewrites by restricting
+%the set of permissible executions, just as we did to disallow temporal
+%paradoxes.  From a pragmatic perspective, we have found that it is
+%convenient to process each arriving event atomically before processing
+%the next.  Doing so ensures that our programs are trivially
+%associative; two events will never arrive simultaneously.  This
+%greatly simplifies our programs.
 
-From a model theoretic perspective, we apply a compile-time rewrite
-that duplicates each \dedalus{@next} rule, leaving one copy intact,
-and replacing the head of the other with \dedalus{busy(1)@next}.
-Instead of delivering tuples directly, \dedalus{@async}'s choice
-construct inserts the tuples into a queue, as in
-Section~\ref{sec:priority-queues}.  For each timestamp \dedalus{T}
-where \dedalus{busy(1)@T} is not defined, we dequeue and deliver
-exactly one tuple.\rcs{bill had some nice things to say about this approach regarding analysability, etc...}
+%joe got freaked out by this, so commenting it out -wrm
+%From a model theoretic perspective, we apply a compile-time rewrite
+%that duplicates each \dedalus{@next} rule, leaving one copy intact,
+%and replacing the head of the other with \dedalus{busy(1)@next}.
+%Instead of delivering tuples directly, \dedalus{@async}'s choice
+%construct inserts the tuples into a queue, as in
+%Section~\ref{sec:priority-queues}.  For each timestamp \dedalus{T}
+%where \dedalus{busy(1)@T} is not defined, we dequeue and deliver
+%exactly one tuple.\rcs{bill had some nice things to say about this approach regarding analysability, etc...}
 
-From an operational perspective, this allows \lang programs to
-leverage large bodies of existing work in database concurrency control
-and compiler optimization techniques that automatically parallelize
-code, strengthen loops, and so on.\rcs{cite two textbooks?}  \rcs{Naturally, programs that make use of imperative constructs will complicate such techniques; such issues existed in overlog, and led to semantic ambiguities that complicated earlier research.  We believe that \lang's foundation in logic will largely avoid such issues.  -- (Not sure we want so say this, or that we can back it up)}
+%joe got freaked out by this, so commenting it out -wrm
+%From an operational perspective, this allows \lang programs to
+%leverage large bodies of existing work in database concurrency control
+%and compiler optimization techniques that automatically parallelize
+%code, strengthen loops, and so on.\rcs{cite two textbooks?}  \rcs{Naturally, programs that make use of imperative constructs will complicate such techniques; such issues existed in overlog, and led to semantic ambiguities that complicated earlier research.  We believe that \lang's foundation in logic will largely avoid such issues.  -- (Not sure we want so say this, or that we can back it up)}
 
 
 
@@ -206,7 +211,7 @@ nondeterminism implied by the async definitions of \dedalus{p} and \dedalus{q}
 leads to two different ultimate models for this instance.  All traces in which
 \dedalus{p} is assigned a lower timestamp than \dedalus{q} lead to an ultimate
 model including \dedalus{r(1,2)}.  However, if \dedalus{q} precedes
-\dedalus{p}, then \dedalus{\(\lnot\) q(A)} is false, and the ultimate model
+\dedalus{p}, or is co-incident with \dedalus{p}, then \dedalus{\(\lnot\) q(A)} is false, and the ultimate model
 excludes \dedalus{r(1, 2)}.
 
 \begin{Dedalus}
@@ -225,6 +230,17 @@ e(1)@10;
 f(1, 2)@4;
 f(3, 4)@11; 
 \end{Dedalus} 
+
+\begin{lemma}
+%
+A \lang program is confluent if and only if it is associative and commutative.
+%
+\end{lemma}
+
+\begin{proof}
+Again, the forward direction is clear, so we restrict our proof to the
+backward direction.
+\end{proof}
 
 At this stage, the careful reader may be concerned that our ``monotonic''
 programs permit async rules, as async rules use the \dedalus{choice} construct,
