@@ -478,11 +478,19 @@ guarantee the existence of a finite model.
 
 \rcs{wrm agreed the following paragraph needs to be moved/rewritten, but I forget where.  Note that the following only holds for analyses of confluence.  We might want to check other properties, such as invariants over a trace that we collect and process at runtime.  Such analyses are probably more interested in network events than the ultimate model.  Other analyses probably want to check other things...}
 
+\wrm{tie in this def better}
 \begin{definition}
+%
+An {\em incremental model} at time $T$ of a \lang instance is the contents of
+all relations at time $T$.
+%
+\end{definition}
 
-The ultimate model of a Dedalus instance is the eventual contents of the simply
-persisted relations (ignoring timestamps)
-
+\begin{definition}
+%
+The {\em ultimate model} of a \lang instance is the eventual contents of the
+simply persisted relations (ignoring timestamps)
+%
 \end{definition}
 
 In the general case, we are not interested in the full model of a trace of an
