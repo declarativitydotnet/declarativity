@@ -218,8 +218,7 @@ an \dedalus{action} event occurs---underscores here indicate that we {\em don't 
 This pattern is common enough
 that many of these languages (and their interpreters) provide the intended semantics of increment-per-action, at the cost of muddying the logical
 interpretation of the implication statement.  Equally problematic is the second of the four rules above,
-an implication which induces communication (note that the \# is on different variables in the left- and right-hand-sides).  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} the antecedent is
-true; some network delay is inevitable.
+an implication which induces communication (note that the \# is on different variables in the left- and right-hand-sides).  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} \wrm{this makes me uncomfortable because we don't have a global clock.  when is ``when''?} the antecedent is true; some network delay is inevitable.
 
 In both cases, what is missing from the language is a notion of time.  When {\em action} is ``true'' in the fourth rule,
 the incremented sequence value should
