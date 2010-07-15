@@ -19,17 +19,18 @@
 
 \subsection{Properties of Asynchronous Derivations}
 
-Having ensured that the finiteness of the ultimate model for any trace of a
-finite \lang instance, we now turn to a problem that is specific to the domain
-of asynchronous distributed systems: the effects of delay
-%,loss
-and reordering of messages. 
-\paa{the previous sentence is weird since we established these far back in the draft.
-perhaps remind the reader "having established the existence and uniqueness of an
-ultimate model by ensuring Tstrat and Tsafety" or somesuch}
-We would like to characterize a class of
-asynchronous \lang programs that are deterministic in the face of this
-non-determinism.
+Having established the existence and finiteness of an ultimate model, we now
+study the effects of non-determinism on the ultimate model.  In particular, we
+study under what conditions there exists a unique ultimate model for a \lang
+instance.  One may desire a more lenient criterion on the ultimate model: for
+example, a programmer may settle for a guarantee that at checkout, the shopping
+cart application charges the user only once -- but possibly for a subset of the
+items in her cart.  We defer the study of these advanced correctness criteria to
+future work.
+
+%We would like to characterize a class of
+%asynchronous \lang programs that are deterministic in the face of this
+%non-determinism.
 %We clearly cannot rely on equality of models over all time, as models of the
 %same program with different {\em async} rule applications will likely differ
 %(at least) in the timestamps of tuples.  However, we would like to say that
@@ -54,16 +55,28 @@ non-determinism.
 %well-known decision procedure for calculating the model \wrm{cite chomikci,
 %partial fixpoint stuff}. \wrm{In practice, due to magic sets, this isn't
 %horribly inefficient}~\cite{magic}
-If all traces of a \lang instance produce the same ultimate model, then we
-call the instance {\em trace confluent}.  If every instance of a program is
-trace confluent, then we say the program is {\em confluent}.  Note that every
-non-contradictory Datalog program without \dedalus{choice} is confluent.
+\begin{definition}
+%
+If all traces of a \lang instance produce the same ultimate model, then we call
+the instance trace confluent.
+%
+\end{definition}
 
 \begin{definition}
 %
-We say that a \lang program is {\em associative} if the
-ultimate model is invariant under the operations of combining two adjacent
-timestamps, or splitting a timestamp into two separate timestamps.
+If every instance of a program is trace confluent, then we say the program is
+confluent.
+%
+\end{definition}
+
+\noindent{}Note that every monotonic Datalog program (without \dedalus{choice})
+is confluent.
+
+\begin{definition}
+%
+We say that a \lang program is {\em associative} if the ultimate model is
+invariant under the operations of combining two adjacent timestamps, and
+splitting a timestamp into two separate timestamps.
 %
 \end{definition}
 
@@ -80,13 +93,14 @@ invariant under the operation of swapping timestamps on two adjacent timestamps.
 %
 We say that two traces $R_1, R_2$ of a \lang instance have the same
 associativity grouping if $\forall t \in$ \dedalus{time} $\forall i,j \in
-\{1,2\} \forall F \subset \mathcal{H} \exists s \in$ \dedalus{time} $: F@t \subset T_i \land F \subset T_i \cap T_j \implies F@s \subset T_j$.
+\{1,2\} \forall F \subset \mathcal{H} \exists s \in$ \dedalus{time} $: F@t
+\subset T_i \land F \subset T_i \cap T_j \implies F@s \subset T_j$. \wrm{change
+this intersection to be an intersection modulo time}
 %
 \end{definition}
 
-%Clearly, all traces of an associative \lang instance e the same associativity 
-%grouping
-%iff the instance is associative.
+Intuitively, if all traces have the same associativity grouping 
+
 
 \begin{definition}
 %
@@ -110,21 +124,26 @@ A monotonic \lang program is confluent if and only if it is associative.
 It is clear that the confluence of a monotonic \lang program implies its
 associativity, so we need only consider the other direction.
 
-Assume the other direction is false.  This implies that for $R_1, R_2$ traces
-of a monotonic \lang instance $I$ with the same associativity grouping,
+If a \lang instance is not trace confluent, we will show the \lang program is
+not associative.  Assume there exists a non-trace-confluent \lang instance $I$
+with an associative program.  That is, there are two traces $R_1, R_2$ for $I$,
+such that 
+%$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
+%\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
+%the $f$ that no 
 $\exists i,j \in \{1,2\}: i \neq j \land f \in \bigcup_{t \in \text{time}}
 \mathcal{M}_{I,T}(R_i) \land f \not\in \bigcup_{t \in \text{time}}
 \mathcal{M}_{I,T}(R_j)$.  Let $g$ be the ``first'' such $f$, that is the $f$
 such that no transitive support of $f$ is also in the set \wrm{note that
 transitive support is acyclic}.  The entire contents of $g$'s transitive
 support clearly is in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_i)$
-\wrm{fix this} (although possibly at different times),
-because if it were not, then $g$ would not be the ``first'' such $f$.  The fact
-that both traces have the same associativity grouping is important, because
-of \lang's syntactic restriction that rules must unify on time.  Thus, even
-under different assignment of timestamps, $g$'s transitive support still derives
-$g$ in $R_i$.  Thus, we have reached a contradiction.
-\wrm{toughen up, note that we have proven something stronger than the lemma}
+\wrm{fix this} (although possibly at different times), because if it were not,
+then $g$ would not be the ``first'' such $f$.  The fact that the program is
+associative is important, because of \lang's syntactic restriction that rules
+must unify on time.  Thus, even under different assignment of timestamps, $g$'s
+transitive support still derives $g$ in $R_i$.  Thus, we have reached a
+contradiction.  \wrm{toughen up, note that we have proven something stronger
+than the lemma}
 %
 \end{proof}
 
@@ -277,9 +296,7 @@ domain.
 
 How do we maintain confluence in the presence of non-monotonicity?  We must
 introduce {\em coordination} into our program---logic that preserves
-commutativity even in the face of non-monotonicity.  
-\paa{well, either that or accept the ND and perhaps take steps to ensure singularity 
-of the result via, eg, committed choice}
+commutativity even in the face of non-monotonicity.
 One simple type of
 coordination involves guarding the universal quantification with a data
 dependency that cannot be fulfilled until the entire set quantified over has

@@ -321,10 +321,19 @@ never be sent based solely on his non-receipt of the message (it may arrive
 arbitrarily far in the future).
 To this end, we require that any communication rules be \dedalus{@async} rules.
 
-We call the set of facts, 
-\paa{ground atoms?}
-including their timestamps, derived by communication
-rules during a particular execution a {\em trace} of the program.
+%We call the set of facts, 
+%\paa{ground atoms?}
+%including their timestamps, derived by communication
+%rules during a particular execution a {\em trace} of the program.
+
+\begin{definition}
+%
+For a \lang instance and a particular series of non-deterministic choices, the
+set of all facts in \dedalus{async} relations, including their timestamps,
+comprise a trace of the instance.
+%
+\end{definition}
+
 %Each trace is associated with exactly one model of the program.
 
 \subsection{Temporal Stratification}
