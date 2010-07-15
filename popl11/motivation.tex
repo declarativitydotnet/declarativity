@@ -59,7 +59,7 @@ done
 
 The pseudocode for the server component processes incoming messages one
 at a time.  The values in the hash {\em cart\_state} (keyed on the session identifiers) 
-are the union of 
+are the union of the received cart update messages:
 
 \begin{Dedalus}
 initialize hash cart_state
@@ -78,7 +78,8 @@ done
 \end{Dedalus}
 
 
-Several difficulties present themselves.
+Several difficulties present themselves when we attempt to reason about whether
+this implementation is insensitive to message reordering and simultaneous receipt.
 First, it is not obvious from a static analysis of the code that the client and server are
 part of a single distributed system, so we must analyze each of the agents individually.
 If we assume conservatively that repeated calls to {\em receive message} will return messages in
@@ -94,8 +95,7 @@ even of simultaneous receipt) is returned by each call.
 
 In logic, we may describe the same program (abstracting away distribution)
 as a pair of implications, describing how clients send {\em cart\_action}
-messages to a server and how servers multicast such tuples to other replicas, and 
-a declaration that defined {\em cart\_action} as a persisted table:
+messages to a server and how servers multicast such tuples to other replicas:
 
 $(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
 \land best\_replica(Client, Session, Server) ) \Rightarrow cart\_action(Server, Client, Session, Item, Type)) $
@@ -107,7 +107,7 @@ $
 
 A distributed logic language would express the pair of implications above as rules
 (backwards implications) in the style of Prolog.  Expressing distribution and communication
-is commonly achieved in such systems~\cite{Loo} by annotating the variable which 
+is commonly achieved in such systems~\cite{Loo} by annotating the variables that 
 contain network addresses: if the variable in the conclusion is distinct from the variables in
 the body, the deduction should cross node boundaries.
 
@@ -122,18 +122,17 @@ cart\_action(#Remote, C, S,S, I, T) :-
 \end{Dedalus}
 
 As is common in logic programming languages, each line is read as a backwards
-implication ($\rightarrow$); if there is a satisfying assignment of tuples to each of
+implication ($\leftarrow$); if there is a satisfying assignment of tuples to each of
 the predicates appearing in the body (with ``,'' read as conjunction), 
 then there is a tuple in the head with the same bindings.
 Note that the distributed system is expressed as a single, global program.
 Because messages are themselves deductions, there are opportunities to 
 analyze server and client code together.  We can analyze the program to 
-show that cart\_action, a set that is persistently and immutably
+show that {\em cart\_action}, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
-\wrm{i thought it's an
-associativity thing, not a commutativity thing}
-and to the co-occurrence of multiple messages simultaneously
-. Moreover, the code 
+%%\wrm{i thought it's an associativity thing, not a commutativity thing}
+and to the co-occurrence of multiple messages simultaneously, without relying
+on semantics provided by external or hidden library calls. Moreover, the code 
 itself is succinct and straightforward. 
 
 
@@ -167,21 +166,21 @@ zero, which should be incremented by one whenever an {\em action} event occurs,
 regardless of its values (here an underscore indicates that the binding of the variable
 is irrelevant because its value is not used).  
 Many distributed logic languages allow rules of this kind,
-but its semantics are unclear.  Though on the surface the rule says that if {\em action} is true
+but their semantics are unclear.  Though on the surface the rule says that if {\em action} is true
 the value of {\em s} should be infinitely incremented, this pattern is common enough
 that many interpreters provide the intended semantics, at the cost of losing a logical
 interpretation of the implication statement.  Equally problematic is the second rule above,
-an implication which induces communication, for it is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true whenever the antecedent is
+an implication which induces communication.  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} the antecedent is
 true.  
 
-In both cases, what is missing is a notion of time.  When {\em action} is ``true,'',
+In both cases, what is missing from the language is a notion of time.  When {\em action} is ``true,'',
 the incremented sequence value should
-hold at the {\em next} visible state of the system (and if action is false, its current
-value should be retained at the next state), and the deduced {\em cart\_action}
+hold at the {\em next} visible state of the system, and if action is false, its current
+value should be retained at the next state.  Given the communication rule, 
+the deduced {\em cart\_action}
 tuple should (ignoring message loss) be true at {\em some} unspecified future time.  In \lang,
 the three different kinds of semantics are captured by annotations (or their absence) 
-associated with rule conclusions.  The second two rules of the above program would be
-written:
+associated with rule conclusions.  Peeking ahead, the second two rules of the above program would be written in \lang as:
 
 \begin{Dedalus}
 
