@@ -2,7 +2,7 @@
 % Title Page
 % ==========
 
-\title{Declarative Systems: Implementation, Optimization, and Application}
+\title{Declarative Systems: Implementation, Optimization, and Beyond}
 \author{Tyson Condie}
 \degreeyear{2010} \degreesemester{} \degree{Doctor of Philosophy}
 \chair{Professor Joseph M. Hellerstein}
@@ -25,8 +25,45 @@ Professor Tapan S. Parikh} \numberofmembers{4}
 %\renewcommand{\thepage}{}
 \begin{abstract}
 
+There is a strong analogy between the Internet today, and database systems in the
+1960's. Network protocol implementations involve complex procedural code, and
+there is an increasing need to separate their specification from physical and logical
+changes to components underneath them: network fabrics and architectures are being
+redesigned for the next generation of Internet applications~\cite{geni05}. Hence the lessons of 
+{\em data independence} and declarative approaches are very timely in this domain~\cite{networkind}, and are
+reflected by recent interest in automatic network optimization and adaptation~\cite{grace-eurosys08}.
+Moreover, we have observed that many networking tasks are naturally described in recursive
+query languages like Datalog, because (a) they typically involve recursive graph traversals
+(e.g., shortest-path computations)~\cite{loo-sigcomm05}, and (b) they are structured around
+asynchronous messaging streams that \emph{join} with the current system state 
+(e.g., "rendezvous" or "session" tables~\cite{p2:sosp, loo-sigmod06}).
 
+Another area that has seen significant change during the early part of the $21^{st}$ century is the data center. During the late 1980's and into 
+the 1990's, the client-server computing model prompted organizations to aggregate microcomputers in large computer rooms.
+These early data centers were primarily used to control and operate all "in-house" information technology (IT) operations. 
+In 2007, companies like Google and IBM, as well as a number of universities, embarked on a large scale {\em cloud computing} 
+research project~\cite{lohr}. A primary focus for this new research direction was to commoditize the data center by enabling third-party
+developers to simply and economically build and host applications on managed clusters.
+Although, these cloud interfaces are convenient for launching multiple independent instances of traditional 
+single-node services, writing truly distributed software remains a significant challenge.  Distributed applications still
+require a developer to orchestrate concurrent computation and communication across machines, in a manner 
+that is robust to delays and failures.  Writing and debugging such code is difficult even for experienced infrastructure
+programmers, and drives away many creative software designers who might otherwise have innovative uses for 
+cloud computing platforms.
 
+This fast paced evolution in the Internet architecture and data center usage has enabled a new era
+of applications in the form of Internet services such as Facebook, Google, MSN, Twitter, and Yahoo!. However,
+many of these new applications are still being developed in programming languages that were specifically tailored to 
+\emph{single instruction} computing models of the past~\cite{flynn}. In this dissertation, we demonstrate the 
+utility of the declarative approach to developing the next generation of applications. We evaluate this conjecture 
+with Datalog-based implementations of a host of functionalities at various levels of the system hierarchy 
+(e.g., network protocols, query optimizers, and scheduling policies). Our declarative specifications of these
+system applications are complied to dataflow runtime implementations reminiscent of traditional database query 
+plans. We have found that using a declarative language often results in drastic reductions in code size 
+($100x$ and more~\cite{chu-sensys07, p2:sosp, boom}) relative to procedural languages like C++. Perhaps more 
+surprising, our declarative implementations are often quite intuitive: in many cases they are almost line-for-line 
+translations of published pseudocode, suggesting that Datalog is indeed a good match for the 
+application domain.
 
 \abstractsignature
 \end{abstract}
@@ -44,7 +81,7 @@ Professor Tapan S. Parikh} \numberofmembers{4}
 \begin{dedication}
 \null\vfil {\large
 \begin{center}
-% To my loving wife.\\
+% To my wife and my advisor for giving me a chance.\\
 %dedication.
 \end{center}}
 \vfil\null

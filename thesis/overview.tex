@@ -1,44 +1,54 @@
 \chapter[Dissertation Overview]{Dissertation Overview}
 \label{ch:overview}
 
-\section{Evita Raced}
-There has been renewed interest in recent years in applying declarative
-languages to a variety of applications outside the traditional
-boundaries of data management.  Examples include work on
-compilers~\cite{lam05context}, computer games~\cite{white-sigmod07}, security
-protocols~\cite{li-padl03}, and modular
-robotics~\cite{ashley-iros07}. Our own work in this area has focused on {\em Declarative Networking},
-as instantiated in the {\em P2} system for Internet overlays~\cite{p2:sosp, loo-sigmod06}, and 
-followed on by variety of recent related efforts~\cite{singh-eurosys06, chu-sensys07,abadi-netdb07,belaramani-sosp07,soule-sosp07}.
+There has been renewed interest in recent years in applying declarative languages to a variety of 
+applications outside the traditional boundaries of data management. Examples include work on 
+compilers~\cite{lam05context}, computer games~\cite{white-sigmod07}, security protocols~\cite{li-padl03}, 
+and modular robotics~\cite{ashley-iros07}. Our own work in this area has focused on {\em Declarative Networking},
+as instantiated in the {\em P2} system for Internet overlays~\cite{p2:sosp, loo-sigmod06}, and our most recent effort in
+the {\em Berkeley Orders Of Magnitude} (BOOM) project, which aims to enable developers to build orders-of-magnitude more
+scalable software using order-of-magnitude less code. This dissertation documents the research developed by these two
+projects on building system software in a declarative language. 
 
-There is a strong analogy between the Internet today, and database systems in the
-1960's. Network protocol implementations involve complex procedural code, and
-there is an increasing need to separate their specification from physical and logical
-changes to components underneath them: network fabrics and architectures are in
-a period of switch evolution~\cite{geni05}. Hence the lessons of Data Independence
-and declarative approaches are very timely in this domain~\cite{networkind}, and are
-reflected by recent interest in automatic network optimization and adaptation~\cite{grace-eurosys08}.
-Moreover, we have observed that many networking tasks are naturally described in recursive
-query languages like Datalog, because (a) they typically involve recursive graph traversals
-(e.g., shortest-path computations)~\cite{loo-sigcomm05}, and (b) the asynchronous messaging
-streams with "rendezvous" or "session" tables~\cite{p2:sosp, loo-sigmod06}.
+The {\em Declarative Networking} project ignited this research direction by using a declarative language to build network layer
+protocols for the next generation of computing architectures~\cite{boon-thesis}. In Chapter~\ref{ch:p2}, we review this early work
+on constructing networking protocols in a declarative language because it sets the stage for much of the subsequent work
+in this dissertation. Specifically, the declarative language \OVERLOG (used throughout this dissertation) was developed during this period, which is a 
+Datalog-like language with distributed extensions. The Declarative Networking project also developed a runtime for the \OVERLOG language called P2, 
+which automatically compiles high-level specifications to a dataflow-oriented runtime system. Although P2 itself was not used 
+throughout this dissertation, our compilation of \OVERLOG into a dataflow runtime remained the same.
 
-Given these intuitions, the P2 and DSN systems demonstrate the utility of the declarative
-approach with Datalog-based implementations of a host of network functionalities at
-various levels of the protocol stack. Both of these systems allow protocols to be expressed 
-as programs in a Datalog-like language, which are complied to dataflow runtime implementations
-reminiscent of traditional database query plans. We have found that using a declarative language
-often results in drastic reductions in code size ($100x$ and more) relative to procedural languages
-like C++. Perhaps more surprising, our declarative protocols are often quite intuitive: in many 
-cases they are almost line-for-line translations of published pseudocode, suggesting that 
-Datalog is indeed a good match for the application domain~\cite{chu-sensys07, p2:sosp}.
+The main contributions of this dissertation begin in Chapter~\ref{ch:evita} where we describe the P2 declarative query optimizer meta-compilation 
+framework. The optimization framework is contained within the P2 query processing engine, and it exports an interface for submitting rewrite 
+rules over the logical query plan. A rewrite rule takes the form of a query written in the same declarative language (\OVERLOG) used to submit 
+client queries. The logical query plan of a query is represented by a set of relations, over which the rewrite rules query and update.  We show that 
+many traditional database optimizations, like the System R optimization algorithm and the Magic-Set rewrite, can be easily expressed 
+as Overlog queries.  We believe that statistics gathering, for cost based optimization rules, can also be written as \OVERLOG queries over 
+the data and system state, leading to a more adaptive query plan generator. Expressing the optimization algorithms as \OVERLOG queries 
+leads to a more concise representation of the algorithm and a dramatic reduction in the overall coding effort. Moreover, our declarative
+rule-based optimizer enables developers to rapidly develop new optimizations that keep up with the fast paced Internet architecture
+changes.
+ 
+The remaining chapters of this dissertation focus on the contributions made during the early stages 
+of the {\em Berkeley Orders Of Magnitude} (\BOOM) project, which evaluated the use of a declarative 
+language in building distributed system software for today's data center architecture (clusters of commodity 
+machines). As we have already alluded, building and debugging distributed software remains extremely 
+difficult. We conjecture that by adopting a \emph{data-centric} approach to system design and by employing 
+\emph{declarative} programming languages, a broad range of distributed software can be recast naturally in 
+a data-parallel programming model.  Our hope is that this model can significantly raise the level of abstraction 
+for programmers, improving code simplicity, speed of development, ease of software evolution, and program correctness.
 
-\section{BOOM}
-MapReduce has emerged as a popular way to harness the power of large clusters of
-computers. MapReduce allows programmers to think in a \emph{data-centric}
-fashion: they focus on applying transformations to sets of data records, and
-allow the details of distributed execution, network communication and fault
-tolerance to be handled by the MapReduce framework.
+To evaluate this conjecture, we used the Overlog language to implement an API-compatible version of the Hadoop 
+MapReduce with competitive performance, and then extended it by adding advanced fault-tolerance and scale features 
+that are typical for cloud computing environments. In Chapter~\ref{ch:mrback}, we provide some background material on 
+MapReduce, which has emerged as a popular way to harness the power of large clusters of computers. In Chapter~\ref{ch:boom}, 
+we describe our rewrite of the Hadoop MapReduce scheduling engine in a declarative language and show that equivalent 
+performance, fault-tolerance, and scalability can be achieved in orders-of-magnitude less code. In Chapter~\ref{ch:hop}, we 
+look at moving beyond a batch-oriented execution model in MapReduce to a more online execution model by pipelining 
+data between system operators. This extension brings with it a number of scheduling challenges, which we solve
+using our declarative scheduling framework. Finally, we conclude in Chapter~\ref{ch:conclusion} with a discussion 
+of future directions.
+
 
 
 
