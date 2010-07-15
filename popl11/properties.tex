@@ -89,14 +89,14 @@ T_j \implies F@t \subset T_j)$.
 
 \begin{definition}
 %
-A {\em support} of fact $F$ in a \lang instance is a set of facts $E_1, \ldots,
-E_n$, such that $\forall i \in 1 \ldots n (E_i \succ F)$.  If $E_1, \ldots, E_n$
-are all non-negated, then we call it a {\em positive support}.
+A {\em support} of fact $f$ in a \lang instance is a set of facts $E$, such
+that $\forall e \in E (F \succ E_i)$.  If all $e$ in $E$ are non-negated, then
+we call it a {\em positive support}.
 %
 \end{definition}
 
-It is clear that all facts in all incremental models of a monotonic \lang
-instance have a positive support.
+It is clear that every fact in all incremental models of a monotonic \lang
+instance has a positive support.
 
 \begin{lemma}
 %
@@ -109,9 +109,12 @@ A monotonic \lang program is confluent if and only if it is associative.
 It is clear that the confluence of a monotonic \lang program implies its
 associativity, so we need only consider the other direction.
 
-Let $T_1, T_2$ be two traces of a monotonic \lang instance with the same
-associativity grouping.  Consider the ultimate models $U_1, U_2$ of the traces.
-
+Let $R_1, R_2$ be two traces of a monotonic \lang instance $I$ with the same
+associativity grouping.  Assume $\mathcal{U}_{I}(R_1) \neq
+\mathcal{U}_{I}(R_2)$. Consider the minimum $T$ such that $\exists i \in
+\{1,2\} \exists f \in \mathcal{M}_{I,T}(R_i) (f \not\in \mathcal{U}_{I}(R_j)
+\land j\neq i)$.  Call this $T$ the {\em point of divergence}.  Consider a
+support $E$ for $f$.  Note that if
 
 Before the point of divergence, program
 $P_1$ must have some support that program $P_2$ will never have.  Where did this
