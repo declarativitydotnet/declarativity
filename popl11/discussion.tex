@@ -1,0 +1,15 @@
+\section{Discussion}
+{\em here we come clean with the things we haven't done, and we make them sound more like opportunities than weaknesses.  The lever here is probably something like this: ``You wouldn't dream of trying to do this to imperative code.  We haven't done any of this yet either, but \lang and our analysis techniques make it natural to go try.''}
+
+\begin{itemize}
+    \item {\bf Points of Order: The Day After}.  After ``fixing'' a point of order with one of the tricks from Section~\ref{sec:stateupdate}, our tests will if anything only highlight {\em more} points of order to be resolved.  That's not too satisfying.  To fix that we need at minimum is a way to annotate a chunk of code as a ``fix'' for a particular point of order so the checks from Section~\ref{sec:properties} skip over the proper cases, a la universal constraint stratification. It would be much better if we could (a) prove that our ``tricks'' indeed induce whatever guarantees we need, and (b) automatically recognize that these tricks are embedded correctly in our code.  Seems like (a) may be application-specific: i.e the satisfaction of certain user constraints.  But perhaps we can identify some common defaults for those (one of which is confluence).  This is something of a language extension agenda: annotations for order semantics checking.  Seems like Dedalus makes this more plausible than an imperative language, but that remains to be proved.
+    
+    \item {\bf Re-Ordering Code.} As we saw in the shopping cart example, despite the ``declarativity'' of \lang, the same basic logic can be implemented in very different ways, with different characteristics.  Just like in Java, you can ignore features like inheritence and write code that looks more like C.  In our case, ``importantly'' different implementations are manifested in different PDG's, which (a) require differing numbers of ordering constructs, and (b) enable differing degrees of asynchrony and parallelism.  Our favorite case study here is sorting ... but that may be more than we have space for.  How would you know not to write shopping cart the ``bad way''? Can we detect ``wasted time'' -- the use of unnecessary ordering constructs in the language?  how can we help people whose code is wasteful in this sense?  Is there an opportunity for (semi-)automatic rewriting?  Tradeoffs with issues like replication and program semantics under delay seem an important part of that discussion.
+
+    \item {\bf Modularity and Programmability.}  Although we have implemented substantial software in \lang and its predecessors, we recognize that the language is rather minimalist w.r.t. typical programming goodies: modularity, types, code reuse and specialization, etc.  We are working on a more practical language called Bloom that takes Dedalus as a base and addresses these issues as well.  One key problem right away is with modularity: (pete to toss off a curious example.)
+    
+    \item {\bf Something about debugging?}
+    
+    \item {\bf Hint at work on complexity models?  BSP as a first guess?}
+    
+\end
