@@ -14,14 +14,14 @@ ensures that the state of the server processes remains consistent.
 
 An alternative approach trades some degree of consistency for reduced update
 latency and improved availability. In an \emph{eventually consistent}
-protocol~\cite{quicksand,beyond}, the state of any two replicas may be
+system~\cite{quicksand,beyond}, the state of any two replicas may be
 inconsistent at any given time; however, after the system has quiesced and all
 pending messages have been delivered, all replicas will have the same final
 state. This weaker consistency model reduces the need for coordination among the
 server processes~\cite{dynamo}.
 
 To analyze the correctness of a protocol for achieving eventual consistency, we
-would like to prove that for any possible sequence of client inputs, all
+would like to prove that for any possible sequence of client input, all
 replicas will eventually reach the same state, despite the possibility of
 message reordering and arbitrary delay.
 
@@ -77,7 +77,7 @@ while true do
      cart_state[req.session] =  
        (req \(\cup\) cart_state[req.session]) 
   else 
-    cart_state[req.session] = { req } 
+    cart_state[req.session] = \{ req \} 
   endif
   foreach r in replicas do
     send(r, req);
@@ -98,7 +98,7 @@ In this imperative approach, we happen to also know that the semantics of {\em r
 hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
 event of simultaneous receipt) is returned by each call.
 
-\paa{an attempt at ``logic pseudocode''.  bill: HELP!}
+% \paa{an attempt at ``logic pseudocode''.  bill: HELP!}
 
 In logic, we may describe the same program (abstracting away distribution)
 as a pair of implications, describing how clients send {\em cart\_action}
