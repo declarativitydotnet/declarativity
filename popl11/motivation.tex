@@ -110,20 +110,46 @@ event of simultaneous receipt) is returned by each call.
 In logic, we may describe the same program (abstracting away distribution)
 as a pair of implications, describing how clients send {\em cart\_action}
 messages to a server and how servers multicast such tuples to other replicas:
-
  %comment out these ``integrity constraints'' and replace with deductive rules
 %$(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
-%\land best\_replica(Client, Session, Server) ) \Rightarrow cart\_action(Server, Client, Session, Item, Type)) $
+%\land best\_replica(Client, Session, Server) ) \Rightarrow cart\_action(Server, Client, Sessiion, Item, Type)) $
+
 %$(\forall Remote, C, S, I, T, Local . (cart\_action(Local, C, S, I, T) \land
-%replicas(Local, C, S, Remote) \Rightarrow cart\_action(Remote, C, S, I, T))
+%replicas(Local, C, S, Remote) \Rightarrow cart\_action(Replica, C, S, I, T))
 %$
 
-$\dedalus{cart\_action(Server, Client, Session, Item, Type)} \equiv $
+\wrm{$\phi$ undefined}
+
+\noindent{}$\phi(\dedalus{cart\_action})\dedalus{[Replica, Client, Session, Item, Type]} \equiv$
+$$
+\left(
+\begin{array}{c}
+\dedalus{action(Client, Session, Item, Type)} \land\\
+\dedalus{best\_replica(Client, Session, Replica)}
+\end{array}
+\right) \bigvee
+$$
+$$
+\left(
+\begin{array}{l}
+\exists \dedalus{Local}:\\
+\dedalus{cart\_action(Local, Client, Session, Item, Type)} \land\\
+\dedalus{replicas(Local, Client, Session, Replica)}
+\end{array}
+\right)
+$$
+%\indent{}$\dedalus{action(Client, Session, Item, Type)} \land$
+%\indent{}$\dedalus{best\_replica(Client, Session, Replica)}$
+%$\lor$
+%\indent{}$\exists \dedalus{Local}:$
+%\indent{}\indent{}$\dedalus{cart\_action(Local, Client, Session, Item, Type)} \land$
+%\indent{}\indent{}$\dedalus{replicas(Local, Client, Session, Replica)}$
 
 A distributed logic language would express the pair of implications above as rules
-(backwards implications) in the style of Prolog.  Expressing distribution and communication
+%(backwards implications) 
+in the style of Prolog \wrm{if these dudes know prolog, whats the point of showing FOL?}.  Expressing distribution and communication
 is commonly achieved in such systems~\cite{loo-sigmod06} by annotating the variables that 
-contain network addresses: if the variable in the conclusion is distinct from the variables in
+contain network addresses: if the variable in the conclusion is bound to a distinct constant from the variables in
 the body, the deduction should cross node boundaries.  \jmh{The preceding sentence is too vague: in addition to fixing it, ground it in the example below (and don't forget to mention your \# syntax!)}
 
 \begin{Dedalus}
@@ -135,6 +161,7 @@ cart\_action(#Remote, C, S,S, I, T) :-
   cart\_action(#Local, C, S, I, T),
   replicas(#Local, C, S, Remote);
 \end{Dedalus}
+\wrm{of course S is ambiguous}
 
 As is common in logic programming languages, each line is read as a backwards
 implication ($\leftarrow$); if there is a satisfying assignment of tuples to each of
@@ -142,7 +169,7 @@ the predicates appearing in the right-hand-side (with ``,'' read as conjunction)
 then there is a tuple in the left-hand-side with the same bindings.
 Note that the distributed system is expressed as a single, global program.
 Because messages are themselves deductions, there are opportunities to 
-analyze server and client code together.  We can analyze the program to 
+analyze server and client code together \wrm{phrase better}.  We can analyze the program to 
 show that {\em cart\_action}, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
 %%\wrm{i thought it's an associativity thing, not a commutativity thing}
@@ -176,14 +203,19 @@ s(0);
 s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
 \end{Dedalus}
 
-
-The intent of the rules defining {\tt s} is that {\tt s} contains an integer, initialized to
-zero, which should be incremented by one whenever an {\em action} event occurs,
-regardless of its values (here an underscore indicates that the binding of the variable
-is irrelevant because its value is not used).  
-Many distributed logic languages allow rules of this kind,
-but their semantics can often appear unclear.  On the surface the rule says that if {\em action} is true
-the value of {\tt s} should be infinitely incremented, but this pattern is common enough
+In a purely logical interpretation, $\dedalus{s} \equiv \mathbb{N}$ if an
+action occurs, and $\dedalus{s} \equiv \{0\}$ otherwise.  However,
+the user most likely intended the \dedalus{s} rule to emulate the behavior of
+the $++$ operator, and destructively increment the value of \dedalus{s} when
+an \dedalus{action} event occurs---underscores here indicate that we {\em don't care} about the values in the \dedalus{action}.
+%The intent of the rule defining {\em s} is that \emph{s} contains an integer, initialized to
+%zero, which should be incremented by one whenever an {\em action} event occurs,
+%regardless of its values (here an underscore indicates that the binding of the variable
+%is irrelevant because its value is not used).  
+%Many distributed logic languages allow rules of this kind,
+%but their semantics are unclear.  Though on the surface the rule says that if {\em action} is true
+%the value of {\em s} should be infinitely incremented,
+This pattern is common enough
 that many of these languages (and their interpreters) provide the intended semantics of increment-per-action, at the cost of muddying the logical
 interpretation of the implication statement.  Equally problematic is the second of the four rules above,
 an implication which induces communication (note that the \# is on different variables in the left- and right-hand-sides).  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} the antecedent is
