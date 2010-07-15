@@ -101,7 +101,7 @@ move(1,1)
 This instance has no minimal model, because it has a contradiction:
 \dedalus{move(1,1)} and \dedalus{\(\lnot\) win(1)} implies \dedalus{win(1)},
 and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
-we required \dedalus{p} $\not\succ$ \dedalus{\(\lnot\) p} for all predicates
+we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
 \dedalus{p}, a contradiction could never arise in any instance of any program
 -- this is known as {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
@@ -481,15 +481,17 @@ guarantee the existence of a finite model.
 \wrm{tie in this def better}
 \begin{definition}
 %
-An {\em incremental model} at time $T$ of a \lang instance is the contents of
-all relations at time $T$.
+An {\em incremental model} at time $T$ of trace $R$ of a \lang instance $I$,
+represented by $\mathcal{M}_{I,T}(R)$, is the contents of the simply persisted
+relations at time $T$.
 %
 \end{definition}
 
 \begin{definition}
 %
-The {\em ultimate model} of a \lang instance is the eventual contents of the
-simply persisted relations (ignoring timestamps)
+The {\em ultimate model} of trace $R$ of a \lang instance $I$, represented by
+$\mathcal{U}_I(R)$, is the eventual contents of the simply persisted relations
+(ignoring timestamps).
 %
 \end{definition}
 
