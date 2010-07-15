@@ -23,7 +23,11 @@ Having ensured that the finiteness of the ultimate model for any trace of a
 finite \lang instance, we now turn to a problem that is specific to the domain
 of asynchronous distributed systems: the effects of delay
 %,loss
-and reordering of messages. We would like to characterize a class of
+and reordering of messages. 
+\paa{the previous sentence is weird since we established these far back in the draft.
+perhaps remind the reader "having established the existence and uniqueness of an
+ultimate model by ensuring Tstrat and Tsafety" or somesuch}
+We would like to characterize a class of
 asynchronous \lang programs that are deterministic in the face of this
 non-determinism.
 %We clearly cannot rely on equality of models over all time, as models of the
@@ -257,7 +261,10 @@ domain.
 
 How do we maintain confluence in the presence of non-monotonicity?  We must
 introduce {\em coordination} into our program---logic that preserves
-commutativity even in the face of non-monotonicity.  One simple type of
+commutativity even in the face of non-monotonicity.  
+\paa{well, either that or accept the ND and perhaps take steps to ensure singularity 
+of the result via, eg, committed choice}
+One simple type of
 coordination involves guarding the universal quantification with a data
 dependency that cannot be fulfilled until the entire set quantified over has
 been computed.
