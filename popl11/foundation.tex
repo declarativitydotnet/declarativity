@@ -191,18 +191,12 @@ condition that we call {\em temporal stratification}.
 In \lang, the form of predicates and rules are restricted in the following ways:
 
 \noindent{\bf Time Suffix: } The final attribute of every \lang
-predicate range must over the \dedalus{time} domain.  
+predicate must range over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
 We refer to this attribute as the predicate's \emph{time suffix}, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
 facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
-\noindent{\bf Unification on Time: }
-
-In a well-formed \lang rule, every body predicate's time suffix contains the
-same variable symbol.  This corresponds to the intuition that rules must
-operate in a given time, and cannot operate across time.  
-\paa{``operate in a given time'' is awkward, but not sure what to suggest}
-For ease of exposition, we henceforth assume that this
+\noindent{\bf Unification on Time: } The time suffix of every predicate in the body of a rule must contain the same variable symbol.  Hence, each rule body refers to a single logical time, and hence to the same database state.\nrc{Is this better?} For ease of exposition, we henceforth assume that this
 variable symbol is named $\DT$.  A well-formed \lang rule must also bind the
 head predicate's time suffix to a variable symbol.  We will assume the name of
 this variable symbol is $\DS$. $\DS$ must be constrained in one of
