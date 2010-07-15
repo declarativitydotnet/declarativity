@@ -52,14 +52,17 @@ loci of coordination.
 Helland and others have advocated the design strategy of ensuring eventually-consistent 
 semantics for replicated state by enforcing high-level algebraic 
 properties in the application logic (in particular, commutativity, associativity and 
-idempotence) rather than attempting to provide a RW storage substrate that can provide
+idempotence) rather than attempting to provide a read/write storage substrate that can provide
 such guarantees in general~\cite{quicksand, beyond}.  For example, Dynamo~\cite{dynamo} 
-is a RW storage system
+is a read/write storage system
 and as such needs to provide versioning and conflict resolution capabilities, the shopping
 cart application that sits atop it is able to easily reconcile conflicts that occur due to inconsistency of global state, because the application logic is fundamentally order-insensitive.
 The eventual state of the shopping cart is guaranteed to be the union of all the operations on
 the cart.  In the case of Dynamo, the application logic and not the storage system controls
 cart merging logic.
+
+\paa{joe writes:  This para is a bit muddy.  Point is something like: eventually consistency comes from the app, not the use of storage.  So although  E.C. is often discussed in the context of storage managers (e.g. noSQL), it's more properly a whole-program property that requires appropriate language support to check/enforce.  A language like Dedalus can help make the checks/enforcement easier.
+}
 
 %%Following this reasoning, if our implementation in \lang could be altered in such a way that
 %%{\em cart\_update} tuples commute with one another,  we could dispense with the total
@@ -75,7 +78,8 @@ we would like to expose the (fundamentally commutative) operation of cart-union 
 %%\end{Dedalus}
 %%But it is only slightly more complicated to hoist the application logic into
 %%the server code explicitly.  
-To a first approximation, an update to a shopping cart
+\paa{a bit of this is redundant with the new section 2}
+An update to a shopping cart
 can be represented as a tuple containing a server and client address, a session identifier,
 an item identifier corresponding to goods, a type field that indicates whether this action
 is an addition or a deletion, and a request identifier to allow idempotent retry.  The contents
@@ -129,7 +133,9 @@ checkout(Server, Client, Session)@async :-
 %%\wrm{change to PDF when peter commits the shopping cart code to hg}
 
 Our tests immediately show us that the program is not necessarily confluent: 
-{\em action\_cnt} falls at a non-local stratification boundary, so it and all tables that
+{\em action\_cnt} falls at a non-local stratification boundary,
+\paa{ring the bell of whatever name we give such boundaries in section 6}
+ so it and all tables that
 depend on it may be affected by the arrival order of tuples to {\em cart\_action} and
 {\em checkout}.  This is not surprising: even though both relations are persisted monotonically,
 the arrival of a {\em checkout} tuple may cause us to universally quantify over {\em cart\_action}
@@ -176,7 +182,7 @@ cart_action(#R, S, I, T, Ri)@async :-
 Because {\em cart\_update} is persisted monotonically, it has set semantics over time: at
 {\em some} time, when all tuples are received, the order in which they were received is
 abstracted away.  Hence asynchronous replication of {\em cart\_update} is confluent,
-up to any nonmonotonic operations on the table.
+at least until such time as a nonmonotonic operation is performed on the table.
 
 
 \subsection{Mutable State}
@@ -280,7 +286,7 @@ the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
 and the program as
 given is unlikely to return the correct version of the cart in a {\em response}
 message.  Our PDG analysis confirms this: a stratum boundary separates the client state
-(at {\em update} from the server state ({\em cart\_update}), upon which all other 
+(at {\em update}) from the server state ({\em cart\_update}), upon which all other 
 predicates in the program, including {\em response}, depend.
 
 Considering the {\em cart\_update} tuples in the client's order would solve
