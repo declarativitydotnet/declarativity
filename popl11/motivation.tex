@@ -89,7 +89,7 @@ order-insensitive, which could in principle be inferred from annotations associa
 with the operator.
 In this imperative approach, we happen to also know that the semantics of {\em receive message}
 hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
-even of simultaneous receipt) is returned by each call.
+event of simultaneous receipt) is returned by each call.
 
 \paa{an attempt at ``logic pseudocode''.  bill: HELP!}
 
@@ -173,7 +173,7 @@ interpretation of the implication statement.  Equally problematic is the second 
 an implication which induces communication.  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} the antecedent is
 true.  
 
-In both cases, what is missing from the language is a notion of time.  When {\em action} is ``true,'',
+In both cases, what is missing from the language is a notion of time.  When {\em action} is ``true'',
 the incremented sequence value should
 hold at the {\em next} visible state of the system, and if action is false, its current
 value should be retained at the next state.  Given the communication rule, 
