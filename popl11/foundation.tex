@@ -188,14 +188,12 @@ condition that we call {\em temporal stratification}.
 
 \subsection{Syntactic Restrictions}
 \label{sec:syntaxrestrictions}
-\jmh{Specifically?}
-Specifically, we restrict the form of predicates and rules in the following ways:
+In \lang, the form of predicates and rules are restricted in the following ways:
 
-\noindent{\bf Time Suffix: }We require that the final attribute of every \lang
-predicate range over the \dedalus{time} domain.  
+\noindent{\bf Time Suffix: } The final attribute of every \lang
+predicate range must over the \dedalus{time} domain.  
 %\lang considers this final attribute as a ``timestamp,'' so
-We refer to this attribute as the \emph{time suffix} of the corresponding
-predicate, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
+We refer to this attribute as the predicate's \emph{time suffix}, and we talk about the {\em timestamp} of a fact. \rcs{Removed:''---we also refer to
 facts as {\em events}.''  We need to talk about async before talking about events.  Also, we should define ``event'' as ``a tuple produced by async rules''.}
 
 \noindent{\bf Unification on Time: }
@@ -207,7 +205,7 @@ operate in a given time, and cannot operate across time.
 For ease of exposition, we henceforth assume that this
 variable symbol is named $\DT$.  A well-formed \lang rule must also bind the
 head predicate's time suffix to a variable symbol.  We will assume the name of
-this variable symbol is $\DS$.  $\DS$ may be constrained in exactly one of
+this variable symbol is $\DS$. $\DS$ must be constrained in one of
 three ways:
 
 \begin{enumerate}
@@ -231,14 +229,14 @@ general only require recourse to ordering primitives for mutable state and commu
 Inductive and asynchronous rules model these cases respectively.
 
 Usage of $S$ or $T$ outside of the time suffixes is known as {\em
-entanglement}.  We will revisit this powerful construct in~\ref{sec:entangle}. 
+entanglement}.  We will revisit this powerful construct in Section~\ref{sec:entangle}. 
 
 \begin{example}
 The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
-We can sugar away the time suffixes in the head and body, and the
+We can sugar away the time suffixes in the head and body, the
 \dedalus{successor}, \dedalus{time} and \dedalus{choice} clauses in
-the body, and the equality constraints, and instead attach an identifier to the head of each
-temporal rule, to indicate the change in time suffix.  In each, the sugared example appears
+the body, and the equality constraints, and instead attach a keyword to the head of each
+temporal rule to indicate the change in time suffix.  In each, the sugared example appears
 below.  We may also represent facts by attaching a constant time suffix, as shown below.  \jmh{We need to find an easier-to-read formatting -- perhaps side-by-side in a figure, or in a \\tabular environment that separates things out.}
 \\
 deductive:
@@ -266,34 +264,34 @@ e(1,2)@3;
 \end{Dedalus}
 \end{example}
 
-\paa{consider using shopping cart examples (with shorter attr names)
-for the above}
-\\
-deductive:
-\begin{Dedalus}
-ca_stage(S, C, Sn, I, T, R, \(\DS\)) :- 
-  action(C, Sn, I, T, \(\DT\)), 
-  best_replica(C, Sn, S, \(\DT\)), s(R, \(\DT\)),
-  \(\DS\) = \(\DT\);
-ca_stage(S, C, Sn, I, T, R) :-
-  action(C, Sn, I, T), best_replica(C, Sn, S), s(R);
-\end{Dedalus}
-\\
-inductive:
-\begin{Dedalus}
-s(X + 1, \(\DS\)) \(\leftarrow\) s(X, \(\DT\))), \(\lnot\) action(_, _, _, _, _, \(\DT\)),
-  successor(\(\DT\), \(\DS\));
-s(X + 1)@next \(\leftarrow\) s(X) \(\lnot\) action(_, _, _, _, _);
-\end{Dedalus}
-\\
-asynchronous:
-\begin{Dedalus}
-cart_action(#L, C, S, I, T, R, \(\DS\))) :- 
-  ca_stage(L, #C, S, I, T, R, \(\DT\))), time(\(\DS\)),
-  choose((L,#C, S, I, T, R, \(\DT\)), (\(\DS\)));
-\end{Dedalus}
-
-\paa{better (modulo formatting)?}
+%\paa{consider using shopping cart examples (with shorter attr names)
+%for the above}
+%\\
+%deductive:
+%\begin{Dedalus}
+%ca_stage(S, C, Sn, I, T, R, \(\DS\)) :- 
+%  action(C, Sn, I, T, \(\DT\)), 
+%  best_replica(C, Sn, S, \(\DT\)), s(R, \(\DT\)),
+%  \(\DS\) = \(\DT\);
+%ca_stage(S, C, Sn, I, T, R) :-
+%  action(C, Sn, I, T), best_replica(C, Sn, S), s(R);
+%\end{Dedalus}
+%\\
+%inductive:
+%\begin{Dedalus}
+%s(X + 1, \(\DS\)) \(\leftarrow\) s(X, \(\DT\))), \(\lnot\) action(_, _, _, _, _, \(\DT\)),
+%  successor(\(\DT\), \(\DS\));
+%s(X + 1)@next \(\leftarrow\) s(X) \(\lnot\) action(_, _, _, _, _);
+%\end{Dedalus}
+%\\
+%asynchronous:
+%\begin{Dedalus}
+%cart_action(#L, C, S, I, T, R, \(\DS\))) :- 
+%  ca_stage(L, #C, S, I, T, R, \(\DT\))), time(\(\DS\)),
+%  choose((L,#C, S, I, T, R, \(\DT\)), (\(\DS\)));
+%\end{Dedalus}
+%
+%\paa{better (modulo formatting)?}
 
 \noindent{\bf Positive and Negative Predicates: }
 \paa{joe thinks we could probably footnote a digest of all or most of this section} \jmh{postpone p\_neg until you need it, and ignore p\_pos (you could footnote that when you talk IDB vs. EDB if you like.)  Assume this is not a language feature, it's just a design pattern you'll use.}
