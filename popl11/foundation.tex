@@ -82,12 +82,12 @@ status(Serv, Cli, Ses, Item, Type, count<ReqId>) :-
 \subsection{Non-Monotonicity}
 
 A Datalog instance without negation or aggregation always has a unique {\em
-minimal model}: the mininimal sets of facts in all predicates, implied by the
+minimal model}: the minimal sets of facts in all predicates, implied by the
 EDB given the program~\cite{ullmanbook}.  Programs without negation or
 aggregation are always {\em monotonic}.  A program is monotonic if, when
 evaluated on two EDBs $E \subset F$, the model of the instance of $P$ with EDB
 $E$ is a subset of the model of the instance of $P$ with EDB $F$.  In practice,
-monotonic logic is not expressive enough to capture intersting programs---computation
+monotonic logic is not expressive enough to capture interesting programs---computation
 can never happen over an unbounded set.
 
 One achieves non-monotonicity by adding negation or aggregation.  When
@@ -114,7 +114,7 @@ we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
 is called {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
-of decreasingly consevative {\em stratification conditions}~\cite{local-strat,
+of decreasingly conservative {\em stratification conditions}~\cite{local-strat,
 ross-syntactic, modular, weak-strat} that assure acyclicity of all facts
 through negation---but exclude some contradiction-free programs. For example,
 adding the condition \dedalus{X < Y} to the above rule would rule out
