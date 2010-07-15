@@ -112,18 +112,16 @@ associativity, so we need only consider the other direction.
 Let $R_1, R_2$ be two traces of a monotonic \lang instance $I$ with the same
 associativity grouping.  Assume $\mathcal{U}_{I}(R_1) \neq
 \mathcal{U}_{I}(R_2)$. Consider the minimum $T$ such that $\exists i \in
-\{1,2\} \exists f \in \mathcal{M}_{I,T}(R_i) (f \not\in \mathcal{U}_{I}(R_j)
-\land j\neq i)$.  Call this $T$ the {\em point of divergence}.  Consider a
-support $E$ for $f$.  Note that if
-
-Before the point of divergence, program
-$P_1$ must have some support that program $P_2$ will never have.  Where did this
-support come from?  If it was derived solely from the EDB, then both programs
-will have this support.  Thus, it must have been derived at least partly from
-the trace.  Given that $P_1$ and $P_2$ \wrm{change to instances} have the same
-associativity grouping, everything coincidentally true in $P_1$ will be
-coincidentally true in $P_2$ (proof).  Since a support must be coincidentally
-true, the eventual models of $P_1$ and $P_2$ are equivalent.
+\{1,2\} \exists f \in \mathcal{PM}_{I,T}(R_i) (f \not\in \mathcal{U}_{I}(R_j)
+\land j\neq i)$.  Consider a
+support $E$ for $f$.  Note that because of the syntactic restrictions on \lang
+rules, it is necessarily the case that $E \subset \mathcal{M}_{I,S}(R_i)$, with
+no restriction on the relation between $S$ and $T$.  This implies that $E 
+\not\subset \mathcal{M}_{I,S}(R_j)$.  Additionally, since $R_1$ and $R_2$ have
+the same associativity grouping, this also implies that $E \not\subset 
+\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_j)$.  But how can this be the
+case?  Clearly, at least one fact in $E$ must be partially supported by the
+trace, rather than the EDB.  \wrm{to continue}
 %
 \end{proof}
 
