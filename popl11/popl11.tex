@@ -119,9 +119,12 @@ implicit ordering of both data and control structures.
 %We believe that much of this order is not meaningful to the overall goal that
 %the programmer wants to achieve, and reasoning about it unnecessarily
 %complicates the task of programming distributed systems.
-In practice, this frequently leads to overspecification of such systems, insofar as 
-many different orderings of instructions and data structures lead to the same 
-result in a distributed computation.
+%In practice, this frequently leads to overspecification of such systems, insofar as 
+%many different orderings of instructions and data structures lead to the same 
+%result in a distributed computation.
+This often leads to overspecified behavior, since many different orderings of
+instructions and data structures can lead to the same result in a distributed
+computation.
 %because the abstractions exposed by imperative programming are inappropriate
 %for programming distributed systems.
 We argue for an inversion of design:
@@ -142,8 +145,8 @@ implementing {\em mutable state} and ensuring
 deterministic results in the face of {\em asynchrony}---that is, non-determinism in
 temporal order.  To capture these uses of order, we build a library of ordered
 constructs in \lang, including persistence, queues, and Lamport clocks.  We
-also extend static analyses from the Datalog domain, including a surprisingly
-powerful analysis that can indicate locations in a program where a programmer
+also extend static analyses from the Datalog domain, including a simple but
+powerful analysis that indicates locations in a program where the developer
 may need to enforce order to maintain determinism in the face of asynchrony.
 We illustrate the benefits of our proposed programming style through a case
 study of a shopping cart application with replicated state.
