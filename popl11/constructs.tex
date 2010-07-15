@@ -17,7 +17,7 @@ University~\cite{scheme}.}
 
 \noindent{}In an asynchronous system, the programmer will in general not be able to
 predict when, or in what order, events arrive from other nodes.  Additionally,
-some events may need to be handled over time, requiring state-oriented motifs
+some events may need to be handled over time \jmh{vague}, requiring state-oriented motifs
 such as persistence and mutability.  In this section, we construct a library of
 \lang constructs to capture these two uses of order.
 
@@ -49,7 +49,7 @@ such as persistence and mutability.  In this section, we construct a library of
 
 \paa{some intro text; logic naturally models the accumulation of information via deduction,
 but systems programming often requires modeling information that may disappear
-or change over time.}
+or change over time.}  \jmh{Back this up with formalism: can't do a flip/flop in Datalog (Chandra/Harel, right?).  This discussion does tee up the question of whether something more traditional like Datalog-neg would have been enough for us ... might be sufficient to simply toss in a result about Turing completeness of Dedalus.  I realize your point here is more practically-minded and illustrative, but then maybe this intro is off target for this section.  Still I think an expressivity subsection in the paper would be nice.}
 
 %\subsubsection{Events}
 
