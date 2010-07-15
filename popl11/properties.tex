@@ -17,8 +17,6 @@
 %presents conservative syntactic conditions to guarantee the non-existence of
 %nontrivially periodic derivations in a program for all EDBs.
 
-\subsection{Properties of Asynchronous Derivations}
-
 Having established the existence and finiteness of an ultimate model, we now
 study the effects of non-determinism on the ultimate model.  In particular, we
 study under what conditions there exists a unique ultimate model for a \lang
@@ -27,6 +25,8 @@ example, a programmer may settle for a guarantee that at checkout, the shopping
 cart application charges the user only once -- but possibly for a subset of the
 items in her cart.  We defer the study of these advanced correctness criteria to
 future work.
+
+%\subsection{Properties of Asynchronous Derivations}
 
 %We would like to characterize a class of
 %asynchronous \lang programs that are deterministic in the face of this
@@ -89,29 +89,30 @@ invariant under the operation of swapping timestamps on two adjacent timestamps.
 
 \subsubsection{Associativity}
 
-\begin{definition}
+%\begin{definition}
 %
-We say that two traces $R_1, R_2$ of a \lang instance have the same
-associativity grouping if $\forall t \in$ \dedalus{time} $\forall i,j \in
-\{1,2\} \forall F \subset \mathcal{H} \exists s \in$ \dedalus{time} $: F@t
-\subset T_i \land F \subset T_i \cap T_j \implies F@s \subset T_j$. \wrm{change
-this intersection to be an intersection modulo time}
+%We say that two traces $R_1, R_2$ of a \lang instance have the same
+%associativity grouping if $\forall t \in$ \dedalus{time} $\forall i,j \in
+%\{1,2\} \forall F \subset \mathcal{H} \exists s \in$ \dedalus{time} $: F@t
+%\subset T_i \land F \subset T_i \cap T_j \implies F@s \subset T_j$. \wrm{change
+%this intersection to be an intersection modulo time}
 %
-\end{definition}
-
-Intuitively, if all traces have the same associativity grouping 
-
+%\end{definition}
 
 \begin{definition}
 %
-A {\em support} of fact $f$ in a \lang instance is a set of facts $E$, such
+A support of fact $f$ in a \lang instance is a set of facts $E$, such
 that $\forall e \in E (F \succ E_i)$.  If all $e$ in $E$ are non-negated, then
-we call it a {\em positive support}.
+we call $E$ a positive support.  If some $e$ in $E$ are negated, or are the
+output of an aggregate, then we call $E$ a negative support.
 %
 \end{definition}
 
-It is clear that every fact in all incremental models of a monotonic \lang
-instance has a positive support.
+It is clear that every fact in all incremental models of a trace of a monotonic
+\lang instance has a positive support.  In a trace of a non-monotonic \lang
+instance, some facts necessarily have only negative supports.  Note that
+because of the syntactic restrictions of \lang, negative supports always have a
+timestamp associated with them.
 
 \begin{lemma}
 %
@@ -220,18 +221,18 @@ predicate per timestamp.
 \subsubsection{Commutativity}
 
 It is easy to see that non-monotonic programs are not necessarily confluent,
-even when async predicates are simply persisted.  The intuitive issue now is
-{\em commutativity}: if we swap the timestamps of two messages, we might swap
-the order of existential and universal quantification, as exhibited by the
-instance below, where the 
+even when async predicates are simply persisted.  In addition to associativity,
+{\em commutativity} is now an issue: if we swap the timestamps of two messages,
+we might swap the order of existential and universal quantification, as
+exhibited by the instance below, where the 
 %quantification over a set occurs before the membership of the set is known,
 %and results of this ``incomplete'' quantification may be forever persisted.
 nondeterminism implied by the async definitions of \dedalus{p} and \dedalus{q}
 leads to two different ultimate models for this instance.  All traces in which
 \dedalus{p} is assigned a lower timestamp than \dedalus{q} lead to an ultimate
 model including \dedalus{r(1,2)}.  However, if \dedalus{q} precedes
-\dedalus{p}, or is co-incident with \dedalus{p}, then \dedalus{\(\lnot\) q(A)} is false, and the ultimate model
-excludes \dedalus{r(1, 2)}.
+\dedalus{p}, or is co-incident with \dedalus{p}, then \dedalus{\(\lnot\) q(A)}
+is false, and the ultimate model excludes \dedalus{r(1, 2)}.
 
 \begin{Dedalus}
 persist[r,2]
@@ -257,8 +258,35 @@ A \lang program is confluent if and only if it is associative and commutative.
 \end{lemma}
 
 \begin{proof}
+%
 Again, the forward direction is clear, so we restrict our proof to the
 backward direction.
+
+If a \lang instance is not trace confluent, we will show the \lang program is
+not associative or not commutative.  Assume there exists a non-trace-confluent 
+\lang instance $I$ with an associative and commutative program.  That is, there
+are two traces $R_1, R_2$ for $I$, such that
+%$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
+%\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
+%the $f$ that no 
+$\exists i,j \in \{1,2\}: i \neq j \land f \in \bigcup_{t \in \text{time}}
+\mathcal{M}_{I,T}(R_i) \land f \not\in \bigcup_{t \in \text{time}}
+\mathcal{M}_{I,T}(R_j)$.  Let $g$ be the ``first'' such $f$, that is the $f$
+such that no transitive support of $f$ is also in the set \wrm{note that
+transitive support is acyclic}.  The entire contents of $g$'s transitive
+support clearly is in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_i)$
+\wrm{fix this} (although possibly at different times), because if it were not,
+then $g$ would not be the ``first'' such $f$.  The fact that the program is
+associative is important, because of \lang's syntactic restriction that rules
+must unify on time.  The fact that the program is commutative is also important
+-- this means that universal quantification at any time allowed by data
+dependencies is fine.  \wrm{this is a sketch but not a real proof.  fix tmrw
+when i get some inspiration}
+%Thus, even under different assignment of timestamps, $g$'s
+%transitive support still derives $g$ in $R_i$.  Thus, we have reached a
+%contradiction.  \wrm{toughen up, note that we have proven something stronger
+%than the lemma}
+%
 \end{proof}
 
 At this stage, the careful reader may be concerned that our ``monotonic''
@@ -274,7 +302,8 @@ is always fully defined.  In other words, universal quantification of
 %depends upon an async derivation, is never really closed \wrm{need to
 %clarify}.
 
-\subsection{Identifying Loci of Coordination}
+\subsection{Identifying Points of Order}
+
 The previous section provided a conservative test for confluence: all monotonic
 programs with simply persisted asynchronous predicates are confluent.  In
 practice, however, programs that monotonically accumulate information and never
@@ -295,36 +324,59 @@ domain.
 %constructs.  
 
 How do we maintain confluence in the presence of non-monotonicity?  We must
-introduce {\em coordination} into our program---logic that preserves
-commutativity even in the face of non-monotonicity.
-One simple type of
-coordination involves guarding the universal quantification with a data
-dependency that cannot be fulfilled until the entire set quantified over has
-been computed.
+introduce points of order into our program. 
+%---logic that preserves commutativity even in the face of non-monotonicity.
+%One simple type of coordination involves guarding the universal quantification
+%with a data dependency that cannot be fulfilled until the entire set
+%quantified over has been computed.  This notion of ``waiting for a data
+%dependency to be satisfied'' is similar to the ordered application of rules
+%required for stratification.  
+Fortunately, we can leverage the concept of a program's {\em predicate
+dependency graph} (PDG) from the Datalog literature to construct an analysis
+that can tell a programmer where points of order may be required to ensure
+confluence.  A PDG is a directed graph that has one node per predicate in the
+program.  A PDG has an edge from \dedalus{p} to \dedalus{q} if $p \succ q$.
+The edge has three possible anotations: $+$ indicating that $p \succ q$ only in
+\dedalus{@next} rules, $\lnot$ indicating that $p \succ q$ in at least one rule
+where $q$ appears negated in the body, and $@$, indicating that $p \succ q$
+only in \dedalus{@async} rules.
 
-This notion of ``waiting for a data dependency to be satisfied'' is similar to
-the waiting in centralized evaluation of a Datalog program.  First, some
-dependency graph of the program or instance, such as a PDG, is analyzed to
-identify and collapse {\em monotonic components}---subgraphs that contain no
-negated edges.  The Datalog program is evaluated in the topological order of
-its collapsed dependency graph.  Later monotonic components ``wait'' for
-computation to be completed in earlier monotonic components.  
+\begin{definition}
+%
+A monotonic component is a maximal connected subgraph with no $\lnot$ edges,
+and all \dedalus{async} predicates simply persisted.
+%
+\end{definition}
 
-In \lang, we can leverage this same analysis to identify all {\em loci of
-coordination}---all places where the programmer may need to instrument his code
-with coordination to ensure confluence.  These are exactly the edges connecting
-monotonic components.  Note that this analysis ignores the non-monotonicity in
-\dedalus{choice} for the reasons outlined above.  Note also that we still
-maintain the requirement that async relations are simply persisted to ensure
-associativity. \wrm{talk about relaxing this?}
+Points of order can only ever be necessary on edges between monotonic
+components, because a monotonic program, considered as a \lang program, is
+confluent.  We have expressed this test in our \lang interpreter, using a
+meta-model to treat rules as data.  Later, we present graphs of programs that
+identify monotonic components.  The data for these graphs was generated by our
+\lang code that expresses this test.
 
-\wrm{write a paragraph extolling the virtues of logic programming here, and
-explaining why this test is good.  that paragraph isn't coming to me now...} 
+%First, some
+%dependency graph of the program or instance, such as a PDG, is analyzed to
+%identify and collapse {\em monotonic components}---subgraphs that contain no
+%negated edges.  The Datalog program is evaluated in the topological order of
+%its collapsed dependency graph.  Later monotonic components ``wait'' for
+%computation to be completed in earlier monotonic components.  
 
-\paa{need a formal description of the new (or special-cased) stratification algorithm.
-regular strat, except any async rule is a stratum boundary \emph{unless} the 
-target predicate is naively persisted, with ``p is naively persisted'' conservatively defined
-as $\exists$ a rule with $p$ in the head,  p in the body with 'the same bindings', and the rest of the body always satisfied or empty}
+%In \lang, we can leverage this same analysis to identify all {\em loci of
+%coordination}---all places where the programmer may need to instrument his code
+%with coordination to ensure confluence.  These are exactly the edges connecting
+%monotonic components.  Note that this analysis ignores the non-monotonicity in
+%\dedalus{choice} for the reasons outlined above.  Note also that we still
+%maintain the requirement that async relations are simply persisted to ensurei
+%associativity. \wrm{talk about relaxing this?}
+
+%\wrm{write a paragraph extolling the virtues of logic programming here, and
+%explaining why this test is good.  that paragraph isn't coming to me now...} 
+
+%\paa{need a formal description of the new (or special-cased) stratification algorithm.
+%regular strat, except any async rule is a stratum boundary \emph{unless} the 
+%target predicate is naively persisted, with ``p is naively persisted'' conservatively defined
+%as $\exists$ a rule with $p$ in the head,  p in the body with 'the same bindings', and the rest of the body always satisfied or empty}
 
 %Centralized evaluation of a logic program ensures confluence considering the
 %program's PDG, and collapsing {\em monotonic components} -- subgraphs of the
