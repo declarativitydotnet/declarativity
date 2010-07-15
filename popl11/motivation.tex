@@ -20,7 +20,11 @@ same final state at some point in time after the last update arrives.
 This weaker consistency model reduces the need for coordination among
 the server processes~\cite{dynamo}, which in turn reduces update
 latencies, and decreases the impact of temporary failures upon read and
-write performance.
+write performance.  To ensure this form of consistency, we need to ensure that our application possesses the 
+properties that, in spite of message reordering and the possibility of the simultaneous
+receipt of multiple messages, all executions of the client code for the same series of
+input will produce the same state on all replicas.  We will formalize this discussion in
+Section~\ref{sec:properties}.
 
 %\wrm{I don't understand why this paragraph begins the way it does.  For both> cases you described abve, we'd like to ensure that order doesn't matter.  It s
 %eems to me like the
@@ -30,13 +34,14 @@ write performance.
 %replicas will eventually reach the same state, despite the possibility of
 %message reordering and arbitrary delay.
 
-Sections~\ref{sec:fixme} formalize this discussion, and provide
-analysis techniques that verify eventual consistency properties, and
-quantify the amount of coordination performed by Dedalus
-implementations of various replication protocols.
+%%Sections~\ref{sec:fixme} formalize this discussion, and provide
+%%analysis techniques that verify eventual consistency properties, and
+%%quantify the amount of coordination performed by Dedalus
+%%implementations of various replication protocols.
 
-We begin by considering an ``imperative'' \wrm{maybe ``serial'' would
-  be a better term here} implementation of eventual consistency. A
+We begin by considering an ``imperative'' 
+\wrm{maybe ``serial'' would be a better term here} 
+implementation of an eventual consistent shopping cart application.  A
 server process accepts a message, updates its local shopping cart
 state, and then propagates the message to the other replicas:
 
