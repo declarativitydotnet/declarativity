@@ -174,8 +174,11 @@ recent'' set of $B$ values appearing in {\em condition}.  If {\em condition(A,
 B)} respects the functional dependency $A \to B$, then \dedalus{log} will
 associate only the ``most recent'' $B$ value with each $A$.
 
-The mirror image of assignment is committed choice, which associates the first
-value(s) of $B$ with $A$:
+The mirror image of assignment is committed choice~\cite{committedchoice},
+which associates the first
+value(s) of $B$ with $A$.  Committed choice ``seals'' the value of \dedalus{B} such that ``future''
+insertions into \dedalus{condition} cannot cause new rows with the same
+\dedalus{A} value to be inserted.
 
 \begin{Dedalus}
 log(A, B)@next \(\leftarrow\) log(A, B);
@@ -183,9 +186,8 @@ log(A, B)@next \(\leftarrow\) condition(A, B), \(\lnot\)log(A, _);
 \end{Dedalus}
 %%\subsection{``At Most Once'' event relations}
 
-Committed choice ``seals'' the value of \dedalus{B} such that ``future''
-insertions into \dedalus{condition} cannot cause new rows with the same
-\dedalus{A} value to be inserted.
+Assignment and committed choice implement ``last write wins'' and 
+``first write wins'' semantics, respectively.
 
 %But perhaps surprisingly,
 %``closing a world'' in this fashion ensures that \dedalus{log} has strictly
@@ -408,6 +410,9 @@ transactions.  This allows us to model well-studied runtime
 optimizations such as parallelizing compilers and database lock
 managers with little additional complexity.
 
+\paa{clean up, and cite netdb and the TR as examples of more complicated
+synchronization constructs expressible in logic (consensus and reliable broadcast,
+respectively)}
 
 %\wrm{why can't
 %we just combo a Lamport clock with a priority queue?  i don't think we need
