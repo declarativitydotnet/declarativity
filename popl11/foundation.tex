@@ -52,7 +52,7 @@ together with an EDB.  The set of facts in intensional predicates implied by
 the EDB given the program is the {\em intensional data base} (IDB) of the
 instance.
 
-The {\em Herband Universe} of an instance, written $\mathcal{H}$, is the set of
+The {\em Herbrand Universe} of an instance, written $\mathcal{H}$ is the set of
 all constants in the EDB and IDB.
 
 \subsection{Aggregation}
@@ -87,11 +87,11 @@ EDB given the program~\cite{ullmanbook}.  Programs without negation or
 aggregation are always {\em monotonic}.  A program is monotonic if, when
 evaluated on two EDBs $E \subset F$, the model of the instance of $P$ with EDB
 $E$ is a subset of the model of the instance of $P$ with EDB $F$.  In practice,
-monotonic logic is not expressive enough to capture interesting programs---computation
-can never happen over an unbounded set.
+monotonic logic is not expressive enough to capture many interesting programs --
+computation can never happen over an unbounded set.
 
-One achieves non-monotonicity by adding negation or aggregation.  When
-admitting negation or aggregation, one possibility is that a {\em
+Adding negation or aggregation introduces potential nonmonotonicity.  When
+admitting negation or aggregation, a {\em
 contradiction} may arise---a fact that depends on its own negation.  Consider
 the Datalog program below, which represents a game where player \dedalus{X}
 wins if she has a move, and player \dedalus{Y} does not have a move:
@@ -110,8 +110,9 @@ This instance has no minimal model, because it has a contradiction:
 \dedalus{move(1,1)} and \dedalus{\(\lnot\) win(1)} implies \dedalus{win(1)},
 and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
 we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
-\dedalus{p}, a contradiction could never arise in any instance of any program---this
-is called {\em syntactic stratification}.  It is known that detecting
+\dedalus{p}, a contradiction could never arise in any instance of any program
+\paa{eek, only if we take $\lnot$ as shorthand for negation \emph{or} aggregation}
+-- this is called {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
 of decreasingly conservative {\em stratification conditions}~\cite{local-strat,
@@ -148,6 +149,9 @@ To ensure that Datalog programs are always effectively computable, the Herbrand
 Universe---and thus the model---is restricted to be finite.  This is
 achieved by making the program {\em safe}---restricting the use of constructs
 that can expand the Herbrand Universe, such as summary aggregates.
+
+
+\subsection{Choice}
 
 One of our goals for \lang is to model the inherent non-determinism of network
 delay in asynchronous distributed systems.  Sacc\`{a} and
