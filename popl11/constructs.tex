@@ -1,4 +1,4 @@
-\section{State and Order in Logic}
+\section{Time, State and Order}
 \label{sec:stateupdate}
 
 %%\linebreak
@@ -13,13 +13,24 @@ University~\cite{scheme}.}
 %Recall that by an event, we mean a \lang fact.
 %The transitive consequences
 %(via deductive rules) of events are likewise events and hold atomically in the
-%same timestep with their premises.  However, 
+%same timestep with their premises.  However,
 
-\noindent{}In an asynchronous system, the programmer will in general not be able to
-predict when, or in what order, events arrive from other nodes.  Additionally,
-some events may need to be handled over time \jmh{vague}, requiring state-oriented motifs
-such as persistence and mutability.  In this section, we construct a library of
-\lang constructs to capture these two uses of order.
+As we showed in the previous section, logical time may be used as a 
+``source of monotonicity'' to restore a meaningful, temporal interpretation to otherwise
+semantically ambiguous constructs like updateable state and orderly processing.  
+Many common motifs in systems programming
+(distributed and otherwise) follow a similar pattern of restricted nonmonotonicity, in 
+which consequences of deductions are deferred in time.  In this section, we demonstrate
+the expressivity of \lang by building a collection of stateful and orderly contructs,
+most of which employ the careful use of nonmonotonic reasoning deferred in time.
+We also introduce a convenience notation in the form of a simple macro language
+for many of these common patterns.
+
+%%\noindent{}In an asynchronous system, the programmer will in general not be able to
+%%predict when, or in what order, events arrive from other nodes.  Additionally,
+%%some events may need to be handled over time \jmh{vague}, requiring state-oriented motifs
+%%such as persistence and mutability.  In this section, we construct a library of
+%%\lang constructs to capture these two uses of order.
 
 %Given our definition of \lang, we now address the persistence and mutability
 %of data across time: a signature feature of distributed systems---and systems
@@ -45,26 +56,17 @@ such as persistence and mutability.  In this section, we construct a library of
 %that capture state-oriented motifs such as persistent relations,
 %deletion and update, sequences, and queues.
 
-\subsection{State}
+\subsection{State in Logic}
 
-\paa{some intro text; logic naturally models the accumulation of information via deduction,
-but systems programming often requires modeling information that may disappear
-or change over time.}  \jmh{Back this up with formalism: can't do a flip/flop in Datalog (Chandra/Harel, right?).  This discussion does tee up the question of whether something more traditional like Datalog-neg would have been enough for us ... might be sufficient to simply toss in a result about Turing completeness of Dedalus.  I realize your point here is more practically-minded and illustrative, but then maybe this intro is off target for this section.  Still I think an expressivity subsection in the paper would be nice.}
+\jmh{Back this up with formalism: can't do a flip/flop in Datalog (Chandra/Harel, right?).  This discussion does tee up the question of whether something more traditional like Datalog-neg would have been enough for us ... might be sufficient to simply toss in a result about Turing completeness of Dedalus.  I realize your point here is more practically-minded and illustrative, but then maybe this intro is off target for this section.  Still I think an expressivity subsection in the paper would be nice.}
 
-%\subsubsection{Events}
+Logic languages naturally model the accumulation of information: deduction in 
+the broadest sense tells us, given what we already know, what follows from it.  However, systems
+programming frequently requires us to model information that may disappear or change
+over time.  In this section we model persistence, both immutable and dynamic, as
+\emph{induction} over time, and provide a convenience notation for declaring certain
+relations as ``persistent.''
 
-%All attributes in a Datalog fact must be fully instantiated with constants.
-%Because every well-formed \lang fact includes a constant timestamp, all facts
-%are  {\em events} \wrm{comment out, because we're defining events == facts
-%earlier} predicates which hold for exactly one timestep or fixpoint
-%computation.  
-%Recall that by an event, we mean a \lang fact.  The transitive consequences
-%(via deductive rules) of events are likewise events and hold atomically in the
-%same timestep with their premises.  However, in an asynchronous system, the
-%programmer will in general not be able to predict when events arrive from other
-%nodes.  Additionally, some events may need to be handled over time, requiring
-%their persistence.  In this section, we construct a library of \lang constructs
-%to capture these two requirements for order.
 
 \subsubsection{Simple Persistence}
 %
@@ -159,7 +161,7 @@ when the new value is derived.  During the evaluation of timestep
 $\DT+1$ the new value exists, and the old does not.
 
 \subsubsection{Assignment and Committed Choice}
-\rcs{this is analagous to the old systems mainstays: ``first writer wins'' and ``last writer wins''.  We should mention those terms, both for context, and because I think they're a more intuitive way to think about it}
+
 The assignment primitive provided by most imperative languages is a special case
 of update without deletion.  We can model the (destructive) assignment of sets
 of values to keys in the following way:
@@ -189,6 +191,36 @@ log(A, B)@next \(\leftarrow\) condition(A, B), \(\lnot\)log(A, _);
 Assignment and committed choice implement ``last write wins'' and 
 ``first write wins'' semantics, respectively.
 
+\subsubsection{``At Most Once``}
+A common requirement for programs with side-effects outside the control
+of the system is ensuring that certain events occur ``at most once.''
+Consider a requirement for our shopping cart application 
+that only a single checkout response should be generated, even if subsequent
+inputs cause the totals to be recalculated.  Hence we want to ensure that the
+predicate {\em response} ``fires'' only once, regardless of the number of times 
+that {\em status} fires.  This feature can be expressed as a 
+specialization of the committed choice pattern.   
+
+\begin{Dedalus}
+response(Cli, Ses, Item, Amt) \(\leftarrow\)
+  amo\_event(Cli, Ses, Item, Amt);
+
+amo\_event(Cli, Ses, Item, Amt) \(\leftarrow\)
+  status(Cli, Ses, Item, Amt), 
+  \(\lnot\) amo\_log(Cli, Ses, Item, _);
+
+amo\_log(Cli, Ses, Item, Amt)@next \(\leftarrow\) 
+  amo\_event(Cli, Ses, Item, Amt);
+
+amo\_log(Cli, Ses, Item, Amt)@next \(\leftarrow\) 
+  amo\_log(Cli, Ses, Item, Amt);
+\end{Dedalus}
+
+In the subprogram above, the (immutable) predicate {\em amo\_log} serves as a guard
+for the predicate {\em amo\_event}, which is true only for the ``first'' assignment
+of an $Amt$ value to a grouping of client, session and item identifiers.  Subsequent
+occurrences of the {\em status} event for the same group will never fire the second rule.
+
 %But perhaps surprisingly,
 %``closing a world'' in this fashion ensures that \dedalus{log} has strictly
 %monotonic behavior in all models
@@ -203,6 +235,12 @@ event (foo\_event) which occurs once if foo occurs at all.}
 \paa{some intro text: pure logic has no notion of order.  distributed systems programming
 frequently requires ordering constructs to cope with indeterminacy in message ordering
 and to achieve synchronization}
+
+\noindent{}In an asynchronous system, the programmer will in general not be able to
+predict when, or in what order, events arrive from other nodes.  When the timing and 
+ordering of message arrival affects program results, it may be necessary to instrument
+programs with constructs that preserve or restore order at communication boundaries,
+or to ensure that simultaneous arrival of messages has the same effect as serial arrival.
 
 \subsubsection{Priority Queues}
 
