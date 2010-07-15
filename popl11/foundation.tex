@@ -63,7 +63,7 @@ satisfying assignment of $\bar{A}$ (the ``grouping'' attributes).  This row cont
 aggregate function over the set of assignments to $B$ for the given value of 
 $\bar{A}$.
 
-As a concrete example, consider implementing the ``checkout'' functionality for shopping carts: this requires carrying out some aggregations over the {\tt cart\_action} table.
+As a concrete example, consider implementing the ``checkout'' functionality for shopping carts: this requires carrying out some aggregations over the \dedalus{cart\_action} table.
 A typical implementation counts the number of additions and deletions 
 of each item.  The rule below will group by the first five attributes, and associate the
 count of unique {\tt ReqId} values with the last attribute: 
@@ -83,8 +83,9 @@ minimal model}: the minimal set of facts in intensional predicates implied by
 the EDB given the program, or the intensional data base ({\em
 IDB})~\cite{ullmanbook}.  
 \paa{the model is EDB $\cup$ IDB, right?}
-We call programs that always have a unique minimal
-model {\em monotonic} programs.  \jmh{I think that's defining a corollary of montonicity, no?  Or are you trying to capture non-syntactic monotonicity here?  I suspect this is a dangerous way to do that...} Adding negation or aggregation to Datalog
+We call programs that always have a unique minimal model {\em monotonic} programs.
+
+\jmh{I think that's defining a corollary of montonicity, no?  Or are you trying to capture non-syntactic monotonicity here?  I suspect this is a dangerous way to do that...} Adding negation or aggregation to Datalog
 programs increases expressivity\wrm{cite}, but removes the guarantee of a
 unique minimal model---we call these {\em non-monotonic} programs.  \jmh{already you're in trouble, since this is not symmetric with the definition of montonicity.  the way you've stated things requires a proof}  When
 admitting negation or aggregation, one possibility is that a {\em
