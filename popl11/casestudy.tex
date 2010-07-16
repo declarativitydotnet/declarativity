@@ -82,9 +82,8 @@ late {\em cart\_action} messages is acceptable, then the program must merely ens
 that any latecomers are ignored---i.e., after a {\em checkout} has occurred, additional
 {\em cart\_action} messages should not result in delivering additional {\em response} messages.
 We can achieve this using the ``at most once'' pattern from Section~\ref{sec:atmostonce}, which ``seals'' the value
-of {\em Cnt} in {\em log} at the first insertion. By making the {\em response} message conditional on {\em log\_event}, we can be sure that only a single response will be sent.
+of {\em Cnt} in {\em log} at the first insertion. By making the {\em response} message conditional on \emph{log\_event}, we can be sure that only a single response will be sent.
 
-\paa{note: introduce the commitfirst macro in the committed choice section of constructs}
 \begin{Dedalus}
 commitfirst[log, 4, 3];
 
@@ -96,18 +95,16 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
     checkout(#Location, Client, Session);
 \end{Dedalus}
 
-
-If, on the other hand, ignoring late {\em cart\_action} tuples is not acceptable,
+If ignoring late {\em cart\_action} tuples is unacceptable,
 some data dependency between them and {\em checkout} tuples must be established
 to ensure that the deduction of {\em action\_cnt} tuples must {\em wait}.  
 The queue pattern introduced in Section~\ref{sec:orderinlogic} is one means of achieving such an 
 ordering, as is sending a manifest (e.g., a count of total {\em cart\_action} tuples
 sent) in the {\em checkout} message.
 
-In addition to illustrating where in our program coordination may be necessary, our
-analysis also illustrates where is is unnecessary.
-The predicate {\em cart\_action}, representing the stored state 
-of the cart program, is part of a monotonic component that includes {\em cart\_action\_stage}, 
+In addition to illustrating where a program might require additional coordination, our
+analysis also illustrates where coordination is unnecessary.
+Note that the predicate {\em cart\_action} is part of a monotonic component that includes {\em cart\_action\_stage}, 
 so we can simply and inexpensively replicate it:
 
 \begin{Dedalus}
@@ -118,7 +115,7 @@ cart_action(#R, S, I, T, Ri)@async :-
 
 Because {\em cart\_action} is persisted monotonically, it has set semantics over time: at
 {\em some} time, when all tuples are received, the order in which they were received is
-abstracted away.  Hence asynchronous replication of {\em cart\_action} is confluent,
+not important.  Hence asynchronous replication of {\em cart\_action} is confluent,
 at least until such time as a nonmonotonic operation is performed on the table.
 
 
@@ -186,7 +183,7 @@ we have a logic bug in our program...}
 
 
 Looking at the above program, we can see that {\em status} is defined by the
-state update pattern (Section whatever) on {\em cart\_update} -- recall that
+state update pattern (Section~\ref{sec:mutable}) on {\em cart\_update}---recall that
 the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
 {\em cart\_update} tuples do not commute with each other
 %%, the program is not confluent, 
