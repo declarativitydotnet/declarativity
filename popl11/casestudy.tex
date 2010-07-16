@@ -18,8 +18,7 @@ or to provide coordination-free alternatives without synchronization.
 
 \nrc{Are the section refs right? Ref'ing sec 6 before sec 5 looks weird.}
 
-\subsection{Set-oriented Implementation}
-\paa{rename me}
+\subsection{Implementation based on commutative operations}
 An update to the shopping cart is represented as a {\em cart\_action} tuple
 containing server and client addresses, a session identifier, an item
 identifier, a type field (indicating whether the action represents adding
@@ -76,8 +75,9 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 \end{Dedalus}
 
 \begin{figure}[t]
+\centering
 \includegraphics[width=0.9\linewidth]{vizza_brick.pdf}
-\caption{PDG diagram for the initial set-oriented shopping cart program.}
+\caption{PDG diagram for the initial shopping cart program based on commutative updates.}
 \label{fig:cs-pgd-1}
 \end{figure}
 
@@ -131,8 +131,7 @@ not important.  Hence asynchronous replication of {\em cart\_action} is confluen
 at least until such time as a nonmonotonic operation is performed on the table.
 
 
-\subsection{Mutable State Implementation}
-\paa{rename me}
+\subsection{Implementation based on event ordering}
 
 The simplest imaginable shopping cart implementation behaves like a key-value store,
 and treats the cart as an opaque object that is repeatedly updated.    Because we have not
@@ -144,7 +143,7 @@ persist[status, 3];
 queue[cart_update, 3, 2];
 
 r1
-status(Location, Session, CartObj) \(\leftarrow\)
+status(Location, Session, CartObj)@next \(\leftarrow\)
     cart_update(Location,  Session, CartObj);
     
 r2
@@ -160,83 +159,78 @@ cart_update(L, S, C)@async \(\leftarrow\)
     update_event(L, S, C);
 \end{Dedalus}
 
-\paa{no longer sure whether the discussion in the below para is worth the space...}
-Note that 
-{\em cart\_update} is declared using the {\em queue} macro, which expands to
-a program fragment that ensures that tuples corresponding to only one $CartObj$
-are processed in a single fixpoint. \wrm{note that we desire a primary key...}
-Consider the behavior of the program without the queue.  Because {\em
-cart\_update} appears in the head of an asynchronous rule,
-\dedalus{cart\_update} tuples may be assigned arbitrary timestamps, and some
-\dedalus{cart\_update} facts may be assigned the same timestamp, even though
-they were derived serially at the sender.  \wrm{this causes some issue because
-we have a logic bug in our program...}
+Here, the \dedalus{serializer} macro ensures that updates are
+processed one at a time on the server.  Without \dedalus{serializer},
+\dedalus{r1} could match multiple tuples in a single fixpoint;
+breaking the intended functional dependency between \dedalus{Session}
+and \dedalus{CartObj}.
 
-%rule in the global program \nrc{What's a ``global program''?}, and hence it is impossible to predict the assignment of timestamps
-%to deduced tuples.  Even if the client deduces {\em cart\_update} tuples in a serial manner, it
-%is possible for multiple tuples to appear at the receiver in the same timestep \wrm{in other words the bug is that the program isn't correct under associativity of messages}.  Thus rules {\em r1} 
-%and {\em r2}, which appear to describe how a single tuple in {\em status} representing a user
-%session is updated when a tuple in {\em cart\_update} appears, may cause multiple records
-%to appear in {\em status} for the same session (a violation of the implied primary key) \wrm{implied primary key?  we should say earlier ``intuitively we want a primary key'' or something}.
-%%To mitigate this bug, we must ensure that exactly one tuple (per session) is available for %%dequeue
-%%from {\em cart\_update} at any time.  The \emph{queue} template presented in section ?? 
-%%provides this capability.
+%\paa{no longer sure whether the discussion in the below para is worth the space...}
+%Note that 
+%{\em cart\_update} is declared using the {\em queue} macro, which expands to
+%a program fragment that ensures that tuples corresponding to only one $CartObj$
+%are processed in a single fixpoint. \wrm{note that we desire a primary key...}
+%Consider the behavior of the program without the queue.  Because {\em
+%cart\_update} appears in the head of an asynchronous rule,
+%\dedalus{cart\_update} tuples may be assigned arbitrary timestamps, and some
+%\dedalus{cart\_update} facts may be assigned the same timestamp, even though
+%they were derived serially at the sender.  \wrm{this causes some issue because
+%we have a logic bug in our program...}
 
+Figure~\ref{fig:cs-pdg-2} contains a PDG diagram of our
+implementation, and reveals a bug.  \dedalus{cart\_update} is in a
+different monotonic component than \dedalus{update\_event}; as updates
+are propogated from one monotonic component to another, they may be
+reordered.  Therefore, the replicas may apply updates in different
+orders, and end up with different end-states.
 
-%replace fancy pants diction -wrm A simple syntactic analysis of the above
-%program shows that {\em status} is temporally stratifiable.  but not
-%syntactically stratifiable: the deletion rule and the expansion of the
-%persistence template define {\em status} in terms of its own negation (in
-%time)
-%%\wrm{this shouldn't be a surprise to anyone, all the constructs we've presented have this %%property, and we've been harping on this for the previous 2 sections at length}.  
+The solution to the problem is simple; we replace the \dedalus{serializer} macro with an \dedalus{ordered queue}.  We entangle the clients' clocks to provide an ordering over the updates:
 
 
 \begin{figure}[t]
+\centering
 \includegraphics[width=0.65\linewidth]{vizza_straw.pdf}
-\caption{PDG diagram for the shopping cart implementation that uses mutable state.}
+\caption{PDG diagram for the shopping cart implementation based on ordered events.}
 \label{fig:cs-pdg-2}
 \end{figure}
 
-Looking at the above program, we can see that {\em status} is defined by the
-state update pattern (Section~\ref{sec:mutable}) on {\em cart\_update}---recall that
-the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
-{\em cart\_update} tuples do not commute with each other
-%%, the program is not confluent, 
-and the program as
-given is unlikely to return the correct version of the cart in a {\em response}
-message.  Our PDG analysis confirms this: a stratum boundary separates the client state
-(at {\em update}) from the server state ({\em cart\_update}), upon which all other 
-predicates in the program, including {\em response}, depend.
-
-Considering the {\em cart\_update} tuples in the client's order would solve
-this problem.  However, the client's order of the updates is lost through the
-asynchronous derivations of {\em cart\_update}, which may arbitrarily reorder
-updates.  In Section whatever, we identified the concept of entanglement as a
-way to preserve an order in the face of asynchrony.  We can communicate the
-desired order from client to server by entangling the sender's time in rule
-\dedalus{r4}, and having the server process updates in this order.\footnote{
-We could also have used a sequence, if we wanted more control over the range of ordered
-values.}
-%serial order of updates at the client is lost in the asynchronous derivations
-%of {\em cart\_update}.  By entangling the sender's time in rule  {\em r4}, we
-%may communicate the desired total order over the {\em cart\_update} tuples and
-%process them in that order.
-The rest of the code is unchanged, except that an additional argument must be
-added to {\em cart\_update}:
+%Looking at the above program, we can see that {\em status} is defined by the
+%state update pattern (Section~\ref{sec:mutable}) on {\em cart\_update}---recall that
+%the state update pattern means that the ``latest'' tuple ``wins.'' Thus clearly
+%{\em cart\_update} tuples do not commute with each other
+%%%, the program is not confluent, 
+%and the program as
+%given is unlikely to return the correct version of the cart in a {\em response}
+%message.  Our PDG analysis confirms this: a stratum boundary separates the client state
+%(at {\em update}) from the server state ({\em cart\_update}), upon which all other 
+%predicates in the program, including {\em response}, depend.
+%
+%Considering the {\em cart\_update} tuples in the client's order would solve
+%this problem.  However, the client's order of the updates is lost through the
+%asynchronous derivations of {\em cart\_update}, which may arbitrarily reorder
+%updates.  In Section whatever, we identified the concept of entanglement as a
+%way to preserve an order in the face of asynchrony.  We can communicate the
+%desired order from client to server by entangling the sender's time in rule
+%\dedalus{r4}, and having the server process updates in this order.\footnote{
+%We could also have used a sequence, if we wanted more control over the range of ordered
+%values.}
+%The rest of the code is unchanged, except that an additional argument must be
+%added to {\em cart\_update}:
 
 \begin{Dedalus}
 cart_update_queue(L, S, C, N)@async \(\leftarrow\)
     update_event(L, S, C)@N;
 \end{Dedalus}
 
-\wrm{the high level point here is that we've made some bad design choices that
-result in us having to over-specify the order.  clearly, a shopping cart doesn't
-need this much order because it's commutative, and indeed, we can write it in a
-much simpler way.  rusty will insert some points here about how distributing
-this naive example results in tons of ugliness (e.g. paxos), and explain that
-yes, we could do that in the language if we want (cite netdb).  this will be a
-nice contrast with later examples which can be distributed much more easily
-because they have much less order and larger monotonic sections.  home run!}
+%\wrm{the high level point here is that we've made some bad design choices that
+%result in us having to over-specify the order.  clearly, a shopping cart doesn't
+%need this much order because it's commutative, and indeed, we can write it in a
+%much simpler way.  rusty will insert some points here about how distributing
+%this naive example results in tons of ugliness (e.g. paxos), and explain that
+%yes, we could do that in the language if we want (cite netdb).  this will be a
+%nice contrast with later examples which can be distributed much more easily
+%because they have much less order and larger monotonic sections.  home run!}
+
 This approach overcomes the nondeterministic ordering implied by asynchronous
 communication with brute force: a totally-ordered protocol. This is simple and
 inexpensive in this case because it is centralized at the client, obviating the
@@ -248,15 +242,13 @@ with a queue also.  The matching queues at client and server impose a
 synchronization barrier: both sides of the computation must ``spend time''
 proportional to the number of tuples.
 
-\rcs{This might be a good place to cite BFS, sherpa, etc.  The para would go something like this (1) if you want to extend the above to multiple writers, then the ordering construct needs to move to the server side.  (2) Once ordering moves to a master node, you need paxos.  (3) in order to replicate you need to allow replicas to send updates to each other.  If you've settled on per-tuple masters, this probably means some sort of log shipping protocol (a'la our queue, above).  Between the primitives described here and in the bfs/paxos work, you can implement this.  Such systems have been implemented in the past, and are currently in production (CITE PNUTS).  However, such approaches are overkill for shopping carts, and don't show off our nice handling of commutative updates, so:}
-
-
+%\rcs{This might be a good place to cite BFS, sherpa, etc.  The para would go something like this (1) if you want to extend the above to multiple writers, then the ordering construct needs to move to the server side.  (2) Once ordering moves to a master node, you need paxos.  (3) in order to replicate you need to allow replicas to send updates to each other.  If you've settled on per-tuple masters, this probably means some sort of log shipping protocol (a'la our queue, above).  Between the primitives described here and in the bfs/paxos work, you can implement this.  Such systems have been implemented in the past, and are currently in production (CITE PNUTS).  However, such approaches are overkill for shopping carts, and don't show off our nice handling of commutative updates, so:}
 
 \begin{comment}
-\paa{this is too many drawings, but I have to admit I like the drawings and how they illustrate
-the componentization of a distributed system into (hopefully maximally large) 'declarative'
-components that are order-independent and imperative components}
 
+%\paa{this is too many drawings, but I have to admit I like the drawings and how they illustrate
+%the componentization of a distributed system into (hopefully maximally large) 'declarative'
+%components that are order-independent and imperative components}
 
 \includegraphics[width=0.65\linewidth]{vizza_withatmostonce.pdf}
 
