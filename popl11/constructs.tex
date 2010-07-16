@@ -248,6 +248,9 @@ ordering of message arrival affects program results, it may be necessary to inst
 programs with constructs that preserve or restore order at communication boundaries,
 or to ensure that simultaneous arrival of messages has the same effect as serial arrival.
 
+We chose these examples for their simplicity and illustrative power: they represent primitive
+kernels of coordination mechansims.  We have demonstrated elsewhere that robust coordination  {\em protocols}~\cite{netdb, dedalus-techr} are expressible in \lang, but omit these for 
+the sake of brevity.
 
 \subsubsection{Serializers}
 
@@ -353,42 +356,6 @@ By doing so, we take advantage of the monotonic property of timestamps to enforc
 very difficult to express in a logic language.
 
 \end{comment}
-\subsubsection{Ordered Queues}
-In a completely local execution, the serializer pattern is sufficient to implement a
-priority queue:  items inserted into {\em update\_queue} will be dequeued 
-according to the data-dependent ordering induced by the $Cartobj$ values.
-Maintaining such orderly queueing across asynchronous boundaries is another
-matter.  To ensure that a set of tuples sent across the network (and hence potentially 
-``scattered'' in logical time) are processed in the correct order requires some synchronization
-between sender and receiver.  In the style of FIFO messaging in network protocols, 
-we may use a sequence at the receiver to ensure that it ``waits'' 
-the necessary amount to ensure totally ordered processing.  Because
-sequences operate over integers, we add an integer column to all relations to represent 
-the sender's ``intended'' order:
-
-\begin{Dedalus}
-persist[update_queue, 4];
-sequence[update_seq, del_update_queue, 4);
-update_seq(B) \(\leftarrow\) bottom(B);
-
-update(L, S, C, I) \(\leftarrow\)
-  update_queue(L, S, C, I),
-  update_seq(I);
-
-delete update_queue(L, S, C, I) \(\leftarrow\)
-  update(L, S, C, I);
-\end{Dedalus}
-
-Note that the sender is thus required not only to establish the ordering of tuples, but
-to inform the receiver of the ``bottom'' element, in order to seed the sequence.
-Tuples persist in {\em update\_queue} until such time as their $I$ value matches the 
-sequence value, at which point they are dequeued, atomically with the incrementation
-of the sequence and deletion from the queue relation.  This simple example illustrates
-a more general pattern of order preservation across network boundaries.
-
-We provide the macro {\em ordered\_queue}, which takes the same arguments as the serializer macro; e.g., \dedalus{ordered\_queue[update, 4, 3]}.
-
-%Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
 
 \subsubsection{Entanglement}
 \label{sec:entangle}
@@ -442,6 +409,45 @@ macro, which takes three arguments (sequence name, a ``trigger'' predicate
 which, when true, should cause the sequence to be incremented, and the
 trigger's arity) and expands them to a pair of definitions of a unary predicate
 like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}).
+
+
+\subsubsection{Ordered Queues}
+In a completely local execution, the serializer pattern is sufficient to implement a
+priority queue:  items inserted into {\em update\_queue} will be dequeued 
+according to the data-dependent ordering induced by the $Cartobj$ values.
+Maintaining such orderly queueing across asynchronous boundaries is another
+matter.  To ensure that a set of tuples sent across the network (and hence potentially 
+``scattered'' in logical time) are processed in the correct order requires some synchronization
+between sender and receiver.  In the style of FIFO messaging in network protocols, 
+we may use a sequence at the receiver to ensure that it ``waits'' 
+the necessary amount to ensure totally ordered processing.  Because
+sequences operate over integers, we add an integer column to all relations to represent 
+the sender's ``intended'' order:
+
+\begin{Dedalus}
+persist[update_queue, 4];
+sequence[update_seq, del_update_queue, 4);
+update_seq(B) \(\leftarrow\) bottom(B);
+
+update(L, S, C, I) \(\leftarrow\)
+  update_queue(L, S, C, I),
+  update_seq(I);
+
+delete update_queue(L, S, C, I) \(\leftarrow\)
+  update(L, S, C, I);
+\end{Dedalus}
+
+Note that the sender is thus required not only to establish the ordering of tuples, but
+to inform the receiver of the ``bottom'' element, in order to seed the sequence.
+Tuples persist in {\em update\_queue} until such time as their $I$ value matches the 
+sequence value, at which point they are dequeued, atomically with the incrementation
+of the sequence and deletion from the queue relation.  This simple example illustrates
+a more general pattern of order preservation across network boundaries.
+
+We provide the macro {\em ordered\_queue}, which takes the same arguments as the serializer macro; e.g., \dedalus{ordered\_queue[update, 4, 3]}.
+
+%Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
+
 
 \subsubsection{Lamport Clocks}
 \label{sec:lamport}
