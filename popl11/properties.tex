@@ -79,7 +79,9 @@ rules is confluent, as the trace is empty.
 %
 Two traces $R_1, R_2$ are in the same associativity class if $R_2$ can be
 derived from $R_1$ by freely applying the operations of combining two adjacent
-timestamps, and splitting a single timestamp into two adjacent timestamps.
+timestamps (i.e.\ 
+
+, and splitting a single timestamp into two adjacent timestamps.
 %
 \end{definition}
 
@@ -140,7 +142,10 @@ A monotonic \lang program is confluent if and only if it is associative.
 \begin{proof}
 %
 It is clear that the confluence of a monotonic \lang program implies its
-associativity \jmh{no it's not -- you need to knit together traces and ``histories'' to make this argument}, so we need only consider the other direction.
+associativity: if a confluent \lang program is not associative, then there is
+some instance $I$ and two traces $R_1, R_2$ in the same associativity class for
+which the ultimate model is not the same; this contradicts the fact that the
+program is confluent.
 
 If a \lang instance is not trace confluent, we will show the \lang program is
 not associative.  Assume there exists a non-trace-confluent \lang instance $I$
