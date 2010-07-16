@@ -217,7 +217,7 @@ including $\DT$.
 %
 \end{enumerate}
 
-The use of \dedalus{successor}, \dedalus{time}, and \dedalus{choice} are
+The use of \dedalus{time}, and \dedalus{choice} are
 otherwise prohibited.  We will study the utility of these three types of rules
 later, but briefly observe here that systems in general only require recourse
 to ordering primitives for mutable state and communication.  Inductive and
@@ -357,9 +357,9 @@ For further details, see~\cite{dedalus-techr}.
 \subsection{Temporal Safety}
 
 One might be concerned about an instance having an infinte model, given \lang's
-infinite \dedalus{time} and \dedalus{successor} relations, and the use of summary
-aggregates and entanglement.  First, we must define what we mean by the model
-of a \lang instance.
+infinite \dedalus{time} and \dedalus{successor} relations, and the use of
+summary aggregates and entanglement.  First, we must define what we mean by the
+model of a \lang instance.
 
 Note that the only non-determinism in a \lang program is in the timestamps of
 facts implied by \dedalus{async} rules.  Thus, there is no single model for a
@@ -383,16 +383,24 @@ trace of a \lang instance.
 %
 An {\em incremental model} at time $T$ of trace $R$ of a \lang instance $I$,
 represented by $\mathcal{M}_{I,T}(R)$, is the contents of all
-relations at time $T$.
+relations at time $T$ (excluding timestamps).
 %
 \end{definition}
-
-By $\mathcal{M}_{I,\infty}(R)$, we mean the set of all $f$ such that $\exists T \in \dedalus{time} \forall S \geq T: f \in \mathcal{M}_{I,T}(R)$.
 
 \begin{definition}
 %
 The {\em ultimate model} of trace $R$ of a \lang instance $I$, represented by
-$\mathcal{U}_{I}(R)$, is the set of all $f \in \mathcal{H}$ such that $\exists
-T \in \dedalus{time} \forall S \geq T: f \in \mathcal{M}_{I,S}(R)$.
+$\mathcal{U}_{I}(R)$, is the set of all facts $f$ (excluding timestamps) such
+that $\exists T \in \dedalus{time} \forall S \geq T: f \in
+\mathcal{M}_{I,S}(R)$.
 %
 \end{definition}
+
+The ultimate model is finite iff the Herbrand universe is finite.
+
+Time and successor usage.
+
+summary aggregates and entanglement
+
+\subsection{Complexity}
+
