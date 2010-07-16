@@ -349,7 +349,7 @@ $\leftsquigarrow$ and $\leftsquigarrow^+$ for async rules.
 %
 A \lang program is temporally stratified if for all predicates \dedalus{p}:
 $\dedalus{p} \succ^+ \lnot \dedalus{p} \implies \dedalus{p} \gets^+ \lnot
-\dedalus{p}$.
+\dedalus{p} \lor \dedalus{p} \leftsquigarrow^+ \dedalus{q}$.
 %
 \end{definition}
 
