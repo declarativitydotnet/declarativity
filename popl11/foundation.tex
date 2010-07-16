@@ -110,7 +110,6 @@ This instance has no minimal model, because it has a contradiction:
 and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
 we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
 \dedalus{p}, a contradiction could never arise in any instance of any program
-\paa{eek, only if we take $\lnot$ as shorthand for negation \emph{or} aggregation}
 -- this is called {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
@@ -337,7 +336,7 @@ rules be \dedalus{async} rules.
 We desire a stratification condition for \lang that corresponds to our
 intuitive interpretation of time---contradictions can always be avoided by
 making the contradictory facts noncoincident in time. \wrm{sum1 look at this}
-\rcs{pete needs to smack bill upside the head}
+%%\rcs{pete needs to smack bill upside the head}
 If predicate \dedalus{p} depends on predicate \dedalus{q} through only
 inductive rules, then we write $\dedalus{p} \gets \dedalus{q}$.  We write
 $\dedalus{p} \gets^+ \dedalus{q}$ if $\dedalus{p} \gets \dedalus{q}$ or
@@ -401,7 +400,9 @@ that $\exists T \in \dedalus{time}~\forall S \geq T: f \in
 
 We care about the finiteness of all incremental models to ensure effective
 computability.  Clearly, all incremental models are finite if and only if the
-Herbrand Universe is finite.\rcs{what if each model is finite, and has one more symbol than the one before it, and there are an infinite number of incremental models?}
+Herbrand Universe is finite.
+%%\rcs{what if each model is finite, and has one more symbol than the one before it, and there 
+%%are  infinite number of incremental models?}
 
 Values from \dedalus{successor} and \dedalus{time} cannot appear in the
 Herbrand Universe unless there is entanglement.  However, it is possible to

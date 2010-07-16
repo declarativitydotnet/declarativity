@@ -1,5 +1,4 @@
 \section{Case Study: Shopping Carts}
-\wrm{say that everything in this section is temporally safe}
 \label{sec:casestudy}
 
 In this section, we use \lang to build two different implementations of a 
@@ -16,7 +15,6 @@ loci of coordination.  Finally, we discuss the potential application of order-re
 constructs introduced in Section~\ref{sec:stateupdate} to achieve the necessary coordination,
 or to provide coordination-free alternatives without synchronization.
 
-\nrc{Are the section refs right? Ref'ing sec 6 before sec 5 looks weird.}
 
 \subsection{Implementation based on commutative operations}
 An update to the shopping cart is represented as a {\em cart\_action} tuple
@@ -25,18 +23,19 @@ identifier, a type field (indicating whether the action represents adding
 or removing an item from the cart), and a request identifier to allow
 idempotent retry. A checkout request is represented by a {\em checkout}
 tuple.  Clients generate {\em cart\_action} and {\em checkout} tuples
-and send them to one of the server replicas. Request identifiers are
-assigned from a sequence {\em s}.
+and send them to one of the server replicas, determined
+by the predicate {\em best\_replica}, whose defining rules are not shown. 
+Request identifiers are assigned from a sequence {\em counter}.
 
 \begin{Dedalus}
 // client code
-sequence[s, cart_action_stage, 6];
+sequence[counter, cart_action_stage, 6];
 
 cart_action_stage(Server, Client, Session,
                   Item, Type, ReqId) \(\leftarrow\)
     action(Client, Session, Item, Type, ReqId),
     best_replica(Client, Session, Server),
-    s(ReqId);
+    counter(ReqId);
 
 cart_action(L, C, S, I, T, R)@async \(\leftarrow\)
     cart_action_stage(L, C, S, I, T, R);
@@ -219,7 +218,7 @@ The solution to the problem is simple; we replace the \dedalus{serializer} macro
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.65\linewidth]{vizza_straw.pdf}
-\caption{PDG diagram for the shopping cart implementation based on ordered events.}
+\caption{PDG diagram for the shopping cart implementation based on ordered events (excluding {\em checkout}).}
 \label{fig:cs-pdg-2}
 \end{figure}
 
@@ -290,11 +289,11 @@ proportional to the number of tuples.
 \begin{Dedalus}
 commitfirst[publish, 4, 3];
 
-sequence[s, cart_action_stage, 5];
+sequence[counter, cart_action_stage, 5];
 cart_action_stage(#Server, Client, Session, Item, Type, ReqId) \(\leftarrow\)
     action(#Client, Session, Type, ReqId),
     best_replica(#Client, Session, Server);
-    s(ReqId);
+    counter(ReqId);
 
 cart_action(#L, S, I, T, R)@async \(\leftarrow\) 
     cart_action_stage(L, #C, S, I, T, R);
