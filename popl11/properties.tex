@@ -259,22 +259,7 @@ non-monotonic program may be implied through negation or aggregation.
 
 \subsection{Commutativity}
 
-\jmh{Too much prose before the example.  Pop the example in the middle (``consider the following example'') and then discuss it.  Or put it up in a Figure.}
-
-
-It is easy to see that non-monotonic programs are not necessarily confluent,
-even when async predicates are simply persisted.  In addition to associativity,
-{\em commutativity} is now an issue: if we swap the timestamps of two messages,
-we might swap the order of existential and universal quantification, as
-exhibited by the instance below, where the 
-%quantification over a set occurs before the membership of the set is known,
-%and results of this ``incomplete'' quantification may be forever persisted.
-nondeterminism implied by the async definitions of \dedalus{p} and \dedalus{q}
-leads to two different ultimate models for this instance.  All traces in which
-\dedalus{p} is assigned a lower timestamp than \dedalus{q} lead to an ultimate
-model including \dedalus{r(1,2)}.  However, if \dedalus{q} precedes
-\dedalus{p}, or is co-incident with \dedalus{p}, then \dedalus{\(\lnot\) q(A)}
-is false, and the ultimate model excludes \dedalus{r(1, 2)}.
+Consider the following example:
 
 \begin{Dedalus}
 persist[r,2]
@@ -293,6 +278,16 @@ f(1, 2)@4;
 f(3, 4)@11; 
 \end{Dedalus} 
 
+This example illustrates that a non-monotonic program is not necessarily
+confluent, even when async predicates are simply persisted.  In addition to
+associativity, {\em commutativity} is now an issue: if we swap the timestamps
+of two messages, we might swap the order of existential and universal
+quantification.  In the example, all traces in which \dedalus{p} is assigned a
+lower timestamp than \dedalus{q} lead to an ultimate model including
+\dedalus{r(1,2)}.  However, if \dedalus{q} precedes \dedalus{p}, or is
+co-incident with \dedalus{p}, then \dedalus{\(\lnot\) q(A)} is false, and the
+ultimate model excludes \dedalus{r(1, 2)}.
+
 \begin{lemma}
 %
 A \lang program is confluent if and only if it is associative and commutative.
@@ -301,36 +296,39 @@ A \lang program is confluent if and only if it is associative and commutative.
 
 \begin{proof}
 %
-Again, the forward direction is clear, so we restrict our proof to the
-backward direction.
+It is clear that the confluence of a \lang program implies its
+associativity: if a confluent \lang program is not associative, then there is
+some instance $I$ and two traces $R_1, R_2$ in the same associativity class for
+which the ultimate model is not the same; this contradicts the fact that the
+program is confluent.
 
-If a \lang instance is not trace confluent, we will show the \lang program is
-not associative or not commutative.  Assume there exists a non-trace-confluent 
-\lang instance $I$ with an associative and commutative program.  \jmh{Again, simplify the below to just defint $R_1$ and $R_2$}.  That is, there
-are two traces $R_1, R_2$ for $I$, such that
+If a \lang program is associative, we will show that any arbitrary instance of
+the \lang program is trace confluent.   Assume there exists a
+non-trace-confluent \lang instance $I$ with an associative program.  That is,
+there are two traces $R_1, R_2$ for $I$, such that (without loss of generality)
 %$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
 %\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
 %the $f$ that no 
-$\exists i,j \in \{1,2\}: i \neq j \land f \in \bigcup_{t \in \text{time}}
-\mathcal{M}_{I,T}(R_i) \land f \not\in \bigcup_{t \in \text{time}}
-\mathcal{M}_{I,T}(R_j)$.  Let $g$ be the ``first'' such $f$, that is the $f$
-such that no transitive support of $f$ is also in the set \wrm{note that
-transitive support is acyclic}.  The entire contents of $g$'s transitive
-support clearly is in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_i)$
-\wrm{fix this} (although possibly at different times), because if it were not,
-then $g$ would not be the ``first'' such $f$.  The fact that the program is
-associative is important, because of \lang's syntactic restriction that rules
-must unify on time.  The fact that the program is commutative is also important
--- this means that universal quantification at any time allowed by data
-dependencies is fine.  \wrm{this is a sketch but not a real proof.  fix tmrw
-when i get some inspiration}
-%Thus, even under different assignment of timestamps, $g$'s
-%transitive support still derives $g$ in $R_i$.  Thus, we have reached a
-%contradiction.  \wrm{toughen up, note that we have proven something stronger
-%than the lemma}
+$\exists f \in \bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1) \land f
+\not\in \bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_2)$.  Let $g$ be the
+$f$ that has a complete support (with a possibly different assignment of
+timestamps) in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_2)$.  We know
+there exists at least one such $g$, because if such a $g$ does not exist, then
+either no $f$ exists or some $f$ is part of its own complete support.  Because
+\lang rules must unify on time, the support of $g$ in $\bigcup_{t \in
+\text{time}} \mathcal{M}_{I,T}(R_2)$ does not necessarily imply $g$ for an
+abitrary program.  However, because we know that the program is monotonic, the
+order of facts does not affect the ultimate model, so we need only worry about
+associativity.  By the Lemma above \wrm{which I haven't proved yet}, we know
+that after applying a commutativity step, $g$'s support in $\bigcup_{t \in
+\text{time}} \mathcal{M}_{I,T}(R_2)$ is in the same associativity class as its
+support in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1)$.  Because we
+know the program is associative, $g$ exists in  $\bigcup_{t \in \text{time}}
+\mathcal{M}_{I,T}(R_2)$.  By induction, the set of $f$ is empty, which
+contradicts our assumption that it was non-empty.  Thus, a monotonic,
+associative \lang program is always confluent.
 %
 \end{proof}
-\jmh{wasn't that a verbatim copy of the previous proof?}
 
 \jmh{the next paragraph needs more time ... introduce the concern more carefully, and I think it's worth formally making the argument as a lemma, since the mode of reasoning here is important to a lot of our notions of fine-grained monotonicity.  and I don't think it's ``easy to see'' since we never explained the Sacca/Zaniolo choice thing in detail.}
 At this stage, the careful reader may be concerned that our ``monotonic''
