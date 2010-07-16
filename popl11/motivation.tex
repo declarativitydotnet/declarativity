@@ -7,7 +7,7 @@ sends messages describing shopping cart updates to one or more members of a coll
 processes. To tolerate process failures and enable load-balancing, shopping cart state will be replicated
 at multiple servers; each client message in a single session may be delivered to a different server process.  A practical implementation of a shopping cart would of course also
 provide a {\em check out} functionality, but we will postpone this discussion until
-section~\ref{sec:casestudy}.
+Section~\ref{sec:casestudy}.
 
 
 Several strategies are possible for performing updates of replicated state. A
@@ -24,7 +24,7 @@ This weaker consistency model reduces the need for coordination among
 the server processes~\cite{dynamo}, which in turn reduces update
 latencies, and decreases the impact of temporary failures upon read and
 write performance.  To guarantee this form of consistency, we need to ensure that our application possesses the 
-properties that, in spite of message reordering and the possibility of the simultaneous
+property that, in spite of message reordering and the possibility of the simultaneous
 receipt of multiple messages, all executions of the client code for the same series of
 input will produce the same state on all replicas.  We will formalize this discussion in
 Section~\ref{sec:properties}.
@@ -43,7 +43,6 @@ Section~\ref{sec:properties}.
 %%implementations of various replication protocols.
 
 We begin by considering an ``imperative'' 
-\wrm{maybe ``serial'' would be a better term here} 
 implementation of an eventually consistent shopping cart application.  A
 server process accepts a message, updates its local shopping cart
 state, and then propagates the message to the other replicas:
@@ -92,15 +91,10 @@ state, and then propagates the message to the other replicas:
 9: done
 \end{Dedalus}
 
-\paa{I know the client code was trivial, but unsure how to talk about co-analysis of
-agents without it}
-
 Several difficulties present themselves when we attempt to reason about whether
-this implementation is insensitive to message reordering concurrent and simultaneous receipt of messages.  \wrm{we need to mention earlier that we're concerned about this}
-
-First, it is not obvious from a static analysis of the code that the client and server are
-part of a single distributed system \wrm{not seeing any client code?}, so we must analyze each of the agents individually \wrm{well, at least we need to analyze the client separately from the server}. 
-\jmh{I found the preceding sentence surprising and distracting.  I thought the above was only server code; why are you complaining about the client here?}
+this implementation is sensitive to message reordering and simultaneous receipt of messages.
+First, it is not obvious from a static analysis of the code that multiple server processes are
+part of a single distributed system, so we must analyze each of the agents individually.
 If we assume conservatively that repeated calls to {\em receive message} will return messages in
 arbitrary order, verifying the first property (essentially, order-independence of messages)
 is tantamount to showing that the {\em union} operation is
@@ -110,7 +104,7 @@ from domain knowledge about the operators in question.
 
 In this imperative approach, we assume that the semantics of {\em receive message}
 hide a {\em queue} which ensures that only one message (perhaps arbitrarily chosen in the
-event of simultaneous receipt) is returned by each call; we also assume messages are handled atomically. \rcs{make a dig about how actual analyses can't assume this stuff in practics and are therefore really, really hard?}
+event of simultaneous receipt) is returned by each call; we also assume messages are handled atomically.
 
 %\paa{an attempt at ``logic pseudocode''.  bill: HELP!}
 
@@ -124,7 +118,7 @@ cart\_action(#Replica, Client, Session, Item, Type)
        best_replica(#Client, Session, Replica) )
 \end{Dedalus}
 
-\noindent and how servers multicast such tuples to other replicas (lines 3 and 4):
+\noindent and how servers multicast tuples to other replicas (lines 3 and 4):
 
 \begin{Dedalus}
 cart\_action(#Replica, C, S, I, T)
@@ -134,11 +128,11 @@ cart\_action(#Replica, C, S, I, T)
 
 These implications are written in a syntax reminiscent of distributed
 logic languages; the existence of facts matching the RHS implies the
-existence of the fact in the LHS.  (Section~\ref{sec:fixsecname}
+existence of the fact in the LHS.  (Section~\ref{sec:lang}
 contains a more formal discussion of Datalog syntax and semantics.)
 The ``\#'' denotes the location of the fact, which may be stored on
 any of the machines in question; both of our ``implications'' are {\em
-  distributed}, as the location of the LHS varies from that of the
+  distributed}, as the location of the LHS is distinct from that of the
 RHS~\cite{Loo2009-CACM}.  
 
  %comment out these ``integrity constraints'' and replace with deductive rules
@@ -211,13 +205,13 @@ RHS~\cite{Loo2009-CACM}.
 %then there is a tuple in the left-hand-side with the same bindings.
 
 Note that the distributed system is expressed as a single, global program.
-Because messages are themselves deductions, there are opportunities to 
-analyze server and client code together \wrm{phrase better}.  We can analyze the program to 
+Because messages are a special type of deduction, application semantics are preserved across communication boundaries, creating opportunities to 
+coanalyze server and client code.  We can analyze the program to 
 show that {\em cart\_action}, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
 %%\wrm{i thought it's an associativity thing, not a commutativity thing}
-and to the co-occurrence of multiple messages simultaneously, without relying
-on semantics provided by external or hidden library calls, or the correctness of imperative optimizations such as pulling set union (line 7) inside the conditional (line 2).  Moreover, the code itself is succinct and straightforward: it does not intersperse server-to-server replication mechanisms and client request handling as the imperative code does.
+and to the co-occurrence of multiple messages simultaneously. We can do so without relying
+the semantics of external or hidden library calls, or the correctness of imperative optimizations such as pulling the set union (line 7) inside the conditional (line 2).  Moreover, the code itself is succinct and straightforward: it does not intersperse server-to-server replication mechanisms and client request handling as the imperative code does.
 
 %  \jmh{how?  are you saying that accumulation into a set is commutative and associative?  why is this easier than the U symbol in the pseudocode?} Moreover, the code 
 %itself is succinct and straightforward. 
@@ -228,7 +222,7 @@ When we consider the case of multiple messages with the same values for
 we see that both the imperative and logical implementations are underspecified.
 The set semantics of $\cup$ in the first implementation and the implicit union 
 in the second specification rule this out, so we need some way of uniquely identifying each message.
-Of course, this is trivial in an imperative language by incrementing a sequence number (often aided by a built-in operator like $++$).
+Of course, achieving this is trivial in an imperative language by incrementing a sequence number (often aided by a built-in operator like $++$).
 % the operation is so common that many such languages
 % provide a shorthand like $++$ for self-increment), 
 But this standard imperative kernel is difficult to express in a logic language:
@@ -245,14 +239,18 @@ cart_action(#L, C, S, I, T, R) \(\leftarrow\)
 
 These two rules introduce \dedalus{ca\_stage}, which is simply
 \dedalus{action} with an additional column associating each event with
-a request id.  The problem comes in the definition of \dedalus{counter}, which is meant to be a source of unique timestamps; the presence of a request id in \dedalus{counter} corresponds to a fact that is forever true, as does the presence of a client request in \dedalus{action}.  Therefore, naive attempts to bump the counter once per message arrival:
+a request id.  The problem comes in the definition of
+\dedalus{counter}, which is meant to be a source of unique timestamps:
 
 \begin{Dedalus}
 counter(ReqId+1) \(\leftarrow\) counter(ReqId),
                     action(_,_,_,_);
 \end{Dedalus}
 
-lead to infinite models ($\dedalus{s} \equiv \mathbb{N}$ once one action occurs), and leave the underlying problem unsolved.
+In logic languages, tuples correspond to facts that are forever true.
+Therefore, naive attempts to bump the counter once per message arrival
+lead to infinite models ($\dedalus{s} \equiv \mathbb{N}$ once one
+action occurs), and leave the underlying problem unsolved.
 
 Logic languages typically resort to operational semantics
 at this point; a common approach is to wrap a Datalog interpreter in
@@ -265,7 +263,7 @@ from acting as true logical
 implications, because their conclusions are certainly not true at the same time
 as their premises.
 Existing distributed logic languages model such issues
-outside of logic which frustrates static analysis approaches, and
+outside of logic, which frustrates static analysis approaches and
 complicates language semantics.  
 
 %%For the purposes of this section,
@@ -290,7 +288,6 @@ complicates language semantics.
 %%manipulation and network communication, as both primitives require an
 Both primitives --- state manipulation and network communication --- require an
 underlying notion of time that is missing from the logic exposed by such systems.
-
 When {\em action} is ``true'' in the fourth rule,
 the incremented sequence value should
 hold at the {\em next} visible state of the system, and if action is false, its current
@@ -298,7 +295,7 @@ value should be retained at the next state.  In the second rule expressing commu
 the deduced {\em cart\_action}
 tuple should (ignoring message loss) be true at {\em some} unspecified future time.  In \lang,
 three different temporal semantics of deduction---now, next, and asynchronous---are captured by annotations (or their absence) 
-associated with rule conclusions.  To give a flavor of our subsequent discussion, the second two rules of the above program \rcs{it's broken into two chunks above... what to do???} would be written in \lang as:
+associated with rule conclusions.  To give a flavor of our subsequent discussion, the last two rules of the above program would be written in \lang as:
 
 \begin{Dedalus}
 cart_action(#L, C, S, I, T, R)@async :-

@@ -87,8 +87,7 @@ EDB given the program~\cite{ullmanbook}.  Programs without negation or
 aggregation are always {\em monotonic}.  A program is monotonic if, when
 evaluated on two EDBs $E \subset F$, the model of the instance of $P$ with EDB
 $E$ is a subset of the model of the instance of $P$ with EDB $F$.  In practice,
-monotonic logic is not expressive enough to capture many interesting programs --
-computation can never happen over an unbounded set.
+monotonic logic is not expressive enough to capture many interesting programs.
 
 Adding negation or aggregation introduces potential nonmonotonicity.  When
 admitting negation or aggregation, a {\em
@@ -157,10 +156,10 @@ One of our goals for \lang is to model the inherent non-determinism of network
 delay in asynchronous distributed systems.  Sacc\`{a} and
 Zaniolo~\cite{sacca-zaniolo} formalized non-determinism in Datalog in their
 \dedalus{choice} construct.  Consider the rule \dedalus{p(X,Y) :- q(X,Y),
-choice((X), (Y));} The \dedalus{choice((X),(Y))} clause means that For each
+choice((X), (Y));} The \dedalus{choice((X),(Y))} clause means that for each
 value that variable \dedalus{X} assumes, variable \dedalus{Y} may only take on
 a single {\em non-deterministically chosen} value.  \dedalus{choice} has a
-model-theoretic definition based on cycles through negation.  \dedalus{choice}
+model-theoretic definition based on cycles through negation.  However, \dedalus{choice}
 never causes a contradiction, and is safe, because it does not expand the
 Herbrand Universe.
 
@@ -338,7 +337,7 @@ rules be \dedalus{async} rules.
 We desire a stratification condition for \lang that corresponds to our
 intuitive interpretation of time---contradictions can always be avoided by
 making the contradictory facts noncoincident in time. \wrm{sum1 look at this}
-
+\rcs{pete needs to smack bill upside the head}
 If predicate \dedalus{p} depends on predicate \dedalus{q} through only
 inductive rules, then we write $\dedalus{p} \gets \dedalus{q}$.  We write
 $\dedalus{p} \gets^+ \dedalus{q}$ if $\dedalus{p} \gets \dedalus{q}$ or
@@ -379,9 +378,9 @@ comprise a trace of the instance.
 %
 \end{definition}
 
-Now we can devise a unique series of models, which we call the {\em incremental
+Now we can devise \rcs{enumerate?} a unique series of models, which we call the {\em incremental
 models} for a trace of a \lang instance.  We also define an {\em ultimate
-model} , which is the eventual contents of the incremental models.
+model}, which is the eventual contents of the incremental models.
 
 \begin{definition}
 %
@@ -395,14 +394,14 @@ relations at time $T$ (excluding timestamps).
 %
 The {\em ultimate model} of trace $R$ of a \lang instance $I$, represented by
 $\mathcal{U}_{I}(R)$, is the set of all facts $f$ (excluding timestamps) such
-that $\exists T \in \dedalus{time} \forall S \geq T: f \in
+that $\exists T \in \dedalus{time}~\forall S \geq T: f \in
 \mathcal{M}_{I,S}(R)$.
 %
 \end{definition}
 
 We care about the finiteness of all incremental models to ensure effective
 computability.  Clearly, all incremental models are finite if and only if the
-Herbrand Universe is finite.
+Herbrand Universe is finite.\rcs{what if each model is finite, and has one more symbol than the one before it, and there are an infinite number of incremental models?}
 
 Values from \dedalus{successor} and \dedalus{time} cannot appear in the
 Herbrand Universe unless there is entanglement.  However, it is possible to
