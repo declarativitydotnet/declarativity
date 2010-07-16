@@ -23,7 +23,7 @@ study the effects of non-determinism on the ultimate model.  In particular, we
 study under what conditions there exists a unique ultimate model for a \lang
 instance.  However, we note that one may desire a more lenient criterion on the
 ultimate model: for example, a programmer may settle for a guarantee that at
-checkout, the shopping cart application charges the user only once -- but
+checkout, the shopping cart application charges the user only once---but
 possibly for a subset of the items in her cart.
 %We defer the study of these advanced correctness criteria to future work.
 
@@ -283,8 +283,8 @@ r1
 r(A, B) \(\leftarrow\) 
     p(A, B), \(\lnot\) q(A);
 
-q(A)@async :- e(A);
-p(A, B)@async :- f(A, B);
+q(A)@async \(\leftarrow\) e(A);
+p(A, B)@async \(\leftarrow\) f(A, B);
 
 e(1)@10;
 f(1, 2)@4;
@@ -299,7 +299,7 @@ quantification.  In the example, all traces in which \dedalus{p} is assigned a
 lower timestamp than \dedalus{q} lead to an ultimate model including
 \dedalus{r(1,2)}.  However, if \dedalus{q} precedes \dedalus{p}, or is
 co-incident with \dedalus{p}, then \dedalus{\(\lnot\) q(A)} is false, and the
-ultimate model excludes \dedalus{r(1, 2)}.
+ultimate model excludes \dedalus{r(1,2)}.
 
 \begin{lemma}
 %

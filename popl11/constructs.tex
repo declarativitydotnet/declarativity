@@ -294,7 +294,7 @@ delete update_queue(L, S, C) \(\leftarrow\)
 In the program fragment above, we indirect {\em cart\_update} tuples through the relation
 {\em update\_queue}, which stores the current contents of the ``queue''  at 
 any given time.  The predicate must persist across timesteps, as multiple steps may be
-necessary to drain it.  At each timestep, the tuple with the minimum value for $Cartobj$
+necessary to drain it.  At each timestep, the tuple with the minimum value for $CartObj$
 is placed in {\em update\_queue\_out} and atomically removed from {\em update\_queue}.
 This changes the value computed by the {\em min} aggregate at the next timestep.
 A serializer thus takes advantage of the monotonic property of timestamps to enforce the
@@ -410,7 +410,7 @@ like the one defined above (e.g., \dedalus{sequence[seq, event, 1]}).
 \subsubsection{Ordered Queues}
 In a completely local execution, the serializer pattern is sufficient to implement a
 priority queue:  items inserted into {\em update\_queue} will be dequeued 
-according to the data-dependent ordering induced by the $Cartobj$ values.
+according to the data-dependent ordering induced by the $CartObj$ values.
 Maintaining such orderly queueing across asynchronous boundaries is another
 matter.  To ensure that a set of tuples sent across the network (and hence potentially 
 ``scattered'' in logical time) are processed in the correct order requires some synchronization

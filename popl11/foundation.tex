@@ -105,12 +105,12 @@ win(X) :- move(X,Y), \(\lnot\) win(Y);
 move(1,1)
 \end{Dedalus}
 
-This instance has no minimal model, because it has a contradiction:
+This instance has no minimal model because it has a contradiction:
 \dedalus{move(1,1)} and \dedalus{\(\lnot\) win(1)} implies \dedalus{win(1)},
 and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
 we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
-\dedalus{p}, a contradiction could never arise in any instance of any program
--- this is called {\em syntactic stratification}.  It is known that detecting
+\dedalus{p}, a contradiction could never arise in any instance of any program---this
+is called {\em syntactic stratification}.  It is known that detecting
 whether a program is contradiction-free for all EDBs is
 undecidable~\cite{papa-yanna}, so the Datalog community has devised a spectrum
 of decreasingly conservative {\em stratification conditions}~\cite{local-strat,
@@ -239,7 +239,7 @@ async & \dedalus{r(A, B, \(\DS\)) \(\leftarrow\) e(A, B, \(\DT\)), time(\(\DS\))
 fact & \dedalus{e(1, 2, 3)} & \dedalus{e(1, 2)@3}
 \end{tabular}
 \end{center}
-\caption{Well-formed deductive, inductive, and asynchronous rules and a fact, and sugared versions}
+\caption{Well-formed deductive, inductive, and asynchronous rules and a fact, and sugared versions.}
 \label{tbl:rules}
 \end{table*}
 
