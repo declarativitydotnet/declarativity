@@ -142,6 +142,7 @@ It is clear that every fact in all incremental models of a trace of a monotonic
 instance, some facts necessarily have only negative supports.
 
 \begin{lemma}
+\label{lem:mon-assoc}
 %
 A monotonic \lang program is confluent if and only if it is associative.
 %
@@ -296,37 +297,14 @@ A \lang program is confluent if and only if it is associative and commutative.
 
 \begin{proof}
 %
-It is clear that the confluence of a \lang program implies its
-associativity: if a confluent \lang program is not associative, then there is
-some instance $I$ and two traces $R_1, R_2$ in the same associativity class for
-which the ultimate model is not the same; this contradicts the fact that the
-program is confluent.
+It is clear that the confluence of a \lang program implies its associativity
+and commutativity, using the same reasoning as in Lemma~\ref{lem:mon-assoc}.
 
-If a \lang program is associative, we will show that any arbitrary instance of
-the \lang program is trace confluent.   Assume there exists a
-non-trace-confluent \lang instance $I$ with an associative program.  That is,
-there are two traces $R_1, R_2$ for $I$, such that (without loss of generality)
-%$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
-%\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
-%the $f$ that no 
-$\exists f \in \bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1) \land f
-\not\in \bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_2)$.  Let $g$ be the
-$f$ that has a complete support (with a possibly different assignment of
-timestamps) in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_2)$.  We know
-there exists at least one such $g$, because if such a $g$ does not exist, then
-either no $f$ exists or some $f$ is part of its own complete support.  Because
-\lang rules must unify on time, the support of $g$ in $\bigcup_{t \in
-\text{time}} \mathcal{M}_{I,T}(R_2)$ does not necessarily imply $g$ for an
-abitrary program.  However, because we know that the program is monotonic, the
-order of facts does not affect the ultimate model, so we need only worry about
-associativity.  By the Lemma above \wrm{which I haven't proved yet}, we know
-that after applying a commutativity step, $g$'s support in $\bigcup_{t \in
-\text{time}} \mathcal{M}_{I,T}(R_2)$ is in the same associativity class as its
-support in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1)$.  Because we
-know the program is associative, $g$ exists in  $\bigcup_{t \in \text{time}}
-\mathcal{M}_{I,T}(R_2)$.  By induction, the set of $f$ is empty, which
-contradicts our assumption that it was non-empty.  Thus, a monotonic,
-associative \lang program is always confluent.
+If a \lang program is associative and commutative, we will show that any
+arbitrary instance of the \lang program is trace confluent.  The proof is
+identical to that of Lemma~\ref{lem:mon-assoc}, except instead of relying on
+the monotonicity of the program to ensure commutativity, we know the program is
+explicitly commutative.
 %
 \end{proof}
 
