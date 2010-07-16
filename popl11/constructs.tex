@@ -75,7 +75,7 @@ A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules at
 time $\DT$, but may only provide ground for deductive rules in timesteps
 greater than $\DT$ if it is persisted.  One way to persist all facts in a
 predicate $p$ is to use a {\em simple persistence rule}:
-\paa{wants a permanent macro}
+%%\paa{wants a permanent macro}
 
 \dedalus{p($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
 p($A_1$,$A_2$,[...],$A_n$);}
@@ -119,7 +119,7 @@ until it is retracted.
 
 %%\newtheorem{example}{Example}
 \begin{example}
-Consider the following \lang instance:\rcs{introduce p predicate?}
+Consider the following \lang instance:
 
 %%p\pos(A, B) \(\leftarrow\) p(A, B);
 \begin{Dedalus}
@@ -235,10 +235,6 @@ we can produce the rules above by expanding the declaration \dedalus{commitfirst
 %``closing a world'' in this fashion ensures that \dedalus{log} has strictly
 %monotonic behavior in all models
 %\wrm{commenting out fancy pants diction, so neil doesn't have to}
-
-\paa{
-present the macro, which expands to a table (say foo), a log (foo\_log) and an
-event (foo\_event) which occurs once if foo occurs at all.}
 
 \subsection{Order in Logic}
 \label{sec:orderinlogic}
@@ -381,8 +377,6 @@ deduction and the time value of its consequence.  We call such a binding an
 {\em entanglement}.   Note that in order to write the rule it is necessary to
 not sugar away the time suffix in the rule body.  
 
-\rcs{the above discussion obscures a crucial detail: entanglement doesn't allow arbitrary access to the timestamp.  Instead, it provides a one way information flow ``out of'' the timestamp field}
-
 \subsubsection{Sequences}
 %\wrm{Maybe somehow work in the fact that sequences are really about preserving
 %an already-established order (at a sender) through asynchrony at the receiver.
@@ -515,9 +509,7 @@ using queues.}
 %optimizations such as parallelizing compilers and database lock
 %managers with little additional complexity.
 
-%\rcs{move this comment to discussion}\paa{clean up, and cite netdb and the TR as examples of more complicated
-%synchronization constructs expressible in logic (consensus and reliable broadcast,
-%respectively)}
+
 
 %\wrm{why can't
 %we just combo a Lamport clock with a priority queue?  i don't think we need
