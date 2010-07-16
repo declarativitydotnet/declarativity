@@ -91,8 +91,10 @@ at some time $N$, only to have a subsequent {\em cart\_action} tuple arrive at s
 
 Depending on the application's requirements, several remedies are possible. If ignoring
 late {\em cart\_action} messages is acceptable, then the program must merely ensure
-that any latecomers are ignored---i.e., after a {\em checkout} has occurred, additional
-{\em cart\_action} messages should not result in delivering additional {\em response} messages.
+that any latecomers are ignored, and 
+%% ---i.e., after a {\em checkout} has occurred, additional
+%% {\em cart\_action} messages should 
+do not produce additional {\em response} messages.
 We can achieve this using the ``at most once'' pattern from Section~\ref{sec:atmostonce}, which ``seals'' the value
 of {\em Cnt} in {\em log} at the first insertion. By making the {\em response} message conditional on \emph{log\_event}, we can be sure that only a single response will be sent.
 
@@ -110,9 +112,36 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 If ignoring late {\em cart\_action} tuples is unacceptable,
 some data dependency between them and {\em checkout} tuples must be established
 to ensure that the deduction of {\em action\_cnt} tuples must {\em wait}.  
-The queue pattern introduced in Section~\ref{sec:orderinlogic} is one means of achieving such an 
-ordering, as is sending a manifest (e.g., a count of total {\em cart\_action} tuples
-sent) in the {\em checkout} message.
+%%The {\em ordered queue} pattern introduced in Section~\ref{sec:orderinlogic} is one means of %%achieving such an 
+%%ordering: if we interpose an ordered queue between {\em cart\_action} and any rules that
+%%reference it, we can process the tuples in the order implied by the Reqid field.
+%%This strategy would impose an unnecessary ordering on the computation of the aggregate,
+%%which we have already shown to be commutative.
+%%A more lightweight coordination solution 
+One strategy 
+is to have the client send a manifest (e.g., a count of total {\em cart\_action} tuples
+sent) in the {\em checkout} message:
+
+\begin{Dedalus}
+// Client code
+stage_cnt(S, C, Se, count<R>) \(\leftarrow\)
+  ca_stage(S, C, Se, R);
+
+checkout(S, C, Se, Cnt) \(\leftarrow\)
+  stage_cnt(S, C, Se, Cnt),
+  checkout(S, C, Se);
+
+// Server code
+ca_cnt(S, Se, count<Ri>) \(\leftarrow\) 
+  cart_action(S, Se, I, T, Amt, Ri);
+
+response(#C, Se, I, A) :-
+  status(#S, Se, I, A), 
+  checkout(#S, C, Se, Cnt),
+  ca_cnt(#S, Se, Cnt);
+
+\end{Dedalus}
+
 
 In addition to illustrating where a program might require additional coordination, our
 analysis also illustrates where coordination is unnecessary.
