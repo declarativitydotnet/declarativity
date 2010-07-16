@@ -75,10 +75,10 @@ A fact in predicate $p$ at time $\DT$ may provide ground for deductive rules at
 time $\DT$, but may only provide ground for deductive rules in timesteps
 greater than $\DT$ if it is persisted.  One way to persist all facts in a
 predicate $p$ is to use a {\em simple persistence rule}:
-\wrm{p\_pos not defined}
+\paa{wants a permanent macro}
 
-\dedalus{p\pos($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
-p\pos($A_1$,$A_2$,[...],$A_n$);}
+\dedalus{p($A_1$,$A_2$,[...],$A_n$)@next $\leftarrow$
+p($A_1$,$A_2$,[...],$A_n$);}
 
 \noindent A rule of this form ensures that a $p$ fact true at time $i$ will be
 true $\forall j \in \mathbb{N} : j >= i$.
@@ -93,12 +93,12 @@ to be broken is to add a \dedalus{p\nega} \wrm{\dedalus{p\nega} not defined} sub
 persistence rule:
 
 \begin{dedalus}
-p\_pos($A_1,A_2,[...],A_n$)@next $\leftarrow$
+p($A_1,A_2,[...],A_n$)@next $\leftarrow$
 \end{dedalus}
 
 \hspace{5mm}
 \begin{dedalus}
-p\_pos($A_1,A_2,[...],A_n$),
+p($A_1,A_2,[...],A_n$),
 \end{dedalus}
 
 \hspace{5mm}
@@ -109,9 +109,9 @@ p\_neg($A_1,A_2,[...],A_n$);
 
 \noindent If, at any time $k$, we have a fact
 \dedalus{p\nega($\overline{C}$)@k}, then we do not deduce a
-\dedalus{p\pos($\overline{C}$)@k+1} fact.  Furthermore, we do not deduce a
-\dedalus{p\pos($\overline{C}$)@j} fact for any $j > k$, unless this
-\dedalus{p\pos} fact is re-derived at some timestep $j > k$ by another rule.
+\dedalus{p($\overline{C}$)@k+1} fact.  Furthermore, we do not deduce a
+\dedalus{p($\overline{C}$)@j} fact for any $j > k$, unless this
+\dedalus{p} fact is re-derived at some timestep $j > k$ by another rule.
 This corresponds to the intuition that a persistent fact, once stated, is true
 until it is retracted.
 
@@ -121,7 +121,7 @@ Consider the following \lang instance:\rcs{introduce p predicate?}
 
 %%p\pos(A, B) \(\leftarrow\) p(A, B);
 \begin{Dedalus}
-p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
+p(A, B)@next \(\leftarrow\) p(A, B), \(\lnot\)p\nega(A, B);
 
 p(1,2)@101;
 p(1,3)@102;
@@ -137,11 +137,10 @@ Since mutable persistence occurs frequently in practice, we provide the
 \dedalus{persist} template, which takes two arguments: a predicate name and
 its arity.  The macro expands to the corresponding mutable persistence rule,
 and rewrites the current program in such a way that any references to the given
-predicate (say \dedalus{p}) in rule bodies or heads are replaced by references
-to its positive relation (e.g., \dedalus{p\_pos}), except for references in the
-head of a rule which prefix \dedalus{p} with the distinguished \dedalus{delete}
+predicate in the
+head of a rule with the distinguished \dedalus{delete}
 keyword---these are replaced with \dedalus{p\_neg}.  The above
-\dedalus{p\_pos} persistence rule may be equivalently specified as
+persistence rule may be equivalently specified as
 \dedalus{persist[p,  2]}.
 
 Mutable persistence rules enable {\em updates}.  For some time $\DT$, an update
@@ -152,7 +151,7 @@ p\nega($\overline{C})@\DT;$
 \end{dedalus}
 
 \begin{dedalus}
-p\pos($\overline{D})@\DT+1$;
+p($\overline{D})@\DT+1$;
 \end{dedalus}
 
 
@@ -174,9 +173,9 @@ log(A, B)@next \(\leftarrow\) log(A, B), \(\lnot\)condition(A, _);
 \end{Dedalus}
 
 The pair of rules above will cause {\em log} to associate with $A$ the ``most
-recent'' set of $B$ values appearing in {\em condition}.  If {\em condition(A,
+recent'' $B$ value appearing in {\em condition}.  If {\em condition(A,
 B)} respects the functional dependency $A \to B$, then \dedalus{log} will
-associate only the ``most recent'' $B$ value with each $A$.
+associate only the ``most recent'' $B$ value with each $A$.  Otherwise, log may contain contain many $B$ values that tie for ``most recent.''
 
 The mirror image of assignment is committed choice~\cite{committedchoice},
 which associates the first
@@ -250,9 +249,7 @@ Some programs will require tuples to be processed in a particular (partial)
 data-dependent order, rather than all-at-once, as a set.  Moreover, it is 
 common for distributed programs that process messages to be written in
 a style that expects only a single message to be received at a time.   This 
-is not an issue for imperative languages that use a {\em recv} primitive
-provided by an operating system, as such primitives hide a queue data structure
-that provides these semantics automatically.  In distributed logic languages,
+is not an issue for imperative languages that explicitly dequeue messages and explicitly schedule their processing.  In distributed logic languages,
 failure to account for the (often rare) possibility of simultaneous receipt of messages
 can be the source of bugs.
 
@@ -485,20 +482,21 @@ detail here: Lamport clocks rely upon a ``tie-breaking'' function to ensure
 that no two events have the same timestamp.  We can implement such a discipline
 using queues.}
 
-Although annotating a program execution with logical clock values has
-a number of practical runtime applications (such as debugging), in our
-setting it is primarily useful as a way to reconcile physical
-constraints (a given program execution on real hardware will obey
-causality) with our expressive language model (which is able to model
-temporal paradoxes).  Crucially, we do so in a purely logical manner,
-without resorting to imperative constructs outside of Datalog.  In
-Section~\rcs{sec:fixme}, we take this idea a step further, and explain
-how \lang programs can be restricted to treat events as serializable
-transactions.  This allows us to model well-studied runtime
-optimizations such as parallelizing compilers and database lock
-managers with little additional complexity.
 
-\paa{clean up, and cite netdb and the TR as examples of more complicated
+%Although annotating a program execution with logical clock values has
+%a number of practical runtime applications (such as debugging), in our
+%setting it is primarily useful as a way to reconcile physical
+%constraints (a given program execution on real hardware will obey
+%causality) with our expressive language model (which is able to model
+%temporal paradoxes).  Crucially, we do so in a purely logical manner,
+%without resorting to imperative constructs outside of Datalog.  In
+%Section~\rcs{sec:fixme}, we take this idea a step further, and explain
+%how \lang programs can be restricted to treat events as serializable
+%transactions.  This allows us to model well-studied runtime
+%optimizations such as parallelizing compilers and database lock
+%managers with little additional complexity.
+
+\rcs{move this comment to discussion}\paa{clean up, and cite netdb and the TR as examples of more complicated
 synchronization constructs expressible in logic (consensus and reliable broadcast,
 respectively)}
 
