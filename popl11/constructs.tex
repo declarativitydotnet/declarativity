@@ -223,6 +223,12 @@ for the predicate {\em amo\_event}, which is true only for the ``first'' assignm
 of an $Amt$ value to a grouping of client, session and item identifiers.  Subsequent
 occurrences of the {\em status} event for the same group will never fire the second rule.
 
+As a shorthand, we will make use of a {\em commitfirst} macro, which takes as arguments a name,
+an arity and an integer representing the prefix of the tuple attributes that constitute the
+``key'' attributes corresponding to the group that should functionally determine the remaining
+attributes.  By convention, these will always precede the ``value'' attributes.  For example,
+we can produce the rules above by expanding the declaration \dedalus{commitfirst[amo, 4, 3]}.
+
 %But perhaps surprisingly,
 %``closing a world'' in this fashion ensures that \dedalus{log} has strictly
 %monotonic behavior in all models
@@ -292,6 +298,10 @@ This changes the value computed by the {\em min} aggregate at the next timestep.
 A serializer thus takes advantage of the monotonic property of timestamps to enforce the
 orderly processing of external inputs.
 
+We provide the {\em queue} macro as a shorthand, which takes as arguments a name,
+an arity and the ordinal of the ordering attribute.
+For example, the above code could be generated with the statement 
+\dedalus{serializer[update, 3, 0]}.
 
 \begin{comment}
 \subsubsection{Priority Queues}
@@ -376,6 +386,9 @@ Tuples persist in {\em update\_queue} until such time as their $I$ value matches
 sequence value, at which point they are dequeued, atomically with the incrementation
 of the sequence and deletion from the queue relation.  This simple example illustrates
 a more general pattern of order preservation across network boundaries.
+
+We provide the macro {\em ordered\_queue}, which takes arguments identical to those
+accepted by the serializer macro; e.g., \dedalus{ordered\_queue[update, 4, 3]}.
 
 %Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
 

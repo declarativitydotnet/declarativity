@@ -5,7 +5,10 @@ Consider a simple distributed application that provides a fault-tolerant, load-b
 ``shopping cart'' service for an e-commerce website. In this design, a client
 sends messages describing shopping cart updates to one or more members of a collection of server
 processes. To tolerate process failures and enable load-balancing, shopping cart state will be replicated
-at multiple servers; each client message in a single session may be delivered to a different server process.
+at multiple servers; each client message in a single session may be delivered to a different server process.  A practical implementation of a shopping cart would of course also
+provide a {\em check out} functionality, but we will postpone this discussion until
+section~\ref{sec:casestudy}.
+
 
 Several strategies are possible for performing updates of replicated state. A
 general purpose, but heavyweight design might employ a consensus protocol (e.g., Paxos\cite{part-time})
@@ -20,7 +23,7 @@ same final state at some point in time after the last update arrives.
 This weaker consistency model reduces the need for coordination among
 the server processes~\cite{dynamo}, which in turn reduces update
 latencies, and decreases the impact of temporary failures upon read and
-write performance.  To ensure this form of consistency, we need to ensure that our application possesses the 
+write performance.  To guarantee this form of consistency, we need to ensure that our application possesses the 
 properties that, in spite of message reordering and the possibility of the simultaneous
 receipt of multiple messages, all executions of the client code for the same series of
 input will produce the same state on all replicas.  We will formalize this discussion in
@@ -89,6 +92,9 @@ state, and then propagates the message to the other replicas:
 9: done
 \end{Dedalus}
 
+\paa{I know the client code was trivial, but unsure how to talk about co-analysis of
+agents without it}
+
 Several difficulties present themselves when we attempt to reason about whether
 this implementation is insensitive to message reordering concurrent and simultaneous receipt of messages.  \wrm{we need to mention earlier that we're concerned about this}
 
@@ -133,13 +139,7 @@ contains a more formal discussion of Datalog syntax and semantics.)
 The ``\#'' denotes the location of the fact, which may be stored on
 any of the machines in question; both of our ``implications'' are {\em
   distributed}, as the location of the LHS varies from that of the
-RHS~\cite{Loo2009-CACM}.  In distributed environments, network delays
-and failures prevent such rules from acting as true logical
-implications; existing distributed logic languages model such issues
-outside of logic which frustrates static analysis approaches, and
-complicates language semantics.  For the purposes of this section,
-such rules can be thought of as logical implications; we ground
-communication in terms of logical deduction below\rcs{sec ref}.
+RHS~\cite{Loo2009-CACM}.  
 
  %comment out these ``integrity constraints'' and replace with deductive rules
 %$(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
@@ -244,8 +244,8 @@ cart_action(#L, C, S, I, T, R) \(\leftarrow\)
 \end{Dedalus}
 
 These two rules introduce \dedalus{ca\_stage}, which is simply
-\dedalus{action} with additional columns associating each event with a
-server and a request id.  The problem comes in the definition of \dedalus{counter}, which is meant to be a source of unique timestamps; the presence of a request id in \dedalus{counter} corresponds to a fact that is forever true, as does the presence of a client request in \dedalus{action}.  Therefore, naive attempts to bump the counter once per message arrival:
+\dedalus{action} with an additional column associating each event with
+a request id.  The problem comes in the definition of \dedalus{counter}, which is meant to be a source of unique timestamps; the presence of a request id in \dedalus{counter} corresponds to a fact that is forever true, as does the presence of a client request in \dedalus{action}.  Therefore, naive attempts to bump the counter once per message arrival:
 
 \begin{Dedalus}
 counter(ReqId+1) \(\leftarrow\) counter(ReqId),
@@ -254,10 +254,23 @@ counter(ReqId+1) \(\leftarrow\) counter(ReqId),
 
 lead to infinite models ($\dedalus{s} \equiv \mathbb{N}$ once one action occurs), and leave the underlying problem unsolved.
 
-Existing distributed logic languages resort to operational semantics
+Logic languages typically resort to operational semantics
 at this point; a common approach is to wrap a Datalog interpreter in
 a \dedalus{while} loop that updates the \dedalus{counter}
 predicate and removes transient facts as necessary.
+A less immediately obvious shortcoming of the logical specification is the 
+fact that in distributed environments, network delays
+and failures prevent communication rules like the rule that deduces {\em cart\_action}
+from acting as true logical
+implications, because their conclusions are certainly not true at the same time
+as their premises.
+Existing distributed logic languages model such issues
+outside of logic which frustrates static analysis approaches, and
+complicates language semantics.  
+
+%%For the purposes of this section,
+%%such rules can be thought of as logical implications; we ground
+%%communication in terms of logical deduction below\rcs{sec ref}.
 
 %s(0);
 %s(X+1) \(\leftarrow\)  s(X), action(_, _, _, _, _);
@@ -273,8 +286,9 @@ predicate and removes transient facts as necessary.
 %interpretation of the implication statement.  Equally problematic is the second of the four rules above,
 %an implication which induces communication (note that the \# is on different variables in the left- and right-hand-sides).  It is certainly not the case that the consequence of the rule's evaluation (the left-hand side) is true {\em exactly when} \wrm{this makes me uncomfortable because we don't have a global clock.  when is ``when''?} the antecedent is true; some network delay is inevitable.
 
-Existing distributed logic languages fail to cleanly model state
-manipulation and network communication, as both primitives require an
+%%Existing distributed logic languages fail to cleanly model state
+%%manipulation and network communication, as both primitives require an
+Both primitives --- state manipulation and network communication --- require an
 underlying notion of time that is missing from the logic exposed by such systems.
 
 When {\em action} is ``true'' in the fourth rule,
@@ -290,7 +304,6 @@ associated with rule conclusions.  To give a flavor of our subsequent discussion
 cart_action(#L, C, S, I, T, R)@async :-
   ca_stage(L, #C, S, I, T, R);
 
-counter(0);
 counter(X+1)@next \(\leftarrow\) counter(X),
                      action(_, _, _, _, _);
 counter(X)@next   \(\leftarrow\) counter(X),
