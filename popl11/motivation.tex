@@ -298,7 +298,7 @@ three different temporal semantics of deduction---now, next, and asynchronous---
 associated with rule conclusions.  To give a flavor of our subsequent discussion, the last two rules of the above program would be written in \lang as:
 
 \begin{Dedalus}
-cart_action(#L, C, S, I, T, R)@async :-
+cart_action(#L, C, S, I, T, R)@async \(\leftarrow\)
   ca_stage(L, #C, S, I, T, R);
 
 counter(X+1)@next \(\leftarrow\) counter(X),
