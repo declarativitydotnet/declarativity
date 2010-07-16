@@ -54,6 +54,8 @@ message to the client.
 \begin{Dedalus}
 // Server code
 persist[cart_action, 6];
+persist[checkout, 3];
+
 action_cnt(Location, Session, Item,
            Type, count<ReqId>) \(\leftarrow\)
     cart_action(Location, Client, Session,
@@ -75,11 +77,11 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 
 \begin{figure}[t]
 \includegraphics[width=0.9\linewidth]{vizza_brick.pdf}
-\caption{PGD diagram for the initial set-oriented shopping cart program.}
+\caption{PDG diagram for the initial set-oriented shopping cart program.}
 \label{fig:cs-pgd-1}
 \end{figure}
 
-Given the PGD diagram for this design (Figure~\ref{fig:cs-pgd-1}),
+Given the PDG diagram for this design (Figure~\ref{fig:cs-pgd-1}),
 our tests indicate that the program is not necessarily confluent: 
 {\em action\_cnt} falls at a point of order, so it may
 be affected by the arrival order of tuples to {\em cart\_action} and
@@ -191,7 +193,7 @@ we have a logic bug in our program...}
 
 \begin{figure}[t]
 \includegraphics[width=0.65\linewidth]{vizza_straw.pdf}
-\caption{Foo}
+\caption{PDG diagram for the shopping cart implementation that uses mutable state.}
 \label{fig:cs-pdg-2}
 \end{figure}
 
