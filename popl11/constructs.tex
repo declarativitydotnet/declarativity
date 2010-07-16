@@ -262,6 +262,7 @@ can be the source of bugs.
 One of the design goals of \lang is to make all semantics manifest and analyzable.
 Consider the following program fragment, whose intent is to model the replacement of the 
 current {\em status} value with the new values in {\em cart\_action}:
+
 \begin{Dedalus}
 status(Location, Session, CartObj) \(\leftarrow\)
     cart_update(Location,  Session, CartObj);
@@ -353,8 +354,6 @@ very difficult to express in a logic language.
 
 \end{comment}
 \subsubsection{Ordered Queues}
-\paa{what is a good name for this?}
-
 In a completely local execution, the serializer pattern is sufficient to implement a
 priority queue:  items inserted into {\em update\_queue} will be dequeued 
 according to the data-dependent ordering induced by the $Cartobj$ values.
@@ -363,7 +362,7 @@ matter.  To ensure that a set of tuples sent across the network (and hence poten
 ``scattered'' in logical time) are processed in the correct order requires some synchronization
 between sender and receiver.  In the style of FIFO messaging in network protocols, 
 we may use a sequence at the receiver to ensure that it ``waits'' 
-the necessary amount \paa{awk, sorry} to ensure totally ordered processing.  Because
+the necessary amount to ensure totally ordered processing.  Because
 sequences operate over integers, we add an integer column to all relations to represent 
 the sender's ``intended'' order:
 
@@ -387,8 +386,7 @@ sequence value, at which point they are dequeued, atomically with the incrementa
 of the sequence and deletion from the queue relation.  This simple example illustrates
 a more general pattern of order preservation across network boundaries.
 
-We provide the macro {\em ordered\_queue}, which takes arguments identical to those
-accepted by the serializer macro; e.g., \dedalus{ordered\_queue[update, 4, 3]}.
+We provide the macro {\em ordered\_queue}, which takes the same arguments as the serializer macro; e.g., \dedalus{ordered\_queue[update, 4, 3]}.
 
 %Priority queues were developed in a similar fashion in~\cite{greedybychoice}.
 
