@@ -70,16 +70,17 @@ checkout(Server, Client, Session)@async \(\leftarrow\)
 
 
 Our tests immediately show us that the program is not necessarily confluent: 
-{\em action\_cnt} falls at a point of order,
- so it and all tables that
-depend on it may be affected by the arrival order of tuples to {\em cart\_action} and
-{\em checkout}.  This is not surprising: even though both relations are persisted monotonically,
+{\em action\_cnt} falls at a point of order, so it may
+be affected by the arrival order of tuples to {\em cart\_action} and
+{\em checkout}.  This is unsurprising: although both relations are persisted monotonically,
 the arrival of a {\em checkout} tuple may cause us to universally quantify over {\em cart\_action}
-at some time $N$, only to have a latecomer {\em cart\_action} tuple arrive at some $M > N$.
-There are several options available to the programmer depending on the business rules.
-If it is acceptable to ignore the latecomers, the program must merely ensure that they do not 
-cause the recalculation of {\em action\_cnt} and transmission of conflicting {\em response} 
-tuples.  We can achieve this by using the ``at most once'' pattern, which ``seals'' the value
+at some time $N$, only to have a latecomer {\em cart\_action} tuple arrive at some time $M > N$.
+
+Depending on the application's requirements, several remedies are possible. If ignoring
+late {\em cart\_action} messages is acceptable, then the program must merely ensure
+that any latecomers are ignored---i.e., after a {\em checkout} has occurred, {\em action\_cnt}
+should not be recalculated.
+We can achieve this using the ``at most once'' pattern from Section~\ref{sec:atmostonce}, which ``seals'' the value
 of $Cnt$ in {\em log} at the first insertion, and ensures that {\em log\_event} occurs once.
 \paa{note: introduce the commitfirst macro in the committed choice section of constructs}
 \begin{Dedalus}
@@ -94,7 +95,7 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 \end{Dedalus}
 
 
-If, on the other hand, ignoring late {\em cart\_update} tuples is not acceptable,
+If, on the other hand, ignoring late {\em cart\_action} tuples is not acceptable,
 some data dependency between them and {\em checkout} tuples must be established
 to ensure that the deduction of {\em action\_cnt} tuples must {\em wait}.  
 The queue pattern introduced in Section~\ref{sec:orderinlogic} is one means of achieving such an 
@@ -113,9 +114,9 @@ cart_action(#R, S, I, T, Ri)@async :-
     replicas(#L, S, R);
 \end{Dedalus}
 
-Because {\em cart\_update} is persisted monotonically, it has set semantics over time: at
+Because {\em cart\_action} is persisted monotonically, it has set semantics over time: at
 {\em some} time, when all tuples are received, the order in which they were received is
-abstracted away.  Hence asynchronous replication of {\em cart\_update} is confluent,
+abstracted away.  Hence asynchronous replication of {\em cart\_action} is confluent,
 at least until such time as a nonmonotonic operation is performed on the table.
 
 
