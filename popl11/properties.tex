@@ -144,30 +144,32 @@ for $E_2$, ..., is a support for $E_n$, which is a support for $f$.
 %
 \end{definition}
 
-It is clear that every fact in all incremental models of a trace of a monotonic
-\lang instance has a positive support.  In a trace of a non-monotonic \lang
-instance, some facts necessarily have only negative supports.
+It is clear that every fact in all incremental models of a trace of a \lang
+instance without negation or aggregation has a positive support.  In a trace of
+a \lang instance with negation and/or aggregation, some facts may have only
+negative supports.
 
-\begin{lemma}
-\label{lem:mon-assoc}
+\begin{lemma} \label{lem:mon-assoc}
 %
-A monotonic \lang program is confluent if and only if it is associative.
+A \lang program without negation or aggregation is confluent if and only if it
+is associative.
 %
 \end{lemma}
 %
 
 \begin{proof}
 %
-It is clear that the confluence of a monotonic \lang program implies its
+It is clear that the confluence of a \lang program implies its
 associativity: if a confluent \lang program is not associative, then there is
 some instance $I$ and two traces $R_1, R_2$ in the same associativity class for
 which the ultimate model is not the same; this contradicts the fact that the
 program is confluent.
 
-If a \lang program is associative, we will show that any arbitrary instance of
-the \lang program is trace confluent.   Assume there exists a
-non-trace-confluent \lang instance $I$ with an associative program.  That is,
-there are two traces $R_1, R_2$ for $I$, such that (without loss of generality)
+If a negation- and aggregation-free \lang program is associative, we will show
+that any arbitrary instance of the \lang program is trace confluent.   Assume
+there exists a non-trace-confluent \lang instance $I$ with an associative
+program.  That is, there are two traces $R_1, R_2$ for $I$, such that (without
+loss of generality)
 %$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
 %\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
 %the $f$ that no 
@@ -179,16 +181,16 @@ there exists at least one such $g$, because if such a $g$ does not exist, then
 either no $f$ exists or some $f$ is part of its own complete support.  Because
 \lang rules must unify on time, the support of $g$ in $\bigcup_{t \in
 \text{time}} \mathcal{M}_{I,T}(R_2)$ does not necessarily imply $g$ for an
-abitrary program.  However, because we know that the program is monotonic, the
-order of facts does not affect the ultimate model, so we need only worry about
-associativity.  By the Lemma above \wrm{which I haven't proved yet}, we know
-that after applying a commutativity step, $g$'s support in $\bigcup_{t \in
+abitrary program.  However, because we know that the program has no negation or
+aggregation, the order of facts does not affect the ultimate model, so we need
+only worry about associativity.  By Lemma~\ref{lem:assoc-comm}, we know that
+after applying a commutativity step, $g$'s support in $\bigcup_{t \in
 \text{time}} \mathcal{M}_{I,T}(R_2)$ is in the same associativity class as its
 support in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1)$.  Because we
-know the program is associative, $g$ exists in  $\bigcup_{t \in \text{time}}
+know the program is associative, $g$ exists in $\bigcup_{t \in \text{time}}
 \mathcal{M}_{I,T}(R_2)$.  By induction, the set of $f$ is empty, which
-contradicts our assumption that it was non-empty.  Thus, a monotonic,
-associative \lang program is always confluent.
+contradicts our assumption that it was non-empty.  Thus, a negation- and
+aggregation-free associative \lang program is always confluent.
 %
 \end{proof}
 
