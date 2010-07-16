@@ -77,18 +77,18 @@ rules is confluent, as the trace is empty.
 
 \begin{definition}
 %
-Two traces $R_1, R_2$ are in the same associativity class if $R_2$ can be
-derived from $R_1$ by freely applying the operations of combining two adjacent
-timestamps (i.e.\ 
-
-, and splitting a single timestamp into two adjacent timestamps.
+Two traces $R_1, R_2$ are in the same associativity class if they contain the
+same facts (ignoring time), and the timestamp of fact $f$ in $R_1$ is less than
+or equal to the timestamp of fact $g$ in $R_1$ if and only if the same is true
+in $R_2$.
 %
 \end{definition}
 
 \begin{definition}
 %
-Two traces $R_1, R_2$ are in the same commutativity class if $R_2$ can be
-derived from $R_1$ by swapping the order of two adjacent timestamps.
+Two traces are in the same commutativity class if they contain the same facts
+(ignoring time), and there exists a bijection $m$ between the $t$ in $R_1$ and a
+subset of $\mathbb{N}$, such that all facts in $R_1$ with timestamp $t$, exist in $R_2$ with timestamp $m(t)$.
 %
 \end{definition}
 
