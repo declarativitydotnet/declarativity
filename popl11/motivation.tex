@@ -217,7 +217,7 @@ show that {\em cart\_action}, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
 %%\wrm{i thought it's an associativity thing, not a commutativity thing}
 and to the co-occurrence of multiple messages simultaneously, without relying
-on semantics provided by external or hidden library calls, or the correctness of imperative optimizations such as pulling set union (line 7) inside the conditional (line 2).  Moreover, the code itself is succinct and straightfoward: it does not intersperse server-to-server replication mechanisms and client request handling as the imperative code does.
+on semantics provided by external or hidden library calls, or the correctness of imperative optimizations such as pulling set union (line 7) inside the conditional (line 2).  Moreover, the code itself is succinct and straightforward: it does not intersperse server-to-server replication mechanisms and client request handling as the imperative code does.
 
 %  \jmh{how?  are you saying that accumulation into a set is commutative and associative?  why is this easier than the U symbol in the pseudocode?} Moreover, the code 
 %itself is succinct and straightforward. 
@@ -255,7 +255,7 @@ counter(ReqId+1) \(\leftarrow\) counter(ReqId),
 lead to infinite models ($\dedalus{s} \equiv \mathbb{N}$ once one action occurs), and leave the underlying problem unsolved.
 
 Existing distributed logic languages resort to operational semantics
-at this point; a common approach is to wrap a Datalog interpreater in
+at this point; a common approach is to wrap a Datalog interpreter in
 a \dedalus{while} loop that updates the \dedalus{counter}
 predicate and removes transient facts as necessary.
 
