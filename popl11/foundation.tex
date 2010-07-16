@@ -356,6 +356,8 @@ For further details, see~\cite{dedalus-techr}.
 
 \subsection{Temporal Safety}
 
+\wrm{some intuition for Herbrand Universe of a \lang instance -- say it's without successor and time}
+
 One might be concerned about an instance having an infinte model, given \lang's
 infinite \dedalus{time} and \dedalus{successor} relations, and the use of
 summary aggregates and entanglement.  First, we must define what we mean by the
@@ -376,8 +378,9 @@ comprise a trace of the instance.
 %
 \end{definition}
 
-Now we can devise a unique model, which we call the {\em ultimate model} for a
-trace of a \lang instance.
+Now we can devise a unique series of models, which we call the {\em incremental
+models} for a trace of a \lang instance.  We also define an {\em ultimate
+model} , which is the eventual contents of the incremental models.
 
 \begin{definition}
 %
@@ -396,11 +399,14 @@ that $\exists T \in \dedalus{time} \forall S \geq T: f \in
 %
 \end{definition}
 
-The ultimate model is finite iff the Herbrand universe is finite.
+We care about the finiteness of all incremental models to ensure effective
+computability.  Clearly, all incremental models are finite if and only if the
+Herbrand Universe is finite.
 
-Time and successor usage.
-
-summary aggregates and entanglement
+Values from \dedalus{successor} and \dedalus{time} cannot appear in the
+Herbrand Universe unless there is entanglement.  However, it is possible to
+make safe use of entanglement \wrm{pointer to lamport, pointer to sequences}.
+Additionally, all programs in this paper make safe use of summary aggregates.
 
 \subsection{Complexity}
-
+\wrm{to do}
