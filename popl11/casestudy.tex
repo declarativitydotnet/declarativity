@@ -5,31 +5,33 @@ In this section, we use \lang to build two different implementations of a
 shopping cart application.
 The first is implemented in a set-oriented style: in the first phase of computation,
 changes to the cart are monotonically accumulated and replicated, while in the second
-(checkout), the stored state is summarized and ``sealed.''
-\jmh{I think the terms ``store'' and ``seal'' will not translate for some readers.}.  
-The second shopping cart
-is implemented in an imperative, overwriting style: as updates are received, the current copy 
-is replaced with the new copy.  We then apply the analysis presented in Section~\ref{properties} 
+phase (``checkout''), the shopping cart state is summarized and ``sealed'' (finalized).
+The second shopping cart design employs an
+an imperative, overwriting style: as updates are received, the current shopping cart state
+is replaced with a new copy.  We then apply the analysis presented in Section~\ref{sec:properties} 
 to analyze both implementations to identify monotonic 
 components and state that can be replicated without waiting, and to identify possible
 loci of coordination.  Finally, we discuss the potential application of order-restoring
-constructs introduced in Section~\ref{sec:constructs} to achieve the necessary coordination,
+constructs introduced in Section~\ref{sec:stateupdate} to achieve the necessary coordination,
 or to provide coordination-free alternatives without synchronization.
 
+\nrc{Are the section refs right? Ref'ing sec 6 before sec 5 looks weird.}
 
 \subsection{Set-oriented Implementation}
 \paa{rename me}
 An update to a shopping cart
-can be represented as a tuple containing a server and client address, a session identifier,
-an item identifier corresponding to goods, a type field that indicates whether this action
-is an addition or a deletion, and a request identifier to allow idempotent retry.  The contents
-of a shopping cart at checkout time are, for each item referenced in the cart update history, 
-the difference between the number of additions and deletions of that item.
+is represented as a tuple containing server and client addresses, a session identifier,
+an item identifier, a type field that indicates whether this action
+is an addition or a deletion, and a request identifier to allow idempotent retry. At checkout time,
+we wish to compute the difference between the number of additions and deletions for each item
+in the cart.
 
 \begin{Dedalus}
 persist[cart_action, 6];
-action_cnt(Location, Session, Item, Type, count<ReqId>) \(\leftarrow\)
-    cart_action(Location, Client, Session, Item, Type, ReqId),
+action_cnt(Location, Session, Item,
+           Type, count<ReqId>) \(\leftarrow\)
+    cart_action(Location, Client, Session,
+                Item, Type, ReqId),
     checkout(Location, Client, Session);
 
 status(L, Session, Item, Cnt) \(\leftarrow\)
@@ -47,15 +49,17 @@ to local events.  A sequence is used to uniquely identify {\em cart\_action} req
 \begin{Dedalus}
 // client code
 sequence[s, cart_action_stage, 6];
-cart_action_stage(Server, Client, Session, Item, Type, ReqId) :-
+
+cart_action_stage(Server, Client, Session,
+                  Item, Type, ReqId) \(\leftarrow\)
   action(Client, Session, Item, Type, ReqId),
   best_replica(Client, Session, Server),
   s(ReqId);
 
-cart_action(L, C, S, I, T, R)@async :-
+cart_action(L, C, S, I, T, R)@async \(\leftarrow\)
   cart_action_stage(L, C, S, I, T, R);
 
-checkout(Server, Client, Session)@async :-
+checkout(Server, Client, Session)@async \(\leftarrow\)
   checkout_req(Client, Session),
   best_replica(Client, Session, Server);
 \end{Dedalus}
@@ -80,6 +84,7 @@ of $Cnt$ in {\em log} at the first insertion, and ensures that {\em log\_event} 
 \paa{note: introduce the commitfirst macro in the committed choice section of constructs}
 \begin{Dedalus}
 commitfirst[log, 4, 3];
+
 log(L, Session, Item, Cnt) \(\leftarrow\) 
     status(L, User, Session, Item, Cnt);
 
@@ -125,6 +130,7 @@ into the server code, this implementation is superficially more terse and simple
 \begin{Dedalus}
 persist[status, 3];
 queue[cart_update, 3, 2];
+
 r1
 status(Location, Session, CartObj) \(\leftarrow\)
     cart_update(Location,  Session, CartObj);
@@ -138,10 +144,8 @@ response(#Client, Loc, Session, CartObj) \(\leftarrow\)
     request(#Loc, Client, User, Session);
 
 // client code
-
 cart_update(L, S, C)@async \(\leftarrow\) 
     update_event(L, S, C);
-
 \end{Dedalus}
 
 \paa{no longer sure whether the discussion in the below para is worth the space...}
