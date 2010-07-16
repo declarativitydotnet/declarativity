@@ -21,11 +21,11 @@
 Having established the existence and finiteness of an ultimate model, we now
 study the effects of non-determinism on the ultimate model.  In particular, we
 study under what conditions there exists a unique ultimate model for a \lang
-instance.  One may desire a more lenient criterion on the ultimate model: for
-example, a programmer may settle for a guarantee that at checkout, the shopping
-cart application charges the user only once -- but possibly for a subset of the
-items in her cart.  We defer the study of these advanced correctness criteria to
-future work.
+instance.  However, we note that one may desire a more lenient criterion on the
+ultimate model: for example, a programmer may settle for a guarantee that at
+checkout, the shopping cart application charges the user only once -- but
+possibly for a subset of the items in her cart.
+%We defer the study of these advanced correctness criteria to future work.
 
 %\subsection{Properties of Asynchronous Derivations}
 
@@ -85,6 +85,13 @@ timestamps, and splitting a single timestamp into two adjacent timestamps.
 
 \begin{definition}
 %
+Two traces $R_1, R_2$ are in the same commutativity class if $R_2$ can be
+derived from $R_1$ by swapping the order of two adjacent timestamps.
+%
+\end{definition}
+
+\begin{definition}
+%
 We say that a \lang program is {\em associative} if, for any instance $I$,  the
 ultimate models for any two traces of $I$ in the same associativity class are
 equal.
@@ -93,12 +100,13 @@ equal.
 
 \begin{definition}
 %
-We say that a \lang program is {\em commutative} if the ultimate model is
-invariant under the operation of swapping timestamps on two adjacent timestamps.
+We say that a \lang program is {\em commutative} if, for any instance $I$, the
+ultimate models for any two traces of $I$ in the same commutativity class are
+equal.
 %
 \end{definition}
 
-\subsubsection{Associativity}
+\subsection{Associativity}
 
 %\begin{definition}
 %
@@ -112,18 +120,16 @@ invariant under the operation of swapping timestamps on two adjacent timestamps.
 
 \begin{definition}
 %
-A support of fact $f$ in a \lang instance is a set of facts $E$, such
-that $\forall e \in E (F \succ E_i)$. \jmh{don't you want to talk about the ``complete'' support?  I.e. define the support so that $E$ contains any fact $e$ in the incremental model such that  $f \succ e$?  Come to think of it, you probably need to scope this discussion to a particular timestep, so that you discuss facts $f_t$ at time $t$.} If all $e$ in $E$ are non-negated, then
-we call $E$ a positive support.  If some $e$ in $E$ are negated, or are the
-output of an aggregate, then we call $E$ a negative support.  \jmh{What is a negated fact?  Do you mean that facts derived from rules with negation include the complement of some predicate in their support?  I.e. supports can be infinite/unsafe?}
+A support of a fact $f$ in a \lang instance is a set of facts $E$ that is
+necessary and sufficient to imply $f$.  If $E$ implies $F$ through negation or
+aggregation, then we call $E$ a negative support.  If all $e$ in $E$ are
+non-negated, then we call $E$ a positive support.
 %
 \end{definition}
 
 It is clear that every fact in all incremental models of a trace of a monotonic
 \lang instance has a positive support.  In a trace of a non-monotonic \lang
-instance, some facts necessarily have only negative supports. \jmh{you don't mean ``only''---range restriction means that support must include positive facts.} Note that
-because of the syntactic restrictions of \lang, negative supports always have a
-timestamp associated with them.  \jmh{I don't see why pos support can get away without timestamps.  And you need a formalism for the idea of ``associating'' a timestamp with a support.}
+instance, some facts necessarily have only negative supports.
 
 \begin{lemma}
 %
@@ -233,7 +239,7 @@ predicate per timestamp.  \jmh{but then the program is not monotonic.  and why a
 %However, the simple persistence of all predicates ensures that for
 %some value of the time suffixes, all deductions that can be made will be made.
 
-\subsubsection{Commutativity}
+\subsection{Commutativity}
 
 \jmh{Too much prose before the example.  Pop the example in the middle (``consider the following example'') and then discuss it.  Or put it up in a Figure.}
 It is easy to see that non-monotonic programs are not necessarily confluent,
@@ -342,153 +348,32 @@ domain.
 %constructs.  
 
 How do we maintain confluence in the presence of non-monotonicity?  We must
-introduce points of order into our program. 
-%---logic that preserves commutativity even in the face of non-monotonicity.
-%One simple type of coordination involves guarding the universal quantification
-%with a data dependency that cannot be fulfilled until the entire set
-%quantified over has been computed.  This notion of ``waiting for a data
-%dependency to be satisfied'' is similar to the ordered application of rules
-%required for stratification.  
-\jmh{You already defined the PDG (rather too tersely) in the section on Temporal Strat}
-Fortunately, we can leverage the concept of a program's {\em predicate
-dependency graph} (PDG) from the Datalog literature to construct an analysis
-that can tell a programmer where points of order may be required to ensure
-confluence.  A PDG is a directed graph that has one node per predicate in the
-program.  A PDG has an edge from \dedalus{p} to \dedalus{q} if $p \succ q$.
-The edge has three possible annotations: $+$ indicating that $p \succ q$ only in
-\dedalus{@next} rules, $\lnot$ indicating that $p \succ q$ in at least one rule
-where $q$ appears negated in the body, and $@$, indicating that $p \succ q$
-only in \dedalus{@async} rules.
+introduce points of order into our program.  We present a conservative
+syntactic test that identifies all places where points of order may be
+required.  Our test is based on the concept of a program's {\em predicate
+dependency graph} (PDG) from the Datalog literature.  A \lang program's PDG is
+a directed graph that has one node per predicate in the A PDG has an edge from
+\dedalus{p} to \dedalus{q} if $\dedalus{p} \succ \dedalus{q}$.  If $\dedalus{p}
+\succ \lnot\dedalus{q}$, then the edge is annotated with a $\lnot$.  If
+$\dedalus{p} \gets \dedalus{q}$, then the edge is annotated with a $+$, and if
+$\dedalus{p} \leftsquigarrow \dedalus{q}$, then the edge is annotated with a
+$@$.  Note that an edge may not be annotated with both $+$ and $@$, but the
+$\lnot$ annotation can coexist with either $+$ or $@$.
 
 \begin{definition}
 %
 A monotonic component is a maximal connected subgraph with no $\lnot$ edges,
-and all \dedalus{async} predicates simply persisted.
+and all predicates at the end of $@$ edges simply persisted.
 %
 \end{definition}
 
-Points of order can only ever be necessary on edges between monotonic
-components, because a monotonic program, considered as a \lang program, is
-confluent.  We have expressed this test \jmh{What test?!  You skipped the main point!  Please highlight the specific contribution here!  The next sentence is also too terse and insider (meta-model is not common parlance, I don't think)}  in our \lang interpreter, using a
-meta-model to treat rules as data.  Later, we present graphs of programs that
+The test consists of constructing the PDG, determining the monotonic
+components, and identifying the edges between monotonic components as loci
+where a point of order may be necessary.  A point of order is never necessary
+within a monotonic component, because a monotonic component is confluent.
+\wrm{state this formally}.  We have expressed this test in our \lang 
+interpreter
+
+, using a meta-model to treat rules as data.  Later, we present graphs of programs that
 identify monotonic components.  The data for these graphs was generated by our
 \lang code that expresses this test.
-
-%First, some
-%dependency graph of the program or instance, such as a PDG, is analyzed to
-%identify and collapse {\em monotonic components}---subgraphs that contain no
-%negated edges.  The Datalog program is evaluated in the topological order of
-%its collapsed dependency graph.  Later monotonic components ``wait'' for
-%computation to be completed in earlier monotonic components.  
-
-%In \lang, we can leverage this same analysis to identify all {\em loci of
-%coordination}---all places where the programmer may need to instrument his code
-%with coordination to ensure confluence.  These are exactly the edges connecting
-%monotonic components.  Note that this analysis ignores the non-monotonicity in
-%\dedalus{choice} for the reasons outlined above.  Note also that we still
-%maintain the requirement that async relations are simply persisted to ensurei
-%associativity. \wrm{talk about relaxing this?}
-
-%\wrm{write a paragraph extolling the virtues of logic programming here, and
-%explaining why this test is good.  that paragraph isn't coming to me now...} 
-
-%\paa{need a formal description of the new (or special-cased) stratification algorithm.
-%regular strat, except any async rule is a stratum boundary \emph{unless} the 
-%target predicate is naively persisted, with ``p is naively persisted'' conservatively defined
-%as $\exists$ a rule with $p$ in the head,  p in the body with 'the same bindings', and the rest of the body always satisfied or empty}
-
-%Centralized evaluation of a logic program ensures confluence considering the
-%program's PDG, and collapsing {\em monotonic components} -- subgraphs of the
-%PDG with no negation -- and evaluating the program in topological order of the
-%resulting graph. This ensures that the evaluator defers universal
-%quantification over a subset of a relation until all facts in the subset are
-%known.  This deferal happens precisely between monotonic components.  Note that
-%we can ignore the negation in \dedalus{choice}, for the reasons described
-%above.
-
-%The utility of syntactic monotonicity checks lies in the ability to identify
-%monotonic \emph{components} of a nonmonotonic program.  Stratification already
-%divides a Datalog program into an ordered list of such monotonic components,
-%separated by nonmonotonic constructs like negation.  Within each such
-%component or \emph{stratum}, rules may be evaluated without ordering or
-%coordination, but the strata must be evaluated in order and \emph{sealed}
-%before downstream strata that depend nonmonotonically on them may begin
-%evaluation.  
-
-%Our use of choice in asynchronous rules uses (ambiguous) negation to represent
-%indeterminacy in timestamp assignment by entailing a multiplicity of models,
-%and hence on the surface always represents a stratum boundary in the global
-%program.  Under this naive interpretation, communication always occurs
-%between, and never within, monotonic program components: that is to say,
-%communication always occurs at a coordination boundary, and it is not safe to
-%process messages ``off the wire'' unless the computation that produced them is
-%complete.  
-
-%To avoid this undesirable barrier, and allow pipelining of the results of an
-%ongoing computation across network (and hence temporal) boundaries, we propose
-%an extension of stratification analysis that identifies when monotonic program
-%components cross network boundaries. 
-
-%\paa{the idea is simple: perform a normal stratification analysis, then
-%collapse pairs of strata that are separated only b/c of an async rule (and
-%it's implied NM choice expansion), when we can show that the async
-%consequences are "protected" by a persistence rule.  the result is a new
-%strata graph with fewer vertices, and some of whose vertices tolerate fully
-%pipelined communication in addition to parallel/unordered evaluation.}
-
-%In \lang, a distributed system is evaluated by many different nodes.  In a
-%horizontally-partitoned distributed system, deferring quantification requires
-%{\em coordination} between some subset of the nodes, as multiple nodes may provide
-%for a subset to be quantified over.  \wrm{connect to coordination in imperative languages.}
-%Within a given monotonic component (between universal quantifications), rules may be evaluated without ordering or
-%coordination.  One neat upshot is that a Dedalus program can completely identify places in the program that
-%might need coordination -- precisely those places in the program (PDG) with negation.  Note that we still need to persist async predicates.
-
-
-%\paa{below are notes}
-
-%when can we say that the ND choice of timestamp in async rules does not affect the outcome
-%of a computation?  in the general case, it almost always does (since 'outcome' implies finality,
-%and thus rules out the possibility of choosing a timestamp after the outcome that could affect the outcome.
-%\wrm{huh?  the ND choice of timestamp doesn't affect the outcome if it ``doesn't affect the outcome'' (i.e. regardless of the choice value, i still get the same set of facts in the naively persistent relations, for all EDBs)  are you looking for some conservative syntactic condition?}
-
-%we can reason, however, about order independence on a predicate-by-predicate basis, and this
-%can significantly simplify how we reason about the replication/distribution of state in the
-%global program.  informally, we say that any predicate all of whose possible derivations 
-%do not transit across async rules is order-independent \wrm{a queue doesn't involve async, but it's order dependent}, but this is vacuous b/c those derivations
-%are fundamentally unordered (well, order is hidden in the interpreter).  more substantively,
-%we may say that by default, all event predicates (all predicates to a first approximation) 
-%are order-dependent b/c the choice of timestamp determines all of their semantics.  
-%can we restore order independence?  yes: persist the predicate.  now any tuple inserted will
-%"be there at infinity" -- the only ordering detail of semantic significance is now the 1st 
-%timestamp of persistence.  and even this matters only when program logic is nonmonotonic. \wrm{you also need that the inputs are either transitively dependent on only EDB, or are persisted, right?}
-
-%a program with negation (aggregation, shipping, summarization) may decide at some time N
-%that a predicate is false, and conclude stuff from it, only to have the predicate become
-%true at some M > N \wrm{don't see a problem here}.  this means conclusions exists that are inconsistent with valuations at
-%infinity \wrm{don't know what this means}.  we know precisely the circumstances under which this may occur:
-
-%consider a predicate p in a dedalus program and the subgraph of the program's RGG that 
-%defines the predicate.  p's semantics are order-insensitive if:
-
-%1. in the global graph from EDB facts, timers etc, there are no stratum boundaries save those encapsulated in the choice expansion.
-
-%2. following each async rule, there is a simple persistence rule.  (we can generalize this some,
-%but not a heck of a lot.  a predicate p is 'basically' persistent of there exists a cycle in the RGG 
-%with exactly one inductive edge and all other edge (possibly 0) deductive, in which the 
-%bindings of p are preserved from p (as premise) to p (as conclusion), and in which either no other predicates participate, or in which we can show that any participating predicate is always true.
-
-%we can see that these conditions imply order-insensitivity wrt ``in-flight'' tuples bound for p.
-%any pair of tuples will end up in p and be there ``at some time'' if the network quiesces, at 
-%which time we may consider the timestamp irrelevant.  and p is order-insensitive in this respect,
-%though operations including join, till the next stratum boundary.
-
-%but can we weaken the conditions?  in general it looks hard.  take (1): if we have indeed crossed a stratum boundary, we have in essence decided ``at some time'' that some predicate is closed to insertion, by universally quantifying over it (to assert its complement, summarize it, ship it, whatever).  recall p() from above.  a rule that negates p() in a subgoal could succeed between 
-%two async insertions of p() tuples, which thus clearly do not commute.  the 'committed choice'
-%pattern is a rudimentary illustration of 'sealing' a nonmonotonic consequence: log is defined 
-%in terms of its own negation.  the 'assignment' pattern is a rudimentary example of... um, I guess a rule that isn't persistent (violates 2) b/c notin condition is clearly not "always true."  ditto the
-%mutable state pattern.
-
-%um, idempotence.
-\wrm{idempotence}
-um, efficient lazy evaluation?  \cite{magic}
