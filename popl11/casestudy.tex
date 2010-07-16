@@ -133,7 +133,7 @@ checkout(S, C, Se, Cnt) \(\leftarrow\)
 ca_cnt(S, Se, count<Ri>) \(\leftarrow\) 
   cart_action(S, Se, I, T, Amt, Ri);
 
-response(#C, Se, I, A) :-
+response(#C, Se, I, A) \(\leftarrow\)
   status(#S, Se, I, A), 
   checkout(#S, C, Se, Cnt),
   ca_cnt(#S, Se, Cnt);
@@ -147,7 +147,7 @@ Note that the predicate {\em cart\_action} is part of a monotonic component that
 so we can simply and inexpensively replicate it:
 
 \begin{Dedalus}
-cart_action(#R, S, I, T, Ri)@async :-
+cart_action(#R, S, I, T, Ri)@async \(\leftarrow\)
     cart_action(#L, S, I, T, Ri),
     replicas(#L, S, R);
 \end{Dedalus}
