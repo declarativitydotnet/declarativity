@@ -108,6 +108,20 @@ equal.
 %
 \end{definition}
 
+\begin{lemma} \label{lem:assoc-comm}
+%
+For any two traces $R_1, R_2$ that have the same facts (ignoring timestamps),
+$R_1$ is in the same commutativity class as a trace $R_3$, which is in the same
+associativity class as $R_2$.
+%
+\end{lemma}
+
+\begin{proof}
+%
+
+%
+\end{proof}
+
 \wrm{Any two traces $R_1, R_2$ that have the same facts (ignoring timestamps)
 can be converted by first applying a commutativity step followed by an
 associativitystep.}
@@ -182,12 +196,13 @@ either no $f$ exists or some $f$ is part of its own complete support.  Because
 \lang rules must unify on time, the support of $g$ in $\bigcup_{t \in
 \text{time}} \mathcal{M}_{I,T}(R_2)$ does not necessarily imply $g$ for an
 abitrary program.  However, because we know that the program has no negation or
-aggregation, the order of facts does not affect the ultimate model, so we need
-only worry about associativity.  By Lemma~\ref{lem:assoc-comm}, we know that
-after applying a commutativity step, $g$'s support in $\bigcup_{t \in
-\text{time}} \mathcal{M}_{I,T}(R_2)$ is in the same associativity class as its
-support in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1)$.  Because we
-know the program is associative, $g$ exists in $\bigcup_{t \in \text{time}}
+aggregation, the order of facts does not affect the ultimate model (and thus
+the program is commutative), so we need only worry about associativity.  By
+Lemma~\ref{lem:assoc-comm}, we know that $g$'s support in $\bigcup_{t \in
+\text{time}} \mathcal{M}_{I,T}(R_2)$ is in the same commutativity class as
+something in the same associativity class as $g$'s support in $\bigcup_{t \in
+\text{time}} \mathcal{M}_{I,T}(R_1)$.  Because we know the program is
+associative, $g$ exists in $\bigcup_{t \in \text{time}}
 \mathcal{M}_{I,T}(R_2)$.  By induction, the set of $f$ is empty, which
 contradicts our assumption that it was non-empty.  Thus, a negation- and
 aggregation-free associative \lang program is always confluent.
