@@ -97,7 +97,7 @@ response(#Client, Session, Item, Amt)@async \(\leftarrow\)
 If, on the other hand, ignoring late {\em cart\_update} tuples is not acceptable,
 some data dependency between them and {\em checkout} tuples must be established
 to ensure that the deduction of {\em action\_cnt} tuples must {\em wait}.  
-The ordered queue pattern introduced in (constructs) is one means of achieving such an 
+The queue pattern introduced in Section~\ref{sec:orderinlogic} is one means of achieving such an 
 ordering, as is sending a manifest (e.g., a count of total {\em cart\_action} tuples
 sent) in the {\em checkout} message.
 
@@ -199,9 +199,9 @@ asynchronous derivations of {\em cart\_update}, which may arbitrarily reorder
 updates.  In Section whatever, we identified the concept of entanglement as a
 way to preserve an order in the face of asynchrony.  We can communicate the
 desired order from client to server by entangling the sender's time in rule
-\dedalus{r4}, and having the server process updates in this order~\footnote{
+\dedalus{r4}, and having the server process updates in this order.\footnote{
 We could also have used a sequence, if we wanted more control over the range of ordered
-values}.
+values.}
 %serial order of updates at the client is lost in the asynchronous derivations
 %of {\em cart\_update}.  By entangling the sender's time in rule  {\em r4}, we
 %may communicate the desired total order over the {\em cart\_update} tuples and
