@@ -57,7 +57,7 @@ future work.
 %partial fixpoint stuff}. \wrm{In practice, due to magic sets, this isn't
 %horribly inefficient}~\cite{magic}
 
-\jmh{I'd prefer if any other basic terminology used here was  defined with similar formality and formatting when first introduced.  It makes jumping into the formal stuff much quicker -- you can more easily find all the necessary defs from before.  So far I think all that's missing is the definition for `instance'}
+%\jmh{I'd prefer if any other basic terminology used here was  defined with similar formality and formatting when first introduced.  It makes jumping into the formal stuff much quicker -- you can more easily find all the necessary defs from before.  So far I think all that's missing is the definition for `instance'}
 \begin{definition}
 %
 If all traces of a \lang instance produce the same ultimate model, then we call
@@ -72,15 +72,22 @@ If every instance of a program is trace confluent, then we say the program is
 %
 \end{definition}
 
-\noindent{}It is easy to show that every monotonic Datalog program (without \dedalus{choice})
-is confluent.
+\noindent{}It is easy to see that every \lang program without \dedalus{async}
+rules is confluent, as the trace is empty.
 
-\jmh{In the next two definitions, I'm uncomfortable with the notion of ``operations on timestamps''.  You need to define that, maybe with terminology about equivalence of timestamp ``histories'': two histories that differ only in a certain way.  I wanted to use the word `trace' rather than `history' in the previous sentence, but the current definition of `trace' is too narrow to let you talk about arbitrary timestamps.  There is of course a deterministic mapping from trace to `history', but your definition takes it from the `history' side.  I wonder if you could define assoc. and commute. in terms of trace equivalence -- that might be simpler to reason about. And it would arguably be nicer: the discussion of timestamp ``history'' feels more operational.}
 \begin{definition}
 %
-We say that a \lang program is {\em associative} if the ultimate model is
-invariant under the operations of combining two adjacent timestamps, and
-splitting a timestamp into two separate timestamps.
+Two traces $R_1, R_2$ are in the same associativity class if $R_2$ can be
+derived from $R_1$ by freely applying the operations of combining two adjacent
+timestamps, and splitting a single timestamp into two adjacent timestamps.
+%
+\end{definition}
+
+\begin{definition}
+%
+We say that a \lang program is {\em associative} if, for any instance $I$,  the
+ultimate models for any two traces of $I$ in the same assciativity class are
+equal.
 %
 \end{definition}
 
