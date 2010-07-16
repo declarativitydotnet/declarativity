@@ -133,9 +133,16 @@ non-negated, then we call $E$ a positive support.
 %
 \end{definition}
 
-\wrm{Notice that fact $f$ may not be part of any support for itself}
+It is clear if a fact $f$ has $\{f\}$ as its only support, then $f$ is a fact
+in an extensional predicate.
 
-\wrm{define complete support}
+\begin{definition}
+%
+A complete support of a fact $f$ in a \lang instance is a set of sets of facts
+$\{E_1, ..., E_n\}$, such that $E_1$ is part of the EDB, and $E_1$ is a support
+for $E_2$, ..., is a support for $E_n$, which is a support for $f$.
+%
+\end{definition}
 
 It is clear that every fact in all incremental models of a trace of a monotonic
 \lang instance has a positive support.  In a trace of a non-monotonic \lang
