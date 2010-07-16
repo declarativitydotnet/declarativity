@@ -207,7 +207,7 @@ and \dedalus{CartObj}.
 Figure~\ref{fig:cs-pdg-2} contains a PDG diagram of our
 implementation, and reveals a bug.  \dedalus{cart\_update} is in a
 different monotonic component than \dedalus{update\_event}; as updates
-are propogated from one monotonic component to another, they may be
+are propagated from one monotonic component to another, they may be
 reordered.  Therefore, the replicas may apply updates in different
 orders, and end up with different end-states.
 
