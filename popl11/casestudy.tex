@@ -20,32 +20,9 @@ or to provide coordination-free alternatives without synchronization.
 
 \subsection{Set-oriented Implementation}
 \paa{rename me}
-An update to a shopping cart
-is represented as a tuple containing server and client addresses, a session identifier,
-an item identifier, a type field that indicates whether this action
-is an addition or a deletion, and a request identifier to allow idempotent retry. At checkout time,
-we wish to compute the difference between the number of additions and deletions for each item
-in the cart.
-
-\begin{Dedalus}
-persist[cart_action, 6];
-action_cnt(Location, Session, Item,
-           Type, count<ReqId>) \(\leftarrow\)
-    cart_action(Location, Client, Session,
-                Item, Type, ReqId),
-    checkout(Location, Client, Session);
-
-status(L, Session, Item, Cnt) \(\leftarrow\)
-    action_cnt(L, Session, Item, "Add", Cnt),
-    notin action_cnt(L, Session, Item, "Del", _);
-
-status(L, Session, Item, Acnt - Dcnt) \(\leftarrow\)
-    action_cnt(L, Session, Item, "Add", Acnt),
-    action_cnt(L, Session, Item, "Del", Dcnt);
-\end{Dedalus}
-
-The client code generates {\em cart\_action} and {\em checkout} messages in response
-to local events.  A sequence is used to uniquely identify {\em cart\_action} requests.
+Clients generate {\em cart\_action} and {\em checkout} messages, and send them
+to one of the server replicas. Each request is tagged with a request identifier
+drawn from a sequence {\em s}, which allows requests to be idempotent.
 
 \begin{Dedalus}
 // client code
@@ -65,30 +42,54 @@ checkout(Server, Client, Session)@async \(\leftarrow\)
   best_replica(Client, Session, Server);
 \end{Dedalus}
 
+At checkout time, the server computes the difference between the number of
+additions and deletions for each item in the cart, and sends a {\em response}
+message to the client.
 
+\begin{Dedalus}
+// Server code
+persist[cart_action, 6];
+action_cnt(Location, Session, Item,
+           Type, count<ReqId>) \(\leftarrow\)
+    cart_action(Location, Client, Session,
+                Item, Type, ReqId),
+    checkout(Location, Client, Session);
+
+status(L, Session, Item, Cnt) \(\leftarrow\)
+    action_cnt(L, Session, Item, "Add", Cnt),
+    notin action_cnt(L, Session, Item, "Del", _);
+
+status(L, Session, Item, Acnt - Dcnt) \(\leftarrow\)
+    action_cnt(L, Session, Item, "Add", Acnt),
+    action_cnt(L, Session, Item, "Del", Dcnt);
+
+response(#Client, Session, Item, Amt)@async \(\leftarrow\)
+    status(#Location, Session, Item, Amt),
+    checkout(#Location, Client, Session);
+\end{Dedalus}
 
 \includegraphics[width=0.9\linewidth]{vizza_brick.pdf}
 
-
-Our tests immediately show us that the program is not necessarily confluent: 
+Our tests indicate that the program is not necessarily confluent: 
 {\em action\_cnt} falls at a point of order, so it may
 be affected by the arrival order of tuples to {\em cart\_action} and
 {\em checkout}.  This is unsurprising: although both relations are persisted monotonically,
-the arrival of a {\em checkout} tuple may cause us to universally quantify over {\em cart\_action}
-at some time $N$, only to have a latecomer {\em cart\_action} tuple arrive at some time $M > N$.
+the arrival of a {\em checkout} tuple may cause a universally quantification over {\em cart\_action}
+at some time $N$, only to have a subsequent {\em cart\_action} tuple arrive at some time $M > N$.
 
 Depending on the application's requirements, several remedies are possible. If ignoring
 late {\em cart\_action} messages is acceptable, then the program must merely ensure
-that any latecomers are ignored---i.e., after a {\em checkout} has occurred, {\em action\_cnt}
-should not be recalculated.
+that any latecomers are ignored---i.e., after a {\em checkout} has occurred, additional
+{\em cart\_action} messages should not result in delivering additional {\em response} messages.
 We can achieve this using the ``at most once'' pattern from Section~\ref{sec:atmostonce}, which ``seals'' the value
-of $Cnt$ in {\em log} at the first insertion, and ensures that {\em log\_event} occurs once.
+of {\em Cnt} in {\em log} at the first insertion. By making the {\em response} message conditional on {\em log\_event}, we can be sure that only a single response will be sent.
+
 \paa{note: introduce the commitfirst macro in the committed choice section of constructs}
 \begin{Dedalus}
 commitfirst[log, 4, 3];
 
 log(L, Session, Item, Cnt) \(\leftarrow\) 
-    status(L, User, Session, Item, Cnt);
+    status(L, Session, Item, Cnt);
 
 response(#Client, Session, Item, Amt)@async \(\leftarrow\)
     log_event(#Location, Session, Item, Amt),
@@ -143,7 +144,7 @@ delete status(L, S, C) \(\leftarrow\)
   
 response(#Client, Loc, Session, CartObj) \(\leftarrow\)
     status(#Loc, Session, CartObj),
-    request(#Loc, Client, User, Session);
+    request(#Loc, Client, Session);
 
 // client code
 cart_update(L, S, C)@async \(\leftarrow\) 
