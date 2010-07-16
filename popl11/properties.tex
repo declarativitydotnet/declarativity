@@ -108,6 +108,10 @@ equal.
 %
 \end{definition}
 
+\wrm{Any two traces $R_1, R_2$ that have the same facts (ignoring timestamps)
+can be converted by first applying a commutativity step followed by an
+associativitystep.}
+
 \subsection{Associativity}
 
 %\begin{definition}
@@ -129,6 +133,10 @@ non-negated, then we call $E$ a positive support.
 %
 \end{definition}
 
+\wrm{Notice that fact $f$ may not be part of any support for itself}
+
+\wrm{define complete support}
+
 It is clear that every fact in all incremental models of a trace of a monotonic
 \lang instance has a positive support.  In a trace of a non-monotonic \lang
 instance, some facts necessarily have only negative supports.
@@ -139,6 +147,9 @@ A monotonic \lang program is confluent if and only if it is associative.
 %
 \end{lemma}
 %
+
+\wrm{define monotonicity} 
+
 \begin{proof}
 %
 It is clear that the confluence of a monotonic \lang program implies its
@@ -147,41 +158,43 @@ some instance $I$ and two traces $R_1, R_2$ in the same associativity class for
 which the ultimate model is not the same; this contradicts the fact that the
 program is confluent.
 
-If a \lang instance is not trace confluent, we will show the \lang program is
-not associative.  Assume there exists a non-trace-confluent \lang instance $I$
-with an associative program.  
-\jmh{The below is unnecessarily hard to read.  Just say that $R_1$ has the first constraint, and $R_2$ has the second.}
-That is, there are two traces $R_1, R_2$ for $I$,
-such that 
+If a \lang program is associative, we will show that any arbitrary instance of
+the \lang program is trace confluent.   Assume there exists a
+non-trace-confluent \lang instance $I$ with an associative program.  That is,
+there are two traces $R_1, R_2$ for $I$, such that (without loss of generality)
 %$\exists i,j \in \{1,2\}: i \neq j \and \exists f \in \mathcal{U}_I(R_i): f
 %\not\in \mathcal{U}_I(R_j)$.  Consider $g$, the ``first'' such $f$, that is
 %the $f$ that no 
-$\exists i,j \in \{1,2\}: i \neq j \land f \in \bigcup_{t \in \text{time}}
-\mathcal{M}_{I,T}(R_i) \land f \not\in \bigcup_{t \in \text{time}}
-\mathcal{M}_{I,T}(R_j)$.  
-\jmh{"first" in what sense: lowest timestamp? the next sentence is plain hard to parse.}
-Let $g$ be the ``first'' such $f$, that is the $f$
-such that no transitive support of $f$ is also in the set \wrm{note that
-transitive support is acyclic}.  The entire contents of $g$'s transitive
-support clearly is in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_i)$
-\wrm{fix this} (although possibly at different times), because if it were not,
-then $g$ would not be the ``first'' such $f$.  The fact that the program is
-associative is important, because of \lang's syntactic restriction that rules
-must unify on time.  Thus, even under different assignment of timestamps, $g$'s
-transitive support still derives $g$ in $R_i$.  Thus, we have reached a
-contradiction.  \wrm{toughen up, note that we have proven something stronger
-than the lemma}
+$\exists f \in \bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1) \land f
+\not\in \bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_2)$.  Let $g$ be the
+$f$ that has a complete support (with a possibly different assignment of
+timestamps) in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_2)$.  We know
+there exists at least one such $g$, because if such a $g$ does not exist, then
+either no $f$ exists or some $f$ is part of its own complete support.  Because
+\lang rules must unify on time, the support of $g$ in $\bigcup_{t \in
+\text{time}} \mathcal{M}_{I,T}(R_2)$ does not necessarily imply $g$ for an
+abitrary program.  However, because we know that the program is monotonic, the
+order of facts does not affect the ultimate model, so we need only worry about
+associativity.  By the Lemma above \wrm{which I haven't proved yet}, we know
+that after applying a commutativity step, $g$'s support in $\bigcup_{t \in
+\text{time}} \mathcal{M}_{I,T}(R_2)$ is in the same associativity class as its
+support in $\bigcup_{t \in \text{time}} \mathcal{M}_{I,T}(R_1)$.  Because we
+know the program is associative, $g$ exists in  $\bigcup_{t \in \text{time}}
+\mathcal{M}_{I,T}(R_2)$.  By induction, the set of $f$ is empty, which
+contradicts our assumption that it was non-empty.  Thus, a monotonic,
+associative \lang program is always confluent.
 %
 \end{proof}
 
 Note that a simple way to ensure associativity of a monotonic program is to
-persist all relations that appear in the head of an \dedalus{@async} rule.  
-This ensures that all support will always be coincidentally true \jmh{``coincidentally'' is annoyingly overloaded; say what you mean explicitly in terms of timestamps}.  However,
-this does not ensure associativity of a non-monotonic program, because the
-support for some derivations is necessarily not positive \wrm{explain better}.  
-Another way to ensure associativity of a monotonic program is to use a
-queue-like construct to only consider one fact derived in an \dedalus{@async}
-predicate per timestamp.  \jmh{but then the program is not monotonic.  and why are bothering to make this point?}
+persist all relations that appear in the head of an \dedalus{@async} rule.
+This ensures that all support will be true at some timestamp.  However, this
+does not ensure associativity of a non-monotonic program, because a fact in a
+non-monotonic program may be implied through negation or aggregation.
+
+%Another way to ensure associativity of a monotonic program is to use a
+%queue-like construct to only consider one fact derived in an \dedalus{@async}
+%predicate per timestamp.  \jmh{but then the program is not monotonic.  and why are bothering to make this point?}
 
 %Since we do not consider the time suffix as part of the ultimate model, how can
 %non-determinism in time suffixes affect the ultimate model?  In purely
@@ -247,6 +260,8 @@ predicate per timestamp.  \jmh{but then the program is not monotonic.  and why a
 \subsection{Commutativity}
 
 \jmh{Too much prose before the example.  Pop the example in the middle (``consider the following example'') and then discuss it.  Or put it up in a Figure.}
+
+
 It is easy to see that non-monotonic programs are not necessarily confluent,
 even when async predicates are simply persisted.  In addition to associativity,
 {\em commutativity} is now an issue: if we swap the timestamps of two messages,
