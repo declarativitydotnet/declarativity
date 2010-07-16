@@ -18,7 +18,8 @@ ensures that each server has the same state.
 An alternative approach trades weaker update semantics for reduced
 replication overhead.  In an {\em eventually consistent}
 protocol~\cite{quicksand,beyond}, updates may be applied in any order
-(or even skipped) as long as all of the replicas will converge to the
+%(or even skipped) 
+as long as all of the replicas will converge to the
 same final state at some point in time after the last update arrives.
 This weaker consistency model reduces the need for coordination among
 the server processes~\cite{dynamo}, which in turn reduces update
