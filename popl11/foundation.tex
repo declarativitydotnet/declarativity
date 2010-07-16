@@ -336,58 +336,37 @@ rules be \dedalus{async} rules.
 \subsection{Temporal Stratification}
 
 We desire a stratification condition for \lang that corresponds to our
-intuitive interpretation of time.  Note that contradictions in a \lang program
-can always be avoided by rewriting the program to spread out the contradictory
-values over time.  \wrm{this is a pretty poor motivation, someone please help}
+intuitive interpretation of time---contradictions can always be avoided by
+making the contradictory facts noncoincident in time. \wrm{sum1 look at this}
 
 If predicate \dedalus{p} depends on predicate \dedalus{q} through only
-inductive rules, then we write $\dedalus{p} \gets \dedalus{q}$.  $\dedalus{p}
-\gets^+ \dedalus{q}$ if $\dedalus{p} \gets \dedalus{q}$ or $\dedalus{p} \gets
-\dedalus{r} \gets^+ \dedalus{q}$.
+inductive rules, then we write $\dedalus{p} \gets \dedalus{q}$.  We write
+$\dedalus{p} \gets^+ \dedalus{q}$ if $\dedalus{p} \gets \dedalus{q}$ or
+$\dedalus{p} \gets \dedalus{r} \gets^+ \dedalus{q}$.
 
 \begin{definition}
 %
 A \lang program is temporally stratified if for all predicates \dedalus{p}:
-$\dedalus{p} \succ^+ \nega \dedalus{p} \implies \dedalus{p} \gets^+ \nega
+$\dedalus{p} \succ^+ \lnot \dedalus{p} \implies \dedalus{p} \gets^+ \lnot
 \dedalus{p}$.
 %
 \end{definition}
 
-
-The edge is annotated with a
-$\lnot$ if $P_i \succ \lnot P_j$.  The
-edge is annotated with a $+$ if all rules with head $P_i$ and $P_j$ in their
-bodies are either inductive or async.  A \lang program is temporally
-stratified if all cycles in the PDG with an $\lnot$ edge also have a $+$
-edge.
-
-The intuitive meaning of a $+$ edge $(N_i, N_j)$ is that $P_j$ derives $P_i$ at
-some later time.  
-\paa{for more details and a proof see the TR}
+For further details, see~\cite{dedalus-techr}.
 
 \subsection{Temporal Safety}
 
-Next we consider the issue of infinite results.  In Datalog, programs with
-infinite results are traditionally ruled out, as Datalog's evaluation
-algorithms fail to terminate on such programs.  Similarly, for \lang, we want
-to somehow constrain programs that fail to terminate, given any bounded EDB.
-Given a finite universe of constants---i.e., restricting entanglement and
-summary aggregates---it is clear that modulo time, a \lang program can
-only compute a finite model.  
-\jmh{we can't just say ``modulo time''.  this requires more careful definition.}
-The only possible termination issue then is that
-a set of facts may exhibit {\em non-convergence}: oscillation in time.  Given
-that the finiteness of the universe implies a finite period of oscillation, we
-can either compute a finite representation of these non-convergent derivations
-in the style of Chomicki et al.~\cite{chomicki-infinite} or a {\em partial
-fixpoint}~\cite{abiteboul-vianu}, which regards non-convergent derivations as
-false.
+One might be concerned about an instance having an infinte model, given \lang's
+infinite \dedalus{time} and \dedalus{successor} relations, and the use of summary
+aggregates and entanglement.  First, we must define what we mean by the model
+of a \lang instance.
 
-If finiteness of the universe cannot be guaranteed, we can fall back on
-conservative syntactic conditions presented in~\cite{dedalus-techr} that
-guarantee the existence of a finite model.
-
-\rcs{wrm agreed the following paragraph needs to be moved/rewritten, but I forget where.  Note that the following only holds for analyses of confluence.  We might want to check other properties, such as invariants over a trace that we collect and process at runtime.  Such analyses are probably more interested in network events than the ultimate model.  Other analyses probably want to check other things...}
+Note that the only non-determinism in a \lang program is in the timestamps of
+facts implied by \dedalus{async} rules.  Thus, there is no single model for a
+\lang instance.  However, we can define a unique model for a \lang instance
+along with the set of all facts implied by \dedalus{async} rules for some
+particular choice of timestamps.  First, we isolate the non-determinism in what
+we call a {\em trace}.
 
 \begin{definition}
 %
@@ -397,8 +376,9 @@ comprise a trace of the instance.
 %
 \end{definition}
 
+Now we can devise a unique model, which we call the {\em ultimate model} for a
+trace of a \lang instance.
 
-\wrm{tie in this def better}
 \begin{definition}
 %
 An {\em incremental model} at time $T$ of trace $R$ of a \lang instance $I$,
@@ -407,25 +387,12 @@ relations at time $T$.
 %
 \end{definition}
 
-\jmh{don't think you've introduced ``simply persisted'' yet.  Meanwhile, can't we say time $t=\infty$}
+By $\mathcal{M}_{I,\infty}(R)$, we mean the set of all $f$ such that $\exists T \in \dedalus{time} \forall S \geq T: f \in \mathcal{M}_{I,T}(R)$.
+
 \begin{definition}
 %
 The {\em ultimate model} of trace $R$ of a \lang instance $I$, represented by
-$\mathcal{U}_I(R)$, is the eventual contents of the simply persisted relations
-(ignoring timestamps).
+$\mathcal{U}_{I}(R)$, is the set of all $f \in \mathcal{H}$ such that $\exists
+T \in \dedalus{time} \forall S \geq T: f \in \mathcal{M}_{I,S}(R)$.
 %
 \end{definition}
-
-In the general case, we are not interested in the full model of a trace of an
-instance: facts that are only ephemerally true represent events, or intermediate
-computations, which intuitively should not be considered as part of the output
-of the program.  We are only interested in the program's {\em ultimate
-  model}---the eventual contents of the simply persisted relations (ignoring
-timestamps).
-\paa{sort of.  but those ephemeral tuples provide ground for future inductive deductions, no?}
-\paa{also (unrelated to previous comment) perhaps make reference to the correspondence with eventual consistency
-(if it has been introduced yet}
-
-Since non-determinism (\dedalus{choice}) is restrited to \dedalus{async} rules, we ca
-
-
