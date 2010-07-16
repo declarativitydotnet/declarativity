@@ -58,7 +58,7 @@ for many of these common patterns.
 
 \subsection{State in Logic}
 
-\jmh{Back this up with formalism: can't do a flip/flop in Datalog (Chandra/Harel, right?).  This discussion does tee up the question of whether something more traditional like Datalog-neg would have been enough for us ... might be sufficient to simply toss in a result about Turing completeness of Dedalus.  I realize your point here is more practically-minded and illustrative, but then maybe this intro is off target for this section.  Still I think an expressivity subsection in the paper would be nice.}
+%%\jmh{Back this up with formalism: can't do a flip/flop in Datalog (Chandra/Harel, right?).  This %%discussion does tee up the question of whether something more traditional like Datalog-neg %%would have been enough for us ... might be sufficient to simply toss in a result about Turing %%completeness of Dedalus.  I realize your point here is more practically-minded and illustrative, %%but then maybe this intro is off target for this section.  Still I think an expressivity subsection %%in the paper would be nice.}
 
 
 Logic languages naturally model the accumulation of information: deduction in 
@@ -89,7 +89,9 @@ true $\forall j \in \mathbb{N} : j >= i$.
 
 Simple persistence rules cannot model deletions and updates of a fact, because
 they express an unbroken induction over time.  One way to allow the induction
-to be broken is to add a \dedalus{p\nega} \wrm{\dedalus{p\nega} not defined} subgoal to the body of a simple
+to be broken is to add a \dedalus{p\nega} 
+%%\wrm{\dedalus{p\nega} not defined} 
+subgoal to the body of a simple
 persistence rule:
 
 \begin{dedalus}
