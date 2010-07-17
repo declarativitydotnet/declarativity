@@ -96,7 +96,7 @@ the Datalog program below, which represents a game where player \dedalus{X}
 wins if she has a move, and player \dedalus{Y} does not have a move:
 
 \begin{Dedalus}
-win(X) \(\leftarrow\) move(X, Y), \(\lnot\) win(Y);
+win(X) \(\leftarrow\) move(X, Y), \(\lnot\)win(Y);
 \end{Dedalus}
 
 \noindent{}Consider the following EDB for the above program:
@@ -106,7 +106,7 @@ move(1,1)
 \end{Dedalus}
 
 \noindent{}This instance has no minimal model because it has a contradiction:
-\dedalus{move(1,1)} and \dedalus{\(\lnot\) win(1)} implies \dedalus{win(1)},
+\dedalus{move(1,1)} and \dedalus{\(\lnot\)win(1)} implies \dedalus{win(1)},
 and thus \dedalus{win(1)} $\succ$ \dedalus{\(\lnot\) win(1)}.  Notice that if
 we required \dedalus{p} $\not\succ^+$ \dedalus{\(\lnot\) p} for all predicates
 \dedalus{p}, a contradiction could never arise in any instance of any program---this

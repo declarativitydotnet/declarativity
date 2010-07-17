@@ -304,7 +304,7 @@ cart_action(#L, C, S, I, T, R)@async \(\leftarrow\)
 counter(X+1)@next \(\leftarrow\) counter(X),
                      action(_, _, _, _, _);
 counter(X)@next   \(\leftarrow\) counter(X),
-                    \(\lnot\) action(_, _, _, _, _);
+                     \(\lnot\)action(_, _, _, _, _);
 \end{Dedalus}
 
 In the remainder of the paper, we present \lang, which restores a logical interpretation to

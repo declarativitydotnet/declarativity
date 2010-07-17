@@ -211,7 +211,7 @@ response(Cli, Ses, Item, Amt) \(\leftarrow\)
 
 amo\_event(Cli, Ses, Item, Amt) \(\leftarrow\)
   status(Cli, Ses, Item, Amt), 
-  \(\lnot\) amo\_log(Cli, Ses, Item, _);
+  \(\lnot\)amo\_log(Cli, Ses, Item, _);
 
 amo\_log(Cli, Ses, Item, Amt)@next \(\leftarrow\) 
   amo\_event(Cli, Ses, Item, Amt);
