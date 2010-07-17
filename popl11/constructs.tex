@@ -285,10 +285,10 @@ omin(L, S, min<C>) \(\leftarrow\)
   update_queue(L, S, C);
 
 update_queue_out(L, S, C)@next \(\leftarrow\)
-  update_queue(L, S, C), omin(A, C);
+  update_queue(L, S, C), omin(L, S, C);
 
 delete update_queue(L, S, C) \(\leftarrow\)
-  update_queue(L, S, C), omin(A, C);
+  update_queue(L, S, C), omin(L, S, C);
 \end{Dedalus}
 
 In the program fragment above, we indirect {\em cart\_update} tuples through the relation
@@ -300,7 +300,7 @@ This changes the value computed by the {\em min} aggregate at the next timestep.
 A serializer thus takes advantage of the monotonic property of timestamps to enforce the
 orderly processing of external inputs.
 
-We provide the {\em queue} macro as a shorthand, which takes as arguments a name,
+We provide the {\em serializer} macro as a shorthand, which takes as arguments a name,
 an arity and the ordinal of the ordering attribute.
 For example, the above code could be generated with the statement 
 \dedalus{serializer[update, 3, 0]}.
@@ -493,7 +493,7 @@ sufficiently advanced, by temporarily storing incoming tuples in the
 \dedalus{p\_wait} relation.\footnote{For ease of exposition, we elide one
 detail here: Lamport clocks rely upon a ``tie-breaking'' function to ensure
 that no two events have the same timestamp.  We can implement such a discipline
-using queues.}
+using serializers.}
 
 
 %Although annotating a program execution with logical clock values has
