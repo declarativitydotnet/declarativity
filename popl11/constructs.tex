@@ -364,12 +364,10 @@ sequences, or to establish a global order (such as through Lamport Clocks).
 Consider the asynchronous rule below:
 
 \begin{Dedalus}
-p(A, B, N)@async \(\leftarrow\)
-  q(A, B)@N;
+p(A, B, N)@async \(\leftarrow\) q(A, B)@N;
 \end{Dedalus}
-\noindent
 
-Due to the \dedalus{async} keyword in the rule head, each \dedalus{p} tuple
+\noindent{}Due to the \dedalus{async} keyword in the rule head, each \dedalus{p} tuple
 will take some unspecified time suffix value.  Note however that the time
 suffix \dedalus{N} of the rule body appears also in an attribute of \dedalus{p}
 other than the time suffix, recording a binding of both the time value of the

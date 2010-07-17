@@ -1,15 +1,17 @@
 \section{Conclusion and Future Work}
 In earlier work we developed substantial experience building significant
-distributed systems~\cite{boom-eurosys,netdb,Chu:2007,Loo2009-CACM} using hybrid
-declarative/imperative languages such as Overlog~\cite{Loo2009-CACM}.
-While our experience with those languages was largely positive, the 
-combination of Datalog and imperative constructs, limited our development of program analyses, and often clouded our understanding of the ``correct'' execution: even for simple  single-node programs that performed state updates.  
-\lang was developed in large part as a reaction to the semantic difficulties
-presented by these distributed logic languages.
+distributed systems~\cite{boom-eurosys,netdb,Chu:2007,p2} using hybrid
+declarative/imperative languages such as Overlog~\cite{Loo2009-CACM}.  While our
+experience with those languages was largely positive, the combination of Datalog
+and imperative constructs limited our development of program analyses and often
+clouded our understanding of the ``correct'' execution, even for simple
+single-node programs that performed state updates.  \lang was developed in large
+part as a reaction to the semantic difficulties presented by these distributed
+logic languages.
 
 The language features, analysis, and examples in this paper are intended to illustrate the benefit that \lang provides to distributed systems by bringing stateful and ordered metaphors under the semantic umbrella of logic programming.  In particular, we believe that the ability to direct programmers to focus on coarse-grained points of order is a significant step forward from reasoning about concurrency in more imperative models.
 
-Having taken this first step in our agenda, a number of next questions come up quite naturally.  We feel that the ability to ask these questions validates our progress---these questions would not be natural or feasible in other languages.  In closing we acknowledge some of this unfinished business, informally laying out some of the questions that interest us in an informal way:
+Having taken this first step in our agenda, a number of next questions come up quite naturally.  We feel that the ability to ask these questions validates our progress---these questions would not be natural or feasible in other languages.  In closing we acknowledge some of this unfinished business, laying out some of the questions that interest us in an informal way:
 
 \begin{itemize}
     \item {\bf Resolving Points of Order.}  In Section~\ref{sec:stateupdate} we present a number of motifs that can be used to insert order into programs at the points non-monotonic boundaries identified by the checks of Section~\ref{sec:properties}.  These motifs are themselves non-monotonic, however.  So after programmer ``resolves'' the points of order in their program, the checks of Section~\ref{sec:properties} on the resulting augmented program will identify {\em even more} points of order.  Clearly it would be better for the analysis tools to ``reward'' a programmer by recognizing order resolution where it is introduced.  This raises a number of challenges including (a) suitably defining what is required to ``resolve'' a point of order and (b) building tests that can verify that order has been resolved---tests that at minimum work over a wide range of typical order-resolving motifs.    
