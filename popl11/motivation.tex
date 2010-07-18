@@ -109,9 +109,9 @@ event of simultaneous receipt) is returned by each call; we also assume messages
 
 %\paa{an attempt at ``logic pseudocode''.  bill: HELP!}
 
-In logic, we may describe the same program
-as a pair of implications, describing how clients send {\em cart\_action}
-messages to a server (lines 1, 6 and 7):
+In logic, we can describe the same program using a pair of implications,
+describing how clients send {\em cart\_action} messages to a server (lines 1, 6
+and 7):
 
 \begin{Dedalus}
 cart\_action(#Replica, Client, Session, Item, Type)
@@ -119,7 +119,7 @@ cart\_action(#Replica, Client, Session, Item, Type)
        best_replica(#Client, Session, Replica) )
 \end{Dedalus}
 
-\noindent and how servers multicast tuples to other replicas (lines 3 and 4):
+\noindent and how servers multicast updates to other replicas (lines 3 and 4):
 
 \begin{Dedalus}
 cart\_action(#Replica, C, S, I, T)
@@ -127,14 +127,14 @@ cart\_action(#Replica, C, S, I, T)
        replicas(#Local, C, S, Replica)
 \end{Dedalus}
 
-These implications are written in a syntax reminiscent of distributed
-logic languages; the existence of facts matching the RHS implies the
-existence of the fact in the LHS.  (Section~\ref{sec:lang}
-contains a more formal discussion of Datalog syntax and semantics.)
-The ``\#'' denotes the location of the fact, which may be stored on
-any of the machines in question; both of our ``implications'' are {\em
-  distributed}, as the location of the LHS is distinct from that of the
-RHS~\cite{Loo2009-CACM}.  
+These implications are written in a syntax reminiscent of distributed logic
+languages such as Overlog~\cite{Loo2009-CACM} and Snlog~\cite{Chu:2007}; the
+existence of facts matching the RHS implies the existence of the fact in the
+LHS.  (Section~\ref{sec:lang} contains a more formal discussion of Datalog
+syntax and semantics.)  The ``\texttt{\#}'' symbol denotes the \emph{location} of a fact
+(e.g., the network location at which it is stored). The two implications shown
+above are both \emph{distributed}, because the location of the LHS is distinct
+from that of the RHS~\cite{Loo2009-CACM}.
 
  %comment out these ``integrity constraints'' and replace with deductive rules
 %$(\forall Server, Client, Session, Item, Type . ( action(Client, Session, Item, Type) 
@@ -210,8 +210,9 @@ coanalyze server and client code.  We can analyze the program to
 show that {\em cart\_action}, a set that is persistently and immutably
 stored, is insensitive to the arrival order of messages 
 %%\wrm{i thought it's an associativity thing, not a commutativity thing}
-and to the co-occurrence of multiple messages simultaneously. We can do so without relying
-the semantics of external or hidden library calls, or the correctness of imperative optimizations such as pulling the set union (line 7) inside the conditional (line 2).  Moreover, the code itself is succinct and straightforward: it does not intersperse server-to-server replication mechanisms and client request handling as the imperative code does.
+and to the co-occurrence of multiple messages simultaneously. We can do so
+without relying on
+the semantics of external library calls, or the correctness of imperative optimizations such as pulling the set union (line 7) inside the conditional (line 2).  Moreover, the code itself is succinct and straightforward: it does not intersperse server-to-server replication mechanisms and client request handling as the imperative code does.
 
 %  \jmh{how?  are you saying that accumulation into a set is commutative and associative?  why is this easier than the U symbol in the pseudocode?} Moreover, the code 
 %itself is succinct and straightforward. 
