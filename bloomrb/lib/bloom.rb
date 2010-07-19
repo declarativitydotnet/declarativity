@@ -1,4 +1,3 @@
-require 'rubygems'
 require 'enumerator'
 require 'msgpack'
 require 'eventmachine'
