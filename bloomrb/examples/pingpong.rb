@@ -1,4 +1,5 @@
-# pingpong demo
+# pingpong demo #2
+# This script unifies pinger and ponger into a single program.
 # To run:
 #  fire up one copy with 'ruby pingpong.rb 12345 2 true'
 #  fire up a second copy with 'ruby pingpong.rb 12346 2'
