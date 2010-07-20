@@ -64,7 +64,7 @@ class Bloom
   def stratum_fixpoint(strat)
     cnts = Hash.new
     @tables.each_key do |k| 
-#      define_method(k.to_sym) { @tables[k] }
+      #      define_method(k.to_sym) { @tables[k] }
       eval "#{k.to_s} = @tables[#{k}]"
     end
     begin
@@ -92,7 +92,7 @@ class Bloom
       # first time registering table, check for method name reserved
       raise BloomError, "symbol :#{name} reserved, cannot be used as table name"
     end
-    
+
     # check for previously-defined tables
     if @tables[name] then
       # check for consistent redefinition, and "tick" the table
@@ -186,7 +186,7 @@ class Bloom
       @storage = @pending
       @pending = {}
     end
-    
+
     # define methods to turn 'table.col' into a [table,col] pair
     # e.g. to support somethin like 
     #    j = join link, path, {link.to => path.from}
@@ -203,7 +203,7 @@ class Bloom
     end
 
     # define methods to access tuple attributes by column name
-   def tuple_accessors(t)
+    def tuple_accessors(t)
       s = @schema
       m = Module.new do
         s.each_with_index do |c, i|
@@ -213,7 +213,7 @@ class Bloom
         end
       end
       t.extend m
-#      return t
+      #      return t
     end
 
     def each
@@ -294,7 +294,7 @@ class Bloom
 
   class BloomScratch < BloomCollection
   end
-  
+
   class BloomChannel < BloomCollection
     attr_accessor :locspec
 
@@ -303,13 +303,13 @@ class Bloom
       lsplit[1] = lsplit[1].to_i
       return lsplit
     end
-    
+
     def establish_connection(l)
       $connections[l] = EventMachine::connect l[0], l[1], Server
       # rescue
       #   puts "connection #{l} failed"
     end
-    
+
     def flush
       ip = Bloom::instance_variable_get('@ip')
       port = Bloom::instance_variable_get('@port')
@@ -324,10 +324,10 @@ class Bloom
       end
     end
   end
-  
+
   class BloomPeriodic < BloomCollection
   end
-  
+
   class BloomTable < BloomCollection
     def initialize(name, keys, cols)
       super(name, keys,cols)
@@ -352,30 +352,33 @@ class Bloom
     end
   end
 
-  class BloomJoin < BloomCollection  
+  class BloomJoin < BloomCollection
     attr_accessor :rels
 
-    def initialize(rels, preds=nil)
-      @rels = rels
+    def initialize(rellist, preds=nil)
       @schema = []
-      
-      # extract predicates on rels[0] and let the rest recurse
-      @localpreds = preds.reject { |k,v| k[0] != rels[0].name and v[0] != rels[0].name }
-      @localpreds.each_pair do |k,v| 
-        if v[0] == rels[0].name then
-          @localpreds.delete(k)
-          @localpreds[v] = k
-        end
-      end    
-      otherpreds = preds.reject { |k,v| k[0] == rels[0].name or v[0] == rels[0].name}
-      otherpreds = nil if otherpreds.empty?
-      if rels.length == 2 and not otherpreds.nil?
+      otherpreds = nil
+
+      # extract predicates on rellist[0] and let the rest recurse
+      unless preds.nil?
+        @localpreds = preds.reject { |k,v| k[0] != rellist[0].name and v[0] != rellist[0].name }
+        @localpreds.each_pair do |k,v| 
+          if v[0] == rellist[0].name then
+            @localpreds.delete(k)
+            @localpreds[v] = k
+          end
+        end    
+        otherpreds = preds.reject { |k,v| k[0] == rellist[0].name or v[0] == rellist[0].name}
+        otherpreds = nil if otherpreds.empty?
+      end
+      if rellist.length == 2 and not otherpreds.nil?
         raise BloomError, "join predicates don't match tables being joined: #{otherpreds.inspect}"
       end
 
       # recurse to form a tree of binary BloomJoins
-      @rels[1] = BloomJoin.new(@rels[1..@rels.length-1], otherpreds) unless rels.length == 2
-      
+      @rels = [rellist[0]]
+      @rels << (rellist.length == 2 ? rellist[1] : BloomJoin.new(rellist[1..rellist.length-1], otherpreds))
+
       # now derive schema: combo of rels[0] and rels[1]
       if @rels[0].schema.empty? or @rels[1].schema.empty? then
         @schema = []
@@ -389,7 +392,7 @@ class Bloom
     def do_insert(o,store)
       raise BloomError, "no insertion into joins"
     end
-    
+
     def each(&block)
       if @localpreds.nil? then        
         nestloop_join(&block)
@@ -397,11 +400,29 @@ class Bloom
         hash_join(&block)
       end
     end
-    
+
+    def test_locals(r, s, *skips)
+      retval = true
+      if (@localpreds.length > skips.length) then           
+        # check remainder of the predicates
+        @localpreds.each do |pred|
+          next if skips.include? pred
+          r_offset, s_index, s_offset = join_offsets(pred)
+          if r[r_offset] != s[s_index][s_offset] then
+            retval = false 
+            break
+          end
+        end
+      end
+      return retval
+    end
+
     def nestloop_join(&block)
       @rels[0].each do |r|
         @rels[1].each do |s|
-          yield [r] + [s]
+          #         require 'ruby-debug'; debugger
+          s = [s] if rels.length == 2
+          yield([r] + s) if test_locals(r, s)
         end  
       end
     end
@@ -412,48 +433,42 @@ class Bloom
       probe_entry = pred[0]
       probe_name, probe_offset = probe_entry[0], probe_entry[1]
 
-      # shift the offset by the width of all preceding tables in the rels list
-      @rels[1..rels.length].each do |r| 
-        break if r.name == build_name
-        raise BloomError, "join table #{r.name} with malformed schema" if r.schema.nil?
-        build_offset += r.schema.length
-      end
-      return probe_offset, build_offset
-    end
-    
-    def hash_join(&block)
-     # hash join on first predicate!
-      ht = {}
-
-      probe_offset, build_offset = join_offsets(@localpreds.first)
-      # build the hashtable on s!
-      rels[1].each do |s|
-        ht[s[build_offset]] ||= []
-        ht[s[build_offset]] << s
+      # determine which subtuple of s contains the table referenced in RHS of pred
+      # note that s doesn't contain the first entry in rels, which is r      
+      index = 0
+      rels[1..rels.length].each_with_index do |t,i|
+        if t.name == pred[1][0] then
+          index = i
+          break
+        end
       end
       
+      return probe_offset, index, build_offset
+    end
+
+    def hash_join(&block)
+      # hash join on first predicate!
+      ht = {}
+
+      probe_offset, build_tup, build_offset = join_offsets(@localpreds.first)
+
+      # build the hashtable on s!
+      rels[1].each do |s|
+        s = [s] if rels.length == 2
+        attrval = s[build_tup][build_offset]
+        ht[attrval] ||= []
+        ht[attrval] << s
+      end
+
       # probe the hashtable!
       rels[0].each do |r|
         next if ht[r[probe_offset]].nil?
         ht[r[probe_offset]].each do |s|
-          test = true
-          if @localpreds.length > 1 then
-            # check remainder of the predicates
-            @localpreds.each do |p|
-              next if p == @localpreds.first
-              r_offset, s_offset = join_offsets(p)
-              if r[r_offset] != s[s_offset] then
-                test = false 
-                break
-              end
-            end
-          end
-          yield [r] + [s] if test
+          yield([r] + s) if test_locals(r, s, @localpreds.first)
         end
       end
     end
   end
-
   ######## error types  
   class BloomError < Exception
   end
@@ -508,6 +523,6 @@ class Bloom
       $connections.delete [@ip,@port]
     end
   end
+  alias rules lambda
 end
-alias rules lambda
 
