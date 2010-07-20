@@ -138,8 +138,8 @@ class Bloom
     return retval
   end
 
-  def join(*rels)
-    BloomJoin.new(*rels)
+  def join(rels, preds)
+    BloomJoin.new(rels, preds)
   end
 
   ######## ids and timers
@@ -159,6 +159,7 @@ class Bloom
     include Enumerable
 
     attr_accessor :schema, :keys, :cols
+    attr_reader :name
 
     def initialize(name, keys, cols)
       @name = name
@@ -278,7 +279,10 @@ class Bloom
     end
 
     def [](key)
-      (@storage.include? key) ? tuple_accessors(key + @storage[key]) : nil
+      return nil unless @storage.include? key
+      tup = key
+      tup += @storage[key] unless @storage[key] == true
+      return tuple_accessors(tup)
     end
 
     def method_missing(sym, *args, &block)
@@ -351,19 +355,33 @@ class Bloom
   class BloomJoin < BloomCollection  
     attr_accessor :rels
 
-    def initialize(*rels)
+    def initialize(rels, preds=nil)
       @rels = rels
       @schema = []
       
-      # turn into a tree of binary BloomJoins
-      rels[1] = BloomJoin.new(*@rels[1..@rels.length-1]) unless rels.length == 2
+      # extract predicates on rels[0] and let the rest recurse
+      @localpreds = preds.reject { |k,v| k[0] != rels[0].name and v[0] != rels[0].name }
+      @localpreds.each_pair do |k,v| 
+        if v[0] == rels[0].name then
+          @localpreds.delete(k)
+          @localpreds[v] = k
+        end
+      end    
+      otherpreds = preds.reject { |k,v| k[0] == rels[0].name or v[0] == rels[0].name}
+      otherpreds = nil if otherpreds.empty?
+      if rels.length == 2 and not otherpreds.nil?
+        raise BloomError, "join predicates don't match tables being joined: #{otherpreds.inspect}"
+      end
+
+      # recurse to form a tree of binary BloomJoins
+      @rels[1] = BloomJoin.new(@rels[1..@rels.length-1], otherpreds) unless rels.length == 2
       
       # now derive schema: combo of rels[0] and rels[1]
-      if rels[0].schema.empty? or rels[1].schema.empty? then
+      if @rels[0].schema.empty? or @rels[1].schema.empty? then
         @schema = []
       else
-        dups = rels[0].schema & rels[1].schema
-        bothschema = rels[0].schema + rels[1].schema
+        dups = @rels[0].schema & @rels[1].schema
+        bothschema = @rels[0].schema + @rels[1].schema
         @schema = bothschema.to_enum(:each_with_index).map  {|c,i| if dups.include?(c) then c + '_' + i.to_s else c end }
       end
     end
@@ -371,12 +389,67 @@ class Bloom
     def do_insert(o,store)
       raise BloomError, "no insertion into joins"
     end
-
-    def each
+    
+    def each(&block)
+      if @localpreds.nil? then        
+        nestloop_join(&block)
+      else
+        hash_join(&block)
+      end
+    end
+    
+    def nestloop_join(&block)
       @rels[0].each do |r|
         @rels[1].each do |s|
           yield [r] + [s]
         end  
+      end
+    end
+
+    def join_offsets(pred)
+      build_entry = pred[1]
+      build_name, build_offset = build_entry[0], build_entry[1]
+      probe_entry = pred[0]
+      probe_name, probe_offset = probe_entry[0], probe_entry[1]
+
+      # shift the offset by the width of all preceding tables in the rels list
+      @rels[1..rels.length].each do |r| 
+        break if r.name == build_name
+        raise BloomError, "join table #{r.name} with malformed schema" if r.schema.nil?
+        build_offset += r.schema.length
+      end
+      return probe_offset, build_offset
+    end
+    
+    def hash_join(&block)
+     # hash join on first predicate!
+      ht = {}
+
+      probe_offset, build_offset = join_offsets(@localpreds.first)
+      # build the hashtable on s!
+      rels[1].each do |s|
+        ht[s[build_offset]] ||= []
+        ht[s[build_offset]] << s
+      end
+      
+      # probe the hashtable!
+      rels[0].each do |r|
+        next if ht[r[probe_offset]].nil?
+        ht[r[probe_offset]].each do |s|
+          test = true
+          if @localpreds.length > 1 then
+            # check remainder of the predicates
+            @localpreds.each do |p|
+              next if p == @localpreds.first
+              r_offset, s_offset = join_offsets(p)
+              if r[r_offset] != s[s_offset] then
+                test = false 
+                break
+              end
+            end
+          end
+          yield [r] + [s] if test
+        end
       end
     end
   end

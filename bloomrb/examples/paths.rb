@@ -2,7 +2,7 @@
 # note use of program.tick at bottom to run a single timestemp 
 # and inspect "shortest" relation
 require 'rubygems'
-require 'bloom'
+require 'lib/bloom'
 
 class ShortestPaths < Bloom
 
@@ -22,9 +22,9 @@ class ShortestPaths < Bloom
 
       path <= link.map{|e| [e.from, e.to, e.to, e.cost]}
 
-      j = join(link, path)
+      j = join [link, path], {path.from => link.to}
       path <= j.map do |l,p|
-        [l.from, p.to, p.from, l.cost+p.cost] if l.to == p.from
+        [l.from, p.to, p.from, l.cost+p.cost] # if l.to == p.from
       end
     }
 
