@@ -3,6 +3,7 @@
 #  fire up one copy with 'ruby pingpong.rb 12345 2 true'
 #  fire up a second copy with 'ruby pingpong.rb 12346 2'
 #  you should see packets received on either side
+require 'rubygems'
 require 'bloom'
 
 class PingPong < Bloom
@@ -19,7 +20,7 @@ class PingPong < Bloom
 
   def state
     channel :pingpongs, 0, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
-    table   :pingbuf, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
+    scratch   :pingbuf, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
     periodic :timer, ARGV[1]
   end
 
@@ -38,7 +39,7 @@ class PingPong < Bloom
       # whenever we get a timer, send out the contents of pingbuf, and delete them for the next tick
       j = join [timer, pingbuf]
       pingpongs <+ j.map {|t,p| [@otherloc, @myloc, (p.msg == 'ping!') ? 'pong!' : 'ping!', t.time, bloomtime]}      
-      pingbuf <- j.map {|t,p| [p.otherloc, p.myloc, p.msg, p.wall, p.bloom]}
+      # pingbuf <- j.map {|t,p| [p.otherloc, p.myloc, p.msg, p.wall, p.bloom]}
     }
   end
 end
