@@ -36,7 +36,7 @@ class PingPong < Bloom
       pingbuf <= pingpongs
 
       # whenever we get a timer, send out the contents of pingbuf, and delete them for the next tick
-      j = join(timer, pingbuf)
+      j = join [timer, pingbuf]
       pingpongs <+ j.map {|t,p| [@otherloc, @myloc, (p.msg == 'ping!') ? 'pong!' : 'ping!', t.time, bloomtime]}      
       pingbuf <- j.map {|t,p| [p.otherloc, p.myloc, p.msg, p.wall, p.bloom]}
     }
