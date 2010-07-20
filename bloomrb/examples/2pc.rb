@@ -36,15 +36,16 @@ class TwoPC < Bloom
       # Prepare => Commit if unanimous 
       j = join(peer_cnt, yes_cnt, xact)
       j.map do |p, y, x| 
-        if p.coord == y.coord and y.coord == x.coord and y.xid == x.xid and p.cnt == y.cnt and x.state == 'prepare'
+        if p.coord == y.coord and y.coord == x.coord and y.xid == x.xid and p.cnt == y.cnt and x.state == 'prepare' then
           xact <= [p.coord, y.xid, "commit"] 
         end
       end
       # Prepare => Abort if any "no" votes 
       k = join(vote, xact)
       k.map do |v, x|
-        if v.coord == x.node and v.xid == x.xid and v.vote == "no" and x.state == "prepare"
+        if v.coord == x.node and v.xid == x.xid and v.vote == "no" and x.state == "prepare" then
           xact <= [k.coord, x.xid, "abort"]  
+        end
       end
       
       # all peers know transaction state
