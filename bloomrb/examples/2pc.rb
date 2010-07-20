@@ -1,9 +1,12 @@
 # two-phase commit.
 # incomplete
 
+require 'rubygems'
+require 'bloom'
+
 class TwoPC < Bloom
-  def initialize(ip, port, delay)
-    super ip, port, delay
+  def initialize(ip, port)
+    super ip, port
   end
 
   def state
@@ -11,7 +14,8 @@ class TwoPC < Bloom
     table   :peers,    ['coord', 'peer']
     scratch :yes_cnt,  ['coord', 'xid'], ['cnt']
     table   :vote,     ['coord', 'xid', 'peer'], ['vote']
-    table   :xact,     ['coord', 'xid'], ['state']
+    table   :xact,     ['node', 'xid'], ['state']
+    channel :results,  ['node', 'xid'], ['state']
   end
   
   def declaration
@@ -38,14 +42,15 @@ class TwoPC < Bloom
       end
       # Prepare => Abort if any "no" votes 
       k = join(vote, xact)
-      k.map do |v, k|
-        if k.coord == x.coord and v.xid == x.xid
-          xact <= [k.coord, x.xid, "abort"] if v.vote == "no" and x.state == "prepare"
+      k.map do |v, x|
+        if v.coord == x.node and v.xid == x.xid and v.vote == "no" and x.state == "prepare"
+          xact <= [k.coord, x.xid, "abort"]  
       end
       
+      # all peers know transaction state
       l = join(peers, xacts)
       l.map do |p, x|
-        [p.peer, x.xid, x.state]
+        results <+ [p.peer, x.xid, x.state]
       end
     }    
   end
