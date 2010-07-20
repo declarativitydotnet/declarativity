@@ -138,7 +138,7 @@ class Bloom
     return retval
   end
 
-  def join(rels, preds)
+  def join(rels, preds=nil)
     BloomJoin.new(rels, preds)
   end
 
@@ -353,11 +353,12 @@ class Bloom
   end
 
   class BloomJoin < BloomCollection
-    attr_accessor :rels
+    attr_accessor :rels, :origrels
 
     def initialize(rellist, preds=nil)
       @schema = []
       otherpreds = nil
+      @origrels = rellist
 
       # extract predicates on rellist[0] and let the rest recurse
       unless preds.nil?
@@ -403,7 +404,7 @@ class Bloom
 
     def test_locals(r, s, *skips)
       retval = true
-      if (@localpreds.length > skips.length) then           
+      if (@localpreds and skips and @localpreds.length > skips.length) then           
         # check remainder of the predicates
         @localpreds.each do |pred|
           next if skips.include? pred
@@ -420,8 +421,7 @@ class Bloom
     def nestloop_join(&block)
       @rels[0].each do |r|
         @rels[1].each do |s|
-          #         require 'ruby-debug'; debugger
-          s = [s] if rels.length == 2
+          s = [s] if origrels.length == 2
           yield([r] + s) if test_locals(r, s)
         end  
       end
@@ -436,7 +436,7 @@ class Bloom
       # determine which subtuple of s contains the table referenced in RHS of pred
       # note that s doesn't contain the first entry in rels, which is r      
       index = 0
-      rels[1..rels.length].each_with_index do |t,i|
+      origrels[1..origrels.length].each_with_index do |t,i|
         if t.name == pred[1][0] then
           index = i
           break
@@ -454,7 +454,7 @@ class Bloom
 
       # build the hashtable on s!
       rels[1].each do |s|
-        s = [s] if rels.length == 2
+        s = [s] if origrels.length == 2
         attrval = s[build_tup][build_offset]
         ht[attrval] ||= []
         ht[attrval] << s
@@ -464,6 +464,8 @@ class Bloom
       rels[0].each do |r|
         next if ht[r[probe_offset]].nil?
         ht[r[probe_offset]].each do |s|
+          retval = [r] + s
+#         require 'ruby-debug'; debugger
           yield([r] + s) if test_locals(r, s, @localpreds.first)
         end
       end
