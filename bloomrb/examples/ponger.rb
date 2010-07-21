@@ -1,7 +1,7 @@
 # pingpong demo
 # To run:
-#  fire up a ponger with 'ruby ponger.rb 12346 127.0.0.1 12345'
-#  fire up a pinger with 'ruby pinger.rb 12345 2 127.0.0.1 12346'
+#  fire up a ponger with 'ruby ponger.rb 127.0.0.1:12346 127.0.0.1:12345'
+#  fire up a pinger with 'ruby pinger.rb 127.0.0.1:12345 127.0.0.1:12346 2'
 #  you should see packets received on either side
 require 'rubygems'
 require 'bloom'
@@ -12,10 +12,11 @@ class Ponger < Bloom
 
   def initialize(ip, port)
     super ip, port
-    @otherip = ARGV[1]
-    @otherport = ARGV[2]
-    @myloc = "#{ip.to_s}:#{port.to_s}"
-    @otherloc = "#{@otherip}:#{@otherport}"
+    dest = ARGV[1].split(':')
+    @otherip = dest[0]
+    @otherport = dest[1]
+    @myloc = ARGV[0]
+    @otherloc = ARGV[1]
   end
 
   def state
@@ -30,5 +31,6 @@ class Ponger < Bloom
   end
 end
 
-program = Ponger.new('127.0.0.1', ARGV[0])
+source = ARGV[0].split(':')
+program = Ponger.new(source[0], source[1])
 program.run
