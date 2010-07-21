@@ -2,7 +2,7 @@
 # note use of program.tick at bottom to run a single timestemp 
 # and inspect "shortest" relation
 require 'rubygems'
-require 'lib/bloom'
+require 'bloom'
 
 class ShortestPaths < Bloom
 

@@ -5,7 +5,7 @@
 #  fire up a second copy with 'ruby pingpong.rb 12346 2'
 #  you should see packets received on either side
 require 'rubygems'
-require 'lib/bloom'
+require 'bloom'
 
 class PingPong < Bloom
   attr_reader :myloc

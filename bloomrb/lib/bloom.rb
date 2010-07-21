@@ -141,6 +141,20 @@ class Bloom
   def join(rels, *preds)
     BloomJoin.new(rels, preds)
   end
+  
+  def natjoin(rels)
+    # for all pairs of relations, add predicates on matching column names
+    preds = []
+    rels.each do |r|
+      rels.each do |s|
+        matches = r.schema & s.schema
+        matches.each do |c| 
+          preds << [self.send(r.name).send(c), self.send(s.name).send(c)] unless r == s
+        end
+      end
+    end
+    join(rels, *preds)
+  end
 
   ######## ids and timers
   def gen_id
