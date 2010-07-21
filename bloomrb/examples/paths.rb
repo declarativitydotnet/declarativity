@@ -22,7 +22,7 @@ class ShortestPaths < Bloom
 
       path <= link.map{|e| [e.from, e.to, e.to, e.cost]}
 
-      j = join [link, path], {path.from => link.to}
+      j = join [link, path], [path.from, link.to]
       path <= j.map do |l,p|
         [l.from, p.to, p.from, l.cost+p.cost] # if l.to == p.from
       end
