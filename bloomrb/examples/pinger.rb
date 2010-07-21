@@ -1,8 +1,8 @@
 # pingpong demo #1
 # This demo uses separate scripts for pinger and ponger.
 # To run:
-#  fire up a ponger with 'ruby ponger.rb 12346 127.0.0.1 12345'
-#  fire up a pinger with 'ruby pinger.rb 12345 2 127.0.0.1 12346'
+#  fire up a ponger with 'ruby ponger.rb 127.0.0.1:12346 127.0.0.1:12345'
+#  fire up a pinger with 'ruby pinger.rb 127.0.0.1:12345 127.0.0.1:12346 2'
 #  you should see packets received on either side
 require 'rubygems'
 require 'bloom'
@@ -13,15 +13,16 @@ class Pinger < Bloom
 
   def initialize(ip, port)
     super ip, port
-    @otherip = ARGV[2]
-    @otherport = ARGV[3]
-    @myloc = "#{ip.to_s}:#{port.to_s}"
-    @otherloc = "#{@otherip}:#{@otherport}"
+    dest = ARGV[1].split(':')
+    @otherip = dest[0]
+    @otherport = dest[1]
+    @myloc = ARGV[0]
+    @otherloc = ARGV[1]
   end
 
   def state
     channel :pingpongs, 0, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
-    periodic :timer, ARGV[1]
+    periodic :timer, ARGV[2]
   end
 
   def declaration
@@ -32,5 +33,6 @@ class Pinger < Bloom
   end
 end
 
-program = Pinger.new('127.0.0.1', ARGV[0])
+source = ARGV[0].split(':')
+program = Pinger.new(source[0], source[1])
 program.run
