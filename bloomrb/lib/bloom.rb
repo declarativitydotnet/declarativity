@@ -138,7 +138,7 @@ class Bloom
     return retval
   end
 
-  def join(rels, preds=nil)
+  def join(rels, *preds)
     BloomJoin.new(rels, preds)
   end
 
@@ -362,14 +362,14 @@ class Bloom
 
       # extract predicates on rellist[0] and let the rest recurse
       unless preds.nil?
-        @localpreds = preds.reject { |k,v| k[0] != rellist[0].name and v[0] != rellist[0].name }
-        @localpreds.each_pair do |k,v| 
-          if v[0] == rellist[0].name then
-            @localpreds.delete(k)
-            @localpreds[v] = k
+        @localpreds = preds.reject { |p| p[0][0] != rellist[0].name and p[1][0] != rellist[0].name }
+        @localpreds.each do |p| 
+          if p[1][0] == rellist[0].name then
+            @localpreds.delete(p)
+            @localpreds << [p[1], p[0]]
           end
         end    
-        otherpreds = preds.reject { |k,v| k[0] == rellist[0].name or v[0] == rellist[0].name}
+        otherpreds = preds.reject { |p| p[0][0] == rellist[0].name or p[1][0] == rellist[0].name}
         otherpreds = nil if otherpreds.empty?
       end
       if rellist.length == 2 and not otherpreds.nil?
@@ -465,7 +465,6 @@ class Bloom
         next if ht[r[probe_offset]].nil?
         ht[r[probe_offset]].each do |s|
           retval = [r] + s
-#         require 'ruby-debug'; debugger
           yield([r] + s) if test_locals(r, s, @localpreds.first)
         end
       end
