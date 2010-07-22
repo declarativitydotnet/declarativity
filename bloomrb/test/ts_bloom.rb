@@ -1,5 +1,5 @@
 require 'rubygems'
-require '../lib/bloom'
+require 'bloom'
 require 'test/unit'
 require 'tc_collections'
 require 'tc_joins'
