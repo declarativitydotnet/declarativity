@@ -65,8 +65,8 @@ class TestCollections < Test::Unit::TestCase
   def test_tuple_accessors
     program = BabyBloom.new('localhost', 12345)
     assert_nothing_raised( RuntimeError) { program.tick }
-    assert_equal('a', program.scrtch.first.k1)
-    assert_equal('b', program.scrtch.first.k2)
+    # assert_equal('a', program.scrtch.first.k1)
+    # assert_equal('b', program.scrtch.first.k2)
     assert_equal(1, program.scrtch[['a','b']].v1)
     assert_equal(2, program.scrtch[['a','b']].v2)
   end
