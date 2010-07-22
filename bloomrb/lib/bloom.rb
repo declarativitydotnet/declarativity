@@ -20,6 +20,8 @@ class Bloom
     $inbound = [] if $inbound.nil?
 
     @periodics = table :periodics, ['name'], ['ident', 'duration']
+    @vars = table :vars, ['name'], ['value']
+    @tmpvars = scratch :tmpvars, ['name'], ['value']
   end  
 
 
@@ -138,8 +140,45 @@ class Bloom
     return retval
   end
 
+  ## methods to define vars and tmpvars.  This code still quite tentative
+  def regvar(name, collection)
+    # rule out varnames that used reserved words
+    reserved = defined?(name)
+    if reserved == "method" and not collection[name] then
+      # first time registering var, check for method name reserved
+      raise BloomError, "symbol :#{name} reserved, cannot be used as variable name"
+    end
+    self.class.send :define_method, name do 
+      collection[name]
+    end
+    setter = (name.to_s + '=').to_sym
+    self.class.send :define_method, setter do |val|
+      curval = collection[name]
+      raise BloomError, "#{name} is frozen with value #{curval}" unless curval.nil?
+      collection.delete(val)
+      collection << [name,val]
+      # collection <- [name]
+      # collection <+ [name,val]
+    end
+  end
+  
+  def var(name)
+    regvar(name, @vars)
+  end
+  
+  def tmpvar(name)
+    regvar(name, @tmpvars)
+  end
+
   def join(rels, *preds)
-    BloomJoin.new(rels, preds)
+    # decompose each pred into a binary pred
+    newpreds = []
+    preds.each do |p|
+      p.each_with_index do |c, i|
+        newpreds << [p[i], p[i+1]] unless p[i+1].nil?
+      end
+    end
+    BloomJoin.new(rels, newpreds)
   end
   
   def natjoin(rels)
@@ -153,6 +192,7 @@ class Bloom
         end
       end
     end
+    preds.uniq!
     join(rels, *preds)
   end
 
@@ -254,7 +294,7 @@ class Bloom
       vals = (schema - keys).map{|v| o[schema.index(v)]}
       vals = true if vals.empty?
       if not store[keycols].nil? then
-        raise KeyConstraintError, "Key conflict on insert" unless store[keycols].nil? or vals == store[keycols]
+        raise KeyConstraintError, "Key conflict inserting [#{keycols}][#{vals}]" unless store[keycols].nil? or vals == store[keycols]
       end
       store[keycols] = vals unless store[keycols]
       return o
