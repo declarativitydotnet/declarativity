@@ -1,4 +1,4 @@
-class BabyBloom < Bloom
+class BabyBud < Bud
   def state
     scratch :scrtch, ['k1', 'k2'], ['v1', 'v2']
     scratch :scrtch2, ['k1', 'k2']
@@ -7,7 +7,7 @@ class BabyBloom < Bloom
   
   def declaration
     strata[0] = rules {
-      if bloomtime == 1 then
+      if budtime == 1 then
         scrtch <= [['a', 'b', 1, 2]]
         scrtch <= [['a', 'c', 3, 4]]
         scrtch2 <= [['a', 'b']]
@@ -22,7 +22,7 @@ class BabyBloom < Bloom
   end
 end
 
-class DupKeyBloom < Bloom
+class DupKeyBud < Bud
   def state
     scratch :s, ['k'], ['name']
   end
@@ -35,7 +35,7 @@ class DupKeyBloom < Bloom
   end
 end
 
-class DupTableBloom < Bloom
+class DupTableBud < Bud
   def state
     scratch :s, ['k']
     scratch :s, ['l']
@@ -44,7 +44,7 @@ class DupTableBloom < Bloom
   end
 end
 
-class DupColBloom < Bloom
+class DupColBud < Bud
   def state
     scratch :s ['a', 'a']
   end
@@ -55,7 +55,7 @@ end
 class TestCollections < Test::Unit::TestCase
  
   def test_simple_deduction
-    program = BabyBloom.new('localhost', 12345)
+    program = BabyBud.new('localhost', 12345)
     assert_nothing_raised( RuntimeError) { program.tick }
     assert_equal(2, program.scrtch.length )
     assert_equal(1, program.scrtch2.length )
@@ -63,7 +63,7 @@ class TestCollections < Test::Unit::TestCase
   end
   
   def test_tuple_accessors
-    program = BabyBloom.new('localhost', 12345)
+    program = BabyBud.new('localhost', 12345)
     assert_nothing_raised( RuntimeError) { program.tick }
     # assert_equal('a', program.scrtch.first.k1)
     # assert_equal('b', program.scrtch.first.k2)
@@ -72,7 +72,7 @@ class TestCollections < Test::Unit::TestCase
   end
   
   def test_insert_delete
-    program = BabyBloom.new('localhost', 12345)
+    program = BabyBud.new('localhost', 12345)
     # tick twice to get to 2nd timestep
     assert_nothing_raised( RuntimeError) { program.tick }
     assert_nothing_raised( RuntimeError) { program.tick }
@@ -82,18 +82,18 @@ class TestCollections < Test::Unit::TestCase
   end
   
   def test_dup_tables
-    program = DupTableBloom.new('localhost', 12345)
-    assert_raise( Bloom::BloomError ) { program.tick }
+    program = DupTableBud.new('localhost', 12345)
+    assert_raise( Bud::BudError ) { program.tick }
   end
   
   def test_dup_columns
-    program = DupTableBloom.new('localhost', 12345)
-    assert_raise( Bloom::BloomError ) { program.tick }
+    program = DupTableBud.new('localhost', 12345)
+    assert_raise( Bud::BudError ) { program.tick }
   end
 
   def test_dup_keys
-    program = DupKeyBloom.new('localhost', 12345)
-    assert_raise( Bloom::KeyConstraintError ) { program.tick }
+    program = DupKeyBud.new('localhost', 12345)
+    assert_raise( Bud::KeyConstraintError ) { program.tick }
   end
   
 end

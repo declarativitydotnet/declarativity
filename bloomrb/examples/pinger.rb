@@ -5,9 +5,9 @@
 #  fire up a pinger with 'ruby pinger.rb 127.0.0.1:12345 127.0.0.1:12346 2'
 #  you should see packets received on either side
 require 'rubygems'
-require 'bloom'
+require 'bud'
 
-class Pinger < Bloom
+class Pinger < Bud
   attr_reader :myloc
   attr_reader :otherloc
 
@@ -21,14 +21,14 @@ class Pinger < Bloom
   end
 
   def state
-    channel :pingpongs, 0, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
+    channel :pingpongs, 0, ['otherloc', 'myloc', 'msg', 'wall', 'bud']
     periodic :timer, ARGV[2]
   end
 
   def declaration
     strata[0] = rules {
       # whenever we get a timer, send out a tuple
-      pingpongs <+ timer.map {|t| [@otherloc, @myloc, 'ping!', t.time, bloomtime]}      
+      pingpongs <+ timer.map {|t| [@otherloc, @myloc, 'ping!', t.time, budtime]}      
     }
   end
 end

@@ -2,9 +2,9 @@
 # incomplete
 
 require 'rubygems'
-require 'bloom'
+require 'bud'
 
-class TwoPC < Bloom
+class TwoPC < Bud
   def initialize(ip, port)
     super ip, port
   end

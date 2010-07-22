@@ -1,6 +1,6 @@
 To install:
-	% gem build bloom.gemspec
-	% sudo gem install bloom-0.0.1.gem
+	% gem build bud.gemspec
+	% sudo gem install bud-0.0.1.gem
 
 A "one-shot" shortest paths example:
   % ruby examples/paths.rb

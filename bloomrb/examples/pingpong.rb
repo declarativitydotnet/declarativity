@@ -5,9 +5,9 @@
 #  fire up a second copy with 'ruby pingpong.rb 12346 2'
 #  you should see packets received on either side
 require 'rubygems'
-require 'bloom'
+require 'bud'
 
-class PingPong < Bloom
+class PingPong < Bud
   attr_reader :myloc
   attr_reader :otherloc
 
@@ -20,17 +20,17 @@ class PingPong < Bloom
   end
 
   def state
-    channel :pingpongs, 0, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
-    table   :pingbuf, ['otherloc', 'myloc', 'msg', 'wall', 'bloom']
+    channel :pingpongs, 0, ['otherloc', 'myloc', 'msg', 'wall', 'bud']
+    table   :pingbuf, ['otherloc', 'myloc', 'msg', 'wall', 'bud']
     periodic :timer, ARGV[1]
   end
 
   def declaration
     strata[0] = rules {
       # if 3rd arg is true, at time tick 1 set up pingbuf with one tuple
-      if ARGV[2] and bloomtime == 1 then
+      if ARGV[2] and budtime == 1 then
         puts "injecting into pingbuf"
-        pingbuf << [@otherloc, @myloc, 'pong!', Time.new.to_s, bloomtime] 
+        pingbuf << [@otherloc, @myloc, 'pong!', Time.new.to_s, budtime] 
         # puts "#{pingbuf.length} tuples in pingbuf"
         # puts "#{timer.length} tuples in timer"
       end
@@ -39,8 +39,8 @@ class PingPong < Bloom
 
       # whenever we get a timer, send out the contents of pingbuf, and delete them for the next tick
       j = join [timer, pingbuf]
-      pingpongs <+ j.map {|t,p| [@otherloc, @myloc, (p.msg == 'ping!') ? 'pong!' : 'ping!', t.time, bloomtime]}      
-      pingbuf <- j.map {|t,p| [p.otherloc, p.myloc, p.msg, p.wall, p.bloom]}
+      pingpongs <+ j.map {|t,p| [@otherloc, @myloc, (p.msg == 'ping!') ? 'pong!' : 'ping!', t.time, budtime]}      
+      pingbuf <- j.map {|t,p| [p.otherloc, p.myloc, p.msg, p.wall, p.bud]}
     }
   end
 end

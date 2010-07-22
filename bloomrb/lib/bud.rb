@@ -4,8 +4,8 @@ require 'eventmachine'
 require 'socket'
 require 'superators'
 
-class Bloom
-  attr_reader :strata, :bloomtime
+class Bud
+  attr_reader :strata, :budtime
   attr_accessor :connections
   attr_reader :tables # for debugging; remove me later
 
@@ -13,7 +13,7 @@ class Bloom
     @tables = {}
     @strata = []
     @channels = {}
-    @bloomtime = 0
+    @budtime = 0
     @ip = ip
     @port = port.to_i
     $connections = {} if $connections.nil?
@@ -30,16 +30,16 @@ class Bloom
     begin 
       EventMachine::run {
         EventMachine::start_server(@ip, @port, Server) { |con|
-          con.bloom = self # pass this Bloom object into the connection
+          con.bud = self # pass this Bud object into the connection
         }
-        puts "running bloom server on #{@ip}, #{@port}"
+        puts "running bud server on #{@ip}, #{@port}"
         tick
       }
     end
   end
 
   def tick
-    @bloomtime += 1
+    @budtime += 1
     # reset any schema stuff that isn't already there
     # state to be defined by the user program
     state
@@ -92,24 +92,24 @@ class Bloom
     reserved = defined?(name)
     if reserved == "method" and not @tables[name] then
       # first time registering table, check for method name reserved
-      raise BloomError, "symbol :#{name} reserved, cannot be used as table name"
+      raise BudError, "symbol :#{name} reserved, cannot be used as table name"
     end
 
     # check for previously-defined tables
     if @tables[name] then
       # check for consistent redefinition, and "tick" the table
       if @tables[name].keys != keys or @tables[name].cols != cols then
-        raise BloomError, "create :#{name}, keys = #{keys.inspect}, cols = #{cols.inspect} \n \
+        raise BudError, "create :#{name}, keys = #{keys.inspect}, cols = #{cols.inspect} \n \
         table :#{name} already defined as #{@tables[name].keys.inspect} #{@tables[name].cols.inspect}"
       end
       @tables[name].tick
     else # define table
       @tables[name] = case persist
-        when :table then BloomTable.new(name, keys, cols)
-        when :channel then BloomChannel.new(name, keys, cols)
-        when :periodic then BloomPeriodic.new(name, keys, cols)
-        when :scratch then BloomScratch.new(name, keys, cols)
-        else raise BloomError, "unknown persistence model"
+        when :table then BudTable.new(name, keys, cols)
+        when :channel then BudChannel.new(name, keys, cols)
+        when :periodic then BudPeriodic.new(name, keys, cols)
+        when :scratch then BudScratch.new(name, keys, cols)
+        else raise BudError, "unknown persistence model"
       end
       self.class.send :define_method, name do 
         @tables[name]
@@ -146,7 +146,7 @@ class Bloom
     reserved = defined?(name)
     if reserved == "method" and not collection[name] then
       # first time registering var, check for method name reserved
-      raise BloomError, "symbol :#{name} reserved, cannot be used as variable name"
+      raise BudError, "symbol :#{name} reserved, cannot be used as variable name"
     end
     self.class.send :define_method, name do 
       collection[name]
@@ -154,7 +154,7 @@ class Bloom
     setter = (name.to_s + '=').to_sym
     self.class.send :define_method, setter do |val|
       curval = collection[name]
-      raise BloomError, "#{name} is frozen with value #{curval}" unless curval.nil?
+      raise BudError, "#{name} is frozen with value #{curval}" unless curval.nil?
       collection.delete(val)
       collection << [name,val]
       # collection <- [name]
@@ -178,7 +178,7 @@ class Bloom
         newpreds << [p[i], p[i+1]] unless p[i+1].nil?
       end
     end
-    BloomJoin.new(rels, newpreds)
+    BudJoin.new(rels, newpreds)
   end
   
   def natjoin(rels)
@@ -209,7 +209,7 @@ class Bloom
   end
 
   ######## the collection types
-  class BloomCollection
+  class BudCollection
     include Enumerable
 
     attr_accessor :schema, :keys, :cols
@@ -221,12 +221,12 @@ class Bloom
       @keys = keys
       @storage = {}
       @pending = {}
-      raise BloomError, "schema contains duplicate names" if schema.uniq.length < schema.length
+      raise BudError, "schema contains duplicate names" if schema.uniq.length < schema.length
       schema_accessors
     end
 
     def clone
-      retval = BloomTable.new(keys, schema - keys)
+      retval = BudTable.new(keys, schema - keys)
       retval.storage = @storage.clone
       retval.pending = @pending.clone
       return retval
@@ -346,10 +346,10 @@ class Bloom
     alias reduce inject
   end
 
-  class BloomScratch < BloomCollection
+  class BudScratch < BudCollection
   end
 
-  class BloomChannel < BloomCollection
+  class BudChannel < BudCollection
     attr_accessor :locspec
 
     def split_locspec(l)
@@ -365,8 +365,8 @@ class Bloom
     end
 
     def flush
-      ip = Bloom::instance_variable_get('@ip')
-      port = Bloom::instance_variable_get('@port')
+      ip = Bud::instance_variable_get('@ip')
+      port = Bud::instance_variable_get('@port')
       each_pending do |t|
         locspec = split_locspec(t[@locspec])
         # remote channel tuples are sent and removed
@@ -379,10 +379,10 @@ class Bloom
     end
   end
 
-  class BloomPeriodic < BloomCollection
+  class BudPeriodic < BudCollection
   end
 
-  class BloomTable < BloomCollection
+  class BudTable < BudCollection
     def initialize(name, keys, cols)
       super(name, keys,cols)
       @to_delete = {}
@@ -406,7 +406,7 @@ class Bloom
     end
   end
 
-  class BloomJoin < BloomCollection
+  class BudJoin < BudCollection
     attr_accessor :rels, :origrels
 
     def initialize(rellist, preds=nil)
@@ -427,12 +427,12 @@ class Bloom
         otherpreds = nil if otherpreds.empty?
       end
       if rellist.length == 2 and not otherpreds.nil?
-        raise BloomError, "join predicates don't match tables being joined: #{otherpreds.inspect}"
+        raise BudError, "join predicates don't match tables being joined: #{otherpreds.inspect}"
       end
 
-      # recurse to form a tree of binary BloomJoins
+      # recurse to form a tree of binary BudJoins
       @rels = [rellist[0]]
-      @rels << (rellist.length == 2 ? rellist[1] : BloomJoin.new(rellist[1..rellist.length-1], otherpreds))
+      @rels << (rellist.length == 2 ? rellist[1] : BudJoin.new(rellist[1..rellist.length-1], otherpreds))
 
       # now derive schema: combo of rels[0] and rels[1]
       if @rels[0].schema.empty? or @rels[1].schema.empty? then
@@ -445,7 +445,7 @@ class Bloom
     end
 
     def do_insert(o,store)
-      raise BloomError, "no insertion into joins"
+      raise BudError, "no insertion into joins"
     end
 
     def each(&block)
@@ -525,22 +525,22 @@ class Bloom
     end
   end
   ######## error types  
-  class BloomError < Exception
+  class BudError < Exception
   end
 
-  class KeyConstraintError < BloomError
+  class KeyConstraintError < BudError
   end
 
 
   ######## the EventMachine server for handling network and timers
   class Server < EM::Connection
-    attr_accessor :bloom
+    attr_accessor :bud
 
     def initialize(*args)
       @pac = MessagePack::Unpacker.new
       super
     rescue Exception
-      print "An error occurred initializing BloomServer: ",$!, "\n"
+      print "An error occurred initializing BudServer: ",$!, "\n"
     end
 
     def post_init
@@ -549,7 +549,7 @@ class Bloom
       $connections = {} if $connections.nil?
       $connections[[@ip, @port]] = self
     rescue Exception
-      print "An error occurred post_init on BloomServer: ",$!, "\n"
+      print "An error occurred post_init on BudServer: ",$!, "\n"
     end
 
     def receive_data(data)
@@ -564,12 +564,12 @@ class Bloom
 
     def message_received(obj)
       puts "got " + obj.inspect
-      if (obj.class <= Array and obj.length == 2 and not bloom.tables[obj[0].to_sym].nil? and obj[1].class <= Array) then
+      if (obj.class <= Array and obj.length == 2 and not bud.tables[obj[0].to_sym].nil? and obj[1].class <= Array) then
         $inbound << obj
-        bloom.tick
+        bud.tick
       else
         puts " ... BAD!"
-        bloom.tick
+        bud.tick
       end
     end
 
