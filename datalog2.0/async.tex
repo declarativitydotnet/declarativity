@@ -37,7 +37,7 @@ subgoal enforces the functional dependency \emph{$X_1$} $\to$ $X_2$,
 \emph{$X_2$} for each variable in \emph{$X_1$}.
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
-must have a multiplicity of stable models---that is it must be unstratifiable.  Greco and Zaniolo define 
+must have a multiplicity of stable models--- \wrm{mention here about how stable model semantics genralizes perfect model semantics} that is it must be unstratifiable.  Greco and Zaniolo define 
 choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules, 
 and each possible choice is associated with a different model.  Each such model has a unique, non-deterministic assignment that
 respects the given functional dependencies.  In our discussion, it may be helpful to think of one such model chosen non-deterministically---a non-deterministic ``assignment of timestamps to tuples.''
@@ -150,7 +150,7 @@ We have avoided restricting \lang to rule out such issues, as doing so
 would reduce its expressiveness.  Recall that simple monotonic Datalog (without negation) is insensitive to the values in any particular attribute.  Hence \lang programs without negation are also well-defined regardless of any ``temporal ordering'' of deductions: in monotonic programs, even if tuples with timestamps ``in the future'' are used to derive tuples ``from the past,'' there is an unambiguous least minimal model.
 %%For non-monotonic \slang programs, the monotonicity of the time suffix ensures us a unique minimal model in many cases.  Whenever we can guarantee monotonicity of the time suffix for \lang programs, our results from Section~\ref{sec:strat} still apply for all models produced by the choice construct.
 In Section~\ref{sec:strat} we showed that the monotonicity of time suffixes achieved by inductive rules
-ensures a unique minimal model even for non-monotonic \slang programs.
+ensures a unique perfect model even for non-monotonic \slang programs.
 
 % Recall, however, that
 % Algorithm~\ref{alg:tsn} assumed some sort of temporal monotonicity
