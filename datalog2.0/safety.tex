@@ -233,7 +233,8 @@ with time suffix $T-1$.
 %%precisely as $\pi_\xi(p)$ for any predicate p.)  what I was trying to do was define quiescence in terms
 %%of inference; a quiescent DB is one for which all inferences are stable.}
 
-\begin{observation}
+%was formerly an observation -wrm
+\begin{lemma}
 %
 A \slang instance that is quiescent at time $T$ will be quiescent until
 timestamp of the next EDB fact $V$, i.e.\ for all $U \in \mathbb{Z}: V > U >=
@@ -241,7 +242,7 @@ T$.  If no EDB fact has a timestamp greater than $T$, then the instance will be
 henceforth quiescent.
 %%\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
 %
-\end{observation}
+\end{lemma}
 %
 \begin{proof}
 %

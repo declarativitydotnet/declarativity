@@ -1,4 +1,5 @@
-\documentclass{sig-alternate}
+%\documentclass{sig-alternate}
+\documentclass[runningheads,a4paper]{llncs}
 
 \usepackage[usenames, dvipsnames]{color}
 \usepackage{times}
@@ -7,12 +8,15 @@
 \usepackage{wrapfig}
 \usepackage{url}
 \usepackage{amsmath, amssymb}
+\usepackage{graphicx}
 \usepackage[protrusion=true,expansion=true]{microtype}
 
 \usepackage{alltt}
 \usepackage{appendix}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+\newcommand{\keywords}[1]{\par\addvspace\baselineskip
+\noindent\keywordname\enspace\ignorespaces#1}
 
 \pdfinfo{/Title (Dedalus: Datalog in Time and Space)}
 
@@ -34,11 +38,10 @@
 \newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
 \newcommand{\smallurl}[1]{{\small \url{#1}}}
 
-\newtheorem{example}{Example}
-\newdef{definition}{Definition}
-\newtheorem{lemma}{Lemma}
-\newtheorem{observation}{Observation}
-
+%\newtheorem{example}{Example}
+%\newdef{definition}{Definition}
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{observation}{Observation}
 %\def\slang{synchronous Dedalus\xspace}
 \def\lang{\textsc{Dedalus}\xspace}
 \def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
@@ -57,7 +60,9 @@
 
 \begin{document}
 
-\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+\mainmatter  % start of an individual contribution
+
+%\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
 \title{{\huge{\bf\lang}}:
 Datalog in Time and Space} 
 %%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
@@ -66,26 +71,40 @@ Datalog in Time and Space}
 % and alignment of the authors under the title, and to add
 % a section for authors number 4 through n.
 
-\numberofauthors{6}
+\titlerunning{{\bf\lang}: Datalog in Time and Space}
 
-\author{
-%
-Peter Alvaro$^\ast$ \quad William R. Marczak$^\ast$ \quad Neil
-Conway$^\ast$  \\
-Joseph M. Hellerstein$^\ast$ \quad 
-David Maier$^\dagger$ \quad Russell Sears$^\ast$ 
-\\\\
-%
-\fontsize{10}{10}\selectfont\itshape 
-%\vspace{0.05in}
-$^\ast$University of California, Berkeley \quad $^\dagger$Portland State
-University\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
-%
-\{palvaro,wrm,nrc,hellerstein,sears\}@cs.berkeley.edu \quad maier@cs.pdx.edu
-%
+\author{Peter Alvaro\inst{1} \and William R. Marczak\inst{1} \and Neil Conway\inst{1} \and Joseph M. Hellerstin\inst{1} \and David Maier\inst{2} \and Russell Sears\inst{3}}
+
+\authorrunning{Alvaro et al.}
+
+\institute{University of California, Berkeley\\
+\email{\{paa, wrm, nrc, hellerstein\}@cs.berkeley.edu}
+\and
+Portand State University\\
+\email{maier@cs.pdx.edu}
+\and
+Yahoo! Research
+\email{sears@yahoo-inc.com}
 }
 
-\toappear{}
+%\author{
+%
+%Peter Alvaro$^\ast$ \quad William R. Marczak$^\ast$ \quad Neil
+%Conway$^\ast$  \\
+%Joseph M. Hellerstein$^\ast$ \quad 
+%David Maier$^\dagger$ \quad Russell Sears$^\ast$ 
+%\\\\
+%
+%\fontsize{10}{10}\selectfont\itshape 
+%\vspace{0.05in}
+%$^\ast$University of California, Berkeley \quad $^\dagger$Portland State
+%University\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
+%
+%\{palvaro,wrm,nrc,hellerstein,sears\}@cs.berkeley.edu \quad maier@cs.pdx.edu
+%
+%}
+
+%\toappear{}
 
 \maketitle
 
@@ -119,6 +138,8 @@ over time via a simple execution strategy.  We also provide conservative syntact
 for our temporal notions of safety and stratification.  Our experience implementing 
 full-featured systems in variants of Datalog suggests that \lang is well-suited to the specification of
 rich distributed services and protocols, and provides both cleaner semantics and richer tests of correctness.
+
+\keywords{Datalog, distributed systems, \wrm{what else}}
 \end{abstract}
 
 \input{intro}
