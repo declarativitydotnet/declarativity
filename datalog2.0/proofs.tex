@@ -100,7 +100,7 @@ unique perfect model \wrm{cite?} because it is a syntactically stratified Datalo
 However, many programs we are interested in expressing are not syntactically
 stratifiable.  Fortunately, we are able to define a syntactically checkable
 notion of {\em temporal stratifiability} of \slang programs that maps to a
-subset of {\em modularly stratifiable}~\cite{modular} Datalog programs.
+subset of {\em locally stratifiable} \wrm{cite, and mention this term was coined previously} Datalog programs.
 
 %Intuitively, a Datalog instance is modularly stratifiable if no EDB
 %element depends negatively on itself.
@@ -237,7 +237,7 @@ In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are captured
 in EDB relations.  This reasonable program is unstratifiable because $p \succ
 p\nega \land p\nega \succ p$.  But because the successor relation is
 constrained such that $\forall A,B, successor(A, B) \rightarrow B > A$, any
-such program is modularly stratified on \emph{successor}.  Therefore, we have
+such program is locally stratified on time suffixes.  Therefore, we have
 $p_{n} \not\succ^* p\_neg_{n} \not\succ^* p_{n+1}$; informally, earlier values
 do not depend on later values.
 %%\paa{need to make the text better, but this old example probably makes sense here}
