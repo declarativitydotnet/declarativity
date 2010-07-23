@@ -62,4 +62,4 @@ The traditional description of semi-naive evaluation takes a recursive Datalog p
   \end{algorithmic}
 \end{algorithm}
 
-Observe that the final loop of Algorithm~\ref{alg:tsn} binds the time suffix of each rule by replacing it with a constant value from a previous timestep.  This ``marches'' through time in order, skipping steps that have no changes.  A simple proof by induction shows that for each timestep $t$, the temporal evaluation yields a database that corresponds to the minimal model of the original \slang program with the \dedalus{successor} relation truncated to the prefix ending at $t$.
+Observe that the final loop of Algorithm~\ref{alg:tsn} binds the time suffix of each rule by replacing it with a constant value from a previous timestep.  This ``marches'' through time in order, skipping steps that have no changes.  A simple proof by induction shows that for each timestep $t$, the temporal evaluation yields a database that corresponds to the perfect model of the original \slang program with the \dedalus{successor} relation truncated to the prefix ending at $t$.

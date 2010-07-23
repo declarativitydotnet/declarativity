@@ -2,10 +2,14 @@
 \subsection{Stratification in {\large{\bf\slang}}}
 \label{sec:strat}
 We first turn our attention to the semantics of
-programs with negation.  As we will see, the inclusion of time introduces a
-``source of monotonicity'' in programs that allows for clean minimal model
-semantics in some surprising cases, and enables purely syntactic monotonicity
-checks for a broad class of temporal programs.
+programs with negation.  As we will see, the inclusion of time enables
+programs' local stratification, and the existence of a unique perfect model
+that corresponds to intuition. \wrm{reword}
+
+%``source of monotonicity''  a unique perfect model
+
+%semantics in some surprising cases, and enables purely syntactic monotonicity
+%checks for a broad class of temporal programs.
 
 %%\paa{notes}
 
@@ -63,7 +67,7 @@ Datalog literature~\cite{ullmanbook}.
 %any order returned by a topological sort on the predicate dependency graph,
 %with each strongly connected component collapsed to a single node.
 It is easy to see that any syntactically stratified \slang instance has a
-unique minimal model because it is a syntactically stratified Datalog program.
+unique perfect model \wrm{cite?} because it is a syntactically stratified Datalog program.
 
 %\begin{lemma}
 %
@@ -158,11 +162,16 @@ reduction is syntactically stratifiable.
 %
 \end{definition}
 
+\wrm{major false depth here, I say we eliminate the theorem and just cite
+Datalog/UT here: ``This paper has shown that by making the local stratification
+of programs explicit in time stamps a pure logical theory of updates is
+possible.''}
+
 %%\newtheorem{theorem}{Theorem}
 \begin{lemma}
 \label{lemma:temp-strat-uniq}
 %
-Any temporally stratifiable \slang instance $P$ has a unique minimal model.
+Any temporally stratifiable \slang instance $P$ has a unique perfect model.
 %
 \end{lemma} 
 
@@ -170,10 +179,13 @@ Any temporally stratifiable \slang instance $P$ has a unique minimal model.
 %
 {\bf Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
 deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
-thus it has a unique minimal model.
+thus it has a unique perfect model.
 
 {\bf Case 2:} $P$ consists of both deductive and inductive rules.  Assume that
-$P$ does not have a unique minimal model.  This implies that $P$ is not
+$P$ does not have a unique perfect model.  \wrm{and the proof requires a bit of
+touching up here...}
+
+This implies that $P$ is not
 syntactically stratifiable.  Thus, there must exist some cycle through at least
 one predicate $q$ involving negation.
 %%or aggregation.  
@@ -183,8 +195,8 @@ stratified.
 Since the time suffix in the head of an inductive rule is strictly greater than
 the time suffix of its body, no atom may depend negatively on itself---it may
 only depend negatively on atoms in the previous timestep.  Thus, $P'$ is
-modularly stratified over time, using the definition of modular stratification
-according to Ross et al.~\cite{modular}.  This guarantees a unique minimal model
+{\em universally contraint stratified} because induction through time implies a
+monotonicity constraint \wrm{cite Ross}.  This guarantees a unique perfect model
 achievable via standard bottom-up fixpoint execution.
 %
 %does not have a unique minimal model.  This implies that $P$ is not
