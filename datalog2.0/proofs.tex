@@ -1,10 +1,12 @@
 
 \subsection{Stratification in {\large{\bf\slang}}}
+%
 \label{sec:strat}
-We first turn our attention to the semantics of
-programs with negation.  As we will see, the inclusion of time enables
-programs' local stratification, and the existence of a unique perfect model
-that corresponds to intuition. \wrm{reword}
+%
+We first turn our attention to the semantics of programs with negation.  As we
+will see, the inclusion of time enables a syntactic stratification condition
+for programs, and the existence of a unique model that corresponds to
+intuition.  \wrm{cite perfect stuff}
 
 %``source of monotonicity''  a unique perfect model
 
@@ -177,27 +179,27 @@ Any temporally stratifiable \slang instance $P$ has a unique perfect model.
 
 \begin{proof}
 %
-{\bf Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
-deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
-thus it has a unique perfect model.
+%{\bf Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
+%deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
+%thus it has a unique perfect model.
 
-{\bf Case 2:} $P$ consists of both deductive and inductive rules.  Assume that
-$P$ does not have a unique perfect model.  \wrm{and the proof requires a bit of
-touching up here...}
+%{\bf Case 2:} $P$ consists of both deductive and inductive rules.  Assume that
+%$P$ does not have a unique perfect model.  \wrm{and the proof requires a bit of
+%touching up here...}
 
-This implies that $P$ is not
-syntactically stratifiable.  Thus, there must exist some cycle through at least
-one predicate $q$ involving negation.
+%This implies that $P$ is not
+%syntactically stratifiable.  Thus, there must exist some cycle through at least
+%one predicate $q$ involving negation.
 %%or aggregation.  
-Furthermore, this cycle must involve an inductive rule, as $P$ is temporally
-stratified.
+%Furthermore, this cycle must involve an inductive rule, as $P$ is temporally
+%stratified.
 
-Since the time suffix in the head of an inductive rule is strictly greater than
-the time suffix of its body, no atom may depend negatively on itself---it may
-only depend negatively on atoms in the previous timestep.  Thus, $P'$ is
-{\em universally contraint stratified} because induction through time implies a
-monotonicity constraint \wrm{cite Ross}.  This guarantees a unique perfect model
-achievable via standard bottom-up fixpoint execution.
+%Since the time suffix in the head of an inductive rule is strictly greater than
+%the time suffix of its body, no atom may depend negatively on itself---it may
+%only depend negatively on atoms in the previous timestep.  Thus, $P'$ is
+%{\em universally contraint stratified} because induction through time implies a
+%monotonicity constraint \wrm{cite Ross}.  This guarantees a unique perfect model
+%achievable via standard bottom-up fixpoint execution.
 %
 %does not have a unique minimal model.  This implies that $P$ is not
 %syntactically stratifiable, thus there must exist some cycle through at least
@@ -243,13 +245,13 @@ do not depend on later values.
 %%\paa{need to make the text better, but this old example probably makes sense here}
 \end{example}
 
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.75\linewidth]{figures/dedalus_classes.pdf}
-  \label{fig:dedalus-classes}
-  \caption{Stratifiability classes.  $A \to B$ means that every program in $A$ is in $B$.}
-\vspace{-8pt}
-\end{figure}
+%\begin{figure}[t]
+%  \centering
+%  \includegraphics[width=0.75\linewidth]{figures/dedalus_classes.pdf}
+%  \label{fig:dedalus-classes}
+%  \caption{Stratifiability classes.  $A \to B$ means that every program in $A$ is in $B$.}
+%\vspace{-8pt}
+%\end{figure}
 
 
 %%\paa{I don't think we can show that programs with async rules are locally stratifiable, actually}
