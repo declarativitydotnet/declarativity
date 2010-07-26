@@ -6,7 +6,7 @@
 We first turn our attention to the semantics of programs with negation.  As we
 will see, the inclusion of time enables a syntactic stratification condition
 for programs, and the existence of a unique model that corresponds to
-intuition.  \wrm{cite perfect stuff}
+intuition~\cite{local-strat}.
 
 %``source of monotonicity''  a unique perfect model
 
@@ -69,7 +69,7 @@ Datalog literature~\cite{ullmanbook}.
 %any order returned by a topological sort on the predicate dependency graph,
 %with each strongly connected component collapsed to a single node.
 It is easy to see that any syntactically stratified \slang instance has a
-unique perfect model \wrm{cite?} because it is a syntactically stratified Datalog program.
+unique perfect model~\cite{local-strat} because it is a syntactically stratified Datalog program.
 
 %\begin{lemma}
 %
@@ -102,7 +102,7 @@ unique perfect model \wrm{cite?} because it is a syntactically stratified Datalo
 However, many programs we are interested in expressing are not syntactically
 stratifiable.  Fortunately, we are able to define a syntactically checkable
 notion of {\em temporal stratifiability} of \slang programs that maps to a
-subset of {\em locally stratifiable} \wrm{cite, and mention this term was coined previously} Datalog programs.
+subset of locally stratifiable Datalog programs.
 
 %Intuitively, a Datalog instance is modularly stratifiable if no EDB
 %element depends negatively on itself.
@@ -164,11 +164,6 @@ reduction is syntactically stratifiable.
 %
 \end{definition}
 
-\wrm{major false depth here, I say we eliminate the theorem and just cite
-Datalog/UT here: ``This paper has shown that by making the local stratification
-of programs explicit in time stamps a pure logical theory of updates is
-possible.''}
-
 %%\newtheorem{theorem}{Theorem}
 \begin{lemma}
 \label{lemma:temp-strat-uniq}
@@ -178,6 +173,9 @@ Any temporally stratifiable \slang instance $P$ has a unique perfect model.
 \end{lemma} 
 
 \begin{proof}
+%
+Every temporally stratifiable \slang instance is locally
+stratifiable~\cite{local-strat}, and thus has a unique perfect model.
 %
 %{\bf Case 1:} $P$ consists of only deductive rules.  In this case, $P$'s
 %deductive reduction is $P$ itself.  We know $P$ is syntactically stratifiable,
