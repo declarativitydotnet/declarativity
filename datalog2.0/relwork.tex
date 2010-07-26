@@ -1,16 +1,18 @@
 \section{Related Work}
 
-\wrm{we need to be far more generous to Datalog/UT here...}
+%\wrm{we need to be far more generous to Datalog/UT here...}
 
 \subsection{Updateable State}
 
 Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
 assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} retain a purely logical 
 interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
-across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
+across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the approach of~\cite{deductiveupdates}---we add time suffixes to tuples, and define an equivalent notion of temporal stratification---but differ in several significant ways.
 First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
 Partly as a result of this, we are able to enforce stricter constraints on the allowable time suffixes in rules: a program may only specify what deductions are visible
-in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu et al.  Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges.''
+in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu et al.  
+%Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges.''
+
 
 U-Datalog~\cite{udatalog-neg} addresses updates using syntax annotations that establish different interpretations for the set of updated 
 relations and the IDB, interpreting update atoms as constraints and using constraint logic programming techniques to test for inconsistent
