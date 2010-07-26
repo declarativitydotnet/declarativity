@@ -59,7 +59,7 @@ partitioning for tuples in that predicate. We call such an
 attribute a {\em location specifier}, and prefix it with a
 \dedalus{\#} symbol in Dedalus.
 
-Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  We now proceed to our model of the asynchrony of this communication, which is captured in a syntactic constraint on the heads of communication rules.
+Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e., the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  We now proceed to our model of the asynchrony of this communication, which is captured in a syntactic constraint on the heads of communication rules.
 
 \subsection{Asynchronous Rules}
 

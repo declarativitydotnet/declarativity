@@ -112,7 +112,7 @@ Yahoo! Research:
 %
 Recent research has explored using Datalog-based
 languages to express a distributed system as a set of logical
-invariants~\cite{boom-techr,loo-sigmod06}.  Two properties of distributed
+invariants~\cite{boom-techr,Loo2009-CACM}.  Two properties of distributed
 systems proved difficult to model in Datalog.  First, the state of any such system
 evolves with its execution.  Second, deductions in these systems may be
 arbitrarily delayed, dropped, or reordered by the unreliable network links
@@ -120,7 +120,7 @@ they must traverse.  Previous efforts addressed the former by extending
 Datalog to include updates, key constraints, persistence and events, and
 the latter by assuming ordered and reliable delivery while ignoring delay.
 These details have a semantics outside Datalog, which increases the complexity of
-the language or its interpretation, and forces programmers to
+the language and its interpretation, and forces programmers to
 think operationally.  We argue that the missing component from these previous
 languages is a notion of {\em time}.
 
