@@ -200,6 +200,7 @@ Consider the asynchronous rule below:
 p(A, B, N)@async \(\leftarrow\)
   q(A, B)@N;
 \end{Dedalus}
+
 \noindent
 Due to the \dedalus{async} keyword in the rule head, each \emph{p} tuple will take some unspecified time suffix value.
 Note however that the time suffix $N$ of the rule body appears also in an attribute of \emph{p} other than the time suffix, recording a 
@@ -230,6 +231,7 @@ p\_wait(A, B, N)@async \(\leftarrow\) q(A, B)@N;
 p\_wait(A, B, N)@next \(\leftarrow\) p\_wait(A, B, N)@M, N \(\ge\) M;
 p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
 \end{Dedalus}
+
 \noindent
 we place the derived tuple in a new relation \dedalus{p\_wait} that
 stores any tuples that were ``sent from the future'' with their sending time ``entangled''; these tuples stay in the \dedalus{p\_wait} predicate  until the point in
