@@ -334,7 +334,7 @@ no EDB atoms are true at any timestamp greater than $E$.  Thus, any facts with
 timestamp greater than $E+1$ are entailed by rules of kind 1 or 2.
 
 Consider the set of equivalence classes modulo time of all possible atoms, {\bf
-A}, given the Herbrand universe.  We know {\bf A} is finite, as the Herbrand
+A}, given the Herbrand Universe.  We know {\bf A} is finite, as the Herbrand
 Universe is finite.  Therefore, if the program is temporally unsafe, then {\bf B}, the
 set of atoms entailed by the program, both contains and excludes
 infinitely many members of at least one equivalence class in {\bf A} (i.e.,
@@ -392,7 +392,7 @@ flip\_flop(0, 1)@1;
 \end{Dedalus}
 
 The above program exemplifies temporally unsafe induction. Even though it
-contains no function symbols, and all variables are range-restricted, it
+contains no function symbols and all variables are range-restricted, it
 entails infinite oscillation of the \emph{p} predicate.  
 %because the \emph{p} predicate occurs in the head with a different variable
 %binding than in the body, and because there are no positive event predicates

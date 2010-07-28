@@ -37,9 +37,7 @@ subgoal enforces the functional dependency \emph{$X_1$} $\to$ $X_2$,
 \emph{$X_2$} for each variable in \emph{$X_1$}.
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
-must have a multiplicity of {\em stable models}
-%~\footnote{Note that the perfect model semantics coincides with the stable model semantics for \lang programs that are both temporally safe and temporally stratified.}  too confusing to add -wrm
----that is it must be unstratifiable.  
+must have a multiplicity of {\em stable models}---that is it must be unstratifiable.  
 Greco and Zaniolo define 
 choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules, 
 and each possible choice is associated with a different model.  Each such model has a unique, non-deterministic assignment that
@@ -197,8 +195,7 @@ applies.
 Consider the asynchronous rule below:
 
 \begin{Dedalus}
-p(A, B, N)@async \(\leftarrow\)
-  q(A, B)@N;
+p(A, B, N)@async \(\leftarrow\) q(A, B)@N;
 \end{Dedalus}
 
 \noindent
