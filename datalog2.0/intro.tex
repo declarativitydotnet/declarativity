@@ -23,24 +23,24 @@
 In recent years, there has been a resurgence of interest in Datalog as
 the foundation for applied, domain-specific languages in a wide
 variety of areas, including networking~\cite{Loo2009-CACM},
-distributed systems~\cite{Belaramani:2009,Chu:2007}, natural language
+distributed systems~\cite{boom-eurosys,Belaramani:2009,Chu:2007}, natural language
 processing~\cite{Eisner:2004}, robotics~\cite{Ashley-Rollman:2007},
 compiler analysis~\cite{Lam:2005}, security~\cite{sd3,Li:2003,Zhou:2009}
 and computer games~\cite{White:2007}.  The resulting languages have
 been promoted for their compact and natural representations of tasks
 in their respective domains, in many cases leading to code that is
 orders of magnitude shorter than equivalent imperative programs.
-Another stated advantage of these languages has been the ability to
+Another stated advantage of these languages is their ability to
 directly capture intuitive specifications of protocols and programs as
 executable code.
 
 While most of these efforts were intended to be ``declarative''
 languages, many chose to extend Datalog with operational features
-natural to their application domain.  These operational aspects,
-though familiar, limit the ability of the language designers to
+natural to their application domain.  These operational aspects
+limit the ability of the language designers to
 leverage the rich literature on Datalog: program checks like safety
 and stratifiability, and optimizations like magic sets and
-materialized recursive view maintenance.  In addition, in many of
+incremental maintenance of materialized views.  In addition, in many of
 these languages the blend of operational and declarative constructs
 leads to semantic ambiguities.  These aspects are of particular interest to us
 in the context of networking and other distributed systems, both
