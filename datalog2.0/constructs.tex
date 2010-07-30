@@ -136,7 +136,7 @@ Since mutable persistence occurs frequently in practice, we provide the {\em
 persist} macro, which takes three arguments: a predicate name, the name of another predicate to hold ``deleted'' facts, and the (matching) arity of the two predicates. The macro
 expands to the corresponding mutable persistence rule.  For example, the above
 \dedalus{p\_pos} persistence rule may be equivalently specified as
-\dedalus{persist[p\_pos, p\_neg, 2]}.
+\dedalus{persist[p, p\_neg, 2]}.
 
 Mutable persistence rules enable {\em updates}.  For some time $\Tau$, an
 update is any pair of facts:
