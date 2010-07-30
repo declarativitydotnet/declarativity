@@ -108,10 +108,10 @@ p\_neg($A_1,A_2,[...],A_n$);
 \noindent
 If, at any time $k$, we have a fact
 \dedalus{p\nega($C_1$,$C_2$,[...],$C_n$)@k}, then we do not deduce a
-\dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@k+1} fact.  By induction, we do not
+\dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@k+1} fact.  Furthermore, we do not
 deduce a \dedalus{p\pos($C_1$,$C_2$,[...],$C_n$)@j} fact for any $j > k$, unless
 this \dedalus{p\pos} fact is re-derived at some timestep $j > k$ by another
-rule.  This corresponds to the intuition that a persistent fact, once stated,
+rule.  This behavior corresponds to the intuition that a persistent fact, once stated,
 is true until it is retracted.  
 
 %%\newtheorem{example}{Example}
