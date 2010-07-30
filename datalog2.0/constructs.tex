@@ -32,7 +32,7 @@ with lower time suffixes occur ``before'' atoms with higher ones.
 %%we may only move forward in time.
 The constraints we imposed on \slang rules restrict how deductions may be made
 with respect to time.  First, rules may only refer to a single time suffix variable in
-their body, and hence {\em cannot join across different ``timesteps''}.  Second, rules may specify
+their body, and hence subgoals {\em cannot join across different ``timesteps''}.  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
 timestep---in \slang, we rule out induction ``backwards'' in time or
 ``skipping'' into the future.
