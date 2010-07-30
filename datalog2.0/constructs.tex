@@ -32,7 +32,7 @@ with lower time suffixes occur ``before'' atoms with higher ones.
 %%we may only move forward in time.
 The constraints we imposed on \slang rules restrict how deductions may be made
 with respect to time.  First, rules may only refer to a single time suffix variable in
-their body, and hence subgoals {\em cannot join across different ``timesteps''}.  Second, rules may specify
+their body, and hence subgoals {\em cannot join across different ``timesteps.''}  Second, rules may specify
 deductions that occur concurrently with their ground facts or in the next
 timestep---in \slang, we rule out induction ``backwards'' in time or
 ``skipping'' into the future.
@@ -62,7 +62,7 @@ p\pos($A_1$,$A_2$,[...],$A_n$);}
 %%\end{definition}
 \noindent
 A simple persistence rule of this form
-ensures that a $p$ fact true at time $i$ will be true $\forall j \in \mathbb{Z} : j >= i$.
+ensures that a $p$ fact true at time $i$ will be true $\forall j \in \mathbb{Z} : j \ge i$.
 
 
 %\wrm{is there a point to this formula?  can't we just say ``a simple persistence
@@ -86,18 +86,18 @@ simple persistence rule accomplishes this:
 %%\end{comment}
 
 \begin{dedalus}
-p\_pos($A_1,A_2,[...],A_n$)@next $\leftarrow$
+p\pos($A_1,A_2,[...],A_n$)@next $\leftarrow$
 \end{dedalus}
 
 \hspace{5mm}
 \begin{dedalus}
-p\_pos($A_1,A_2,[...],A_n$),
+p\pos($A_1,A_2,[...],A_n$),
 \end{dedalus}
 
 \hspace{5mm}
 $\lnot$
 \begin{dedalus}
-p\_neg($A_1,A_2,[...],A_n$);
+p\neg($A_1,A_2,[...],A_n$);
 \end{dedalus}
 
 %%\begin{definition}
