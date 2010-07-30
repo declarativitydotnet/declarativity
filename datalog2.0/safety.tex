@@ -22,7 +22,7 @@ a way that admits sensible non-terminating programs.
 
 \subsection{Temporal Safety}
 Next we consider the issue of infinite results raised in the introduction to this section.
-In traditional Datalog, this is a well-studied concern.
+In traditional Datalog, this concern is well-studied.
 A Datalog program is considered {\em safe} if it has a finite minimal model, and hence has
 a finite execution.  Safety in Datalog is traditionally ensured
 through the following syntactic constraints:
@@ -137,7 +137,7 @@ An unsafe \slang instance?
 %%p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
 %%\end{Dedalus}
 \begin{Dedalus}
-persist[p, p\_neg 2]
+persist[p\pos, p\nega, 2]
 p(1, 2)@123;
 \end{Dedalus}
 
@@ -247,8 +247,8 @@ henceforth quiescent.
 \begin{proof}
 %
 %%\wrm{sightly ???}
-A \slang program admits only instantaneous and inductive rules, which derive
-new tuples at the same time as their ground tuples, or in the immediate next
+A \slang program admits only deductive and inductive rules, which derive
+new tuples at the same time as their ground tuples or in the immediate next
 timestep.  Thus, the set of tuples true at time $T$ is completely determined by
 any tuples true at time $T-1$, and any EDB facts true at time $T$.  Observe
 that the integer value of the timestep does not influence the derivation.
