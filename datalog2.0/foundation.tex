@@ -59,9 +59,8 @@ corresponding predicate.
 %time without restriction, and the rule syntax below provides the restrictions
 %you want.  you're hinting at the reduction stuff below, but we can rewrite to
 %that.}
-In a well-formed \slang rule, every subgoal uses the same existential variable 
+In a well-formed \slang rule, every subgoal must use the same existential variable 
 $\Tau$
-%%$T$
 as its time suffix.  A well-formed
 \slang rule must also have a time suffix 
 $\SDedalus$ 
@@ -70,15 +69,14 @@ as its rightmost head attribute, which must be
 constrained in exactly one of the following two ways:
 \begin{enumerate}
 %
-\item The rule is said to be \emph{deductive} if $\SDedalus$ is bound to the
+\item The rule is \emph{deductive} if $\SDedalus$ is bound to the
 value $\Tau$; that is, the body contains the subgoal \dedalus{$\SDedalus$ = $\Tau$}.
 %
-\item The rule is said to be {\em inductive} if $\SDedalus$ is the successor of
+\item The rule is {\em inductive} if $\SDedalus$ is the successor of
 $\Tau$; that is, the body contains the subgoal \dedalus{successor($\Tau$, $\SDedalus$)}.
 %
 \end{enumerate}
-
-In Section~\ref{sec:async} when we consider \lang---a superset of \slang---we will
+\noindent{}In Section~\ref{sec:async}, we will define \lang as a superset of \slang and
 introduce a third kind of rule to capture asynchrony.
 
 \begin{example}
