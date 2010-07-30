@@ -237,7 +237,7 @@ with time suffix $T-1$.
 \begin{lemma}
 %
 A \slang instance that is quiescent at time $T$ will be quiescent until
-timestamp of the next EDB fact $V$, i.e.\ for all $U \in \mathbb{Z}: V > U >=
+timestamp of the next EDB fact $V$, i.e.\ for all $U \in \mathbb{Z}: V > U \ge
 T$.  If no EDB fact has a timestamp greater than $T$, then the instance will be
 henceforth quiescent.
 %%\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
@@ -318,20 +318,20 @@ A temporally stratifiable \slang instance is temporally safe if it has a finite 
 \begin{proof}
 %
 Assume the program is temporally unsafe.  That is, there exists no time $T$
-such that $\forall U >= T$, the set of all atoms with timestamp $U$ is
+such that $\forall U \ge T$, the set of all atoms with timestamp $U$ is
 equivalent modulo time to the set of all atoms with timestamp $T-1$.  Let $E$
 be the maximum timestamp of any fact in the EDB.
 
 Observe that every rule $r$ of kind 3 may only entail a finite number
 of facts---as the EDB is finite---and thus may entail no facts at a
-timestamp greater than some maximum timestamp $V_r <= E+1 \in
+timestamp greater than some maximum timestamp $V_r \le E+1 \in
 \mathbb{Z}$.  Since a \slang program has a finite set of rules we know
-$\exists V \in \mathbb{Z} : \forall r: V >= V_r$, and thus $V <= E+1$.
+$\exists V \in \mathbb{Z} : \forall r: V \ge V_r$, and thus $V \le E+1$.
 
-We now consider times $T$ such that $T > E+1$.  By the above argument, no rules
+We now consider times $T$ such that $T > E+1$.  By the argument above, no rules
 of kind 3 entail any facts with a timestamp greater than $E+1$.  Recall that
 no EDB atoms are true at any timestamp greater than $E$.  Thus, any facts with
-timestamp greater than $E+1$ are entailed by rules of kind 1 or 2.
+timestamp greater than $E+1$ must be entailed by rules of kind 1 or 2.
 
 Consider the set of equivalence classes modulo time of all possible atoms, {\bf
 A}, given the Herbrand Universe.  We know {\bf A} is finite, as the Herbrand
@@ -357,7 +357,7 @@ necessarily contains $P$ in its body, so it cannot entail $P$ unless $P$ is
 entailed by some other rule.  If $J_2$ contains $R$ in its body, then the
 program is syntactically unstratifiable.  But if $J_2$ does not contain $R$ in
 its body, then it contains some predicate $S$ transitively entailed by $R$;
-wlog the body contains $R$.  Thus, the program is syntactically unstratifiable.
+without loss of generality, the body contains $R$.  Thus, the program is syntactically unstratifiable.
 
 {\bf Case 2: }$P = R$.  In this case, $J_1$ and $J_2$ are the same rule: $P
 \leftarrow \lnot P$.  Thus, the program is syntactically unstratifiable.
