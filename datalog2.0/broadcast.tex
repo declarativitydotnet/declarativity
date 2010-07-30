@@ -1,5 +1,5 @@
 \subsection{Reliable Broadcast}
-Distributed systems cope with unreliable networks by using mechanisms like broadcast and consensus protocols, 
+Distributed systems cope with unreliable networks by using mechanisms such as broadcast and consensus protocols, 
 timeouts and retries, and often hide the nondeterminism behind these abstractions.  \lang supports these notions,
 achieving encapsulation of nondeterminism while dealing explicitly with the uncertainty in the model.  Consider the simple
 broadcast protocol below:
@@ -13,7 +13,7 @@ sdeliver(#Member, Sender, Message) \(\leftarrow\)
   sbcast(#Member, Sender, Message);
 \end{Dedalus}
 
-Assume the table \dedalus{members} is a persistent relation given to us, containing the broadcast 
+Assume that \dedalus{members} is a persistent relation that contains the broadcast 
 membership list.  
 %%The symbol \emph{\#} is used to indicate that the annotated attribute contains a network
 %%address.  

@@ -33,14 +33,14 @@ concurrent systems in terms of constraints over valuations of state, and tempora
 %%The notion of 
 %%\emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering'' is similar to our declarative definition 
 %%of table persistence.  
-Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (next and later), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
+Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (\texttt{next} and \texttt{async}), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
 
 \subsection{Distributed Systems}
 
 Significant recent work (\cite{boom-eurosys,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
 a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
-Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
+Existing distributed deductive languages such as NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
 straightforward Datalog, and evaluation proceeds in three phases:
 
 \begin{enumerate}

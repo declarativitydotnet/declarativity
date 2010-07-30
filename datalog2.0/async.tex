@@ -29,7 +29,7 @@ We also describe a syntactic convention to employ this communication model for `
 %%\subsubsection{Choice}
 An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.  In this section, we enhance our language with a traditional model of nondeterminism from the literature to capture these issues: the \emph{choice} construct as defined by Greco and Zaniolo~\cite{greedychoice}.
 
-The subgoal \dedalus{choose((\emph{$X_1$}), (\emph($X_2$))} may appear
+The subgoal \dedalus{choose((\emph{$X_1$}), (\emph{$X_2$}))} may appear
 in the body of a rule, where \emph{$X_1$} and \emph{$X_2$} are vectors
 whose constituent variables occur elsewhere in the body.  Such a
 subgoal enforces the functional dependency \emph{$X_1$} $\to$ $X_2$,
@@ -37,7 +37,7 @@ subgoal enforces the functional dependency \emph{$X_1$} $\to$ $X_2$,
 \emph{$X_2$} for each variable in \emph{$X_1$}.
 
 The choice construct is nondeterministic.  In a model-theoretic interpretation of logic programming, a nondeterministic program 
-must have a multiplicity of {\em stable models}---that is it must be unstratifiable.  
+must have a multiplicity of {\em stable models}---that is, it must be unstratifiable.  
 Greco and Zaniolo define 
 choice in precisely this fashion: the choice construct is expanded into an unstratifiable strongly-connected component of rules, 
 and each possible choice is associated with a different model.  Each such model has a unique, non-deterministic assignment that
@@ -113,7 +113,7 @@ the additional body predicates.
 %%$N$ is a variable,
 %%corresponding to the time suffix $\Tau$ of all predicates in the rule body and
 %%optionally referenced in the head.  
-The above example expressed using \dedalus{async} is:
+The example above expressed using \dedalus{async} is:
 
 % asynchronous
 \begin{example}
@@ -146,7 +146,7 @@ violates the monotonicity assumptions upon which we based
 our proof of
 temporal stratification.  On an intuitive level, it may also trouble
 us that rules can derive head tuples that exist ``before'' the body
-tuples on which they are grounded; this violates intuitive notions of
+tuples on which they are grounded; this situation violates intuitive notions of
 causality and admits the possibility of temporal paradoxes.
 
 We have avoided restricting \lang to rule out such issues, as doing so
@@ -184,9 +184,9 @@ Given this discussion, in practice we are interested in three asynchronous scena
 
 The first category captures the spirit of many simple distributed implementations that are built atop unreliable asynchronous substrates.  For example, in some Internet publishing applications (weblogs, online fora), it is possible due to caching or failure that a ``thread'' of discussion arrives out of order, with responses appearing before the comments they reference.  In many cases a monotonic ``bag semantics'' for the comment program is considered a reasonable interface for readers, and the ability to tolerate temporal anomalies simplifies the challenge of scaling a system through distribution.
 
-The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the literature of distributed computing, this is known as a {\em causal ordering} and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
+The second scenario is achieved in \slang via the use of \dedalus{successor} for the time suffix. The asynchronous rules of \lang require additional program logic to guarantee monotonic increases in time for predicates with dependencies.  In the literature of distributed computing, this constraint is known as a {\em causal ordering} and is enforced by distributed clock protocols.  We review one classic protocol in the \lang context in Section~\ref{sec:lamport}; including this protocol into \lang programs ensures temporal monotonicity.
 
-Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols achieve this.  When temporal monotonicity is given, the proof of temporal stratification 
+Finally, certain computational substrates guarantee monotonicity in both timestamps and message ordering---for example, some multiprocessor cache coherency protocols provide this property.  When temporal monotonicity is given, the proof of temporal stratification 
 %and Algorithm~\ref{alg:tsn} both apply.
 applies.
 
@@ -207,7 +207,7 @@ to write the rule it was necessary to not sugar away the time suffix in the rule
 
 Entanglement is a powerful construct.  It allows a rule
 to reference the logical clock time of the deduction that produced one
-(or more) of its subgoals; this supports protocols that reason about partial ordering of time across machines.  More generally, it exposes the infinite \dedalus{successor} relation to attributes other than the time suffix, allowing us to express concepts such as infinite sequences.
+(or more) of its subgoals; this capability supports protocols that reason about partial ordering of time across machines.  More generally, it exposes the infinite \dedalus{successor} relation to attributes other than the time suffix, allowing us to express concepts such as infinite sequences.
 
 %%\jmh{Where do we give the def that say ``\lang is \slang with the following extra goo''?  Here?  After async?}\rcs{beginning of sec 6, first sentence}
 
@@ -223,7 +223,7 @@ Consider a rule \dedalus{p(A,B)@async \(\leftarrow\) q(A,B)}.  By
 rewriting it to:
 
 \begin{Dedalus}
-persist[p, p\_neg, 2]
+persist[p\pos, p\nega, 2]
 p\_wait(A, B, N)@async \(\leftarrow\) q(A, B)@N;
 p\_wait(A, B, N)@next \(\leftarrow\) p\_wait(A, B, N)@M, N \(\ge\) M;
 p(A, B)@next \(\leftarrow\) p\_wait(A, B, N)@M, N < M;
@@ -249,7 +249,7 @@ in the \dedalus{p\_wait} relation.
 
 We gloss over one detail here: Lamport clocks rely
 upon a ``tie-breaking'' function to ensure that no two events have the
-same timestamp.  In \lang, such a function could be implemented via another use of \dedalus{choice}, or by a program convention like
+same timestamp.  In \lang, such a function could be implemented via another use of \dedalus{choice}, or by a program convention such as
 appending a unique node identifier to each timestamp to prevent ``ties.''
 
 %%\jmh{Can't we please do the normal use of Lamport clocks, i.e. show how it solves a distributed systems problem?}
