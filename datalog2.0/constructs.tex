@@ -127,16 +127,16 @@ p(1,3)@102;
 p\nega(1,2)@300;
 \end{Dedalus}
 
-It is easy to see that the following facts are true: \dedalus{p(1,2)@200},
-\dedalus{p(1,3)@200}, \dedalus{p(1,3)@300}.  However, \dedalus{p(1,2)@301} is
-false because it was ``deleted'' at timestep \dedalus{300}.
+\noindent{}The following facts are true: \dedalus{p(1,2)@200}, \dedalus{p(1,3)@200},
+\dedalus{p(1,3)@300}.  However, \dedalus{p(1,2)@301} is false because it was
+``deleted'' at timestep \dedalus{300}.
 \end{example}
 
 Since mutable persistence occurs frequently in practice, we provide the {\em
 persist} macro, which takes three arguments: a predicate name, the name of another predicate to hold ``deleted'' facts, and the (matching) arity of the two predicates. The macro
 expands to the corresponding mutable persistence rule.  For example, the above
 \dedalus{p\_pos} persistence rule may be equivalently specified as
-\dedalus{persist[p, p\_neg, 2]}.
+\dedalus{persist[p\pos, p\nega, 2]}.
 
 Mutable persistence rules enable {\em updates}.  For some time $\Tau$, an
 update is any pair of facts:
@@ -174,15 +174,16 @@ Note that these two rules produce only a single value of \dedalus{seq} at each t
 \subsection{Queues}
 %%\jmh{Can't we whittle this down to the bone?  Why are we dealing with user and job attributes?  Why not drop user?}\rcs{my example; joe's right.  It is all h4xor3d right now.}
 
-While sequences are useful constructs for generating or imposing an ordering on tuples, programs will in some cases require that tuples
-are processed in a particular (partial) order associated with specific timesteps.   To this end, we introduce a queue template, which employs 
-inductive persistence and aggregate functions in rule heads to process tuples according to a data-dependent order, rather than as a set.
+While sequences are useful for imposing an ordering on tuples, programs will in
+some cases require that tuples are processed in a particular (partial) order
+associated with specific timesteps.  To this end, we introduce a queue template,
+which employs inductive persistence and aggregate functions in rule heads to
+process tuples according to a data-dependent order, rather than as a set.
 
 Aggregate functions simplify our discussion of queues.  Mumick and Shmueli observe correspondences in the expressivity of Datalog with stratified negation and stratified aggregation functions~\cite{mumickshmueli}.  Adding aggregation to our language does not affect its expressive power, but is useful for writing natural constructs for distributed computing including queues and ordering.  
 
-In \slang we will allow
-aggregate functions $\rho_1 - \rho_n$ to appear
-in the head of a deductive rule of the form:
+In \slang we allow aggregate functions $\rho_1 - \rho_n$ to appear in the head
+of a deductive rule of the form:
 
 %%\dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
 
@@ -205,10 +206,10 @@ Consider a predicate \dedalus{priority\_queue} that represents a series of tasks
 indicating the priority of the job in the queue:
 
 \begin{Dedalus}
-priority\_queue('bob', 'bash', 200)@123;
-priority\_queue('eve', 'ls', 1)@123;
-priority\_queue('alice', 'ssh', 204)@123;
-priority\_queue('bob', 'ssh', 205)@123;
+priority\_queue(`bob', `bash', 200)@123;
+priority\_queue(`eve', `ls', 1)@123;
+priority\_queue(`alice', `ssh', 204)@123;
+priority\_queue(`bob', `ssh', 205)@123;
 \end{Dedalus}
 
 Observe that all the time suffixes are the same.  
