@@ -11,14 +11,13 @@
 % \vspace{-8pt}
 % \end{figure}
 
-Until now we have restricted our discussion to \slang.  In this section we
-introduce \lang, a superset of \slang that also admits the \emph{choice} construct~\cite{greedychoice} to bind time suffixes.
-Choice allows us to model the inherent nondeterminism in communication over unreliable
-networks that may delay, lose or reorder the results of logical deductions. 
-We also describe a syntactic convention to employ this communication model for ``horizontal partitions'' of relations on different machines.
-%(see Figure~\ref{fig:time}).
-
-%%\subsection{{\bf \large \lang}: New Constructs}
+In this section we introduce \lang, a superset of \slang that also admits the
+\emph{choice} construct~\cite{greedychoice} to bind time suffixes.  Choice
+allows us to model the inherent nondeterminism in communication over unreliable
+networks that may delay, lose or reorder the results of logical deductions.  We
+then describe a syntactic convention for rules that model communication between
+agents, and show how \lang can be used to implement common distributed computing
+idioms like Lamport clocks and reliable broadcast.
 
 \subsection{Choice}
 
@@ -103,7 +102,7 @@ A well-formed asynchronous \lang rule:
 \begin{Dedalus}
 r(A, B, \(\SDedalus\)) \(\leftarrow\) 
   e(A, B, \(\Tau\)),
-  time(\(\SDedalus\)), choose((A, B, \(\Tau\))), (\(\SDedalus\)));
+  time(\(\SDedalus\)), choose((A, B, \(\Tau\)), (\(\SDedalus\)));
 \end{Dedalus}
 \end{example}
 
@@ -136,8 +135,6 @@ relationship between the agents' clocks; they could be
 non-monotonically increasing, or they could respect a global order.
 
 \subsection{Temporal Monotonicity}
-
-
 Nothing in our definition of asynchronous rules prevents tuples in the
 head of a rule from having a timestamp that precedes the timestamp in
 the rule's body. This is a significant departure from \slang, since it
