@@ -224,21 +224,21 @@ A simple temporally stratifiable \slang program that is not syntactically strati
 persist[p\pos, p\nega, 3]  
   
 r1
-p(A, B, T) \(\leftarrow\)
+p_pos(A, B, T) \(\leftarrow\)
   insert\_p(A, B, T);
 
 r2  
 p_neg(A, B, T) \(\leftarrow\)
-  p(A, B, T),
+  p_pos(A, B, T),
   delete\_p(T);
 \end{Dedalus}
 
 In the \slang program above, \emph{insert\_p} and \emph{delete\_p} are captured
-in EDB relations.  This reasonable program is unstratifiable because $p \succ
-p\nega \land p\nega \succ p$.  But because the successor relation is
+in EDB relations.  This reasonable program is unstratifiable because $p\pos \succ
+p\nega \land p\nega \succ p\pos$.  But because the successor relation is
 constrained such that $\forall A,B, successor(A, B) \rightarrow B > A$, any
 such program is locally stratified on time suffixes.  Therefore, we have
-$p_{n} \not\succ^* p\_neg_{n} \not\succ^* p_{n+1}$; informally, earlier values
+$p\pos_{n} \not\succ^+ p\_neg_{n} \not\succ^+ p\pos_{n+1}$; informally, earlier values
 do not depend on later values.
 %%\paa{need to make the text better, but this old example probably makes sense here}
 \end{example}

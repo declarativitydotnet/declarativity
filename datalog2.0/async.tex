@@ -93,7 +93,10 @@ body:
 
 \noindent
 where
-$\SDedalus$ is the timestamp of the rule head.  Note that our use of \dedalus{choose} incorporates all variables of each head predicate tuple, which allows a unique choice of $\SDedalus$ for each head tuple.
+$\SDedalus$ is the timestamp of the rule head.  Note that our use of \dedalus{choose} incorporates all variables of each head predicate tuple, which allows a unique choice of $\SDedalus$ for each head tuple.  We further require that
+communication rules include the location specifier appearing in the rule body 
+among the functionally-determining attributes of the \dedalus{choose} predicate,
+even if it does not occur in the head.
 
 
 \begin{example}
