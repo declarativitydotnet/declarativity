@@ -40,8 +40,8 @@ Two distinguishing features of \lang with respect to TLA+ is our minimalist use 
 Significant recent work (\cite{boom-eurosys,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
 a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
-Existing distributed deductive languages such as NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
-straightforward Datalog, and evaluation proceeds in three phases:
+Existing distributed deductive languages such as NDlog and Overlog adopt a
+\emph{chain of fixpoints} interpretation. Evaluation proceeds in three phases:
 
 \begin{enumerate}
 \item Input from the external world, including network messages, clock interrupts and host language calls, is collected.
