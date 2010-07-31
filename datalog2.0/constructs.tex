@@ -236,7 +236,7 @@ timestep, for each value of \textbf{A}, a single tuple is projected into
 at the subsequent step:
 
 \begin{Dedalus}
-persist[m\_priority\_queue, del\_m\_priority\_queue, 3]
+persist[m\_priority\_queue\_pos, m\_priority\_queue\_neg, 3]
 
 % find the min priority
 omin(A, min<C>) \(\leftarrow\)
@@ -250,7 +250,7 @@ priority_queue(A, B, C)@next \(\leftarrow\)
 
 % delete from the next step 
 % those items of min priority
-del\_m\_priority\_queue(A, B, C) \(\leftarrow\)
+m\_priority\_queue\_neg(A, B, C) \(\leftarrow\)
   m\_priority\_queue(A, B, C),
   omin(A, C);
 \end{Dedalus}
