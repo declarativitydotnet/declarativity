@@ -125,14 +125,13 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{example}
 
 \subsection{Asynchrony and Distribution in {\large{\bf\lang}}}
-As a syntactic constraint of \lang, the {\em communication rules} introduced in the previous section (rules that differ in head and body location specifiers) are required to be asynchronous.
-This restricts our model of communication between agents in two important ways.
-First, by restricting bodies to a single agent, the only communication
-modeled in \lang occurs via communication rules.  Second, because
-all communication rules are asynchronous, agents may only learn about
-time values at another agent by receiving messages (with unbounded
-delay) from that agent.  Note that this model says nothing about the
-relationship between the agents' clocks; they could be
+As noted above, communication rules must be asynchronous.  This restricts our
+model of communication between agents in two important ways.  First, by
+restricting bodies to a single agent, the only communication modeled in \lang
+occurs via communication rules.  Second, because all communication rules are
+asynchronous, agents may only learn about time values at another agent by
+receiving messages (with unbounded delay) from that agent.  Note that this model
+says nothing about the relationship between the agents' clocks; they could be
 non-monotonically increasing, or they could respect a global order.
 
 \subsection{Temporal Monotonicity}
