@@ -1,0 +1,129 @@
+\documentclass[]{book}
+\title{The Bloom Book}
+
+\begin{document}
+\maketitle
+\chapter{Introduction}
+Drop your preconceptions, this is a new language for a new time.  Von Neumann is over.  Programs are not recipes, you are not a cook.  Programs are a mass of forces that you orchestrate.  Your task: command and control.
+
+(Analogies: general/armies, free will/destiny?)
+
+In the past, the languages that focused on masses of things focused on masses of data: this includes relational languages like SQL, and functional batch-programming approaches like MapReduce.
+
+Bloom derives inspiration from these languages, but Bloom is not a data sub-language or a batch computing language: it is a general-purpose programming language for distributed computing.
+
+\chapter{First Blossoms}
+    \section{Basics}
+        \subsection{Basic Maps}
+        Example: Grep
+        \subsection{Basic Reduces}
+        Example: Count (roll-your-own and built-in)
+        \subsection{Basic Joins}
+        Example: Find strings with Keywords
+    \section{Channels and Scratches}
+    Example: PingPong
+    \section{Modularity}
+        \subsection{Interposition}
+        \subsection{Putting it Together}
+        Example: Parallel MapReduce.  Implement parallel sort, and modularize.
+    \section{Recursion}
+        \subsection{Joins}
+        Example: Distributed All-Paths
+        \subsection{Recursing Through Reduce}
+        Example: Distributed Shortest-Paths
+        \subsection{Side-bar: a point of Order}
+        \subsection{A Fancier Example}
+        Example: Distributed PageRank
+
+\chapter{Collection Types}
+    \section{Scratch}
+    \section{Table}
+    \section{Channel}
+    \section{Var}
+    \section{MacroCollections}
+        \subsection{Queues: FIFO, Priority, Persistent}
+        \subsection{Sequences}
+        \subsection{Distributed Collections}
+        \subsection{K-V Store}
+        \subsection{Unified Log (Paxos)}
+
+\chapter{Writing Services in Bloom}
+    \section{Time and Events}
+        \subsection{The Bloom clock}
+        \subsection{Channels}
+        \subsection{Timers and Periodics}
+        \subsection{Putting it Together}
+        Example: Simple replicated K-V store
+    \section{Membership patterns}
+        \subsection{Static membership files}
+         Example: Simple code
+        \subsection{Master member server(s)}
+         Example: use previous simple K-V store
+        \subsection{Distributed member server}
+        Example: using built-in K-V store
+    \section{An Advanced Example}
+        The Bloom K-V implementation
+
+\chapter{Control and Coordination}
+    \section{How much control?}
+        \subsection{The Cost of Control}
+        \subsection{Detecting and Resolving chaos}
+    \section{Control Patterns}
+        \subsection{Voting to Proceed (2PC)}
+        \subsection{Mutable State}
+    \section{Two Examples}
+        \subsection{Distributed Invariants}
+        \subsection{Sorting}
+        
+\chapter{Testing and Verification}
+    \section{Static Checks}
+        \subsection{Meaningful recursion: avoiding contradictions}
+        \subsection{Points of Order}
+    \section{Runtime Checks}
+        \subsection{Local invariants}
+        \subsection{Distributed Invariants}
+        \subsection{Tracing and Provenance}
+        
+\chapter{Scenarios: Distributed Systems}
+    \section{A Distributed File System}
+    \section{A Batch Cluster Scheduler (Nexus?)}
+    \section{A Transactional Distributed Datastore}
+
+\chapter{Scenarios: Business Logic}
+    \section{Shopping Carts}
+    \section{Multiparty Credit-Card Billing}
+    
+\chapter{Scenarios: Distributed AI}
+People have strong feelings about AI.  Some are driving toward Kurzweil's Singularity, and believe it will first occur in the cloud.  Others say that modern AI is nothing more than applied statistics in the hands of computer scientists.  Successful services like Google have a flavor of both extremes.  One thing is clear: attempts to make concrete progress on AI will take some significant distributed software engineering.
+
+Here we have a humbler but still exciting goal: making it easy to write simple scalable algorithms for AI applications.
+
+    \section{Two Simple Examples}
+        \subsection{Spam Filtering}
+        Example: Naive Bayes
+        \subsection{Entity Extraction}
+        Example: Viterbi Inference
+        \subsubsection{Sidebar: Dynamic Programming}
+    \section{Two Bayesian Kernels}
+        \subsection{Distributed Learning}
+        Example: E-M.
+        \subsection{Distributed Inference}
+            \subsubsection{Belief Propagation}
+            Examples: Trees and Loopy.
+            \subsubsection{Exact Inference}
+            Example: Junction Tree
+            \subsubsection{Monte Carlo Methods}
+            Example: Gibbs Sampling?
+    \section{A More Complex Example}
+        \subsection{What's fun?  Vision alg?}
+
+\chapter{Scenarios: Graph Algorithms}
+    \section{Considerate Crawlers}
+    \section{Social Graphs}
+    Example: Josep's stuff from SIGCOMM?  Centrality measures...
+ 
+\chapter{Reference}
+    \section{Grammar}
+    \section{Quick Reference}
+\end{document}
+
