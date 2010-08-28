@@ -10,18 +10,22 @@ the {\em Berkeley Orders Of Magnitude} (BOOM) project, which aims to enable deve
 scalable software using order-of-magnitude less code. This dissertation documents the research developed by these two
 projects on building system software in a declarative language. 
 
-The {\em Declarative Networking} project ignited this research direction by using a declarative language to build network layer
-protocols for the next generation of computing architectures~\cite{boon-thesis}. In Chapter~\ref{ch:p2}, we review this early work
-on constructing networking protocols in a declarative language because it sets the stage for much of the subsequent work
-in this dissertation. Specifically, the declarative language \OVERLOG (used throughout this dissertation) was developed during this period, which is a 
-Datalog-like language with distributed extensions. The Declarative Networking project also developed a runtime for the \OVERLOG language called P2, 
-which automatically compiles high-level specifications to a dataflow-oriented runtime system. Although P2 itself was not used 
-throughout this dissertation, our compilation of \OVERLOG into a dataflow runtime remained the same.
+The {\em Declarative Networking} project~\cite{boon-thesis} ignited the research direction of using a declarative language to develop
+distributed software, specifically network layer protocols, for the next generation of computing architectures. 
+In Chapter~\ref{ch:p2}, we review this early work on constructing networking protocols in a declarative language because it sets 
+the stage for the work described in this dissertation. Specifically, the declarative language \OVERLOG (used throughout 
+this dissertation) was developed during the Declarative Networking project. \OVERLOG is a Datalog-like language with distributed 
+extensions. The Declarative Networking project also developed a runtime for the \OVERLOG language called P2, 
+which automatically compiled \OVERLOG programs into a dataflow-oriented runtime system. Although P2 itself was not used 
+throughout this dissertation~\footnote{Chapter~\ref{ch:evita} marks the final chapter in the P2 project.}, our compilation of \OVERLOG 
+into a dataflow runtime persists.
 
-The main contributions of this dissertation begin in Chapter~\ref{ch:evita} where we describe the P2 declarative query optimizer meta-compilation 
-framework. The optimization framework is contained within the P2 query processing engine, and it exports an interface for submitting rewrite 
-rules over the logical query plan. A rewrite rule takes the form of a query written in the same declarative language (\OVERLOG) used to submit 
-client queries. The logical query plan of a query is represented by a set of relations, over which the rewrite rules query and update.  We show that 
+The contributions presented by this dissertation begin in Chapter~\ref{ch:evita}, where we describe the P2 declarative 
+query optimizer meta-compilation framework. The optimization framework is contained within the P2 query processing engine, 
+and it exports an interface for submitting rewrite rules over the logical query plan. A rewrite rule takes the form of a query written 
+in the same declarative language (\OVERLOG) used to submit 
+client queries. The P2 compiler was engineered to compile the logical query plan of a query into a relational format, thereby permitting 
+rewrite rules (written in \OVERLOG) the ability to query and update the logical query plan.  We show that 
 many traditional database optimizations, like the System R optimization algorithm and the Magic-Set rewrite, can be easily expressed 
 as Overlog queries.  We believe that statistics gathering, for cost based optimization rules, can also be written as \OVERLOG queries over 
 the data and system state, leading to a more adaptive query plan generator. Expressing the optimization algorithms as \OVERLOG queries 
@@ -30,12 +34,12 @@ rule-based optimizer enables developers to rapidly develop new optimizations tha
 changes.
  
 The remaining chapters of this dissertation focus on the contributions made during the early stages 
-of the {\em Berkeley Orders Of Magnitude} (\BOOM) project, which evaluated the use of a declarative 
+of the {\em Berkeley Orders Of Magnitude} (\BOOM) project, which evalutes the use of a declarative 
 language in building distributed system software for today's data center architecture (clusters of commodity 
 machines). As we have already alluded, building and debugging distributed software remains extremely 
-difficult. We conjecture that by adopting a \emph{data-centric} approach to system design and by employing 
-\emph{declarative} programming languages, a broad range of distributed software can be recast naturally in 
-a data-parallel programming model.  Our hope is that this model can significantly raise the level of abstraction 
+difficult. We conjecture that by adopting a \emph{data-centric} approach to 
+system design and by employing \emph{declarative} programming languages, a broad range of distributed software 
+can be recast naturally in a data-parallel programming model.  Our hope is that this model can significantly raise the level of abstraction 
 for programmers, improving code simplicity, speed of development, ease of software evolution, and program correctness.
 
 To evaluate this conjecture, we used the Overlog language to implement an API-compatible version of the Hadoop 
