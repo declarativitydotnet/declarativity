@@ -1,0 +1,253 @@
+\documentclass{acm_proc_article-sp}
+
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{times}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{amsmath, amssymb}
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{comment}
+\usepackage{alltt}
+\usepackage{appendix}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+\usepackage{booktabs}
+
+%\linespread{0.975}
+
+%\pdfinfo{/Title (Computation and Controlled Coincidence in Dedalus)}
+
+\usepackage{txfonts}
+%\newcommand{\DT}{\mathcal{T}}
+%\newcommand{\DS}{\mathcal{S}}
+\newcommand{\DT}{T}
+\newcommand{\DS}{S}
+\newcommand{\Consts}{\mathcal{C}}
+\newcommand{\Vars}{\mathcal{A}}
+%\newcommand{\pos}{\protect{$_{pos}$}}
+%\newcommand{\nega}{\protect{$_{neg}$}}
+% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
+\newcommand{\pos}{\_pos}
+\newcommand{\nega}{\_neg}
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+\newtheorem{example}{Example}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{observation}{Observation}
+
+%\def\slang{synchronous Dedalus\xspace}
+\def\lang{\textsc{Dedalus}\xspace}
+\def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
+%\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
+\newcommand{\naive}      {na\"{\i}ve\xspace}
+\newcommand{\Naive}      {Na\"{\i}ve\xspace}
+%dedalus environment for code
+
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+
+\begin{document}
+
+\title{Untitled CIDR11 Paper}
+\numberofauthors{6}
+
+\author{
+\alignauthor
+Person 1
+\alignauthor
+Person 2
+\alignauthor
+Person 3
+\and
+\alignauthor
+Person 4
+\alignauthor
+Person 5
+\alignauthor
+Person 6
+}
+
+%\conferenceinfo{POPL '11}{Austin, TX, USA} 
+%\copyrightyear{2011} 
+%\copyrightdata{[to be supplied]}
+
+%\title{Computation and Controlled Coincidence in Dedalus} 
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+%\numberofauthors{4}
+
+%\authorinfo{Peter Alvaro$^\ast$ \quad William R. Marczak$^\ast$ \quad Neil
+%Conway$^\ast$ \quad Joseph M. Hellerstein$^\ast$ \\ \quad David Maier$^\dagger$
+%\quad Russell Sears$^\ddagger$ \quad Rastislav Bod\'{i}k$^\ast$}
+%{$^\ast$University of California, Berkeley \quad $^\dagger$Portland State University \quad $^\ddagger$Yahoo! Research}
+%{\{paa, wrm, nrc, hellerstein, bodik\}@cs.berkeley.edu \quad maier@cs.pdx.edu \quad sears@yahoo-inc.com}
+% \authorinfo{William R. Marczak}
+%            {University of California, Berkeley}
+%            {wrm@cs.berkeley.edu}
+% \authorinfo{Neil Conway}
+%            {University of California, Berkeley}
+%            {nrc@cs.berkeley.edu}
+% \authorinfo{Joseph M. Hellerstein}
+%            {University of California, Berkeley}
+%            {hellerstein@cs.berkeley.edu}
+%\authorinfo{David Maier}
+%           {Portland State University}
+%           {maier@cs.pdx.edu}
+%\authorinfo{Russell Sears}
+%           {Yahoo! Research}
+%           {sears@yahoo-inc.com}
+% \authorinfo{Rastislav Bodik}
+%            {University of California, Berkeley}
+%            {bodik@cs.berkeley.edu}
+\maketitle
+
+\begin{abstract} 
+\wrm{currently still the POPL abstract}
+%
+%Imperative programming languages are {\em ordered} by default, and often
+%require programmers to explicitly implement concurrency, such as through
+%duplication of sequential control structures.  concurrency.  \paa{I think
+%'concurrency' is the core issue that is addressed by our contribution.
+%'parallelism' is a correllary -- right?} Unfortunately, this programming style
+%leads to an overspecification of order, much of which %much of this order is
+%{\em overspecified} -- \paa{why false?  the point is it's overspecified in the
+%order domain.} may obscure parallelism, or not be semantically meaningful to
+%the computation.  , or obscures parallelism.  We argue for an inversion in
+%design -- parallel by default, and programmer-defined order only when required
+%for correctness.  \paa{alternate text: 
+Distributed systems are traditionally implemented in imperative languages using
+a threaded or event-driven programming style, and inherit these languages'
+implicit ordering of both data and control structures.
+%Concurrency is achieved by duplication of sequential control structures, and
+%reasoning about the behavior of such systems requires explicit consideration
+%of the interleaving of instructions and the arrival order of messages.
+%Concurrency must be explicitly achieved through programmer intervention,
+%We believe that much of this order is not meaningful to the overall goal that
+%the programmer wants to achieve, and reasoning about it unnecessarily
+%complicates the task of programming distributed systems.
+%In practice, this frequently leads to overspecification of such systems, insofar as 
+%many different orderings of instructions and data structures lead to the same 
+%result in a distributed computation.
+This often leads to overspecified behavior, since many different orderings of
+instructions and data structures can lead to the same result in a distributed
+computation.
+%because the abstractions exposed by imperative programming are inappropriate
+%for programming distributed systems.
+We argue for an inversion of design:
+%for programming distributed systems
+unordered and concurrent by default, with explicit, programmer-defined order
+only when required for correctness.  To this end, we propose \lang, a logic
+programming language, and study it in the context of asynchronous distributed
+systems.  \lang is based on the well-studied Datalog %~\cite{ullmanbook}
+language, which exposes a single operator---{\em logical implication}, and a
+single data structure---the set.
+
+%%In \lang, it is easy to observe 
+%%\paa{stronger:} 
+By abstracting away irrelevant orders while providing explicit control of sequencing, \lang
+focuses the programmer's attention on
+the two features of distributed systems for which recourse to order is unavoidable: 
+implementing {\em mutable state} and ensuring
+deterministic results in the face of {\em asynchrony}---that is, non-determinism in
+temporal order.  To capture these uses of order, we build a library of ordered
+constructs in \lang, including persistence, queues, and Lamport clocks.  We
+also extend static analyses from the Datalog domain, including a simple but
+powerful analysis that indicates locations in a program where the developer
+may need to enforce order to maintain determinism in the face of asynchrony.
+We illustrate the benefits of our proposed programming style through a case
+study of a shopping cart application with replicated state.
+
+%and require programmers to explicitly specify exclude order to support parallelism.  Well-known prior work has equated various computational complexity classes with logics, implying a correspondence between computation and deduction.  In logic, certain formulas may lead to contradictions, such as $p$ if $\lnot p$.  We observe that adding a notion of {\em order} to such formulas prevents the contradiction, by explicitly excluding coincidence of $p$ and $\lnot p$.  However, a large class of logical statements are non-contradictory even in the absence of order.  We propose a programming paradigm where computation is unordered (embarassingly parallel) by default, and conservative syntactic checks force the imposition of order to avoid contradiction.  
+
+%We observe that broadly, recourse to order is only needed to model two features
+%of asynchronous systems: {\em mutable state} and {\em asynchrony}.  As
+%asynchrony corresponds to non-determinism in order, this non-determinism may
+%influence the results of the computation -- clearly an undesirable result if we
+%wish to build asynchronous systems that are eventually deterministic (i mean
+%Pete's confluence thing later).  Using \lang, we build many common abstractions
+%for distributed systems, such as queues, etc.  We then compose these constructs
+%to define programming styles that ensure determinism, and study this
+%programming style in a case study of a shopping cart.}
+
+%Recent research has explored using Datalog-based
+%languages to express a distributed system as a set of logical
+%invariants~\cite{boom-eurosys,loo-sigmod06}.  Two properties of distributed
+%systems proved difficult to model in Datalog.  First, the state of any such system
+%evolves with its execution.  Second, deductions in these systems may be
+%arbitrarily delayed, dropped, or reordered by the unreliable network links
+%they must traverse.  Previous efforts addressed the former by extending
+%Datalog to include updates, key constraints, persistence and events, and
+%the latter by assuming ordered and reliable delivery while ignoring delay.
+%These details have a semantics outside Datalog, which increases the complexity of
+%the language or its interpretation, and forces programmers to
+%think operationally.  We argue that the missing component from these previous
+%languages is a notion of {\em time}.
+
+%In this paper we present {\bf \lang}, a foundation language for programming and
+%reasoning about distributed systems.  \lang reduces to a subset of
+%Datalog~\cite{ullmanbook} with negation, aggregate functions, successor and
+%choice \wrm{cite?}.  \lang also admits an explicit representation of logical
+%time.
+%
+%We show that \lang provides a declarative foundation for the two signature
+%features of distributed systems: mutable state, and asynchronous processing and
+%communication.  
+%%Given these two features, we address three important properties
+%%of programs in a domain-specific manner: a notion of {\em safety} appropriate
+%%to non-terminating computations, {\em stratified} monotonic reasoning with
+%%negation over time, and efficient evaluation over time via a simple execution
+%%strategy.  
+%Given these features, we illustrate how powerful verification techniques from the
+%Datalog literature may be preserved or reinterpreted in the new domain, including 
+%conservative syntactic checks for a notion of {\em safety} appropriate to 
+%non-terminating computation, and {\em stratified} monotonic reasoning with negation 
+%over time.
+%%We also provide conservative syntactic checks for our temporal
+%%notions of safety and stratification.  
+%We also explore the use of similar static analysis techniques to verify properties unique 
+%to systems with asynchronous communication, including commutativity and idempotence
+%of in-flight messages.
+%Our experience implementing
+%full-featured systems in variants of Datalog suggests that \lang is well-suited
+%to the specification of rich distributed services and protocols, and provides
+%both cleaner semantics and richer tests of correctness.
+
+\end{abstract}
+
+\input{intro}
+\input{lang}
+\input{analysis}
+\input{case}
+\input{eval}
+\input{conclusion}
+
+%\scriptsize
+%\begin{spacing}{0.9}
+\bibliographystyle{abbrv}
+\bibliography{cidr11,declarativity}
+%\end{spacing}
+
+%%\appendix
+%%\input{appendix}
+
+%%\input{attic}
+
+\end{document}

@@ -1,0 +1,63 @@
+\section{Analysis}
+\label{sec:analysis}
+
+\subsection{Confluence}
+
+{\em Confluence} is a simple correctness criterion that the author of a
+distributed program may desire.  Confluence implies that for any
+non-deterministic choice of timestamps, the program's ultimate model is the
+same.
+
+\wrm{connect to ultimate model here}
+
+\subsection{Threats to Confluence}
+
+Joining two events is a problem, because the {\em simultenaity} of these events
+may be a precondition for a derivation.  Intuitively, we solve this problem by
+disallowing events being sent over the network -- all events sent over the
+network are persisted. \wrm{There's an $\epsilon$ less-conservative version
+that paa and I talked about.  We could put that here, but it might not be
+enlightening.}
+
+The other problem is that a distributed program may notice that some event has
+{\em not occured yet}, and reach a conclusion based on this information.
+Intuitively, we solve this problem by preventing these early {\em world-closings},
+much in the style of Stratification for centralized logic programs.
+
+\subsection{Analysis}
+
+Our analysis looks for these two properties.  Obviously, ruling out both of the
+above threats is undecidable, so we use conservative approximations in each
+case.  In the former case, we ensure that all events sent over the network are
+persisted.
+
+In the latter case, we can employ our analysis.  Our analysis suggests to the
+programmer areas in the program that may require coordination.  The analysis
+returns false positives -- possibly incorrectly flagging an area as requiring
+coordination where none is required -- but never returns a false negative.
+
+After the programmer makes these modifications and runs the analysis again, ideally
+the analysis could prove the modifications are the appropriate coordination logic.
+However, this is undecidable, so in the general case, we will have to trust that the
+user has inserted the correct coordination, or possibly require the user to supply a
+proof.
+
+The basic form of the static analysis looks for all syntactic patterns ('!' and
+'<...>') that are necessary for threats to confluence of the second kind, and
+returns this set to the user.
+
+We can improve the basic analysis by not flagging some '!' and '<...>' patterns, or being providing more specific guidelines, as described below:
+
+\begin{enumerate}
+%
+\item Use domain knowledge about aggregates (for example, threshold aggregates
+like "max >" and "min <" are fine, because the correctness of these aggregates
+is not affected by observing intermediate data (escrow transactions link?)
+%
+\item Use some scheme to propagate constraints around, so we can say to the
+user "you only need to worry about coordination when variable X > 5, for
+example".  In the limit, where the rule has contradictory constraints and is
+thus unsatisfiable, we do not need to flag it for the user as requiring
+coordination.
+%
+\end{enumerate}
