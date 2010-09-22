@@ -1,0 +1,10 @@
+\section{Consistency and Monotonicity}
+\jmh{At minimum, we should assert formal proof in one direction: purely Monotonic deduction can be done without coordination.  Start with explaining syntactic montonicity, perhaps via SQL, Datalog and MapReduce.  Then enrich this by saying that single-node non-monotonicity is OK (if it's acyclic).  We should then enrich further by introducing the non-syntactic, ``instance-oriented'''' style monotonicity: saying that individual monotonic deductions---i.e. any monotonic tuple lineage---can be computed without coordination.  Give intuitive examples that are database instance-dependent (a la local stratification), and that are program-semantics dependent (a la universal constraint stratification).  The latter should do escrow transactions, and/or tee up shopping cart.}
+
+\jmh{Now you can talk at least in casual terms about a check for consistency: check the program for non-monotonicity.  Can probably do intuition of the data dependency here, and hint at how we'll do taint tracking later.}
+
+\jmh{Now that we've said that ``counting requires waiting'', point out that ``waiting requires counting'': coordination protocols are basically threshhold tests on distributed count aggregates.  Hence any check for consistency like the one above will flag the coordination logic as a problem.  Our solution: either expert programmers (us) verify the modules, or we develop universal-constraint-style analyses to validate them.}
+
+\jmh{Finally, introduce the Bi-directional CALM Conjecture: that non-monotonic deduction (at the individual tuple level) requires coordination.  We can wave hands here about this requiring a crisper definition of coordination than we needed before.}
+
+\jmh{Occurs to me there's a disconnect here with the intro---in the intro we said that programming without coordination relates to ``loose'' consistency.  We should show a case where for the universal-constraint scenario, a read-write consistency analysis would flag this as bad, and a transaction manager would forbid it.}
