@@ -1,4 +1,13 @@
-\section{Bud by Example}
+\section{Bud: Bloom Under Development}
 \label{sec:lang}
 
 \wrm{Don't really know that much about Bud.  Peter should ideally write this section.}
+
+\jmh{Start with disorderly-by-default philosophy.}
+
+\jmh{Need to introduce tables, channels and scratches.    Introduce the 3 operators: now, next, delete.  Ref Dedalus paper for proof that tables are purely declarative, can be implemented as a macro over scratches.  And by extension tuples are immutable.
+Perhaps give a brief intuition about all that: ``Dedalus avoids state modification using temporal logic, in a style reminiscent of versioning: `updates' in Bloom are appends of new versions, and all Bloom rules by default read the current latest version.''}
+
+\jmh{Next introduce map, join and group.  May need to briefly clarify Ruby block argument syntax.}
+
+\jmh{Finally, discuss Bud implementation in Ruby, and advantages.  Talk about how to instantiate a Bud object and kick off its execution via run or tick.  Mention that we get OO stuff like inheritance of ``rule blocks'' for free from Ruby.  Mention that the programmer is free to treat Bud as a DSL inside Ruby, and write imperative Ruby code that invokes bud objects.  This is a common request anyhow -- nail down the tricky consistency-sensitive code, but give me familiar imperative for the gunk around it.  We should argue that all the Bud logic is isolated and that the Ruby code only affects it via messages -- in the same way that any external agent could affect Bud code that listens on a channel.}
