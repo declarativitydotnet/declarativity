@@ -18,8 +18,6 @@
 
 %\linespread{0.975}
 
-%\pdfinfo{/Title (Computation and Controlled Coincidence in Dedalus)}
-
 \usepackage{txfonts}
 %\newcommand{\DT}{\mathcal{T}}
 %\newcommand{\DS}{\mathcal{S}}
@@ -117,6 +115,38 @@ William R. Marczak
 
 \begin{abstract} 
 \jmh{I excised the POPL abstract that was pasted here.  I think we need a clean slate.  The last paragraph of the intro is probably close to what we want.}
+
+
+All applications that manage distributed data have consistency requirements.
+Transactional consistency is necessary to 
+guarantee arbitrary, atomic updates of data in multiple locations,
+but comes at the cost of
+message delay in consensus protocols like two-phase commit, which can 
+greatly increase transaction time.  Implementors of systems with 
+replicated state must choose between such expensive (but certain) 
+consistency and loosely or ``eventually'' consistent infrastructures, which
+ensure that all messages reach their destinations without guarantees about
+timing or order.  Arguing the correctness of such applications often involves
+showing that high-level applications semantics are insensitive the the order
+of physical I/O to an underlying data store (e.g., a shopping cart application 
+may be built atop a loosely consistent key/value store because the operations
+of updating a cart are commutative).  This places a significant burden on 
+the programmer, and the end result is an informal consistency argument.  In 
+this paper, we introduce a distributed programming language 
+that is order-independent by default, encouraging a style of programming
+that is insensitive to reordering and delay of messages.
+Using the CALM conjecture, which establishes a connection between logical
+nonmonotonicity, nondeterminism in message delay and order-sensitivity in 
+program results, we provide full-program analyses that either guarantee
+consistency of distributed state, or identify ``points of order'' where
+it may be necessary to constrain the order of certain operations to ensure
+consistency by augmenting the program with coordination protocols.
+We implement, analyze and evolve several shopping cart applications, and
+evaluate the performance of different coordination mechanisms in a cloud 
+environment.
+
+
+
 \end{abstract}
 
 \input{intro}
