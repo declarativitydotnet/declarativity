@@ -116,7 +116,22 @@ William R. Marczak
 \begin{abstract} 
 %\jmh{I excised the POPL abstract that was pasted here.  I think we need a clean slate.  The last paragraph of the intro is probably close to what we want.}
 
+% NEW
+Applications that manage replicated state have consistency
+requirements \nrc{Awkward: we actually want to say something like they ``must
+  ensure that consistency is maintained.''}. Distributed transactions allow atomic, arbitrary updates of
+replicated state, but they can also greatly increase messaging costs and may harm
+partition tollerance. This has motivated the recent interest in ``eventually
+consistent'' distributed protocols, which only require that all messages
+eventually reach their destinations. However, building such an eventually
+consistent system is a challenging task: the designer must ensure that
+application semantics are insensitive to arbitrary message delay and reordering.
 
+In this paper, we introduce \emph{Bloom}, a new language for distributed
+programming, and a suite of analysis techniques intended to simplify the design
+of distributed systems with ``loose'' consistency requirements.
+
+% OLD
 All applications that manage replicated state have consistency requirements.
 Distributed transactions allow atomic, arbitrary updates of replicated state,\wrm{confluence seems
 to be missing here.  also, i don't need transactional consistency if i never
@@ -129,7 +144,7 @@ and relies on the programmer to manage confluence via a custom protocol}
 expensive consistency measures and ``eventually consistent'' infrastructures,
 which ensure that all messages reach their destinations without guarantees
 about timing or order.  Arguing the correctness of such applications often
-involves showing that high-level applications semantics are insensitive to the
+involves showing that high-level application semantics are insensitive to the
 order of physical I/O to an underlying data store \wrm{i don't know much about databases, but when i hear ``physical I/O to a data store'' i imagine some disk head bouncing around a disk doing I/Os.  this seems irrelevant to me -- i think the important part is showing that the program is a determinstic function of the program inputs -- in other words, insensitive to any re-ordering, delay, or co-incidence on the channel} (e.g., a shopping cart
 application may be built atop a loosely consistent key/value store because the
 operations of updating a cart are commutative).  This places a significant
