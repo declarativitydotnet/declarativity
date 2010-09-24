@@ -120,9 +120,9 @@ William R. Marczak
 All applications that manage distributed data have consistency requirements.
 Transactional consistency is necessary to 
 guarantee arbitrary, atomic updates of data in multiple locations,
-but comes at the cost of
-message delay in consensus protocols like two-phase commit, which can 
-greatly increase transaction time.  Implementors of systems with 
+but requires consensus protocols like two-phase commit, whose message delays
+can greatly increase transaction time.
+Implementors of systems with 
 replicated state must choose between such expensive (but certain) 
 consistency and loosely or ``eventually'' consistent infrastructures, which
 ensure that all messages reach their destinations without guarantees about
