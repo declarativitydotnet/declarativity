@@ -133,11 +133,12 @@ semantics are insensitive to arbitrary message delay and reordering.
 In this paper, we introduce \emph{Bloom}, a new programming framework intended
 to simplify the design of distributed systems with ``loose'' consistency
 requirements.  {\em Bloom} includes a new language and runtime (called {\em
-Bud}), and a powerful static analysis that identifies {\em points of order},
-or edges in a dataflow graph corresponding to code that may require programmer attention to ensure consistency
-in the face of message reordering.  {\em Bloom}'s design is motivated by
-Hellerstein's CALM Conjecture, which provides a partially descriptive and
-partially semantic characterization of eventually consistent programs. 
+  Bud}), and a static analysis technique that identifies {\em points of order},
+which correspond to parts of the program that may require programmer attention
+to ensure consistency in the face of message reordering.  {\em Bloom}'s design
+is motivated by Hellerstein's CALM Conjecture, which provides a partially
+descriptive and partially semantic characterization of eventually consistent
+programs.
 
 % OLD
 %All applications that manage replicated state have consistency requirements.
