@@ -117,54 +117,60 @@ William R. Marczak
 %\jmh{I excised the POPL abstract that was pasted here.  I think we need a clean slate.  The last paragraph of the intro is probably close to what we want.}
 
 % NEW
-Applications that manage replicated state have consistency
-requirements \nrc{Awkward: we actually want to say something like they ``must
-  ensure that consistency is maintained.''}. Distributed transactions allow atomic, arbitrary updates of
-replicated state, but they can also greatly increase messaging costs and may harm
-partition tolerance. This has motivated the recent interest in ``eventually
-consistent'' distributed protocols, which only require that all messages
-eventually reach their destinations. However, building such an eventually
-consistent system is a challenging task: the designer must ensure that
-application semantics are insensitive to arbitrary message delay and reordering.
 
-In this paper, we introduce \emph{Bloom}, a new language for distributed
-programming, and a suite of analysis techniques intended to simplify the design
-of distributed systems with ``loose'' consistency requirements.
+Consistency is often important for applications that manage replicated state.
+Traditional programming models ensure strong consistency guarantees by exposing
+transactions that allow atomic, arbitrary updates of replicated state.  Such
+distributed transactions entail a large performance penalty in messaging costs,
+and may harm applications' tolerance to partitions.  These pitfalls have motivated
+the recent interest in ``eventually consistentcy,'' a programming model that
+only guarantees the eventual receipt of all messages.  Building atop this
+foundation is a challenging task: programmers must ensure that application
+semantics are insensitive to arbitrary message delay and reordering.
+
+In this paper, we introduce \emph{Bloom}, a new programming framework intended
+to simplify the design of distributed systems with ``loose'' consistency
+requirements.  {\em Bloom} includes a new language and runtime (called {\em
+Bud}), and a powerful static analysis that identifies {\em points of order} --
+places in the code that may require programmer attention to ensure consistency
+in the face of message reordering.  {\em Bloom}'s design is motivated by
+Hellerstein's CALM Conjecture, which provides a partially descriptive and
+partially semantic characterization of eventually consistent programs. 
 
 % OLD
-All applications that manage replicated state have consistency requirements.
-Distributed transactions allow atomic, arbitrary updates of replicated state,\wrm{confluence seems
-to be missing here.  also, i don't need transactional consistency if i never
-read, for example.}, but require consensus protocols like two-phase commit,
-whose message delays can greatly increase transaction time. Distributed system
-designers must choose between \wrm{maybe one way to change
-this is to say -- as an alternative to these expensive strong consistency things,
-many have advocated a programming style that only guarantees message delivery,
-and relies on the programmer to manage confluence via a custom protocol}
-expensive consistency measures and ``eventually consistent'' infrastructures,
-which ensure that all messages reach their destinations without guarantees
-about timing or order.  Arguing the correctness of such applications often
-involves showing that high-level application semantics are insensitive to the
-order of physical I/O to an underlying data store \wrm{i don't know much about databases, but when i hear ``physical I/O to a data store'' i imagine some disk head bouncing around a disk doing I/Os.  this seems irrelevant to me -- i think the important part is showing that the program is a deterministic function of the program inputs -- in other words, insensitive to any re-ordering, delay, or co-incidence on the channel} (e.g., a shopping cart
-application may be built atop a loosely consistent key/value store because the
-operations of updating a cart are commutative).  This places a significant
-burden on the programmer \wrm{because the programmer doesn't have any tools to assist them with this}, and the end result is an informal consistency
-argument.  In this paper, we introduce a distributed programming language that
-is order-independent by default\nrc{Should we name the language? Do we want to
-  say this paper ``introduces'' the new lang?}, encouraging a style of programming that is
-insensitive to reordering and message delay.  Using the CALM conjecture \wrm{better be a theorem, because we need to prove it in this paper},
-which establishes a connection between logical monotonicity,
+%All applications that manage replicated state have consistency requirements.
+%Distributed transactions allow atomic, arbitrary updates of replicated state,\wrm{confluence seems
+%to be missing here.  also, i don't need transactional consistency if i never
+%read, for example.}, but require consensus protocols like two-phase commit,
+%whose message delays can greatly increase transaction time. Distributed system
+%designers must choose between \wrm{maybe one way to change
+%this is to say -- as an alternative to these expensive strong consistency things,
+%many have advocated a programming style that only guarantees message delivery,
+%and relies on the programmer to manage confluence via a custom protocol}
+%expensive consistency measures and ``eventually consistent'' infrastructures,
+%which ensure that all messages reach their destinations without guarantees
+%about timing or order.  Arguing the correctness of such applications often
+%involves showing that high-level application semantics are insensitive to the
+%order of physical I/O to an underlying data store \wrm{i don't know much about databases, but when i hear ``physical I/O to a data store'' i imagine some disk head bouncing around a disk doing I/Os.  this seems irrelevant to me -- i think the important part is showing that the program is a deterministic function of the program inputs -- in other words, insensitive to any re-ordering, delay, or co-incidence on the channel} (e.g., a shopping cart
+%application may be built atop a loosely consistent key/value store because the
+%operations of updating a cart are commutative).  This places a significant
+%burden on the programmer \wrm{because the programmer doesn't have any tools to assist them with this}, and the end result is an informal consistency
+%argument.  In this paper, we introduce a distributed programming language that
+%is order-independent by default\nrc{Should we name the language? Do we want to
+%  say this paper ``introduces'' the new lang?}, encouraging a style of programming that is
+%insensitive to reordering and message delay.  Using the CALM conjecture \wrm{better be a theorem, because we need to prove it in this paper},
+%which establishes a connection between logical monotonicity,
 %nondeterminism in message delay
-and deterministic program results in the face of channel re-ordering, we provide
-a full-program static analysis to check for confluence.\nrc{Confluence has not
-  been defined.}  The analysis
-guarantees consistency of distributed state \wrm{still uncomfortable here -- if the analysis returns ``true'', your distributed state is not necessarily consistent.  maybe you replicate to N replicas, but all clients read from replica 1.  in that case, the state need only be consistent at replica 1.  also, if you add coordination, you might make your program confluent (such as in the previous example) but without coordinating distributed state},
-or identify ``points of order'' where it may be necessary to constrain the
-order of certain operations \wrm{in other words -- it may be necessary to defer visibility of updates} to ensure consistency by augmenting the program
-with coordination protocols \wrm{not sure what a coordination protocol is}.
-To demonstrate these techniques, we implement several variants of a distributed ``shopping
-cart'' application, apply our analysis technique to do XYZ, and evaluate the
-performance of the resulting programs.
+%and deterministic program results in the face of channel re-ordering, we provide
+%a full-program static analysis to check for confluence.\nrc{Confluence has not
+%  been defined.}  The analysis
+%guarantees consistency of distributed state \wrm{still uncomfortable here -- if the analysis returns ``true'', your distributed state is not necessarily consistent.  maybe you replicate to N replicas, but all clients read from replica 1.  in that case, the state need only be consistent at replica 1.  also, if you add coordination, you might make your program confluent (such as in the previous example) but without coordinating distributed state},
+%or identify ``points of order'' where it may be necessary to constrain the
+%order of certain operations \wrm{in other words -- it may be necessary to defer visibility of updates} to ensure consistency by augmenting the program
+%with coordination protocols \wrm{not sure what a coordination protocol is}.
+%To demonstrate these techniques, we implement several variants of a distributed ``shopping
+%cart'' application, apply our analysis technique to do XYZ, and evaluate the
+%performance of the resulting programs.
 
 \end{abstract}
 
