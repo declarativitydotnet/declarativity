@@ -136,9 +136,14 @@ requirements.  {\em Bloom} includes a new language and runtime (called {\em
   Bud}), and a static analysis technique that identifies {\em points of order},
 which correspond to parts of the program that may require programmer attention
 to ensure consistency in the face of message reordering.  {\em Bloom}'s design
-is motivated by Hellerstein's CALM Conjecture, which provides a partially
-descriptive and partially semantic characterization of eventually consistent
-programs.
+%is motivated by Hellerstein's CALM Conjecture, which provides a partially
+%descriptive and partially semantic characterization of eventually consistent
+%programs.
+is inspired by database query languages and analysis techniques from the logic
+programming literature.  To demonstrate these techniques, we implement variants
+of a distributed ``shopping cart'' application and analyze them to discover
+points of order.  We evolve the applications in reaction to these hints, and 
+evaluate their performance.
 
 % OLD
 %All applications that manage replicated state have consistency requirements.
