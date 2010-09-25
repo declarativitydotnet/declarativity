@@ -118,12 +118,14 @@ William R. Marczak
 
 % NEW
 
-Consistency is often important for applications that manage replicated state.
-Traditional programming models ensure strong consistency guarantees by exposing
-transactions that allow atomic, arbitrary updates of replicated state.  Such
+%Consistency is often important for applications that manage replicated state.
+All applications that manage replicated state must ensure that consistency
+is maintained.
+Database programming models ensure strong consistency guarantees by exposing
+transactions, which allow atomic, arbitrary updates of replicated state.  Such
 distributed transactions entail a large performance penalty in messaging costs,
 and may harm applications' tolerance to partitions.  These pitfalls have motivated
-the recent interest in ``eventually consistentcy,'' a programming model that
+the recent interest in ``eventually consistency,'' a programming model that
 only guarantees the eventual receipt of all messages.  Building atop this
 foundation is a challenging task: programmers must ensure that application
 semantics are insensitive to arbitrary message delay and reordering.
@@ -131,8 +133,8 @@ semantics are insensitive to arbitrary message delay and reordering.
 In this paper, we introduce \emph{Bloom}, a new programming framework intended
 to simplify the design of distributed systems with ``loose'' consistency
 requirements.  {\em Bloom} includes a new language and runtime (called {\em
-Bud}), and a powerful static analysis that identifies {\em points of order} --
-places in the code that may require programmer attention to ensure consistency
+Bud}), and a powerful static analysis that identifies {\em points of order},
+or edges in a dataflow graph corresponding to code that may require programmer attention to ensure consistency
 in the face of message reordering.  {\em Bloom}'s design is motivated by
 Hellerstein's CALM Conjecture, which provides a partially descriptive and
 partially semantic characterization of eventually consistent programs. 
