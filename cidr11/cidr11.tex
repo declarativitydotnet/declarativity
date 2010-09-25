@@ -121,7 +121,7 @@ Applications that manage replicated state have consistency
 requirements \nrc{Awkward: we actually want to say something like they ``must
   ensure that consistency is maintained.''}. Distributed transactions allow atomic, arbitrary updates of
 replicated state, but they can also greatly increase messaging costs and may harm
-partition tollerance. This has motivated the recent interest in ``eventually
+partition tolerance. This has motivated the recent interest in ``eventually
 consistent'' distributed protocols, which only require that all messages
 eventually reach their destinations. However, building such an eventually
 consistent system is a challenging task: the designer must ensure that
@@ -145,14 +145,14 @@ expensive consistency measures and ``eventually consistent'' infrastructures,
 which ensure that all messages reach their destinations without guarantees
 about timing or order.  Arguing the correctness of such applications often
 involves showing that high-level application semantics are insensitive to the
-order of physical I/O to an underlying data store \wrm{i don't know much about databases, but when i hear ``physical I/O to a data store'' i imagine some disk head bouncing around a disk doing I/Os.  this seems irrelevant to me -- i think the important part is showing that the program is a determinstic function of the program inputs -- in other words, insensitive to any re-ordering, delay, or co-incidence on the channel} (e.g., a shopping cart
+order of physical I/O to an underlying data store \wrm{i don't know much about databases, but when i hear ``physical I/O to a data store'' i imagine some disk head bouncing around a disk doing I/Os.  this seems irrelevant to me -- i think the important part is showing that the program is a deterministic function of the program inputs -- in other words, insensitive to any re-ordering, delay, or co-incidence on the channel} (e.g., a shopping cart
 application may be built atop a loosely consistent key/value store because the
 operations of updating a cart are commutative).  This places a significant
 burden on the programmer \wrm{because the programmer doesn't have any tools to assist them with this}, and the end result is an informal consistency
 argument.  In this paper, we introduce a distributed programming language that
 is order-independent by default\nrc{Should we name the language? Do we want to
   say this paper ``introduces'' the new lang?}, encouraging a style of programming that is
-insensitive to reordering and message delay.  Using the CALM conjecture \wrm{better be a theorem, becuase we need to prove it in this paper},
+insensitive to reordering and message delay.  Using the CALM conjecture \wrm{better be a theorem, because we need to prove it in this paper},
 which establishes a connection between logical monotonicity,
 %nondeterminism in message delay
 and deterministic program results in the face of channel re-ordering, we provide
