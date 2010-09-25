@@ -125,7 +125,7 @@ Database programming models provide strong consistency guarantees by exposing
 transactions, which allow atomic, arbitrary updates of replicated state.  Such
 distributed transactions entail a large performance penalty in messaging costs,
 and may harm applications' tolerance to partitions.  These pitfalls have motivated
-the recent interest in ``eventually consistency,'' a programming model that
+the recent interest in ``eventual consistency,'' a programming model that
 only guarantees the eventual receipt of all messages.  Building atop this
 foundation is a challenging task: programmers must ensure that application
 semantics are insensitive to arbitrary message delay and reordering.
@@ -140,7 +140,7 @@ to ensure consistency in the face of message reordering.  {\em Bloom}'s design
 %descriptive and partially semantic characterization of eventually consistent
 %programs.
 is inspired by database query languages and analysis techniques from the logic
-programming literature.  To demonstrate these techniques, we implement variants
+programming literature.  To validate our approach, we implement variants
 of a distributed ``shopping cart'' application and analyze them to discover
 points of order.  We evolve the applications in reaction to these hints, and 
 evaluate their performance.
