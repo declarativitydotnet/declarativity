@@ -25,7 +25,15 @@ is indicated by a dotted line in the graph, while edges that involve
 nonmonotonic logic are marked with a $\lnot$.  Edges that involve a temporal 
 edge are marked with a $+$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into temporal clusters.  Individual monotonic components 
 (or strata) are surrounded by a dashed rectangle.  A point of order occurs
-whereever an edge crosses strata, or at any self-edge attached to a temporal cluster.
+wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
+
+To resolve a point of order, the programmer may add coordination logic.
+As we observe in Section~\ref{sec:calm}, waiting requires counting and coordination code almost always 
+requires nonmonotonic logic, so the augmented program is not reanalyzed.
+Instead, coordination code is always associated with an annotation that can
+be interpreted as a contract about a point of order.  Such contracts will
+typically guarantee an ordering over arriving tuples, or guarantee a 
+a barrier-passing condition (indicating that there will be no more tuples).
 
 \begin{comment}
 \begin{figure}[t]
