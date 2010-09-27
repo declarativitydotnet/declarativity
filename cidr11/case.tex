@@ -140,11 +140,15 @@ end
 Figure~\ref{fig:pdf-destructive} shows the destructive shopping cart code
 and its accompanying analysis.  Note the points of order between \emph{client\_action} and \emph{iaction}
 and between the temporal cluster and itself.  This means that the arrival 
-timing and order of tuples crossing the point of order may result in different
+timing and order of both client updates (via \emph{iaction}) and
+server replication (via the meta-edge in the temporal cycle from 
+\emph{kvstore} to itself) may result in different
 end results.  Although there is no obvious nonmonotonicity in the destructive
 cart code as shown, the underlying key-value store uses updateable state
-to implement the storage of opaque, mutable values of keys, and our global
-analysis detects this.
+to implement the storage of opaque, mutable values of 
+keys~\footnote{Our full-length paper expands the SCC to analyze the
+key-value store in detail}, 
+and our global analysis detects this.
 To ensure a consistent final state across all replicas, We may require coordination
 between client and server at every update to the cart, and between the 
 server and all replicas at each update.  
