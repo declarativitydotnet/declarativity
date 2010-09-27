@@ -1,9 +1,9 @@
 \section{Consistency and Logical Monotonicity (CALM)}
-In this section we describe in informal terms the connection between the distributed systems desire for ``consistency'', and the theoretical notion of monotonic logic.  In the next section we discuss a language where we this connection provides concrete tools for programmers.
+In this section we discuss the connection between ``consistency'' in distributed systems, and monotonicity in logic.  In the next section we use this connection to provide concrete tools for programmers.
 
-A key issue in distributed programming is to maintain consistency in the face of {\em
+A key issue in distributed programming is to reason about consistency in the face of {\em
 temporal nondeterminism}: the delay and re-ordering of messages and data across
-nodes.  Because delays can be unbounded, most distributed systems attempt to reason about ``eventual consistency'' at points when all messages have been delivered~\cite{vogels}.  A sufficient condition for eventual consistency is {\em order independence}: the independence of program execution from temporal
+nodes.  Because delays can be unbounded, analysis typically focuses on ``eventual consistency'' at points when all messages have been delivered~\cite{vogels}.  A sufficient condition for eventual consistency is {\em order independence}: the independence of program execution from temporal
 nondeterminism.
 
 Programming models based on sets are attractive in this regard, because they keep programmers from making assumptions about the order of data arrival.  But unordered inputs alone are not sufficient: there is still a question of handling delays as set contents stream (or stall) across a network. Relational database theory builds on classical logic to reason about this issue. \emph{Monotonic} programs---e.g., operators like selection, projection and join---can be implemented by streaming algorithms that incrementally produce output elements as they receive input elements; the final order or contents of the input cannot cause any output to be ``revoked'' once it is generated.  
@@ -22,9 +22,9 @@ The implications for distributed programming and delayed messaging are clear. St
 % on it.  
 %Monotonic operators require no coordination logic.
 
-Interestingly, coordination protocols involve calculating whether a quorum of participants has responded appropriately.  For example, Paxos requires waiting for a majority to agree, while Two-Phase Commit requires waiting for unanimous agreement (or a veto).  Hence we say that {\em waiting requires counting}; the converse of our earlier truism.  Put together, these form is the crux of what we call the {\em CALM Principle}: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs guarantee eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires computation to ``wait'' until inputs can be guaranteed to be complete.
+Interestingly, coordination protocols involve counting to see whether a quorum of participants has responded appropriately.  For example, Paxos requires waiting for a majority to agree, while Two-Phase Commit requires waiting for unanimous agreement (or a veto).  Hence we say that {\em waiting requires counting}; the converse of our earlier truism.  Put together, these form the crux of what we call the {\em CALM Principle}: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs guarantee eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires computation to ``wait'' until inputs can be guaranteed to be complete.  Obviously we wish to minimize the use of coordination, for reasons highlighted in our introduction.
 
-Coordination logic is to be avoided when possible---i.e. for monotonic programs---since it adds complexity and message delays to distributed code.  In logic languages, conservative tests for monotonicity are well understood. A simple syntactic check is often sufficient: if the program does not contain any of the symbols in the language that correspond to non-monotonic operators (e.g. ``NOT'', or aggregate symbols), then it is monotonic.  These conservative checks can be refined further to consider semantics of predicates in the language: for example the expression ``MIN(x) $< 100$'' is monotonic despite containing an aggregate, by virtue of the semantics of ``MIN'' and $<$: once a subset $S$ satisfies this test, any superset $T$ of $S$ will also satisfy it.  Further refinements along these lines are possible, to increase the number of cases when monotonicity can be detected.
+We can use the CALM principle to implement distributed consistency checks in logic languages, where conservative tests for monotonicity are well understood. A simple syntactic check is often sufficient: if the program does not contain any of the symbols in the language that correspond to non-monotonic operators (e.g. ``NOT IN'' or aggregate symbols), then it is monotonic.  These conservative checks can be refined further to consider semantics of predicates in the language: for example the expression ``MIN(x) $< 100$'' is monotonic despite containing an aggregate, by virtue of the semantics of ``MIN'' and $<$: once a subset $S$ satisfies this test, any superset $T$ of $S$ will also satisfy it.  Further refinements along these lines exist, increasing the ability of program analysis tools to identify monotonic logic.
 %More advanced whole-program analyses can take into account whether possibly non-monotonic conclusions can ever be consistent with other checks in the program; while undecidable in general, conservative tests with constraint propagation are often possible.  
 % 
 % It may also be useful to understand which portions
@@ -38,7 +38,10 @@ In cases where an analysis cannot guarantee monotonicity of a whole program, it 
 We call the loci suggested by this analysis the program's \emph{points of
 order}. A program with non-monotonicity can be made consistent by including coordination logic at its points of order.  
 
-The observant reader will note that adding coordination logic to alleviate points of order in a program will instead introduce new points of order in the program: as we said above, coordination logic is itself non-monotonic.  To avoid this problem, annotations on the coordination logic can inform the analysis tool to (a) skip the coordination logic in its analysis, and (b) to skip the point of order that the coordination logic handles.  
+The observant reader will note that coordination logic introduces additional points of order to a program: as we said above, coordination logic is itself non-monotonic.  To avoid this problem, the coordination logic must be hand-verified for consistency, after which annotations on the coordination logic can inform the analysis tool to (a) skip the coordination logic in its analysis, and (b) skip the point of order that the coordination logic handles.  
+
+Because it operates at a higher semantic level, a CALM analysis of logic programs can avoid coordination logic in cases where traditional read/write analysis would require it.  Perhaps more importantly, as we will see in the next sections, logic languages and the analysis of ``points of order'' can help programmers redesign code to mitigate the need for coordination.
+
 
 % 
 % In the general case, it is undecidable to verify whether they have done this
@@ -52,40 +55,40 @@ The observant reader will note that adding coordination logic to alleviate point
 % \wrm{not sure how we can introduce additional detail here without pulling in
 % tons of knowledge dependencies} 
 
-\wrm{addressed this} \jmh{At minimum, we should assert formal proof in one
-direction: purely Monotonic deduction can be done without coordination.  Start
-with explaining syntactic montonicity, perhaps via SQL, Datalog and MapReduce.
-Then enrich this by saying that single-node non-monotonicity is OK (if it's
-acyclic).} \wrm{i don't think it's okay if it's acyclic -- it's only okay if it
-does not depend on any network messages}  \jmh{  We should then enrich further
-by introducing the non-syntactic, ``instance-oriented'''' style monotonicity:
-saying that individual monotonic deductions---i.e. any monotonic tuple
-lineage---can be computed without coordination.  Give intuitive examples that
-are database instance-dependent (a la local stratification), and that are
-program-semantics dependent (a la universal constraint stratification).  The
-latter should do escrow transactions, and/or tee up shopping cart.}
+% \wrm{addressed this} \jmh{At minimum, we should assert formal proof in one
+% direction: purely Monotonic deduction can be done without coordination.  Start
+% with explaining syntactic montonicity, perhaps via SQL, Datalog and MapReduce.
+% Then enrich this by saying that single-node non-monotonicity is OK (if it's
+% acyclic).} \wrm{i don't think it's okay if it's acyclic -- it's only okay if it
+% does not depend on any network messages}  \jmh{  We should then enrich further
+% by introducing the non-syntactic, ``instance-oriented'''' style monotonicity:
+% saying that individual monotonic deductions---i.e. any monotonic tuple
+% lineage---can be computed without coordination.  Give intuitive examples that
+% are database instance-dependent (a la local stratification), and that are
+% program-semantics dependent (a la universal constraint stratification).  The
+% latter should do escrow transactions, and/or tee up shopping cart.}
 
-\wrm{addressed this} \jmh{Now you can talk at least in casual terms about a
-check for consistency: check the program for non-monotonicity.  Can probably do
-intuition of the data dependency here, and hint at how we'll do taint tracking
-later.}
+% \wrm{addressed this} \jmh{Now you can talk at least in casual terms about a
+% check for consistency: check the program for non-monotonicity.  Can probably do
+% intuition of the data dependency here, and hint at how we'll do taint tracking
+% later.}
 
-\wrm{not sure if this is true, also not sure what "universal-constraint-style
-analyses" you are referring to} \jmh{Now that we've said that ``counting
-requires waiting'', point out that ``waiting requires counting'': coordination
-protocols are basically threshhold tests on distributed count aggregates.
-Hence any check for consistency like the one above will flag the coordination
-logic as a problem.  Our solution: either expert programmers (us) verify the
-modules, or we develop universal-constraint-style analyses to validate them.}
+% \wrm{not sure if this is true, also not sure what "universal-constraint-style
+% analyses" you are referring to} \jmh{Now that we've said that ``counting
+% requires waiting'', point out that ``waiting requires counting'': coordination
+% protocols are basically threshhold tests on distributed count aggregates.
+% Hence any check for consistency like the one above will flag the coordination
+% logic as a problem.  Our solution: either expert programmers (us) verify the
+% modules, or we develop universal-constraint-style analyses to validate them.}
 
-\wrm{i think we decided the other direction of CALM was false.  consider
-committed choice.  that's non-monotonic any way you look at it (except for the
-definition I tried to sell you durig the POPL submission that we ultimately
-rejected, because we believed monotonic should mean "has a monotonic
-representation in FOL")} \jmh{Finally, introduce the Bi-directional CALM
-Conjecture: that non-monotonic deduction (at the individual tuple level)
-requires coordination.  We can wave hands here about this requiring a crisper
-definition of coordination than we needed before.}
+% \wrm{i think we decided the other direction of CALM was false.  consider
+% committed choice.  that's non-monotonic any way you look at it (except for the
+% definition I tried to sell you durig the POPL submission that we ultimately
+% rejected, because we believed monotonic should mean "has a monotonic
+% representation in FOL")} \jmh{Finally, introduce the Bi-directional CALM
+% Conjecture: that non-monotonic deduction (at the individual tuple level)
+% requires coordination.  We can wave hands here about this requiring a crisper
+% definition of coordination than we needed before.}
 
 \wrm{not sure what this means} \jmh{Occurs to me there's a disconnect here with
 the intro---in the intro we said that programming without coordination relates
