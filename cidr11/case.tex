@@ -137,7 +137,8 @@ end
 \label{fig:pdg-destructive}
 \end{figure}
 
-Note the points of order between \emph{client\_action} and \emph{iaction}
+Figure~\ref{fig:pdf-destructive} shows the destructive shopping cart code
+and its accompanying analysis.  Note the points of order between \emph{client\_action} and \emph{iaction}
 and between the temporal cluster and itself.  This means that the arrival 
 timing and order of tuples crossing the point of order may result in different
 end results.  Although there is no obvious nonmonotonicity in the destructive
@@ -204,7 +205,20 @@ approximating ``eager replication''~\cite{dangers} via two-phase commit.
 \end{figure}
 
 
+Figure~\ref{fig:pdg-disorderly} shows the ``disorderly'' cart and analysis.
+Dotted lines indicate that 
+\emph{action} (owned by the server) is derived from \emph{client\_action} 
+(owned by the client) via an asynchronous message, and that \emph{action} 
+derives itself via messages when it is replicated.  However, the analysis
+shows that because these derivations are strictly monotonic, no points of
+order are crossed.  Hence, clients may send and servers may replicate 
+updates without any coordination: regardless of timing and ordering, the end
+result will be the same.
 
+The analysis does indicate a point of order at checkout, when a \emph{checkout}
+message is joined with an aggregate over the set of updates.  While the 
+accumulation of state has been monotonic, summarization of the cart state
+requires us to assume (or prove) that there will be no further updates.
 
 
 
