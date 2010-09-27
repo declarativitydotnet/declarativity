@@ -75,51 +75,14 @@ Joseph M. Hellerstein
 William R. Marczak
 }
 
-%\conferenceinfo{POPL '11}{Austin, TX, USA} 
-%\copyrightyear{2011} 
-%\copyrightdata{[to be supplied]}
-
-%\title{Computation and Controlled Coincidence in Dedalus} 
-%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
-%
-% You need the command \numberofauthors to handle the "boxing"
-% and alignment of the authors under the title, and to add
-% a section for authors number 4 through n.
-
-%\numberofauthors{4}
-
-%\authorinfo{Peter Alvaro$^\ast$ \quad William R. Marczak$^\ast$ \quad Neil
-%Conway$^\ast$ \quad Joseph M. Hellerstein$^\ast$ \\ \quad David Maier$^\dagger$
-%\quad Russell Sears$^\ddagger$ \quad Rastislav Bod\'{i}k$^\ast$}
-%{$^\ast$University of California, Berkeley \quad $^\dagger$Portland State University \quad $^\ddagger$Yahoo! Research}
-%{\{paa, wrm, nrc, hellerstein, bodik\}@cs.berkeley.edu \quad maier@cs.pdx.edu \quad sears@yahoo-inc.com}
-% \authorinfo{William R. Marczak}
-%            {University of California, Berkeley}
-%            {wrm@cs.berkeley.edu}
-% \authorinfo{Neil Conway}
-%            {University of California, Berkeley}
-%            {nrc@cs.berkeley.edu}
-% \authorinfo{Joseph M. Hellerstein}
-%            {University of California, Berkeley}
-%            {hellerstein@cs.berkeley.edu}
-%\authorinfo{David Maier}
-%           {Portland State University}
-%           {maier@cs.pdx.edu}
-%\authorinfo{Russell Sears}
-%           {Yahoo! Research}\emph{}
-%           {sears@yahoo-inc.com}
-% \authorinfo{Rastislav Bodik}
-%            {University of California, Berkeley}
-%            {bodik@cs.berkeley.edu}
 \maketitle
 
 \begin{abstract} 
-%\jmh{I excised the POPL abstract that was pasted here.  I think we need a clean slate.  The last paragraph of the intro is probably close to what we want.}
-
 % NEW
 
 %Consistency is often important for applications that manage replicated state.
-In many distributed programming circles today, conventional wisdom rejects transactional solutions in favor of application-level reasoning about eventual consistency.  But there are few concrete principles or tools to help programmers think through and assess the trustworthiness of such reasoning.
+\nrc{Phrasing of the first sentence seems awkward to me.} 
+In many distributed programming circles today, conventional wisdom rejects distributed transactions in favor of application-level reasoning about eventual consistency.  But there are few concrete principles or tools to help programmers design and verify the correctness of eventually-consistent protocols.
 % \jmh{I disagree strongly with this first sentence.  Let's rewrite the abstract to be shorter, too.}
 % All applications that manage replicated state must ensure that the state
 % remains consistent.
@@ -132,16 +95,10 @@ In many distributed programming circles today, conventional wisdom rejects trans
 % foundation is a challenging task: programmers must ensure that application
 % semantics are insensitive to arbitrary message delay and reordering.
 
-We address this void with the CALM principle, which connects distributed consistency to logical tests for monotonicity.  We then introduce \emph{Bloom}, a distributed programming language that is amenable to high-level consistency analysis, and encourages order-insensitive programming.  We present a prototype implementation of Bloom as a domain-specific language in Ruby. We also present a static analysis technique that identifies {\em points of order} in Bloom programs: code locations where programmers need to inject coordination logic to ensure consistency.  
-%{\em Bloom}'s design
-%is motivated by Hellerstein's CALM Conjecture, which provides a partially
-%descriptive and partially semantic characterization of eventually consistent
-%programs.
-% is inspired by database query languages and analysis techniques from the logic
-% programming literature.  
+We address this void with the \emph{CALM Principle}, which connects distributed consistency to logical tests for monotonicity.  We then introduce \emph{Bloom}, a distributed programming language that is amenable to high-level consistency analysis and encourages order-insensitive programming.  We present a prototype implementation of Bloom as a domain-specific language in Ruby. We also propose a static analysis technique that identifies {\em points of order} in Bloom programs: code locations where programmers need to inject coordination logic to ensure consistency.  
 We present variants
 of a distributed ``shopping cart'' application in Bloom, and analyze them to discover
-points of order.  We show how Bloom's analysis and code structure allow us to evolve the applications. Performance implications are illustrated by running the code on the EC2 cloud platform.
+points of order.  We show how Bloom's analysis and code structure allow us to evolve the applications. Performance implications are illustrated by running the code on Amazon EC2.
 
 % OLD
 %All applications that manage replicated state have consistency requirements.
