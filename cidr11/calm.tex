@@ -1,10 +1,109 @@
 \section{Consistency and Monotonicity}
-\jmh{At minimum, we should assert formal proof in one direction: purely Monotonic deduction can be done without coordination.  Start with explaining syntactic montonicity, perhaps via SQL, Datalog and MapReduce.  Then enrich this by saying that single-node non-monotonicity is OK (if it's acyclic).  We should then enrich further by introducing the non-syntactic, ``instance-oriented'''' style monotonicity: saying that individual monotonic deductions---i.e. any monotonic tuple lineage---can be computed without coordination.  Give intuitive examples that are database instance-dependent (a la local stratification), and that are program-semantics dependent (a la universal constraint stratification).  The latter should do escrow transactions, and/or tee up shopping cart.}
 
-\jmh{Now you can talk at least in casual terms about a check for consistency: check the program for non-monotonicity.  Can probably do intuition of the data dependency here, and hint at how we'll do taint tracking later.}
+The principal issue in maintaining consistency in distributed systems is {\em
+temporal nondeterminism} -- the delay and re-ordering of data exchanged between
+nodes.  A sufficient condition for consistency in a distributed system is {\em
+order independence} -- the independence of the execution from temporal
+nondeterminism.
 
-\jmh{Now that we've said that ``counting requires waiting'', point out that ``waiting requires counting'': coordination protocols are basically threshhold tests on distributed count aggregates.  Hence any check for consistency like the one above will flag the coordination logic as a problem.  Our solution: either expert programmers (us) verify the modules, or we develop universal-constraint-style analyses to validate them.}
+\wrm{a bit out of my depth here talking about database operators}
 
-\jmh{Finally, introduce the Bi-directional CALM Conjecture: that non-monotonic deduction (at the individual tuple level) requires coordination.  We can wave hands here about this requiring a crisper definition of coordination than we needed before.}
+Thinking about a query plan for a relational language, such as SQL or Datalog,
+we see that there are two types of operators.  A {\em monotonic} operator, such
+as a join, selection, or projection, can produce part of the final output
+immediately if the input tuples satisfy a certain condition.  In the case of a
+join, if the input tuples arrive on-line (i.e. over the network), we must
+materialize them in order to compute the full join.  A non-monotonic operator,
+such as an antijoin or aggregate, cannot produce any final output until it
+views some nontrivial subset of the input tuples -- possibly the entire set.
 
-\jmh{Occurs to me there's a disconnect here with the intro---in the intro we said that programming without coordination relates to ``loose'' consistency.  We should show a case where for the universal-constraint scenario, a read-write consistency analysis would flag this as bad, and a transaction manager would forbid it.}
+The key difference between parallelizing monotonic and non-monotonic operators
+is that a non-monotonic operator cannot produce output until it is sure it has
+seen the entire set of tuples it needs to see.  If a non-monotonic operator is
+allowed to prematurely produce output, it may report an incorrect result.  For
+example, a sum aggregate over a set may produce an incorrect result if only a
+subset of the tuples are summed, and an antijoin may output an incorrect row if
+it does not examine all the input tuples.
+
+If correctness is desired, non-monotonic operators must have {\em coordination
+logic} -- code that transmits auxilliary information about set completeness,
+that the non-monotonic operator uses to produce a correct result.  The
+non-monotonic operator orders the production of the result only after it has
+examined the complete set.  Our language, {\em Bud}, omits coordination logic
+from non-monotonic operators by default, and forces the user to specify it.
+This is because badly-designed coordination logic can be a performance penalty,
+and this seems like a hard problem for an optimizer to approximate (an exact
+solution is undecidable).  In any case, this is the hard component of
+distributed systems programming, so a language should focus programmer effort
+on it.  Monotonic operators require no coordination logic.
+
+A simple conservative check for monotonicity of a program is syntactic -- if a
+program contains any symbols that are known to correspond to non-monotonic
+operators (such as "NOT", and certain aggregate symbols "MIN >", "MAX <"), then
+it is non-monotonic, otherwise it is monotonic.  Note it is interesting that
+"MIN <" and "MAX >" are monotonic \wrm{and this somehow corresponds to escrow
+transactions, though i don't see the connection...}  A more advanced
+whole-program static analysis would take into account whether any non-monotonic
+symbols correspond to portions of the query plan that are ever used
+(satisfiable).  It may also be useful to understand which portions of the
+program's execution or output may be affected by network non-determinism.  In
+this case, a static or runtime analysis could perform {\em taint tracking} of
+network nondeterminism.  Intuitively, a tuple is tainted if it is the
+transitive result of some non-monotonic operator.
+
+We can modify this monotonicity analysis to identify the non-monotonic pieces
+in the program.  The output of this analysis is an overestimate of the loci in
+the program that require coordination in order to ensure consistency.  We call
+the loci suggested by this analysis the program's {\em points of order}.  The
+user can augment the program with appropriate coordination logic.  In the
+general case, it is undecidable to verify whether they have done this
+correctly.  In fact, the introduction of coordination logic may involve
+additional non-monotonic operators (for example, two-phase commit has a
+non-monotonic "COUNT users = COUNT messages" statement).  There are a variety
+of possible solutions to this problem.  One option is for expert programmers
+(i.e. us) to encapsulate a suite of coordination protocols in a library, and
+manually verify the correctness of each protocol.  Another option is to develop
+various static analyses in the style of stratification tests for Datalog.
+\wrm{not sure how we can introduce additional detail here without pulling in
+tons of knowledge dependencies} 
+
+\wrm{addressed this} \jmh{At minimum, we should assert formal proof in one
+direction: purely Monotonic deduction can be done without coordination.  Start
+with explaining syntactic montonicity, perhaps via SQL, Datalog and MapReduce.
+Then enrich this by saying that single-node non-monotonicity is OK (if it's
+acyclic).} \wrm{i don't think it's okay if it's acyclic -- it's only okay if it
+does not depend on any network messages}  \jmh{  We should then enrich further
+by introducing the non-syntactic, ``instance-oriented'''' style monotonicity:
+saying that individual monotonic deductions---i.e. any monotonic tuple
+lineage---can be computed without coordination.  Give intuitive examples that
+are database instance-dependent (a la local stratification), and that are
+program-semantics dependent (a la universal constraint stratification).  The
+latter should do escrow transactions, and/or tee up shopping cart.}
+
+\wrm{addressed this} \jmh{Now you can talk at least in casual terms about a
+check for consistency: check the program for non-monotonicity.  Can probably do
+intuition of the data dependency here, and hint at how we'll do taint tracking
+later.}
+
+\wrm{not sure if this is true, also not sure what "universal-constraint-style
+analyses" you are referring to} \jmh{Now that we've said that ``counting
+requires waiting'', point out that ``waiting requires counting'': coordination
+protocols are basically threshhold tests on distributed count aggregates.
+Hence any check for consistency like the one above will flag the coordination
+logic as a problem.  Our solution: either expert programmers (us) verify the
+modules, or we develop universal-constraint-style analyses to validate them.}
+
+\wrm{i think we decided the other direction of CALM was false.  consider
+committed choice.  that's non-monotonic any way you look at it (except for the
+definition I tried to sell you durig the POPL submission that we ultimately
+rejected, because we believed monotonic should mean "has a monotonic
+representation in FOL")} \jmh{Finally, introduce the Bi-directional CALM
+Conjecture: that non-monotonic deduction (at the individual tuple level)
+requires coordination.  We can wave hands here about this requiring a crisper
+definition of coordination than we needed before.}
+
+\wrm{not sure what this means} \jmh{Occurs to me there's a disconnect here with
+the intro---in the intro we said that programming without coordination relates
+to ``loose'' consistency.  We should show a case where for the
+universal-constraint scenario, a read-write consistency analysis would flag
+this as bad, and a transaction manager would forbid it.}
