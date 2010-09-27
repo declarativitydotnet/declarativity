@@ -8,6 +8,7 @@ nondeterminism.
 
 \wrm{a bit out of my depth here talking about database operators}
 
+\jmh{introduce monotonicity}
 Thinking about a query plan for a relational language, such as SQL or Datalog,
 we see that there are two types of operators.  A {\em monotonic} operator, such
 as a join, selection, or projection, can produce part of the final output
@@ -17,6 +18,7 @@ materialize them in order to compute the full join.  A non-monotonic operator,
 such as an antijoin or aggregate, cannot produce any final output until it
 views some nontrivial subset of the input tuples -- possibly the entire set.
 
+\jmh{distributed non-monotonicity requires waiting for the full set.  this is hard.}
 The key difference between distributing monotonic and non-monotonic operators
 is that a non-monotonic operator cannot produce output until it is sure it has
 seen the entire set of tuples it needs to see.  If a non-monotonic operator is
@@ -25,18 +27,22 @@ example, a sum aggregate over a set may produce an incorrect result if only a
 subset of the tuples are summed, and an antijoin may output an incorrect row if
 it does not examine all the input tuples.
 
+\jmh{the solution to ``waiting'' is coordination, and its not needed otherwise.}
 If correctness is desired, non-monotonic operators must have {\em coordination
 logic} -- code that transmits auxilliary information about set completeness,
 that the non-monotonic operator uses to produce a correct result.  The
 non-monotonic operator orders the production of the result only after it has
-examined the complete set.  Our language, {\em Bud}, omits coordination logic
-from non-monotonic operators by default, and forces the user to specify it.
-This is because badly-designed coordination logic can be a performance penalty,
-and this seems like a hard problem for an optimizer to approximate (an exact
-solution is undecidable).  In any case, this is the hard component of
-distributed systems programming, so a language should focus programmer effort
-on it.  Monotonic operators require no coordination logic.
+examined the complete set.  
+% Our language, {\em Bud}, omits coordination logic
+% from non-monotonic operators by default, and forces the user to specify it.
+% This is because badly-designed coordination logic can be a performance penalty,
+% and this seems like a hard problem for an optimizer to approximate (an exact
+% solution is undecidable).  In any case, this is the hard component of
+% distributed systems programming, so a language should focus programmer effort
+% on it.  
+Monotonic operators require no coordination logic.
 
+\jmh{if we start by default without coordination, we can do simple syntax checks for non-monotonicity}
 A simple conservative check for monotonicity of a program is syntactic -- if a
 program contains any symbols that are known to correspond to non-monotonic
 operators (such as "NOT", and certain aggregate symbols "MIN >", "MAX <"), then
@@ -53,6 +59,7 @@ runtime analysis could perform {\em taint tracking} of network nondeterminism.
 %Intuitively, a tuple is tainted if it is the transitive result of some
 %non-monotonic operator.
 
+\jmh{these syntax checks can be isolated within the program, and resolved via coordination logic}
 This monotonicity analysis can also be used to identify the non-monotonic
 pieces in the program.  The output of this analysis is an overestimate of the
 loci in the program that require coordination in order to ensure consistency.
