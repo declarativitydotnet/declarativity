@@ -17,7 +17,7 @@ materialize them in order to compute the full join.  A non-monotonic operator,
 such as an antijoin or aggregate, cannot produce any final output until it
 views some nontrivial subset of the input tuples -- possibly the entire set.
 
-The key difference between parallelizing monotonic and non-monotonic operators
+The key difference between distributing monotonic and non-monotonic operators
 is that a non-monotonic operator cannot produce output until it is sure it has
 seen the entire set of tuples it needs to see.  If a non-monotonic operator is
 allowed to prematurely produce output, it may report an incorrect result.  For
@@ -45,18 +45,20 @@ it is non-monotonic, otherwise it is monotonic.  Note it is interesting that
 transactions, though i don't see the connection...}  A more advanced
 whole-program static analysis would take into account whether any non-monotonic
 symbols correspond to portions of the query plan that are ever used
-(satisfiable).  It may also be useful to understand which portions of the
-program's execution or output may be affected by network non-determinism.  In
-this case, a static or runtime analysis could perform {\em taint tracking} of
-network nondeterminism.  Intuitively, a tuple is tainted if it is the
-transitive result of some non-monotonic operator.
+(satisfiable) -- also undecidable, but conservative tests with constraint
+propagation are possible.  It may also be useful to understand which portions
+of the program's execution or output may be affected by network
+non-determinism, and which are deterministic.  In this case, a static or
+runtime analysis could perform {\em taint tracking} of network nondeterminism.
+%Intuitively, a tuple is tainted if it is the transitive result of some
+%non-monotonic operator.
 
-We can modify this monotonicity analysis to identify the non-monotonic pieces
-in the program.  The output of this analysis is an overestimate of the loci in
-the program that require coordination in order to ensure consistency.  We call
-the loci suggested by this analysis the program's {\em points of order}.  The
-user can augment the program with appropriate coordination logic.  In the
-general case, it is undecidable to verify whether they have done this
+This monotonicity analysis can also be used to identify the non-monotonic
+pieces in the program.  The output of this analysis is an overestimate of the
+loci in the program that require coordination in order to ensure consistency.
+We call the loci suggested by this analysis the program's {\em points of
+order}.  The user can augment the program with appropriate coordination logic.
+In the general case, it is undecidable to verify whether they have done this
 correctly.  In fact, the introduction of coordination logic may involve
 additional non-monotonic operators (for example, two-phase commit has a
 non-monotonic "COUNT users = COUNT messages" statement).  There are a variety
