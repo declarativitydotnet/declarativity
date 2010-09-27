@@ -21,10 +21,10 @@ For each, we apply whole-program analysis techniques to discover points of
 order in the program.  The analysis, based on traditional stratification
 techniques, represents the dependency graph of predicates (and hence the 
 flow of tuples) as a staged dataflow graph.  Asynchronous message sending
-is indicated by a dotted line in the graph, while edges that involve 
+is indicated by a dashed line in the graph, while edges that involve 
 nonmonotonic logic are marked with a $\lnot$.  Edges that involve a temporal 
 edge are marked with a $+$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into temporal clusters.  Individual monotonic components 
-(or strata) are surrounded by a dashed rectangle.  A point of order occurs
+(or strata) are surrounded by a dotted rectangle.  A point of order occurs
 wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
 
 To resolve a point of order, the programmer may add coordination logic.
