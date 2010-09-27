@@ -103,9 +103,9 @@ end
       kvstore <= iaction.map do |a| 
         unless bigtable.map{|b| b.key}.include? a.session
           if a.action == "A"
-            [a.server, 'localhost:10000', a.session, Array.new.push(a.item)]
+            [a.server, a.client, a.session, Array.new.push(a.item)]
           elsif a.action == "D"
-            [a.server, 'localhost:10000', a.session, Array.new]
+            [a.server, a.client, a.session, Array.new]
           end
         end
       end
@@ -115,11 +115,11 @@ end
       joldstate = join [bigtable, iaction], [bigtable.key, iaction.session]
       kvstore <= joldstate.map do |b, a| 
        if a.action == "A"
-          [a.server, 'localhost:10000', a.session, b.value.push(a.item)]
+          [a.server, a.client, a.session, b.value.push(a.item)]
         elsif a.action == "D"
           copy = b.value.clone;
           copy.delete_at(copy.index(a.item));
-          [a.server, 'localhost:10000', a.session, copy]
+          [a.server, a.client, a.session, copy]
         end
       end
       response <+ join([bigtable, checkout], [bigtable.key, checkout.session]).map do |s, c|
