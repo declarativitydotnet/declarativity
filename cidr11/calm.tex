@@ -1,80 +1,56 @@
-\section{Consistency and Monotonicity}
+\section{Consistency and Logical Monotonicity (CALM)}
+In this section we describe in informal terms the connection between the distributed systems desire for ``consistency'', and the theoretical notion of monotonic logic.  In the next section we discuss a language where we this connection provides concrete tools for programmers.
 
-The principal issue in maintaining consistency in distributed systems is {\em
-temporal nondeterminism} -- the delay and re-ordering of data exchanged between
-nodes.  A sufficient condition for consistency in a distributed system is {\em
-order independence} -- the independence of the execution from temporal
+A key issue in distributed programming is to maintain consistency in the face of {\em
+temporal nondeterminism}: the delay and re-ordering of messages and data across
+nodes.  Because delays can be unbounded, most distributed systems attempt to reason about ``eventual consistency'' at points when all messages have been delivered~\cite{vogels}.  A sufficient condition for eventual consistency is {\em order independence}: the independence of program execution from temporal
 nondeterminism.
 
-\wrm{a bit out of my depth here talking about database operators}
+Programming models based on sets are attractive in this regard, because they keep programmers from making assumptions about the order of data arrival.  But unordered inputs alone are not sufficient: there is still a question of handling delays as set contents stream (or stall) across a network. Relational database theory builds on classical logic to reason about this issue. \emph{Monotonic} programs---e.g., operators like selection, projection and join---can be implemented by streaming algorithms that incrementally produce output elements as they receive input elements; the final order or contents of the input cannot cause any output to be ``revoked'' once it is generated.  
+\emph{Non-monotonic} programs---e.g., grouping/aggregation or anti-join operators---require blocking algorithms that do not produce any output until they have received a complete logical subset of the input tuples.  For example, aggregation queries need to receive entire ``groups'', or in some cases the entire input set.\footnote{Formally, in a monotonic logic program any true statement continues to be true as new axioms---including new facts---are added to the program.}  
 
-\jmh{introduce monotonicity}
-Thinking about a query plan for a relational language, such as SQL or Datalog,
-we see that there are two types of operators.  A {\em monotonic} operator, such
-as a join, selection, or projection, can produce part of the final output
-immediately if the input tuples satisfy a certain condition.  In the case of a
-join, if the input tuples arrive on-line (i.e. over the network), we must
-materialize them in order to compute the full join.  A non-monotonic operator,
-such as an antijoin or aggregate, cannot produce any final output until it
-views some nontrivial subset of the input tuples -- possibly the entire set.
+The implications for distributed programming and delayed messaging are clear. Streaming algorithms produce useful output while tolerating delays.  By contrast, it is a truism of distributed procedures like elections that \emph{counting requires waiting}: non-monotonic, blocking operators like COUNT must wait for all their inputs, including stragglers, before producing a correct output.
+% ; the alternative is to risk generating outputs that may be prove to be inconsistent with the full input once it arrives.    For example, an antijoin may output a row incorrectly if it does not wait for all the input records; similarly a SUM may be incorrectly reported as below a threshhold if only a subset of the records are summed.  
 
-\jmh{distributed non-monotonicity requires waiting for the full set.  this is hard.}
-The key difference between distributing monotonic and non-monotonic operators
-is that a non-monotonic operator cannot produce output until it is sure it has
-seen the entire set of tuples it needs to see.  If a non-monotonic operator is
-allowed to prematurely produce output, it may report an incorrect result.  For
-example, a sum aggregate over a set may produce an incorrect result if only a
-subset of the tuples are summed, and an antijoin may output an incorrect row if
-it does not examine all the input tuples.
-
-\jmh{the solution to ``waiting'' is coordination, and its not needed otherwise.}
-If correctness is desired, non-monotonic operators must have {\em coordination
-logic} -- code that transmits auxilliary information about set completeness,
-that the non-monotonic operator uses to produce a correct result.  The
-non-monotonic operator orders the production of the result only after it has
-examined the complete set.  
-% Our language, {\em Bud}, omits coordination logic
+``Waiting'' is specified in a program via additional \emph{coordination logic}:  code that (a) computes and transmits auxiliary information enabling the recipient to determine when a set has completely arrived across the network, and (b) postpones production of results until after that determination is made.  Typical example mechanisms for coordination include sequence numbering, counters, and consensus protocols like Paxos or Two-Phase Commit
+% Our language, \emph{Bud}, omits coordination logic
 % from non-monotonic operators by default, and forces the user to specify it.
 % This is because badly-designed coordination logic can be a performance penalty,
 % and this seems like a hard problem for an optimizer to approximate (an exact
 % solution is undecidable).  In any case, this is the hard component of
 % distributed systems programming, so a language should focus programmer effort
 % on it.  
-Monotonic operators require no coordination logic.
+%Monotonic operators require no coordination logic.
 
-\jmh{if we start by default without coordination, we can do simple syntax checks for non-monotonicity}
-A simple conservative check for monotonicity of a program is syntactic -- if a
-program contains any symbols that are known to correspond to non-monotonic
-operators (such as "NOT", and certain aggregate symbols "MIN >", "MAX <"), then
-it is non-monotonic, otherwise it is monotonic.  Note it is interesting that
-"MIN <" and "MAX >" are monotonic \wrm{and this somehow corresponds to escrow
-transactions, though i don't see the connection...}  A more advanced
-whole-program static analysis would take into account whether any non-monotonic
-symbols correspond to portions of the query plan that are ever used
-(satisfiable) -- also undecidable, but conservative tests with constraint
-propagation are possible.  It may also be useful to understand which portions
-of the program's execution or output may be affected by network
-non-determinism, and which are deterministic.  In this case, a static or
-runtime analysis could perform {\em taint tracking} of network nondeterminism.
-%Intuitively, a tuple is tainted if it is the transitive result of some
-%non-monotonic operator.
+Interestingly, coordination protocols involve calculating whether a quorum of participants has responded appropriately.  For example, Paxos requires waiting for a majority to agree, while Two-Phase Commit requires waiting for unanimous agreement (or a veto).  Hence we say that {\em waiting requires counting}; the converse of our earlier truism.  Put together, these form is the crux of what we call the {\em CALM Principle}: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs guarantee eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires computation to ``wait'' until inputs can be guaranteed to be complete.
 
-\jmh{these syntax checks can be isolated within the program, and resolved via coordination logic}
-This monotonicity analysis can also be used to identify the non-monotonic
-pieces in the program.  The output of this analysis is an overestimate of the
-loci in the program that require coordination in order to ensure consistency.
-We call the loci suggested by this analysis the program's {\em points of
-order}.  The user can augment the program with appropriate coordination logic.
-In the general case, it is undecidable to verify whether they have done this
-correctly.  In fact, the introduction of coordination logic may involve
-additional non-monotonic operators (for example, two-phase commit has a
-non-monotonic "COUNT users = COUNT messages" statement).  There are a variety
-of possible solutions to this problem.  One option is for expert programmers
-(i.e. us) to encapsulate a suite of coordination protocols in a library, and
-manually verify the correctness of each protocol.  Another option is to develop
-various static analyses in the style of stratification tests for Datalog.
-\wrm{not sure how we can introduce additional detail here without pulling in
-tons of knowledge dependencies} 
+Coordination logic is to be avoided when possible---i.e. for monotonic programs---since it adds complexity and message delays to distributed code.  In logic languages, conservative tests for monotonicity are well understood. A simple syntactic check is often sufficient: if the program does not contain any of the symbols in the language that correspond to non-monotonic operators (e.g. ``NOT'', or aggregate symbols), then it is monotonic.  These conservative checks can be refined further to consider semantics of predicates in the language: for example the expression ``MIN(x) $< 100$'' is monotonic despite containing an aggregate, by virtue of the semantics of ``MIN'' and $<$: once a subset $S$ satisfies this test, any superset $T$ of $S$ will also satisfy it.  Further refinements along these lines are possible, to increase the number of cases when monotonicity can be detected.
+%More advanced whole-program analyses can take into account whether possibly non-monotonic conclusions can ever be consistent with other checks in the program; while undecidable in general, conservative tests with constraint propagation are often possible.  
+% 
+% It may also be useful to understand which portions
+% of the program's execution or output may be affected by network
+% non-determinism, and which are deterministic.  In this case, a static or
+% runtime analysis could perform \emph{taint tracking} of network nondeterminism.
+% %Intuitively, a tuple is tainted if it is the transitive result of some
+% %non-monotonic operator.
+
+In cases where an analysis cannot guarantee monotonicity of a whole program, it can instead provide a conservative assessment of the specific points in the program where coordination may be required to ensure consistency.  For example, a shallow syntactic analysis could flag all non-monotonic predicates in a program (e.g., ``NOT IN'' tests, or predicates with aggregate values as input).
+We call the loci suggested by this analysis the program's \emph{points of
+order}. A program with non-monotonicity can be made consistent by including coordination logic at its points of order.  
+
+The observant reader will note that adding coordination logic to alleviate points of order in a program will instead introduce new points of order in the program: as we said above, coordination logic is itself non-monotonic.  To avoid this problem, annotations on the coordination logic can inform the analysis tool to (a) skip the coordination logic in its analysis, and (b) to skip the point of order that the coordination logic handles.  
+
+% 
+% In the general case, it is undecidable to verify whether they have done this
+% correctly.  In fact, the introduction of coordination logic may involve
+% additional non-monotonic operators (for example, two-phase commit has a
+% non-monotonic "COUNT users = COUNT messages" statement).  There are a variety
+% of possible solutions to this problem.  One option is for expert programmers
+% (i.e. us) to encapsulate a suite of coordination protocols in a library, and
+% manually verify the correctness of each protocol.  Another option is to develop
+% various static analyses in the style of stratification tests for Datalog.
+% \wrm{not sure how we can introduce additional detail here without pulling in
+% tons of knowledge dependencies} 
 
 \wrm{addressed this} \jmh{At minimum, we should assert formal proof in one
 direction: purely Monotonic deduction can be done without coordination.  Start
