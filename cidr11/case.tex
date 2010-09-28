@@ -159,6 +159,18 @@ ReliableDelivery or, better, QuorumDeliver instead of BestEffortDelivery, and re
 The simplest (and least performant) approach is to require unanimous quorum,
 approximating ``eager replication''~\cite{dangers} via two-phase commit.
 
+As one would imagine and we will demonstrate, \paa{eg, in the demo, or maybe in another picture}
+eager replication substantially decreases system throughput.  One is tempted
+to argue that we can simply use best-effort, asynchronous delivery,
+because although we use an ordered data structure (an array) and nonmonotonic
+operations (updating values in the store), the order of operations on the array
+affects only the ordering of its contents, not the set of elements it contains.
+
+Thus we might argue that the shopping cart application is eventually consistent
+when asynchronously updated.  Unfortunately, such informal reasoning can
+hide serious bugs.  Consider what happens if a delete update is received
+before the addition it was intended to cancel.
+
 
 \subsection{Disorderly Cart}
 
@@ -209,7 +221,13 @@ approximating ``eager replication''~\cite{dangers} via two-phase commit.
 \end{figure}
 
 
-Figure~\ref{fig:pdg-disorderly} shows the ``disorderly'' cart and analysis.
+Figure~\ref{fig:pdg-disorderly} presents a ``disorderly'' cart implementation
+and analysis.  In this top-down rewrite, we model the state shopping cart 
+as the set of changes in each session, rather than as a mutable cell in a
+key-value abstraction.  By doing so we enable our analysis to recognize the
+inherent commutativity of basic set operations, and flag most of the 
+program logic as consistent without coordination.
+
 Dotted lines indicate that 
 \emph{action} (owned by the server) is derived from \emph{client\_action} 
 (owned by the client) via an asynchronous message, and that \emph{action} 
@@ -223,6 +241,13 @@ The analysis does indicate a point of order at checkout, when a \emph{checkout}
 message is joined with an aggregate over the set of updates.  While the 
 accumulation of state has been monotonic, summarization of the cart state
 requires us to assume (or prove) that there will be no further updates.
+Consider a checkout message and a final update message racing from a client
+to one of the replicas: the order in which they arrive will surely affect
+the contents of the response message.  
 
+Unlike in our previous implementation, which discovered a point of order at
+every update and replication step, the current analysis has indicated
+a point of order at checkout.  We need only coordinate once per session to
+ensure that the response to the client is deterministic.
 
 
