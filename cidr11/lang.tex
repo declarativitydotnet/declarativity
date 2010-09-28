@@ -49,13 +49,55 @@ Bloom programs are bundles of declarative statements akin to SQL views or Datalo
 
 \noindent\textbf{State in Bloom}\\
 \noindent
-Bloom programs manage state using four collection types described in Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  Similar to other object-relational ADT schemes a la Postgres~\cite{postgres-adt}, column types can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.
+Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 3 of Figure~\ref{fig:queue} shows a Bloom state definition for a table with 2 columns \texttt{id} and \texttt{payload}; \texttt{id} is the primary key.  In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  Similar to other object-relational ADT schemes a la Postgres~\cite{postgres-adt}, column types can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
 
-Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages or tuples in view definitions.  The contents of a \textbf{table} persist across consecutive timesteps until that persistence is interrupted via a Bloom statement (containing the \texttt{$<$-} operator described below). Although there are proper declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient and not misleading to think operationally as follows: Bloom \textbf{scratch} collections are ``emptied'' before each timestep; Bloom \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator (like SQL's \texttt{DELETE FROM}) represents batch ``deletion'' before the beginning of the next timestep.
+Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages or tuples in view definitions.  The contents of a \textbf{table} persist across consecutive timesteps until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below. Although there are proper declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient and not misleading to think operationally as follows: Bloom \textbf{scratch} collections are ``emptied'' before each timestep; Bloom \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator (like SQL's \texttt{DELETE FROM}) represents batch ``deletion'' before the beginning of the next timestep.
 
-The facts of the ``real world'', including message delays and clock events that mark the passage of real time, are captured logically in Bloom via the specification of \textbf{channel} and \textbf{periodic} collections: \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
+The facts of the ``real world'', including message delays and clock events that mark the passage of real time, are captured logically in Bloom via the specification of \textbf{channel} and \textbf{periodic} collections; these are \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
 % From a semantic point of view, all real-world non-determinism is captured here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep in which each fact eventually ``appears''.  
-Again, the paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that ``failure'' of nodes or communication is captured here; it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient and reasonable to think operationally as follows: facts in a \textbf{channel} are delivered via a best-effort unordered network protocol like UDP; the specification of a \textbf{periodic} instructs the runtime to ``inject'' facts at regular intervals to ``drive'' futher derivations.
+Again, the paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that ``failure'' of nodes or communication is captured here; it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient and reasonable to think operationally as follows: facts in a \textbf{channel} are delivered to the address in their location specifier via a best-effort unordered network protocol like UDP; the specification of a \textbf{periodic} instructs the runtime to ``inject'' facts at regular intervals to ``drive'' futher derivations.
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{verbatim}
+ 1      class SimplePQueue < Bud
+ 2      def state
+ 3        table :q, ['id'], ['payload']
+ 4        table :min_id, ['id']
+ 5        table :log, ['id'], ['payload']
+ 6        scratch :newmins, ['id'], ['payload']
+ 7        channel :output, 0, ['addr', 'id'], ['payload']
+ 8      end
+ 9    
+10      declare
+11      def dequeue
+12        # find min_id value, agg across all items (group=nil)
+13        min_id <= q.group(nil, min(q.id))
+14    
+15        # find the q items with min_id via natural join
+16        mins = natjoin [q, min_id] {|q, m| q }
+17    
+18        # idempotence: ignore items with id previously logged
+19        newmins <= mins.map do |q| 
+20          q unless log.map{|p| p.id}.include? q.id
+21        end
+22
+23        # in the next timestep, add newmins to log, delete from q
+24        log <+ newmins.map{|h| [h.id]}
+25        q <- mins.map {|q| q}
+26      
+27        # ship the min items via the output channel
+28        output <+ mins.map{|q| ['192.168.1.1:12345'] + q}
+29      end
+30    end
+\end{verbatim}
+\vspace{-10pt}
+\caption{Example Bloom code for dequeuing items from a priority queue.}
+\label{fig:queue}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
 
 \textbf{Bloom Statements}\\
 \noindent
@@ -66,18 +108,21 @@ Statements in Bloom are akin to rules in Datalog, or views in SQL.  They consist
 In the Bud prototype, both sides of the operator are instances of (a subclass of) a Ruby class called \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable} module supporting typical collection methods.  Figure~\ref{tab:bloom} describes the four operators that can be used to define the contents of the left-hand side (lhs) in terms of the right-hand side (rhs).
 
 As in Datalog or SQL, the lhs of a statement may be referenced recursively in its rhs, or recursion can be defined mutually across statements.  The rhs typically includes methods of \texttt{BudCollection} objects.  
-Most common is the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to specify scalar operations on all tuples of a \texttt{BudCollection}, including relational selection and projection.  \jmh{Refer to a line in an example.}  \texttt{BudCollection} defines a \texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates. \jmh{Refer to a line in an example.}  User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. \jmh{Refer to a line in an example}.
+Most common is the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to specify scalar operations on all tuples of a \texttt{BudCollection}, including relational selection and projection. For example, line 24 of Figure~\ref{fig:queue} projects the \texttt{newmins} collection to its \texttt{id} field.  \texttt{BudCollection} defines a \texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates; line 13 of Figure~\ref{fig:queue} provides an example computing the minimum \texttt{id} across all tuples in collection \texttt{q}.  User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. Line 16 of Figure~\ref{fig:queue} gives an example of the natural join (equijoin on matching column names, in this case \texttt{id}.)
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
 
-Programmers declare Bloom statements within methods of a Bud subclass definition that are flagged with the \texttt{declare} modifier.  \jmh{Refer to a line in an example.}  The semantics of a Bloom program are defined by the union of all the \texttt{declare} methods; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
+Programmers declare Bloom statements within methods of a Bud subclass definition that are flagged with the \texttt{declare} modifier (Figure~\ref{fig:queue}, line 10).  The order of statements is immaterial.  The semantics of a Bloom program are defined by the union of all the \texttt{declare} methods; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
-The constructs above form the core of the Bloom language; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{christospaper}.  Bud also includes some additional convenience methods that provide macros over these methods.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Bud classes, like any Ruby classes, can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances (via Ruby metaprogramming), allowing for selective rewriting of encapsulated bundles of statements.  We have found that the combination of Bloom's logic programming with Ruby's Object-Oriented inheritance and overriding has been quite natural.
+The constructs above form the core of the Bloom language; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{Papadimitriou85}.  
+\jmh{Actually no ... papadimitriou85 ``a note on the expressive power of prolog'' shows that Datalog neg with finite successor is exactly PTIME.  If we can't get the right ref for this assertion, just remove it.}
+Bud also includes some additional convenience methods that provide macros over these methods.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Bud classes, like any Ruby classes, can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances (via Ruby metaprogramming), allowing for selective rewriting of encapsulated bundles of statements.  We have found that the combination of Bloom's logic programming with Ruby's Object-Oriented inheritance and overriding has been quite natural.
 
-Conventional wisdom in certain quarters says that rule-based languages become untenable for large programs that evolve over time, since the interactions among rules becomes too difficult to understand.  We believe this understandable concern is an artifact of the immaturity of many of those early rule languages, which tried to paper over important imperative aspects of their semantics.  In fact, we demonstrate below that the pure logic-programming roots of Bloom allow programmers to reason about important issues in a much deeper way than traditional imperative languages.
+Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions.  In fact, we demonstrate below that the pure logic-programming roots of Bloom can in some cases allow programmers to reason about program interactions in a much deeper way than traditional imperative languages.
 
 \textbf{Bud Implementation}\\
-Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud currently consists of under 1400 lines of Ruby code, developed in approximately two programmer-months of part-time effort.\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for event handling (\texttt{EventMachine}), marshalling (\texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
+Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud currently consists of under 1400 lines of Ruby code, developed in approximately two programmer-months of part-time effort.
+%\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
 
 \jmh{The next two paragraphs could be chopped}
 A Bud program is just a Ruby class definition.  To make it operational, a small amount of imperative Ruby code is needed to instantiate an instance of the class and invoke the Bud \texttt{run} method.  This imperative code is then executed on as many machines as desired; messages targeted at those nodes are handled according to the Bud specification.  In addition to the \texttt{run} method, the Bud class also has a \texttt{tickle} method that can be used to force evaluation of a single timestep; this is useful for debugging Bloom code with standard Ruby debugging tools, or for executing a Bud specification that is intended as a ``one-shot'' query.
