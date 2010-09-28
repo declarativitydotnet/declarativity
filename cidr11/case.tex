@@ -20,38 +20,49 @@
 %%Second, we implement a ``disorderly'' cart which accumulates updates in a 
 %%set-wise fashion and describes how to combine the updates into a final result.
 
-Figure~\ref{fig:pdg-destructive} shows a Bud implementation of a shopping
-cart built on a key-value store abstraction.  Each cart (identified by a
-session identifier) is associated with a key, whose value is a Ruby array
-representing the set of items contained in the cart at any time.  The 
-scratch table \emph{kvstore} is defined by the KeyValueStore module (not shown), 
-which the shopping cart extends via Ruby inheritance, and is used in a manner
-analogous to the \emph{put} function for hash tables.  
+\jmh{Blah blah intro.}
 
+We begin with a shopping
+cart built on a key-value store abstraction.  Each cart is identified by a
+session identifier key, whose value is a Ruby array
+representing the set of items contained in the cart at any time.  Addition
+and deletion actions to a cart result in ``destructive'' overwrites,
+replacing the value associated with the key with a new array reflecting
+the additions.  Deletion from an empty cart is ignored.
+
+\jmh{Not clear where distribution is: is kvstore replicated?  Is action\_msg a channel?}
+Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.
+The 
+scratch table \texttt{kvstore} is defined by the KeyValueStore module (XXX lines of Bloom not shown here), 
+which the shopping cart extends via Ruby inheritance; it is used in a manner
+analogous to the \emph{put} function for hash tables.  
+\jmh{Line numbers seem messed up.}
 Cart updates are transmitted from the client in line 28,
-thereafter appearing in the \emph{action\_msg} collection at a server replica.
+thereafter appearing in the \texttt{action\_msg} collection at a server replica.
 For each such arriving tuple,
-line 2 probes the \emph{bigtable} collection for a matching
-session.  If found, lines 2-6 are evaluated; otherwise the join conditions
-in lines 10-11 will be met and lines 12-18 will instead be evaluated.
-In the first case, both the key and a singleton array value must be created.
-In the second, the old copy of the array must be modified to produce a new 
-value, which replaces the original array stored under the session key.
-Finally, when a checkout message is received, value in \emph{bigtable}
+line 2 probes the \texttt{bigtable} collection for a matching
+session.  If found (i.e. the cart did not previously exist), lines 2-6 are evaluated, inserting
+the key with an appropriately initialized array. 
+\jmh{I think you mean if NOT found?  line 1 said ``unless'', not ``if''!}
+Otherwise the join conditions
+in lines 10-11 will be met and lines 12-18 will instead be evaluated, replacing the array
+with an appropriately-modified new value.
+Finally, when a checkout message is received, the value in \texttt{bigtable}
 associated with the given session is extracted (via the join on lines 22-23)
 and sent back to the client.
 
 Figure~\ref{fig:} shows an alternative shopping cart implementation, in which
 updates are accumulated in a disorderly fashion and summarized only at 
 checkout.  Line 0 appends all client updates to the persistent table 
-\emph{cart\_action}.  Lines 2-3 define \emph{action\_cnt} as an aggregate
-over \emph{cart\_action}, in the style of an SQL group-by statement: for
-each item associated with a cart, we could the number of times it was added
-or deleted.  Lines 11-16 define the collection \emph{status} as a 3-way
-join between the \emph{checkout} message and two copies of 
-\emph{action\_cnt} (one corresponding to additions and one to deletions),
-and for each item, compute it quantity as the different of the two counts
-in line 14.  A \emph{response} message containing the quantity is then sent 
+\texttt{cart\_action}.  Lines 2-3 define \texttt{action\_cnt} as an aggregate
+over \texttt{cart\_action}, in the style of an SQL group-by statement: for
+each item associated with a cart, we separately count the number of times it was added and the number of times it was deleted.
+\jmh{what's up with lines 5-9?  initialize number of deletions to 0...to avoid failed join of additions with no deletions, right?  Maybe less confusing to do another rule for status that antijoins additions to deletions.  Or we could hack up an outerjoin syntax.}
+Lines 11-16 define the collection \texttt{status} as a 3-way
+join between the \texttt{checkout} message and two copies of 
+\texttt{action\_cnt} (one corresponding to additions and one to deletions),
+and for each item, compute its final quantity in the cart as the difference of the two counts
+in line 14.  A \texttt{response} message containing the quantity is then sent 
 to the client in lines 18-22.  Because the disorderly implementation does not
 use a separate storage system, it must replicate its own state to replicas 
 via multicast (lines 24-26).
@@ -62,10 +73,10 @@ via multicast (lines 24-26).
 \begin{verbatim}
 
 0: kvstore <= action_msg.map do |a|
-1:   unless bigtable.map{|b| b.key}.include? a.session
-2:     if a.action == "A"
+1:   if not bigtable.map{|b| b.key}.include? a.session
+2:     if a.action == "Add"
 3:       [a.server, a.client, a.session, a.reqid, [a.item]]
-4:     elsif a.action == "D"
+4:     elsif a.action == "Del"
 5:       [a.server, a.client, a.session, a.reqid, []]
 6:     end
 7:   end
@@ -73,9 +84,9 @@ via multicast (lines 24-26).
 9: 
 10: kvstore <= join([bigtable, action_msg]).map do |b, a|
 11:   if b.key == a.session
-12:     if a.action == "A"
+12:     if a.action == "Add"
 13:       [a.server, a.client, a.session, a.reqid, b.value.push(a.item)]
-14:     elsif a.action == "D"
+14:     elsif a.action == "Del"
 15:       copy = b.value.clone;
 16:       copy.delete_at(copy.index(a.item));
 17:       [a.server, a.client, a.session, a.reqid, copy]
@@ -107,47 +118,44 @@ via multicast (lines 24-26).
 
 For each cart, we apply whole-program analysis techniques to discover points of 
 order.  The Bud interpreter automatically generates
-a graphical representation of the dependency graph of collections 
+a graphical representation of the dependency graph of collections through rules,
 (and hence the 
 flow of tuples) as a staged dataflow.  Each node in the graph is either
-a collection or a cluster of collections (as described below).  
-Asynchronous messaging
-is indicated by a dashed line in the graph, while edges that involve 
-nonmonotonic logic are marked with a $\lnot$.  Edges that involve a temporal 
-edge are marked with a $+$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into temporal clusters.  
+a collection or a cluster of collections (as described below).  A directed edge from node $A$ to node $B$ captures the fact that $B$ is in the lhs of a Bloom statement with $R$ in the rhs (or in a join expression in the rhs).  Edges are annotated based on the operators and lhs types in the rules.  Rules that involve synchronous timesteps---i.e. a \texttt{$<$+} operator with a {\bf table} lhs---are marked with a $+$.  Rules that involve asynchronous messaging---i.e., a \texttt{$<+$} operators with a {\bf channel lhs}---are indicated by a dashed line.  Nomonotonic rhs predicates result in edges marked with a $\lnot$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into ``temporal clusters'', \jmh{capturing what? the fact that they must recurse over multiple timesteps?}
 %%Individual monotonic components 
 %%(or strata) are surrounded by a dotted rectangle.  A point of order occurs
 %%wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
 Points of order are indicated by lightning bolts.
 
-To resolve a point of order, the programmer may add coordination logic.
-Instead of reanalyzing the augmented program, we associate coordination code
-with an annotation that can
-be interpreted as a contract about a point of order.  Such contracts will
-typically guarantee an ordering over arriving tuples, or guarantee a 
-a barrier-passing condition (e.g., indicating that there will be no more tuples).
+To resolve a point of order, the programmer may add coordination logic, which typically ensures  ordered delivered tuples, and/or guarantees that a boundary condition has been irrevocably crossed (e.g., there will be no more tuples).
+% Instead of reanalyzing the augmented program, we associate coordination code
+% with an annotation that can
+% be interpreted as a contract about a point of order.  Such contracts will
+% typically guarantee an ordering over arriving tuples, or guarantee a 
+% a barrier-passing condition (e.g., indicating that there will be no more tuples).
 
-It should be intuitively obvious that the ``destructive'' cart based on
-array mutation is nonmonotonic and potentially sensitive to the order
+\jmh{the subsequent discussion should be pared down and made simple.  updates are non-monotonic.  we see it in the points of order.  If we resolve using coordination a la 2PC, we get a round of coord for every client action.  This is the kind of thing Amazon didn't like for availability.  However, if we examine the disorderly figure, we see that the point of order is at checkout only, which is what Amazon wanted.}
+Intuitively, the ``destructive'' cart based on
+array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 of its inputs.
-And indeed, the graph in Figure~\ref{fig:pdf-destructive}
+Indeed, the graph in Figure~\ref{fig:pdf-destructive}
 indicates that there are
-points of order between \emph{iaction} and the temporal cluster
-and between the temporal cluster and itself.  This means that the arrival 
-timing and order of both client updates (via \emph{iaction}) and
+points of order between \texttt{iaction} and the temporal cluster,
+and between the temporal cluster and itself.  
+\jmh{We didn't see iaction in the example code; deal with that.}
+This means that the arrival 
+timing and order of both client updates (via \texttt{iaction}) and
 server replication (via the meta-edge in the temporal cycle from 
-\emph{kvstore} to itself) may result in different
-end results.  Although there is no syntactically obvious nonmonotonicity in the destructive
-cart code as shown, the underlying key-value store uses updateable state
-to implement the storage of opaque, mutable values of 
-keys~\footnote{Our full-length paper expands the SCC to analyze the
+\texttt{kvstore} to itself) may produce different
+end results \jmh{what is different from what?}.  Although there is no syntactically obvious non-monotonicity in the destructive
+cart code as shown, the underlying key-value store uses the \texttt{$<$-} operator to model updateable state, which results in non-monotonicity\footnote{Our full-length paper expands the SCC to analyze the
 key-value store in detail}, 
 and our global analysis detects this.
 To ensure a consistent final state across all replicas, we may require coordination
 between client and server at every update to the cart, and between the 
 server and all replicas at each update.  
 
-We can easily achieve coordination without modfying the cart implementation
+We can easily achieve coordination without modifying the cart implementation
 by redefining the key-value store to extend
 a reliable or quorum-based delivery module instead of the best-effort module
 that the basic key-value store extends, and require acknowledgement from a server or a quorum of servers, respectively.
@@ -211,6 +219,7 @@ before the addition it was intended to cancel.
 \end{figure}
 
 
+\jmh{prune the below}
 Figure~\ref{fig:pdg-disorderly} presents a ``disorderly'' cart implementation
 and analysis.  In this top-down rewrite, we model the state shopping cart 
 as the set of changes in each session, rather than as a mutable cell in a
@@ -219,15 +228,15 @@ inherent commutativity of basic set operations, and flag most of the
 program logic as consistent without coordination.
 
 Dotted lines indicate that 
-\emph{action} (owned by the server) is derived from \emph{client\_action} 
-(owned by the client) via an asynchronous message, and that \emph{action} 
+\texttt{action} (owned by the server) is derived from \texttt{client\_action} 
+(owned by the client) via an asynchronous message, and that \texttt{action} 
 derives itself via messages when it is replicated.  However, the analysis
 shows that because these derivations are strictly monotonic, no points of
 order are crossed.  Hence, clients may send and servers may replicate 
 updates without any coordination: regardless of timing and ordering, the end
 result will be the same.
 
-The analysis does indicate a point of order at checkout, when a \emph{checkout}
+The analysis does indicate a point of order at checkout, when a \texttt{checkout}
 message is joined with an aggregate over the set of updates.  While the 
 accumulation of state has been monotonic, summarization of the cart state
 requires us to assume (or prove) that there will be no further updates.
