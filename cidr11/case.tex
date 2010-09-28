@@ -224,7 +224,9 @@ before the addition it was intended to cancel.
 \end{figure}
 
 
-Analysis of the disorderly figure shows dotted lines indicating that 
+Turning our attention to the disorderly figure,
+\begin{comment}
+ shows dotted lines indicating that 
 \texttt{action\_msg} (owned by the server) is derived from \texttt{client\_action} 
 (owned by the client) via an asynchronous message, and that \texttt{action\_msg} 
 derives itself via messages when it is replicated.  However, the analysis
@@ -240,10 +242,18 @@ requires us to assume (or prove) that there will be no further updates.
 Consider a checkout message and a final update message racing from a client
 to one of the replicas: the order in which they arrive will surely affect
 the contents of the response message.  
-
-Unlike in our previous implementation, which discovered a point of order at
-every update and replication step, the current analysis has indicated
-a point of order at checkout.  We need only coordinate once per session to
+\end{comment}
+we see that communication (via \texttt{action\_msg}) beween client and server
+and between servers and replicas crosses no points of order, so all such
+communication will converge to the same final state without coordination.
+There is, however, a point of order at checkout, when a \texttt{checkout}
+message is joined with an aggregate over the set of updates.  While the 
+accumulation of state has been monotonic, summarization of the cart state
+requires us to assume (or prove) that there will be no further updates.
+Consider a checkout message and a final update message racing from a client
+to one of the replicas: the order in which they arrive will surely affect
+the contents of the response message.  
+We need only coordinate once per session to
 ensure that the response to the client is deterministic.
 
 \paa{notes}
