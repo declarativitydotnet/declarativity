@@ -175,11 +175,10 @@ before the addition it was intended to cancel.
 20:     [c.client, c.server, s.session, s.item, s.cnt]
 21:   end
 22: end
-
-
-action <+ join([action, member]).map do |a, m|
-  [m.player, a.server, a.session, a.item, a.action, a.reqid]
-end
+23: 
+24: action <+ join([action, member]).map do |a, m|
+25:   [m.player, a.server, a.session, a.item, a.action, a.reqid]
+26: end
 
 
 \end{verbatim}
