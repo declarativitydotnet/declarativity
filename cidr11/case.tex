@@ -22,36 +22,40 @@
 
 \jmh{Blah blah intro.}
 
-We begin with a shopping
-cart built on a key-value store abstraction.  Each cart is a pair \texttt{[key,value]}, where \texttt{key} is a unique 
-session identifier, and \texttt{value} is a Ruby array
-representing the set of items contained in the cart at any time.  Addition
-and deletion actions to a cart result in ``destructive'' overwrites,
-replacing the value associated with the key with a new array reflecting
-the additions.  Deletion from an empty cart is ignored. 
+We begin with a shopping cart built on a key-value store abstraction.  Each
+cart is a pair \texttt{[key,value]}, where \texttt{key} is a unique session
+identifier, and \texttt{value} is a Ruby array representing the set of items
+contained in the cart at any time.  Addition and deletion actions to a cart
+result in ``destructive'' overwrites, replacing the value associated with the
+key with a new array reflecting the additions.  Deletion from an empty cart
+\wrm{, as well as deletion of a non-existent element,} is ignored. 
 
-Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.
-The 
-\textbf{scratch} \texttt{kvstore} is defined by the KeyValueStore module (XXX lines of Bloom not shown here), 
-which the shopping cart extends via inheritance.
+Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
+\textbf{scratch} \texttt{kvstore} is defined by the KeyValueStore module (XXX
+lines of Bloom not shown here), which the shopping cart extends via
+inheritance.
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
-The set of shopping carts, represented by the persistent \textbf{table} \texttt{bigtable}, is kept 
-consistent across replicas by shipping \texttt{kvstore} tuples to other servers.
+The set of shopping carts, represented by the persistent \textbf{table}
+\texttt{bigtable}, is 
+%kept  consistent across replicas
+replicated by shipping \texttt{kvstore} tuples to other servers.
 %%\jmh{Line numbers seem messed up.}
 
-We begin describing the logic from the outside:
-cart updates are transmitted from the client in line 28,
-thereafter appearing in the \texttt{action\_msg} \textbf{channel} at a server replica.
-\jmh{which server replica?  all server replicas??}
-For each such arriving tuple,
-line 2 probes the \texttt{bigtable} collection for a matching
-session.  If none is found (i.e., the cart did not previously exist), lines 2-6 are evaluated, generating
-the key with an appropriately initialized array. 
-Otherwise the join conditions
-in lines 10-11 will be met and lines 12-18 will instead be evaluated, ``replacing'' the value at the next timestep with an appropriately-modified new value.
-Finally, when a checkout message is received, the value in \texttt{bigtable}
-associated with the given session is extracted (via the join on lines 22-23)
-and sent back to the client.
+%We begin describing the logic from the outside \wrm{outside of what?}:
+
+The client transmits \texttt{client\_action}---corresponding to cart
+updates---over the \texttt{action\_msg} \textbf{channel} to a server replica.
+\jmh{which server replica?  all server replicas??} For each such arriving
+tuple, line 2 probes the \texttt{bigtable} collection for a matching session.
+If none is found (i.e., this is the first update for a new session), then lines
+2-6 generate an entry for the new session in \texttt{bigtable}, and
+appropriately initialize the array corresponding to the shopping cart contents.
+Otherwise, the join conditions in lines 10-11 will be met and lines 12-18 will
+instead be evaluated, ``replacing'' the array at the next timestep with a new
+version.  Finally, when a server replica receives a \texttt{checkout\_msg}, the
+array representing the cart contents in \texttt{bigtable} associated with the
+given session is extracted (via the join on lines 22-23) and sent back to the
+client.
 
 Figure~\ref{fig:} shows an alternative shopping cart implementation, in which
 updates are accumulated in a disorderly fashion and summarized only at 
