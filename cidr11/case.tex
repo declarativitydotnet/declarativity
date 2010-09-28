@@ -265,3 +265,6 @@ once per session, and is a more efficient coordination point than state update a
 which occur repeatedly -- this is not unlike synchronizing on read rather than write 
 in write-dominant systems generally.  Our analysis assisted us by highlighting the few locations where program correctness may depend upon costly synchronization, which may
 result in decreased throughput and availability.  
+
+\jmh{Challenge text that was kicking around and needs to be addressed here: we don't really say how we discourage a programmer from a destructive implementation, or help them migrate from that implementation to a better one.  Ideally we'd find ways to ``push back'' coordination requirements to local nodes and/or points of the program that don't have latency constraints.}
+
