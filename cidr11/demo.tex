@@ -1,0 +1,28 @@
+\clearpage
+\section{Demo Proposal}
+\label{sec:demo}
+
+In our demonstration, we will build the destructive and disorerly shopping
+carts, first without coordination.  We will run each cart on a cluster of
+laptops interconnected via wi-fi.  One laptop will serve as the client,
+submitting requests to add or remove items from the cart.  The balance of the
+laptops will function as server replicas.  The client will dispatch each
+request to a random server replica.  For demonstration purposes, we will
+interpose a demonic message delivery module, which operates at each server
+replica, and delivers messages in a random bad order (for example, deletions
+before insertions, and checkouts before all insertions and deletions).
+
+We will display a trace of the cart's execution in real time by displaying the
+messages sent by the client, and received by each server replica, in the order
+they are sent or received, and explain the problems associated with each order.
+We will run our points-of-order analysis, and show how the analysis captures
+the message ordering problems we identified by experimentation in the
+uncoordinated code.
+
+We will add coordination to the destructive and disorderly carts and run the
+coordinated implementation on our cluster of laptops.  We will benchmark the
+coordinated disorderly and destructive carts, and note that the increased
+coordination in the destructive cart reduces its performance relative to the
+disorderly cart.  This effect should be quite visible given the latency and
+jitter of the congested wi-fi spectrum in the conference room, which would
+approximate the performance of a globally distributed cloud network.
