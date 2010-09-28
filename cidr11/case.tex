@@ -130,23 +130,37 @@ storage system, it must explicitly replicate its state (lines 24-26).
 
 \subsection{Analysis}
 
+%For each cart, we apply whole-program analysis techniques to discover points
+%of order.
+The Bud interpreter automatically identifies, and generates a graphical
+representation of, dependencies between collections in a program
+(Figures~\ref{fig:pdg-destructive-analysis, fig:pdg-disorderly-analysis}).
+%The Bud interpreter automatically generates a graphical representation of the
+%dependency graph of collections through rules, (and hence the flow of tuples)
+%as a staged dataflow.
+Each node in the graph is either a collection or a cluster of collections (as
+described below); \texttt{table}s are shown as rectangles, while ephemeral
+collections (\texttt{scratch} and \texttt{channel}) are depicted as ovals.  A
+directed edge from node $A$ to node $B$ indicates that that $B$ appears in the
+LHS of a Bloom rule with $A$ referenced directly, or through a join expression,
+in the RHS.  An edge is annotated based on the operator symbol in the rule, and
+the type of $B$.  If the rule is inductive---i.e. has the \texttt{$<$+}
+operator and a {\bf table} LHS---then the edge is marked with a $+$.  If the
+rule is asynchronous---i.e., a rule with the \texttt{$<+$} operator and a {\bf
+channel} LHS---then the edge is a dashed line.  If the rule involves
+aggregation or negation over $A$, then the edge is marked with a $\lnot$.
+%result in edges marked with a $\lnot$.
+Each strongly connected component with both a $\lnot$ and a $+$ edge is grouped
+into a ``temporal cluster'', represented by an octagon.
 
-For each cart, we apply whole-program analysis techniques to discover points of 
-order.  The Bud interpreter automatically generates
-a graphical representation of the dependency graph of collections through rules,
-(and hence the 
-flow of tuples) as a staged dataflow.  Each node in the graph is either
-a collection or a cluster of collections (as described below); \textbf{tables} are shown
-as rectangles, while ephemal collections (\textbf{scratch} and \textbf{channel}) are ovals.
-.  A directed edge from node $A$ to node $B$ captures the fact that $B$ is in the lhs of a Bloom statement with $R$ in the rhs (or in a join expression in the rhs).  Edges are annotated based on the operators and lhs types in the rules.  Rules that involve synchronous timesteps---i.e. a \texttt{$<$+} operator with a {\bf table} lhs---are marked with a $+$.  Rules that involve asynchronous messaging---i.e., a \texttt{$<+$} operators with a {\bf channel lhs}---are indicated by a dashed line.  Nonmonotonic rhs predicates result in edges marked with a $\lnot$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into ``temporal clusters'', 
 %%\jmh{capturing what? the fact that they must recurse over multiple timesteps?}
-collapsing the mutually dependent collections into a single node.  All edges
-incident to a temporal cluster, including the self-edge, are points of order,
-as are any negated edges.
+%collapsing the mutually dependent collections into a single node.
+All edges incident to a temporal cluster, including the self-edge, are points
+of order, as are any negated edges.
 %%Individual monotonic components 
 %%(or strata) are surrounded by a dotted rectangle.  A point of order occurs
 %%wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
-Points of order are indicated by edges with white circles.
+A points of order is indicated by an edge with a white circle.
 
 To resolve a point of order, the programmer may add coordination logic, which typically ensures  ordered delivered tuples, and/or guarantees that a boundary condition has been irrevocably crossed (e.g., there will be no more tuples).
 % Instead of reanalyzing the augmented program, we associate coordination code
