@@ -147,8 +147,8 @@ To resolve a point of order, the programmer may add coordination logic, which ty
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
 Although there is no syntactically obvious non-monotonicity in the destructive
-cart code as shown, the underlying key-value store uses the \texttt{$<$-} operator to model updateable state, which results in non-monotonicity\footnote{Our full-length paper expands the SCC to analyze the
-key-value store in detail}.
+cart code as shown, the underlying key-value store uses the \texttt{$<$-} operator to model updateable state, which results in non-monotonicity.\footnote{Our full-length paper expands the SCC to analyze the
+key-value store in detail.}
 The global analysis shown in Figure~\ref{fig:pdf-destructive}
 indicates that there are
 points of order between \texttt{action\_msg} and the temporal cluster,
