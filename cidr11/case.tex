@@ -14,13 +14,11 @@
 
 \end{comment}
 
-%%In this section, we implement two different styles of distributed shopping cart
-%%applications in Bud.  First, we implement a ``destructive,'' overwriting
-%%shopping cart application using a simple key-value store implemented in Bud.
-%%Second, we implement a ``disorderly'' cart which accumulates updates in a 
-%%set-wise fashion and describes how to combine the updates into a final result.
-
-\jmh{Blah blah intro.}
+In this section, we build two different styles of distributed shopping cart
+applications in Bud.  First, we implement a ``destructive,'' overwriting
+shopping cart application using a simple key-value store (also written in Bud).
+Second, we implement a ``disorderly'' cart which accumulates updates in a 
+set-wise fashion and describes how to combine the updates into a final result.
 
 We begin with a shopping cart built on a key-value store abstraction.  Each
 cart is a pair \texttt{[key,value]}, where \texttt{key} is a unique session
@@ -30,7 +28,7 @@ result in ``destructive'' overwrites, replacing the value associated with the
 key with a new array reflecting the additions.  Deletion from an empty cart
 \wrm{, as well as deletion of a non-existent element,} is ignored. 
 
-Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
+Figure~\ref{tab:pdg-destructive} shows the Bloom code for this design.  The
 \textbf{scratch} \texttt{kvstore} is defined by the KeyValueStore module (XXX
 lines of Bloom not shown here), which the shopping cart extends via
 inheritance.
@@ -44,8 +42,10 @@ replicated by shipping \texttt{kvstore} tuples to other servers.
 %We begin describing the logic from the outside \wrm{outside of what?}:
 
 The client transmits \texttt{client\_action} tuples---corresponding to cart
-updates---over the \texttt{action\_msg} \textbf{channel} to a server replica.
-\jmh{which server replica?  all server replicas??} For each such arriving
+updates---over the \texttt{action\_msg} \textbf{channel} to an individually
+chosen server replica.
+%\jmh{which server replica?  all server replicas??} 
+For each such arriving
 tuple, line 2 probes \texttt{bigtable} to see if a record exists for the
 session associated with the \texttt{action\_msg}.  If none is found (i.e., this
 is the first update for a new session), then lines 2-6 generate an entry for
@@ -57,7 +57,7 @@ receives a \texttt{checkout\_msg}, the array representing the cart contents in
 \texttt{bigtable} associated with the given session is extracted (via the join
 on lines 22-23) and sent back to the client.
 
-Figure~\ref{fig:} shows an alternative shopping cart implementation, in which
+Figure~\ref{tab:pdg-disorderly} shows an alternative shopping cart implementation, in which
 updates are monotonically accumulated in a disorderly fashion and summarized
 only at checkout.  Line 0 appends all client updates to the persistent table
 \texttt{cart\_action}.  Lines 2-3 define \texttt{action\_cnt} as an aggregate
@@ -116,7 +116,7 @@ storage system, it must explicitly replicate its state (lines 24-26).
 \end{verbatim}
 \end{scriptsize}
 \caption{Destructive Cart Implementation}
-\label{fig:pdg-destructive}
+\label{tab:pdg-destructive}
 \end{figure}
 
 \begin{figure}[t]
@@ -124,7 +124,7 @@ storage system, it must explicitly replicate its state (lines 24-26).
 \includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
 
 \caption{Destructive Cart Analysis, with temporal cycles collapsed}
-\label{fig:pdg-destructive-analysis}
+\label{tab:pdg-destructive-analysis}
 \end{figure}
 
 
@@ -161,7 +161,6 @@ of order, as are any negated edges.
 %%(or strata) are surrounded by a dotted rectangle.  A point of order occurs
 %%wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
 A points of order is indicated by an edge with a white circle.
-
 To resolve a point of order, the programmer may add coordination logic, which typically ensures  ordered delivered tuples, and/or guarantees that a boundary condition has been irrevocably crossed (e.g., there will be no more tuples).
 % Instead of reanalyzing the augmented program, we associate coordination code
 % with an annotation that can
@@ -179,7 +178,7 @@ To resolve a point of order, the programmer may add coordination logic, which ty
 Although there is no syntactically obvious non-monotonicity in the destructive
 cart code as shown, the underlying key-value store uses the \texttt{$<$-} operator to model updateable state, which results in non-monotonicity.\footnote{Our full-length paper expands the SCC to analyze the
 key-value store in detail.}
-The global analysis shown in Figure~\ref{fig:pdf-destructive}
+The global analysis shown in Figure~\ref{tab:pdg-destructive-analysis}
 indicates that there are
 points of order between \texttt{action\_msg} and the temporal cluster,
 and between the temporal cluster and itself.
@@ -198,10 +197,14 @@ server and all replicas at each update.
 %%that the basic key-value store extends, and require acknowledgement from a server or a %%quorum of servers, respectively.
 %%The simplest (and least performant) approach is to require unanimous quorum,
 %%approximating ``eager replication''~\cite{dangers} via two-phase commit.
+%%A programmer could resolve this point of order by adapting the key-value store
+%%to require reliable delivery to all replicas before acknowledging a client update, by
+%%making the key-value store inherit from a superclass providing a reliable delivery
+%%abstraction (6 LOC).
+
 A programmer could resolve this point of order by adapting the key-value store
-to require reliable delivery to all replicas before acknowledging a client update, by
-making the key-value store inherit from a superclass providing a reliable delivery
-abstraction (6 LOC).
+to inherit from a reliable delivery superclass (implemented in 6 LOC), requiring 
+acknowledgements from replicas before acknowledging a client update.
 Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
 per server per client update, and substantially decrease system throughput.  
 Because we only care about the set of elements contained in the value array
@@ -251,20 +254,21 @@ before the addition it was intended to cancel.
 \end{verbatim}
 \end{scriptsize}
 \caption{Disorderly Cart Implementation}
-\label{fig:pdg-disorderly}
+\label{tab:pdg-disorderly}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{fig/disorderly.pdf}
 \caption{Disorderly Cart Analysis}
-\label{fig:pdg-disorderly-analysis}
+\label{tab:pdg-disorderly-analysis}
 \end{figure}
 
 
 
 
-Turning our attention to the disorderly figure,
+Turning our attention to the analysis of the disorderly implementation
+shown in Figure~\ref{tab:pdg-disorderly-analysis},
 \begin{comment}
  shows dotted lines indicating that 
 \texttt{action\_msg} (owned by the server) is derived from \texttt{client\_action} 
@@ -307,8 +311,9 @@ in write-dominant systems generally.  Our analysis assisted us by highlighting t
 result in decreased throughput and availability.  
 
 By providing the programmer with a set of abstractions that are predominantly 
-order-independent, Bud encourages a style of programming that minimizes points 
-of order, but is expressive enough to allow very order-sensitive implementations. 
+order-independent, Bud encourages a style of programming that minimizes  
+coordination requirements, 
+but is nonetheless expressive enough to allow very order-sensitive implementations. 
 Given a particular implementation with points of order, Bud's 
 static analysis helps a programmer to incrementally ``push down'' points of order
 to loci in the program dataflow where the coordination can be implemented locally, or to 
