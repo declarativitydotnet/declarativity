@@ -161,12 +161,16 @@ of order, as are any negated edges.
 %%(or strata) are surrounded by a dotted rectangle.  A point of order occurs
 %%wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
 A points of order is indicated by an edge with a white circle.
-To resolve a point of order, the programmer may add coordination logic, which typically ensures  ordered delivered tuples, and/or guarantees that a boundary condition has been irrevocably crossed (e.g., there will be no more tuples).
+%described earlier, so i commented it out -wrm
+%To resolve a point of order, the programmer may add coordination logic, which
+%typically ensures ordered delivered tuples, and/or guarantees that a boundary
+%condition has been irrevocably crossed (e.g., there will be no more tuples).
+
 % Instead of reanalyzing the augmented program, we associate coordination code
-% with an annotation that can
-% be interpreted as a contract about a point of order.  Such contracts will
-% typically guarantee an ordering over arriving tuples, or guarantee a 
-% a barrier-passing condition (e.g., indicating that there will be no more tuples).
+% with an annotation that can be interpreted as a contract about a point of
+% order.  Such contracts will typically guarantee an ordering over arriving
+% tuples, or guarantee a a barrier-passing condition (e.g., indicating that
+% there will be no more tuples).
 
 %\jmh{the subsequent discussion should be pared down and made simple.  updates are non-monotonic.  we see it in the points of order.  If we resolve using coordination a la 2PC, we get a %round of coord for every client action.  This is the kind of thing Amazon didn't like for %availability.  However, if we examine the disorderly figure, we see that the point of order is at %checkout only, which is what Amazon wanted.}
 
@@ -175,45 +179,47 @@ To resolve a point of order, the programmer may add coordination logic, which ty
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
-Although there is no syntactically obvious non-monotonicity in the destructive
-cart code as shown, the underlying key-value store uses the \texttt{$<$-} operator to model updateable state, which results in non-monotonicity.\footnote{Our full-length paper expands the SCC to analyze the
-key-value store in detail.}
-The global analysis shown in Figure~\ref{tab:pdg-destructive-analysis}
-indicates that there are
-points of order between \texttt{action\_msg} and the temporal cluster,
-and between the temporal cluster and itself.
+Although there is no 
+%syntactically obvious
+non-monotonicity in the destructive cart code in
+Figure~\ref{tab:pdg-destructive}, the underlying key-value store uses the
+non-monotonic \texttt{$<$-} operator for updates\footnote{Our full-length paper
+will analyze the key-value store in detail.}.  The full-program analysis shown
+in Figure~\ref{tab:pdf-destructive-analysis} indicates that there are points of order
+between \texttt{action\_msg} and the temporal cluster, and between the temporal
+cluster and itself.
 %%This means that the arrival 
 %%timing and ordering of both client updates (via \texttt{iaction}) and
 %%server replication (via the meta-edge in the temporal cycle from 
 %%\texttt{kvstore} to itself) may affect the
 %%end results.  
-To ensure a consistent final state across all replicas, we may require coordination
-between client and server at every update to the cart, and between the 
-server and all replicas at each update.   
-
+To ensure a consistent final state across all replicas, coordination between
+the client and replicas may be required at each update to the cart.  One
+coordination technique would require the client to wait for all replicas to
+successfully apply an update before sending a subsequent update.  This would
+involve changing the key-value store to inherit from a reliable delivery superclass
+(implemented in 6 LOC).
 %%We can easily achieve coordination without modifying the cart implementation
 %%by redefining the key-value store to extend
 %%a reliable or quorum-based delivery module instead of the best-effort module
 %%that the basic key-value store extends, and require acknowledgement from a server or a %%quorum of servers, respectively.
 %%The simplest (and least performant) approach is to require unanimous quorum,
 %%approximating ``eager replication''~\cite{dangers} via two-phase commit.
-%%A programmer could resolve this point of order by adapting the key-value store
-%%to require reliable delivery to all replicas before acknowledging a client update, by
-%%making the key-value store inherit from a superclass providing a reliable delivery
-%%abstraction (6 LOC).
 
-A programmer could resolve this point of order by adapting the key-value store
-to inherit from a reliable delivery superclass (implemented in 6 LOC), requiring 
-acknowledgements from replicas before acknowledging a client update.
-Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
-per server per client update, and substantially decrease system throughput.  
-Because we only care about the set of elements contained in the value array
-and not its order, we might be tempted to argue that 
-the shopping cart application is eventually consistent
-when asynchronously updated, and forego the synchronization.  Unfortunately, such informal reasoning can hide serious bugs: consider what happens if a delete update is received
-before the addition it was intended to cancel.
-
-
+%A programmer could resolve this point of order by adapting the key-value store
+%to require reliable delivery to all replicas before acknowledging a client
+%update, by making the key-value store inherit from a superclass providing a
+%reliable delivery abstraction (6 LOC).
+Such ``eager replication''~\cite{dangers} would incur a cost of a round of
+messages per server per client update, and substantially decrease system
+throughput.  \wrm{The following is confusing because people might not have this
+temptation.  Maybe rephrase to ``a need for synchronization arises, because
+deletions and insertions do not commute''} Because we only care about the set
+of elements contained in the value array and not its order, we might be tempted
+to argue that the shopping cart application is eventually consistent when
+asynchronously updated, and forego the synchronization.  Unfortunately, such
+informal reasoning can hide serious bugs: consider what happens if a delete
+update is received before the addition it was intended to cancel.
 
 \begin{figure}[t]
 \begin{scriptsize}
