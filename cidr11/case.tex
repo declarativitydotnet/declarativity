@@ -24,12 +24,14 @@ Figure~\ref{fig:pdg-destructive} shows a Bud implementation of a shopping
 cart built on a key-value store abstraction.  Each cart (identified by a
 session identifier) is associated with a key, whose value is a Ruby array
 representing the set of items contained in the cart at any time.  The 
-collection \emph{kvstore} is defined by the KeyValueStore module (not shown), 
-which the shopping cart extends via Ruby inheritance.  
+scratch table \emph{kvstore} is defined by the KeyValueStore module (not shown), 
+which the shopping cart extends via Ruby inheritance, and is used in a manner
+analogous to the \emph{put} function for hash tables.  
 
-Client updates to the cart are transmitted to a server replica in line 28,
-thereafter appearing in the \emph{action\_msg} collection.  For each tuple
-arriving there, line 2 probes the \emph{bigtable} collection for a matching
+Cart updates are transmitted from the client in line 28,
+thereafter appearing in the \emph{action\_msg} collection at a server replica.
+For each such arriving tuple,
+line 2 probes the \emph{bigtable} collection for a matching
 session.  If found, lines 2-6 are evaluated; otherwise the join conditions
 in lines 10-11 will be met and lines 12-18 will instead be evaluated.
 In the first case, both the key and a singleton array value must be created.
@@ -104,26 +106,33 @@ via multicast (lines 24-26).
 
 
 For each cart, we apply whole-program analysis techniques to discover points of 
-order in the program.  The analysis, based on traditional stratification
-techniques, represents the dependency graph of predicates (and hence the 
-flow of tuples) as a staged dataflow graph.  Asynchronous message sending
+order.  The Bud interpreter automatically generates
+a graphical representation of the dependency graph of collections 
+(and hence the 
+flow of tuples) as a staged dataflow.  Each node in the graph is either
+a collection or a cluster of collections (as described below).  
+Asynchronous messaging
 is indicated by a dashed line in the graph, while edges that involve 
 nonmonotonic logic are marked with a $\lnot$.  Edges that involve a temporal 
-edge are marked with a $+$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into temporal clusters.  Individual monotonic components 
-(or strata) are surrounded by a dotted rectangle.  A point of order occurs
-wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
+edge are marked with a $+$.  Strongly connected components having both a $\lnot$ and a $+$ edge are grouped into temporal clusters.  
+%%Individual monotonic components 
+%%(or strata) are surrounded by a dotted rectangle.  A point of order occurs
+%%wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
+Points of order are indicated by lightning bolts.
 
 To resolve a point of order, the programmer may add coordination logic.
-As we observe in Section~\ref{sec:calm}, waiting requires counting and coordination code almost always 
-requires nonmonotonic logic, so the augmented program is not reanalyzed.
-Instead, coordination code is always associated with an annotation that can
+%%As we observe in Section~\ref{sec:calm}, waiting requires counting and coordination code almost always 
+%%requires nonmonotonic logic, so the augmented program is not reanalyzed.
+Instead of reanalyzing the augmented program, we associate coordination code
+with an annotation that can
 be interpreted as a contract about a point of order.  Such contracts will
 typically guarantee an ordering over arriving tuples, or guarantee a 
 a barrier-passing condition (e.g., indicating that there will be no more tuples).
 
 
-Figure~\ref{fig:pdf-destructive} shows the destructive shopping cart code
-and its accompanying analysis.  Note the points of order between \emph{client\_action} and \emph{iaction}
+The graph in Figure~\ref{fig:pdf-destructive}
+indicates that there are
+points of order between \emph{client\_action} and \emph{iaction}
 and between the temporal cluster and itself.  This means that the arrival 
 timing and order of both client updates (via \emph{iaction}) and
 server replication (via the meta-edge in the temporal cycle from 
