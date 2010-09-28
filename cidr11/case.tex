@@ -6,18 +6,94 @@
 %%independent style?  Talk about inserting all sorts of exotic stuff like queues
 %%if we want a highly order-dependent imperative style.}
 
+\begin{comment}
+
 \jmh{We discussed the following on the phone.  (1) Handle shopping in two styles: destructive updates, and disorderly accumulation of increment/decrement.  (2) Do analysis on them to detect need for coordination in only the first, show that (annotated) 2PC removes the compiler warning.  (3) Deploy destructive+2PC on EC2 and show practical benefits of avoiding coordination.  (4) Evolve the program with new rules for checkout and/or inventory, show how the disorderly version is no longer monotonic.  Fix that  with 2PC where needed.  Also make sure the destructive version works with the new rules.  Now show that the disorderly version is still better than the destructive one, by coordinating only where needed.}
 
 \jmh{Finally, show what would happen if you didn't coordinate the inventory bit, but tracked taint.  Note that tainted output is the stuff where programmers need to write compensation logic.}
 
+\end{comment}
 
-In this section, we implement two different styles of distributed shopping cart
-applications in Bud.  First, we implement a ``destructive,'' overwriting
-shopping cart application using a simple key-value store implemented in Bud.
-Second, we implement a ``disorderly'' cart which accumulates updates in a 
-set-wise fashion and describes how to combine the updates into a final result.
+%%In this section, we implement two different styles of distributed shopping cart
+%%applications in Bud.  First, we implement a ``destructive,'' overwriting
+%%shopping cart application using a simple key-value store implemented in Bud.
+%%Second, we implement a ``disorderly'' cart which accumulates updates in a 
+%%set-wise fashion and describes how to combine the updates into a final result.
 
-For each, we apply whole-program analysis techniques to discover points of 
+Figure~\ref{fig:pdg-destructive} shows a Bud implementation of a shopping
+cart built on a key-value store abstraction.  Each cart (identified by a
+session identifier) is associated with a key, whose value is a Ruby array
+representing the set of items contained in the cart at any time.  The 
+collection \emph{kvstore} is defined by the KeyValueStore module (not shown), 
+which the shopping cart extends via Ruby inheritance.  
+
+Client updates to the cart are transmitted to a server replica in line 28,
+thereafter appearing in the \emph{action\_msg} collection.  For each tuple
+arriving there, line 2 probes the \emph{bigtable} collection for a matching
+session.  If found, lines 2-6 are evaluated; otherwise the join conditions
+in lines 10-11 will be met and lines 12-18 will instead be evaluated.
+In the first case, both the key and a singleton array value must be created.
+In the second, the old copy of the array must be modified to produce a new 
+value, which replaces the original array stored under the session key.
+Finally, when a checkout message is received, value in \emph{bigtable}
+associated with the given session is extracted (via the join on lines 22-23)
+and sent back to the client.
+
+Figure~\ref{fig:} shows an alternative shopping cart implementation, in which
+updates are accumulated in a disorderly fashion and summarized only at 
+checkout.  Line 0 appends all client updates to the persistent table 
+\emph{cart\_action}.  
+
+
+\begin{figure}[t]
+\begin{tiny}
+\begin{verbatim}
+
+0: kvstore <= action_msg.map do |a|
+1:   unless bigtable.map{|b| b.key}.include? a.session
+2:     if a.action == "A"
+3:       [a.server, a.client, a.session, a.reqid, [a.item]]
+4:     elsif a.action == "D"
+5:       [a.server, a.client, a.session, a.reqid, []]
+6:     end
+7:   end
+8: end
+9: 
+10: kvstore <= join([bigtable, action_msg]).map do |b, a|
+11:   if b.key == a.session
+12:     if a.action == "A"
+13:       [a.server, a.client, a.session, a.reqid, b.value.push(a.item)]
+14:     elsif a.action == "D"
+15:       copy = b.value.clone;
+16:       copy.delete_at(copy.index(a.item));
+17:       [a.server, a.client, a.session, a.reqid, copy]
+18:     end
+19:   end
+20: end
+21:
+22: response_msg <+ join([bigtable, checkout_msg]).map do |s, c|
+23:   if s.key == c.session
+24:     [c.client, c.server, s.key, s.value]
+25:   end
+26: end
+27: 
+28: action_msg <+ client_action.map{|a| a}
+
+
+\end{verbatim}
+\end{tiny}
+\centering
+\includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
+
+\caption{Destructive Cart (cycles collapsed)}
+\label{fig:pdg-destructive}
+\end{figure}
+
+
+\subsection{Analysis}
+
+
+For each cart, we apply whole-program analysis techniques to discover points of 
 order in the program.  The analysis, based on traditional stratification
 techniques, represents the dependency graph of predicates (and hence the 
 flow of tuples) as a staged dataflow graph.  Asynchronous message sending
@@ -35,107 +111,6 @@ be interpreted as a contract about a point of order.  Such contracts will
 typically guarantee an ordering over arriving tuples, or guarantee a 
 a barrier-passing condition (e.g., indicating that there will be no more tuples).
 
-\begin{comment}
-\begin{figure}[t]
-\begin{tiny}
-\begin{verbatim}
-class BudKVS < BestEffortDelivery
-#class BudKVS < ReliableDelivery
-  def state
-    super
-    table :bigtable, ['key'], ['value']
-    #table :stor_saved, ['client', 'server', 'key', 'reqid', 'value']
-    table :stor_saved, ['server','client', 'key', 'reqid', 'value']
-    table :member, ['peer']
-    scratch :kvstore, ['server', 'client', 'key', 'reqid'], ['value']
-  end
-
-  declare
-    def kstore
-      readback = join [stor_saved, pipe_out], [stor_saved.reqid, pipe_out.id]
-      stor_saved <- readback.map{ |s, p| s }
-      stor_saved <+ kvstore.map{|k| k}
-      bigtable <+ readback.map { |s, p| [s.key, s.value] }
-
-      jst = join [bigtable, stor_saved, pipe_out], [bigtable.key, stor_saved.key], [stor_saved.reqid, pipe_out.id]
-      bigtable <- jst.map { |b, s, p| b }
-    end
-
-  declare
-    def replicate
-      jrep = join [kvstore, member]
-      pipe <+ jrep.map do |s, m|
-        if m.peer != @addy and m.peer != s.client
-          [m.peer, @addy, s.reqid, [s.key, s.value]]
-        end
-      end
-  
-      kvstore <+ pipe_chan.map do |p|
-        if @addy == p.dst and p.dst != p.src
-          [p.dst, p.src, p.payload.index(0), p.id, p.payload.index(1)] 
-        end
-      end
-
-      # bootstrap slaves: they are not required to replicate data to the source.
-      pipe_out <= jrep.map { |s, m| [m.peer, @addy, s.reqid, [s.key, s.value]] if s.client == m.peer }
-    end
-
-end
-
-
-\end{verbatim}
-\vspace{-10pt}
-\caption{An agent sends a constrained promise if it has voted for an
-  update in a previous view.}
-\label{fig:anchor}
-\end{tiny}
-\vspace{-2pt}
-\end{figure}
-
-\end{comment}
-
-\subsection{Destructive Cart}
-
-\begin{figure}[t]
-\begin{tiny}
-\begin{verbatim}
-  declare def accumulate
-      kvstore <= iaction.map do |a| 
-        unless bigtable.map{|b| b.key}.include? a.session
-          if a.action == "A"
-            [a.server, a.client, a.session, Array.new.push(a.item)]
-          elsif a.action == "D"
-            [a.server, a.client, a.session, Array.new]
-          end
-        end
-      end
-  end
-
-  declare def consider
-      joldstate = join [bigtable, iaction], [bigtable.key, iaction.session]
-      kvstore <= joldstate.map do |b, a| 
-       if a.action == "A"
-          [a.server, a.client, a.session, b.value.push(a.item)]
-        elsif a.action == "D"
-          copy = b.value.clone;
-          copy.delete_at(copy.index(a.item));
-          [a.server, a.client, a.session, copy]
-        end
-      end
-      response <+ join([bigtable, checkout], [bigtable.key, checkout.session]).map do |s, c|
-        [c.client, c.server, s.key, s.value]
-      end
-  end
-
-
-\end{verbatim}
-\end{tiny}
-\centering
-\includegraphics[width=0.9\linewidth]{fig/ImperativeCartServer_gvoutput.pdf}
-
-\caption{Destructive Cart (cycles collapsed)}
-\label{fig:pdg-destructive}
-\end{figure}
 
 Figure~\ref{fig:pdf-destructive} shows the destructive shopping cart code
 and its accompanying analysis.  Note the points of order between \emph{client\_action} and \emph{iaction}
@@ -177,45 +152,41 @@ before the addition it was intended to cancel.
 \begin{figure}[t]
 \begin{tiny}
 \begin{verbatim}
-  declare def accumulate 
-      cart_action <= action.map { |c| [c.session, c.item, c.action, c.reqid] }
-      action_cnt <= cart_action.group([cart_action.session, 
-          cart_action.item, cart_action.action], count(cart_action.reqid))
-      action_cnt <= cart_action.map do |a| 
-        unless cart_action.map{|c| [c.session, c.item] if c.action == "D"}.include? [a.session, a.item] 
-           [a.session, a.item, 'D', 0]
-        end 
-      end
-  end
+0:  cart_action <= action.map { |c| [c.session, c.item, c.action, c.reqid] }
+1:
+2:  action_cnt <= cart_action.group([cart_action.session, 
+3:    cart_action.item, cart_action.action], count(cart_action.reqid))
+4:
+5:  action_cnt <= cart_action.map do |a| 
+6:    unless cart_action.map{|c| [c.session, c.item] if c.action == "D"}.include? [a.session, a.item] 
+7:      [a.session, a.item, 'D', 0]
+8:    end 
+9:  end
+10: 
+11: status <= join([action_cnt, action_cnt, checkout]).map do |a1, a2, c| 
+12:   if a1.session == a2.session and a1.item == a2.item 
+13:   and a1.session == c.session and a1.action == "A" and a2.action == "D"
+14:     [a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
+15:   end
+16: end
+17:
+18: response <= join([status, checkout]).map do |s, c| 
+19:   if s.session == c.session
+20:     [c.client, c.server, s.session, s.item, s.cnt]
+21:   end
+22: end
 
-  declare def consider
-      status <= join([action_cnt, action_cnt, checkout]).map do |a1, a2, c| 
-        if a1.session == a2.session and a1.item == a2.item 
-            and a1.session == c.session and a1.action == "A" and a2.action == "D"
-           [a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
-        end
-      end
-      response <= join([status, checkout], [status.session, checkout.session]).map do |s, c| 
-        [c.client, c.server, s.session, s.item, s.cnt]
-      end
-    end
 
-  declare def replicate
-      action <+ join([action, member]).map do |a, m|
-          [m.player, a.server, a.session, a.item, a.action, a.reqid]
-      end
-
-      checkout <+ join([checkout, member]).map do |c, m|
-         [m.player, c.client, c.session]
-      end
-    end
+action <+ join([action, member]).map do |a, m|
+  [m.player, a.server, a.session, a.item, a.action, a.reqid]
+end
 
 
 \end{verbatim}
 \end{tiny}
 
 \centering
-\includegraphics[width=0.7\linewidth]{fig/BasicCartServer_gvoutput.pdf}
+\includegraphics[width=0.7\linewidth]{fig/disorderly.pdf}
 \caption{Disorderly Cart}
 \label{fig:pdg-disorderly}
 \end{figure}
