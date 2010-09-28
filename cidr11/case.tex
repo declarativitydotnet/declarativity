@@ -256,13 +256,12 @@ the contents of the response message.
 We need only coordinate once per session to
 ensure that the response to the client is deterministic.
 
-\paa{notes}
-
-both implementations have points of order -- is one better than another?
-in this case, clearly yet.  but in choosing the implementation (and the coordination
-protocol), the analysis isolated the places where we need to apply our domain knowledge 
--- for example, in the case of the shopping cart workload, knowing that coordinating
-on read makes a lot more sense than coordinating on write.
-fwiw, the disorderly version was written first, in part because Bud leads to such a style
-naturally.
-
+Like embarassing parallelism in parallel computing, strictly monotonic programs
+are rare in the distributed systems domain.  In this running example we studied
+two candidate implementations of a simple distributed application with the aid of
+our tool, and discovered that both have points of order.  Deciding that the disorderly
+approach is ``better'' required us to apply domain knowledge: checkout happens
+once per session, and is a more efficient coordination point than state update and replication, 
+which occur repeatedly -- this is not unlike synchronizing on read rather than write 
+in write-dominant systems generally.  Our analysis assisted us by highlighting the few locations where program correctness may depend upon costly synchronization, which may
+result in decreased throughput and availability.  
