@@ -143,44 +143,41 @@ To resolve a point of order, the programmer may add coordination logic, which ty
 % a barrier-passing condition (e.g., indicating that there will be no more tuples).
 
 \jmh{the subsequent discussion should be pared down and made simple.  updates are non-monotonic.  we see it in the points of order.  If we resolve using coordination a la 2PC, we get a round of coord for every client action.  This is the kind of thing Amazon didn't like for availability.  However, if we examine the disorderly figure, we see that the point of order is at checkout only, which is what Amazon wanted.}
-Intuitively, the ``destructive'' cart based on
-array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
-of its inputs.
-Indeed, the graph in Figure~\ref{fig:pdf-destructive}
-indicates that there are
-points of order between \texttt{iaction} and the temporal cluster,
-and between the temporal cluster and itself.  
-\jmh{We didn't see iaction in the example code; deal with that.}
-This means that the arrival 
-timing and order of both client updates (via \texttt{iaction}) and
-server replication (via the meta-edge in the temporal cycle from 
-\texttt{kvstore} to itself) may produce different
-end results \jmh{what is different from what?}.  Although there is no syntactically obvious non-monotonicity in the destructive
+%%Intuitively, the ``destructive'' cart based on
+%%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
+%%of its inputs.
+Although there is no syntactically obvious non-monotonicity in the destructive
 cart code as shown, the underlying key-value store uses the \texttt{$<$-} operator to model updateable state, which results in non-monotonicity\footnote{Our full-length paper expands the SCC to analyze the
-key-value store in detail}, 
-and our global analysis detects this.
+key-value store in detail}.
+The global analysis shown in Figure~\ref{fig:pdf-destructive}
+indicates that there are
+points of order between \texttt{action\_msg} and the temporal cluster,
+and between the temporal cluster and itself.
+%%This means that the arrival 
+%%timing and ordering of both client updates (via \texttt{iaction}) and
+%%server replication (via the meta-edge in the temporal cycle from 
+%%\texttt{kvstore} to itself) may affect the
+%%end results.  
 To ensure a consistent final state across all replicas, we may require coordination
 between client and server at every update to the cart, and between the 
-server and all replicas at each update.  
+server and all replicas at each update.   
 
-We can easily achieve coordination without modifying the cart implementation
-by redefining the key-value store to extend
-a reliable or quorum-based delivery module instead of the best-effort module
-that the basic key-value store extends, and require acknowledgement from a server or a quorum of servers, respectively.
-The simplest (and least performant) approach is to require unanimous quorum,
-approximating ``eager replication''~\cite{dangers} via two-phase commit.
-
-Of course, eager replication substantially decreases system throughput.  
-%%One is tempted
-%%to argue that we can simply use best-effort, asynchronous delivery,
-%%because although we use an ordered data structure (an array) and nonmonotonic
-%%operations (updating values in the store), the order of operations on the array
-%%affects only the ordering of its contents, not the set of elements it contains.
+%%We can easily achieve coordination without modifying the cart implementation
+%%by redefining the key-value store to extend
+%%a reliable or quorum-based delivery module instead of the best-effort module
+%%that the basic key-value store extends, and require acknowledgement from a server or a %%quorum of servers, respectively.
+%%The simplest (and least performant) approach is to require unanimous quorum,
+%%approximating ``eager replication''~\cite{dangers} via two-phase commit.
+A programmer could resolve this point of order by adapting the key-value store
+to require reliable delivery to all replicas before acknowledging a client update, by
+making the key-value store inherit from a superclass providing a reliable delivery
+abstraction (6 LOC).
+Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
+per server per client update, and substantially decrease system throughput.  
 Because we only care about the set of elements contained in the value array
 and not its order, we might be tempted to argue that 
 the shopping cart application is eventually consistent
-when asynchronously updated, and forgo the synchronization.  Unfortunately, such informal reasoning can
-hide serious bugs: consider what happens if a delete update is received
+when asynchronously updated, and forego the synchronization.  Unfortunately, such informal reasoning can hide serious bugs: consider what happens if a delete update is received
 before the addition it was intended to cancel.
 
 
@@ -227,17 +224,9 @@ before the addition it was intended to cancel.
 \end{figure}
 
 
-\jmh{prune the below}
-Figure~\ref{fig:pdg-disorderly} presents a ``disorderly'' cart implementation
-and analysis.  In this top-down rewrite, we model the state shopping cart 
-as the set of changes in each session, rather than as a mutable cell in a
-key-value abstraction.  By doing so we enable our analysis to recognize the
-inherent commutativity of basic set operations, and flag most of the 
-program logic as consistent without coordination.
-
-Dotted lines indicate that 
-\texttt{action} (owned by the server) is derived from \texttt{client\_action} 
-(owned by the client) via an asynchronous message, and that \texttt{action} 
+Analysis of the disorderly figure shows dotted lines indicating that 
+\texttt{action\_msg} (owned by the server) is derived from \texttt{client\_action} 
+(owned by the client) via an asynchronous message, and that \texttt{action\_msg} 
 derives itself via messages when it is replicated.  However, the analysis
 shows that because these derivations are strictly monotonic, no points of
 order are crossed.  Hence, clients may send and servers may replicate 
