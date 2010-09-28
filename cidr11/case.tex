@@ -42,7 +42,17 @@ and sent back to the client.
 Figure~\ref{fig:} shows an alternative shopping cart implementation, in which
 updates are accumulated in a disorderly fashion and summarized only at 
 checkout.  Line 0 appends all client updates to the persistent table 
-\emph{cart\_action}.  
+\emph{cart\_action}.  Lines 2-3 define \emph{action\_cnt} as an aggregate
+over \emph{cart\_action}, in the style of an SQL group-by statement: for
+each item associated with a cart, we could the number of times it was added
+or deleted.  Lines 11-16 define the collection \emph{status} as a 3-way
+join between the \emph{checkout} message and two copies of 
+\emph{action\_cnt} (one corresponding to additions and one to deletions),
+and for each item, compute it quantity as the different of the two counts
+in line 14.  A \emph{response} message containing the quantity is then sent 
+to the client in lines 18-22.  Because the disorderly implementation does not
+use a separate storage system, it must replicate its own state to replicas 
+via multicast (lines 24-26).
 
 
 \begin{figure}[t]
