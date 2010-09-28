@@ -243,7 +243,7 @@ Consider a checkout message and a final update message racing from a client
 to one of the replicas: the order in which they arrive will surely affect
 the contents of the response message.  
 \end{comment}
-we see that communication (via \texttt{action\_msg}) beween client and server
+we see that communication (via \texttt{action\_msg}) between client and server
 and between servers and replicas crosses no points of order, so all such
 communication will converge to the same final state without coordination.
 There is, however, a point of order at checkout, when a \texttt{checkout}
@@ -256,7 +256,7 @@ the contents of the response message.
 We need only coordinate once per session to
 ensure that the response to the client is deterministic.
 
-Like embarassing parallelism in parallel computing, strictly monotonic programs
+Like embarrassing parallelism in parallel computing, strictly monotonic programs
 are rare in the distributed systems domain.  In this running example we studied
 two candidate implementations of a simple distributed application with the aid of
 our tool, and discovered that both have points of order.  Deciding that the disorderly
