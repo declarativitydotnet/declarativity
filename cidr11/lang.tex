@@ -22,10 +22,10 @@ Bloom programs are bundles of declarative statements akin to SQL views or Datalo
 		\hline
 		type & persistence and other notes\\
 		\hline
-		\textbf{table} & A collection whose contents persist across timesteps\\
-		\textbf{scratch} & A collection whose contents persist for only one timestep\\
+		\textbf{table} & A collection whose contents persist across timesteps.\\
+		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
 		\textbf{channel} & A scratch collection with one attribute designated as the {\em location specifier}. Tuples ``appear'' at the address stored in their location specifier.\\
-		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{wallclock}).  The spec for a \textbf{periodic} is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) to for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current system time\\
+		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{period}).  The spec for a \textbf{periodic} is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current system time.\\
 		\hline
 	\end{tabular}
 
@@ -35,11 +35,11 @@ Bloom programs are bundles of declarative statements akin to SQL views or Datalo
 		\hline
 		op & valid lhs types & meaning\\
 				\hline 
-		\texttt{=} & \textbf{scratch} & rhs defines the contents of the lhs for the current timestep.  lhs must not appear in lhs of any other statement\\
-		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep\\
+		\texttt{=} & \textbf{scratch} & rhs defines the contents of the lhs for the current timestep.  lhs must not appear in lhs of any other statement.\\
+		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep.\\
 		\texttt{$<$+} & \textbf{table}, \textbf{scratch}, & lhs will include the content of the rhs in the\\
-		              & \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay \\
-		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be missing from the lhs at the start of  the next timestep\\
+		              & \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay.\\
+		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be missing from the lhs at the start of  the next timestep.\\
 		\hline
 	\end{tabular}
 	\end{small}
@@ -51,11 +51,11 @@ Bloom programs are bundles of declarative statements akin to SQL views or Datalo
 \noindent
 Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 3 of Figure~\ref{fig:queue} shows a Bloom state definition for a table with 2 columns \texttt{id} and \texttt{payload}; \texttt{id} is the primary key.  In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  Similar to other object-relational ADT schemes a la Postgres~\cite{postgres-adt}, column types can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
 
-Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages or tuples in view definitions.  The contents of a \textbf{table} persist across consecutive timesteps until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below. Although there are proper declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient and not misleading to think operationally as follows: Bloom \textbf{scratch} collections are ``emptied'' before each timestep; Bloom \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator (like SQL's \texttt{DELETE FROM}) represents batch ``deletion'' before the beginning of the next timestep.
+Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages or tuples in view definitions.  The contents of a \textbf{table} persist across consecutive timesteps until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below. Although there are precise declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient and not misleading to think operationally as follows: \textbf{scratch} collections are ``emptied'' before each timestep; Bloom \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator (like SQL's \texttt{DELETE}) represents batch ``deletion'' before the beginning of the next timestep.
 
-The facts of the ``real world'', including message delays and clock events that mark the passage of real time, are captured logically in Bloom via the specification of \textbf{channel} and \textbf{periodic} collections; these are \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
+The facts of the ``real world,'' including message delays and clock events that mark the passage of wall-clock time, are captured via the specification of \textbf{channel} and \textbf{periodic} collections; these are \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
 % From a semantic point of view, all real-world non-determinism is captured here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep in which each fact eventually ``appears''.  
-Again, the paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that ``failure'' of nodes or communication is captured here; it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient and reasonable to think operationally as follows: facts in a \textbf{channel} are delivered to the address in their location specifier via a best-effort unordered network protocol like UDP; the specification of a \textbf{periodic} instructs the runtime to ``inject'' facts at regular intervals to ``drive'' futher derivations.
+Again, the paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that ``failure'' of nodes or communication is captured here; it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient and reasonable to think operationally as follows: facts in a \textbf{channel} are delivered to the address in their location specifier via a best-effort unordered network protocol like UDP; the specification of a \textbf{periodic} instructs the runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further derivations.
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -116,7 +116,7 @@ Programmers declare Bloom statements within methods of a Bud subclass definition
 
 The constructs above form the core of the Bloom language; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{Papadimitriou85}.  
 \jmh{Actually no ... papadimitriou85 ``a note on the expressive power of prolog'' shows that Datalog neg with finite successor is exactly PTIME.  If we can't get the right ref for this assertion, just remove it.}
-Bud also includes some additional convenience methods that provide macros over these methods.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Bud classes, like any Ruby classes, can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances (via Ruby metaprogramming), allowing for selective rewriting of encapsulated bundles of statements.  We have found that the combination of Bloom's logic programming with Ruby's Object-Oriented inheritance and overriding has been quite natural.
+Bud also includes some additional convenience methods that provide macros over these methods.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Bud classes, like any Ruby classes, can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances (via Ruby metaprogramming), allowing for selective rewriting of encapsulated bundles of statements.  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been quite natural.
 
 Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions.  In fact, we demonstrate below that the pure logic-programming roots of Bloom can in some cases allow programmers to reason about program interactions in a much deeper way than traditional imperative languages.
 
