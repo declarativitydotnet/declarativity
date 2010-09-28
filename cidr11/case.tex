@@ -109,11 +109,16 @@ via multicast (lines 24-26).
 
 \end{verbatim}
 \end{scriptsize}
+\caption{Destructive Cart Implementation}
+\label{fig:pdg-destructive}
+\end{figure}
+
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
 
-\caption{Destructive Cart (cycles collapsed)}
-\label{fig:pdg-destructive}
+\caption{Destructive Cart Analysis, with temporal cycles collapsed}
+\label{fig:pdg-destructive-analysis}
 \end{figure}
 
 
@@ -185,7 +190,7 @@ before the addition it was intended to cancel.
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{verbatim}
-0:  cart_action <= action.map { |c| [c.session, c.item, c.action, c.reqid] }
+0:  cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] }
 1:
 2:  action_cnt <= cart_action.group([cart_action.session, 
 3:    cart_action.item, cart_action.action], count(cart_action.reqid))
@@ -203,25 +208,35 @@ before the addition it was intended to cancel.
 15:   end
 16: end
 17:
-18: response <= join([status, checkout]).map do |s, c| 
+18: response_msg <= join([status, checkout]).map do |s, c| 
 19:   if s.session == c.session
 20:     [c.client, c.server, s.session, s.item, s.cnt]
 21:   end
 22: end
 23: 
-24: action <+ join([action, member]).map do |a, m|
+24: action_msg <+ join([action_msg, member]).map do |a, m|
 25:   [m.player, a.server, a.session, a.item, a.action, a.reqid]
 26: end
+27: 
+28: checkout_msg <+ join([checkout_msg, member}).map do |c, m|
+29:   [m.player, c.server, c.session, c.reqid]
+30: end
 
 
 \end{verbatim}
 \end{scriptsize}
-
-\centering
-\includegraphics[width=0.7\linewidth]{fig/disorderly.pdf}
-\caption{Disorderly Cart}
+\caption{Disorderly Cart Implementation}
 \label{fig:pdg-disorderly}
 \end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.7\linewidth]{fig/disorderly.pdf}
+\caption{Disorderly Cart Analysis}
+\label{fig:pdg-disorderly-analysis}
+\end{figure}
+
+
 
 
 Turning our attention to the disorderly figure,
