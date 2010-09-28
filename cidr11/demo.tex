@@ -2,27 +2,37 @@
 \section{Demo Proposal}
 \label{sec:demo}
 
-In our demonstration, we will build the destructive and disorerly shopping
-carts, first without coordination.  We will run each cart on a cluster of
-laptops interconnected via wi-fi.  One laptop will serve as the client,
-submitting requests to add or remove items from the cart.  The balance of the
-laptops will function as server replicas.  The client will dispatch each
-request to a random server replica.  For demonstration purposes, we will
-interpose a demonic message delivery module, which operates at each server
-replica, and delivers messages in a random bad order (for example, deletions
-before insertions, and checkouts before all insertions and deletions).
+The goal of our demonstration will be to illustrate the basic concepts of the
+Bloom programming language, and in particular to show how our program analysis
+techniques assist in the development of distributed software. We will
+demonstrate how to use Bloom to develop several variants of a distributed
+shopping cart system, similar to the case study described in
+Section~\ref{sec:case}.
 
-We will display a trace of the cart's execution in real time by displaying the
-messages sent by the client, and received by each server replica, in the order
-they are sent or received, and explain the problems associated with each order.
-We will run our points-of-order analysis, and show how the analysis captures
-the message ordering problems we identified by experimentation in the
-uncoordinated code.
+We will begin by developing the destructive and disorderly variants of the
+shopping cart example, initially without any coordination logic. We will run
+these programs on a cluster of laptops, interconnected via wireless
+networking. One laptop will serve as the client, submitting requests to add or
+remove items from the cart.  The rest of the laptops will function as server
+replicas.  The client will dispatch each request to a random server replica.
+For demonstration purposes, we will interpose a demonic message delivery module,
+which operates at each server replica and delivers messages in a random ``bad''
+order (e.g., deletions before insertions, checkouts before all insertions
+and deletions).
 
-We will add coordination to the destructive and disorderly carts and run the
-coordinated implementation on our cluster of laptops.  We will benchmark the
-coordinated disorderly and destructive carts, and note that the increased
-coordination in the destructive cart reduces its performance relative to the
-disorderly cart.  This effect should be quite visible given the latency and
-jitter of the congested wi-fi spectrum in the conference room, which would
-approximate the performance of a globally distributed cloud network.
+We will display a trace of the cart's execution in real time by visualizing the
+messages sent by the client and received by each server replica, in the order
+they are sent or received, and explain the potential hazards associated with
+different orders. We will then apply our points-of-order program analysis, and
+show how this technique identifies the message ordering inconsistencies we have
+already demonstrated experimentally.
+
+Finally, we will add coordination logic to the two shopping cart variants, and
+then run the modified code on the cluster of laptops. We will benchmark the
+performance of the modified shopping cart programs and visualize the results,
+demonstrating how the increased coordination in the destructive shopping cart
+implementation results in reduced performance. To ensure that this effect is
+visible, we may need to ensure the network has some amount of latency. The
+conference WiFi may be sufficiently congested to serve this purpose, or else we
+may need to bring our own networking equipment and instrument it to add the
+appropriate amount of latency.
