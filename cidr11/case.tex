@@ -121,52 +121,53 @@ edge are marked with a $+$.  Strongly connected components having both a $\lnot$
 Points of order are indicated by lightning bolts.
 
 To resolve a point of order, the programmer may add coordination logic.
-%%As we observe in Section~\ref{sec:calm}, waiting requires counting and coordination code almost always 
-%%requires nonmonotonic logic, so the augmented program is not reanalyzed.
 Instead of reanalyzing the augmented program, we associate coordination code
 with an annotation that can
 be interpreted as a contract about a point of order.  Such contracts will
 typically guarantee an ordering over arriving tuples, or guarantee a 
 a barrier-passing condition (e.g., indicating that there will be no more tuples).
 
-
-The graph in Figure~\ref{fig:pdf-destructive}
+It should be intuitively obvious that the ``destructive'' cart based on
+array mutation is nonmonotonic and potentially sensitive to the order
+of its inputs.
+And indeed, the graph in Figure~\ref{fig:pdf-destructive}
 indicates that there are
-points of order between \emph{client\_action} and \emph{iaction}
+points of order between \emph{iaction} and the temporal cluster
 and between the temporal cluster and itself.  This means that the arrival 
 timing and order of both client updates (via \emph{iaction}) and
 server replication (via the meta-edge in the temporal cycle from 
 \emph{kvstore} to itself) may result in different
-end results.  Although there is no obvious nonmonotonicity in the destructive
+end results.  Although there is no syntactically obvious nonmonotonicity in the destructive
 cart code as shown, the underlying key-value store uses updateable state
 to implement the storage of opaque, mutable values of 
 keys~\footnote{Our full-length paper expands the SCC to analyze the
 key-value store in detail}, 
 and our global analysis detects this.
-To ensure a consistent final state across all replicas, We may require coordination
+To ensure a consistent final state across all replicas, we may require coordination
 between client and server at every update to the cart, and between the 
 server and all replicas at each update.  
 
-We can easily achieve this without modfying the cart implementation
+We can easily achieve coordination without modfying the cart implementation
 by redefining the key-value store to extend
-ReliableDelivery or, better, QuorumDeliver instead of BestEffortDelivery, and require acknowledgement from a server or a quorum of servers, respectively.
+a reliable or quorum-based delivery module instead of the best-effort module
+that the basic key-value store extends, and require acknowledgement from a server or a quorum of servers, respectively.
 The simplest (and least performant) approach is to require unanimous quorum,
 approximating ``eager replication''~\cite{dangers} via two-phase commit.
 
-As one would imagine and we will demonstrate, \paa{eg, in the demo, or maybe in another picture}
-eager replication substantially decreases system throughput.  One is tempted
-to argue that we can simply use best-effort, asynchronous delivery,
-because although we use an ordered data structure (an array) and nonmonotonic
-operations (updating values in the store), the order of operations on the array
-affects only the ordering of its contents, not the set of elements it contains.
-
-Thus we might argue that the shopping cart application is eventually consistent
-when asynchronously updated.  Unfortunately, such informal reasoning can
-hide serious bugs.  Consider what happens if a delete update is received
+Of course, eager replication substantially decreases system throughput.  
+%%One is tempted
+%%to argue that we can simply use best-effort, asynchronous delivery,
+%%because although we use an ordered data structure (an array) and nonmonotonic
+%%operations (updating values in the store), the order of operations on the array
+%%affects only the ordering of its contents, not the set of elements it contains.
+Because we only care about the set of elements contained in the value array
+and not its order, we might be tempted to argue that 
+the shopping cart application is eventually consistent
+when asynchronously updated, and forgo the synchronization.  Unfortunately, such informal reasoning can
+hide serious bugs: consider what happens if a delete update is received
 before the addition it was intended to cancel.
 
 
-\subsection{Disorderly Cart}
 
 \begin{figure}[t]
 \begin{tiny}
