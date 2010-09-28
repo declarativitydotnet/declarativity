@@ -246,4 +246,13 @@ every update and replication step, the current analysis has indicated
 a point of order at checkout.  We need only coordinate once per session to
 ensure that the response to the client is deterministic.
 
+\paa{notes}
+
+both implementations have points of order -- is one better than another?
+in this case, clearly yet.  but in choosing the implementation (and the coordination
+protocol), the analysis isolated the places where we need to apply our domain knowledge 
+-- for example, in the case of the shopping cart workload, knowing that coordinating
+on read makes a lot more sense than coordinating on write.
+fwiw, the disorderly version was written first, in part because Bud leads to such a style
+naturally.
 
