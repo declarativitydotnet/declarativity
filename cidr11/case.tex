@@ -185,16 +185,20 @@ non-monotonicity in the destructive cart code in
 Figure~\ref{tab:pdg-destructive}, the underlying key-value store uses the
 non-monotonic \texttt{$<$-} operator for updates\footnote{Our full-length paper
 will analyze the key-value store in detail.}.  The full-program analysis shown
-in Figure~\ref{tab:pdf-destructive-analysis} indicates that there are points of order
-between \texttt{action\_msg} and the temporal cluster, and between the temporal
-cluster and itself.
+in Figure~\ref{tab:pdg-destructive-analysis} indicates that there are points of
+order between \texttt{action\_msg} and the temporal cluster, and between the
+temporal cluster and itself.
 %%This means that the arrival 
 %%timing and ordering of both client updates (via \texttt{iaction}) and
 %%server replication (via the meta-edge in the temporal cycle from 
 %%\texttt{kvstore} to itself) may affect the
 %%end results.  
-To ensure a consistent final state across all replicas, coordination between
-the client and replicas may be required at each update to the cart.  One
+Coordination between the client and replicas is required to achieve consistency
+because deletions and insertions of cart items do not commute: consider what
+happens if a delete update is received before the addition it was intended to
+cancel.
+
+One
 coordination technique would require the client to wait for all replicas to
 successfully apply an update before sending a subsequent update.  This would
 involve changing the key-value store to inherit from a reliable delivery superclass
@@ -205,21 +209,21 @@ involve changing the key-value store to inherit from a reliable delivery supercl
 %%that the basic key-value store extends, and require acknowledgement from a server or a %%quorum of servers, respectively.
 %%The simplest (and least performant) approach is to require unanimous quorum,
 %%approximating ``eager replication''~\cite{dangers} via two-phase commit.
-
 %A programmer could resolve this point of order by adapting the key-value store
 %to require reliable delivery to all replicas before acknowledging a client
 %update, by making the key-value store inherit from a superclass providing a
 %reliable delivery abstraction (6 LOC).
 Such ``eager replication''~\cite{dangers} would incur a cost of a round of
 messages per server per client update, and substantially decrease system
-throughput.  \wrm{The following is confusing because people might not have this
-temptation.  Maybe rephrase to ``a need for synchronization arises, because
-deletions and insertions do not commute''} Because we only care about the set
-of elements contained in the value array and not its order, we might be tempted
-to argue that the shopping cart application is eventually consistent when
-asynchronously updated, and forego the synchronization.  Unfortunately, such
-informal reasoning can hide serious bugs: consider what happens if a delete
-update is received before the addition it was intended to cancel.
+throughput.
+%\wrm{The following is confusing because people might not have this
+%temptation.  Maybe rephrase to ``a need for synchronization arises, because
+%deletions and insertions do not commute''} Because we only care about the set
+%of elements contained in the value array and not its order, we might be tempted
+%to argue that the shopping cart application is eventually consistent when
+%asynchronously updated, and forego the synchronization.  Unfortunately, such
+%informal reasoning can hide serious bugs: consider what happens if a delete
+%update is received before the addition it was intended to cancel.
 
 \begin{figure}[t]
 \begin{scriptsize}
