@@ -342,7 +342,6 @@ ensure that the response to the client is deterministic and consistently replica
 % client is deterministic.
 % >>>>>>> .r5792
 
-<<<<<<< .mine
 \noindent
 \textbf{Discussion}\\
 \noindent
@@ -355,38 +354,16 @@ approach is ``better'' required us to apply domain knowledge: checkout is a coar
 %---this is not unlike synchronizing on read rather than write in write-dominant systems generally.  
 % Our analysis assisted us by highlighting the few locations where program correctness may depend upon costly synchronization, which may
 % result in decreased throughput and availability.  
-=======
-Like embarrassing parallelism in parallel computing, strictly monotonic
-programs are rare in the distributed systems domain.  In this running example
-we studied two candidate implementations of a simple distributed application
-with the aid of our analysis, and discovered that both have points of order.
-Deciding that the disorderly approach is ``better'' required us to apply domain
-knowledge: checkout happens once per session, and is a more efficient
-coordination point than state update and replication, which occur repeatedly --
-this is not unlike synchronizing on reads rather than writes in write-dominant
-systems.  Our analysis assisted us by highlighting the few locations where
-program correctness may depend upon costly synchronization, which may result in
-decreased throughput and availability.  
->>>>>>> .r5792
 
-<<<<<<< .mine
-By providing the programmer with a set of abstractions that are predominantly 
-order-independent, Bloom encourages a style of programming that minimizes  
-coordination requirements.  But as we see in our destructive cart implementation, it is nonetheless possible to write imperative-style, order-intensive code in Bloom---much as it is possible (though discouraged) to write ``C-style'' code in Ruby.  However, our analysis tools provide assistance in this regard.
-Given a particular implementation with points of order, Bloom's 
-static analysis can help a programmer iteratively refine their program: either to ``push back'' the points to as late as possible in the dataflow, as we did in this example, or to ``localize'' points of order by moving them
-to loci in the program's dataflow where the coordination can be implemented on individual nodes (a case we did not illustrate in this short submission.)
-=======
 By providing the programmer with a set of abstractions that are predominantly
-order-independent, Bud encourages a style of programming that minimizes
-coordination requirements, but is nonetheless expressive enough to allow very
-order-sensitive implementations.  Given a particular implementation with points
-of order, Bud's static analysis helps a programmer to incrementally ``push
-down'' points of order to loci in the program dataflow where the coordination
-can be implemented locally, or to ``push back'' the points to as late as
-possible in the dataflow (e.g., only computing the nonmonotonic aggregates over
-the cart state after a checkout message has been received).
-
-\jmh{Challenge text that was kicking around and needs to be addressed here: we don't really say how we discourage a programmer from a destructive implementation, or help them migrate from that implementation to a better one.  Ideally we'd find ways to ``push back'' coordination requirements to local nodes and/or points of the program that don't have latency constraints.}
-
->>>>>>> .r5792
+order-independent, Bloom encourages a style of programming that minimizes
+coordination requirements.  But as we see in our destructive cart
+implementation, it is nonetheless possible to write imperative-style,
+order-intensive code in Bloom---much as it is possible (though discouraged) to
+write ``C-style'' code in Ruby.  However, our analysis tools provide assistance
+in this regard.  Given a particular implementation with points of order,
+Bloom's static analysis can help a programmer iteratively refine their program:
+either to ``push back'' the points to as late as possible in the dataflow, as
+we did in this example, or to ``localize'' points of order by moving them to
+loci in the program's dataflow where the coordination can be implemented on
+individual nodes (a case we did not illustrate in this short submission.)
