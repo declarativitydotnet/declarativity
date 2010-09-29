@@ -344,10 +344,10 @@ There are, however, points of order upon the appearance of \texttt{client\_check
 messages, which must be joined with an \texttt{action\_cnt} aggregate over the set of updates.  Although the 
 accumulation of shopping actions is monotonic, summarization of the cart state
 requires us to assume (or rather, prove) that there will be no further cart actions.
-\wrm{i don't think we need to explicitly spell out the race in gruesome detail below.  candidate for cutting.}
-Consider a checkout message and a final update message racing from a client
-to one of the replicas: the order in which they arrive will surely affect
-the contents of the response message.  
+%\wrm{i don't think we need to explicitly spell out the race in gruesome detail below.  candidate for cutting.}
+%Consider a checkout message and a final update message racing from a client
+%to one of the replicas: the order in which they arrive will surely affect
+%the contents of the response message.  
 The story of coordination in this graph is much happier: to
 ensure that the response to the client is deterministic and consistently replicated, we need to coordinate once per {\em session} (at checkout), rather than once per shopping action.  This is analogous to the desired behavior in practice~\cite{quicksand}.
 % =======
