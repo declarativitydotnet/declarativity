@@ -26,15 +26,14 @@ identifier, and \texttt{value} is a composite object containing session informat
 result in ``destructive'' overwrites, replacing the value associated with the
 key with a new value whose item array reflects the effects of the actions.  Deletion requests are ignored if the item they refer to does not exist in the cart. 
 
-\jmh{Why name the scratch `kvstore'?  Can't we name it something transient-sounding (e.g. foobuf)?}
 Figure~\ref{tab:pdg-destructive} shows the Bloom code for this design.  The
-\textbf{scratch} \texttt{kvstore} is defined by the KeyValueStore module (XXX
+\textbf{scratch} \texttt{kvput} is defined by the KeyValueStore module (XXX
 lines of Bloom not shown here), which the shopping cart extends via
 inheritance; it represents the input interface to the key-value store.
 \jmh{is the previous clause reasonable?}
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
 The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated across multiple nodes.  The \texttt{bigtable} replicas are kept 
-consistent by shipping \texttt{kvstore} tuples upon updates.
+consistent by shipping \texttt{kvput} tuples upon updates.
 \jmh{Would be nice to be more specific about the replication policy: does each node have a full copy of bigtable, or is it partitioned somehow?  OK if it's simple in our example, we just need to mention that it's simple.}
 
 %%\jmh{Line numbers seem messed up.}
@@ -99,7 +98,7 @@ storage system, it includes its own logic for state replication (lines 24-26).
 \begin{scriptsize}
 \begin{verbatim}
 
-0: kvstore <= action_msg.map do |a|
+0: kvput <= action_msg.map do |a|
 1:   if not bigtable.map{|b| b.key}.include? a.session
 2:     if a.action == "Add"
 3:       [a.server, a.client, a.session, a.reqid, [a.item]]
@@ -109,7 +108,7 @@ storage system, it includes its own logic for state replication (lines 24-26).
 7:   end
 8: end
 9: 
-10: kvstore <= join([bigtable, action_msg]).map do |b, a|
+10: kvput <= join([bigtable, action_msg]).map do |b, a|
 11:   if b.key == a.session
 12:     if a.action == "Add"
 13:       [a.server, a.client, a.session, a.reqid, b.value.push(a.item)]
@@ -203,10 +202,10 @@ and between the temporal cluster and itself.
 %%This means that the arrival 
 %%timing and ordering of both client updates (via \texttt{iaction}) and
 %%server replication (via the meta-edge in the temporal cycle from 
-%%\texttt{kvstore} to itself) may affect the
+%%\texttt{kvput} to itself) may affect the
 %%end results.  
 This figure tells the (sad!) story of how we would ensure consistency of the destructive cart implementation: we would introduce coordination
-between client and server---and between the chosen server and all its replicas---for {\em every client action or kvstore update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. It would incur the latency of a round of messages per server per client update, substantially decrease system throughput, and make the system fragile in the face of replica failures.
+between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. It would incur the latency of a round of messages per server per client update, substantially decrease system throughput, and make the system fragile in the face of replica failures.
 
 %One coordination technique would require the client to wait for all replicas to
 %successfully apply an update before sending a subsequent update.  This would
