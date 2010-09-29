@@ -22,7 +22,7 @@ We will begin by developing the destructive and disorderly variants of the
 shopping cart example, initially without any coordination logic. We will run
 these programs on our cluster, with one laptop as the client---submitting
 requests to add or remove items from the cart---and the rest of the laptops as
-server replicas.  The client will dispatch each request to a random server
+server replicas (Figure~\ref{fig:demoarch}).  The client will dispatch each request to a random server
 replica.  For demonstration purposes, we will interpose a \emph{demonic}
 message delivery module, which operates at each server replica and delivers
 messages in a random ``bad'' order (e.g., deletions before insertions,
@@ -46,6 +46,13 @@ distributed cloud environment, we need to ensure realistic latencies between
 the laptops.  The wireless spectrum in Asilomar's conference room may be
 sufficiently congested to serve this purpose.  Alternatively, we may interpose
 a message delivery module to introduce delay.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{fig/demoarch.pdf}
+\caption{Demo Architecture}
+\label{fig:demoarch}
+\end{figure}
 
 %may need to bring our own networking equipment and instrument it to add the
 %appropriate amount of latency.
