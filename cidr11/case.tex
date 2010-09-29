@@ -166,8 +166,8 @@ orginated inside the quorum.
 
 %For each cart, we apply whole-program analysis techniques to discover points
 %of order.
-The Bud interpreter automatically identifies, and generates a graphical
-representation of, dependencies between collections in a program
+The Bud interpreter automatically identifies and generates a graphical
+representation of dependencies between collections in a program
 (Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
 %The Bud interpreter automatically generates a graphical representation of the
 %dependency graph of collections through rules, (and hence the flow of tuples)
@@ -185,11 +185,9 @@ non-monotonicity (aggregation or negation) over $A$, then the edge is marked wit
 %result in edges marked with a $\lnot$.
 To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into a octagonal ``temporal cluster,'' 
 which can be viewed abstractly as a single, nonmonotonic node in the 
-dataflow~\footnote{Datalog afficioanados may be troubled by our mention of cycles
+dataflow~\footnote{Datalog aficionados may be troubled by our mention of cycles
 involving negation in the dependency graph.  In a separate paper~\cite{dedalus-techr} we
 describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability.}.
-
-
 %\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro %this without any intuition.  You should also dismiss the particular collection names in this 
 %figure as details from the KV store that are beyond the scope....}
 %collapsing the mutually dependent collections into a single node.
