@@ -276,15 +276,17 @@ destructive fashion.
 \end{figure}
 
 
-The analysis of our disorderly implementation,
-shown in Figure~\ref{tab:pdg-disorderly-analysis},
+The analysis of our disorderly implementation, shown in
+Figure~\ref{tab:pdg-disorderly-analysis},
+%
 \begin{comment}
-(owned by the client) via an asynchronous message, and that \texttt{action\_msg} 
-derives itself via messages when it is replicated.  However, the analysis
-shows that because these derivations are strictly monotonic, no points of
-order are crossed.  Hence, clients may send and servers may replicate 
-updates without any coordination: regardless of timing and ordering, the end
-result will be the same.
+%
+(owned by the client) via an asynchronous message, and that
+\texttt{action\_msg} derives itself via messages when it is replicated.
+However, the analysis shows that because these derivations are strictly
+monotonic, no points of order are crossed.  Hence, clients may send and servers
+may replicate updates without any coordination: regardless of timing and
+ordering, the end result will be the same.
 
 The analysis does indicate a point of order at checkout, when a
 \texttt{checkout} message is joined with an aggregate over the set of updates.
@@ -292,15 +294,19 @@ While the accumulation of state has been monotonic, summarization of the cart
 state requires us to assume (or prove) that there will be no further updates.
 Consider a checkout message and a final update message racing from a client to
 one of the replicas: the order in which they arrive will surely affect the
-contents of the response message.  \end{comment} indicates that no points of
-order are crossed when a client sends an \texttt{action\_msg} to a replica, and
-when replicas exchange \texttt{action\_msg} messages during replication.  Thus,
-all replicas will eventually have the same contents in their
-\texttt{cart\_action} collections, even in the absence of coordination.  There
-is, however, a point of order at checkout, when a \texttt{checkout\_msg}
-message is joined with an aggregate over the set of updates.  While the
-accumulation of \texttt{cart\_action} is monotonic, an aggregate cannot be
-returned until \texttt{cart\_action} is complete.
+contents of the response message.
+%
+\end{comment}
+%
+indicates that no points of order are crossed when a client sends an
+\texttt{action\_msg} to a replica, and when replicas exchange
+\texttt{action\_msg} messages during replication.  Thus, all replicas will
+eventually have the same contents in their \texttt{cart\_action} collections,
+even in the absence of coordination.  There is, however, a point of order at
+checkout, when a \texttt{checkout\_msg} message is joined with an aggregate
+over the set of updates.  While the accumulation of \texttt{cart\_action} is
+monotonic, an aggregate cannot be returned until \texttt{cart\_action} is
+complete.
 
 %requires us to assume (or prove) that there will be no further updates.
 %Consider a checkout message and a final update message racing from a client
