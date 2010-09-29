@@ -19,7 +19,6 @@ application in Bloom, using our Bud prototype.  First, we implement a ``destruct
 shopping cart application using a simple key-value store (also written in Bloom).
 Second, we implement a ``disorderly'' cart that accumulates updates in a 
 set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.
-\paa{TODO: reswizzle the line number pointers when the code quiesces.}
 
 We begin with a shopping cart built on a key-value storage abstraction.  Each
 cart is a pair \texttt{(key,value)}, where \texttt{key} is a unique session
@@ -194,7 +193,6 @@ describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability
 %\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro %this without any intuition.  You should also dismiss the particular collection names in this 
 %figure as details from the KV store that are beyond the scope....}
 %collapsing the mutually dependent collections into a single node.
-
 Points of order are indicated in the graph by an edge with a white circle.
  Any negated edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.
 
