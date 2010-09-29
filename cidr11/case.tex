@@ -15,68 +15,82 @@
 \end{comment}
 
 In this section, we build two different styles of distributed shopping cart
-applications in Bud.  First, we implement a ``destructive,'' overwriting
-shopping cart application using a simple key-value store (also written in Bud).
+applications in Bloom, using our Bud prototype.  First, we implement a ``destructive,'' overwriting
+shopping cart application using a simple key-value store (also written in Bloom).
 Second, we implement a ``disorderly'' cart which accumulates updates in a 
-set-wise fashion and describes how to combine the updates into a final result.
+set-wise fashion and describes how to combine the updates into a final result.  These two different designs illustrate our analysis tools and the way they inform distributed programming.
 
 We begin with a shopping cart built on a key-value store abstraction.  Each
 cart is a pair \texttt{[key,value]}, where \texttt{key} is a unique session
-identifier, and \texttt{value} is a Ruby array representing the set of items
-contained in the cart at any time.  Addition and deletion actions to a cart
+identifier, and \texttt{value} contains session state, along with a Ruby array representing the items contained in the cart at any time.  Addition and deletion actions to a cart
 result in ``destructive'' overwrites, replacing the value associated with the
-key with a new array reflecting the additions.  Deletion from an empty cart
-\wrm{, as well as deletion of a non-existent element,} is ignored. 
+key with a new value whose item array reflects the additions.  Deletion requests are ignored if the item they refer to does not exist in the cart. 
 
+\jmh{Why name the scratch `kvstore'?  Can't we name it something transient-sounding (e.g. foobuf)?}
 Figure~\ref{tab:pdg-destructive} shows the Bloom code for this design.  The
 \textbf{scratch} \texttt{kvstore} is defined by the KeyValueStore module (XXX
 lines of Bloom not shown here), which the shopping cart extends via
 inheritance.
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
-The set of shopping carts, represented by the persistent \textbf{table}
-\texttt{bigtable}, is 
-%kept  consistent across replicas
-replicated by shipping \texttt{kvstore} tuples to other servers.
+The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated across multiple nodes.  The \texttt{bigtable} replicas are kept 
+consistent by shipping \texttt{kvstore} tuples upon updates.
+\jmh{Would be nice to be more specific about the replication policy: does each node have a full copy of bigtable, or is it partitioned somehow?  OK if it's simple in our example, we just need to mention that it's simple.}
+
 %%\jmh{Line numbers seem messed up.}
 
 %We begin describing the logic from the outside \wrm{outside of what?}:
 
+\jmh{Any reason not to move line 28 to the top and reference it here?}
 The client transmits \texttt{client\_action} tuples---corresponding to cart
 updates---over the \texttt{action\_msg} \textbf{channel} to an individually
-chosen server replica.
+chosen server replica.  \jmh{say how chosen.}
 %\jmh{which server replica?  all server replicas??} 
 For each such arriving
-tuple, line 2 probes \texttt{bigtable} to see if a record exists for the
-session associated with the \texttt{action\_msg}.  If none is found (i.e., this
+tuple, line 1 
+checks \texttt{bigtable} to see if a record exists for the
+session associated with the \texttt{action\_msg}.  If none is there (i.e., this
 is the first update for a new session), then lines 2-6 generate an entry for
 the new session in \texttt{bigtable}, appropriately initializing the array of
-shopping cart contents.  Otherwise, the join conditions in lines 10-11 will be
-satisfied, and lines 12-18 will instead be evaluated, ``replacing'' the array
-at the next timestep with a new version.  Finally, when a server replica
-receives a \texttt{checkout\_msg}, the array representing the cart contents in
+shopping cart contents.  Otherwise, the join conditions in lines 10-11 are
+satisfied, and lines 12-18 ``replace'' the item array
+at the next timestep with a new version.  
+\jmh{lines 15 and 16 do not fit my definition of Bloom above.  Not sure how to deal with that.}
+Whenever a \texttt{checkout\_msg} appears in a server replica, the array representing the cart contents in
 \texttt{bigtable} associated with the given session is extracted (via the join
-on lines 22-23) and sent back to the client.
+on lines 22-23) and sent back to the client.  \jmh{Note that checkout is idempotent because checkout\_msg is a persisted set?}
 
 Figure~\ref{tab:pdg-disorderly} shows an alternative shopping cart implementation, in which
-updates are monotonically accumulated in a disorderly fashion and summarized
+updates are monotonically accumulated during shopping in a disorderly set, and summed up
 only at checkout.  Line 0 appends all client updates to the persistent table
 \texttt{cart\_action}.  Lines 2-3 define \texttt{action\_cnt} as an aggregate
-over \texttt{cart\_action}, in the style of an SQL group-by statement: for each
+over \texttt{cart\_action}, in the style of an SQL \texttt{GROUP BY} statement: for each
 item associated with a cart, we separately count the number of times it was
-added and the number of times it was deleted.  \jmh{what's up with lines 5-9?
-initialize number of deletions to 0...to avoid failed join of additions with no
-deletions, right?  Maybe less confusing to do another rule for status that
-antijoins additions to deletions.  Or we could hack up an outerjoin syntax.}
-\paa{I've frequently wanted an outerjoin syntax.  anti join? do you mean a
-'subquery' with unlesss..include? ?} Lines 11-16 define the collection
-\texttt{status} as a ternary join between the \texttt{checkout} message and two
-copies of \texttt{action\_cnt} (one corresponding to additions and one to
-deletions).  For each item, \texttt{status} contains its final quantity: the
-difference between its number of additions and deletions (line 14).  The
-replica then returns a \texttt{response} message to the client containing the
-final quantity.  Because the disorderly implementation does not use a separate
-storage system, it must explicitly replicate its state (lines 24-26).
+added and the number of times it was deleted.   Lines 11-16 define the collection
+\texttt{status} as a 3-way join between the \texttt{checkout} message and two
+copies of \texttt{action\_cnt}---one corresponding to additions and one to
+deletions.  
+For each item, \texttt{status} contains its final quantity: the
+difference between its number of additions and deletions (line 14).  
+Upon the appearance of a \texttt{checkout\_msg}, the
+replica returns a \texttt{response} message to the client containing the
+final quantity (lines 18-22).  
+Because the disorderly implementation does not use a separate
+storage system, it includes its own logic for state replication (lines 24-26).
+\jmh{need an explanation of lines 5-9, or an alternative syntax (see below or implement LOJ).  In the last sentence do you mean lines 24-30?  Won't 28-30 result in each node multicasting checkouts to each other node, i.e. $n^2$ messages?}
 
+
+
+\jmh{Alternative to lines 5-9 is to insert the following rule.  It ``preserves'' the action items that have adds but no deletes ... i.e. the other branch of the left-outer-join.  I think this is easier to explain.}
+\begin{scriptsize}
+\begin{verbatim}
+	status <= join(action_cnt, checkout).map do |a, c|
+	  if a.action == "Add" and not
+	        action_cnt.map{|d| d.id if d.action == "Del" and a.id}.include? a.id
+	     [a.session, a.item, a.cnt]
+	  end
+	end
+\end{verbatim}	
+\end{scriptsize}
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -111,8 +125,6 @@ storage system, it must explicitly replicate its state (lines 24-26).
 26: end
 27: 
 28: action_msg <+ client_action.map{|a| a}
-
-
 \end{verbatim}
 \end{scriptsize}
 \caption{Destructive Cart Implementation}
@@ -124,7 +136,7 @@ storage system, it must explicitly replicate its state (lines 24-26).
 \includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
 
 \caption{Destructive Cart Analysis, with temporal cycles collapsed}
-\label{tab:pdg-destructive-analysis}
+\label{fig:pdg-destructive-analysis}
 \end{figure}
 
 
@@ -134,29 +146,28 @@ storage system, it must explicitly replicate its state (lines 24-26).
 %of order.
 The Bud interpreter automatically identifies, and generates a graphical
 representation of, dependencies between collections in a program
-(Figures~\ref{tab:pdg-destructive-analysis},\ref{tab:pdg-disorderly-analysis}).
+(Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
 %The Bud interpreter automatically generates a graphical representation of the
 %dependency graph of collections through rules, (and hence the flow of tuples)
 %as a staged dataflow.
 Each node in the graph is either a collection or a cluster of collections (as
-described below); \texttt{table}s are shown as rectangles, while ephemeral
-collections (\texttt{scratch} and \texttt{channel}) are depicted as ovals.  A
+described below); \texttt{table}s are shown as rectangles, ephemeral
+collections (\texttt{scratch} and \texttt{channel}) are depicted as ovals, and clusters as octagons.  A
 directed edge from node $A$ to node $B$ indicates that that $B$ appears in the
-LHS of a Bloom rule with $A$ referenced directly, or through a join expression,
-in the RHS.  An edge is annotated based on the operator symbol in the rule, and
-the type of $B$.  If the rule is inductive---i.e. has the \texttt{$<$+}
-operator and a {\bf table} LHS---then the edge is marked with a $+$.  If the
-rule is asynchronous---i.e., a rule with the \texttt{$<+$} operator and a {\bf
-channel} LHS---then the edge is a dashed line.  If the rule involves
-aggregation or negation over $A$, then the edge is marked with a $\lnot$.
+lhs of a Bloom rule with $A$ referenced directly, or through a join expression,
+in the rhs.  An edge is annotated based on the operator symbol in the rule, and
+the type of $B$.  If the rule is ``inductive''---i.e. has the \texttt{$<$+}
+operator and a {\bf table} lhs---then the edge is marked with a $+$.  If the
+rule is ``asynchronous''---i.e., a rule with the \texttt{$<$+} operator and a {\bf
+channel} lhs---then the edge is a dashed line.  If the rule involves
+non-monotonicity (aggregation or negation) over $A$, then the edge is marked with a $\lnot$.
 %result in edges marked with a $\lnot$.
 Each strongly connected component with both a $\lnot$ and a $+$ edge is collapsed
-into a ``temporal cluster'', represented by an octagon.
-
-%%\jmh{capturing what? the fact that they must recurse over multiple timesteps?}
+into a octagonal ``temporal cluster''.
+\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro this without any intuition.  You should also dismiss the particular collection names in this figure as details from the KV store that are beyond the scope....}
 %collapsing the mutually dependent collections into a single node.
-All edges incident to a temporal cluster, including the self-edge, are points
-of order, as are any negated edges.
+Points of order are indicated in the graph by an edge with a white circle.
+ Any negated edge in the graph is a point of order as are all edges incident to a temporal cluster, including any self-edges.
 %%Individual monotonic components 
 %%(or strata) are surrounded by a dotted rectangle.  A point of order occurs
 %%wherever an edge crosses strata, or at any self-edge attached to a temporal cluster.
@@ -179,29 +190,25 @@ A points of order is indicated by an edge with a white circle.
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
-Although there is no 
-%syntactically obvious
-non-monotonicity in the destructive cart code in
-Figure~\ref{tab:pdg-destructive}, the underlying key-value store uses the
-non-monotonic \texttt{$<$-} operator for updates\footnote{Our full-length paper
-will analyze the key-value store in detail.}.  The full-program analysis shown
-in Figure~\ref{tab:pdg-destructive-analysis} indicates that there are points of
-order between \texttt{action\_msg} and the temporal cluster, and between the
-temporal cluster and itself.
+Although there is no syntactically obvious non-monotonicity in the destructive
+cart code of Figure~\ref{tab:pdg-destructive}, the underlying key-value store uses the non-monotonic \texttt{$<$-} operator to model updateable state.\footnote{Our full-length paper discusses the non-monotonic nature of \texttt{$<$-}, and expands the SCC to analyze the
+key-value store in detail.}
+The full-program analysis shown in Figure~\ref{fig:pdg-destructive-analysis}
+indicates that there are
+points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
+and between the temporal cluster and itself.
 %%This means that the arrival 
 %%timing and ordering of both client updates (via \texttt{iaction}) and
 %%server replication (via the meta-edge in the temporal cycle from 
 %%\texttt{kvstore} to itself) may affect the
 %%end results.  
-Coordination between the client and replicas is required to achieve consistency
-because deletions and insertions of cart items do not commute: consider what
-happens if a delete update is received before the addition it was intended to
-cancel.
+This figure tells the (sad!) story of how we would ensure consistency of the destructive cart implementation: we would introduce coordination
+between client and server---and between the chosen server and all its replicas---for {\em every client action or kvstore update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. it would incur the latency of a round of messages per server per client update, substantially decrease system throughput, and make the system fragile in the face of replica failures.
 
-One coordination technique would require the client to wait for all replicas to
-successfully apply an update before sending a subsequent update.  This would
-involve changing the key-value store to inherit from a reliable delivery
-superclass (implemented in 6 LOC).
+%One coordination technique would require the client to wait for all replicas to
+%successfully apply an update before sending a subsequent update.  This would
+%involve changing the key-value store to inherit from a reliable delivery
+%superclass (implemented in 6 LOC).
 %%We can easily achieve coordination without modifying the cart implementation
 %%by redefining the key-value store to extend
 %%a reliable or quorum-based delivery module instead of the best-effort module
@@ -212,11 +219,11 @@ superclass (implemented in 6 LOC).
 %to require reliable delivery to all replicas before acknowledging a client
 %update, by making the key-value store inherit from a superclass providing a
 %reliable delivery abstraction (6 LOC).
-Such ``eager replication''~\cite{dangers} would incur a cost of a round of
-messages per server per client update, and substantially decrease system
-throughput.  However, it is possible to achieve consistency with far less
-coordination, by writing the shopping cart in a disorderly, rather than
-destructive fashion.
+%Such ``eager replication''~\cite{dangers} would incur a cost of a round of
+%messages per server per client update, and substantially decrease system
+%throughput.  However, it is possible to achieve consistency with far less
+%coordination, by writing the shopping cart in a disorderly, rather than
+%destructive fashion.
 %\wrm{The following is confusing because people might not have this temptation.
 %Maybe rephrase to ``a need for synchronization arises, because deletions and
 %insertions do not commute''} Because we only care about the set of elements
@@ -225,6 +232,17 @@ destructive fashion.
 %asynchronously updated, and forego the synchronization.  Unfortunately, such
 %informal reasoning can hide serious bugs: consider what happens if a delete
 %update is received before the addition it was intended to cancel.
+
+% A programmer could resolve this point of order by adapting the key-value store
+% to inherit from a reliable delivery superclass (implemented in 6 LOC), requiring 
+% acknowledgements from replicas before acknowledging a client update.
+% Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
+% per server per client update, and substantially decrease system throughput.  
+Because we only care about the \emph{set} of elements contained in the value array
+and not its order, we might be tempted to argue that 
+the shopping cart application is eventually consistent
+when asynchronously updated, and forego the coordination logic.  Unfortunately, such informal reasoning can hide serious bugs: consider what happens if an item delete action is received at some replica
+before any addition of that item arrives: the delete would be ignored, leading to inconsistencies across replicas.
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -235,14 +253,14 @@ destructive fashion.
 3:    cart_action.item, cart_action.action], count(cart_action.reqid))
 4:
 5:  action_cnt <= cart_action.map do |a| 
-6:    unless cart_action.map{|c| [c.session, c.item] if c.action == "D"}.include? [a.session, a.item] 
-7:      [a.session, a.item, 'D', 0]
+6:    unless cart_action.map{|c| [c.session, c.item] if c.action == "Del"}.include? [a.session, a.item] 
+7:      [a.session, a.item, "Del", 0]
 8:    end 
 9:  end
 10: 
 11: status <= join([action_cnt, action_cnt, checkout]).map do |a1, a2, c| 
 12:   if a1.session == a2.session and a1.item == a2.item 
-13:   and a1.session == c.session and a1.action == "A" and a2.action == "D"
+13:   and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
 14:     [a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
 15:   end
 16: end
@@ -260,8 +278,6 @@ destructive fashion.
 28: checkout_msg <+ join([checkout_msg, member}).map do |c, m|
 29:   [m.player, c.server, c.session, c.reqid]
 30: end
-
-
 \end{verbatim}
 \end{scriptsize}
 \caption{Disorderly Cart Implementation}
@@ -272,13 +288,12 @@ destructive fashion.
 \centering
 \includegraphics[width=0.7\linewidth]{fig/disorderly.pdf}
 \caption{Disorderly Cart Analysis}
-\label{tab:pdg-disorderly-analysis}
+\label{fig:pdg-disorderly-analysis}
 \end{figure}
 
 
-The analysis of our disorderly implementation, shown in
-Figure~\ref{tab:pdg-disorderly-analysis},
-%
+A happier story emerges via the analysis of the disorderly implementation
+shown in Figure~\ref{fig:pdg-disorderly-analysis}.
 \begin{comment}
 %
 (owned by the client) via an asynchronous message, and that
@@ -297,23 +312,50 @@ one of the replicas: the order in which they arrive will surely affect the
 contents of the response message.
 %
 \end{comment}
+Here we see that communication (via \texttt{action\_msg}) between client and server---and between servers and replicas---crosses no points of order, so all the
+communication related to shopping actions will converge to the same final state without coordination.
+There are, however, points of order upon the appearance of \texttt{client\_checkout}
+messages, which must be joined with an \texttt{action\_cnt} aggregate over the set of updates.  Although the 
+accumulation of shopping actions has been monotonic, summarization of the cart state
+requires us to assume (or prove) that there will be no further cart actions.
+Consider a checkout message and a final update message racing from a client
+to one of the replicas: the order in which they arrive will surely affect
+the contents of the response message.  
+The story of coordination in this graph is much happier: to
+ensure that the response to the client is deterministic and consistently replicated, we need to coordinate once per {\em session} (at checkout), rather than once per shopping action.  This is analogous to the desired behavior in practice~\cite{quicksand}.
+% =======
 %
-indicates that no points of order are crossed when a client sends an
-\texttt{action\_msg} to a replica, and when replicas exchange
-\texttt{action\_msg} messages during replication.  Thus, all replicas will
-eventually have the same contents in their \texttt{cart\_action} collections,
-even in the absence of coordination.  There is, however, a point of order at
-checkout, when a \texttt{checkout\_msg} message is joined with an aggregate
-over the set of updates.  While the accumulation of \texttt{cart\_action} is
-monotonic, an aggregate cannot be returned until \texttt{cart\_action} is
-complete.
-%requires us to assume (or prove) that there will be no further updates.
-%Consider a checkout message and a final update message racing from a client to
-%one of the replicas: the order in which they arrive will surely affect the
-%contents of the response message.  
-We need only coordinate once per session to ensure that the response to the
-client is deterministic.
+% indicates that no points of order are crossed when a client sends an
+% \texttt{action\_msg} to a replica, and when replicas exchange
+% \texttt{action\_msg} messages during replication.  Thus, all replicas will
+% eventually have the same contents in their \texttt{cart\_action} collections,
+% even in the absence of coordination.  There is, however, a point of order at
+% checkout, when a \texttt{checkout\_msg} message is joined with an aggregate
+% over the set of updates.  While the accumulation of \texttt{cart\_action} is
+% monotonic, an aggregate cannot be returned until \texttt{cart\_action} is
+% complete.
+% %requires us to assume (or prove) that there will be no further updates.
+% %Consider a checkout message and a final update message racing from a client to
+% %one of the replicas: the order in which they arrive will surely affect the
+% %contents of the response message.  
+% We need only coordinate once per session to ensure that the response to the
+% client is deterministic.
+% >>>>>>> .r5792
 
+<<<<<<< .mine
+\noindent
+\textbf{Discussion}\\
+\noindent
+%Like ``embarrassing parallelism'' in parallel computing, 
+Strictly monotonic programs
+are rare in practice, so programmers often need to reason about coordination overheads to ensure consistent data.  In this running example we studied
+two candidate implementations of a simple distributed application with the aid of
+our language and program analysis. Both have points of order, but the analysis tool helped us reason about their relative coordination costs.  Deciding that the disorderly
+approach is ``better'' required us to apply domain knowledge: checkout is a coarser-grained coordination point than cart actions and their replication.
+%---this is not unlike synchronizing on read rather than write in write-dominant systems generally.  
+% Our analysis assisted us by highlighting the few locations where program correctness may depend upon costly synchronization, which may
+% result in decreased throughput and availability.  
+=======
 Like embarrassing parallelism in parallel computing, strictly monotonic
 programs are rare in the distributed systems domain.  In this running example
 we studied two candidate implementations of a simple distributed application
@@ -325,7 +367,16 @@ this is not unlike synchronizing on reads rather than writes in write-dominant
 systems.  Our analysis assisted us by highlighting the few locations where
 program correctness may depend upon costly synchronization, which may result in
 decreased throughput and availability.  
+>>>>>>> .r5792
 
+<<<<<<< .mine
+By providing the programmer with a set of abstractions that are predominantly 
+order-independent, Bloom encourages a style of programming that minimizes  
+coordination requirements.  But as we see in our destructive cart implementation, it is nonetheless possible to write imperative-style, order-intensive code in Bloom---much as it is possible (though discouraged) to write ``C-style'' code in Ruby.  However, our analysis tools provide assistance in this regard.
+Given a particular implementation with points of order, Bloom's 
+static analysis can help a programmer iteratively refine their program: either to ``push back'' the points to as late as possible in the dataflow, as we did in this example, or to ``localize'' points of order by moving them
+to loci in the program's dataflow where the coordination can be implemented on individual nodes (a case we did not illustrate in this short submission.)
+=======
 By providing the programmer with a set of abstractions that are predominantly
 order-independent, Bud encourages a style of programming that minimizes
 coordination requirements, but is nonetheless expressive enough to allow very
@@ -338,3 +389,4 @@ the cart state after a checkout message has been received).
 
 \jmh{Challenge text that was kicking around and needs to be addressed here: we don't really say how we discourage a programmer from a destructive implementation, or help them migrate from that implementation to a better one.  Ideally we'd find ways to ``push back'' coordination requirements to local nodes and/or points of the program that don't have latency constraints.}
 
+>>>>>>> .r5792

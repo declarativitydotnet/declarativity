@@ -25,7 +25,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 		\textbf{table} & A collection whose contents persist across timesteps.\\
 		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
 		\textbf{channel} & A scratch collection with one attribute designated as the {\em location specifier}. Tuples ``appear'' at the address stored in their location specifier.\\
-		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{period}).  The spec for a \textbf{periodic} is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current system time.\\
+		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The spec for a \textbf{periodic} is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
 		\hline
 	\end{tabular}
 
