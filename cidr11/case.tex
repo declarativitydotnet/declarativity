@@ -198,11 +198,10 @@ because deletions and insertions of cart items do not commute: consider what
 happens if a delete update is received before the addition it was intended to
 cancel.
 
-One
-coordination technique would require the client to wait for all replicas to
+One coordination technique would require the client to wait for all replicas to
 successfully apply an update before sending a subsequent update.  This would
-involve changing the key-value store to inherit from a reliable delivery superclass
-(implemented in 6 LOC).
+involve changing the key-value store to inherit from a reliable delivery
+superclass (implemented in 6 LOC).
 %%We can easily achieve coordination without modifying the cart implementation
 %%by redefining the key-value store to extend
 %%a reliable or quorum-based delivery module instead of the best-effort module
@@ -215,12 +214,14 @@ involve changing the key-value store to inherit from a reliable delivery supercl
 %reliable delivery abstraction (6 LOC).
 Such ``eager replication''~\cite{dangers} would incur a cost of a round of
 messages per server per client update, and substantially decrease system
-throughput.
-%\wrm{The following is confusing because people might not have this
-%temptation.  Maybe rephrase to ``a need for synchronization arises, because
-%deletions and insertions do not commute''} Because we only care about the set
-%of elements contained in the value array and not its order, we might be tempted
-%to argue that the shopping cart application is eventually consistent when
+throughput.  However, it is possible to achieve consistency with far less
+coordination, by writing the shopping cart in a disorderly, rather than
+destructive fashion.
+%\wrm{The following is confusing because people might not have this temptation.
+%Maybe rephrase to ``a need for synchronization arises, because deletions and
+%insertions do not commute''} Because we only care about the set of elements
+%contained in the value array and not its order, we might be tempted to argue
+%that the shopping cart application is eventually consistent when
 %asynchronously updated, and forego the synchronization.  Unfortunately, such
 %informal reasoning can hide serious bugs: consider what happens if a delete
 %update is received before the addition it was intended to cancel.
@@ -275,13 +276,9 @@ throughput.
 \end{figure}
 
 
-
-
-Turning our attention to the analysis of the disorderly implementation
+The analysis of our disorderly implementation,
 shown in Figure~\ref{tab:pdg-disorderly-analysis},
 \begin{comment}
- shows dotted lines indicating that 
-\texttt{action\_msg} (owned by the server) is derived from \texttt{client\_action} 
 (owned by the client) via an asynchronous message, and that \texttt{action\_msg} 
 derives itself via messages when it is replicated.  However, the analysis
 shows that because these derivations are strictly monotonic, no points of
@@ -289,26 +286,28 @@ order are crossed.  Hence, clients may send and servers may replicate
 updates without any coordination: regardless of timing and ordering, the end
 result will be the same.
 
-The analysis does indicate a point of order at checkout, when a \texttt{checkout}
-message is joined with an aggregate over the set of updates.  While the 
-accumulation of state has been monotonic, summarization of the cart state
-requires us to assume (or prove) that there will be no further updates.
-Consider a checkout message and a final update message racing from a client
-to one of the replicas: the order in which they arrive will surely affect
-the contents of the response message.  
-\end{comment}
-we see that communication (via \texttt{action\_msg}) between client and server
-and between servers and replicas crosses no points of order, so all such
-communication will converge to the same final state without coordination.
-There is, however, a point of order at checkout, when a \texttt{checkout}
-message is joined with an aggregate over the set of updates.  While the 
-accumulation of state has been monotonic, summarization of the cart state
-requires us to assume (or prove) that there will be no further updates.
-Consider a checkout message and a final update message racing from a client
-to one of the replicas: the order in which they arrive will surely affect
-the contents of the response message.  
-We need only coordinate once per session to
-ensure that the response to the client is deterministic.
+The analysis does indicate a point of order at checkout, when a
+\texttt{checkout} message is joined with an aggregate over the set of updates.
+While the accumulation of state has been monotonic, summarization of the cart
+state requires us to assume (or prove) that there will be no further updates.
+Consider a checkout message and a final update message racing from a client to
+one of the replicas: the order in which they arrive will surely affect the
+contents of the response message.  \end{comment} indicates that no points of
+order are crossed when a client sends an \texttt{action\_msg} to a replica, and
+when replicas exchange \texttt{action\_msg} messages during replication.  Thus,
+all replicas will eventually have the same contents in their
+\texttt{cart\_action} collections, even in the absence of coordination.  There
+is, however, a point of order at checkout, when a \texttt{checkout\_msg}
+message is joined with an aggregate over the set of updates.  While the
+accumulation of \texttt{cart\_action} is monotonic, an aggregate cannot be
+returned until \texttt{cart\_action} is complete.
+
+%requires us to assume (or prove) that there will be no further updates.
+%Consider a checkout message and a final update message racing from a client
+%to one of the replicas: the order in which they arrive will surely affect
+%the contents of the response message.  
+%We need only coordinate once per session to
+%ensure that the response to the client is deterministic.
 
 Like embarrassing parallelism in parallel computing, strictly monotonic programs
 are rare in the distributed systems domain.  In this running example we studied
