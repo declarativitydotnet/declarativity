@@ -15,14 +15,14 @@
 \end{comment}
 
 In this section, we build two different styles of distributed shopping cart
-applications in Bloom, using our Bud prototype.  First, we implement a ``destructive,'' overwriting
+applications in Bloom, using our Bud prototype.  First, we implement a ``destructive'', state-modifying
 shopping cart application using a simple key-value store (also written in Bloom).
 Second, we implement a ``disorderly'' cart which accumulates updates in a 
-set-wise fashion and describes how to combine the updates into a final result.  These two different designs illustrate our analysis tools and the way they inform distributed programming.
+set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.
 
 We begin with a shopping cart built on a key-value store abstraction.  Each
 cart is a pair \texttt{[key,value]}, where \texttt{key} is a unique session
-identifier, and \texttt{value} contains session state, along with a Ruby array representing the items contained in the cart at any time.  Addition and deletion actions to a cart
+identifier, and \texttt{value} is a composite object containing session information along with a Ruby array representing the items contained in the cart at any time.  Addition and deletion actions to a cart
 result in ``destructive'' overwrites, replacing the value associated with the
 key with a new value whose item array reflects the additions.  Deletion requests are ignored if the item they refer to does not exist in the cart. 
 
