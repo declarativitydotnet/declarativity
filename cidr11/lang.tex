@@ -49,7 +49,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 
 \noindent\textbf{State in Bloom}\\
 \noindent
-Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations} shows a Bloom state definition for a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; \texttt{session, reqid} is the primary key. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema definition.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
+Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations} shows a Bloom state definition for a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; \texttt{(session, reqid)} is the primary key. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema definition.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
 
 Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages or for ``view'' or ``macro'' definitions that enable reuse and readability of code fragments.  The contents of a \textbf{table} persist across consecutive timesteps (until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below). Although there are precise declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient and not misleading to think operationally as follows: \textbf{scratch} collections are ``emptied'' before each timestep; Bloom \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator (like SQL's \texttt{DELETE}) represents batch ``deletion'' before the beginning of the next timestep.
 
@@ -106,7 +106,7 @@ Again, the paper on Dedalus delves deeper into the logical semantics of this non
 \begin{verbatim}
 0:  class BasicCartServer < Bud
 1:    def state
-2:      table :cart_action, ['session', 'item', 'action', 'reqid']
+2:      table :cart_action, ['session', 'reqid'], ['item', 'action']
 3:      scratch :status, 
 4:        ['server', 'client', 'session', 'item'], ['cnt']
 5:      channel :action_msg, 0, 
