@@ -49,7 +49,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 
 \noindent\textbf{State in Bloom}\\
 \noindent
-Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 3 of Figure~\ref{fig:queue} shows a Bloom state definition for a \textbf{table} with 2 columns \texttt{id} and \texttt{payload}; \texttt{id} is the primary key. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema definition.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
+Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations} shows a Bloom state definition for a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; \texttt{session, reqid} is the primary key. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema definition.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
 
 Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages or for ``view'' or ``macro'' definitions that enable reuse and readability of code fragments.  The contents of a \textbf{table} persist across consecutive timesteps (until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below). Although there are precise declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient and not misleading to think operationally as follows: \textbf{scratch} collections are ``emptied'' before each timestep; Bloom \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator (like SQL's \texttt{DELETE}) represents batch ``deletion'' before the beginning of the next timestep.
 
@@ -57,6 +57,7 @@ The facts of the ``real world,'' including messages and system events that mark 
 % From a semantic point of view, all real-world non-determinism is captured here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep in which each fact eventually ``appears''.  
 Again, the paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that failure of nodes or communication is captured here; it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient and reasonable to think operationally as follows: facts in a \textbf{channel} are delivered to the address in their location specifier via a best-effort unordered network protocol like UDP; the specification of a \textbf{periodic} instructs the runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further derivations.
 
+\begin{comment}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{verbatim}
@@ -98,6 +99,29 @@ Again, the paper on Dedalus delves deeper into the logical semantics of this non
 \vspace{-2pt}
 \end{figure}
 
+\end{comment}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{verbatim}
+0:  class BasicCartServer < Bud
+1:    def state
+2:      table :cart_action, ['session', 'item', 'action', 'reqid']
+3:      scratch :status, 
+4:        ['server', 'client', 'session', 'item'], ['cnt']
+5:      channel :action_msg, 0, 
+6:        ['server', 'client', 'session', 'item', 'action', 'reqid']
+7:    end
+       [...]
+\end{verbatim}
+\vspace{-10pt}
+\caption{Example Bloom collection declarations.}
+\label{fig:declarations}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+
 
 \textbf{Bloom Statements}\\
 \noindent
@@ -108,11 +132,20 @@ Statements in Bloom are akin to rules in Datalog, or views in SQL.  They consist
 In the Bud prototype, both sides of the operator are instances of (a subclass of) a Ruby class called \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable} module supporting typical collection methods.  Figure~\ref{tab:bloom} describes the four operators that can be used to define the contents of the left-hand side (lhs) in terms of the right-hand side (rhs).
 
 As in Datalog or SQL, the lhs of a statement may be referenced recursively in its rhs, or recursion can be defined mutually across statements.  The rhs typically includes methods of \texttt{BudCollection} objects.  
-Most common is the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to specify scalar operations on all tuples of a \texttt{BudCollection}, including relational selection and projection. For example, line 24 of Figure~\ref{fig:queue} projects the \texttt{newmins} collection to its \texttt{id} field.  \texttt{BudCollection} defines a \texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates; line 13 of Figure~\ref{fig:queue} provides an example computing the minimum \texttt{id} across all tuples in collection \texttt{q}.  User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. Line 16 of Figure~\ref{fig:queue} gives an example of the natural join (equijoin on matching column names, in this case \texttt{id}.)
+Most common is the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to specify scalar operations on all tuples of a \texttt{BudCollection}, including relational selection and projection. For example, line 2 of Figure~\ref{fig:pdg-disorderly} projects the \texttt{action\_msg} collection to its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.  \texttt{BudCollection} defines a \texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates; lines 4 and 5 of Figure~\ref{fig:pdg-disorderly} 
+provides an example computing the count 
+%%\texttt{id} across all tuples in collection \texttt{q}.  
+of unique \texttt{reqid} values for every combination of values for \texttt{session}, 
+\texttt{item} and \texttt{action}.
+User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. 
+%Line 16 of Figure~\ref{fig:queue} gives an example of the natural join (equijoin on matching %column names, in this case \texttt{id}.)
+Line 34 of Figure~\ref{fig:pdg-disorderly} gives an example of a join between
+\texttt{checkout\_msg} and \texttt{status}.
+
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
 
-Programmers declare Bloom statements within methods of a Bud subclass definition that are flagged with the \texttt{declare} modifier (Figure~\ref{fig:queue}, line 10).  The order of statements is immaterial.  The semantics of a Bloom program are defined by the union of all the \texttt{declare} methods; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
+Programmers declare Bloom statements within methods of a Bud subclass definition that are flagged with the \texttt{declare} modifier (Figure~\ref{fig:pdg-disorderly}, line 0).  The order of statements is immaterial.  The semantics of a Bloom program are defined by the union of all the \texttt{declare} methods; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
 The constructs above form the core of the Bloom language.
 % nrc: I think this is tangential anyway; removing for now
