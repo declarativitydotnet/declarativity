@@ -32,7 +32,7 @@ lines of Bloom not shown here), which the shopping cart extends via
 inheritance; it represents the input interface to the key-value store.
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
 The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated across multiple nodes.  The \texttt{bigtable} replicas are kept 
-consistent by shipping \texttt{kvput} tuples upon updates.
+consistent by shipping \texttt{kvput} tuples upon updates \wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
 Ideally, when all messages have been delivered, every server should have an 
 identical copy of \texttt{bigtable}.
 
@@ -202,9 +202,12 @@ Points of order are indicated in the graph by an edge with a white circle.
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
-Although there is no syntactically obvious non-monotonicity in the destructive
-cart code of Figure~\ref{fig:pdg-destructive}, the underlying key-value store uses the non-monotonic \texttt{$<$-} operator to model updateable state.\footnote{Our full-length paper discusses the non-monotonic nature of \texttt{$<$-}, and expands the SCC to analyze the
-key-value store in detail.}
+Although there is no
+%syntactically obvious
+%\wrm{there is no non-monotonicity whatsoever in the code.  so i reverted this change.}
+non-monotonicity in the destructive
+cart code of Figure~\ref{fig:pdg-destructive}, the underlying key-value store uses the non-monotonic \texttt{$<$-} operator to model updateable state.\footnote{Our full-length paper discusses the non-monotonic nature of \texttt{$<$-}, and
+expands the SCC to analyze analyzes the key-value store in detail.}
 The full-program analysis shown in Figure~\ref{fig:pdg-destructive-analysis}
 indicates that there are
 points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
@@ -250,6 +253,7 @@ between client and server---and between the chosen server and all its replicas--
 % acknowledgements from replicas before acknowledging a client update.
 % Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
 % per server per client update, and substantially decrease system throughput.  
+\wrm{i don't quite see the point of presenting this straw-man scenario to people.  i think we should just explain that coordination is intuitively needed because deletions don't commute with insertions.}
 Because we only care about the \emph{set} of elements contained in the value array
 and not its order, we might be tempted to argue that 
 the shopping cart application is eventually consistent
@@ -340,6 +344,7 @@ There are, however, points of order upon the appearance of \texttt{client\_check
 messages, which must be joined with an \texttt{action\_cnt} aggregate over the set of updates.  Although the 
 accumulation of shopping actions is monotonic, summarization of the cart state
 requires us to assume (or rather, prove) that there will be no further cart actions.
+\wrm{i don't think we need to explicitly spell out the race in gruesome detail below.  candidate for cutting.}
 Consider a checkout message and a final update message racing from a client
 to one of the replicas: the order in which they arrive will surely affect
 the contents of the response message.  
