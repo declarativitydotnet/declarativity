@@ -111,7 +111,6 @@ orginated inside the quorum.
 	end
 \end{verbatim}	
 \end{scriptsize}
-
 \end{comment}
 
 \begin{figure}[t]
@@ -134,8 +133,8 @@ orginated inside the quorum.
 14:        if a.action == "Add"
 15:          [a.server, a.client, a.session, a.reqid, b.value.push(a.item)]
 16:        elsif a.action == "Del"
-17:          copy = b.value.clone;
-18:          copy.delete_at(copy.index(a.item));
+17:          copy = b.value.clone
+18:          copy.delete_at(copy.index(a.item))
 19:          [a.server, a.client, a.session, a.reqid, copy]
 20:        end
 21:      end
@@ -154,14 +153,14 @@ orginated inside the quorum.
 34:  end
 \end{verbatim}
 \end{scriptsize}
-\caption{Destructive Cart Implementation}
+\caption{Destructive Cart Implementation.}
 \label{fig:pdg-destructive}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
-\caption{Destructive Cart Analysis, with temporal cycles collapsed}
+\caption{Destructive Cart Analysis, with temporal cycles collapsed.}
 \label{fig:pdg-destructive-analysis}
 \end{figure}
 
@@ -309,14 +308,14 @@ before any addition of that item: the delete would be ignored, leading to incons
 39:  end
 \end{verbatim}
 \end{scriptsize}
-\caption{Disorderly Cart Implementation}
+\caption{Disorderly Cart Implementation.}
 \label{fig:pdg-disorderly}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{fig/disorderly.pdf}
-\caption{Disorderly Cart Analysis}
+\caption{Disorderly Cart Analysis.}
 \label{fig:pdg-disorderly-analysis}
 \end{figure}
 
