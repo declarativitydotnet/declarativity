@@ -22,8 +22,9 @@ set-wise fashion, summing up the updates at checkout into a final result.  These
 
 We begin with a shopping cart built on a key-value storage abstraction.  Each
 cart is a pair \texttt{(key,value)}, where \texttt{key} is a unique session
-identifier and \texttt{value} is a composite object containing session
-information along with a Ruby array representing the items contained in the cart
+identifier and \texttt{value} is 
+%%a composite object containing session information along with 
+a Ruby array representing the items contained in the cart
 at any time. Adding or deleting items from the cart result in ``destructive''
 overwrites, replacing the value associated with the key with a new value whose
 item array reflects the effects of the actions.  Deletion requests are ignored
@@ -34,8 +35,10 @@ Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
 lines of Bloom not shown here), which the shopping cart extends via
 inheritance; it represents the input interface to the key-value store.
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
-The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated across multiple nodes.  The \texttt{bigtable} replicas are kept 
-consistent by shipping \texttt{kvput} tuples upon updates \wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
+The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated across multiple nodes  
+%%The \texttt{bigtable} replicas are kept consistent 
+by shipping \texttt{kvput} tuples upon updates. 
+%%\wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
 Ideally, when all messages have been delivered, every server should have an 
 identical copy of \texttt{bigtable}.
 
