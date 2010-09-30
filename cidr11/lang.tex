@@ -20,7 +20,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 	\begin{small}
 	\begin{tabular}{|l|p{2.55in}|}
 		\hline
-		type & persistence and other notes\\
+		Type & Behavior\\
 		\hline
 		\textbf{table} & A collection whose contents persist across timesteps.\\
 		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
@@ -33,7 +33,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 	
 	\begin{tabular}{|c|l|p{2in}|}
 		\hline
-		op & valid lhs types & meaning\\
+		Op & Valid lhs types & Meaning\\
 				\hline 
 		\texttt{=} & \textbf{scratch} & rhs defines the contents of the lhs for the current timestep.  lhs must not appear in lhs of any other statement.\\
 		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep.\\
@@ -43,7 +43,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 		\hline
 	\end{tabular}
 	\end{small}
-	\caption{The Bloom collection types and operators.}
+	\caption{Bloom collection types and operators.}
 	\label{tab:bloom}
 \end{figure}
 
