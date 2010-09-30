@@ -277,14 +277,14 @@ before any addition of that item: the delete would be ignored, leading to incons
 8:
 9:   declare
 10:  def summarize
-11:    status <= join(action_cnt, checkout).map do |a, c| 
+11:    status <= join(action_cnt, checkout_msg).map do |a, c| 
 12:      if a.action == "Add" and not 
 13:      action_cnt.map{|d| d.id if d.action == "Del" and a.id}.include? a.id 
 14:        [a.session, a.item, a.cnt] 
 15:      end 
 16:    end
 17:
-18:    status <= join([action_cnt, action_cnt, checkout]).map do |a1, a2, c| 
+18:    status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| 
 19:      if a1.session == a2.session and a1.item == a2.item 
 20:      and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
 21:        [a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
@@ -294,7 +294,7 @@ before any addition of that item: the delete would be ignored, leading to incons
 25:
 26:  declare 
 27:  def communicate
-28:    response_msg <= join([status, checkout]).map do |s, c| 
+28:    response_msg <= join([status, checkout_msg]).map do |s, c| 
 29:      if s.session == c.session
 30:        [c.client, c.server, s.session, s.item, s.cnt]
 31:      end
