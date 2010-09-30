@@ -15,7 +15,7 @@
 \end{comment}
 
 In this section, we develop two different designs for a distributed shopping-cart
-application in Bloom, using our Bud prototype.  First, we implement a ``destructive,'' state-modifying
+application in Bloom.  First, we implement a ``destructive,'' state-modifying
 shopping cart application using a simple key-value store (also written in Bloom).
 Second, we implement a ``disorderly'' cart that accumulates updates in a 
 set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.
@@ -35,9 +35,9 @@ Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
 lines of Bloom not shown here), which the shopping cart extends via
 inheritance; it represents the input interface to the key-value store.
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
-The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated across multiple nodes  
+The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated
 %%The \texttt{bigtable} replicas are kept consistent 
-by shipping \texttt{kvput} tuples upon updates. 
+by shipping \texttt{kvput} tuples between replicas upon updates. 
 %%\wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
 Ideally, when all messages have been delivered, every server should have an 
 identical copy of \texttt{bigtable}.
@@ -54,9 +54,8 @@ tuple, line 3
 checks \texttt{bigtable} to see if a record exists for the
 session associated with the \texttt{action\_msg}.  If none is there (i.e., this
 is the first update for a new session), then lines 4--8 generate an entry for
-the new session in \texttt{bigtable}, appropriately initializing the array of
-shopping cart contents.  Otherwise, the join conditions in lines 12--13 are
-satisfied, and lines 14--20 ``replace'' the item array
+the new session in \texttt{bigtable}.  Otherwise, the join conditions in lines 12--13 are
+satisfied and lines 14--20 ``replace'' the item array
 at the next timestep with a new version.  
 %\jmh{lines 15 and 16 do not fit my definition of Bloom above.  Not sure how to deal with that.} %\jmh{I added a note above that we allow simple side-effect-free Ruby expressions.}
 Whenever a \texttt{checkout\_msg} appears in a server replica, the 
@@ -175,7 +174,7 @@ orginated inside the quorum.
 \noindent
 %For each cart, we apply whole-program analysis techniques to discover points
 %of order.
-The Bud interpreter automatically identifies and generates a graphical
+The Bud interpreter automatically generates a graphical
 representation of dependencies between collections in a program
 (Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
 %The Bud interpreter automatically generates a graphical representation of the
@@ -194,7 +193,7 @@ non-monotonicity (aggregation or negation) over $A$, then the edge is marked wit
 %result in edges marked with a $\lnot$.
 To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into a octagonal ``temporal cluster,'' 
 which can be viewed abstractly as a single, nonmonotonic node in the 
-dataflow.~\footnote{Datalog aficionados may be troubled by our mention of cycles
+dataflow.\footnote{Datalog aficionados may be troubled by our mention of cycles
 involving negation in the dependency graph.  In~\cite{dedalus-techr} we
 describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability.}
 %\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro %this without any intuition.  You should also dismiss the particular collection names in this 
