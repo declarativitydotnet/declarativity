@@ -174,7 +174,7 @@ representation of dependencies between collections in a program
 %dependency graph of collections through rules, (and hence the flow of tuples)
 %as a staged dataflow.
 Each node in the graph is either a collection or a cluster of collections; \textbf{table}s are shown as rectangles, ephemeral
-collections (\textbf{scratch} and \textbf{channel}) are depicted as ovals, and clusters as octagons.  A
+collections (\textbf{scratch} and \textbf{channel}) are depicted as ovals, and clusters (described below) as octagons.  A
 directed edge from node $A$ to node $B$ indicates that that $B$ appears in the
 lhs of a Bloom rule with $A$ referenced directly, or through a join expression,
 in the rhs.  An edge is annotated based on the operator symbol in the rule and
@@ -218,7 +218,7 @@ and between the temporal cluster and itself.
 %%server replication (via the meta-edge in the temporal cycle from 
 %%\texttt{kvput} to itself) may affect the
 %%end results.  
-This figure tells the (sad!) story of how we would ensure consistency of the destructive cart implementation: we would introduce coordination
+This figure tells the (sad!) story of how we could ensure consistency of the destructive cart implementation: introduce coordination
 between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. It would incur the latency of a round of messages per server per client update, substantially decrease system throughput, and make the system fragile in the face of replica failures.
 
 %One coordination technique would require the client to wait for all replicas to
@@ -255,6 +255,7 @@ between client and server---and between the chosen server and all its replicas--
 % Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
 % per server per client update, and substantially decrease system throughput.  
 \wrm{i don't quite see the point of presenting this straw-man scenario to people.  i think we should just explain that coordination is intuitively needed because deletions don't commute with insertions.}
+\paa{personally I am inclined to keep it.  neil?}
 Because we only care about the \emph{set} of elements contained in the value array
 and not its order, we might be tempted to argue that 
 the shopping cart application is eventually consistent
@@ -339,7 +340,7 @@ contents of the response message.
 \end{comment}
 Here we see that communication (via \texttt{action\_msg}) between client and server---and between servers and replicas---crosses no points of order, so all the
 communication related to shopping actions converges to the same final state without coordination.
-There are, however, points of order upon the appearance of \texttt{client\_checkout}
+There are, however, points of order upon the appearance of \texttt{checkout\_msg}
 messages, which must be joined with an \texttt{action\_cnt} aggregate over the set of updates.  Although the 
 accumulation of shopping actions is monotonic, summarization of the cart state
 requires us to assume (or rather, prove) that there will be no further cart actions.
