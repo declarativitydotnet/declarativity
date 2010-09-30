@@ -140,7 +140,7 @@ of unique \texttt{reqid} values for every combination of values for \texttt{sess
 User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. 
 %Line 16 of Figure~\ref{fig:queue} gives an example of the natural join (equijoin on matching %column names, in this case \texttt{id}.)
 Line 34 of Figure~\ref{fig:pdg-disorderly} gives an example of a join between
-\texttt{checkout\_msg} and \texttt{status}.
+\texttt{action\_msg} and \texttt{member}.
 
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
