@@ -31,17 +31,33 @@ Interestingly, these coordination mechanisms themselves typically involve counti
 
 Our observations about waiting and counting illustrate the crux of what we call the \emph{CALM Principle}: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs \emph{guarantee} eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires coordination schemes that ``wait'' until inputs can be guaranteed to be complete.  
 
-Obviously we wish to minimize the use of coordination, because of well-known concerns about latency and availability in the face of message delays during coordination.  We can use the CALM principle to develop checks for distributed consistency in logic languages, where conservative tests for monotonicity are well understood. A simple syntactic check is often sufficient: if the program does not contain any of the symbols in the language that correspond to non-monotonic operators (e.g., ``NOT IN'' or aggregate symbols), then it is monotonic and can be implemented without coordination---regardless of any read-write dependencies in the code.  These conservative checks can be refined further to consider semantics of predicates in the language. For example, the expression ``MIN(x) $< 100$'' is monotonic despite containing an aggregate, by virtue of the semantics of ``MIN'' and $<$: once a subset $S$ satisfies this test, any superset of $S$ will also satisfy it.  Further refinements along these lines exist, increasing the ability of program analyses to verify monotonicity.
-%More advanced whole-program analyses can take into account whether possibly non-monotonic conclusions can ever be consistent with other checks in the program; while undecidable in general, conservative tests with constraint propagation are often possible.  
+Obviously we wish to minimize the use of coordination, because of well-known
+concerns about latency and availability in the face of message delays during
+coordination.  We can use the CALM principle to develop checks for distributed
+consistency in logic languages, where conservative tests for monotonicity are
+well understood. A simple syntactic check is often sufficient: if the program
+does not contain any of the symbols in the language that correspond to
+non-monotonic operators (e.g., \texttt{NOT IN} or aggregate symbols), then it is
+monotonic and can be implemented without coordination---regardless of any
+read-write dependencies in the code.  These conservative checks can be refined
+further to consider semantics of predicates in the language. For example, the
+expression ``\texttt{MIN(x) $< 100$}'' is monotonic despite containing an aggregate, by
+virtue of the semantics of \texttt{MIN} and $<$: once a subset $S$ satisfies this
+test, any superset of $S$ will also satisfy it.  Further refinements along
+these lines exist, increasing the ability of program analyses to verify
+monotonicity.
+%More advanced whole-program analyses can take into account whether possibly
+%non-monotonic conclusions can ever be consistent with other checks in the
+%program; while undecidable in general, conservative tests with constraint
+%propagation are often possible.  
 % 
-% It may also be useful to understand which portions
-% of the program's execution or output may be affected by network
-% non-determinism, and which are deterministic.  In this case, a static or
-% runtime analysis could perform \emph{taint tracking} of network nondeterminism.
-% %Intuitively, a tuple is tainted if it is the transitive result of some
-% %non-monotonic operator.
+% It may also be useful to understand which portions of the program's execution
+% or output may be affected by network non-determinism, and which are
+% deterministic.  In this case, a static or runtime analysis could perform
+% \emph{taint tracking} of network nondeterminism.  %Intuitively, a tuple is
+% tainted if it is the transitive result of some %non-monotonic operator.
 
-In cases where an analysis cannot guarantee monotonicity of a whole program, it can instead provide a conservative assessment of the points in the program where coordination may be required to ensure consistency.  For example, a shallow syntactic analysis could flag all non-monotonic predicates in a program (e.g., ``NOT IN'' tests, or predicates with aggregate values as input).
+In cases where an analysis cannot guarantee monotonicity of a whole program, it can instead provide a conservative assessment of the points in the program where coordination may be required to ensure consistency.  For example, a shallow syntactic analysis could flag all non-monotonic predicates in a program (e.g., \texttt{NOT IN} tests, or predicates with aggregate values as input).
 We call the loci suggested by this analysis the program's \emph{points of
 order}. A program with non-monotonicity can be made consistent by including coordination logic at its points of order.  
 
