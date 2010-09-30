@@ -195,7 +195,7 @@ non-monotonicity (aggregation or negation) over $A$, then the edge is marked wit
 To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into a octagonal ``temporal cluster,'' 
 which can be viewed abstractly as a single, nonmonotonic node in the 
 dataflow.~\footnote{Datalog aficionados may be troubled by our mention of cycles
-involving negation in the dependency graph.  In a separate paper~\cite{dedalus-techr} we
+involving negation in the dependency graph.  In~\cite{dedalus-techr} we
 describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability.}
 %\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro %this without any intuition.  You should also dismiss the particular collection names in this 
 %figure as details from the KV store that are beyond the scope....}
@@ -216,7 +216,7 @@ Although there is no
 %\wrm{there is no non-monotonicity whatsoever in the code.  so i reverted this change.}
 non-monotonicity in the destructive
 cart code of Figure~\ref{fig:pdg-destructive}, the underlying key-value store uses the non-monotonic \texttt{$<$-} operator to model updateable state.\footnote{Our full-length paper discusses the non-monotonic nature of \texttt{$<$-}, and
-expands the SCC to analyze analyzes the key-value store in detail.}
+expands the SCC to analyze the key-value store in detail.}
 The full-program analysis shown in Figure~\ref{fig:pdg-destructive-analysis}
 indicates that there are
 points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
