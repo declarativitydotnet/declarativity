@@ -286,7 +286,7 @@ before any addition of that item: the delete would be ignored, leading to incons
 10:  def summarize
 11:    status <= join(action_cnt, checkout_msg).map do |a, c| 
 12:      if a.action == "Add" and not 
-13:      action_cnt.map{|d| d.id if d.action == "Del" and a.id}.include? a.id 
+13:      action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
 14:        [a.session, a.item, a.cnt] 
 15:      end 
 16:    end
