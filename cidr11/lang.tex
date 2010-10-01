@@ -1,6 +1,18 @@
 \section{Bud: Bloom Under Development}
 \label{sec:lang}
-At base, distributed programs are parallel algorithms, and parallel programming is well known to be hard---even in the absence of distributed issues like component failure and message reordering.  Bloom is based on the observation that many of the fundamental problems with parallel programming come from a legacy of assumptions regarding classical von Neumann architectures.  In the von Neumann model, state is captured in an ordered array of addresses, and computation is expressed via an ordered list of instructions.  Traditional imperative programming grew out of these pervasive assumptions about order.  It is no surprise therefore that popular imperative languages are a bad match to parallel and distributed platforms, which make few guarantees about order of execution and communication. By contrast, set-oriented approaches like SQL and batch dataflow approaches like MapReduce translate better to architectures with loose control over ordering.
+% At base, distributed programs are parallel algorithms, and parallel programming
+% is well known to be hard---even in the absence of distributed issues like
+% component failure and message reordering.
+Bloom is based on the conjecture that many of the fundamental problems with
+parallel programming come from a legacy of assumptions regarding classical von
+Neumann architectures.  In the von Neumann model, state is captured in an
+ordered array of addresses, and computation is expressed via an ordered list of
+instructions.  Traditional imperative programming grew out of these pervasive
+assumptions about order.  It is no surprise therefore that popular imperative
+languages are a bad match to parallel and distributed platforms, which make few
+guarantees about order of execution and communication. By contrast, set-oriented
+approaches like SQL and batch dataflow approaches like MapReduce translate
+better to architectures with loose control over ordering.
 
 Bloom is designed in the tradition of programming styles that are ``disorderly'' by nature.  State is captured in unordered relations.  Computation is expressed in logic: an unordered set of declarative rules, each consisting of an unordered set of predicates.  As we discuss below, mechanisms for imposing order are available when needed, but the programmer is provided with tools to evaluate the need for these mechanisms as special-case behaviors, rather than a default model.  The result is code that runs naturally on distributed machines with a minimum of coordination overhead.
  
@@ -49,7 +61,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 
 \noindent\textbf{State in Bloom}\\
 \noindent
-Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations} shows a Bloom state definition for a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; \texttt{(session, reqid)} is the primary key. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema definition.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
+Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations} shows the definition of a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; the primary key is \texttt{(session, reqid)}. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
 
 Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages and for ``macro'' definitions that enable reuse and readability of code fragments.  The contents of a \textbf{table} persist across consecutive timesteps (until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below). Although there are precise declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient to think operationally as follows: \textbf{scratch} collections are ``emptied'' before each timestep, \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator represents batch ``deletion'' before the beginning of the next timestep.
 
