@@ -16,7 +16,7 @@
 \begin{scriptsize}
 %\begin{verbatim}
 \begin{lstlisting}
-declare
+declare (*\label{line:des_declare}*)
 def store
 	kvput <= action_msg.map do |a|
 		if not bigtable.map{|b| b.key}.include? a.session
