@@ -57,13 +57,17 @@ of program analyses to verify monotonicity.
 % \emph{taint tracking} of network nondeterminism.  %Intuitively, a tuple is
 % tainted if it is the transitive result of some %non-monotonic operator.
 
-In cases where an analysis cannot guarantee monotonicity of a whole program, it can instead provide a conservative assessment of the points in the program where coordination may be required to ensure consistency.  For example, a shallow syntactic analysis could flag all non-monotonic predicates in a program (e.g., \texttt{NOT IN} tests or predicates with aggregate values as input).
-We call the loci suggested by this analysis the program's \emph{points of
-order}. \kc{bit awk, how about: The foci produced by analysis are the program's \emph{points of order}.} A program with non-monotonicity can be made consistent by including coordination logic at its points of order.  
+In cases where an analysis cannot guarantee monotonicity of a whole program, it
+can instead provide a conservative assessment of the points in the program where
+coordination may be required to ensure consistency.  For example, a shallow
+syntactic analysis could flag all non-monotonic predicates in a program (e.g.,
+\texttt{NOT IN} tests or predicates with aggregate values as input). The loci
+produced by this analysis are the program's \emph{points of order}. A program
+with non-monotonicity can be made consistent by including coordination logic at
+its points of order.
 
-The reader may observe that because ``waiting requires counting,'' adding coordination logic actually increases the number of points of order in a program since it is non-monotonic.  To avoid this problem, the coordination logic must be hand-verified for consistency, after which annotations on the coordination logic can inform the analysis tool to (a) skip the coordination logic in its analysis, and (b) skip the point of order that the coordination logic handles.  
+The reader may observe that because ``waiting requires counting,'' adding coordination logic actually increases the number of points of order in a program.  To avoid this problem, the coordination logic must be hand-verified for consistency, after which annotations on the coordination logic can inform the analysis tool to (a) skip the coordination logic in its analysis, and (b) skip the point of order that the coordination logic handles.  
 
-\kc{hrm coordination is good, oh no its bad, oh trust us it's gonna be okay... feels uneven}
 Because analyses based on the CALM principle operate with information about program semantics, they can avoid coordination logic in cases where traditional read/write analysis would require it.  Perhaps more importantly, as we will see in the next sections, logic languages and the analysis of points of order can help programmers redesign code to achieve goals of minimizing coordination.
 
 %%\jmh{Should we say this: in the full paper, we will more directly show how CALM analysis relates to read/write analyses like serializability?}
