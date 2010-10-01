@@ -206,11 +206,16 @@ Points of order are indicated in the graph by an edge with a white circle.
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
+Figure~\ref{fig:pdg-disorderly-analysis} presents the analysis of the 
+destructive cart code of Figure~\ref{fig:pdg-destructive}.  Note that
+because all dependencies are analyzed, collections defined in the superclass
+but not referenced in the code sample
+(e.g., \texttt{pipe\_chan}, \texttt{member}) also appear in the graph.
 Although there is no
 %syntactically obvious
 %\wrm{there is no non-monotonicity whatsoever in the code.  so i reverted this change.}
-non-monotonicity in the destructive
-cart code of Figure~\ref{fig:pdg-destructive}, the underlying key-value store
+non-monotonicity in 
+Figure~\ref{fig:pdg-destructive}, the underlying key-value store
 uses the non-monotonic \texttt{$<$-} operator to model updateable
 state.\footnote{Our full-length paper will discuss the non-monotonic nature of \texttt{$<$-}, and
 will expand the SCC to analyze the key-value store in detail.}
