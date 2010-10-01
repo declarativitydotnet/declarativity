@@ -7,7 +7,7 @@
 \begin{lstlisting}
 declare
 def accumulate
-	cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] }
+	cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] } (*\label{line:action_msg}*)
 	action_cnt <= cart_action.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid))
 end
 
