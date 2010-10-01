@@ -214,8 +214,10 @@ Although there is no
 %syntactically obvious
 %\wrm{there is no non-monotonicity whatsoever in the code.  so i reverted this change.}
 non-monotonicity in the destructive
-cart code of Figure~\ref{fig:pdg-destructive}, the underlying key-value store uses the non-monotonic \texttt{$<$-} operator to model updateable state.\footnote{Our full-length paper discusses the non-monotonic nature of \texttt{$<$-}, and
-expands the SCC to analyze the key-value store in detail.}
+cart code of Figure~\ref{fig:pdg-destructive}, the underlying key-value store
+uses the non-monotonic \texttt{$<$-} operator to model updateable
+state.\footnote{Our full-length paper will discuss the non-monotonic nature of \texttt{$<$-}, and
+will expand the SCC to analyze the key-value store in detail.}
 The full-program analysis shown in Figure~\ref{fig:pdg-destructive-analysis}
 indicates that there are
 points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
