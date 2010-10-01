@@ -149,7 +149,8 @@ provides an example computing the count
 %%\texttt{id} across all tuples in collection \texttt{q}.  
 of unique \texttt{reqid} values for every combination of values for \texttt{session}, 
 \texttt{item} and \texttt{action}.
-User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. 
+%User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  
+Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. 
 %Line 16 of Figure~\ref{fig:queue} gives an example of the natural join (equijoin on matching %column names, in this case \texttt{id}.)
 Line 34 of Figure~\ref{fig:pdg-disorderly} gives an example of a join between
 \texttt{action\_msg} and \texttt{member}.
