@@ -65,7 +65,7 @@ Bloom programs manage state using four collection types described in the top of 
 
 Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages and for ``macro'' definitions that enable reuse and readability of code fragments.  The contents of a \textbf{table} persist across consecutive timesteps (until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below). Although there are precise declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient to think operationally as follows: \textbf{scratch} collections are ``emptied'' before each timestep, \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator represents batch ``deletion'' before the beginning of the next timestep.
 
-The facts of the ``real world,'' including messages and system events that mark the passage of wall-clock time, are captured via \textbf{channel} and \textbf{periodic} collections; these are \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
+The facts of the ``real world,'' including network messages and the passage of wall-clock time, are captured via \textbf{channel} and \textbf{periodic} collections; these are \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
 % From a semantic point of view, all real-world non-determinism is captured here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep in which each fact eventually ``appears''.  
 The paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that failure of nodes or communication is captured here: it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient to think operationally as follows: facts in a \textbf{channel} are delivered to the address in their location specifier via a best-effort unordered network protocol like UDP, and the definition of a \textbf{periodic} collection instructs the runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further derivations.
 
@@ -137,7 +137,7 @@ The paper on Dedalus delves deeper into the logical semantics of this non-determ
 
 \textbf{Bloom Statements}\\
 \noindent
-Statements in Bloom are akin to rules in Datalog, or views in SQL.  They consist of declarative relational statements that define the contents of derived relations.  The syntax is:\\
+Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist of declarative relational statements that define the contents of derived collections.  The syntax is:\\
 \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$ $<$collection-expression$>$}}\\
 \noindent

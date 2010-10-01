@@ -131,10 +131,10 @@ orginated inside the quorum.
 13:      if b.key == a.session
 14:        if a.action == "Add"
 15:          [a.server, a.client, a.session, 
-16:          a.reqid, b.value.push(a.item)]
+16:           a.reqid, b.value.push(a.item)]
 17:        elsif a.action == "Del"
 18:          [a.server, a.client, a.session, 
-19:          a.reqid, b.value.reject{|bv| bv == a.item}]
+19:           a.reqid, b.value.reject{|bv| bv == a.item}]
 20:        end
 21:      end
 22:    end
