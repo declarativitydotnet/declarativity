@@ -61,13 +61,49 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 
 \noindent\textbf{State in Bloom}\\
 \noindent
-Bloom programs manage state using four collection types described in the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a relational-style schema of named columns, including an optional subset of those columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations} shows the definition of a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; the primary key is \texttt{(session, reqid)}. In Bud, the type system for the columns is taken from Ruby, so it is possible to have a column based on any Ruby class the programmer cares to define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array containing as many elements as the columns of the collection's schema.  As in other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values can be manipulated using their own (non-destructive) methods, but the Bloom language has no knowledge of those types and can only reference the column values as opaque objects.  
 
-Persistence in Bloom is determined by the type of the collection.  \textbf{scratch} collections are handy for transient data like network messages and for ``macro'' definitions that enable code reuse. The contents of a \textbf{table} persist across consecutive timesteps (until that persistence is interrupted via a Bloom statement containing the \texttt{$<$-} operator described below). Although there are precise declarative semantics for this persistence~\cite{dedalus-techr}, it is convenient to think operationally as follows: \textbf{scratch} collections are ``emptied'' before each timestep, \textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator represents batch ``deletion'' before the beginning of the next timestep.
+Bloom programs manage state using four collection types described in the top of
+Figure~\ref{tab:bloom}. Each object of these types is defined with a
+relational-style schema of named columns, including an optional subset of those
+columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations}
+shows the definition of a \textbf{table} with 4 columns \texttt{session},
+\texttt{reqid}, \texttt{item} and \texttt{action}; the primary key is
+\texttt{(session, reqid)}. In Bud, the type system for the columns is taken
+from Ruby, so it is possible to have a column based on any Ruby class the
+programmer cares to define or import.  In Bud, a tuple in a Bloom collection is
+simply a Ruby array containing as many elements as the columns of the
+collection's schema.  As in other object-relational ADT schemes like
+Postgres~\cite{postgres-adt}, column values can be manipulated using their own
+(non-destructive) methods, but the Bloom language has no knowledge of those
+types and can only reference the column values as opaque objects.  
 
-The facts of the ``real world,'' including network messages and the passage of wall-clock time, are captured via \textbf{channel} and \textbf{periodic} collections; these are \textbf{scratch} collections whose contents ``appear'' at non-deterministic timesteps. 
-% From a semantic point of view, all real-world non-determinism is captured here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep in which each fact eventually ``appears''.  
-The paper on Dedalus delves deeper into the logical semantics of this non-determinism~\cite{dedalus-techr}.  Note that failure of nodes or communication is captured here: it can be thought of as the repeated ``non-appearance'' of a fact at every timestep.  Again, it is convenient to think operationally as follows: facts in a \textbf{channel} are delivered to the address in their location specifier via a best-effort unordered network protocol like UDP, and the definition of a \textbf{periodic} collection instructs the runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further derivations.
+Persistence in Bloom is determined by the type of the collection.
+\textbf{scratch} collections are handy for transient data like network messages
+and for ``macro'' definitions that enable code reuse. The contents of a
+\textbf{table} persist across consecutive timesteps (until that persistence is
+interrupted via a Bloom statement containing the \texttt{$<$-} operator
+described below). Although there are precise declarative semantics for this
+persistence~\cite{dedalus-techr}, it is convenient to think operationally as
+follows: \textbf{scratch} collections are ``emptied'' before each timestep,
+\textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator
+represents batch ``deletion'' before the beginning of the next timestep.
+
+The facts of the ``real world,'' including network messages and the passage of
+wall-clock time, are captured via \textbf{channel} and \textbf{periodic}
+collections; these are \textbf{scratch} collections whose contents ``appear''
+at non-deterministic timesteps. 
+% From a semantic point of view, all real-world non-determinism is captured
+% here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep
+% in which each fact eventually ``appears''.  
+The paper on Dedalus delves deeper into the logical semantics of this
+non-determinism~\cite{dedalus-techr}.  Note that failure of nodes or
+communication is captured here: it can be thought of as the repeated
+``non-appearance'' of a fact at every timestep.  Again, it is convenient to
+think operationally as follows: facts in a \textbf{channel} are delivered to
+the address in their location specifier via a best-effort unordered network
+protocol like UDP, and the definition of a \textbf{periodic} collection
+instructs the runtime to ``inject'' facts at regular wall-clock intervals to
+``drive'' further derivations.
 
 \begin{comment}
 \begin{figure}[t]
@@ -137,21 +173,39 @@ The paper on Dedalus delves deeper into the logical semantics of this non-determ
 
 \textbf{Bloom Statements}\\
 \noindent
-Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist of declarative relational statements that define the contents of derived collections.  The syntax is:\\
-\noindent
-\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$ $<$collection-expression$>$}}\\
-\noindent
-In the Bud prototype, both sides of the operator are instances of (a subclass of) a Ruby class called \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable} module supporting typical collection methods.  Figure~\ref{tab:bloom} describes the four operators that can be used to define the contents of the left-hand side (lhs) in terms of the right-hand side (rhs).
 
-As in Datalog or SQL, the lhs of a statement may be referenced recursively in its rhs, or recursion can be defined mutually across statements.  The rhs typically includes methods of \texttt{BudCollection} objects.  
-Most common is the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to specify scalar operations on all tuples of a \texttt{BudCollection}, including relational selection and projection. For example, line 2 of Figure~\ref{fig:pdg-disorderly} projects the \texttt{action\_msg} collection to its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.  \texttt{BudCollection} defines a \texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates; lines 4 and 5 of Figure~\ref{fig:pdg-disorderly} 
-provides an example computing the count 
+Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
+of declarative relational statements that define the contents of derived
+collections.  The syntax is:\\ \noindent
+\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
+$<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
+the operator are instances of (a subclass of) a Ruby class called
+\texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
+module supporting typical collection methods.  Figure~\ref{tab:bloom} describes
+the four operators that can be used to define the contents of the left-hand
+side (lhs) in terms of the right-hand side (rhs).
+
+As in Datalog or SQL, the lhs of a statement may be referenced recursively in
+its rhs, or recursion can be defined mutually across statements.  The rhs
+typically includes methods of \texttt{BudCollection} objects.  Most common is
+the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to
+specify scalar operations on all tuples of a \texttt{BudCollection}, including
+relational selection and projection. For example, line~\ref{line:action_msg} of
+Figure~\ref{fig:pdg-disorderly} projects the \texttt{action\_msg} collection to
+its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.
+\texttt{BudCollection} defines a \texttt{group} method akin to SQL's
+\texttt{GROUP BY}, supporting the standard SQL aggregates; lines 4 and 5 of
+Figure~\ref{fig:pdg-disorderly} provides an example computing the count 
 %%\texttt{id} across all tuples in collection \texttt{q}.  
-of unique \texttt{reqid} values for every combination of values for \texttt{session}, 
-\texttt{item} and \texttt{action}.
-%User-defined aggregates can be specified via a \texttt{reduce} method from Ruby \texttt{Enumerable}.  
-Multiway joins are specified via a subclass of \texttt{BudCollection} called \texttt{Join}, which produces an anonymous \textbf{scratch} collection that can be used in the rhs of a statement. 
-%Line 16 of Figure~\ref{fig:queue} gives an example of the natural join (equijoin on matching %column names, in this case \texttt{id}.)
+of unique \texttt{reqid} values for every combination of values for
+\texttt{session}, \texttt{item} and \texttt{action}.
+%User-defined aggregates can be specified via a \texttt{reduce} method from
+%Ruby \texttt{Enumerable}.  
+Multiway joins are specified via a subclass of \texttt{BudCollection} called
+\texttt{Join}, which produces an anonymous \textbf{scratch} collection that can
+be used in the rhs of a statement. 
+%Line 16 of Figure~\ref{fig:queue} gives an example of the natural join
+%(equijoin on matching %column names, in this case \texttt{id}.)
 Line 34 of Figure~\ref{fig:pdg-disorderly} gives an example of a join between
 \texttt{action\_msg} and \texttt{member}.
 
