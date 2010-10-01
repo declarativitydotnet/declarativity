@@ -7,8 +7,8 @@
 \begin{lstlisting}
 declare
 def accumulate
-	cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] } (*\label{line:action_msg}*)
-	action_cnt <= cart_action.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid))
+	cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] } (*\label{line:dis_action_msg}*)
+	action_cnt <= cart_action.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid)) (*\label{line:dis_count_reqid}*)
 end
 
 declare
@@ -34,7 +34,7 @@ def communicate
 		end
 	end
 
-	action_msg <+ join([action_msg, member]).map do |a, m|
+	action_msg <+ join([action_msg, member]).map do |a, m| (*\label{line:dis_join_action_msg_member}*)
 		unless member.map{|nm| nm.player}.include? a.client
 			[m.player, a.server, a.session, a.item, a.action, a.reqid]
 		end 

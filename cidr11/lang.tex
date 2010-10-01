@@ -190,11 +190,12 @@ its rhs, or recursion can be defined mutually across statements.  The rhs
 typically includes methods of \texttt{BudCollection} objects.  Most common is
 the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to
 specify scalar operations on all tuples of a \texttt{BudCollection}, including
-relational selection and projection. For example, line~\ref{line:action_msg} of
-Figure~\ref{fig:pdg-disorderly} projects the \texttt{action\_msg} collection to
-its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.
-\texttt{BudCollection} defines a \texttt{group} method akin to SQL's
-\texttt{GROUP BY}, supporting the standard SQL aggregates; lines 4 and 5 of
+relational selection and projection. For example,
+line~\ref{line:dis_action_msg} of Figure~\ref{fig:pdg-disorderly} projects the
+\texttt{action\_msg} collection to its \texttt{session}, \texttt{item},
+\texttt{action} and \texttt{reqid} fields.  \texttt{BudCollection} defines a
+\texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard
+SQL aggregates; line~\ref{line:dis_count_reqid} of
 Figure~\ref{fig:pdg-disorderly} provides an example computing the count 
 %%\texttt{id} across all tuples in collection \texttt{q}.  
 of unique \texttt{reqid} values for every combination of values for
@@ -206,18 +207,19 @@ Multiway joins are specified via a subclass of \texttt{BudCollection} called
 be used in the rhs of a statement. 
 %Line 16 of Figure~\ref{fig:queue} gives an example of the natural join
 %(equijoin on matching %column names, in this case \texttt{id}.)
-Line 34 of Figure~\ref{fig:pdg-disorderly} gives an example of a join between
-\texttt{action\_msg} and \texttt{member}.
+Line~\ref{line:dis_join_action_msg_member} of Figure~\ref{fig:pdg-disorderly}
+gives an example of a join between \texttt{action\_msg} and \texttt{member}.
 
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
 
-Programmers declare Bloom statements within methods of a Bud subclass definition
-that are flagged with the \texttt{declare} modifier (e.g., line 0 of
-Figure~\ref{fig:pdg-destructive}). The semantics of a Bloom program are defined
-by the union of all the \texttt{declare} methods; the order of statements is
-immaterial. Dividing rules into multiple methods improves the readability of the
-program and allows use of Ruby's method overriding and inheritance features, as described below.
+Programmers declare Bloom statements within methods of a Bud subclass
+definition that are flagged with the \texttt{declare} modifier (e.g.,
+line~\ref{line:des_declare} of Figure~\ref{fig:pdg-destructive}). The semantics
+of a Bloom program are defined by the union of all the \texttt{declare}
+methods; the order of statements is immaterial. Dividing rules into multiple
+methods improves the readability of the program and allows use of Ruby's method
+overriding and inheritance features, as described below.
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
