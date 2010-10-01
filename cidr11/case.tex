@@ -1,101 +1,3 @@
-\section{Case Study}
-\label{sec:case}
-
-%%\wrm{Re-do case studies in Bud} \wrm{Break cart development down into
-%%iterations} \wrm{How does the language naturally lead us to an order
-%%independent style?  Talk about inserting all sorts of exotic stuff like queues
-%%if we want a highly order-dependent imperative style.}
-
-\begin{comment}
-
-\jmh{We discussed the following on the phone.  (1) Handle shopping in two styles: destructive updates, and disorderly accumulation of increment/decrement.  (2) Do analysis on them to detect need for coordination in only the first, show that (annotated) 2PC removes the compiler warning.  (3) Deploy destructive+2PC on EC2 and show practical benefits of avoiding coordination.  (4) Evolve the program with new rules for checkout and/or inventory, show how the disorderly version is no longer monotonic.  Fix that  with 2PC where needed.  Also make sure the destructive version works with the new rules.  Now show that the disorderly version is still better than the destructive one, by coordinating only where needed.}
-
-\jmh{Finally, show what would happen if you didn't coordinate the inventory bit, but tracked taint.  Note that tainted output is the stuff where programmers need to write compensation logic.}
-
-\end{comment}
-
-In this section, we develop two different designs for a distributed shopping-cart
-application in Bloom.  First, we implement a ``destructive,'' state-modifying
-shopping cart application using a simple key-value store (also written in Bloom).
-Second, we implement a ``disorderly'' cart that accumulates updates in a 
-set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.
-
-We begin with a shopping cart built on a key-value storage abstraction.  Each
-cart is a pair \texttt{(key,value)}, where \texttt{key} is a unique session
-identifier and \texttt{value} is 
-%%a composite object containing session information along with 
-a Ruby array representing the items contained in the cart
-at any time. Adding or deleting items from the cart result in ``destructive''
-updates, replacing the value associated with the key with a new value whose
-item array reflects the effects of the actions.  Deletion requests are ignored
-if the item they refer to does not exist in the cart.
-
-Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
-\textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} module (10
-lines of Bloom not shown here), which the shopping cart extends via
-inheritance; it represents the input interface to the key-value store.
-%; it is used in a manner analogous to the \emph{put} function for hash tables.  
-The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated
-%%The \texttt{bigtable} replicas are kept consistent 
-by shipping \texttt{kvput} tuples between replicas upon updates. 
-%%\wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
-Ideally, when all messages have been delivered, every server should have an 
-identical copy of \texttt{bigtable}.
-
-%%\paa{TODO:}\jmh{Any reason not to move line 28 to the top and reference it here?}
-In line 27, the client transmits \texttt{client\_action} tuples that correspond to cart
-updates over the \texttt{action\_msg} \textbf{channel} to an individually
-chosen server replica.  We assume that the client has already chosen a server
-based on load balancing.
-%\jmh{say how chosen.}
-%\jmh{which server replica?  all server replicas??} 
-For each such arriving
-tuple, line 3
-checks \texttt{bigtable} to see if a record exists for the
-session associated with the \texttt{action\_msg}.  If none is there (i.e., this
-is the first update for a new session), then lines 4--8 generate an entry for
-the new session in \texttt{bigtable}.  Otherwise, the join conditions in lines 12--13 are
-satisfied and lines 14--20 ``replace'' the item array
-at the next timestep with a new version.  
-%\jmh{lines 15 and 16 do not fit my definition of Bloom above.  Not sure how to deal with that.} %\jmh{I added a note above that we allow simple side-effect-free Ruby expressions.}
-Whenever a \texttt{checkout\_msg} appears in a server replica, the 
-\texttt{bigtable} tuple associated with the given session is identified (via the join
-on lines 29--30), and the item array in its value field is sent back to the client.  
-
-%\jmh{Note that checkout is idempotent because checkout\_msg is a persisted set?}
-
-Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart implementation, in which
-updates are monotonically accumulated during shopping in a disorderly set, and summed up
-only at checkout.  Line 3 appends all client updates to the persistent table
-\texttt{cart\_action}.  Lines 4--5 define \texttt{action\_cnt} as an aggregate
-over \texttt{cart\_action}, in the style of an SQL \texttt{GROUP BY} statement: for each
-item associated with a cart, we separately count the number of times it was
-added and the number of times it was deleted.   
-%Lines 5--16 define the collection
-%\texttt{status} as the union of the session, item and action fields resulting from 
-%a 3-way join between the \texttt{checkout} message and two
-%copies of \texttt{action\_cnt}---one corresponding to additions and one to
-%deletions -- and the set of \texttt{action\_cnt}  tuples corresponding to items 
-%for which there is no deletion in a given session.
-Lines 11--16 ensure that when a \texttt{checkout\_msg} tuple arrives, \texttt{status} 
-contains a record for every added item
-for which there was no corresponding deletion in the session.  Lines 18--23 
-additionally define \texttt{status} as the 3-way join of of the \texttt{checkout\_msg}
-message and two copies of \texttt{action\_cnt}---one corresponding to additions and one to
-deletions.
-Thus, for each item, \texttt{status} contains its final quantity: the
-difference between its number of additions and deletions (line 21), or simply the number
-of additions if there are no deletions (line 14). 
-Upon the appearance of a \texttt{checkout\_msg}, the
-replica returns a \texttt{response} message to the client containing the
-final quantity (lines 28--32).  
-Because the disorderly implementation does not use a separate
-storage system, it includes its own logic for state replication (lines 34--38).
-Line 36 ensures that only the replica contacted by the client performs a multicast,
-by probing the \textbf{table} \texttt{member} to see if the \texttt{action\_msg} 
-originated inside the quorum.
-
-%%\jmh{need an explanation of lines 5-9, or an alternative syntax (see below or implement LOJ).  %%In the last sentence do you mean lines 24-30?  Won't 28-30 result in each node multicasting %%checkouts to each other node, i.e. $n^2$ messages?}
 
 
 \begin{comment}
@@ -158,6 +60,152 @@ originated inside the quorum.
 \end{scriptsize}
 \end{figure}
 
+\section{Case Study}
+\label{sec:case}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{verbatim}
+0:   declare
+1:   def accumulate
+2:     cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] }
+3:
+4:     action_cnt <= cart_action.group([cart_action.session, 
+5:       cart_action.item, cart_action.action], count(cart_action.reqid))
+7:   end
+8:
+9:   declare
+10:  def summarize
+11:    status <= join(action_cnt, checkout_msg).map do |a, c| 
+12:      if a.action == "Add" and not 
+13:      action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
+14:        [a.session, a.item, a.cnt] 
+15:      end 
+16:    end
+17:
+18:    status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| 
+19:      if a1.session == a2.session and a1.item == a2.item 
+20:      and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
+21:        [a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
+22:      end
+23:    end
+24:   end
+25:
+26:  declare 
+27:  def communicate
+28:    response_msg <= join([status, checkout_msg]).map do |s, c| 
+29:      if s.session == c.session
+30:        [c.client, c.server, s.session, s.item, s.cnt]
+31:      end
+32:    end
+33: 
+34:    action_msg <+ join([action_msg, member]).map do |a, m|
+35:      unless member.map{|nm| nm.player}.include? a.client
+36:        [m.player, a.server, a.session, a.item, a.action, a.reqid]
+37:      end 
+38:    end
+39:  end
+\end{verbatim}
+\vspace{-10pt}
+\caption{Disorderly cart implementation.}
+\label{fig:pdg-disorderly}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+%%\wrm{Re-do case studies in Bud} \wrm{Break cart development down into
+%%iterations} \wrm{How does the language naturally lead us to an order
+%%independent style?  Talk about inserting all sorts of exotic stuff like queues
+%%if we want a highly order-dependent imperative style.}
+
+\begin{comment}
+
+\jmh{We discussed the following on the phone.  (1) Handle shopping in two styles: destructive updates, and disorderly accumulation of increment/decrement.  (2) Do analysis on them to detect need for coordination in only the first, show that (annotated) 2PC removes the compiler warning.  (3) Deploy destructive+2PC on EC2 and show practical benefits of avoiding coordination.  (4) Evolve the program with new rules for checkout and/or inventory, show how the disorderly version is no longer monotonic.  Fix that  with 2PC where needed.  Also make sure the destructive version works with the new rules.  Now show that the disorderly version is still better than the destructive one, by coordinating only where needed.}
+
+\jmh{Finally, show what would happen if you didn't coordinate the inventory bit, but tracked taint.  Note that tainted output is the stuff where programmers need to write compensation logic.}
+
+\end{comment}
+
+In this section, we develop two different designs for a distributed shopping-cart
+application in Bloom.  First, we implement a ``destructive,'' state-modifying
+shopping cart application using a simple key-value store (also written in Bloom).
+Second, we implement a ``disorderly'' cart that accumulates updates in a 
+set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.
+
+We begin with a shopping cart built on a key-value storage abstraction.  Each
+cart is a \texttt{(key,value)} pair, where \texttt{key} is a unique session
+identifier and \texttt{value} is an object containing the session's state,
+including a Ruby array that holds the items in the cart. Adding or deleting
+items from the cart result in ``destructive'' updates: the value associated with
+the key is replaced by a new value that reflects the effect of the
+update. Deletion requests are ignored if the item they refer to does not exist
+in the cart.
+
+Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
+\textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} module (10
+lines of Bloom not shown here), which the shopping cart extends via
+inheritance; it represents the input interface to the key-value store.
+%; it is used in a manner analogous to the \emph{put} function for hash tables.  
+The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated
+%%The \texttt{bigtable} replicas are kept consistent 
+by shipping \texttt{kvput} tuples between replicas upon updates. 
+%%\wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
+% Ideally, when all messages have been delivered, every server should have an 
+% identical copy of \texttt{bigtable}.
+
+%%\paa{TODO:}\jmh{Any reason not to move line 28 to the top and reference it here?}
+In line 27, the client transmits \texttt{client\_action} tuples that correspond to cart
+updates over the \texttt{action\_msg} \textbf{channel} to an individually
+chosen server replica.  We assume that the client has already chosen a server
+based on load balancing.
+%\jmh{say how chosen.}
+%\jmh{which server replica?  all server replicas??} 
+For each such arriving
+tuple, line 3
+checks \texttt{bigtable} to see if a record exists for the
+session associated with the \texttt{action\_msg}.  If none is there (i.e., this
+is the first update for a new session), then lines 4--8 generate an entry for
+the new session in \texttt{bigtable}.  Otherwise, the join conditions in lines 12--13 are
+satisfied and lines 14--20 ``replace'' the item array
+at the next timestep with a new version.  
+%\jmh{lines 15 and 16 do not fit my definition of Bloom above.  Not sure how to deal with that.} %\jmh{I added a note above that we allow simple side-effect-free Ruby expressions.}
+Whenever a \texttt{checkout\_msg} appears in a server replica, the 
+\texttt{bigtable} tuple associated with the given session is identified (via the join
+on lines 29--30), and the item array in its value field is sent back to the client.  
+
+%\jmh{Note that checkout is idempotent because checkout\_msg is a persisted set?}
+
+Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart implementation, in which
+updates are monotonically accumulated during shopping in a disorderly set, and summed up
+only at checkout.  Line 3 appends all client updates to the persistent table
+\texttt{cart\_action}.  Lines 4--5 define \texttt{action\_cnt} as an aggregate
+over \texttt{cart\_action}, in the style of an SQL \texttt{GROUP BY} statement: for each
+item associated with a cart, we separately count the number of times it was
+added and the number of times it was deleted.   
+%Lines 5--16 define the collection
+%\texttt{status} as the union of the session, item and action fields resulting from 
+%a 3-way join between the \texttt{checkout} message and two
+%copies of \texttt{action\_cnt}---one corresponding to additions and one to
+%deletions -- and the set of \texttt{action\_cnt}  tuples corresponding to items 
+%for which there is no deletion in a given session.
+Lines 11--16 ensure that when a \texttt{checkout\_msg} tuple arrives, \texttt{status} 
+contains a record for every added item
+for which there was no corresponding deletion in the session.  Lines 18--23 
+additionally define \texttt{status} as the 3-way join of the \texttt{checkout\_msg}
+message and two copies of \texttt{action\_cnt}---one corresponding to additions and one to
+deletions.
+Thus, for each item, \texttt{status} contains its final quantity: the
+difference between its number of additions and deletions (line 21), or simply the number
+of additions if there are no deletions (line 14). 
+Upon the appearance of a \texttt{checkout\_msg}, the
+replica returns a \texttt{response} message to the client containing the
+final quantity (lines 28--32).  
+Because the disorderly implementation does not use a separate
+storage system, it includes its own logic for state replication (lines 34--38).
+Line 36 ensures that only the replica contacted by the client performs a multicast,
+by probing the \textbf{table} \texttt{member} to see if the \texttt{action\_msg} 
+originated inside the quorum.
+
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
@@ -167,6 +215,7 @@ originated inside the quorum.
 \vspace{-2pt}
 \end{figure}
 
+%%\jmh{need an explanation of lines 5-9, or an alternative syntax (see below or implement LOJ).  %%In the last sentence do you mean lines 24-30?  Won't 28-30 result in each node multicasting %%checkouts to each other node, i.e. $n^2$ messages?}
 
 %\subsection{Analysis}
 \noindent
@@ -182,7 +231,7 @@ representation of dependencies between collections in a program
 %as a staged dataflow.
 Each node in the graph is either a collection or a cluster of collections; \textbf{table}s are shown as rectangles, ephemeral
 collections (\textbf{scratch} and \textbf{channel}) are depicted as ovals, and clusters (described below) as octagons.  A
-directed edge from node $A$ to node $B$ indicates that that $B$ appears in the
+directed edge from node $A$ to node $B$ indicates that $B$ appears in the
 lhs of a Bloom rule with $A$ referenced directly, or through a join expression,
 in the rhs.  An edge is annotated based on the operator symbol in the rule and
 the type of $B$.  If the rule is ``inductive''---i.e., has the \texttt{$<$+}
@@ -270,56 +319,6 @@ and not its order, we might be tempted to argue that
 the shopping cart application is eventually consistent
 when asynchronously updated, and forego the coordination logic.  Unfortunately, such informal reasoning can hide serious bugs: consider what happens if a delete action for an item arrives at some replica
 before any addition of that item: the delete would be ignored, leading to inconsistencies across replicas.
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{verbatim}
-0:   declare
-1:   def accumulate
-2:     cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] }
-3:
-4:     action_cnt <= cart_action.group([cart_action.session, 
-5:       cart_action.item, cart_action.action], count(cart_action.reqid))
-7:   end
-8:
-9:   declare
-10:  def summarize
-11:    status <= join(action_cnt, checkout_msg).map do |a, c| 
-12:      if a.action == "Add" and not 
-13:      action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
-14:        [a.session, a.item, a.cnt] 
-15:      end 
-16:    end
-17:
-18:    status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| 
-19:      if a1.session == a2.session and a1.item == a2.item 
-20:      and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
-21:        [a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
-22:      end
-23:    end
-24:   end
-25:
-26:  declare 
-27:  def communicate
-28:    response_msg <= join([status, checkout_msg]).map do |s, c| 
-29:      if s.session == c.session
-30:        [c.client, c.server, s.session, s.item, s.cnt]
-31:      end
-32:    end
-33: 
-34:    action_msg <+ join([action_msg, member]).map do |a, m|
-35:      unless member.map{|nm| nm.player}.include? a.client
-36:        [m.player, a.server, a.session, a.item, a.action, a.reqid]
-37:      end 
-38:    end
-39:  end
-\end{verbatim}
-\vspace{-10pt}
-\caption{Disorderly cart implementation.}
-\label{fig:pdg-disorderly}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
 
 \begin{figure}[t]
 \centering
