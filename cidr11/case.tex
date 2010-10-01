@@ -350,11 +350,11 @@ approach is ``better'' required us to apply domain knowledge: checkout is a coar
 By providing the programmer with a set of abstractions that are predominantly
 order-independent, Bloom encourages a style of programming that minimizes
 coordination requirements. But as we see in our destructive cart implementation,
-it is nonetheless possible to write imperative-style, order-intensive code in
-Bloom.  Our analysis tools provide assistance in this regard.  Given a
+it is nonetheless possible to use Bloom to write code in an imperative,
+order-sensitive style. Our analysis tools provide assistance in this regard.  Given a
 particular implementation with points of order, Bloom's static analysis can help
 a programmer iteratively refine their program: either to ``push back'' the
 points to as late as possible in the dataflow, as we did in this example, or to
-``localize'' points of order by moving them to loci in the program's dataflow
+``localize'' points of order by moving them to locations in the program's dataflow
 where the coordination can be implemented on individual nodes without
-communication (a case we did not illustrate in this short submission.)
+communication.
