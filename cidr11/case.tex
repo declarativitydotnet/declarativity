@@ -148,7 +148,7 @@ originated inside the quorum.
 \centering
 \includegraphics[width=0.9\linewidth]{fig/destructive.pdf}
 \vspace{-10pt}
-\caption{Destructive cart analysis with temporal cycles collapsed.}
+\caption{Destructive cart analysis.}
 \label{fig:pdg-destructive-analysis}
 \vspace{-2pt}
 \end{figure}
@@ -224,7 +224,7 @@ and between the temporal cluster and itself.
 %%\texttt{kvput} to itself) may affect the
 %%end results.  
 This figure tells the (sad!) story of how we could ensure consistency of the destructive cart implementation: introduce coordination
-between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. It would incur the latency of a round of messages per server per client update, substantially decrease system throughput, and make the system fragile in the face of replica failures.
+between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. It would incur the latency of a round of messages per server per client update, decrease system throughput, and make the system fragile in the face of replica failures.
 
 %One coordination technique would require the client to wait for all replicas to
 %successfully apply an update before sending a subsequent update.  This would
