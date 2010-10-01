@@ -308,7 +308,7 @@ before any addition of that item: the delete would be ignored, leading to incons
 32:    end
 33: 
 34:    action_msg <+ join([action_msg, member]).map do |a, m|
-35:      unless member.map{|m| m.player}.include? a.client
+35:      unless m.map{|m| m.player}.include? a.client
 36:        [m.player, a.server, a.session, a.item, a.action, a.reqid]
 37:      end 
 38:    end
