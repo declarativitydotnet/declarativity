@@ -208,14 +208,12 @@ Points of order are indicated in the graph by an edge with a white circle.
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
-Figure~\ref{fig:pdg-disorderly-analysis} presents the analysis of the 
-destructive cart code of Figure~\ref{fig:pdg-destructive}.  Note that
+Figure~\ref{fig:pdg-destructive-analysis} presents the analysis of the 
+``destructive'' shopping cart variant.  Note that
 because all dependencies are analyzed, collections defined in the superclass
 but not referenced in the code sample
 (e.g., \texttt{pipe\_chan}, \texttt{member}) also appear in the graph.
 Although there is no
-%syntactically obvious
-%\wrm{there is no non-monotonicity whatsoever in the code.  so i reverted this change.}
 non-monotonicity in 
 Figure~\ref{fig:pdg-destructive}, the underlying key-value store
 uses the non-monotonic \texttt{$<$-} operator to model updateable
@@ -271,8 +269,10 @@ between client and server---and between the chosen server and all its replicas--
 Because we only care about the \emph{set} of elements contained in the value array
 and not its order, we might be tempted to argue that 
 the shopping cart application is eventually consistent
-when asynchronously updated, and forego the coordination logic.  Unfortunately, such informal reasoning can hide serious bugs: consider what happens if a delete action for an item arrives at some replica
-before any addition of that item: the delete would be ignored, leading to inconsistencies across replicas.
+when asynchronously updated, and forego the coordination logic.  Unfortunately,
+such informal reasoning can hide serious bugs. For example, consider what would happen if a delete action for an item arrived at some replica
+before any addition of that item: the delete would be ignored, leading to
+inconsistencies between replicas.
 
 A happier story emerges via the analysis of the disorderly implementation
 shown in Figure~\ref{fig:pdg-disorderly-analysis}.
@@ -294,9 +294,10 @@ one of the replicas: the order in which they arrive will surely affect the
 contents of the response message.
 %
 \end{comment}
-Here we see that communication (via \texttt{action\_msg}) between client and server---and between servers and replicas---crosses no points of order, so all the
+Here we see that communication (via \texttt{action\_msg}) between client and
+server---and among server replicas---crosses no points of order, so all the
 communication related to shopping actions converges to the same final state without coordination.
-There are, however, points of order upon the appearance of \texttt{checkout\_msg}
+However, there are points of order upon the appearance of \texttt{checkout\_msg}
 messages, which must be joined with an \texttt{action\_cnt} aggregate over the set of updates.  Although the 
 accumulation of shopping actions is monotonic, summarization of the cart state
 requires us to assume (or rather, prove) that there will be no further cart actions.

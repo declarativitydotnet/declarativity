@@ -61,7 +61,6 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 
 \noindent\textbf{State in Bloom}\\
 \noindent
-
 Bloom programs manage state using four collection types described in the top of
 Figure~\ref{tab:bloom}. Each object of these types is defined with a
 relational-style schema of named columns, including an optional subset of those
@@ -173,7 +172,6 @@ instructs the runtime to ``inject'' facts at regular wall-clock intervals to
 
 \textbf{Bloom Statements}\\
 \noindent
-
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
 of declarative relational statements that define the contents of derived
 collections.  The syntax is:\\ \noindent
@@ -217,7 +215,7 @@ Programmers declare Bloom statements within methods of a Bud subclass
 definition that are flagged with the \texttt{declare} modifier (e.g.,
 line~\ref{line:des_declare} of Figure~\ref{fig:pdg-destructive}). The semantics
 of a Bloom program are defined by the union of all the \texttt{declare}
-methods; the order of statements is immaterial. Dividing rules into multiple
+methods; the order of statements is immaterial. Dividing statements into multiple
 methods improves the readability of the program and allows use of Ruby's method
 overriding and inheritance features, as described below.
 
