@@ -97,7 +97,7 @@ Distributed programming has become a topic of widespread interest, and many prog
 % foundation is a challenging task: programmers must ensure that application
 % semantics are insensitive to arbitrary message delay and reordering.
 
-We address this situation with the \emph{CALM Principle}, which connects the idea of distributed consistency to program tests for logical monotonicity.  We then introduce \emph{Bloom}, a distributed programming language that is amenable to high-level consistency analysis and encourages order-insensitive programming.  We present a prototype implementation of Bloom as a domain-specific language in Ruby. We also propose a static analysis technique that identifies {\em points of order} in Bloom programs: code locations where programmers need to inject coordination logic to ensure consistency.  
+We address this situation with the \emph{CALM} principle, which connects the idea of distributed consistency to program tests for logical monotonicity.  We then introduce \emph{Bloom}, a distributed programming language that is amenable to high-level consistency analysis and encourages order-insensitive programming.  We present a prototype implementation of Bloom as a domain-specific language in Ruby. We also propose a static analysis technique that identifies {\em points of order} in Bloom programs: code locations where programmers need to inject coordination logic to ensure consistency.  
 We illustrate these ideas in the context of two variants
 of a distributed ``shopping cart'' application in Bloom.  We also sketch the feasibility of code rewrites to support runtime annotation of data consistency, a topic for a longer paper.
 
