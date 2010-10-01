@@ -31,21 +31,21 @@ Interestingly, these coordination mechanisms themselves typically involve counti
 
 Our observations about waiting and counting illustrate the crux of what we call the \emph{CALM} principle: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs \emph{guarantee} eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires coordination schemes that ``wait'' until inputs can be guaranteed to be complete.  
 
-Obviously we wish to minimize the use of coordination, because of well-known
-concerns about latency and availability in the face of message delays during
-coordination.  We can use the CALM principle to develop checks for distributed
-consistency in logic languages, where conservative tests for monotonicity are
-well understood. A simple syntactic check is often sufficient: if the program
-does not contain any of the symbols in the language that correspond to
-non-monotonic operators (e.g., \texttt{NOT IN} or aggregate symbols), then it is
-monotonic and can be implemented without coordination, regardless of any
-read-write dependencies in the code.  These conservative checks can be refined
-further to consider semantics of predicates in the language. For example, the
-expression ``\texttt{MIN(x) $< 100$}'' is monotonic despite containing an aggregate, by
-virtue of the semantics of \texttt{MIN} and $<$: once a subset $S$ satisfies this
-test, any superset of $S$ will also satisfy it.  Further refinements along
-these lines exist, increasing the ability of program analyses to verify
-monotonicity.
+We typically wish to minimize the use of coordination, because of well-known
+concerns about latency and availability in the face of message delays and
+network partitions.  We can use the CALM principle to develop checks for
+distributed consistency in logic languages, where conservative tests for
+monotonicity are well understood. A simple syntactic check is often sufficient:
+if the program does not contain any of the symbols in the language that
+correspond to non-monotonic operators (e.g., \texttt{NOT IN} or aggregate
+symbols), then it is monotonic and can be implemented without coordination,
+regardless of any read-write dependencies in the code.  These conservative
+checks can be refined further to consider semantics of predicates in the
+language. For example, the expression ``\texttt{MIN(x) $< 100$}'' is monotonic
+despite containing an aggregate, by virtue of the semantics of \texttt{MIN} and
+$<$: once a subset $S$ satisfies this test, any superset of $S$ will also
+satisfy it.  Further refinements along these lines exist (e.g., \cite{ross-modular,ross-strat}), increasing the ability
+of program analyses to verify monotonicity.
 %More advanced whole-program analyses can take into account whether possibly
 %non-monotonic conclusions can ever be consistent with other checks in the
 %program; while undecidable in general, conservative tests with constraint

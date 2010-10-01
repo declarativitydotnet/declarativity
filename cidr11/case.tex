@@ -31,7 +31,7 @@ item array reflects the effects of the actions.  Deletion requests are ignored
 if the item they refer to does not exist in the cart.
 
 Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
-\textbf{scratch} \texttt{kvput} is defined by the KeyValueStore module (10
+\textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} module (10
 lines of Bloom not shown here), which the shopping cart extends via
 inheritance; it represents the input interface to the key-value store.
 %; it is used in a manner analogous to the \emph{put} function for hash tables.  
