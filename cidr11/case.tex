@@ -8,37 +8,38 @@
 declare
 def accumulate
 	cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] } (*\label{line:dis_action_msg}*)
+
 	action_cnt <= cart_action.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid)) (*\label{line:dis_count_reqid}*)
 end
 
 declare
 def summarize
-	status <= join(action_cnt, checkout_msg).map do |a, c|
+	status <= join(action_cnt, checkout_msg).map do |a, c| (*\label{line:dis_checkout_no_item_beg}*)
 		if a.action == "Add" and not action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
-			[a.session, a.item, a.cnt] 
+			[a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
 		end 
-	end
+	end (*\label{line:dis_checkout_no_item_end}*)
 
-	status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| 
+	status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| (*\label{line:dis_checkout_item_beg}*)
 		if a1.session == a2.session and a1.item == a2.item and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
-			[a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0
+			[a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0 (*\label{line:dis_status_diff}*)
 		end
-	end
+	end (*\label{line:dis_checkout_item_end}*)
 end
 
 declare 
 def communicate
-	response_msg <+ join([status, checkout_msg]).map do |s, c| 
+	response_msg <+ join([status, checkout_msg]).map do |s, c| (*\label{line:dis_checkout_response_beg}*)
 		if s.session == c.session
 			[c.client, c.server, s.session, s.item, s.cnt]
 		end
-	end
+	end (*\label{line:dis_checkout_response_end}*)
 
 	action_msg <+ join([action_msg, member]).map do |a, m| (*\label{line:dis_join_action_msg_member}*)
 		unless member.map{|nm| nm.player}.include? a.client
-			[m.player, a.server, a.session, a.item, a.action, a.reqid]
+			[m.player, a.server, a.session, a.item, a.action, a.reqid] (*\label{line:dis_multicast}*)
 		end 
-	end
+	end (*\label{line:dis_rep_end}*)
 end
 \end{lstlisting}
 %\end{verbatim}
@@ -118,33 +119,39 @@ the item array in its value field is sent back to the client.
 
 Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart
 implementation, in which updates are monotonically accumulated during shopping
-in a disorderly set, and summed up only at checkout.  Line~\ref{line:} inserts all client
-updates into the persistent table \texttt{cart\_action}.  Lines 4--5 define
+in a disorderly set, and summed up only at checkout.
+Line~\ref{line:dis_action_msg} inserts all client updates into the persistent
+table \texttt{cart\_action}.  Line~\ref{line:dis_count_reqid} defines
 \texttt{action\_cnt} as an aggregate over \texttt{cart\_action}, in the style
 of an SQL \texttt{GROUP BY} statement: for each item associated with a cart, we
 separately count the number of times it was added and the number of times it
-was deleted.   
+was deleted.
 %Lines 5--16 define the collection \texttt{status} as the union of the session,
 %item and action fields resulting from a 3-way join between the
 %\texttt{checkout} message and two copies of \texttt{action\_cnt}---one
 %corresponding to additions and one to deletions -- and the set of
 %\texttt{action\_cnt}  tuples corresponding to items for which there is no
 %deletion in a given session.
-Lines 11--16 ensure that when a \texttt{checkout\_msg} tuple arrives,
-\texttt{status} contains a record for every added item for which there was no
-corresponding deletion in the session.  Lines 18--23 additionally define
-\texttt{status} as the 3-way join of the \texttt{checkout\_msg} message and two
-copies of \texttt{action\_cnt}---one corresponding to additions and one to
-deletions.  Thus, for each item, \texttt{status} contains its final quantity:
-the difference between its number of additions and deletions (line 21), or
-simply the number of additions if there are no deletions (line 14).  Upon the
-appearance of a \texttt{checkout\_msg}, the replica returns a \texttt{response}
-message to the client containing the final quantity (lines 28--32).  Because
-the disorderly implementation does not use a separate storage system, it
-includes its own logic for state replication (lines 34--38).  Line 36 ensures
-that only the replica contacted by the client performs a multicast, by probing
-the \textbf{table} \texttt{member} to see if the \texttt{action\_msg}
-originated inside the quorum.
+Lines~\ref{line:dis_checkout_no_item_beg}--~\ref{line:dis_checkout_no_item_end}
+ensure that when a \texttt{checkout\_msg} tuple arrives, \texttt{status}
+contains a record for every added item for which there was no corresponding
+deletion in the session.
+Lines~\ref{line:dis_checkout_item_beg}--~\ref{line:dis_checkout_item_end}
+additionally define \texttt{status} as the 3-way join of the
+\texttt{checkout\_msg} message and two copies of \texttt{action\_cnt}---one
+corresponding to additions and one to deletions.  Thus, for each item,
+\texttt{status} contains its final quantity: the difference between its number
+of additions and deletions (line~\ref{line:dis_status_diff}), or simply the
+number of additions if there are no deletions (line~\ref{line:dis_status_add}).
+Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
+\texttt{response} message to the client containing the final quantity
+(lines~\ref{line:dis_checkout_response_beg}--~\ref{line:dis_checkout_response_end}).
+Because the disorderly implementation does not use a separate storage system,
+it includes its own logic for state replication
+(lines~\ref{line:dis_join_action_msg_member}--~\ref{line:dis_rep_end}).
+Line~\ref{line:dis_multicast}ensures that only the replica contacted by the
+client performs a multicast, by probing the \textbf{table} \texttt{member} to
+see if the \texttt{action\_msg} originated inside the quorum.
 
 \begin{figure}[t]
 \centering
