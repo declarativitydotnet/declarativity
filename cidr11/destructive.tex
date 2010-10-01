@@ -19,32 +19,32 @@
 declare (*\label{line:des_declare}*)
 def store
 	kvput <= action_msg.map do |a|
-		if not bigtable.map{|b| b.key}.include? a.session (*\label{des_bigtable_check}*)
-			if a.action == "Add" (*\label{des_bigtable_gen_beg}*)
+		if not bigtable.map{|b| b.key}.include? a.session (*\label{line:des_bigtable_check}*)
+			if a.action == "Add" (*\label{line:des_bigtable_gen_beg}*)
 				[a.server, a.client, a.session, a.reqid, [a.item]]
 			elsif a.action == "Del"
 				[a.server, a.client, a.session, a.reqid, []]
-			end (*\label{des_bigtable_gen_end}*)
+			end (*\label{line:des_bigtable_gen_end}*)
 		end
 	end  
 
-	kvput <= join([bigtable, action_msg]).map do |b, a| (*\label{des_join_bigtable_action_msg_beg}*)
-		if b.key == a.session (*\label{des_join_bigtable_action_msg_end}*)
-			if a.action == "Add" (*\label{des_replace_beg}*)
+	kvput <= join([bigtable, action_msg]).map do |b, a| (*\label{line:des_join_bigtable_action_msg_beg}*)
+		if b.key == a.session (*\label{line:des_join_bigtable_action_msg_end}*)
+			if a.action == "Add" (*\label{line:des_replace_beg}*)
 				[a.server, a.client, a.session, a.reqid, b.value.push(a.item)]
 			elsif a.action == "Del"
 				[a.server, a.client, a.session, a.reqid, b.value.reject{|bv| bv == a.item}]
-			end (*\label{des_replace_end}*)
+			end (*\label{line:des_replace_end}*)
 		end
 	end
 end
 
 declare
 def communicate
-	action_msg <+ client_action.map{|a| a} (*\label{des_client_action}*)
+	action_msg <+ client_action.map{|a| a} (*\label{line:des_client_action}*)
 
-	response_msg <+ join([bigtable, checkout_msg]).map do |s, c| (*\label{des_checkout_join_beg}*)
-		if s.key == c.session (*\label{des_checkout_join_end}*)
+	response_msg <+ join([bigtable, checkout_msg]).map do |s, c| (*\label{line:des_checkout_join_beg}*)
+		if s.key == c.session (*\label{line:des_checkout_join_end}*)
 			[c.client, c.server, s.key, s.value]
 		end
 	end
