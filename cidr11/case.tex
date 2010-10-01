@@ -90,59 +90,60 @@ by shipping \texttt{kvput} tuples between replicas upon updates.
 % identical copy of \texttt{bigtable}.
 
 %%\paa{TODO:}\jmh{Any reason not to move line 28 to the top and reference it here?}
-In line~\ref{des_client_action}, the client transmits \texttt{client\_action}
-tuples that correspond to cart updates over the \texttt{action\_msg}
-\textbf{channel} to an individually chosen server replica.  We assume that the
-client has already chosen a server based on load balancing.
+In line~\ref{line:des_client_action}, the client transmits
+\texttt{client\_action} tuples that correspond to cart updates over the
+\texttt{action\_msg} \textbf{channel} to an individually chosen server replica.
+We assume that the client has already chosen a server based on load balancing.
 %\jmh{say how chosen.} \jmh{which server replica?  all server replicas??} 
-For each such arriving tuple, line~\ref{des_bigtable_check} checks
+For each such arriving tuple, line~\ref{line:des_bigtable_check} checks
 \texttt{bigtable} to see if a record exists for the session associated with the
 \texttt{action\_msg}.  If none is there (i.e., this is the first update for a
 new session), then
-lines~\ref{des_bigtable_gen_beg}--~\ref{des_bigtable_gen_end} generate an entry
-for the new session in \texttt{bigtable}.  Otherwise, the join conditions in
-lines~\ref{des_join_bigtable_action_msg_beg}--~\ref{des_join_bigtable_action_msg_end}
-are satisfied and lines~\ref{des_replace_beg}--~\ref{des_replace_end}
+lines~\ref{line:des_bigtable_gen_beg}--~\ref{line:des_bigtable_gen_end}
+generate an entry for the new session in \texttt{bigtable}.  Otherwise, the
+join conditions in
+lines~\ref{line:des_join_bigtable_action_msg_beg}--~\ref{line:des_join_bigtable_action_msg_end}
+are satisfied and lines~\ref{line:des_replace_beg}--~\ref{line:des_replace_end}
 ``replace'' the item array at the next timestep with a new version.  
 %\jmh{lines 15 and 16 do not fit my definition of Bloom above.  Not sure how to
 %deal with that.} %\jmh{I added a note above that we allow simple
 %side-effect-free Ruby expressions.}
 Whenever a \texttt{checkout\_msg} appears in a server replica, the
 \texttt{bigtable} tuple associated with the given session is identified (via
-the join on lines~\ref{des_checkout_join_beg}--~\ref{des_checkout_join_end}),
-and the item array in its value field is sent back to the client.  
+the join on
+lines~\ref{line:des_checkout_join_beg}--~\ref{line:des_checkout_join_end}), and
+the item array in its value field is sent back to the client.  
 
 %\jmh{Note that checkout is idempotent because checkout\_msg is a persisted set?}
 
-Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart implementation, in which
-updates are monotonically accumulated during shopping in a disorderly set, and summed up
-only at checkout.  Line 3 inserts all client updates into the persistent table
-\texttt{cart\_action}.  Lines 4--5 define \texttt{action\_cnt} as an aggregate
-over \texttt{cart\_action}, in the style of an SQL \texttt{GROUP BY} statement: for each
-item associated with a cart, we separately count the number of times it was
-added and the number of times it was deleted.   
-%Lines 5--16 define the collection
-%\texttt{status} as the union of the session, item and action fields resulting from 
-%a 3-way join between the \texttt{checkout} message and two
-%copies of \texttt{action\_cnt}---one corresponding to additions and one to
-%deletions -- and the set of \texttt{action\_cnt}  tuples corresponding to items 
-%for which there is no deletion in a given session.
-Lines 11--16 ensure that when a \texttt{checkout\_msg} tuple arrives, \texttt{status} 
-contains a record for every added item
-for which there was no corresponding deletion in the session.  Lines 18--23 
-additionally define \texttt{status} as the 3-way join of the \texttt{checkout\_msg}
-message and two copies of \texttt{action\_cnt}---one corresponding to additions and one to
-deletions.
-Thus, for each item, \texttt{status} contains its final quantity: the
-difference between its number of additions and deletions (line 21), or simply the number
-of additions if there are no deletions (line 14). 
-Upon the appearance of a \texttt{checkout\_msg}, the
-replica returns a \texttt{response} message to the client containing the
-final quantity (lines 28--32).  
-Because the disorderly implementation does not use a separate
-storage system, it includes its own logic for state replication (lines 34--38).
-Line 36 ensures that only the replica contacted by the client performs a multicast,
-by probing the \textbf{table} \texttt{member} to see if the \texttt{action\_msg} 
+Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart
+implementation, in which updates are monotonically accumulated during shopping
+in a disorderly set, and summed up only at checkout.  Line~\ref{line:} inserts all client
+updates into the persistent table \texttt{cart\_action}.  Lines 4--5 define
+\texttt{action\_cnt} as an aggregate over \texttt{cart\_action}, in the style
+of an SQL \texttt{GROUP BY} statement: for each item associated with a cart, we
+separately count the number of times it was added and the number of times it
+was deleted.   
+%Lines 5--16 define the collection \texttt{status} as the union of the session,
+%item and action fields resulting from a 3-way join between the
+%\texttt{checkout} message and two copies of \texttt{action\_cnt}---one
+%corresponding to additions and one to deletions -- and the set of
+%\texttt{action\_cnt}  tuples corresponding to items for which there is no
+%deletion in a given session.
+Lines 11--16 ensure that when a \texttt{checkout\_msg} tuple arrives,
+\texttt{status} contains a record for every added item for which there was no
+corresponding deletion in the session.  Lines 18--23 additionally define
+\texttt{status} as the 3-way join of the \texttt{checkout\_msg} message and two
+copies of \texttt{action\_cnt}---one corresponding to additions and one to
+deletions.  Thus, for each item, \texttt{status} contains its final quantity:
+the difference between its number of additions and deletions (line 21), or
+simply the number of additions if there are no deletions (line 14).  Upon the
+appearance of a \texttt{checkout\_msg}, the replica returns a \texttt{response}
+message to the client containing the final quantity (lines 28--32).  Because
+the disorderly implementation does not use a separate storage system, it
+includes its own logic for state replication (lines 34--38).  Line 36 ensures
+that only the replica contacted by the client performs a multicast, by probing
+the \textbf{table} \texttt{member} to see if the \texttt{action\_msg}
 originated inside the quorum.
 
 \begin{figure}[t]
