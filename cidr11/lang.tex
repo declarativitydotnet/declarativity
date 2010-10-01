@@ -8,7 +8,7 @@ parallel programming come from a legacy of assumptions regarding classical von
 Neumann architectures.  In the von Neumann model, state is captured in an
 ordered array of addresses, and computation is expressed via an ordered list of
 instructions.  Traditional imperative programming grew out of these pervasive
-assumptions about order.  \kc{Therefore, it is no...}It is no surprise therefore that popular imperative
+assumptions about order.  Therefore, it is no surprise that popular imperative
 languages are a bad match to parallel and distributed platforms, which make few
 guarantees about order of execution and communication. By contrast, set-oriented
 approaches like SQL and batch dataflow approaches like MapReduce translate
@@ -174,7 +174,6 @@ Bud also includes some additional convenience methods that provide macros over t
 Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions.  In fact, we demonstrate below that the pure logic-programming roots of Bloom can allow programmers to reason about many program interactions in a much deeper way than traditional imperative languages.
 \end{comment}
 
-\kc{Would it make sense to move this paragraph just before Bloom basics?}
 \textbf{Bud Implementation}\\
 Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 1400 lines of Ruby code, developed in approximately two programmer-months of part-time effort.
 %\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
