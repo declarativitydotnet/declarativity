@@ -93,7 +93,7 @@ Because the disorderly implementation does not use a separate
 storage system, it includes its own logic for state replication (lines 34--38).
 Line 36 ensures that only the replica contacted by the client performs a multicast,
 by probing the \textbf{table} \texttt{member} to see if the \texttt{action\_msg} 
-\kc{originated}orginated inside the quorum.
+originated inside the quorum.
 
 %%\jmh{need an explanation of lines 5-9, or an alternative syntax (see below or implement LOJ).  %%In the last sentence do you mean lines 24-30?  Won't 28-30 result in each node multicasting %%checkouts to each other node, i.e. $n^2$ messages?}
 
