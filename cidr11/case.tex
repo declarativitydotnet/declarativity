@@ -259,8 +259,8 @@ between client and server---and between the chosen server and all its replicas--
 % acknowledgements from replicas before acknowledging a client update.
 % Such ``eager replication''~\cite{dangers} would incur a cost of a round of messages
 % per server per client update, and substantially decrease system throughput.  
-\wrm{i don't quite see the point of presenting this straw-man scenario to people.  i think we should just explain that coordination is intuitively needed because deletions don't commute with insertions.}
-\paa{personally I am inclined to keep it.  neil?}
+% \wrm{i don't quite see the point of presenting this straw-man scenario to people.  i think we should just explain that coordination is intuitively needed because deletions don't commute with insertions.}
+% \paa{personally I am inclined to keep it.  neil?}
 Because we only care about the \emph{set} of elements contained in the value array
 and not its order, we might be tempted to argue that 
 the shopping cart application is eventually consistent
