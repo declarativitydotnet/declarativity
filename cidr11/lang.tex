@@ -59,22 +59,21 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 	\label{tab:bloom}
 \end{figure}
 
-\noindent\textbf{State in Bloom}\\
-\noindent
-Bloom programs manage state using four collection types described in the top of
-Figure~\ref{tab:bloom}. Each object of these types is defined with a
-relational-style schema of named columns, including an optional subset of those
-columns that forms a primary key.  Line 2 of Figure~\ref{fig:declarations}
-shows the definition of a \textbf{table} with 4 columns \texttt{session},
-\texttt{reqid}, \texttt{item} and \texttt{action}; the primary key is
-\texttt{(session, reqid)}. In Bud, the type system for the columns is taken
-from Ruby, so it is possible to have a column based on any Ruby class the
-programmer cares to define or import.  In Bud, a tuple in a Bloom collection is
-simply a Ruby array containing as many elements as the columns of the
-collection's schema.  As in other object-relational ADT schemes like
-Postgres~\cite{postgres-adt}, column values can be manipulated using their own
-(non-destructive) methods, but the Bloom language has no knowledge of those
-types and can only reference the column values as opaque objects.  
+\noindent\textbf{State in Bloom}\\ \noindent Bloom programs manage state using
+four collection types described in the top of Figure~\ref{tab:bloom}. Each
+object of these types is defined with a relational-style schema of named
+columns, including an optional subset of those columns that forms a primary
+key.  Line~\ref{line:dec_table} of Figure~\ref{fig:declarations} shows the
+definition of a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid},
+\texttt{item} and \texttt{action}; the primary key is \texttt{(session,
+reqid)}. In Bud, the type system for the columns is taken from Ruby, so it is
+possible to have a column based on any Ruby class the programmer cares to
+define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array
+containing as many elements as the columns of the collection's schema.  As in
+other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column
+values can be manipulated using their own (non-destructive) methods, but the
+Bloom language has no knowledge of those types and can only reference the
+column values as opaque objects.  
 
 Persistence in Bloom is determined by the type of the collection.
 \textbf{scratch} collections are handy for transient data like network messages
@@ -150,17 +149,17 @@ instructs the runtime to ``inject'' facts at regular wall-clock intervals to
 
 \begin{figure}[t]
 \begin{scriptsize}
-\begin{verbatim}
-0:  class BasicCartServer < Bud
-1:    def state
-2:      table :cart_action, ['session', 'reqid'], ['item', 'action']
-3:      scratch :status, 
-4:        ['server', 'client', 'session', 'item'], ['cnt']
-5:      channel :action_msg, 0, 
-6:        ['server', 'client', 'session', 'item', 'action', 'reqid']
-7:    end
+%\begin{verbatim}
+\begin{lstlisting}
+class BasicCartServer < Bud
+def state
+	table :cart_action, ['session', 'reqid'], ['item', 'action'] (*\label{line:dec_table}*)
+	scratch :status, ['server', 'client', 'session', 'item'], ['cnt']
+	channel :action_msg, 0, ['server', 'client', 'session', 'item', 'action', 'reqid']
+end
        [...]
-\end{verbatim}
+\end{lstlisting}
+%\end{verbatim}
 \vspace{-10pt}
 \caption{Example Bloom collection declarations.}
 \label{fig:declarations}
