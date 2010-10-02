@@ -197,13 +197,8 @@ SQL aggregates; for example, lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis
 Figure~\ref{fig:pdg-disorderly} compute the count 
 of unique \texttt{reqid} values for every combination of values for
 \texttt{session}, \texttt{item} and \texttt{action}.
-%User-defined aggregates can be specified via a \texttt{reduce} method from
-%Ruby \texttt{Enumerable}.  
-Multiway joins are specified via a subclass of \texttt{BudCollection} called
-\texttt{Join}, which produces an anonymous \textbf{scratch} collection that can
-be used in the rhs of a statement. 
-%Line 16 of Figure~\ref{fig:queue} gives an example of the natural join
-%(equijoin on matching %column names, in this case \texttt{id}.)
+Multiway joins are specified using the \texttt{join} method, which produces an anonymous \textbf{scratch} collection that can
+be used in the rhs of a statement.\footnote{For clarity, we write out the join condition explicitly. Bloom provides syntax sugar for common join types (e.g., natural join).}
 Line~\ref{line:dis_join_action_msg_member} of Figure~\ref{fig:pdg-disorderly}
 gives an example of a join between \texttt{action\_msg} and \texttt{member}.
 
