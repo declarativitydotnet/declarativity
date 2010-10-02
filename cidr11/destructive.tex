@@ -31,9 +31,11 @@ def store
 	kvput <= join([bigtable, action_msg]).map do |b, a| (*\label{line:des_join_bigtable_action_msg_beg}*)
 		if b.key == a.session (*\label{line:des_join_bigtable_action_msg_end}*)
 			if a.action == "Add" (*\label{line:des_replace_beg}*)
-				[a.server, a.client, a.session, a.reqid, b.value.push(a.item)]
+				[a.server, a.client, a.session,
+				 a.reqid, b.value.push(a.item)]
 			elsif a.action == "Del"
-				[a.server, a.client, a.session, a.reqid, b.value.reject{|bv| bv == a.item}]
+				[a.server, a.client, a.session,
+				 a.reqid, b.value.reject{|bv| bv == a.item}]
 			end (*\label{line:des_replace_end}*)
 		end
 	end
@@ -44,10 +46,10 @@ def communicate
 	action_msg <+ client_action.map{|a| a} (*\label{line:des_client_action}*)
 
 	response_msg <+ join([bigtable, checkout_msg]).map do |s, c| (*\label{line:des_checkout_join_beg}*)
-		if s.key == c.session (*\label{line:des_checkout_join_end}*)
+		if s.key == c.session
 			[c.client, c.server, s.key, s.value]
 		end
-	end
+	end (*\label{line:des_checkout_join_end}*)
 end
 \end{lstlisting}
 %\end{verbatim}
