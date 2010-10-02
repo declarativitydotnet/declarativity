@@ -70,10 +70,14 @@ end
 \end{comment}
 
 In this section, we develop two different designs for a distributed shopping-cart
-application in Bloom.  First, we implement a ``destructive,'' state-modifying
+application in Bloom~\footnote{The complete source code for 
+both implementations can be found at \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}.
+First, we implement a ``destructive,'' state-modifying
 shopping cart application using a simple key-value store (also written in Bloom).
 Second, we implement a ``disorderly'' cart that accumulates updates in a 
-set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.
+set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.  
+%\footnote{The complete source code for 
+%both implementations can be found at \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}
 
 We begin with a shopping cart built on a key-value storage abstraction.  Each
 cart is a \texttt{(key,value)} pair, where \texttt{key} is a unique session
