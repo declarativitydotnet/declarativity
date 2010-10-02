@@ -3,26 +3,33 @@
 
 \begin{figure}[t]
 \begin{scriptsize}
-%\begin{verbatim}
 \begin{lstlisting}
 declare
 def accumulate
-	cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] } (*\label{line:dis_action_msg}*)
+	cart_action <= action_msg.map do |c| (*\label{line:dis_action_msg_beg}*)
+		[c.session, c.item, c.action, c.reqid]
+	end (*\label{line:dis_action_msg_end}*)
 
-	action_cnt <= cart_action.group([cart_action.session, cart_action.item, cart_action.action], count(cart_action.reqid)) (*\label{line:dis_count_reqid}*)
+	action_cnt <= cart_action.group( (*\label{line:dis_count_reqid_beg}*)
+					[cart_action.session, cart_action.item, cart_action.action],
+					count(cart_action.reqid)) (*\label{line:dis_count_reqid_end}*)
 end
 
 declare
 def summarize
 	status <= join([action_cnt, checkout_msg]).map do |a, c| (*\label{line:dis_checkout_no_item_beg}*)
-		if a.action == "Add" and not action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
+		if a.action == "Add" and not
+		   action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
 			[a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
 		end 
 	end (*\label{line:dis_checkout_no_item_end}*)
 
-	status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| (*\label{line:dis_checkout_item_beg}*)
-		if a1.session == a2.session and a1.item == a2.item and a1.session == c.session and a1.action == "Add" and a2.action == "Del"
-			[a1.session, a1.item, a1.cnt - a2.cnt] if (a1.cnt - a2.cnt) > 0 (*\label{line:dis_status_diff}*)
+	status <= join([action_cnt, action_cnt,
+										checkout_msg]).map do |a1, a2, c| (*\label{line:dis_checkout_item_beg}*)
+		if a1.session == a2.session and a1.item == a2.item and
+			  a1.session == c.session and a1.action == "Add" and
+			  a2.action == "Del" and (a1.cnt - a2.cnt) > 0
+			[a1.session, a1.item, a1.cnt - a2.cnt] (*\label{line:dis_status_diff}*)
 		end
 	end (*\label{line:dis_checkout_item_end}*)
 end
@@ -42,7 +49,6 @@ def communicate
 	end (*\label{line:dis_rep_end}*)
 end
 \end{lstlisting}
-%\end{verbatim}
 \vspace{-10pt}
 \caption{Disorderly cart implementation.}
 \label{fig:pdg-disorderly}
@@ -120,8 +126,8 @@ the item array in its value field is sent back to the client.
 Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart
 implementation, in which updates are monotonically accumulated during shopping
 in a disorderly set, and summed up only at checkout.
-Line~\ref{line:dis_action_msg} inserts all client updates into the persistent
-table \texttt{cart\_action}.  Line~\ref{line:dis_count_reqid} defines
+Lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} insert client updates into the persistent
+table \texttt{cart\_action}.  Lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} define
 \texttt{action\_cnt} as an aggregate over \texttt{cart\_action}, in the style
 of an SQL \texttt{GROUP BY} statement: for each item associated with a cart, we
 separately count the number of times it was added and the number of times it
@@ -140,7 +146,7 @@ Lines~\ref{line:dis_checkout_item_beg}--\ref{line:dis_checkout_item_end}
 additionally define \texttt{status} as the 3-way join of the
 \texttt{checkout\_msg} message and two copies of \texttt{action\_cnt}---one
 corresponding to additions and one to deletions.  Thus, for each item,
-\texttt{status} contains its final quantity: the difference between its number
+\texttt{status} contains its final quantity: the difference between the number
 of additions and deletions (line~\ref{line:dis_status_diff}), or simply the
 number of additions if there are no deletions (line~\ref{line:dis_status_add}).
 Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
@@ -149,7 +155,7 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 Because the disorderly implementation does not use a separate storage system,
 it includes its own logic for state replication
 (lines~\ref{line:dis_join_action_msg_member}--\ref{line:dis_rep_end}).
-Line~\ref{line:dis_multicast}ensures that only the replica contacted by the
+Line~\ref{line:dis_multicast} ensures that only the replica contacted by the
 client performs a multicast, by probing the \textbf{table} \texttt{member} to
 see if the \texttt{action\_msg} originated inside the quorum.
 

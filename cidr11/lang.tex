@@ -149,17 +149,18 @@ instructs the runtime to ``inject'' facts at regular wall-clock intervals to
 
 \begin{figure}[t]
 \begin{scriptsize}
-%\begin{verbatim}
 \begin{lstlisting}
 class BasicCartServer < Bud
-def state
-	table :cart_action, ['session', 'reqid'], ['item', 'action'] (*\label{line:dec_table}*)
-	scratch :status, ['server', 'client', 'session', 'item'], ['cnt']
-	channel :action_msg, 0, ['server', 'client', 'session', 'item', 'action', 'reqid']
+	def state
+		table :cart_action, ['session', 'reqid'], ['item', 'action'] (*\label{line:dec_table}*)
+		scratch :status, ['server', 'client', 'session', 'item'],
+												['cnt']
+		channel :action_msg, 0, ['server', 'client', 'session',
+																 'item', 'action', 'reqid']
+	end
+	[...]
 end
-       [...]
 \end{lstlisting}
-%\end{verbatim}
 \vspace{-10pt}
 \caption{Example Bloom collection declarations.}
 \label{fig:declarations}
@@ -188,13 +189,12 @@ typically includes methods of \texttt{BudCollection} objects.  Most common is
 the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to
 specify scalar operations on all tuples of a \texttt{BudCollection}, including
 relational selection and projection. For example,
-line~\ref{line:dis_action_msg} of Figure~\ref{fig:pdg-disorderly} projects the
+lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of Figure~\ref{fig:pdg-disorderly} project the
 \texttt{action\_msg} collection to its \texttt{session}, \texttt{item},
 \texttt{action} and \texttt{reqid} fields.  \texttt{BudCollection} defines a
 \texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard
-SQL aggregates; line~\ref{line:dis_count_reqid} of
-Figure~\ref{fig:pdg-disorderly} provides an example computing the count 
-%%\texttt{id} across all tuples in collection \texttt{q}.  
+SQL aggregates; for example, lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
+Figure~\ref{fig:pdg-disorderly} compute the count 
 of unique \texttt{reqid} values for every combination of values for
 \texttt{session}, \texttt{item} and \texttt{action}.
 %User-defined aggregates can be specified via a \texttt{reduce} method from
