@@ -1,64 +1,127 @@
 \chapter[Declarative Optimization]{Declarative Optimization}
 \label{ch:evita}
 
-Declarative Networking and related topics have the potential to expand the lessons and 
-impact of database technologies into new domains, while reviving interest in classical 
-database topics like recursive query processing that had received minimal attention in 
-recent years.  Yet our own systems were entirely implemented in imperative programming
-languages: the initial version of the P2 runtime was implemented in C++~\cite{p2:sosp}, 
-and the DSN declarative sensor network system began with an embedded dialect 
-of C~\cite{chu-sensys07}. We asked ourselves whether Codd's vision applies to our own 
-efforts: can declarative programming improve the implementation of declarative systems?
+Declarative Networking has the potential to expand the lessons and impact of
+database technologies into new domains, while reviving interest in classical
+database topics like recursive query processing that have received minimal
+attention in recent years.  Yet our own system was entirely implemented in an
+imperative programming language: the initial version of the P2 runtime was
+implemented in C++~\cite{p2:sosp}.  We asked ourselves whether Codd's vision
+applies to our own efforts: can declarative programming improve the
+implementation of declarative systems?
 
-In this chapter, we put declarative systems ``in the mirror,''
-investigating a declarative implementation of a key aspect of a
-declarative system.  Specifically, we reimplemented the query
-optimizer of P2 as a {\em metacompiler}: a compiler (optimizer) for the
-P2 language, \OVERLOG, that is itself written in \OVERLOG.  We named the
-resulting implementation ``Evita Raced.''\footnote{``Evita Raced'' is
-almost ``Declarative'' in the mirror, but as with the \OVERLOG language
-itself, it makes some compromises on complete declarativity.}  Using
-Evita Raced, we extended P2 with a number of important query
-optimization techniques it formerly lacked, and found that our
-declarative infrastructure made this quite elegant and compact. For
-example, our implementation of the traditional System R dynamic
-programming algorithm comprises only 38 \OVERLOG rules (225 lines of
-code); our implementation of the Magic Sets Rewriting optimization for
-recursive queries is not only compact (68 rules, 264 lines), but also
-nearly a direct translation of the description from Ullman's course
-notes on the subject~\cite{ullmanNotes}.   
+In this chapter, we put declarative systems ``in the mirror'' by investigating
+a declarative implementation of one key component in any relational database
+system, the query optimizer.  Specifically, we reimplemented the query
+optimizer of P2 as a {\em metacompiler}: a compiler (optimizer) for the P2
+language, \OVERLOG, that is itself written in \OVERLOG.  We named the resulting
+implementation ``Evita Raced.''\footnote{``Evita Raced'' is almost
+``Declarative'' in the mirror, but as with the \OVERLOG language itself, it
+makes some compromises on complete declarativity.} Using Evita Raced, we
+extended P2 with a number of important query optimization techniques it
+formerly lacked, and found that our declarative infrastructure made this quite
+elegant and compact.  As we will see in Section~\ref{ch:evita:sec:systemr}, our
+implementation of the traditional System R dynamic programming algorithm
+comprises only $38$ \OVERLOG rules ($225$ lines of code); our implementation of the
+Magic-sets rewriting optimization for recursive queries is not only compact ($68$
+rules, $264$ lines), but also nearly a direct translation of the description from
+Ullman's course notes on the subject~\cite{ullmanNotes}.
 
-The elegance of our approach was derived in part from the fact that query optimization 
-techniques -- like many search algorithms -- are at heart recursive algorithms, and
-benefit from a declarative approach in much the same way as networking
-protocols.  Even non-recursive optimization logic -- such as parts of
-Ullman's magic-sets algorithm -- was simple enough to express in a
+The elegance of our approach was derived in part from the fact that many query
+optimization techniques -- like many search algorithms -- are at heart
+recursive algorithms, and benefit from a declarative approach in much the same
+way as networking protocols.  Even non-recursive optimization logic -- such as
+parts of Ullman's magic-sets algorithm -- are simple enough to express in a
 declarative fashion that abstracts away mechanistic details such as the
-scheduling of data-parallel steps (e.g., scanning all rules in a program
-in parallel versus sequentially).
+scheduling of data-parallel steps (e.g., scanning all rules in a program in
+parallel versus sequentially).
 
-Our contributions here are three-fold.  First, we presented a declarative architecture for query optimization 
-that is based on metacompilation, reusing the query executor in a stylized fashion to serve as the engine beneath 
-the optimization process.  This resulted in an {\em economy of mechanism}~\cite{Saltzer75theprotection}
-not afforded by earlier extensible optimizers. Second, we showed that a variety of traditional and novel 
-query optimizations are easy to express in a recursive, declarative language. Finally, 
-we evaluated the simplicity and applicability of our design via a full-fledged implementation 
-of an \OVERLOG query optimizer for the P2 Declarative Networking engine, which also 
-cross-compiles code that runs on the DSN wireless sensor network platform~\cite{chu-sensys07}.  
-Based on our experience, we believe that declarative metacompilation is a clean,
-architecturally parsimonious way to build the next generation of extensible query optimizers
-for a wide variety of emerging application domains, where the relevant optimizations remain
-unclear.
+Our contributions here are three-fold.  First, we presented a declarative
+architecture for query optimization that is based on metacompilation, reusing
+the query executor in a stylized fashion to serve as the engine beneath the
+optimization process.  This resulted in an {\em economy of
+mechanism}~\cite{Saltzer75theprotection} not afforded by earlier extensible
+optimizers (i.e., EXODUS~\cite{exodus}, Starburst~\cite{phh92},
+Volcano~\cite{volcano}, OPT++~\cite{opt++}).  Second, we showed that a variety
+of traditional and novel query optimizations are easy to express in a
+recursive, declarative language.  Finally, we evaluated the simplicity and
+applicability of our design via a full-fledged implementation of an \OVERLOG
+query optimizer for P2, which also cross-compiles code that runs on the DSN
+wireless sensor network platform~\cite{chu-sensys07}.  Based on our experience,
+we believe that declarative metacompilation is a clean, architecturally
+parsimonious way to build the next generation of extensible query optimizers
+for a wide variety of emerging application domains, where the relevant
+optimizations are likely to evolve over time.
 
-The remainder of this chapter is organized as follows. In Section~\ref{ch:evita:sec:compile}, we describe
-the steps to compile an \OVERLOG program into a relational representation. By compiling code into 
-data, we are able to express optimizations and rewrites as queries. Section~\ref{ch:evita:sec:stages} 
-packages these meta-queries into compilation stages that are dynamically installed into the compiler 
-at runtime, using the same compilation path taken by any \OVERLOG program. In this dissertation, we describe 
-three compilation stages that contain declarative specification of the System R dynamic program (Section~\ref{ch:evita:sec:systemr}), 
-the Magic-sets rewrite (Section~\ref{ch:evita:sec:magic}), and the localization rewrite (Section~\ref{ch:evita:sec:localization})
-for handling distributed joins in \OVERLOG~\cite{loo-sigmod06}. Section~\ref{ch:evita:sec:related} describes some
-of the related work and Section~\ref{ch:evita:sec:summary} reflects on some lessons learned.
+The remainder of this chapter is organized as follows.  We begin in
+Section~\ref{ch:evita:sec:related} with a look at some prior work in the area
+of query optimization, focusing primarily on extensible query optimizers.  We
+then turn to the architecture of Evita Raced, starting in
+Section~\ref{ch:evita:sec:compile} with a description of the steps to compile
+an \OVERLOG program into a relational representation.  Compiling code into data
+is necessary in order to then express optimizations and rewrites as queries.  A
+program containing queries that reference compiled code is packaged up into a
+{\em compilation stage}.  Section~\ref{ch:evita:sec:stages} defines the API of
+a compilation stage, and describes how we can dynamically install stages into
+the compiler at runtime.  We then present three core declarative compilation
+stages (packaged with Evita Raced): the System R dynamic program
+(Section~\ref{ch:evita:sec:systemr}), the Magic-sets rewrite
+(Section~\ref{ch:evita:sec:magic}), and the localization rewrite
+(Section~\ref{ch:evita:sec:localization}) for handling distributed joins in
+\OVERLOG~\cite{loo-sigmod06}.  We then conclude with a discussion of lessons
+learned in Section~\ref{ch:evita:sec:discussion} and a brief summary in
+Section~\ref{ch:evita:sec:summary}.
+
+
+\section{Related Work}
+\label{ch:evita:sec:related}
+
+The pioneering work on extensible query optimizer architectures was done in the
+EXODUS~\cite{exodus} and Starburst~\cite{lohman,phh92} systems, which provided
+custom rule languages for specifying plan transformations.  The EXODUS
+optimizer generator used a forward-chaining rule language to iteratively
+transform existing query plans into new ones.  Follow-on work
+(Volcano~\cite{volcano} and Cascades~\cite{cascades}) exposed more interfaces
+to make the search in this space of transformations more efficient.  Starburst
+had two rule-based optimization stages.  The SQL Query Rewrite stage provided a
+production rule execution engine, for ``rules'' that were written imperatively
+in C; it included a precedence ordering facility over those rules.  The
+cost-based optimizer in Starburst was more declarative, taking a grammar-based
+approach to specifying legal plans and subplans.
+
+While all of this work was rule-based and extensible, most of it only exposed
+individual plan transformations to extensibility; the actual search algorithms
+or transformation orderings of EXODUS, Volcano, Cascades, and the Starburst
+cost-based optimizer were fixed in procedural code.  By contrast, Evita Raced
+does not embed a search algorithm, instead leaving that open to specification
+as needed.  As we show in Section~\ref{ch:evita:sec:systemr}, both the dynamic programming
+bottom-up strategy and the Cascades top-down strategy naturally fit to a
+Datalog-based rule language.
+
+Another interesting extensible query optimizer is Opt++~\cite{kabradewitt},
+which exploits the object-oriented features of C++ to make an optimizer
+framework that was easy to customize in a number of ways.  A specific goal of
+Opt++ was to make the search strategy extensible, enabling not only top-down
+vs.  bottom-up state-space enumeration, but also randomized search algorithms.
+Evita Raced embraces these additional dimensions of extensibility introduced by
+Opt++, but provides them in a higher-level declarative programming framework.
+
+The cyclic dataflow used for stage scheduling in Evita Raced
+(Section~\ref{ch:evita:sec:stages}) resembles the continuous query engine of
+TelegraphCQ, with our StageScheduler and Demux elements working together to
+behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This
+connection occurred to us long after we developed our design, but in retrospect
+the analogy is quite natural: Evita Raced stages are akin to TelegraphCQ's
+``installed'' continuous queries, and P2's \OVERLOG queries are akin to data
+streaming into TelegraphCQ.
+
+%Our description of \OVERLOG was based on our understanding of the current state
+%of the P2 codebase.  Loo et al.~\cite{loo-sigmod06} describe a language for P2
+%they call Network Datalog (NDLog), that is roughly a simple sub-language of the
+%current state of \OVERLOG.  NDLog is a subset of Datalog with aggregation, and
+%hence does not provide delete rules or updates.  Unlike \OVERLOG, NDLog offers
+%well-defined global program semantics across the network, but it does so by not
+%offering delete or update rules, which are used in many \OVERLOG programs.
 
 \section{Declarative Compilation}
 \label{ch:evita:sec:compile}
@@ -67,7 +130,7 @@ Evita Raced is a compiler (i.e., query optimizer) for the \OVERLOG
 declarative language that supports a runtime-extensible set of program
 rewrites and optimizations, which are themselves expressed in \OVERLOG.
 This metacompilation approach is achieved by implementing optimization
-via dataflow programs  (query plans) running over a set of tables.  Two
+logic via dataflow programs  (query plans) running over a set of tables.  Two
 main challenges must be addressed to make this work.  First, all
 compiler state -- including the internal representation of both
 declarative \OVERLOG programs and imperative dataflow programs -- needs
@@ -83,35 +146,40 @@ fragments needed to bootstrap the optimizer.
 \begin{figure*}
 \ssp
 \begin{center}
-\includegraphics{figures/ERDiagram}
-\caption{{ER Diagram of a query plan in P2. The primary key columns shown in bold.}}
+\includegraphics[scale=1.3]{figures/ERDiagram}
+\caption{ER Diagram of a query plan in P2. The primary key columns shown in bold.}
 \label{ch:evita:fig:p2er}
 \end{center}
 \end{figure*}
-\subsection{Table-izing Optimizer State}
-A typical query optimizer maintains a number of data structures to describe the contents 
-of a query, and to represent ongoing properties of a query planner including fragments of 
-query plans.  Our first task in designing Evita Raced was to capture this information in a 
-relational schema.
 
-Figure~\ref{ch:evita:fig:p2er} shows an Entity-Relationship diagram we developed that captures the 
-properties of an \OVERLOG program, and its associated P2 dataflow query plans. 
-We derived the constraints in the diagram by reviewing the semantic analysis rules enforced 
-in the original P2 compiler; we discuss a few of them here for illustration.
-An \OVERLOG~{\em rule} must appear in exactly one {\em program}. A {\em select} term 
-(e.g., \ol{f\_contains(X,P2) == false} in Figure~\ref{ch:p2:fig:overlogSP}) is a Boolean expression 
-over attributes in the predicates of the rule, and must appear in exactly one {\em rule}.  
-The diagram indicates that a {\em predicate} must also appear in a unique {\em rule}, and 
-that it may possibly reference a single {\em table}. A predicate that references a table is called 
-a {\em table predicate} (or a \emph{materialized predicate}), while one that does not is called 
-an {\em event predicate}. An {\em index} is defined over exactly one {\em table}, and a {\em table} 
-defines at least one index (namely the primary key index, which P2 always
-constructs). Some relations may contain {\em facts} (input tuples) at startup, 
-each of which must belong to a single program and must reference a single table.
+\subsection{Table-izing Optimizer State} 
 
-\begin{table*}
-\small{
-\begin{tabular}{|l|l|l|} \hline
+A typical query optimizer maintains a number of data structures to describe the
+contents of a query, and to represent the ongoing state of a query planning
+algorithm, including fragments of query plans.  Our first task in designing
+Evita Raced was to capture this information in a relational schema.
+
+Figure~\ref{ch:evita:fig:p2er} shows an Entity-Relationship diagram we
+developed that captures the properties of an \OVERLOG program, and its
+associated P2 dataflow query plans.  We derived the constraints in the diagram
+by reviewing the semantic analysis rules enforced in the original P2 compiler;
+we discuss a few of them here for illustration.  An \OVERLOG~{\em rule} must
+appear in exactly one {\em program}.  A {\em select} term (e.g.,
+\ol{f\_contains(X,P2) == false} in Figure~\ref{ch:p2:fig:overlogSP}) is a
+Boolean expression over attributes in the predicates of the rule, and must
+appear in exactly one {\em rule}.  The diagram indicates that a {\em predicate}
+must also appear in a unique {\em rule}, and that it may possibly reference a
+single {\em table}.  A predicate that references a table is called a {\em table
+predicate} (or a \emph{materialized predicate}), while one that does not is
+called an {\em event predicate}.  An {\em index} is defined over exactly one
+{\em table}, and a {\em table} defines at least one index (namely the primary
+key index, which P2 always constructs).  Some relations may contain {\em facts}
+(input tuples) at startup, each of which must belong to a single program and
+must reference a single table.
+
+\begin{figure*}
+\ssp
+\begin{tabular}{|l|l|p{10cm}|} \hline
 {\it Name}& {\it Description} & {\it Relevant attributes} \\ \hline\hline
 table     & Table definitions & {\bf table\_id}, primary\_key\\ \hline
 index     & Index definitions & {\bf index\_id}, {\bf table\_id}, keys, type \\ \hline
@@ -122,145 +190,206 @@ predicate & Relational predicates  & {\bf id}, {\bf rule\_id}, table\_id, name, 
 select    & Selection predicates  & {\bf id}, {\bf rule\_id}, boolean, position \\  \hline
 assign    & Variable substitution statements & {\bf id}, {\bf rule\_id}, variable, value, position \\ \hline 
 \end{tabular}
-}
-\ssp
 \caption{The Metacompiler Catalog: tables defining an \OVERLOG program and dataflow execution plan.
-                The primary key columns shown in bold. }
+         The primary key columns shown in bold. }
 \label{tbl:catalog}
-\end{table*}
+\end{figure*}
 
-The conversion from ER diagram to relational format was straightforward. Table~\ref{tbl:catalog} lists the set of relations that capture the entities 
-mentioned in the ER diagram; we refer to this as the {\em Metacompiler Catalog}. We modified P2 to create these tables
-at system startup, and they are accessible to any \OVERLOG programs (e.g., optimizations) subsequently added to the system.
-% In addition, there are compiler constraints
-% that cannot be captured by key constraints alone. For instance, a rule must contain
-% exactly one head and one event predicate. Such checks can be performed by integrity 
-% constraints written into the compiler logic (possibly as \OVERLOG programs). 
+The conversion from ER diagram to relational format was a textbook
+exercise~\cite{DBTextbook}.  Table~\ref{tbl:catalog} lists the set of relations
+that capture the entities mentioned in the ER diagram; we refer to this as the
+{\em Metacompiler Catalog}.  We modified P2 to create these tables at system
+startup, and they are accessible to any \OVERLOG programs (e.g., optimizations)
+subsequently added to the system.
+% In addition, there are compiler constraints that cannot be captured by key
+% constraints alone.  For instance, a rule must contain exactly one head and
+% one event predicate.  Such checks can be performed by integrity constraints
+% written into the compiler logic (possibly as \OVERLOG programs).
 
 \subsection{Metacompiler Architecture}
 \label{ch:evita:sec:metaarch}
-Optimization logic expressed in \OVERLOG is declarative, and Evita Raced realizes this logic by converting it to a dataflow program to be executed by the P2 dataflow subsystem.  In this section we describe how Evita Raced represents query optimization programs as dataflow, and also the way it orchestrates multiple different optimization programs through the P2 dataflow framework.
+  
+\begin{figure*}[htbp]
+\centering
+\ssp
+\begin{tabular}{|l|l|p{10cm}|} \hline
+{\it Stage name}& {\it Language} & {\it Description} \\ \hline\hline
+StageScheduler & C++ & Coordinates the compilation of stages (Section~\ref{ch:evita:sec:stageschedule}).\\ \hline
+Parser    & C++ & Bison based parser. Populates Metacompiler Catalog using program AST.\\ \hline
+Planner   & C++ & Generates a dataflow description from the program data contained in the Metacompiler Catalog.\\ \hline
+Installer & C++  & Instantiates C++ dataflow objects from a dataflow description. \\ \hline
+Delta Rewrite & \OVERLOG  & Converts rules based on materialized tables into an ECA form. \\ \hline
+Localization & \OVERLOG   & Rewrites rules containing a distributed joins into a  localized form. \\ \hline
+System R & \OVERLOG  & Performs System R dynamic programming optimization on all rules. \\ \hline
+Cascades    & \OVERLOG  & Query optimization based on a top-down search strategy. \\  \hline
+Magic-sets    & \OVERLOG & Rewrites rules to include magic predicates, which act as
+selection predicates for constants contained in query predicates. \\ \hline
+Debug print & \OVERLOG & Add special pretty printer predicates, interposed in certain rules. 
+The Planner stage translates these printer predicates into dataflow objects that print the tuples
+that pass through. \\ \hline
+\end{tabular} 
+\caption{Primary Evita Raced compiler stages. }
+\label{tbl:stages}
+\end{figure*}
+  
 
-An optimizer built using Evita Raced is composed of an extensible number of {\em stages}, each of which performs some
-compilation task on the input program. One way to write an Evita Raced stage is to construct a dataflow program of one or more P2 elements in C++, and compile the result into the P2 binary; this is how we implement certain base stages required for bootstrapping, as described in Section~\ref{ch:evita:sec:bootstrap}.  However, the power of Evita Raced comes from its support for stages written in \OVERLOG, which, in addition to being compactly expressed in a high-level language, can be loaded into a running P2 installation at any time. 
-A stage programmer registers a new stage with Evita Raced by inserting a tuple into the {\em program} relation. 
-This tuple contains a unique identifier ($program\_id$), a name
-($name$),  a list of stage dependencies ($depends$), and the program
-text ($text$). Because the \ol{program} relation is used to convey
-partial compilation results from stage to stage as well, \ol{program}
-tuples also contain attributes for the name of the compiler stage operating 
-on the program ($stage$), and the final physical plan ($plan$), though
-these attributes are empty when the programmer first creates the tuple. Section~\ref{ch:evita:sec:stageschedule} describes the
-$depends$ attribute, and its use in the installation of new stages. The $plan$ attribute pertains to the
-physical planner stage, which is described in Section~\ref{ch:evita:sec:planner}.
-We also expose the dataflow registration facility of Evita Raced to programmers inserting arbitrary
-\OVERLOG programs  (not compiler stages) into a P2 node; for these generic programs, the $depends$ attribute must be empty.  We next describe the 
-interfaces to an Evita Raced compiler stage, after which we discuss the way that multiple such stages are coordinated.
+Optimization logic expressed in \OVERLOG is declarative, and Evita Raced
+realizes this logic by converting it to a dataflow program to be executed by
+the P2 dataflow subsystem, which was described in Section~\ref{ch:p2:sec:p2}.
+In this section we describe how Evita Raced represents query optimization
+programs as dataflow, and also the way it orchestrates multiple different
+optimization programs through the P2 dataflow framework.
+
+An optimizer built using Evita Raced is composed of an extensible number of
+{\em stages}, each of which performs some compilation task on the input
+program.  Table~\ref{tbl:stages} describes the primary compiler stages packaged
+with the Evita Raced framework.  An Evita Raced stage can be written as a
+dataflow program of one or more P2 elements in C++, which are then compiled
+into the P2 binary; this is how we implement certain base stages required for
+bootstrapping, further described in Section~\ref{ch:evita:sec:bootstrap}.  However,
+the power of Evita Raced comes from its support for stages written in \OVERLOG,
+which, in addition to being compactly expressed in a high-level language, can
+be loaded into a running P2 installation at any time.
+
+A stage programmer registers a new stage with Evita Raced by inserting a tuple
+into the \ol{program} relation.  This tuple contains a unique identifier
+($program\_id$), a name ($name$), a list of stage dependencies ($depends$), and
+the program text ($text$).  Because the \ol{program} relation is used to convey
+partial compilation results from stage to stage as well, \ol{program} tuples
+also contain attributes for the name of the compiler stage currently operating
+on the program ($stage$), and the final physical plan ($plan$), though these
+attributes are empty when the programmer first creates the tuple.
+Section~\ref{ch:evita:sec:stageschedule} describes the $depends$ attribute, and
+its use in the installation of new stages.  The $plan$ attribute pertains to
+the physical planner stage, which is described in
+Section~\ref{ch:evita:sec:planner}.  We next describe the interfaces to an
+Evita Raced compiler stage, after which we discuss the way that multiple such
+stages are coordinated.
 
 \subsubsection{The Stage API}
-At base, an Evita Raced stage can be thought of as a stream query that listens for a tuple to arrive on an event stream called \ol{<stage>::programEvent}, where \ol{<stage>} is the name of the stage. 
-The \ol{<stage>::programEvent} table contains all the attributes mentioned in the \ol{program} table. When such a tuple arrives, the stage runs its dataflow over that event and the tables in the Metacompiler Catalog, typically modifying catalog tables in some way, until it inserts a new \ol{program} tuple, containing the name of the stage in
-the $stage$ attribute, into the program table. This insertion indicates
-the completion of the stage.
 
-To represent this behavior in a stage written in \OVERLOG, a relatively
-simple template can be followed.  An \OVERLOG stage must have at least
-one rule body containing the \ol{<stage>::programEvent} predicate. This 
-represents the ability of the stage to react to new programs arriving at
-the system.  In addition, the stage must have
-at least one rule that
-inserts a \ol{program} tuple into the \ol{program} table to signal stage
-completion.  \OVERLOG stages may be recursive programs, so they run
-to fixpoint before completing.
+At base, an Evita Raced stage can be thought of as a stream query that listens
+for a tuple to arrive on an event stream called \ol{<stage>::programEvent},
+where \ol{<stage>} is the name of the stage.  The \ol{<stage>::programEvent}
+table contains all the attributes mentioned in the \ol{program} table.  When
+such a tuple arrives, the queries that make up that stage execute, typically by
+modifying catalog tables in some way.  When a stage competes it inserts a new
+\ol{program} tuple, containing the name of the stage in the $stage$ attribute,
+into the program table.
+
+To represent this behavior in a stage written in \OVERLOG, a relatively simple
+template can be followed.  An \OVERLOG stage must have at least one rule body
+containing the \ol{<stage>::programEvent} predicate.  This represents the
+ability of the stage to react to new programs arriving at the system.  In
+addition, the stage must have at least one rule that inserts a \ol{program}
+tuple into the \ol{program} table to signal stage completion.
 
 \subsubsection{Stage Scheduling}
 \label{ch:evita:sec:stageschedule}
-In many cases, optimization stages need to be ordered in a particular way for compilation to succeed.  For example, 
-a {\em Parser} stage must run before any other stages, in order to populate the Metacompiler Catalogs, and an 
-{\em Installer} stage must follow all other stages, since by installing the dataflow program into the P2 runtime it 
-terminates compilation. We will see other specific precedence constraints in Section~\ref{ch:evita:sec:stages}.  
 
+In many cases, optimization stages need to be ordered in a particular way for
+compilation to succeed.  For example, a {\em Parser} stage must run before any
+other stages, in order to populate the Metacompiler Catalogs.  The {\em
+Planner} must follow any stages written in \OVERLOG, since it is responsible
+for translating the relational representation of a query into a dataflow
+representation.  And finally, the {\em Installer} stage must follow the {\em
+Planner}, since it instantiates dataflow specifications as P2 C++ elements, and
+installs them into the P2 runtime.  We will see other specific precedence
+constraints in Section~\ref{ch:evita:sec:stages}.
 
-A natural way to achieve such an ordering would be to ``wire up'' stages explicitly so that 
-predecessor stages directly produce \ol{<stage>::programEvent} tuples for their successors, 
-in an explicit chain of stages.  However, it is awkward to modify such an explicit dataflow configuration 
-upon registration of new stages or precedence constraints. Instead, Evita Raced captures precedence 
-constraints as {\em data} within a materialized
-relation called \ol{StageLattice}, which represents an arbitrary partial
-order (i.e., an acyclic binary relation) among stages; this partial
-order is intended to be a lattice, with the {\em Parser} as the source,
-and the dataflow {\em Installer} as the sink.  (We review built-in stages in Section~\ref{ch:evita:sec:bootstrap}.)
+A natural way to achieve such an ordering would be to ``wire up'' stages
+explicitly so that predecessor stages directly produce
+\ol{<stage>::programEvent} tuples for their successors, in an explicit chain of
+stages.  However, it is awkward to modify such an explicit dataflow
+configuration upon registration of new stages or precedence constraints.
+Instead, Evita Raced captures precedence constraints as {\em data} within a
+materialized relation called \ol{StageLattice}, which represents an arbitrary
+partial order (i.e., an acyclic binary relation) among stages; this partial
+order is intended to be a lattice, with the {\em Parser} as the source, and the
+dataflow {\em Installer} as the sink.  
  
 To achieve the dataflow connections among stages, the built-in {\em
-  StageScheduler} component listens for
-updates to the \ol{program} table, indicating the arrival of a new
-\OVERLOG program or the completion of a compiler
-stage for an on-going program compilation, as described in the previous section.  The {\em StageScheduler} is
-responsible for shepherding compilation stage execution according to the
-\ol{StageLattice}. Given a \ol{program} update, it checks the lattice to identify a next stage
-that can be invoked, and generates the
-\ol{<stage>::programEvent} tuple that will start that stage; the
-contents of the tuple are the same as those of the updated
-\ol{program} tuple.  
+StageScheduler} component (itself a stage) listens for updates to the
+\ol{program} table, indicating the arrival of a new \OVERLOG program or the
+completion of a compiler stage for an on-going program compilation.  The {\em
+StageScheduler} is responsible for shepherding compilation stage execution
+according to the \ol{StageLattice}.  Given a \ol{program} update, it ''joins with`` the
+lattice to identify a next stage that can be invoked, and generates the
+\ol{<stage>::programEvent} tuple that will start that stage; the contents of
+the tuple are the same as those of the updated \ol{program} tuple.
 
 \begin{figure*}[htbp]
 \begin{center}
-\includegraphics{figures/DefaultCompiler}
+\includegraphics[scale=1.5]{figures/DefaultCompiler}
 \ssp
-\caption{The cyclic dataflow of Evita Raced, showing only the default compilation stages.}
+\caption{The Evita Raced (cyclic) dataflow architecture, containing only the default compilation stages.}
 \label{ch:evita:fig:basecompiler}
 \end{center}
 \end{figure*}
 
-The StageScheduler and any compilation stages (whether built-in or
-runtime-installed) are interconnected via the simple dataflow
-illustrated in Figure~\ref{ch:evita:fig:basecompiler}. This is the same dataflow
-that P2 constructs for all \OVERLOG programs. It consists of a C++ ``demultiplexer'' that
-routes tuples from its input (on the left) to individual event handlers listening for
-particular tuple names (the arrows leaving the Demux element in the
-figure contain the name of the tuple for which the four components to the
-right listen).  We did not changed P2's dataflow architecture~\cite{p2:sosp}, and its
-details are not required for the rest of this chapter.  
+The {\em StageScheduler} and any compilation stages (whether built-in or
+runtime-installed) are interconnected via the simple dataflow illustrated in
+Figure~\ref{ch:evita:fig:basecompiler}.  This is the same dataflow architecture
+used throughout the {\em Declarative Networking} project.  As described in
+Section~\ref{} (and~\cite{p2:sosp}), it consists of a C++ ``demultiplexer''
+that routes tuples from its input (on the left) to individual event handlers
+listening for particular tuple names (the arrows leaving the Demux element in
+the figure contain the name of the tuple for which the four components to the
+right listen).  The Evita Raced framework simply adds the its ''default
+stages`` to the bootstrap routine of the P2 system.
 
-Consider the simplicity of this approach as compared to the explicit
-stage-wiring  sketched above. When a new compilation stage is installed
-at runtime, the Installer (Section~\ref{ch:evita:sec:installer})
-simply connects it to the {\em Demux} element, listening for
-\ol{<stage>::programEvent} tuples, before updating the corresponding
-tuple in the \ol{program} table. 
-Then the StageScheduler who receives the updated \ol{program} tuple uses
-the value of its $depends$ attribute  to insert appropriate 
-\ol{StageLattice} tuples into the corresponding table of the
-system catalog. Subsequent \ol{program} tuples being compiled will be directed to
-the newly installed compiler stage by the StageScheduler as the updated
-\ol{StageLattice} dictates.
+Consider the simplicity of how the Evita Raced framework coexists with the P2
+dataflow architecture.  To install a new (\OVERLOG) compilation stage into the
+runtime, the Installer stage (Section~\ref{ch:evita:sec:installer}) simply extends
+the {\em Demux} element to include a port for \ol{<stage>::programEvent}
+tuples, routing them to the respective rule(s) of a given stage's \OVERLOG
+program. The \ol{StageLattice} relation is also updated (e.g., through fact tuples
+in the \OVERLOG stage program) to include its position in the compilation pipeline.
+This completes the installation process, after which the \OVERLOG stage need only 
+follow a simple protocol for when and how it should execute. 
 
-To sum up, the life cycle of a program compilation starts when a user
-submits a \ol{program} tuple to the system with a \ol{null} stage
-attribute. The StageScheduler receives that \ol{program} tuple and
-generates a
+The protocol to stage execution indicates when it should start (after receiving
+a \ol{<stage>::programEvent} tuple) and what it must do on completion.  When a
+stage completes, the only requirement is to update the \ol{program} table to
+indicate this fact.  The {\em StageScheduler} receives all such updates to the
+\ol{program} table -- see Figure~\ref{ch:evita:fig:basecompiler}, the {\em
+Demux} \ol{program} tuple port into the {\em StageScheduler} -- and uses the
+value of the \ol{program} $depends$ attribute along with the \ol{StageLattice}
+relation to determine the next stage.  This completes the full compilation
+process in Evita Raced of an \OVERLOG program, from the {\em Parser} stage to the {\em
+Installer} stage, and any other stages along the way.
+
+To sum up, the life cycle of a program compilation starts when a user submits a
+\ol{program} tuple to the system with a \ol{null} stage attribute.  The
+StageScheduler receives that \ol{program} tuple and generates a
 \ol{parse::programEvent} tuple (the Parser being the source stage in the
-lattice), which is routed by the Demux element to
-the Parser stage. When the Parser is done, it updates that \ol{program} tuple
-in the corresponding table, changing the tuple's attribute to
-``Parser.''  The StageScheduler receives the \ol{program} tuple, and routes a
-\ol{planner::programEvent} to the Demux and eventually the Physical Planner, which goes round the loop again to the
-Installer.  Finally, once the Installer is done and notifies the
-StageScheduler via a \ol{program} tuple with the \ol{stage} attribute set to
-``Installer,'' the StageScheduler concludes the compilation process.
-If the \OVERLOG program being parsed is itself a new compilation stage, then after
-installation, the scheduler updates the stage lattice.
+lattice), which is routed by the Demux element to the Parser stage.  When the
+Parser is done, it updates that \ol{program} tuple in the corresponding table,
+changing the tuple's attribute to ``Parser.'' The StageScheduler receives the
+\ol{program} tuple, and routes a \ol{planner::programEvent} to the Demux and
+eventually the Physical Planner, which goes round the loop again to the
+Installer.  Finally, once the Installer is done and notifies the StageScheduler
+via a \ol{program} tuple with the \ol{stage} attribute set to ``Installer,''
+the StageScheduler concludes the compilation process.  If the \OVERLOG program
+being parsed is itself a new compilation stage, then after installation, the
+scheduler updates the stage lattice.
 
 
 \subsection{Compiler Bootstrapping}
 \label{ch:evita:sec:bootstrap}
-The previous architectural discussion neatly sidestepped a natural question: how is an Evita Raced compiler containing many \OVERLOG stages bootstrapped, so that it can compile its own \OVERLOG specification?
-As in many metaprogramming settings, this is done by writing a small bootstrap  in a lower-level language. Evita Raced is initialized by a small C++ library that constructs the cyclic dataflow of Figure~\ref{ch:evita:fig:basecompiler}, including the three default stages shown, which are themselves written in C++. %The entire bootstrap, including the stages is {\bf XXX} lines of C++ (and a).  
-Together, this code is sufficient
-to compile simplified \OVERLOG (local rules only, no optimizations) into
-operational P2 dataflows. We next describe each of these stages in a bit
-more detail, since they form the foundation of the Evita Raced runtime.
 
+This section drills down on the stages that make up the baseline Evita Raced
+compiler that is now part of P2's bootstrap routine.  As in many
+metaprogramming settings, this is done by writing a small bootstrap component
+in a lower-level language.  Evita Raced is initialized by a small C++ library
+that constructs the cyclic dataflow of Figure~\ref{ch:evita:fig:basecompiler},
+including the three default stages shown, which are themselves written in C++.
+The entire bootstrap, including the stages is around {\bf 400} lines of C++.
+The bootstrap compiler is sufficient to compile simplified \OVERLOG programs
+(local rules only, no optimizations) into operational P2 dataflows.  We next
+describe each of the three bootstrap stages (Parser, Planner, and Installer) in
+a bit more detail, since they form the core foundation of the Evita Raced
+framework.
 
 % \jmh{This paragraph was saved from a conflict with Tyson's checkin.  Joe will merge it in Tuesday night.
 % The {\em stage scheduler} is a dataflow element that is responsible for providing the inputs to a 
@@ -301,6 +430,7 @@ more detail, since they form the foundation of the Evita Raced runtime.
 % a stage based on the dependency graph and the current value of the $State$ attribute in the program tuple. 
 % The process completes when the program $State$ attribute reaches stage that no further stage depend on.
 % 
+
 \subsubsection{Parser}
 
 The Parser passes the program text it receives in the \ol{programEvent}
@@ -321,29 +451,30 @@ rule is the head predicate.
 \subsubsection{Physical Planner}
 \label{ch:evita:sec:planner}
 
-The Physical Planner stage is responsible for doing a na\"{i}ve
-translation of Metacompiler Catalog tuples (i.e., a parsed \OVERLOG program) into a dataflow program. It essentially takes each rule and deterministically translates it into a dataflow graph language, based on the positions of terms in the rule.
+The Physical Planner stage is responsible for doing a na\"{i}ve translation of
+Metacompiler Catalog tuples (i.e., a parsed \OVERLOG program) into a dataflow
+program.  It essentially takes each rule and deterministically translates it
+into a dataflow graph language, based on the positions of terms in the rule.
 
-More specifically, for each rule the Planner considers each term
-(predicate, selection or assignment) in order of position attribute.
-The predicate representing the event stream is always planned first,
-and registers a listener in the Demux element (recall
-Figure~\ref{ch:evita:fig:basecompiler}).  The terms following the event stream
-are translated, left-to-right, into a C++ dataflow in the same way that
-the original P2 system did, so we do not address them further here.
+More specifically, for each rule the Planner considers each term (predicate,
+selection or assignment) in order of position attribute.  The predicate
+representing the event stream is always planned first, and registers a listener
+in the Demux element (recall Figure~\ref{ch:evita:fig:basecompiler}).  The
+terms following the event stream are translated, left-to-right, into a C++
+dataflow in the same way that the original P2 system did, so we do not address
+them further here.
 
-We do mention three specific details. First, whereas the original P2
-system translated a logical query plan directly to a software dataflow
-structure in C++, we have chosen to create an intermediate, textual
-representation of the dataflow. This representation is in a language
-akin to the Click router's dataflow language, but we omit its details here. 
+We do mention three specific details.  First, whereas the original P2 system
+translated a logical query plan directly to a software dataflow structure in
+C++, we have chosen to create an intermediate, textual representation of the
+dataflow.  This representation is in a language akin to the Click router's
+dataflow language, but we omit its details here.
 
-Second, unlike the original P2
-system, we have introduced a number of access methods for in-memory
-tables. Our \ol{predicate} relation contains the access method as one of
-the attributes, and we have modified the P2 physical planner to choose
-the appropriate dataflow element that implements the given access
-method. 
+Second, unlike the original P2 system, we have introduced a number of access
+methods for in-memory tables.  Our \ol{predicate} relation contains the access
+method as one of the attributes, and we have modified the P2 physical planner
+to choose the appropriate dataflow element that implements the given access
+method.
 
 %% Those are naturally introduced to the P2 physical planner
 %% machinery and otherwise
@@ -385,15 +516,21 @@ method.
 % the physical plan. Select and assign operators are also planned at the position indicated by the 
 % respective table tuple.
 
-Third, as mentioned before, \OVERLOG rules may have no event predicate
-(e.g., ``\ol{table1 :- table2, table3.}''). 
-The physical planner converts such rules to (multiple) event rules via the {\em delta
-rewrite} of Loo, et al.~\cite{loo-sigmod06}. (E.g., ``\ol{table1 :- delta\_table2,
-table3.}'' and ``\ol{table1 :- table2,
-delta\_table3.}''.) As in~\cite{loo-sigmod06} \ol{delta\_table} denotes a stream conveying
-insertions, deletions, or timeout refreshes to tuples of the table
-\ol{table}.
-
+Third, the Planner only understands rules that are in the
+event-condition-action (ECA) form. An \OVERLOG rule may have no event
+predicate (e.g., ``\ol{table1 :- table2, table3.}'').  A {\em delta rewrite}
+(from Loo, et al.~\cite{loo-sigmod06}) is used to convert such rules in an ECA
+form (E.g., ``\ol{table1 :- delta\_table2, table3.}'' and ``\ol{table1 :-
+table2, delta\_table3.}''.) As in~\cite{loo-sigmod06} \ol{delta\_table} denotes
+a stream conveying insertions, deletions, or timeout refreshes to tuples of the
+table \ol{table}.  We could have chosen to do this directly in the Planner, but
+instead we built it as an \OVERLOG stage.  This decision had an
+important consequence; we could only use rules that contained an explicit event
+predicate.  Furthermore, any \OVERLOG stage that contained rules with no
+explicit event predicate depended on this compilation stage.  The delta rewrite
+\OVERLOG stage consists of a mere $6$ rules ($25$ lines of code), and is
+usually the first \OVERLOG stage to be compiled into the runtime.
+ 
 
 \subsubsection{Plan Installer}
 \label{ch:evita:sec:installer}
@@ -414,15 +551,34 @@ a feature not available in the released system.
 % details of that contribution.
 % 
 
-\subsection{Discussion}
-The metacompilation approach of Evita Raced led us to naturally design the system extensibility around issues of data storage and dataflow, rather than library loading and control flow modifications.  While any rule-based system is easier to extend than a procedural system, the internal implementation of Evita Raced is especially elegant, due to our thorough embrace of the native dataflow infrastructure, which we use both to execute optimization code, and orchestrate stages via precedence tables and the StageScheduler cycle.  The result of this design is that
-even a major addition to the Evita Raced compiler entails very minimal
-modification to the runtime state: only the addition of a pair of
-dataflow edges to connect up the new stage, and the insertion of
-precedence tuples in a single table.  Beyond the StageScheduler and the three bootstrap stages, no additional extensibility code was added to P2 to support Evita Raced.
 
-Despite its simplicity, Evita Raced is flexible enough that we have used it to enhance P2 with support for new languages at both its input and output.  First, by extending the Parser element and registering some \OVERLOG rules, we have been able to get P2  to optimize and rewrite programs written in a new language, which extends \OVERLOG with the ability to attest to the provenance of data in a manner similar to that of~\cite{abadi-netdb07}.  Second, we have been able to use Evita Raced to cross-compile \OVERLOG programs into dataflow specifications that execute on the DSN platform, a declarative networking system that runs on wireless sensor nodes~\cite{chu-sensys07}.
-%  In Section~\ref{ch:evita:sec:dsn} we present results from running Evita Raced plans in DSN on Berkeley Mote hardware.  
+\subsection{Discussion}
+
+The metacompilation approach of Evita Raced led us to naturally design the
+system extensibility around issues of data storage and dataflow, rather than
+library loading and control flow modifications.  While rule-based systems are
+usually intended to be easier to extend than a procedural system, the internal
+implementation of Evita Raced is especially elegant, due to our thorough
+embrace of the native dataflow infrastructure, which we use both to execute
+optimization code, and orchestrate stages via precedence tables and the
+StageScheduler cycle.  The result of this design is that even a major addition
+to the Evita Raced compiler entails very minimal modification to the runtime
+state: only the addition of a pair of dataflow edges to connect up the new
+stage, and the insertion of precedence tuples in a single table.  Beyond the
+StageScheduler and the three bootstrap stages, no additional extensibility code
+was added to P2 to support Evita Raced.
+
+Despite its simplicity, Evita Raced is flexible enough that other researchers
+have used it to enhance P2 with support for new languages at both its input and
+output.  First, by extending the Parser element and registering some \OVERLOG
+rules, Abadi and Loo were able to get P2 to optimize and rewrite programs
+written in a new language, which extends \OVERLOG with the ability to attest to
+the provenance of data in a manner similar to that of~\cite{abadi-netdb07}.
+Second, Chu, et al. were able to use Evita Raced to cross-compile \OVERLOG programs
+into dataflow specifications that execute on the DSN platform, a declarative
+networking system that runs on wireless sensor nodes~\cite{chu-sensys07}.
+% In Section~\ref{ch:evita:sec:dsn} we present results from running Evita Raced
+% plans in DSN on Berkeley Mote hardware.
 
 
 \section{Query Compilation Stages}
@@ -443,50 +599,121 @@ Despite its simplicity, Evita Raced is flexible enough that we have used it to e
 % that it should update the dependency relation accordingly. After performing the update to the dependency
 % relation, the new stage will be included in the compilation process of future input programs. 
 
-Having described the Evita Raced infrastructure, we now turn to the issue of specifying query optimizations 
-in \OVERLOG.  In this section we describe three of the compiler stages we have developed for Evita Raced. 
-Section~\ref{ch:evita:sec:systemr} discusses a dynamic programming optimizer stage akin to that of
-System R. Section~\ref{ch:evita:sec:magic} describes a stage that performs magic-sets rewrite on recursive 
-\OVERLOG programs. Finally, Section~\ref{ch:evita:sec:localization} describes our reimplementation in Evita Raced 
-of the localization rewrite from Loo et al.~\cite{loo-sigmod06}. 
+Having described the Evita Raced infrastructure, we now turn to the issue of
+specifying query optimizations in \OVERLOG.  In this section we describe three
+of the compiler stages we have developed for Evita Raced.
+Section~\ref{ch:evita:sec:systemr} discusses a dynamic programming optimizer
+stage akin to that of System R.  We present, in
+Section~\ref{ch:evita:sec:cascades}, an optimization that performs a top-down
+search strategy, which is modeled after the Cascades optimizer.
+Section~\ref{ch:evita:sec:magic} describes a stage that performs magic-sets
+rewrite on recursive \OVERLOG programs.  Finally,
+Section~\ref{ch:evita:sec:localization} describes our reimplementation in Evita
+Raced of the localization rewrite from Loo et al.~\cite{loo-sigmod06}.
 
 \subsection{System R Optimization}
 \label{ch:evita:sec:systemr}
 
-The System R optimizer paper by Selinger, et al. is the canonical textbook framework for database query optimization~\cite{selinger}.  The paper laid out for
-the first time the notion that query optimization can be decomposed
-into two basic parts: query plan cost
-estimation and plan enumeration.  While this algorithm is traditionally implemented inside
-the heart of a database system via a traditional procedural
-programming language, both of these tasks are
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+  {\bf def} optimizer($Q$)
+    \begin{algorithmic}[1]
+      	\STATE /* Base case: access methods to relations in Q */
+  	\FORALL{base relations $R \in Q$}
+		\STATE Find all access methods to $R$ and store in $AM$
+		\STATE Include index scans iff there exists sargable predicates 
+  	\ENDFOR
+	\STATE
+  	\FORALL{$p \in AM$}
+		\IF{$p$ is the cheapest unordered access method \OR 
+		    $p$ is the cheapest access method for some "interesting order"}
+			\STATE $plans[1] = plans[1] \bigcup p$ 
+		\ENDIF
+ 	\ENDFOR
+	\STATE
+	\STATE $bp$ = bestplan($|Q|$) /* Get best plans for query Q */
+	\IF{$Q$ contains a GROUP BY or ORDER BY}
+	 	\STATE $cp$ = cheapest plan $p \in bp$ w.r.t. relevant interesting order 
+		\IF{$cp == null$}
+			\STATE $cp$ = cheapest overall plan $p \in bp$ + sort operator
+		\ENDIF
+		\RETURN $cp$
+	\ELSE
+	 	\RETURN cheapest overall plan $p \in cp$ /* irrespective of ``interesting orders'' */ 
+	\ENDIF
+    \end{algorithmic}
+  {\bf end} \\
+  \\
+  {\bf def} bestplan(n)
+    \begin{algorithmic}[1]
+  	\IF{$plans[n] = \emptyset$}
+		\FORALL{$p_1 \in plans[1]$} 
+			\STATE $P_{n-1}$ = bestplan(n -1)
+			\FORALL{$p_{n-1} \in P_{n - 1}$}
+			\STATE /* if $p_1$ and $p_{n-1}$ have non-overlapping query predicates */
+				\IF{$p_1 \bigcap p_{n-1} = \emptyset$}
+					\STATE $plans[n] = plans[n] \bigcup$ all (left-outer) join methods for $p_1$ and $p_{n-1}$
+				\ENDIF
+			\ENDFOR
+		\ENDFOR
+		\STATE
+		\FORALL{$p \in plans[n]$}
+			\IF{$p$ is not the cheapest unordered plan among its equivalent plans \OR
+			    $p$ is not the cheapest ``interesting ordered'' plan among its equivalent plans}
+				\STATE delete $p$ from $plans[n]$
+			\ENDIF
+		\ENDFOR
+	\ENDIF
+	\RETURN plans[n]
+      \end{algorithmic}
+    {\bf end}
+\end{boxedminipage}
+\caption{\label{ch:evita:fig:systemr}System R optimizer algorithm.}
+\end{figure*}
+
+The System R optimizer paper by Selinger, et al.  is the canonical textbook
+framework for database query optimization~\cite{selinger}.  The paper laid out
+for the first time the notion that query optimization can be decomposed into
+two basic parts: query plan cost estimation and plan enumeration.  While this
+algorithm is traditionally implemented inside the heart of a database system
+via a traditional procedural programming language, both of these tasks are
 naturally specified in a declarative query language.  To perform cost
-estimation, System~R requires data statistics like relation
-cardinalities and index selectivities; \OVERLOG is a fitting language to
-collect these statistics, especially in a distributed fashion over all
-relation partitions. In our description we omit statistics gathering.
+estimation, System~R requires data statistics like relation cardinalities and
+index selectivities; \OVERLOG is a fitting language to collect these
+statistics, especially in a distributed fashion over all relation partitions.
 
-We focus instead on the basic dynamic programming algorithm for the
-state-space enumeration at the heart of the System R optimizer.  This
-algorithm enumerates query plans for increasingly-large subgoals of the
-query optimizer.  It fills in a dynamic programming table keyed by the
-plan identifier.  The dynamic programming task is
-to fill in this table with the lowest-estimated-cost query plan among
-all plans producing an {\em equivalent} output relation (i.e., plans
-composed of the same terms).  
-In the System R optimizer, the {\em principle of
-optimality} is assumed to hold: the lowest-cost solution to some
-plan will be built from the optimal solutions to subplans.  Thus dynamic
-programming can proceed in ``bottom-up'' fashion.  Each rule's event
-predicate is the ``outermost,'' streaming relation in a query plan for the rule.  For a given rule,
-the optimizer generates plans of size $k$ terms by appending a single
-(thus unused)
-term from the rule body to the optimal plan of
-size $k-1$ terms.
+Our focus in this section is on the basic dynamic programming algorithm for the
+state-space enumeration at the heart of the System R optimizer.
+Figure~\ref{ch:evita:fig:systemr} gives a (simplified) sketch of this
+algorithm.  It enumerates query plans for increasingly-large subgoals of the
+query optimizer.  It fills in a dynamic programming table (e.g., $plans$ in
+Figure~\ref{ch:evita:fig:systemr}) with plans that cover a given number of
+(relational algebra) predicates that appear in the query.  The dynamic
+programming task is to fill in this table with the lowest-estimated-cost query
+plan among all plans producing an {\em equivalent} output relation (i.e., plans
+composed of the same terms).  The \ol{bestplan} procedure in
+Figure~\ref{ch:evita:fig:systemr} captures the essence of generating and
+choosing optimal plans with a given number of predicates.
 
-% An
-% aggregation query chooses optimal plans from the set of equivalent plans.
-We first describe the rules for plan generation and conclude with the
-rules for optimal plan selection.
+In the System R optimizer, the {\em principle of optimality} is assumed to hold: the
+lowest-cost solution to some plan will be built from the optimal solutions to
+subplans.  Thus dynamic programming can proceed in ``bottom-up'' fashion.  In a
+given program $P$ to be optimized, each rule's event predicate is the
+``outermost,'' streaming relation in a query plan for the rule.  For a given
+rule $r \in P$, the optimizer generates plans of size $k$ terms by appending a
+single (thus unused) term from the rule body to the optimal plan of size $k-1$
+terms, as shown in the first loop of \ol{bestplan} in Figure~\ref{ch:evita:fig:systemr}.
+There are many additional details that we have chosen to gloss over in the
+pseudocode.  
+
+For instance, avoid combining a k-way plan with a 1-way plan if there is no
+join predicate between them, unless all predicates have been used up (i.e.,
+postpone Cartesian products).  We handle this in our \OVERLOG rules by ensuring
+the cost of such an option is greater than any other option that includes join
+predicates.  We now turn to describe the \OVERLOG rules for plan generation and
+conclude with the rules for best plan selection.
 
 \subsubsection{Plan Generation}
 \label{ch:evita:sec:plangen}
@@ -496,9 +723,8 @@ rules for optimal plan selection.
 \centering
 \begin{boxedminipage}{\linewidth}
 pg1 {\bf plan}(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, \\
-\datalogspace \xspace \xspace Plan, Schema, Card, Cost, Pos, AM, Sort, TermC) :- \\
+\datalogspace \xspace \xspace Plan, Schema, Card, Cost, Pos, AM, Sort) :- \\
 \datalogspace {\bf systemr::programEvent}(@A, Pid, \_, \_, \_, \_, \_, \_),\\
-\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermC),\\
 \datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, \_, \_, Schema, Pos, \_, \_),\\
 \datalogspace Pos == $1$,\\
 \datalogspace PlanID := {\em f\_idgen()}, SubPlanID := $null$,\\
@@ -510,90 +736,107 @@ pg1 {\bf plan}(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, \\
 \caption{\label{ch:evita:fig:planseed}Plan seed rule.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:planseed} shows the optimizer rule  that creates
-the initial plan for each rule from the event predicate. The \ol{plan} tuple
-contains a query plan for a given rule, and the plan's \ol{size} reflects the number of
-term identifiers in the $Plan$ attribute (i.e., the number of leaves in the plan tree). The optimizer listens on the \ol{programEvent} event stream in
-rule \ol{pg1}, which will start the optimization process.  
-The \ol{programEvent} tuple is subsequently joined with the \ol{rule} table along the 
-$Pid$ (program identifier) attribute to obtain the set of rules defined in the input program. 
-The resulting set of rule tuples are each joined with the \ol{predicate} table along the 
-$Rid$ (rule identifier) attribute. The result of this join produces a tuple for each predicate term 
-defined by a given rule. The predicate term assigned to position~$1$ ($Pos == 1$) is
-by convention the event predicate term.  For each 
-event \ol{predicate} tuple in each rule of the input program, rule \ol{pg1} adds a new 
-plan to the \ol{plan} table. The $Plan$ attribute represents the initial plan list,
-starting with the term identifier ($PredID$) that identifies streaming predicates.
-Plan generation proceeds by appending term identifiers to this list when
-constructing new plans from optimal subplans.
+Figure~\ref{ch:evita:fig:systemr} presents the System R algorithm for plan
+generation in two phases.  The first is generating all access methods for a
+given relation mentioned in the query (e.g., in the ``from'' clause).
+Subsequent to that, a second phase enumerates all possible join orders and
+methods.  Recall in Section ? that P2 converts a rule into an
+event-condition-action (ECA) form, where the event predicate represents a
+stream of tuples from the table reference.  As a consequence of this dataflow
+design, our first phase simply generates a plan that listens for such event
+tuples.  Extending this rule to consider access methods would entail adding a
+predicate that references all access methods to a given relation.
 
-The optimizer defines a set of plan generation rules that extend the
-best plan found with $k$ terms with a new thus far unused term from the
-rule body. Each such rule joins the \ol{bestPlanUpdate} event predicate
-(generated when a new $k$-term plan is found) with unused terms in the
-rule. If the new term considered is a predicate, then the new plan
-must define an access method
-that identifies the physical join operator, which
-takes the optimal subplan and ``joins it'' with the predicate table. The access methods we presently 
-support are scanned and index-nested-loop-join, as well as merge-join. 
-The rules for plan generation from rule predicates are defined around the supported access methods. 
-Due to space constraints, we only show the rules that generate plans for nested-loop-join 
-and index nested-loop-join access methods.\footnote{A complete description of our rules 
-in an extended technical report is available to the conference chair
-during double blind reviewing.}
+Figure~\ref{ch:evita:fig:planseed} shows the optimizer rule that creates the
+initial plan for each rule from the event predicate.  The \ol{plan} tuple
+contains a query plan for a given rule, and the plan's \ol{size} reflects the
+number of term identifiers in the $Plan$ attribute (i.e., the number of leaves
+in the plan tree).  The optimizer listens on the \ol{programEvent} event stream
+in rule \ol{pg1}, which initiates the optimization process.  The
+\ol{programEvent} tuple is subsequently joined with the \ol{rule} table along
+the $Pid$ (program identifier) attribute to obtain the set of rules defined in
+the input program.  The resulting set of rule tuples are each joined with the
+\ol{predicate} table along the $Rid$ (rule identifier) attribute.  The result
+of this join produces a tuple for each predicate term defined by a given rule.
+The predicate term assigned to position~$1$ ($Pos == 1$) is by convention the
+event predicate term.  For each event \ol{predicate} tuple in each rule of the
+input program, rule \ol{pg1} adds a new plan to the \ol{plan} table.  The
+$Plan$ attribute represents the initial plan list, starting with the term
+identifier ($PredID$) that identifies streaming predicates.  Plan generation
+proceeds by appending term identifiers to this list when constructing new plans
+from optimal subplans.
+
+The \OVERLOG optimizer defines a set of plan generation rules that together
+perform the induction step of the dynamic program.  Each rule extends a best
+plan of $k$ terms with a $(k+1)^{st}$, thus far unused term from the rule body.
+If the new term considered is a table predicate, then the new plan
+annotated with an appropriate join method, which takes the optimal subplan and
+``joins it'' with the predicate table.  The join methods supported by P2
+include scanned and index-nested-loop-join, as well as merge-join.  A plan
+tuple also carries with it an associated cost, which only considers CPU costs
+since all P2 relations reside in memory.  We now turn to the description of the
+rules that generate plans for nested-loop-join, index nested-loop-join, and
+sort-merge join methods.
 
 \begin{figure*}
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
+\linenumbers
 pg2 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, "Predicate", PredID, \\
-\datalogspace \xspace Plan, Schema, Card, Cost, OuterPos+$1$, AM, $null$, TermC) :-\\
-\datalogspace {\bf bestPlanUpdate}(@A, Pid, Rid, PlanID),\\
+\datalogspace \xspace Plan, Schema, Card, Cost, OuterPos+$1$, JM, $null$) :-\\
+\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, OuterPlan, \\
 \datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, \_),  \\   
 \datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
-\datalogspace $PredPos < TermC$,\\
+\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace $PredPos < TermCount$,\\
 \datalogspace {\bf table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
 \datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
 \datalogspace Card := OuterCard * TCard / $10$,\\
 \datalogspace Cost := OuterCost + (OuterCard * TCard),\\
-\datalogspace AM := {\em f\_cons}("SCAN", $null$), \\
+\datalogspace JM := NESTED\_LOOP, \\
 \datalogspace Plan := {\em f\_cons}(PredID, OuterPlan), \\
 \datalogspace Schema := {\em f\_merge}(OuterSchema, PredSchema).\\
-\\
-pgn {\bf planUpdate}(@A, Pid, Rid, PlanID, SubPlanID, Sort) :- \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, SubPlanID, \_, \_, \_, \_, \_, \_, \_, \_, Sort, \_).
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:plangen1}Scan-join access method.}
+\caption{\label{ch:evita:fig:plangen1}nested-loop join method.}
 \end{figure*}
 
-A nested-loop-join plan access method is generated for any table predicate appearing
-in the rule body. Rule \ol{pg2} in Figure~\ref{ch:evita:fig:plangen1} generates a
-(scanned) nested-loop-join 
-plan on all rule body table predicates not mentioned in the $OuterPlan$ attribute of the \ol{plan}
-predicate representing the subplan. The \ol{plan} tuple representing the subplan is joined with 
-the \ol{predicate} (all predicate terms in the rule body) table followed by another join with 
-the \ol{table} (all tables in the system) table. The result of these join operations produce all 
-term predicates mentioned in the rule that have a matching table identifier definition. 
-The selection predicate $PredPos < TermC$ ensures that we do not
-consider the rule head predicate (last in the rule's terms by
-convention). The function $f\_contains$ tests for containment of the predicate in the subplan (outer plan). 
-Any tuples that meet the constraints imposed by this rule generate a new \ol{plan} 
-tuple with the ``SCAN'' access method (since the predicate table will be scanned for each outer tuple). 
-Each new plan tuple is given a new $Plan$ attribute that appends the $PredID$ to the $OuterPlan$ 
-subplan attribute. 
-The cardinality ($Card$) and cost ($Cost$) estimates are given values based on some costing 
-measure, which in this case makes use of best plan cardinality and cost estimates, and the predicate 
-table cardinality.
+Any table predicate appearing in a rule body is given a nested-loop-join plan,
+shown by rule~\ol{pg2} in Figure~\ref{ch:evita:fig:plangen1}.  The rule is
+triggered on an update to the \ol{bestPlan} relation (described in
+Section~\ref{}), which contains the plan identifier ($PlanID$) used to select
+the reference plan in the \ol{plan} relation.  Each plan tuple contains a list
+of the predicate identifiers that already appear in it.  This list is
+referenced by the $OuterPlan$ variable in the \ol{plan} predicate of
+rule~\ol{pg2}.
+
+The next step is to extend the \ol{plan} tuple with a ``new'' table predicate,
+which is done by joining with the \ol{predicate} relation along the same rule
+identifier ($Rid$).  The result of this join operation produces all predicates
+mentioned in the rule.  To get only the table predicates we join with the
+\ol{table} predicate.  The selection predicate $PredPos < TermCount$ ensures that
+we do not consider the rule head predicate (last in the rule's terms by
+convention).  The function $f\_contains$ tests for containment of the predicate
+in the subplan (outer plan).  The tuples that meet the constraints imposed thus
+far represent new table predicates that can be used to extend the optimal plan.
+We need only assign annotate the new (projected) plan tuple with a join method
+(NESTED\_LOOP), associated cost (based on cardinality estimates), a new
+predicate list (see $Plan$ variable), and a new schema (see $Schema$ variable).
 
 \begin{figure*}
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
 pg3 {\bf plan}(@A, ...) :-\\
-\datalogspace ...\\
-\datalogspace {\bf table}(@A, Tid, Tablename, \_, \_, \_, TCard, \_),\\
-\datalogspace {\bf index}(@A, Iid, Tablename, Key, Type, Selectivity),\\
+\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, OuterPlan, \\
+\datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, \_),  \\   
+\datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
+\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace $PredPos < TermCount$,\\
+\datalogspace {\bf table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
+\datalogspace {\bf index}(@A, Iid, Tid, Key, Type, Selectivity),\\
 \datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
 \datalogspace {\em f\_indexMatch}(OuterSchema, PredSchema, Key),\\
 \datalogspace Card   := OuterCard * (Selectivity * TCard),\\
@@ -601,28 +844,36 @@ pg3 {\bf plan}(@A, ...) :-\\
 \datalogspace AM := {\em f\_cons}(Type, Iid),\\
 \datalogspace ...
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:plangen2}Index-join access method (diff from Figure~\ref{ch:evita:fig:plangen1}).}
+\caption{\label{ch:evita:fig:plangen2}index-nested-loop join method (diff from Figure~\ref{ch:evita:fig:plangen1}).}
 \end{figure*}
 
-An index-nested-loop-join plan is generated by rule \ol{pg3} in Figure~\ref{ch:evita:fig:plangen2}. The main
-difference between this rule and rule \ol{pg2} is the additional \ol{index} predicate, which
-adds index definitions to the resulting table predicate tuples. The function {\em f\_indexMatch}
-tests if the index can be used to perform the join using attributes from the best plan schema ($OuterSchema$)
-and attributes from the predicate table ($PredSchema$). Any tuple results from this plan are assigned 
-cardinality and cost estimates based on some cost function, which uses the additional index selectivity
-information given by the $Selectivity$ \ol{index} predicate attribute.
-We also support range predicates in our index-nested-loop-joins but do
-not show the 3 relevant rules here.
+An index-nested-loop join plan is generated by rule \ol{pg3} in
+Figure~\ref{ch:evita:fig:plangen2}.  Like rule~\ol{pg2}, it joins the
+\ol{bestPlan}, \ol{plan}, \ol{predicate}, and \ol{table} predicates to
+get all table predicates referenced by the target rule.  That result is
+subsequently joined with the (additional) \ol{index} predicate, which adds
+index information to the result tuples.  The function {\em f\_indexMatch} tests
+if the index can be used to perform the join using attributes from the best
+plan schema ($OuterSchema$) and attributes from the predicate table
+($PredSchema$).  Any tuple results from this plan are assigned cardinality and
+cost estimates based on some cost function, which uses the additional index
+selectivity information given by the $Selectivity$ \ol{index} predicate
+attribute.  We also support range predicates in our index-nested-loop join
+plans but do not discuss them in detail as they are quite similar to the
+nested-loop cases above.
 
-A merge-join performs a join of a plan with a table predicate mentioned in the rule body along
-some sorting attribute. The tuple set from the outer plan and the predicate table must
-be ordered by the sorting attribute. The output of a merge-join operation preserves
-the sorting attribute order. Therefore, the \ol{plan} predicate generated by the merge-join rule 
-includes the sorting attribute in the value of the $Sort$ \ol{plan} predicate. We note that the $Sort$
-attribute in the \ol{table} plan table identifies the sorting attribute of the table.
-A $null$ valued $Sort$ attribute, in either the outer relation \ol{plan} predicate or the inner relation
-\ol{table} predicate, means that the relation is unordered, and must be presorted prior to the merge-join operator.  
-The cost of a merge-join operator depends on need to presort either relation. 
+A merge-join performs a join of a plan with a table predicate mentioned in the
+rule body along some sorting attribute.  The tuple set from the outer plan and
+the predicate table must be ordered by the sorting attribute.  The output of a
+merge-join operation preserves the sorting attribute order.  Therefore, the
+\ol{plan} predicate generated by the merge-join rule includes the sorting
+attribute in the value of the $Sort$ \ol{plan} predicate.  We note that the
+$Sort$ attribute in the \ol{table} plan table identifies the sorting attribute
+of the table.  A $null$ valued $Sort$ attribute, in either the outer relation
+\ol{plan} predicate or the inner relation \ol{table} predicate, means that the
+relation is not known to be ordered, and must be presorted prior to the
+merge-join operator.  The cost of a merge-join operator depends on need to
+presort either relation.
 
 \subsubsection{Best plan selection}
 \label{ch:evita:sec:bestplan}
@@ -631,42 +882,58 @@ The cost of a merge-join operator depends on need to presort either relation.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-bp1 {\bf bestCostPlan}(@A, Pid, Rid, Plan1, Sort1, {\small \bf a\_min}<Cost>) :- \\
-\datalogspace {\bf planUpdate}(@A, Pid, Rid, \_, Plan1, Sort1), \\
-\datalogspace {\bf plan}(@A, Pid, Rid, \_, \_, \_, \_, Plan2, \_, \_, Cost, \_, \_, Sort2, \_), \\
-\datalogspace {\em f\_setequals}(Plan1, Plan2), Sort1 == Sort2. \\
+bp1 {\bf bestCostPlan}(@A, Pid, Rid, Plan, Sort, {\small \bf a\_min}<Cost>) :- \\
+\datalogspace {\bf plan}(@A, Pid, Rid, \_, \_, \_, \_, Plan, \_, \_, Cost, \_, \_, Sort, \_). \\
 \\            
 bp2 {\bf bestPlan}(@A, Pid, Rid, PlanID, Plan2, Cost) :- \\
+\datalogspace {\bf bestCostPlan}(@A, Pid, Rid, Plan1, Sort, Cost), \\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, Plan2, \_, \_, Cost, \_, \_, Sort, \_), \\
+\datalogspace Sort == $null$.\\
+\\
+bp3 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, Plan, \_, \_, Cost, \_, \_, Sort, \_), \\
+\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
+\datalogspace {\bf select}(@A, Sid, Rid, Pred, \_, \_), \\
+\datalogspace // participates in a later join OR is a prefix of a grouping attribute \\ 
+\datalogspace ({\em f\_contains}(PredID, Plan) ==  $false$ \&\& Pred.contains(Sort)) $||$ \\
+\datalogspace (PredPos == TermCount \&\& PredSchema.isGroupingAttribute(Sort)). \\
+\\
+bp4 {\bf bestPlan}(@A, Pid, Rid, PlanID, Plan2, Cost) :- \\
 \datalogspace {\bf bestCostPlan}(@A, Pid, Rid, Plan1, Sort1, Cost), \\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, Plan2, \_, \_, Cost, \_, \_, Sort2, \_), \\
+\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
 \datalogspace {\em f\_setequals}(Plan1, Plan2), Sort1 == Sort2.\\
 \\            
-bp3 {\bf bestPlanUpdate}(@A, Pid, Rid, PlanID) :- \\
-\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID, \_, \_).
 \end{boxedminipage}
 \caption{\label{ch:evita:fig:bestplan}Best plan selection.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:bestplan} shows two rules that select the best plan from a 
-set of equivalent plans, in terms of the output result set and the ordering 
-properties of the result set. The \ol{bestCostPlan} predicate picks the
-plan with the minimum cost from the set of equivalent plans. This aggregation 
-query groups along the program identifier, rule identifier, plan list, and sort
-attribute. The function {\em f\_setequals} tests whether the set of term identifiers 
-in the two argument plans are the same, regardless of the order. The inclusion of 
-the sort attribute in the group condition enables the handling of what Selinger 
-calls ``interesting orders''~\cite{selinger}, along with optimal subplans. A separate 
-rule (not shown) retains only those plans with no ordering attributes ($Sort == null$) and 
-with sort orders on attributes that participate in subsequent join and group by 
-operations~\footnote{Overlog does not have a notion of an "order by" clause.}.
+Figure~\ref{ch:evita:fig:bestplan} shows the rules that select the best plan
+from a set of equivalent plans, in terms of the output result set and the
+ordering properties of the result set.  The \ol{bestCostPlan} predicate of
+rule~\ol{bp1} contains the plan with the minimum cost from the set of
+equivalent plans.  This aggregation query groups along the program identifier,
+rule identifier, plan list~\footnote{The plan lists are actually sets of
+predicate identifiers, which forces the grouping operator to use a set
+comparison method to test for equivalence.}, and sort attribute.  The inclusion
+of the sort attribute in the group condition {\emph enables} the handling of
+what Selinger calls ``interesting orders''~\cite{selinger}, along with optimal
+subplans.
+
+The remain rules deal with populating the \ol{bestPlan} table with the optimal
+unordered and interestingly ordered plans.  Rule~\ol{bp2} selects the best
+unordered plan (no ordering attributes $Sort == null$).  An interesting order
+is determined in rule~\ol{bp3} by considering the Sort attribute of a plan with
+new join predicates and grouping attributes.  The new join predicates are
+simply those table predicates not already mentioned in the plan list.  The
+grouping attributes are given by the head predicate (in the last position)
+through a special method that returns true iff there is a grouping and the Sort
+variable references a prefix of the grouping attributes.  This completes our
+consideration of interesting orders, since \OVERLOG does not have a notion of
+an "order by" clause.  Rule~\ol{bp4} uses the \ol{interestingOrder} predicate
+to choose the optimal plan with the given order.
  
-The aggregation rule \ol{bp1} triggers whenever a new plan is added to the \ol{plan} 
-table (indicated by the \ol{planUpdate} event). Then, the \ol{bestCostPlan} predicate is used 
-in rule \ol{bp2} to select the identifier of the best plan, which is inserted into the \ol{bestPlan} 
-table. An update to the \ol{bestPlan} table triggers a new \ol{bestPlanUpdate} event that the 
-plan generation rules, described in Section~\ref{ch:evita:sec:plangen}, use to build new candidate plans.
-
-
 \subsubsection{Improving Selectivity Estimation}
 
 For equality selection predications, our System R rules above support selectivity
@@ -695,6 +962,7 @@ a join with the histogram data relation, and based on the bucket boundaries obta
 estimations for a given selection predicate.
 
 \subsection{Top-down Optimization}
+\label{ch:evita:sec:cascades}
 
 The bottom-up, dynamic programming search strategy is a natural fit to a Datalog-based rule 
 language. However, a top-down Cascades-style optimization strategy~\cite{cascades} is just
@@ -1119,20 +1387,6 @@ code that performed this task in P2 consisted of approximately 400 lines of
 C++.  
 
 
-\section{Related Work}
-\label{ch:evita:sec:related}
-
-The pioneering work on extensible query optimizer architectures was done in the EXODUS~\cite{exodus} and Starburst~\cite{lohman,phh92} systems, which provided custom rule languages for specifying plan transformations.  The EXODUS optimizer generator used a forward-chaining rule language to iteratively transform existing query plans into new ones. Follow-on work (Volcano~\cite{volcano} and Cascades~\cite{cascades}) exposed more interfaces to make the search in this space of transformations more efficient.  Starburst had two rule-based optimization stages.  The SQL Query Rewrite stage provided a production rule execution engine, for ``rules'' that were written imperatively in C; it included a precedence ordering facility over those rules.  The cost-based optimizer in Starburst was more declarative, taking a grammar-based approach to specifying legal plans and subplans.
-
-While all of this work was rule-based and extensible, most of it only exposed individual plan transformations to extensibility; the actual search algorithms or transformation orderings of EXODUS, Volcano, Cascades, and the Starburst cost-based optimizer were fixed in procedural code.  By contrast, Evita Raced does not embed a search algorithm, instead leaving that open to specification as needed.  The dynamic programming search we implemented is a natural fit to a Datalog-based rule language, and it is an interesting future work challenge to consider whether the Cascades-style ``top-down'' optimization is easy to achieve in \OVERLOG; the fact that magic-sets rewriting blurs the difference between top-down and bottom-up logic evaluation may be germane here~\cite{topdownbottomup}.
-
-Another interesting extensible query optimizer is Opt++~\cite{kabradewitt}, which exploits the object-oriented features of C++ to make an optimizer framework that was easy to customize in a number of ways.  A specific goal of Opt++ was to make the search strategy extensible, enabling not only top-down vs. bottom-up state-space enumeration, but also randomized search algorithms.  Evita Raced embraces these additional dimensions of extensibility introduced by Opt++, but provides them in a higher-level declarative programming framework.
-
-The cyclic dataflow used for stage scheduling in Evita Races resembles the continuous query engine of TelegraphCQ, with our StageScheduler and Demux elements working together to behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This connection occurred to us long after we developed our design, but in retrospect the analogy is quite natural: Evita Raced stages are akin to TelegraphCQ's ``installed'' continuous queries, and P2's \OVERLOG queries are akin to data streaming into TelegraphCQ.
-
-Our description of \OVERLOG was based on our understanding of the current state of the P2 codebase.  Loo et al.~\cite{loo-sigmod06} describe a language for P2 they call Network Datalog (NDLog), that is roughly a simple sub-language of the current state of \OVERLOG.  NDLog is a subset of Datalog with aggregation, and hence does not provide delete rules or updates.  Unlike \OVERLOG, NDLog offers well-defined global program semantics across the network, but it does so by not offering delete or update rules, which are used in many \OVERLOG programs.
-
-
 \section{Discussion}
 \label{ch:evita:sec:discussion}
 
@@ -1194,7 +1448,6 @@ our Evita Raced infrastructure could accelerate the ability of the P2 group to p
 
 \section{Summary}
 \label{ch:evita:sec:summary}
-
 The Evita Raced metacompilation framework allows \OVERLOG compilation tasks to be written in \OVERLOG and
 executed in the P2 runtime engine. It provides significant extensibility via a relatively clean declarative
 language. Many of the tasks of query optimization -- dynamic programming, dependency-graph construction
