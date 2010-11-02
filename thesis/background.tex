@@ -1,23 +1,55 @@
 \chapter[Background: Declarative Networking]{Background: Declarative Networking}
 \label{ch:p2}
 
-We begin with an overview of key aspects of the Declarative Networking project, which introduced the declarative language 
-{\em \OVERLOG} and the {\em P2} runtime engine. The primary goal of the project was to make it easy to implement and 
-deploy overlay networks by allowing specifications in a high-level declarative language to be directly executed on nodes 
-to instantiate overlays. In an early stage of the project, we implemented and deployed a Narada-style mesh network~\cite{chu00case}, 
-using only 12 rules, and the Chord structured overlay~\cite{chord} in only 35 rules~\cite{p2:sosp}. Our experience with overlay implementations has 
-shown that relations, together with a recursive query language, can fairly naturally represent the persistent routing state of the overlays 
-we considered~\cite{loo-sigmod06, p2:sosp}.
+We begin with an overview of key aspects of the Declarative Networking project, which introduced our declarative language 
+{\em \OVERLOG} and its runtime {\em P2}. The project aim was to make it easy to implement and deploy overlay networks 
+by allowing specifications in a high-level declarative language to be directly executed on nodes that span the Internet. 
+Our overlay specifications, expressed in \OVERLOG rules, contained {\em orders of magnitude} fewer lines of code than 
+corresponding overlay implementations written in an imperative language (e.g., C/C++). We implemented and deployed 
+a Narada-style mesh network~\cite{chu00case}, using only 12 rules, and the Chord structured overlay~\cite{chord} 
+in only 35 rules~\cite{p2:sosp}, versus thousands of lines of code for the MIT Chord reference implementation. 
+Our experience with overlay implementations has shown that relations, together with a recursive query language, 
+can fairly naturally represent the persistent routing state of the overlays we considered~\cite{loo-sigmod06, p2:sosp}.
 
-Section~\ref{ch:p2:sec:overlog} describes the \OVERLOG language, which extends Datalog in three main ways: 
-it adds notation to specify the location of data, provides some SQL-style extensions such as primary keys and aggregation, 
-and defines a model for processing and generating changes to tables. Section~\ref{ch:p2:sec:p2} reviews the P2 runtime 
-responsible for compiling and executing \OVERLOG programs on a set of distributed nodes. The design of P2 was inspired 
-by prior work in both databases and networking. It is based in large part upon a side-by-side comparison between the PIER 
-peer-to-peer query engine~\cite{pier-cidr05} and the Click router~\cite{click-tocs}. Like PIER, P2 can manage structureddata 
-tuples flowing through a broad range of query processing elements, which may accumulate significant state and perform substantial 
-asynchronous processing.  Like Click, P2 stresses high-performance transfers of data units, as well as dataflow
-elements with both ``push'' and ``pull'' modalities. 
+The \OVERLOG language is an extension of Datalog, which we introduce in Section~\ref{ch:p2:sec:datalog}.
+In Section~\ref{ch:p2:sec:overlog} we describe the \OVERLOG language, which extends Datalog in three main ways: 
+it adds notation to specify the location of data, provides some SQL-style extensions such as primary keys and 
+aggregation, and defines a model for processing and generating changes to tables. 
+Section~\ref{ch:p2:sec:p2} reviews the P2 runtime responsible for compiling and executing \OVERLOG 
+programs on a set of distributed nodes. The design of P2 was inspired by prior work in both databases and 
+networking. It is based in large part upon a side-by-side comparison between the PIER peer-to-peer query 
+engine~\cite{pier-cidr05} and the Click router~\cite{click-tocs}. Like PIER, P2 can manage structured data 
+tuples flowing through a broad range of query processing elements, which may accumulate significant state 
+and perform substantial asynchronous processing.  Like Click, P2 stresses high-performance transfers of data units, 
+as well as dataflow elements with both ``push'' and ``pull'' modalities. 
+
+\section{Introduction to Datalog}
+\label{ch:p2:sec:datalog}
+
+We begin with a short review of Datalog, following the conventions in Ramakrishnan and Ullman's 
+survey~\ref{deductive-database}. Datalog drew inspiration from the Prolog language~\cite{prolog}, 
+which was one of the first logic programming languages. Both Datalog and Prolog express their logic in 
+terms of relations, represented as facts (tuples) and rules (queries). A key difference between these two 
+languages the evaluation strategy used to derive new facts. Prolog employees a depth-first (top-down)
+evaluation strategy, which starts at the top-level query and decomposes it into simpler problems
+until it reaches some baseline facts. Datalog on the other hand uses a bottom-up strategy, which starts
+with the baseline facts, and through rule derivations, extends its knowledge with new facts until it can
+directly evaluate the top-level queries. A key consequence of a bottom-up evaluation strategy is that
+it can efficiently handle ``large data'' sets, whose size exceeds the capacity of a machine's main memory~\ref{ullman}.
+
+Datalog consists of a set of declarative {\em rules} and
+and optional {\em query}. A Datalog rule has the form $p :- q_1, q_2, \ldots, q_n$, which consists 
+of a disjuntion of literals. Informally, a Datalog rules reads ''{\bf if} $q_1$ and $q_2$ and $\ldots$
+and $q_n$ is true {\bf then} $p$ is true``. Literals are either {\em predicates} over {\em fields} (variables
+and constants), or function symbols applied to fields. Recursion is expressed by rules that refer to
+each other in a cyclic fashion. 
+
+A Datalog {\em program} can then be viewed as a set of rules, an (optional) query, and a set of baseline facts.  
+The order that the rules are expressed in a program is semantically immaterial.
+The evaluation of a set of Datalog rules is performed in a bottom-up fashion, starting with a set of 
+baseline facts.
+
+
 
 \section{\OVERLOG: The P2 Query Language}
 \label{ch:p2:sec:overlog}
