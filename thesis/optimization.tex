@@ -79,7 +79,7 @@ Section~\ref{ch:evita:sec:summary}.
 The pioneering work on extensible query optimizer architectures was done in the
 EXODUS~\cite{exodus} and Starburst~\cite{lohman,phh92} systems, which provided
 custom rule languages for specifying plan transformations.  The EXODUS
-optimizer generator used a forward-chaining rule language to iteratively
+optimizer generator used a forward-chaining production rule language to iteratively
 transform existing query plans into new ones.  Follow-on work
 (Volcano~\cite{volcano} and Cascades~\cite{cascades}) exposed more interfaces
 to make the search in this space of transformations more efficient.  Starburst
@@ -964,68 +964,241 @@ estimations for a given selection predicate.
 \subsection{Top-down Optimization}
 \label{ch:evita:sec:cascades}
 
-The bottom-up, dynamic programming search strategy is a natural fit to a Datalog-based rule 
-language. However, a top-down Cascades-style optimization strategy~\cite{cascades} is just
-as natural and intuitive in Evita Raced. We briefly describe how we implemented the Cascades 
-branch-and-bound algorithm in \OVERLOG using only $33$ rules ($204$ lines).
+The bottom-up, dynamic programming search strategy described in
+Section~\ref{ch:evita:sec:systemr} is a natural fit to a Datalog-based rule
+language.  You might think a top-down Cascades-style optimization
+strategy~\cite{cascades} would be hard to implement since \OVERLOG, like
+Datalog, is evaluated in a bottom-up fashion.  Although the Volcano/Cascades
+search strategy is top-down, it still uses a dynamic programming technique
+called memoization, which is just as natural and intuitive in \OVERLOG/Datalog,
+and hence easily implemented in Evita Raced.  In this section, we describe our
+implementation of the Cascades branch-and-bound algorithm in \OVERLOG,
+consisting of a mere $33$ rules ($204$ lines).
 
-In the Cascades optimizer, plans are classified into {\em groups}. A group is an equivalence class
-of plans that produce the same result. The optimizer generates groups in a top-down order and
-within each group it searches for the cheapest plan, the {\em winner}. An upper bound is assigned
-to each group. A plan (and all its subplans) is pruned if its cost exceeds the group upper bound.
-The upper bound for a given group is initialized to the parent group upper bound (the root group 
-upper bound is initialized to a cost of inifinity) and continuously updated as new winner plans
-are discovered. The optimization terminates when a root plan group has fully explored or pruned
-all possible plans. The winner plan in the root group is then chosen to be the best-cost plan.
+Our description of the Cascades optimizer follows the notation of Shapiro, et.
+al~\ref{Shapiro-opt}.  In Cascades, plans are classified into {\em groups},
+which is an equivalence class of expressions (predicates) that produce the same
+result.  During the optimization, each group (e.g., [ABC]) represents a
+container that references all physical plans (e.g., \{[AB] sort-merge-join [C]\},
+\{[B] nested-loop-join [AC]\}, \ldots) that make up the group.  In order to keep
+the search space small, a group only references top-level plans through {\emph
+multiexpressions}, which is an expression whose operator takes other groups
+e.g., multiexpression \{[AB] sort-merge-join [C]\} takes groups [AB] and [C] as
+input.  Associated with each group is a {\emph winner's circle}, which
+identifies the optimal plan within a given group, and will be the plan chosen
+to represent a given group referenced by a multiexpression.  In the discussion
+that follows, a when we indicate a {\emph plan} we mean a given multiexpression within a group.
 
+We now describe the declarative rules for performing our version of the Cascades top-down optimizer. 
+We focus on the rules that form the heart of the search strategy, winner plan selection, and plan generation.
+The remaining rules that make up this optimization stage deal with the P2's lack of support for stratified Datalog.
+Our Cascades rules are not stratified but rather modularly stratified program~\cite{rossmodular}, and we
+require each module to be fully evaluated bottom-up. The rules are divided into three modules, the 
+search strategy (Figure~\ref{ch:evita:fig:cascades_top_down}), plan generation 
+(Figure~\ref{ch:evita:fig:cascades_plan}), and group winner selection (Figure~\ref{ch:evita:fig:cascades_winner})
+
+\subsubsection{Search strategy}
 
 \begin{figure*}
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-bp1 {\bf branch}(@A, Pid, Rid, f\_groupID(SubPreds), 0, SubPreds, Bound) :- \\
-\datalogspace {\bf winner}(@A, Pid, Rid, GroupID, Cost), \\
-\datalogspace {\bf branch}(@A, Pid, Rid, GroupID, Pos, Preds, Bound), \\
-\datalogspace $Pos < f\_size(Preds)$, \\
-\datalogspace Bound := Cost, \\
-\datalogspace SubPreds := f\_removePredicate(Pos, Preds). \\
+cst1 {\bf group}(Group, Schema) :- \\
+\datalogspace {\bf branch}(Group, \_, Cursor, Bound), \\
+\datalogspace $Cursor != null$,
+\datalogspace Group := Cursor.current(), \\
+\datalogspace Schema := Group.schema(). \\
+\\
+cst2 {\bf branch}(Group, 0, Cursor, Bound) :- \\
+\datalogspace {\bf group}(Group, Schema), \\
+\datalogspace Cursor := Group.cursor(), \\
+\datalogspace Bound  := $infinity$. \\
+\\
+cst3 {\bf branch}(Group, BranchId+1, Cursor, Bound) :- \\
+\datalogspace {\bf bestBranchCost}(Group, BranchId, Cost), \\
+\datalogspace {\bf branch}(Group, BranchId, Cursor, OldBound), \\
+\datalogspace $Cursor != null$, \\
+\datalogspace Cursor := Cursor.next(), \\
+\datalogspace Bound := $Cost < OldBound$ ? Cost : OldBound. \\
+  
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:bb} Evita Raced branch-and-bound generation in top-down optimization.}
+\caption{\label{ch:evita:fig:cascades_top_down} Cascades top down search strategy rules.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:bb} gives the single recursive rule that drives the optimization by generating groups of plans in a top-down
-order. A \ol{branch} tuple contains the information that identifies a given group. Specifically, it identifies
-the group (\ol{GroupID}), a branch position (\ol{Pos}), the predicates (\ol{Preds}) in the plan, and a
-bound (\ol{Bound}). A separate \ol{cost} relation maintains the cost of plans computed from the
-physical properties assigned to it during the optimization. A plan of size $k$ is formed out of the current
-best-cost plan of size $k - 1$ and the best-cost singe predicate plan. The base case of this
-recursion costs single-table plans. A new plan will only be generated if its cost is less than the bound
-values in the branch tuple containing the group to which the new plan belongs. 
+The optimization begins when the root group (e.g., [ABC]) is inserted into the
+group table.  A group tuples contains an object, as its first attribute, that
+provides a cursor to the underlining predicates in the group.  The cursor will
+generating all subgroups of the given group (e.g., cursor for group [ABC] will
+generate subgroups [AB], [BC], [AC]).  Rule~\ol{cs2} in
+Figure~\ref{ch:evita:fig:cascades_top_down} creates a {\bf branch} tuple from
+the initial {\bf group} tuple, using the {\emph cursor} method to create an
+initial cursor at position $0$.  A branch contains an upper bound (initialized
+to infinity) on the cost of a plan in the given group.  An insertion into the
+{\bf branch} table triggers rule~\ol{cst1}, which inserts the ``current''
+subgroup referenced by the cursor object, should one exists (i.e., no cursor
+exists for groups containing a single predicate).  When all plans for the current 
+subgroup have been explored, and a winner selected, rule~\ol{cst3} advances the
+cursor to the next subgroup.  This process completes when the group cursor contains
+no more subgroups, at which point a winner can be chosen for the group.
 
-Suppose the initial query is $A \Join B \Join C$. The optimizer first initalizes the \ol{winner} relation
-with a tuple for each group (i.e., $ABC$, $AB$, $AC$, $BC$, $A$, $B$, $C$) each having a cost
-of \ol{infinity}. A single rule seeds the recursive rule \ol{c1} in Figure~\ref{ch:evita:fig:bb} by initializing
-the \ol{branch} relation with a tuple that defines the root group (i.e., $ABC$) and starts the optimization
-at position $0$ with predicates ($A$, $B$, $C$) and a bound of \ol{infinity}. The recursion proceeds in a
-top-down fashion. In the first step a new \ol{branch} tuple is generated that removes the predicate in position $0$
-generating the group $BC$. Another rule will generate a branch group $A$ at the same time. The recursion returns
-when a winner for group $ABC$ has been discovered, which occurs when groups $A$ and $BC$ have been fully
-explored and the \ol{next} branch position (e.g., $1$) is set for group $ABC$. A group has been fully explored when its 
-branch position reaches the end. As new winners are discovered the \ol{Bound} variable is updated with the
-winning cost before proceeding to the next predicate. 
+
+\subsubsection{Plan Generation}
+
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+p1 {\bf plan}(PlanId, Group, BranchId, "tablescan", null, null, Card, Cost) :- \\
+\datalogspace {\bf branch}(Group, BranchId, Cursor, Bound), \\
+\datalogspace {\bf table}(Name, $\ldots$, Size), \\
+\datalogspace $Group.size() == 1$, \\
+\datalogspace $Group.tablePredicate() == Name$, \\
+\datalogspace PlanId := "tablescan" + Group.id(), \\
+\datalogspace Card := Size, \\
+\datalogspace Cost := Size. \\
+\\
+p2 {\bf plan}(PlanId, Group, ``nested-loop'', OuterGroup, InnerGroup, Card, Cost) :- \\
+\datalogspace {\bf branch}(Group, BranchId, Cursor, Bound), \\
+\datalogspace {\bf winner}(OuterGroup, OuterPlanId, OuterCard, OuterCost), \\
+\datalogspace {\bf winner}(InnerGroup, InnerPlanId, InnerCard, InnerCost), \\
+\datalogspace {\bf group}(OuterGroup, OuterSchema), \\
+\datalogspace {\bf group}(InnerGroup, InnerSchema), \\
+\datalogspace $OuterGroup.insersect(InnerGroup) ==  null$, \\
+\datalogspace $OuterSchema.joinsWith(InnerSchema) ==  true$, \\
+\datalogspace $InnerGroup.size() == 1$, \\
+\datalogspace Cost := $OuterSchema.joinsWith(InnerSchema)$ ? \\
+\datalogspace \datalogspace OuterCost + (OuterCard * InnerCost) : infinity, \\
+\datalogspace $Cost < Bound$, \\
+\datalogspace Card := $OuterSchema.joinsWith(InnerSchema)$ ? \\
+\datalogspace \datalogspace (OuterCard * InnerCard) / 3 : (OuterCard * InnerCard), \\
+\datalogspace PlanId := ``nested-loop'' + Group.id(). \\
+\\
+p3 {\bf plan}(PlanId, Group, "index-loop", OuterGroup, InnerGroup, Card, Cost) :- \\
+\datalogspace {\bf branch}(Group, BranchId, Cursor, Bound), \\
+\datalogspace {\bf winner}(OuterGroup, OuterPlanId, OuterCard, OuterCost), \\
+\datalogspace {\bf winner}(InnerGroup, InnerPlanId, InnerCard, InnerCost), \\
+\datalogspace {\bf group}(OuterGroup, OuterSchema), \\
+\datalogspace {\bf group}(InnerGroup, InnerSchema), \\
+\datalogspace $OuterGroup.insersect(InnerGroup) ==  null$, \\
+\datalogspace $OuterSchema.joinsWith(InnerSchema) ==  true$, \\
+\datalogspace $InnerGroup.size() == 1$, \\
+\datalogspace {\bf index}(IndexId, Tablename, IndexColumn), \\
+\datalogspace $InnerGroup.tablePredicate() == Tablename$, \\
+\datalogspace $OuterSchema.join(InnerSchema).contains(IndexColumn) ==  true$, \\
+\datalogspace Cost := OuterCost + OuterCard, \\
+\datalogspace $Cost < Bound$, \\
+\datalogspace Card := (OuterCard * InnerCard) / 3, \\ 
+\datalogspace PlanId := "index-loop" + Group.id(). \\
+  
+\end{boxedminipage}
+\caption{\label{ch:evita:fig:cascades_plan} Cascades plan generation rules.}
+\end{figure*}
+
+Figure~\ref{ch:evita:fig:cascades_plan} gives three rules for generating plans in the
+Cascades optimizer. The rules are very similar to the plan generation rules in the
+System R optimizer (Section{ch:evita:sec:systemr) but are based on {\emph winner} plans
+from relevant subgroups. The schema of a plan has also changed to reference groups instead
+of actual plans, as indicated by the $OuterGroup$ and $InnerGroup$ variables in rules~\ol{p2}
+and \ol{p3}. 
+
+The plan generation rules are evaluated in a bottom-up fashion by deducing new
+plans for a given group.  The {\bf branch} tuple for a given group triggers
+each rule.  If the group contains a single table predicate ($Group.size == 1$
+in rule~\ref{p1}) then a table scan access method is deduced with a cost based
+on the number of tuples in the table.  This access method will be selected as
+the winner for the single predicate group. Since P2 only has a table scan
+access method we do not consider other access methods (e.g., index). Additional access methods would 
+include appropriate rules in the form of Rule~\ol{p1}.
+
+Rules~\ol{p2} and \ol{p3} consider joins of two subgroups (an $OuterPlan$ and
+$InnerPlan$) for nested-loop and index-loop join methods.  The rules reference
+the optimal plan, contained in the \ol{winner} table, for each subgroup in
+order to derive an overall cost for the plan with the given join method.  Each
+rule also ensures that the inner plan contains a single table predicate
+(left-deep plans only) and that the subgroups do not overlap in the predicates
+the consider ($OuterGroup.insersect(InnerGroup) == null$). We avoid
+cross product plans be giving such plans a high cost ($infinity$), which forces
+such plans to be considered last. Since rule~\ol{p3} considers an index-loop join
+method, it must check for the existence of an index on the inner predicate that matches
+the join attribute. 
+
+\subsubsection{Winner Selection}
+
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+wc1 {\bf winner}(Group, PlanId, Schema, Cost) :- \\
+\datalogspace {\bf bestCost}(Group, Cost), \\
+\datalogspace {\bf branch}(Group, \_, Cursor, \_), \\
+\datalogspace $Cursor ==  null$,
+\datalogspace {\bf group}(Group, Schema), \\
+\datalogspace {\bf plan}(PlanId, Group, \_, \_, \_, \_, \_, Cost). \\
+\\
+wc2 {\bf bestCost}(Group, {\bf min}$<Cost>$) :- \\
+\datalogspace {\bf bestBranchCost}(Group, BranchId, Cost). \\
+\\
+wc3 {\bf bestBranchCost}(Group, BranchId, {\bf min}$<Cost>$) :- \\
+\datalogspace {\bf plan}(PlanId, Group, BranchId, Method, \_, \_, \_, Cost). \\
+  
+\end{boxedminipage}
+\caption{\label{ch:evita:fig:cascades_winner} Cascades winner selection rules.}
+\end{figure*}
+
+The rules in Figure~\ref{ch:evita:fig:cascades_winner} select a {\emph winner} plan
+from the plans deduced for a given group. We begin with rule~\ol{wc3}, which
+determines the optimal plan in a given group. The cost of this optimal plan is
+used to update the upper bound for the next branch taken by the search strategy.
+Rule~\ol{wc2} further aggregates the result of rule~\ol{wc3} to determine the
+best overall plan for a given group, which is used to select a winner for the
+group in rule~\ol{wc1}. We must ensure however that a winner is only selected when
+the group has been fully explored, which occurs after the cursor ($Cursor$) in
+the \ol{branch} table for the group takes on a $null$ value. 
+
+
+\subsubsection{Summary}
+
+With the details of the rules behind us, we summarize the above discussion
+here.  The optimizer generates groups in a top-down order and within each group
+it performs a bottom-up search for the cheapest plan, called the {\em winner}.
+An upper bound is assigned to each group, contained in the \ol{branch} table,
+and initialized to $inifinty$, which is updated as new (cheaper) plans for the
+given group are discovered.  A plan (and all its subplans) is pruned if its
+cost exceeds the group upper bound.  The optimization terminates when a root
+group (containing all expressions in the query) has been fully explored and a
+winner has been chosen.
+
+%Suppose the initial query is $A \Join B \Join C$.  The optimizer first
+%initalizes the \ol{winner} relation with the root group [ABC]. 
+%A single
+%rule seeds the recursive rule \ol{c1} in Figure~\ref{ch:evita:fig:bb} by
+%initializing the \ol{branch} relation with a tuple that defines the root group
+%(i.e., $ABC$) and starts the optimization at position $0$ with predicates ($A$,
+%$B$, $C$) and a bound of \ol{infinity}.  The recursion proceeds in a top-down
+%fashion.  In the first step a new \ol{branch} tuple is generated that removes
+%the predicate in position $0$ generating the group $BC$.  Another rule will
+%generate a branch group $A$ at the same time.  The recursion returns when a
+%winner for group $ABC$ has been discovered, which occurs when groups $A$ and
+%$BC$ have been fully explored and the \ol{next} branch position (e.g., $1$) is
+%set for group $ABC$.  A group has been fully explored when its branch position
+%reaches the end.  As new winners are discovered the \ol{Bound} variable is
+%updated with the winning cost before proceeding to the next predicate.
 
 \subsection{Magic-Sets Rewrite}
 \label{ch:evita:sec:magic}
 
-Datalog-oriented systems like P2 perform a bottom-up (\emph{forward chaining}) evaluation 
-on each rule, starting with known facts (tuples), and recursively resolving body predicates to the 
-head predicate. The advantage of this strategy is that the evaluation is data driven (from known facts 
-to possible deductions) and will not enter infinite loops for some statically verifiable \emph{safe} programs. 
-In contrast, top-down (\emph{backward chaining}) evaluation (e.g., in the Prolog language), 
-starts with the query predicates as the top-level goals, and recursively identifies rules whose head predicates 
-unify with needed goals, replacing them with the subgoal predicates in the rule body, until all subgoals are 
-satisfied by known facts or rejected when no further recursion is possible. The advantage of a top-down evaluation 
-strategy is that it avoids resolving goals that are not needed by the posed queries.
+Datalog-oriented systems like P2 perform a bottom-up (\emph{forward chaining})
+evaluation on each rule, starting with known facts (tuples), and recursively
+deriving new facts through rule deductions.  The advantage of this strategy is
+that the evaluation is data driven (from known facts to possible deductions)
+and will not enter infinite loops for some statically verifiable \emph{safe}
+programs.  In contrast, top-down (\emph{backward chaining}) evaluation (e.g.,
+in the Prolog language), starts with the query predicates as the top-level
+goals, and recursively identifies rules whose head predicates unify with needed
+goals, replacing them with the subgoal predicates in the rule body, until all
+subgoals are satisfied by known facts or rejected when no further recursion is
+possible.  The advantage of a top-down evaluation strategy is that it avoids
+resolving goals that are not needed by the posed queries.
 
 \begin{figure*}[!t]
 \ssp
@@ -1048,41 +1221,43 @@ Query: path(@LOCALHOST, "localhost:10000", P, C).
 \caption{\label{ch:evita:fig:querySP}Relevant rules copied from Figure~\ref{ch:p2:fig:overlogSP}.}
 \end{figure*}
 
-Consider again a snippet of the shortest path program in Figure~\ref{ch:evita:fig:querySP}. 
-The query asks for the shortest path from all nodes to node ``localhost:10000''. A bottom-up evaluation
-applies the \ol{link} tuples to rule \ol{r1}, creating the initial {\tt path} tuples. Rule \ol{r2} derives all \ol{path} tuples,
-while any \ol{path} tuples matching ``localhost:10000'' on their second attribute are returned by the programmer's 
-query.  
+Consider again a snippet of the shortest path program in
+Figure~\ref{ch:evita:fig:querySP}.  The query asks for the shortest path from
+all nodes to node ``localhost:10000''.  A straightforward bottom-up evaluation
+applies the \ol{link} tuples to rule \ol{r1}, creating the initial {\tt path}
+tuples.  Rule \ol{r2} derives all \ol{path} tuples, while any \ol{path} tuples
+matching ``localhost:10000'' on their second attribute are returned by the
+programmer's query.
 
-The bottom-up evaluation generates some \ol{path} tuples that do not have ``localhost:10000'' in 
-the second attribute and therefore cannot satisfy the programmer's query.  In contrast, a top-down
-evaluation begins by unifying the query predicate with the head predicate of rules \ol{r1} and
-\ol{r2}. Therefore, the \ol{path} predicate unification binds the $@X$ attribute to the current node
-identifier and the $Y$ attribute to ``localhost:10000'' in both rules, which is carried over to the predicates 
-in the rule body. The binding of $@X$ and $Y$ attributes in rules \ol{r1} and \ol{r2} means that these
-rules will only look for tuples of the form \ol{path}$(LOCALHOST,"localhost:10000",P,C)$ as well as 
-tuples that can help form such \ol{path} tuples, but nothing else.
+The bottom-up evaluation generates some \ol{path} tuples that do not have
+``localhost:10000'' in the second attribute and therefore cannot satisfy the
+programmer's query.  In contrast, a top-down evaluation begins by unifying the
+query predicate with the head predicate of rules \ol{r1} and \ol{r2}.
+Therefore, the \ol{path} predicate unification binds the $@X$ attribute to the
+current node identifier and the $Y$ attribute to ``localhost:10000'' in both
+rules, which is carried over to the predicates in the rule body.  The binding
+of $@X$ and $Y$ attributes in rules \ol{r1} and \ol{r2} means that these rules
+will only look for tuples of the form
+\ol{path}$(LOCALHOST,"localhost:10000",P,C)$ as well as tuples that can help
+form such \ol{path} tuples, but nothing else.
 
-The magic-sets rewrite is an optimization that can reduce the amount of computation in 
-recursive Datalog queries by deriving only those tuples that are relevant to query predicates 
-posed by a program. It does this by adding extra selection predicates to the rules of a program 
-to emulate the goal-oriented execution of top-down evaluation (this is sometimes called 
-\emph{sideways information passing} or SIP). Conceptually, given a rule of the form
-\[
-H_p \ \text{\ol{:-}}\  G_1, G_2, ..., G_k
-\]
-where $H_p$ is the head predicate $p$ and $G_{1,...,k}$ are the goal
-predicates in the order of appearance in the rule, a magic-sets
-algorithm intersperses selection predicates $s_{1,...,k}$ to generate rule
-\[
-H_p \ \text{\ol{:-}}\  s_1, G_1, s_2, G_2, ..., s_{k}, G_k
-\]
+The magic-sets rewrite is an optimization that can reduce the amount of
+computation in recursive Datalog queries by deriving only those tuples that are
+relevant to query predicates posed by a program.  It does this by adding extra
+selection predicates to the rules of a program to emulate the goal-oriented
+execution of top-down evaluation (this is sometimes called \emph{sideways
+information passing} or SIP).  Conceptually, given a rule of the form 
+\[ H_p \text{\ol{:-}}\ G_1, G_2, ..., G_k \] where $H_p$ is the head predicate $p$ and
+$G_{1,...,k}$ are the goal predicates in the order of appearance in the rule, a
+magic-sets algorithm intersperses selection predicates $s_{1,...,k}$ to
+generate rule \[ H_p \ \text{\ol{:-}}\ s_1, G_1, s_2, G_2, ..., s_{k}, G_k \]
 Facts for these selection predicates are generated according to bindings of
 attributes, in the user's query or other rule predicates in the program, to
-constant values. In Evita Raced we created a magic-sets rewrite stage written in
-Overlog. The Overlog rules are based on the description of the magic-sets algorithm
-given in Ullman's course notes~\cite{ullmanNotes}, which operates in three phases: program analysis,
-program rewrite, and filter population. A very brief overview by example follows.
+constant values.  In Evita Raced we created a magic-sets rewrite stage written
+in Overlog.  The Overlog rules are based on the description of the magic-sets
+algorithm given in Ullman's course notes~\cite{ullmanNotes}, which operates in
+three phases: program analysis, program rewrite, and filter population.  A very
+brief overview by example follows.
 
 \subsubsection{Magic-sets by example}
 
@@ -1094,42 +1269,42 @@ program rewrite, and filter population. A very brief overview by example follows
 \end{center}
 \end{figure*}
 
-In the program analysis phase, the algorithm traverses every rule,
-starting with those whose rule heads that match the query predicate, to build
+In the program analysis phase, the algorithm considers every rule,
+starting with the rule heads that match the query predicate, to build
 a recursive tree structure called the {\em Rule/Goal} graph. This graph consists 
 of \emph{rule} and \emph{goal} vertices.  A goal vertex consists of a predicate 
 with an adornment indicating which of the attributes in the predicate are bound 
-to a constant value and which are not (free).  A rule vertex represents the bound/free 
+to a constant value and which are not bound (free).  A rule vertex represents the bound/free 
 state of all seen variables within a rule body, up to a particular position in its left-to-right 
 execution. A rule with $k$ body predicates will result in exactly $k$ rule vertices 
 corresponding to its positions $[0,...,k-1]$.
 
-Figure~\ref{ch:evita:fig:rggraph} illustrates the full {\em Rule/Goal} graph for our 
-shortest path example.  To build this graph, the algorithm starts with a goal 
-predicate (at first, this is the query predicate---\ol{path} in our example), and creates 
-a goal vertex in the graph with the appropriate adornment ($\mathit{bbff}$ for
-\ol{path} since the query binds its first two variables to constant values). For every
-rule with that goal predicate as its head, the algorithm traverses the
-rule body from left to right, creating a child rule vertex for every
-$0$-th position variable binding.  For rule \ol{r2} in the example, the
-rule vertex for position $0$ ($r_{2,0}$) has variable state $[X,Y|P,C]$,
-which denotes that variables \ol{X,Y} are bound (to the same values as
-those ``pushed down'' from the goal vertex) and \ol{P,C} are free.
-Given a rule vertex for position $i$, two children are created: a goal
-vertex for the next predicate after position $i$ and a rule vertex for
-the next position in the rule (unless the body's end has been reached).
-In the running example, the child goal vertex corresponds to the {\tt link} 
-predicate that appears at position $0$, with adornment $\mathit{bff}$ 
-since \ol{X} is already bound at this point in the evaluation, but \ol{Z, C1} are not.  
-Similarly, the child rule vertex at position $1$ contains the variable signature 
-$[X,Y,Z,C1|P,C]$ since \ol{link} added some bound variables.  The process 
-continues until all rule and goal vertices have been constructed and connected; 
-only a single goal vertex can exist with the same predicate and
+Figure~\ref{ch:evita:fig:rggraph} illustrates the full {\em Rule/Goal} graph
+for our shortest path example.  To build this graph, the algorithm starts with
+a goal predicate (at first, this is the query predicate---\ol{path} in our
+example), and creates a goal vertex in the graph with the appropriate adornment
+($\mathit{bbff}$ for \ol{path} since the query binds its first two variables to
+constant values).  For every rule with that goal predicate as its head, the
+algorithm traverses the rule body from left to right, creating a child rule
+vertex for every $0$-th position variable binding.  For rule \ol{r2} in the
+example, the rule vertex for position $0$ ($r_{2,0}$) has variable state
+$[X,Y|P,C]$, which denotes that variables \ol{X,Y} are bound (to the same
+values as those ``pushed down'' from the goal vertex) and \ol{P,C} are free.
+Given a rule vertex for position $i$, two children are created: a goal vertex
+for the next predicate after position $i$ and a rule vertex for the next
+position in the rule (unless the body's end has been reached).  In the running
+example, the child goal vertex corresponds to the {\tt link} predicate that
+appears at position $0$, with adornment $\mathit{bff}$ since \ol{X} is already
+bound at this point in the evaluation, but \ol{Z} and \ol{C1} are not.
+Similarly, the child rule vertex at position $1$ contains the variable
+signature $[X,Y,Z,C1|P,C]$ since \ol{link} added some bound variables.  The
+process continues until all rule and goal vertices have been constructed and
+connected; only a single goal vertex can exist with the same predicate and
 adornment, as is the case for the \ol{path} vertex with adornment
-$\mathit{bbff}$.  It is easy to see how the rest of the rule/goal graph is 
-constructed. After all vertices have been generated given the chosen rules, 
-any predicates with a unique adornment in the graph are added to the goals 
-and the rules producing them are recursively traversed.
+$\mathit{bbff}$.  It is easy to see how the rest of the rule/goal graph is
+constructed.  After all vertices have been generated given the chosen rules,
+any predicates with a unique adornment in the graph are added to the goals, and
+the rules producing them are recursively traversed.
 
 
 In the program rewrite phase, Ullman's algorithm traverses the rule/goal
@@ -1196,16 +1371,16 @@ to Ullman's rule groups. For instance, rules named \ol{r*\_g3[a-c]} follow rule 
 and rule \ol{r2\_g1a} follows rule group 1.}  adds
 more magic facts as more \ol{sup\_r2\_1} tuples are produced.
 
-Our rewrite implementation of this algorithm first traverses every rule
-from head predicate to body predicates from left to right, constructing
-the rule/goal graph in the recursive manner of the program analysis, in
-a single fixpoint.  Then the new program rules (and replacement of old
-rules) for the program rewrite and filter population phases are
-performed via a traversal of the newly constructed rule/goal graph in a
-subsequent fixpoint. Finally, initial magic facts are created by direct
-translation from the query.  Other details that we elide here involve detecting 
-eligibility of a predicate for a magic-sets rewrite (whether or not it has a unique 
-adornment in the rule/goal graph), state cleanup, etc. 
+Our rewrite implementation of this algorithm first traverses every rule from
+head predicate to body predicates from left to right, constructing the
+rule/goal graph in the recursive manner of the program analysis, in a single
+fixpoint.  Then the new program rules (and replacement of old rules) for the
+program rewrite and filter population phases are performed via a traversal of
+the newly constructed rule/goal graph in a subsequent fixpoint.  Finally,
+initial magic facts are created by direct translation from the query.  Other
+details that we elide here involve detecting eligibility of a predicate for a
+magic-sets rewrite (whether or not it has a unique adornment in the rule/goal
+graph), and state cleanup.
 
 \begin{figure*}
 \ssp
@@ -1250,29 +1425,33 @@ mg6 {\bf adornment}(@A, Pid, Rid, Pos, PredName, Sig) :- \\
 \caption{\label{ch:evita:fig:magicRules}Rule/Goal graph traversal rules.}
 \end{figure*}
 
-To give a flavor of the \OVERLOG implementation of magic-sets,
+To give a flavor of the \OVERLOG implementation of Magic Sets,
 Figure~\ref{ch:evita:fig:magicRules} shows six rules that build the state
-necessary in the magic-sets rewrite by traversing the rule/goal graph. 
-The \ol{adornment} predicate contains the predicate name ($PredName$) and an
-adornment string ($Sig$), which is initially populated (by a single rule, not shown) with
-the query predicate adornments. Rule \ol{mg1} counts the number of
-adornments for each {\em IDB} predicate. If this count is unique ($Count == 1$) in rule \ol{mg2},
-then a \ol{magicPred} tuple is created. Rule \ol{mg3} triggers on a \ol{magicPred} tuple and, for each
-rule whose head predicate is named by the \ol{magicPred} tuple, it generates a \ol{sup} predicate
-with a $Schema$ attribute containing the bound variables that exist at the given rule position. 
-Rule \ol{mg4} detects a new \ol{sup} predicate (like the one generated for the rule head) and triggers 
-an event for the subsequent \ol{sup} predicate position in the given rule. The three way join in rule \ol{mg5} 
-produces a tuple that contains the schema of the previous \ol{sup} predicate ($PrevSupSchema$) 
-and the schema of the predicate ($Schema$) in the subsequent rule position, should one 
-exist~\footnote{Two rules (not shown) move the \ol{supNext} position forward if the given rule position does 
-not identify a predicate.}. The head \ol{sup} predicate schema in rule \ol{mg5} contains all the variables from the 
-previous \ol{sup} predicate and the schema of the current predicate, since this schema represents the bound variables
-that will exist in the subsequent rule position. Rule \ol{mg6} creates an \ol{adornment} out of the predicate 
-in the given rule position, if that predicate is part of the {\em IDB}. The {\em f\_adornment} 
-function creates a new signature from the bound variables in the $PrevSupSchema$ attribute, 
-and the variables in the predicate $Schema$ attribute. At the end of the rule/goal graph traversal, 
-those predicates that define a unique adornment become magic predicates, and the rules that mention 
-these magic predicates are rewritten using the information contained in the \ol{sup} table.
+necessary in the magic-sets rewrite by traversing the rule/goal graph.  The
+\ol{adornment} predicate contains the predicate name ($PredName$) and an
+adornment string ($Sig$), which is initially populated with the query predicate
+adornments.  Rule \ol{mg1} counts the number of adornments for each {\em IDB}
+predicate.  If this count is unique ($Count == 1$) in rule \ol{mg2}, then a
+\ol{magicPred} tuple is created.  Rule \ol{mg3} triggers on a \ol{magicPred}
+tuple and, for each rule whose head predicate is named by the \ol{magicPred}
+tuple, it generates a \ol{sup} predicate with a $Schema$ attribute containing
+the bound variables that exist at the given rule position.  Rule \ol{mg4}
+detects a new \ol{sup} predicate (like the one generated for the rule head) and
+triggers an event for the subsequent \ol{sup} predicate position in the given
+rule.  The three way join in rule \ol{mg5} produces a tuple that contains the
+schema of the previous \ol{sup} predicate ($PrevSupSchema$) and the schema of
+the predicate ($Schema$) in the subsequent rule position, should one exist.
+The head \ol{sup} predicate schema in rule \ol{mg5} contains all the variables
+from the previous \ol{sup} predicate and the schema of the current predicate,
+since this schema represents the bound variables that will exist in the
+subsequent rule position.  Rule \ol{mg6} creates an \ol{adornment} out of the
+predicate in the given rule position, if that predicate is part of the {\em
+IDB}.  The {\em f\_adornment} function creates a new signature from the bound
+variables in the $PrevSupSchema$ attribute, and the variables in the predicate
+$Schema$ attribute.  At the end of the rule/goal graph traversal, those
+predicates that define a unique adornment are converted into special magic
+predicates, and the rules that mention these magic predicates are rewritten
+using the information contained in the \ol{sup} table.
 
 \subsubsection{Magic-sets in the Network}
 
@@ -1325,126 +1504,144 @@ other dependent actions on those tuples).
 \label{ch:evita:fig:magicresults}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:magicresults}(a) shows the number of tuples that each node receives from
-the network. The magic-sets rewritten program causes no more tuples to
-be received than the original, and for most nodes significantly fewer
-when moving to nodes farther away from the clique. That is because many
-paths that are generated in the original program with destinations
-within the clique other than node $1$ are pruned early on and never
-transmitted all the way to the far end.    Similarly,
-Figure~\ref{ch:evita:fig:magicresults}(b) shows the number of tuples each node transmits.
-Again, the magic-rewritten program does a lot better.  The two programs
-have similar tuple transmit/receive overheads for nodes represents the number of tuples a node sends out
-over the network. The inclusion of the magic-sets rewrite reduces the number of sends
-in all but one case (node $10$). The node with identifier $10$ is the only node with 
-no incoming links and 
-is therefore never burdened with network traffic other than its
-own; as a result, though its received tuple overhead benefits from magic
-sets, it transmitted tuple overhead is unaffected, since it already
-sends out no extraneous paths other than its sole path towards node $1$.
-Finally, tuple storage is impacted beneficially by magic sets everywhere
-(Figure~\ref{ch:evita:fig:magicresults}(c)), since
-both \ol{path} tuples received from the network, but also those
-generated locally for local consumption are pruned away by the rewrite.
+Figure~\ref{ch:evita:fig:magicresults}(a) shows the number of tuples that each
+node receives from the network.  The magic-sets rewritten program causes no
+more tuples to be received than the original, and for most nodes significantly
+fewer when moving to nodes farther away from the clique.  That is because many
+paths that are generated in the original program with destinations within the
+clique other than node $1$ are pruned early on and never transmitted all the
+way to the far end.  Similarly, Figure~\ref{ch:evita:fig:magicresults}(b) shows
+the number of tuples each node transmits.  Again, the magic-rewritten program
+does a lot better.  The two programs have similar tuple transmit/receive
+overheads for nodes represents the number of tuples a node sends out over the
+network.  The inclusion of the magic-sets rewrite reduces the number of sends
+in all but one case (node $10$).  The node with identifier $10$ is the only
+node with no incoming links and is therefore never burdened with network
+traffic other than its own; as a result, though its received tuple overhead
+benefits from magic sets, it transmitted tuple overhead is unaffected, since it
+already sends out no extraneous paths other than its sole path towards node
+$1$.  Finally, tuple storage is impacted beneficially by magic sets everywhere
+(Figure~\ref{ch:evita:fig:magicresults}(c)), since both \ol{path} tuples
+received from the network, and those generated locally for local consumption
+are pruned away by the rewrite.
 
 
 
 \subsection{Localization}
 \label{ch:evita:sec:localization}
 
-Finally, we briefly describe the localization compiler stage, which turns
-a rule with  multiple
-location specifiers in its body to many rules, each of which has a
-single location specifier in its body; this essentially turns a
-distributed join into a set of local joins with partial result
-transmissions among the rules involved~\cite{loo-sigmod06}. This rewrite
-is part of the P2
+Finally, we briefly describe the localization compiler stage, which turns a
+rule with multiple location specifiers in its body to many rules, each of which
+has a single location specifier in its body; this essentially turns a
+distributed join into a set of local joins with partial result transmissions
+among the rules involved~\cite{loo-sigmod06}.  This rewrite was part of the original P2
 system, but implemented in C++ and woven into the monolithic compiler.
 
-In Evita Raced, localization stage traverses distributed rules in
-left-to-right order starting with first body predicates (rules with
-local-only body predicates are selected out early in the stage). 
-The location attribute of the current predicate in this traversal is noted at each iteration.
-A {\em breakpoint} is generated if the traversal reaches a predicate with location attribute 
-that differs from the previous. The breakpoint triggers a {\em split} rule at the given 
-position, which creates a new {\em glue} predicate $IR_p$, and two new rules defined as follows.
-\begin{CompactEnumerate}
-\item $IR_p$ :- (predicates to the left, excluding the breakpoint).
-\item (original rule head predicate) :- $IR_p$, (predicates to the right, including the breakpoint). 
-\end{CompactEnumerate}
-The location attribute in the $IR_p$ predicate is taken from the predicate at the breakpoint position.
-The other attributes in the $IR_p$ predicate are taken from the predicates to the left of (and not 
-including) the breakpoint, which represents the schema of the intermediate result prior to the
-breakpoint position predicate. The algorithm then removes the original rule, and moves recursively on
-the second rule, which is considered the original rule in the above discussion. 
-The recursion terminates at the rightmost predicate position. 
+In Evita Raced, the localization stage traverses distributed rules in
+left-to-right order starting with first body predicates (rules with local-only
+body predicates are selected out early in the stage).  The location attribute
+of the current predicate in this traversal is stored along with the cursor
+information of the traversal.  A {\em breakpoint} is generated if the traversal
+reaches a predicate with location attribute that differs from the previous.
+The breakpoint triggers a {\em split} rule at the given position, which creates
+a new {\em glue} predicate $IR_p$, and two new rules defined as follows.
+\begin{CompactEnumerate} 
+\item $IR_p$ :- (predicates to the left, excluding the breakpoint).  
+\item (original rule head predicate) :- $IR_p$, (predicates to the right, including
+  the breakpoint).  
+\end{CompactEnumerate} 
+The location attribute in the $IR_p$ predicate is taken from the predicate at
+the breakpoint position.  The other attributes in the $IR_p$ predicate are
+taken from the predicates to the left of (and not including) the breakpoint,
+which represents the schema of the intermediate result prior to the breakpoint
+position predicate.  The algorithm then removes the original rule, and moves
+recursively on the second rule, which is considered the original rule in the
+above discussion.  The recursion terminates at the rightmost predicate
+position.
 
-The localization stage is not an optimization per se, but rather a  program rewrite necessary to make distributed rules executable. 
-% Any program that contains distributed rules must go through this compilation stage. 
-The \OVERLOG program for localization consists of only 28 rules. The original P2
-code that performed this task in P2 consisted of approximately 400 lines of
-% carefully crafted 
-C++.  
-
+The localization stage is not an optimization per se, but rather a program
+rewrite necessary to make distributed rules executable.
+% Any program that contains distributed rules must go through this compilation
+% stage.
+The \OVERLOG program for localization consists of only 28 rules.  The original
+P2 code that performed this task in P2 consisted of approximately 400 lines of
+% carefully crafted
+C++.
 
 \section{Discussion}
 \label{ch:evita:sec:discussion}
 
-When we started this work, the vision of declaratively specified query optimization was appealing 
-thanks to its elegance and its promise of usability and maintainability.  Although we remain convinced 
-on this front, our optimism has been tempered by the pragmatics of developing software within a
-continuously changing system prototype. Here we reflect on some of the (hard) lessons we learned 
-while conducting this research.
+When we started this work, the vision of declaratively specified query
+optimization was appealing thanks to its elegance and its promise of usability
+and maintainability.  Although we remain convinced on this front, our optimism
+has been tempered by the pragmatics of developing software within a
+continuously changing system prototype.  Here we reflect on some of the (hard)
+lessons we learned while conducting this research.
 
-P2's notion of consecutive Datalog-style fixpoints, especially in networked environments, still has 
-many rough edges, both on the design and on the engineering front.  Because deep down P2's runtime 
-is an event-driven execution engine, its basic unit of atomicity is akin to a single iteration 
-through a recursive query evaluation strategy like semi-naive evaluation, generating a set of 
-derived actions (tuples to be inserted, deleted, transmitted remotely, or evaluated locally for 
-further deduction) from a single incoming event, and committing changes to the database atomically 
-upon completion of such a step~\cite{LuThesis}. P2's Datalog-style fixpoints are implemented as 
-sequences of such single-event iterations, in a manner that appears to have been an afterthought. 
-As a result, the system's design shares both event-driven and logic-style flavors, with some 
-remaining unresolved conflicts, and no explicit language constructs to bridge between the two.
+P2's notion of consecutive Datalog-style fixpoints, especially in networked
+environments, still has many rough edges, both on the design and on the
+engineering front.  Because deep down P2's runtime is an event-driven execution
+engine, its basic unit of atomicity is akin to a single iteration through a
+recursive query evaluation strategy like semi-naive evaluation, generating a
+set of derived actions (tuples to be inserted, deleted, transmitted remotely,
+or evaluated locally for further deduction) from a single incoming event, and
+committing changes to the database atomically upon completion of such a
+step~\cite{LuThesis}.  P2's Datalog-style fixpoints are implemented as
+sequences of such single-event iterations, in a manner that appears to have
+been an afterthought.  As a result, the system's design shares both
+event-driven and logic-style flavors, with some remaining unresolved conflicts,
+and no explicit language constructs to bridge between the two.
 
-One example is the notion of \ol{delete} rules, the semantics of which are unclear.  How is one to 
-handle delete rules triggered by the \emph{deletion} of a base tuple?  The system certainly does 
-not support -- semantically or operationally -- the ``undeleting'' of tuples that were
-originally deleted due to a base fact that is no longer in the database.  Similarly, the semantics 
-for multiple updates to the same tuple within the same fixpoint are undefined and a local tie
-breaking rule is chosen to decide on a consistent ordering among same-fixpoint updates to the 
-same relation. Compiler stages that do static analysis might catch such dangerous rules and alert the user.
+One example is the notion of \ol{delete} rules, the semantics of which are
+unclear.  How is one to handle delete rules triggered by the \emph{deletion} of
+a base tuple?  The system certainly does not support -- semantically or
+operationally -- the ``undeleting'' of tuples that were originally deleted due
+to a base fact that is no longer in the database.  Similarly, the semantics for
+multiple updates to the same tuple within the same fixpoint are undefined and a
+local tie breaking rule is chosen to decide on a consistent ordering among
+same-fixpoint updates to the same relation.  Compiler stages that do static
+analysis might catch such dangerous rules and alert the user.
 
-Second, as in most prototypes, the programmer interface is not polished. Debugging is difficult, especially 
-since the logic language makes it tough to understand which value corresponds to which formal
-attribute in a long tuple of a dozen or more attributes.  Though concise, declaratively specified 
-optimizations pack a punch in terms of density of concepts, which only becomes deadlier due to the (otherwise
-desirable) arbitrary order of rule execution.  Certainly a better thought-out system to debug declarative 
-programs -- optimizations, no less -- would have made the job easier.  To be fair, however, our
-experience with building monolithic optimizers in production database management systems in the past 
-was not a great deal rosier.  It is hard to debug code when the output's correctness (e.g., minimality of cost) 
-is too expensive to verify.
+Second, as in most prototypes, the programmer interface is not polished.
+Debugging is difficult, especially since the logic language makes it tough to
+understand which value corresponds to which formal attribute in a long tuple of
+a dozen or more attributes.  Though concise, declaratively specified
+optimizations pack a punch in terms of density of concepts, which only becomes
+deadlier due to the (otherwise desirable) arbitrary order of rule execution.
+Certainly a better thought-out system to debug declarative programs --
+optimizations, no less -- would have made the job easier.  To be fair, however,
+our experience with building monolithic optimizers in production database
+management systems in the past was not a great deal rosier.  It is hard to
+debug code when the output's correctness (e.g., minimality of cost) is too
+expensive to verify.
 
-Third, the evolution of the \OVERLOG language has a long way to go. The language still offers no modularity, 
-making it tough to isolate and reuse logically distinct components. It does has a rudimentary concrete
-type system, but has poor support for structured types like matrices and lists.  \OVERLOG still ``cuts corners'' 
-on the proper set-orientation of Datalog; since program stratification is only preliminary in
-the system prototype, dealing with streaming aggregates in the face of EDB updates required us to 
-resort to imperative tricks like timers and polling to determine that aggregates were ready to be finalized.
+Third, the evolution of the \OVERLOG language has a long way to go.  The
+language still offers no modularity, making it tough to isolate and reuse
+logically distinct components.  It does has a rudimentary concrete type system,
+but has poor support for structured types like matrices and lists.  \OVERLOG
+still ``cuts corners'' on the proper set-orientation of Datalog; since program
+stratification is only preliminary in the system prototype, dealing with
+streaming aggregates in the face of EDB updates required us to resort to
+imperative tricks like timers and polling to determine that aggregates were
+ready to be finalized.
 
-Beyond particular characteristics of P2, one hard lesson we learned was that extensibility and ease of use at 
-the top often comes at the expense of complexity below the extensibility layer.  The tabularization of
-compiler state to enable declarative optimizations also meant that even imperative compiler stages such as our
-bootstrap stages implemented in C++ had to use tables, foregoing their familiar interaction with C++ data 
-structures.  Building glue libraries that ease this interaction may relieve this pain.
+Beyond particular characteristics of P2, one hard lesson we learned was that
+extensibility and ease of use at the top often comes at the expense of
+complexity below the extensibility layer.  The tabularization of compiler state
+to enable declarative optimizations also meant that even imperative compiler
+stages such as our bootstrap stages implemented in C++ had to use tables,
+foregoing their familiar interaction with C++ data structures.  Building glue
+libraries that ease this interaction may relieve this pain.
 
-Nevertheless, despite these complaints, we were able to get all of our desired optimizations expressed 
-in \OVERLOG in a highly compact way, as promised by the various earlier papers on P2.  By contrast, the 
-initial version of P2 had no query optimizations of interest beyond localization.  As \OVERLOG and P2 mature, 
-the use of a metacompilation approach should get even easier.  And based on our initial experience 
-extending \OVERLOG with security properties in a manner similar to~\cite{abadi-netdb07}, we believe that 
-our Evita Raced infrastructure could accelerate the ability of the P2 group to pursue modifications to 
-\OVERLOG itself.
+Nevertheless, despite these complaints, we were able to get all of our desired
+optimizations expressed in \OVERLOG in a highly compact way, as promised by the
+various earlier papers on P2.  By contrast, the initial version of P2 had no
+query optimizations of interest beyond localization.  As \OVERLOG and P2
+mature, the use of a metacompilation approach should get even easier.  And
+based on our initial experience extending \OVERLOG with security properties in
+a manner similar to~\cite{abadi-netdb07}, we believe that our Evita Raced
+infrastructure could accelerate the ability of the P2 group to pursue
+modifications to \OVERLOG itself.
 
 \section{Summary}
 \label{ch:evita:sec:summary}
