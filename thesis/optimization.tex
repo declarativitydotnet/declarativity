@@ -22,10 +22,14 @@ extended P2 with a number of important query optimization techniques it
 formerly lacked, and found that our declarative infrastructure made this quite
 elegant and compact.  As we will see in Section~\ref{ch:evita:sec:systemr}, our
 implementation of the traditional System R dynamic programming algorithm
-comprises only $38$ \OVERLOG rules ($225$ lines of code); our implementation of the
-Magic-sets rewriting optimization for recursive queries is not only compact ($68$
-rules, $264$ lines), but also nearly a direct translation of the description from
-Ullman's course notes on the subject~\cite{ullmanNotes}.
+comprises only $38$ \OVERLOG rules ($225$ lines of code).  Converting our
+System R bottom-up search strategy to a Cascade's style top-down exploration of
+the plan space involved minimal effort (less than $24$ hours of programming
+time), as we will see in Section~\ref{ch:evita:sec:cascades}.  And our
+implementation of the Magic-sets rewriting optimization for recursive queries
+in Section~\ref{ch:evita:sec:magic} is not only compact ($68$ rules, $264$
+lines), but also nearly a direct translation of the description from Ullman's
+course notes on the subject~\cite{ullmanNotes}.
 
 The elegance of our approach was derived in part from the fact that many query
 optimization techniques -- like many search algorithms -- are at heart
@@ -36,7 +40,7 @@ declarative fashion that abstracts away mechanistic details such as the
 scheduling of data-parallel steps (e.g., scanning all rules in a program in
 parallel versus sequentially).
 
-Our contributions here are three-fold.  First, we presented a declarative
+Our contributions in this chapter are three-fold.  First, we presented a declarative
 architecture for query optimization that is based on metacompilation, reusing
 the query executor in a stylized fashion to serve as the engine beneath the
 optimization process.  This resulted in an {\em economy of
@@ -68,8 +72,8 @@ stages (packaged with Evita Raced): the System R dynamic program
 (Section~\ref{ch:evita:sec:systemr}), the Magic-sets rewrite
 (Section~\ref{ch:evita:sec:magic}), and the localization rewrite
 (Section~\ref{ch:evita:sec:localization}) for handling distributed joins in
-\OVERLOG~\cite{loo-sigmod06}.  We then conclude with a discussion of lessons
-learned in Section~\ref{ch:evita:sec:discussion} and a brief summary in
+\OVERLOG~\cite{loo-sigmod06}.  We conclude with a discussion of lessons learned
+in Section~\ref{ch:evita:sec:discussion} and a brief summary in
 Section~\ref{ch:evita:sec:summary}.
 
 
@@ -92,7 +96,7 @@ approach to specifying legal plans and subplans.
 While all of this work was rule-based and extensible, most of it only exposed
 individual plan transformations to extensibility; the actual search algorithms
 or transformation orderings of EXODUS, Volcano, Cascades, and the Starburst
-cost-based optimizer were fixed in procedural code.  By contrast, Evita Raced
+cost-based optimizer were confined to procedural code.  By contrast, Evita Raced
 does not embed a search algorithm, instead leaving that open to specification
 as needed.  As we show in Section~\ref{ch:evita:sec:systemr}, both the dynamic programming
 bottom-up strategy and the Cascades top-down strategy naturally fit to a
@@ -146,7 +150,7 @@ fragments needed to bootstrap the optimizer.
 \begin{figure*}
 \ssp
 \begin{center}
-\includegraphics[scale=1.3]{figures/ERDiagram}
+\includegraphics[scale=1.4]{figures/ERDiagram}
 \caption{ER Diagram of a query plan in P2. The primary key columns shown in bold.}
 \label{ch:evita:fig:p2er}
 \end{center}
@@ -170,16 +174,16 @@ Boolean expression over attributes in the predicates of the rule, and must
 appear in exactly one {\em rule}.  The diagram indicates that a {\em predicate}
 must also appear in a unique {\em rule}, and that it may possibly reference a
 single {\em table}.  A predicate that references a table is called a {\em table
-predicate} (or a \emph{materialized predicate}), while one that does not is
-called an {\em event predicate}.  An {\em index} is defined over exactly one
-{\em table}, and a {\em table} defines at least one index (namely the primary
-key index, which P2 always constructs).  Some relations may contain {\em facts}
-(input tuples) at startup, each of which must belong to a single program and
-must reference a single table.
+predicate} (or a \emph{materialized predicate}), while one that does not
+reference a table is called an {\em event predicate}.  An {\em index} is
+defined over exactly one {\em table}, and a {\em table} defines at least one
+index (namely the primary key index, which P2 always constructs).  Some
+relations may contain {\em facts} (input tuples) at startup, each of which must
+belong to a single program and must reference a single table.
 
 \begin{figure*}
 \ssp
-\begin{tabular}{|l|l|p{10cm}|} \hline
+\begin{tabular}{|l|l|p{8cm}|} \hline
 {\it Name}& {\it Description} & {\it Relevant attributes} \\ \hline\hline
 table     & Table definitions & {\bf table\_id}, primary\_key\\ \hline
 index     & Index definitions & {\bf index\_id}, {\bf table\_id}, keys, type \\ \hline
@@ -191,7 +195,7 @@ select    & Selection predicates  & {\bf id}, {\bf rule\_id}, boolean, position 
 assign    & Variable substitution statements & {\bf id}, {\bf rule\_id}, variable, value, position \\ \hline 
 \end{tabular}
 \caption{The Metacompiler Catalog: tables defining an \OVERLOG program and dataflow execution plan.
-         The primary key columns shown in bold. }
+         The primary key columns are shown in bold. }
 \label{tbl:catalog}
 \end{figure*}
 
@@ -200,7 +204,7 @@ exercise~\cite{DBTextbook}.  Table~\ref{tbl:catalog} lists the set of relations
 that capture the entities mentioned in the ER diagram; we refer to this as the
 {\em Metacompiler Catalog}.  We modified P2 to create these tables at system
 startup, and they are accessible to any \OVERLOG programs (e.g., optimizations)
-subsequently added to the system.
+added to the system.
 % In addition, there are compiler constraints that cannot be captured by key
 % constraints alone.  For instance, a rule must contain exactly one head and
 % one event predicate.  Such checks can be performed by integrity constraints
@@ -212,18 +216,18 @@ subsequently added to the system.
 \begin{figure*}[htbp]
 \centering
 \ssp
-\begin{tabular}{|l|l|p{10cm}|} \hline
+\begin{tabular}{|p{2.5cm}|l|p{10cm}|} \hline
 {\it Stage name}& {\it Language} & {\it Description} \\ \hline\hline
-StageScheduler & C++ & Coordinates the compilation of stages (Section~\ref{ch:evita:sec:stageschedule}).\\ \hline
-Parser    & C++ & Bison based parser. Populates Metacompiler Catalog using program AST.\\ \hline
-Planner   & C++ & Generates a dataflow description from the program data contained in the Metacompiler Catalog.\\ \hline
-Installer & C++  & Instantiates C++ dataflow objects from a dataflow description. \\ \hline
-Delta Rewrite & \OVERLOG  & Converts rules based on materialized tables into an ECA form. \\ \hline
-Localization & \OVERLOG   & Rewrites rules containing a distributed joins into a  localized form. \\ \hline
-System R & \OVERLOG  & Performs System R dynamic programming optimization on all rules. \\ \hline
-Cascades    & \OVERLOG  & Query optimization based on a top-down search strategy. \\  \hline
-Magic-sets    & \OVERLOG & Rewrites rules to include magic predicates, which act as
+StageScheduler $(Section~\ref{ch:evita:sec:stageschedule})$ & C++ & Coordinates the compilation of stages.\\ \hline
+Parser $(Section~\ref{ch:evita:sec:parser})$  & C++ & Bison based parser. Populates Metacompiler Catalog using program AST.\\ \hline
+Planner $(Section~\ref{ch:evita:sec:planner})$ & C++ & Generates a dataflow description from the program data contained in the Metacompiler Catalog.\\ \hline
+Installer $(Section~\ref{ch:evita:sec:installer})$ & C++  & Instantiates C++ dataflow objects from a dataflow description. \\ \hline
+System~R $(Section~\ref{ch:evita:sec:systemr})$ & \OVERLOG  & Performs System R dynamic programming optimization on all rules. \\ \hline
+Cascades $(Section~\ref{ch:evita:sec:cascades})$ & \OVERLOG  & Query optimization based on a top-down search strategy. \\  \hline
+Magic-sets $(Section~\ref{ch:evita:sec:magic})$  & \OVERLOG & Rewrites rules to include magic predicates, which act as
 selection predicates for constants contained in query predicates. \\ \hline
+Localization & \OVERLOG   & Rewrites rules containing a distributed joins into a  localized form. \\ \hline
+Delta Rewrite & \OVERLOG  & Converts rules based on materialized tables into an ECA form. \\ \hline
 Debug print & \OVERLOG & Add special pretty printer predicates, interposed in certain rules. 
 The Planner stage translates these printer predicates into dataflow objects that print the tuples
 that pass through. \\ \hline
@@ -252,7 +256,7 @@ which, in addition to being compactly expressed in a high-level language, can
 be loaded into a running P2 installation at any time.
 
 A stage programmer registers a new stage with Evita Raced by inserting a tuple
-into the \ol{program} relation.  This tuple contains a unique identifier
+into the \ol{program} relation.  This tuple contains an unique identifier
 ($program\_id$), a name ($name$), a list of stage dependencies ($depends$), and
 the program text ($text$).  Because the \ol{program} relation is used to convey
 partial compilation results from stage to stage as well, \ol{program} tuples
@@ -313,10 +317,12 @@ StageScheduler} component (itself a stage) listens for updates to the
 \ol{program} table, indicating the arrival of a new \OVERLOG program or the
 completion of a compiler stage for an on-going program compilation.  The {\em
 StageScheduler} is responsible for shepherding compilation stage execution
-according to the \ol{StageLattice}.  Given a \ol{program} update, it ''joins with`` the
-lattice to identify a next stage that can be invoked, and generates the
-\ol{<stage>::programEvent} tuple that will start that stage; the contents of
-the tuple are the same as those of the updated \ol{program} tuple.
+according to the \ol{StageLattice}.  Given a \ol{program} update, the
+StageScheduler ''joins with`` the \ol{StageLattic} to identify a next stage
+that can be invoked, and derives a \ol{<stage>::programEvent} tuple that will
+start the given stage; the contents (attributes) of the
+\ol{<stage>::programEvent} tuple are the same as those in the updated
+\ol{program} tuple.
 
 \begin{figure*}[htbp]
 \begin{center}
@@ -327,14 +333,14 @@ the tuple are the same as those of the updated \ol{program} tuple.
 \end{center}
 \end{figure*}
 
-The {\em StageScheduler} and any compilation stages (whether built-in or
+The StageScheduler and any compilation stages (whether built-in or
 runtime-installed) are interconnected via the simple dataflow illustrated in
 Figure~\ref{ch:evita:fig:basecompiler}.  This is the same dataflow architecture
 used throughout the {\em Declarative Networking} project.  As described in
-Section~\ref{} (and~\cite{p2:sosp}), it consists of a C++ ``demultiplexer''
+Section~\ref{} (and~\cite{p2:sosp}), the dataflow consists of a C++ ``demultiplexer''
 that routes tuples from its input (on the left) to individual event handlers
 listening for particular tuple names (the arrows leaving the Demux element in
-the figure contain the name of the tuple for which the four components to the
+the figure contain the name of the tuple for which the stages to the
 right listen).  The Evita Raced framework simply adds the its ''default
 stages`` to the bootstrap routine of the P2 system.
 
@@ -432,6 +438,7 @@ framework.
 % 
 
 \subsubsection{Parser}
+\label{ch:evita:sec:parser}
 
 The Parser passes the program text it receives in the \ol{programEvent}
 through a traditional lexer/parser library specified using
@@ -603,13 +610,13 @@ Having described the Evita Raced infrastructure, we now turn to the issue of
 specifying query optimizations in \OVERLOG.  In this section we describe three
 of the compiler stages we have developed for Evita Raced.
 Section~\ref{ch:evita:sec:systemr} discusses a dynamic programming optimizer
-stage akin to that of System R.  We present, in
-Section~\ref{ch:evita:sec:cascades}, an optimization that performs a top-down
-search strategy, which is modeled after the Cascades optimizer.
-Section~\ref{ch:evita:sec:magic} describes a stage that performs magic-sets
-rewrite on recursive \OVERLOG programs.  Finally,
-Section~\ref{ch:evita:sec:localization} describes our reimplementation in Evita
-Raced of the localization rewrite from Loo et al.~\cite{loo-sigmod06}.
+stage akin to that of System R.  In Section~\ref{ch:evita:sec:cascades}, we
+present an optimization that performs a top-down search strategy, which is
+modeled after the Cascades optimizer.  Section~\ref{ch:evita:sec:magic}
+describes a stage that performs magic-sets rewrite on recursive \OVERLOG
+programs.  Finally, Section~\ref{ch:evita:sec:localization} describes our
+reimplementation in Evita Raced of the localization rewrite from Loo et
+al.~\cite{loo-sigmod06}.
 
 \subsection{System R Optimization}
 \label{ch:evita:sec:systemr}
@@ -966,36 +973,53 @@ estimations for a given selection predicate.
 
 The bottom-up, dynamic programming search strategy described in
 Section~\ref{ch:evita:sec:systemr} is a natural fit to a Datalog-based rule
-language.  You might think a top-down Cascades-style optimization
+language.  One might think a top-down Cascades-style optimization
 strategy~\cite{cascades} would be hard to implement since \OVERLOG, like
-Datalog, is evaluated in a bottom-up fashion.  Although the Volcano/Cascades
-search strategy is top-down, it still uses a dynamic programming technique
-called memoization, which is just as natural and intuitive in \OVERLOG/Datalog,
-and hence easily implemented in Evita Raced.  In this section, we describe our
-implementation of the Cascades branch-and-bound algorithm in \OVERLOG,
-consisting of a mere $33$ rules ($204$ lines).
+Datalog, is evaluated in a bottom-up fashion.  This is partially true.  Since
+the System R search strategy conforms to the \OVERLOG evaluation strategy, it
+did not require explicit rules for its traversal through the plan space.  That is,
+the System R search strategy was implicitly implemented by the \OVERLOG
+bottom-up evaluation.  A top-down search strategy, on the other hand, required
+extra logic (three rules) to guide the search through the plan space in
+a top-down order.  The logic of a top-down search strategy follows a dynamic
+programming technique called memoization, which turns out to be just as natural
+and intuitive in \OVERLOG, and hence easily implemented in Evita
+Raced.  In this section, we describe our implementation of the Cascades
+branch-and-bound algorithm in \OVERLOG.
+%, consisting of a mere $33$ rules ($204$ lines).
 
 Our description of the Cascades optimizer follows the notation of Shapiro, et.
-al~\ref{Shapiro-opt}.  In Cascades, plans are classified into {\em groups},
+al~\cite{Shapiro-opt}.  In Cascades, plans are classified into {\em groups},
 which is an equivalence class of expressions (predicates) that produce the same
 result.  During the optimization, each group (e.g., [ABC]) represents a
-container that references all physical plans (e.g., \{[AB] sort-merge-join [C]\},
-\{[B] nested-loop-join [AC]\}, \ldots) that make up the group.  In order to keep
-the search space small, a group only references top-level plans through {\emph
-multiexpressions}, which is an expression whose operator takes other groups
-e.g., multiexpression \{[AB] sort-merge-join [C]\} takes groups [AB] and [C] as
-input.  Associated with each group is a {\emph winner's circle}, which
+container that references all physical plans (e.g., \{[AB] sort-merge-join
+[C]\}, \{[B] nested-loop-join [AC]\}, \ldots) that make up the group.  In order
+to keep the search space small, a group only references top-level plans through
+{\emph multiexpressions}, which are expressions whose operator takes other
+groups as input (e.g., multiexpression \{[AB] sort-merge-join [C]\} takes groups [AB] and
+[C] as input).  Associated with each group is a {\emph winner's circle}, which
 identifies the optimal plan within a given group, and will be the plan chosen
 to represent a given group referenced by a multiexpression.  In the discussion
-that follows, a when we indicate a {\emph plan} we mean a given multiexpression within a group.
+that follows, a when we indicate a {\emph plan} we mean a given multiexpression
+within a group.
 
-We now describe the declarative rules for performing our version of the Cascades top-down optimizer. 
-We focus on the rules that form the heart of the search strategy, winner plan selection, and plan generation.
-The remaining rules that make up this optimization stage deal with the P2's lack of support for stratified Datalog.
-Our Cascades rules are not stratified but rather modularly stratified program~\cite{rossmodular}, and we
-require each module to be fully evaluated bottom-up. The rules are divided into three modules, the 
-search strategy (Figure~\ref{ch:evita:fig:cascades_top_down}), plan generation 
-(Figure~\ref{ch:evita:fig:cascades_plan}), and group winner selection (Figure~\ref{ch:evita:fig:cascades_winner})
+We now describe the declarative rules for performing our version of the
+Cascades top-down optimization.  The rules are divided into three modules, the
+search strategy (Figure~\ref{ch:evita:fig:cascades_top_down}), plan generation
+(Figure~\ref{ch:evita:fig:cascades_plan}), and winner selection
+(Figure~\ref{ch:evita:fig:cascades_winner}) The rules for winner selection and
+plan generation may remind the reader of the best plan selection and plan
+generation rules in the System R optimization
+(Section~\ref{ch:evita:sec:systemr}).  However, the rules for search strategy
+are unique to this optimizer, and will be the focus our attention.
+We note that the $9$ rules described here form the
+heart of the Cascades optimization in P2, consisting of a total $23$ rules
+($204$ lines of code).  The rules not discussed here deal with the P2's lack of
+support for stratified Datalog.  Our Cascades optimizer is not stratified but
+it is modularly stratified~\cite{rossmodular}, and we require that
+each module be fully evaluated bottom-up.  A number of imperative hacks were
+required to ensure this requirement in P2, which we defer to the comments
+contained in the reference code~\cite{p2code}.
 
 \subsubsection{Search strategy}
 
@@ -1026,20 +1050,22 @@ cst3 {\bf branch}(Group, BranchId+1, Cursor, Bound) :- \\
 \end{figure*}
 
 The optimization begins when the root group (e.g., [ABC]) is inserted into the
-group table.  A group tuples contains an object, as its first attribute, that
-provides a cursor to the underlining predicates in the group.  The cursor will
-generating all subgroups of the given group (e.g., cursor for group [ABC] will
-generate subgroups [AB], [BC], [AC]).  Rule~\ol{cs2} in
-Figure~\ref{ch:evita:fig:cascades_top_down} creates a {\bf branch} tuple from
-the initial {\bf group} tuple, using the {\emph cursor} method to create an
+\ol{group} table.  A \ol{group} tuple contains an object, as its first
+attribute, that provides a cursor to the underlining predicates in the group.
+The cursor will generating all subgroups of the given group (e.g., cursor for
+group [ABC] will generate subgroups [AB], [BC], [AC]~\footnote{The subgroup
+cursors will further generate groups [A], [B], and [C].}).  Rule~\ol{cs2} in
+Figure~\ref{ch:evita:fig:cascades_top_down} creates a \ol{branch} tuple from
+the initial \ol{group} tuple, using the {\emph cursor} method to create an
 initial cursor at position $0$.  A branch contains an upper bound (initialized
-to infinity) on the cost of a plan in the given group.  An insertion into the
-{\bf branch} table triggers rule~\ol{cst1}, which inserts the ``current''
-subgroup referenced by the cursor object, should one exists (i.e., no cursor
-exists for groups containing a single predicate).  When all plans for the current 
-subgroup have been explored, and a winner selected, rule~\ol{cst3} advances the
-cursor to the next subgroup.  This process completes when the group cursor contains
-no more subgroups, at which point a winner can be chosen for the group.
+to infinity) that is used to prune the cost of plans contained within the given
+group.  An insertion into the \ol{branch} table triggers rule~\ol{cst1}, which
+inserts the ``current'' subgroup referenced by the cursor object, should one
+exists (i.e., no cursor exists for groups containing a single predicate).  When
+all plans for the current subgroup have been explored, and a winner selected,
+rule~\ol{cst3} advances the cursor to the next subgroup.  This process
+completes when the group cursor contains no more subgroups, at which point a
+winner can be chosen for the group.
 
 
 \subsubsection{Plan Generation}
@@ -1094,21 +1120,23 @@ p3 {\bf plan}(PlanId, Group, "index-loop", OuterGroup, InnerGroup, Card, Cost) :
 \caption{\label{ch:evita:fig:cascades_plan} Cascades plan generation rules.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:cascades_plan} gives three rules for generating plans in the
-Cascades optimizer. The rules are very similar to the plan generation rules in the
-System R optimizer (Section{ch:evita:sec:systemr) but are based on {\emph winner} plans
-from relevant subgroups. The schema of a plan has also changed to reference groups instead
-of actual plans, as indicated by the $OuterGroup$ and $InnerGroup$ variables in rules~\ol{p2}
-and \ol{p3}. 
+Figure~\ref{ch:evita:fig:cascades_plan} gives three rules for generating plans
+in the Cascades optimizer.  The rules are very similar to the plan generation
+rules in the System R optimizer (Section{ch:evita:sec:systemr) but are based on
+{\emph winner} plans from relevant subgroups.  The schema of the \ol{plan}
+table has also changed to reference groups instead of actual plans, as
+indicated by the $OuterGroup$ and $InnerGroup$ variables in rules~\ol{p2} and
+\ol{p3}.
 
 The plan generation rules are evaluated in a bottom-up fashion by deducing new
-plans for a given group.  The {\bf branch} tuple for a given group triggers
+plans for a given group.  The \ol{branch} tuple for a given group triggers
 each rule.  If the group contains a single table predicate ($Group.size == 1$
-in rule~\ref{p1}) then a table scan access method is deduced with a cost based
+in rule~\ol{p1}) then a {\emph table scan} access method is deduced with a cost based
 on the number of tuples in the table.  This access method will be selected as
-the winner for the single predicate group. Since P2 only has a table scan
-access method we do not consider other access methods (e.g., index). Additional access methods would 
-include appropriate rules in the form of Rule~\ol{p1}.
+the winner for the single predicate group.  Since P2 only has a table scan
+access method we do not consider other access methods (e.g., index).
+Additional access methods would include appropriate rules in the form of
+Rule~\ol{p1}.
 
 Rules~\ol{p2} and \ol{p3} consider joins of two subgroups (an $OuterPlan$ and
 $InnerPlan$) for nested-loop and index-loop join methods.  The rules reference
@@ -1116,11 +1144,11 @@ the optimal plan, contained in the \ol{winner} table, for each subgroup in
 order to derive an overall cost for the plan with the given join method.  Each
 rule also ensures that the inner plan contains a single table predicate
 (left-deep plans only) and that the subgroups do not overlap in the predicates
-the consider ($OuterGroup.insersect(InnerGroup) == null$). We avoid
-cross product plans be giving such plans a high cost ($infinity$), which forces
-such plans to be considered last. Since rule~\ol{p3} considers an index-loop join
-method, it must check for the existence of an index on the inner predicate that matches
-the join attribute. 
+the consider ($OuterGroup.insersect(InnerGroup) == null$).  We avoid cross
+product plans be giving such plans a high cost ($infinity$), which forces such
+plans to be considered last.  Since rule~\ol{p3} considers an index-loop join
+method, it must check for the existence of an index on the inner predicate that
+matches the join attribute.
 
 \subsubsection{Winner Selection}
 
