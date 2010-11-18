@@ -2,13 +2,14 @@
 \label{ch:magic}
 
 Having described the Evita Raced infrastructure, we now turn to the issue of
-specifying query optimizations in \OVERLOG.  In this section we describe the
-magic-sets rewrite compiler stage developed for Evita Raced.  Datalog-oriented
-systems like P2 perform a bottom-up (\emph{forward chaining}) evaluation on
-each rule, starting with known facts (tuples), and recursively deriving new
-facts through rule deductions.  The advantage of this strategy is that the
-evaluation is data driven (from known facts to possible deductions) and will
-not enter infinite loops for some statically verifiable \emph{safe} programs.
+specifying query optimizations in \OVERLOG.  In this chapter, we describe the
+magic-sets rewrite developed as a declarative compiler stage for Evita Raced.
+Datalog-oriented systems like P2 perform a bottom-up (\emph{forward chaining})
+evaluation on each rule, starting with known facts (tuples), and recursively
+deriving new facts through rule deductions.  The advantage of this strategy is
+that the evaluation is data driven (from known facts to possible deductions)
+and will not enter infinite loops for some statically verifiable \emph{safe}
+programs.
 
 In contrast, top-down (\emph{backward chaining}) evaluation (e.g., in the
 Prolog language), starts with the query predicates as the top-level goals, and
@@ -17,6 +18,23 @@ replacing them with the subgoal predicates in the rule body, until all subgoals
 are satisfied by known facts or rejected when no further recursion is possible.
 The advantage of a top-down evaluation strategy is that it avoids resolving
 goals that are not needed by the posed queries.
+
+The magic-sets rewrite performs a transitive closure, on the rule/goal graph of
+a Datalog program, to obtain extra predicates that prune results, known to be
+superfluous, from a bottom-up evaluation.  We review the definition of a
+rule/goal graph and its elements in Section~\ref{ch:magic:sec:review}.  Using
+this graph representation of an \OVERLOG program, we express the magic-sets
+algorithm in a mere $30$ rules.  Our rules are divided into two logical phases.
+The first phase is presented in Section~\ref{ch:magic:sec:rgconstruct}, which
+derives the extra predicates (called magic and supplementary predicates) via a
+transitive closure on the Metacompiler Catalog.  The Metacompiler Catalog and
+the extra predicates together form the rule/goal graph.  Our second group of
+rules, presented in Section~\ref{ch:magic:sec:rewrite}, perform a transitive
+closure on the rule/goal graph, to obtain the rewritten rules that include the
+magic and supplementary predicates.
+
+\section{Magic-sets in a Nutshell}
+\label{ch:magic:sec:review}
 
 \begin{figure*}[!t]
 \ssp
@@ -32,13 +50,13 @@ r2 {\bf path}(@X, Y, P, C) :- \\
 \\
 Query: path(@LOCALHOST, ``localhost:10000'', P, C).
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:querySP}Relevant rules copied from Figure~\ref{ch:p2:fig:overlogSP}.}
+\caption{\label{ch:magic:fig:basicSP}Relevant rules copied from Figure~\ref{ch:p2:fig:overlogSP}.}
 \end{figure*}
 
 The magic-sets technique rewrites logical rules so that bottom-up evaluation
 over the rewritten rules has all advantages of top-down and bottom-up
 evaluation strategies.  We review those advantages here by example using the
-shortest path program shown in Figure~\ref{ch:evita:fig:querySP}.  A
+shortest path program shown in Figure~\ref{ch:magic:fig:basicSP}.  A
 straightforward bottom-up evaluation of this program applies the \ol{link}
 tuples to rule \ol{r1}, creating the initial {\tt path} tuples.  Rule \ol{r2}
 derives all \ol{path} tuples, while any \ol{path} tuples matching
@@ -57,51 +75,46 @@ will only look for tuples of the form
 \ol{path(``127.0.0.1'', ``localhost:10000'', P, C)} as well as tuples that can help
 form such \ol{path} tuples, but nothing else.
 
-In Section~\ref{ch:magic:sec:background} we review the literature
-
-\section{Background}
-
 The magic-sets rewrite is an optimization that can reduce the amount of
 computation in recursive Datalog queries by deriving only those tuples that are
 relevant to query predicates posed by a program.  It does this by adding extra
 selection predicates to the rules of a program to emulate the goal-oriented
-execution of top-down evaluation (his is sometimes called \emph{sideways
-information passing} or SIP).  Conceptually, given a rule of the form \[ H_p
-\text{\ol{:-}}\ G_1, G_2, ..., G_k \] where $H_p$ is the head predicate $p$ and
-$G_{1,...,k}$ are the goal predicates in the order of appearance in the rule, a
-magic-sets algorithm intersperses selection predicates $s_{1,...,k}$ to
-generate rule $H_p \ \text{\ol{:-}}\ s_1, G_1, s_2, G_2, ..., s_{k}, G_k$.
-Facts for these selection predicates are generated according to bindings of
-attributes, in the user's query or other rule predicates in the program, to
-constant values.
+execution of top-down evaluation (sometimes called \emph{sideways information
+passing} or SIP).  Conceptually, given a rule of the form $H\ \text{\ol{:-}}\
+G_1, G_2, ..., G_k$, where $H$ is the head predicate and $G_{1,...,k}$ are the
+subgoals, the magic-sets rewrite intersperses selection predicates
+$s_{1,...,k}$ to generate rule $H\ \text{\ol{:-}}\ s_1, G_1, s_2, G_2, ...,
+s_{k}, G_k$.  Facts for these selection predicates are generated according to
+bindings of attributes, in the user's query or other rule predicates in the
+program, to constant values.
 
 Before we present the declarative rules for implementing this rewrite
 technique, we review the concept of adornments and the ``rule/goal graph''
 representation for a collection of \OVERLOG (Datalog) rules.  These data
-structures form the basis of the magic-sets algorithm, and hence our
-declarative rules for it.
+structures form the basis of the transitive closure algorithm performed
+by the magic-sets rewrite, and our declarative rules follow this model.
 
 
 \subsection{Adornments}
 
-Consider again a snippet of the shortest path program in Figure~\ref{ch:evita:fig:querySP}.  
-The query predicate \ol{path(@LOCALHOST,
+Consider again a snippet of the shortest path program in
+Figure~\ref{ch:magic:fig:basicSP}.  The query predicate \ol{path(@LOCALHOST,
 ``localhost:10000'', P, C)} asks for the shortest path from all nodes to node
 ``localhost:10000''.  We can indicate which path arguments are bound and which
 are free by an {\emph adornment}, which is a binding pattern that contains a
 string of {\emph b's} and {\emph f's} of length {\emph k}, for each {\emph k}
-arguments of path.  In the current context, the {\emph path} query predicate has
-a $path^{ffbb}$ adornment since the first two arguments are bound to constants
-and the last two are free variables.
+arguments of path.  In the current context, the {\emph path} query predicate
+has a $path^{ffbb}$ adornment since the first two arguments are bound to
+constants and the last two are free variables.
 
 Each rule in an \OVERLOG program is also given an adornment according its
-evaluation based on the sideways information passing algorithm described in
-Section~\ref{ch:intro}.  The steps for assigning rule adornments are as
+left-to-right evaluation order.  The steps for assigning rule adornments are as
 follows.
 \begin{enumerate}
-\item A variable appearing in a bound argument of the rule head is bound before processing any subgoals.
-\item A variable is bound after processing subgoal $G_i$ if it was bound
-  before processing $G_i$ or if it appears anywhere in $G_i$.
+    \ssp
+    \item A variable appearing in a bound argument of the rule head is bound before processing any subgoals.
+    \item A variable is bound after processing subgoal $G_i$ if it was bound 
+          before processing $G_i$ or if it appears anywhere in $G_i$.
 \end{enumerate}
 The format of a rule adornment differs from a predicate.  It follows the form
 $[X_1,\cdots,X_m|Y_1,\cdots,Y_n]$, which contains two sublists of variables
@@ -113,20 +126,22 @@ A given rule contains a number of these binding patterns, one for each subgoal
 position.  A rule adornment is a binding pattern of a rule at a particular
 position.  The notation that we follow for rule adornments identifies rule
 positions as a subscript and binding patterns as a superscript.  For example,
-$r1_0^{[X,Y|P,C]}$ is the adornment for rule \ol{r1} at position $0$, which
+$r1_0^{[@X,Y|P,C]}$ is the adornment for rule \ol{r1} at position $0$, which
 takes on the binding pattern of the head predicate relative to the
-$path^{bbff}$ adornment. Continuing, $r1_1^{[X,Y,C|P]}$ represents the rule
-adornment at position $1$, following the \ol{link} predicate, which adds
-$C$ to the list of bound variables. Finally, $r1_2^{[X,Y,C,P]}$ is the
-rule adornment following the assignment, and therefore binding, of the variable
-$P$.
+$path^{bbff}$ adornment.  Continuing, $r2_0^{[@X,Y|Z,C1,P,C]}$ represents the
+adornment for rule~\ol{r2} at position $0$, again binding the first two
+variables of the head predicate.  This rule adornment creates the new
+$link^{bff}$ adornment for the \ol{link} predicate, which adds variables $Z$
+and $C1$ to the list of bound variables.  Finally, $r1_1^{[@X,Y,Z,C1,|P,C]}$ is
+the rule adornment following the \ol{link} predicate, maintaining the desired
+$path^{bbff}$ adornment.
 
 \subsection{Rule/Goal Graphs}
 
 \begin{figure*}[!t]
 \begin{center}
-\includegraphics[scale=1.8]{figures/RuleGoalGraph}
-\caption{Rule/Goal graph of the program in Figure~\ref{ch:evita:fig:querySP}.}
+\includegraphics[scale=0.5]{figures/RuleGoalGraph}
+\caption{rule/goal graph of the program in Figure~\ref{ch:magic:fig:basicSP}.}
 \label{ch:evita:fig:rggraph}
 \end{center}
 \end{figure*}
@@ -137,7 +152,7 @@ vertices.  A goal vertex consists of a predicate with an adornment, and
 similarly, a rule vertex represents the adornment of the rule in a particular
 position accoring to its left-to-right execution.
 
-Figure~\ref{ch:evita:fig:rggraph} illustrates the full {\em Rule/Goal} graph
+Figure~\ref{ch:evita:fig:rggraph} illustrates the full {\em rule/goal} graph
 for our shortest path example.  To build this graph, the algorithm starts with
 a goal predicate (at first, this is the query predicate---\ol{path} in our
 example), and creates a goal vertex in the graph with the appropriate adornment
@@ -171,23 +186,25 @@ the rules producing them are recursively traversed.
 In Evita Raced we created a magic-sets rewrite stage written in \OVERLOG.  The
 \OVERLOG rules are based on the description of the magic-sets algorithm given
 in Ullman's course notes~\cite{ullmanNotes}, which begins by constructing a
-rule/goal graph on the target program.  It uses the constructed rule/goal graph
-to check for the {\emph unique binding property} with respect to the adornment
-of the query predicate.  This property is met for query predicate $p$ {\emph
-iff} the rule/goal graph contains a unique ``binding pattern'' for $p$.  The
-original query predicate for $p$ provides the first binding patterns, while
-rules that mention $p$ provide further bindings.  We check for this property
-during our construction of the rule/goal graph.
+rule/goal graph on the target program.  It uses the constructed graph, for
+instance, to check for the {\emph unique binding property} with respect to the
+adornment of the query predicate.  This property is met when the query
+predicate $q_p$, expressed against table predicate $p$, contains a unique
+``binding pattern'' throughout the rule/goal graph.  The query predicate $q_p$
+provides the first binding patterns, while rules that mention the $p$ table
+predicate provide further bindings.  
 
-The magic-sets rewrite involves a number of steps, which we have subdivided
-into to logical groups. The first group presented in Section~\ref{ch:magic:sec:rgconstruct}
-deals with the construction of the rule/goal graph for the target program.
-The Metacompiler Catalog already provides some of this information through
-goal (head predicate) and subgoal (body terms) rule dependencies. The remaining
-information that we need to derive include the adornment information for goal and
-rule nodes. Once this information is recursively obtained, we can move on to
-the actual rewrite rules described in Section~\ref{ch:magic:sec:rewrite}, where
-magic and supplementary relations are materialized in the target program.
+We check for the unique binding property in the first phase of our rewrite,
+which constructs the rule/goal graph through a transitive closure over the
+Metacompiler Catalog.  As we will describe in
+Section~\ref{ch:magic:sec:rgconstruct}, the Metacompiler Catalog already
+provides some of the rule/goal graph information; specifically goal (head
+predicate) and subgoal (body terms) rule dependencies.  The remaining
+information that we need to derive include the adornment information for goal
+and rule nodes.  Once this information is recursively obtained, we can move on
+to the actual rewrite rules described in Section~\ref{ch:magic:sec:rewrite},
+where magic and supplementary relations are materialized in the target program
+during a transitive closure over the rule/goal graph.
 
 \subsection{Rule/Goal Graph Construction}
 \label{ch:magic:sec:rgconstruct}
@@ -229,49 +246,6 @@ some number of (binding) constants and (free) variables.  The function {\emph
 f\_adornment} takes a schema object as argument and returns a string containing
 the adornment signature.
 
-\begin{figure*}[!t]
-\ssp
-\centering
-\begin{boxedminipage}{\linewidth}
-/* Initialize sup position 0 for rules that reference a magic predicate in the head. */ \\
-ms2 {\bf sup}(@A, Pid, Rid, Pos, SupName, Schema, f\_idgen()) :- \\
-\datalogspace {\bf magicPred}(@A, Pid, Name, Sig), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, RName, HeadPid, ...), \\
-\datalogspace {\bf sys::predicate}(@A, HeadPid, Rid, \_, Name, ..., FSchema, ...), \\
-\datalogspace Schema := f\_project(Sig, FSchema), \\
-\datalogspace SupName := "sup\_" + RName + 0, \\
-\datalogspace Pos := 0. \\
-
-/* Move the rule position forward when update occurs to sup. */ \\
-ms3 {\bf supNext}(@A, Pid, Rid, Pos+1, Schema) :- \\
-\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema, Tid). \\
-	
-/* Create supplementary predicate for a given subgoal. */ \\
-ms4 {\bf sup}(@A, Pid, Rid, Pos, SupName, NewSchema, f\_idgen()) :- \\
-\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, Schema), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, RName, ...), \\
-\datalogspace {\bf sys::predicate}(@A, Fid, Rid, ..., FSchema, Pos, ...), \\
-\datalogspace SupName := "sup\_" + RName + "\_" + Pos, \\
-\datalogspace NewSchema := f\_merge(Schema, FSchema). \\
-	
-/* Create supplementary predicate for a given assignment. */ \\
-ms5 {\bf sup}(@A, Pid, Rid, Pos, SupName, NewSchema, f\_idgen()) :- \\
-\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, Schema), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, RName, ...), \\
-\datalogspace {\bf sys::assign}(@A, Aid, Rid, Var, \_, Pos), \\
-\datalogspace SupName := "sup\_" + RName + "\_" + Pos, \\
-\datalogspace NewSchema := f\_assignschema(Schema, Var). \\ 
-	
-/* Move supNext forward for selection predicates. */ \\
-ms6 {\bf supNext}(@A, Pid, Rid, Pos+1, Schema) :- \\
-\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, Schema), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, ..., Goals), \\
-\datalogspace {\bf sys::select}(@A, Sid, Rid, \_, Pos, \_), \\
-\datalogspace $Pos < Goals$. 
-\end{boxedminipage}
-\caption{\label{ch:magic:fig:magic2}Rules for supplementary relational predicates.}
-\end{figure*}
-
 The previous rule (\ol{ms1}) created the top-level goal node, which is the root
 of the rule/goal graph.  The group of rules in Figure~\ref{ch:magic:fig:magic2}
 deal with creating adornments for rules in the target program.  We store the
@@ -288,6 +262,49 @@ create supplementary predicates in Section~\ref{ch:magic:sec:rewrite}.  A
     a new rule that supplies facts to the supplementary relation.
 \end{itemize}
 
+\begin{figure*}[!t]
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+/* Initialize sup position 0 for rules that reference a magic predicate in the head. */ \\
+ms2 {\bf sup}(@A, Pid, Rid, Pos, SupName, Schema, f\_idgen()) :- \\
+\datalogspace {\bf magicPred}(@A, Pid, Name, Sig), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, RName, HeadPid, ...), \\
+\datalogspace {\bf sys::predicate}(@A, HeadPid, Rid, \_, Name, ..., FSchema, ...), \\
+\datalogspace Schema := f\_project(Sig, FSchema), \\
+\datalogspace SupName := "sup\_" + RName + 0, \\
+\datalogspace Pos := 0. \\
+
+/* Create supplementary predicate for a given subgoal. */ \\
+ms3 {\bf sup}(@A, Pid, Rid, Pos, SupName, NewSchema, f\_idgen()) :- \\
+\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, Schema), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, RName, ...), \\
+\datalogspace {\bf sys::predicate}(@A, Fid, Rid, ..., FSchema, Pos, ...), \\
+\datalogspace SupName := "sup\_" + RName + "\_" + Pos, \\
+\datalogspace NewSchema := f\_merge(Schema, FSchema). \\
+	
+/* Create supplementary predicate for a given assignment. */ \\
+ms4 {\bf sup}(@A, Pid, Rid, Pos, SupName, NewSchema, f\_idgen()) :- \\
+\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, Schema), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, RName, ...), \\
+\datalogspace {\bf sys::assign}(@A, Aid, Rid, Var, \_, Pos), \\
+\datalogspace SupName := "sup\_" + RName + "\_" + Pos, \\
+\datalogspace NewSchema := f\_assignschema(Schema, Var). \\ 
+
+/* Move the rule position forward when update occurs to sup. */ \\
+ms5 {\bf supNext}(@A, Pid, Rid, Pos+1, Schema) :- \\
+\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema, Tid). \\
+	
+/* Move supNext forward for selection predicates. */ \\
+ms6 {\bf supNext}(@A, Pid, Rid, Pos+1, Schema) :- \\
+\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, Schema), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, ..., Goals), \\
+\datalogspace {\bf sys::select}(@A, Sid, Rid, \_, Pos, \_), \\
+\datalogspace $Pos < Goals$. 
+\end{boxedminipage}
+\caption{\label{ch:magic:fig:magic2}Rules for supplementary relational predicates.}
+\end{figure*}
+
 We now describe the details of each rule in Figure~\ref{ch:magic:fig:magic2}.
 Rule~\ol{ms2} initiates the first \ol{sup} deduction.  It joins \ol{magicPred}
 with the \ol{rule} and \ol{predicate} relations to obtain those rules that
@@ -300,6 +317,17 @@ contains the bound head variables (according to the adornment). For example,
 if the head predicate schema is $[A, B, C]$ and the adornment is $fbf$ then
 the {\emph f\_project} would return $[B]$ as the new schema. This new schema
 will be the schema for the current supplementary predicate.
+
+Given a particular rule $r$, a \ol{sup} tuple is created for each subgoal that
+adds bindings.  This means we are only interested in relational predicates
+(rule~\ol{ms3}) and assignment statements (rule~\ol{ms4}); selection predicates
+do not create new bindings.  The {\emph f\_merge} and {\emph f\_assignschema}
+functions are used to update the schema object with the bindings of the current
+term.  The \ol{supNext} position is moved forward by one when an update occurs
+in the \ol{sup} relation (rule~\ol{ms5}) or a selection subgoal exists in the current
+\ol{subNext} position (rule~\ol{ms6}). This brings up a subtle point. We need to 
+wait for the update to the \ol{sup} relation before moving to the next position
+since we rely on the previous positions bindings. 
 
 
 \begin{figure*}[!t]
@@ -316,8 +344,19 @@ ms7 {\bf magicPred}(@A, Pid, FName, Sig) :- \\
 \datalogspace Sig := f\_adornment(Schema, FSchema).
 
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal}Encountering a magic predicate during subgoal traversal.}
+\caption{\label{ch:magic:fig:magic3}Encountering a magic predicate during subgoal traversal.}
 \end{figure*}
+
+The previous group of rules ignored the special case of discovering a magic
+predicate at the position in the \ol{supNext} tuple.  In order to verify that
+the unique binding property holds, we must compute the adornment for the magic
+predicate based on the bindings at given position.
+Figure~\ref{ch:magic:fig:magic3} contains the single rule that generates a new
+adornment for a subgoal that happens to be a magic predicate.  If the adornment
+is different than the previous then multiple rows will exist in the
+\ol{magicPred} relation.  A simple count query can then be used to detect
+unique binding property violations.  This constraint rule appears in
+Figure~\ref{ch:magic:fig:magic4}.
 
 \begin{figure*}[!t]
 \ssp
@@ -327,7 +366,7 @@ ms7 {\bf magicPred}(@A, Pid, FName, Sig) :- \\
 ms9 {\bf ruleComplete}(@A, Pid, Rid) :- \\
 \datalogspace {\bf supNext}(@A, Pid, Rid, Pos, \_), \\
 \datalogspace {\bf sys::rule}(@A, Rid, Pid, ..., Goals), \\
-\datalogspace Pos >= Goals. \\
+\datalogspace $Pos == Goals$. \\
 	       
 /* Count the number of completed rules. */ \\
 ms10 {\bf rulesComplete}(@A, Pid, a\_count<Rid>) :- \\
@@ -350,49 +389,90 @@ ms13 {\bf commitMagicPred}(@A, Pid, Name, Sig, f\_idgen()) :- \\
 \datalogspace {\bf magicPred}(@A, Pid, Name, Sig), \\
 \datalogspace $Count == 1$.
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal}Detect completion of rule/goal traversal and check for unique binding property.}
+\caption{\label{ch:magic:fig:magic4}Detect completion of rule/goal traversal and check for unique binding property.}
 \end{figure*}
+
+The last group of rules that make up the rule/goal graph construction phase
+deal with detecting the phase completion and checks for the unique binding
+property.  Figure~\ref{ch:magic:fig:magic4} maintains a running count of the
+rules that have completed the rule/goal graph construction phase
+(rules~\ol{ms9} and \ol{ms10}).  Rule~\ol{ms11} counts the total number of rules
+in a given program and rule~\ol{ms12} counts the number of adornments for a
+given \ol{magicPred}.  Finally, rule~\ol{ms13} signals the completion of the
+current phase by deducing a \ol{commitMagicPred} tuple, which occurs iff all
+rules have completed and the magic predicate has a single adornment.  We note
+that the counts for \ol{programRuleCount} and \ol{rulesComplete} would not be
+needed if P2 supported stratified Datalog.  The magic predicate adornment count
+is necessary.  Notice that it marks a stratification boundary, which
+automatically ensures the complete evaluation of all previously discussed rules
+before taking that count.
 
 
 \subsection{Rewrite Commit Rules}
 \label{ch:magic:sec:rewrite}
-
+ 
 \begin{figure*}[!t]
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-/* Create a {\bf writeMagic} tuple contains identifiers for a new rule \\
+/* Create a {\bf writeMagic} tuple that contains identifiers for a new rule \\
 and a corresponding head predicate. */ \\
 ms14 {\bf writeMagic}(@A, Pid, Rid, f\_idgen(), f\_idgen()) :- \\
 \datalogspace {\bf commitMagicPred}(@A, Pid, Name, ...), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, ...), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, Rid, HeadFid, ...), \\
 \datalogspace {\bf sys::predicate}(@A, HeadFid, Rid, \_, Name, ...). \\
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal} Signal the rewrite of the top level rule 
+\caption{\label{ch:magic:fig:rewrite1} Signal the rewrite of the top level rule 
 containing the given magic predicate.}
 \end{figure*}
+
+Figure~\ref{ch:magic:fig:rewrite1} contains the single rule~\ol{ms14}, which
+initiates the rewrite phase for the magic predicate referenced in
+\ol{commitMagicPred}.  The rule deduces a \ol{writeMagic} predicate for each
+rule that mentions the magic predicate in the head.  Each \ol{writeMagic} tuple
+will create a new rule that rewrites the original rule to include the
+appropriate magic and supplementary predicates.  The schema of \ol{writeMagic}
+contains attributes that hold new identifiers for the new rule and its
+corresponding head predicate.
 
 \begin{figure*}[!t]
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-/* Initiate an iterator for the new magic predicate rewrite along a given rule.  \\
-The iteration begins at the goal predicate immediately following the event \\
-predicate. */ \\
-ms15 {\bf rewriteIter}(@A, Pid, Rid, 1, NewRid, NewHeadFid, 2) :- \\
-\datalogspace {\bf writeMagic}(@A, Pid, Rid, NewRid, NewHeadFid). \\
-
 /* The event predicate for the new rule is the magic predicate, which through \\
 sideways information passing will trigger the rule's execution. */ \\ 
-ms16 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, ``DELTA'', Schema, 1, null, 0) :- \\
+ms15 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, ``DELTA'', Schema, 1) :- \\
 \datalogspace {\bf writeMagic}(@A, Pid, Rid, NewRid, NewHead), \\
 \datalogspace {\bf sup}(@A, Pid, Rid, 0, Name, Schema, Tid).
 
+/* Initiate an iterator for the new magic predicate rewrite along a given rule.  \\
+The iteration begins at the goal predicate immediately following the event \\
+predicate. */ \\
+ms16 {\bf rewriteIter}(@A, Pid, Rid, 1, NewRid, NewHeadFid, 2) :- \\
+\datalogspace {\bf writeMagic}(@A, Pid, Rid, NewRid, NewHeadFid). \\
+
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal} Rule for initiating an iteration over the
+\caption{\label{ch:magic:fig:rewrite2} Rule for initiating an iteration over the
 top level rule that is to be rewritten. }
 \end{figure*}
 
+The \ol{writeMagic} predicate is used in Figure~\ref{ch:magic:fig:rewrite2} to create
+the initial magic predicate the event position ($1$) and a \ol{rewriteIter} tuple. 
+Rule~\ol{ms15} forces the rule to trigger off of updates to the magic predicate, and nothing
+more. The next step in the rewrite is to walk down the list of subgoals in the original 
+rule body. Rule~\ol{ms16} takes care of seeding this process through the initial 
+\ol{rewriteIter} deduction. A \ol{rewriteIter} contains the following schema attributes 
+in order of appearance.
+\begin{enumerate} 
+  \ssp
+  \item Location attribute.  
+  \item Program identifier.
+  \item The original rule identifier.
+  \item The subgoal position relative to the original rule.
+  \item The new rule identifier.
+  \item An identifier for the new rule's head predicate.
+  \item The position of the subgoal in the new rule.
+\end{enumerate}
 
 \begin{figure*}[!t]
 \ssp
@@ -401,48 +481,70 @@ top level rule that is to be rewritten. }
 /* If goal node $G_i$ is not a magic predicate then shift position to $NewPos$  \\
    in the new rule $NewRid$. */ \\
 ms17 {\bf sys::predicate}(@A, Fid, NewRid, NotIn, Name, Tid, ECA, Schema, NewPos, AM, New) :- \\
-\datalogspace {\bf rewriteIter}(@A, Pid, Rid, SupPos, NewRid, NewHeadFid, NewPos), \\
-\datalogspace {\bf sys::predicate}(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New), \\
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, NewRid, NewHeadFid, NewPos), \\
+\datalogspace {\bf sys::predicate}(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New), \\
 \datalogspace notin {\bf magicPred}(@A, Pid, Name, Sig). \\
 	
 /* Point assignment to the new rule ($NewRid$) in the new position ($NewPos$). */ \\
 ms18 {\bf sys::assign}(@A, Aid, NewRid, Var, Value, NewPos) :- \\
-\datalogspace {\bf rewriteIter}(@A, Pid, Rid, SupPos, NewRid, NewHeadFid, NewPos), \\
-\datalogspace {\bf sys::assign}(@A, Aid, Rid, Var, Value, SupPos). \\
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, NewRid, NewHeadFid, NewPos), \\
+\datalogspace {\bf sys::assign}(@A, Aid, Rid, Var, Value, Pos). \\
 	
 /* Point selection predicate to the new rule ($NewRid$) in the new position ($NewPos$). */ \\
 ms19 {\bf sys::select}(@A, Sid, NewRid, Bool, NewPos, AM) :- \\
-\datalogspace {\bf rewriteIter}(@A, Pid, Rid, SupPos, NewRid, NewHeadFid, NewPos), \\
-\datalogspace {\bf sys::select}(@A, Sid, Rid, Bool, SupPos, AM).
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, NewRid, NewHeadFid, NewPos), \\
+\datalogspace {\bf sys::select}(@A, Sid, Rid, Bool, Pos, AM).
 
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal} Rule's for moving subgoals in the top level rule
+\caption{\label{ch:magic:fig:rewrite3} Rule's for moving subgoals in the top level rule
 the new rule undergoing the rewrite. }
 \end{figure*}
+
+The \ol{rewriteIter} is used to walk the subgoals of the original rule and copy
+them to a new rule that will contain the magic and supplementary predicates.
+This proceeds in a trivial fashion and is implemented by the rules in
+Figure~\ref{ch:magic:fig:rewrite3}, until a subgoal referencing a magic
+predicate is reached.  Rule~\ol{ms17} copies the predicate at position $Pos$ in
+the original rule to position $NewPos$ in the new rule iff the predicate is
+{\bf not} a magic predicate.  Rules~\ol{ms18} and \ol{ms19} similarly handle
+assignment statements and selection predicates.
+
 
 \begin{figure*}[!t]
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
 /* Continue the rewrite iter if the current goal node $Pid$ is not a magic predicate. */ \\
-ms20 {\bf rewriteIter}(@A, Pid, Rid, SupPos+1, NewRid, HeadFid, NewPos+1) :- \\
-\datalogspace {\bf rewriteIter}(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos), \\
-\datalogspace {\bf sys::predicate}(@A, Pid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New), \\
+ms20 {\bf rewriteIter}(@A, Pid, Rid, Pos+1, NewRid, HeadFid, NewPos+1) :- \\
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos), \\
+\datalogspace {\bf sys::predicate}(@A, Pid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New), \\
 \datalogspace notin {\bf magicPred}(@A, Pid, Name, Sig). \\
 
 /* The current goal node $Pid$ is a magic predicate. Indicate where the break \\
-occurs ($SupPos$) within the subgoals of the given rule $Rid$. */ \\
-ms21 {\bf break}(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos) :- \\
-\datalogspace {\bf rewriteIter}(@A, Pid, Rid, SupPos, NewRid, HeadFid, NewPos), \\
-\datalogspace {\bf sys::predicate}(@A, Pid, Rid, NotIn, Name, Tid, ECA, Schema, SupPos, AM, New), \\
+occurs ($Pos$) within the subgoals of the given rule $Rid$. */ \\
+ms21 {\bf break}(@A, Pid, Rid, Name, MagicSchema, Pos, NewRid, HeadFid, NewPos) :- \\
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos), \\
+\datalogspace {\bf sys::predicate}(@A, Pid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New), \\
 \datalogspace {\bf magicPred}(@A, Pid, Name, Sig), \\
-\datalogspace Bound := f\_project(Sig, Schema). \\
+\datalogspace MagicSchema := f\_project(Sig, Schema). \\
 
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal} Given a particular subgoal $G_i$, these rules determine
+\caption{\label{ch:magic:fig:rewrite4} Given a particular subgoal $G_i$, these rules determine
 if the iteration should continue to the next subgoal or if a {\bf break} tuple should be
 deduced because $G_i$ represents a magic predicate. }
 \end{figure*}
+
+Figure~\ref{ch:magic:fig:rewrite4} contains two rules that will either move the
+\ol{rewriteIter} forward or deduce a new \ol{break} tuple.  These two conditions
+are based on whether the current subgoal at position $Pos$ is a magic
+predicate.  If not, then rule~\ol{ms20} advances the \ol{rewriteIter} positions
+($Pos$ and $NewPos$).  Otherwise, rule~\ol{ms21} creates a \ol{break} tuple
+that contains the magic predicate name ($Name$), the magic predicate schema
+relative to the current variables, and other already described variables.  Note
+that since the unique binding property holds here the projection ({\emph
+f\_project}) of the current schema ($Schema$) onto the magic predicate
+adornment ($Sig$) is sound.
+
 
 \begin{figure*}[!t]
 \ssp
@@ -465,73 +567,104 @@ of the new rule for the current iteration.
 Finalize rule: $sup_{i-1} \ol{:-} sup_{i-j}, G_j, G_{j+1}, \cdots, G_{i-1}$.}
 \end{figure*}
 
+The occurrence of a \ol{break} tuple indicates that a magic predicate has been
+discovered at position~$i$ in the original rule~$r$.  We need to create the following
+two rules in response to such a \ol{break} tuple.
+\begin{itemize}
+  \ssp
+  \item \ol{sup\_rule1} $sup_{i-1}$~\ol{:-}~$sup_{i-j}, G_j, G_{j+1}, \cdots, G_{i-1}$.
+  \item \ol{sup\_rule2} $m_p$~\ol{:-}~$sup_{i-1}$.
+\end{itemize}
+Assume $j$ subgoals have been traversed prior to the magic predicate.  The body
+of rule $r$ up to but not including the magic predicate has the following form
+$sup_{i-j}, G_j, G_{j+1}, \cdots, G_{i-1}$, where $sup_{i-j}$ is the previous
+\ol{sup} predicate with the subsequent subgoals $G$ not include the magic
+predicate at position~$i$.  
+
+Recall that the \ol{subNext} contained a new rule identifier.  This identifier
+will be for rule~\ol{sup\_rule1}, which feeds values to $sup_{i-1}$.  Also recall that
+while traversing non-magic subgoals in rule~$r$ via \ol{supNext}, we re-referenced
+those subgoals to rule~\ol{sup\_rule1}. Therefore, after a \ol{break}, all that remains 
+for rule~\ol{sup\_rule1} is the creation of its head predicate $sup_{i-1}$ and the rule
+itself. Figure~\ref{ch:magic:fig:rewrite5} contains two rules that perform this
+final step in the creation of rule~\ol{sup\_rule1}. 
+
 \begin{figure*}[!t]
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-/* Initiate this rewrite by inferring a {\bf group1} tuple with required information. */ \\
-ms24 {\bf group1}(@A, Pid, Rid, Pos, f\_idgen(), f\_idgen(), Name, Bound, f\_idgen()) :- \\
+/* Initiate this rewrite by inferring a {\bf sup\_rule2} tuple with required information. */ \\
+ms24 {\bf sup\_rule2}(@A, Pid, Rid, Pos, f\_idgen(), f\_idgen(), Name, Bound) :- \\
 \datalogspace break(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos). \\
 	
 /* Create a new magic predicate and reference it in the head of the new rule. */ \\
-ms25 {\bf sys::predicate}(@A, HeadFid, NewRid, false, MPName, MPTid, null, MPSchema, 0, null, 0) :- \\
-\datalogspace group1(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid). \\
+ms25 {\bf sys::predicate}(@A, HeadFid, NewRid, false, MPName, MPTid, null, MPSchema, 0) :- \\
+\datalogspace sup\_rule2(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema). \\
 	
 /* Find the supplementary predicate information at position $SupPos$ immediately \\
 proceeding the magic predicate position $Pos$. Add a single subgoal to the new rule \\
 that references this supplementary predicate. */ \\
-ms26 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :- \\
-\datalogspace {\bf group1}(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid), \\
+ms26 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1) :- \\
+\datalogspace {\bf sup\_rule2}(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema), \\
 \datalogspace {\bf sup}(@A, Pid, Rid, SupPos, Name, Schema, Tid), \\
 \datalogspace SupPos == Pos - 1. \\
 	
 /* Commit the new Rule. */ \\
 ms27 {\bf sys::rule}(@A, NewRid, Pid, RName, HeadFid, null, false, 2) :- \\
-\datalogspace {\bf group1}(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema, MPTid), \\
+\datalogspace {\bf sup\_rule2}(@A, Pid, Rid, Pos, NewRid, HeadFid, MPName, MPSchema), \\
 \datalogspace RName := "MagicPredFill" + MPName + Pos. \\
 
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal} Rule for passing values from $sup_{i-1}$ to the 
-magic predicate under consideration. Finalize rule: $m_p$ :- $sup_{i-1}$.}
+\caption{\label{ch:magic:fig:rewrite6} Rule for passing values from $sup_{i-1}$ to the 
+magic predicate under consideration. Finalize rule: sup\_rule2 $m_p$ :- $sup_{i-1}$.}
 \end{figure*}
 
-\begin{figure*}[!t]
-\ssp
-\centering
-\begin{boxedminipage}{\linewidth}
-/* Create the group record that will contain the new rule identifier \\
-and the new head predicate identifier. */ \\
-ms28 {\bf group2}(@A, Pid, Rid, Pos, f\_idgen(), f\_idgen()) :- \\
-\datalogspace {\bf break}(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos). \\
-	
-/* Create head predicate that references $sup_i$ in the new rule at position $0$. */ \\
-ms29 {\bf sys::predicate}(@A, HeadFid, NewRid, false, Name, Tid, null, Schema, 0, null, 0) :- \\
-\datalogspace {\bf group2}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
-\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema, Tid). \\
-	
-/* Create delta predicate that references  $sup_{i-1}$ (by looking up sup  \\
-tuple in position $Pos - 1$) in the new rule at position $1$. */ \\
-ms30 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :- \\
-\datalogspace {\bf group2}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
-\datalogspace {\bf sup}(@A, Pid, Rid, SupPos, Name, Schema, Tid), \\
-\datalogspace SupPos == Pos - 1. \\
-	
-/* Create new subgoal $G_i$ that references the magic predicate in top level rule, placing \\
-it in position $2$ (immediately following $sup_{i-1}$) in the new rule. */ \\
-ms31 {\bf sys::predicate}(@A, Fid, NewRid, false, Name, Tid, null, Schema, 2, AM, New) :- \\
-\datalogspace {\bf group2}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
-\datalogspace {\bf sys::predicate}(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New). \\
-	
-/* Commit the new Rule. */ \\
-ms32 {\bf sys::rule}(@A, NewRid, Pid, RName, HeadFid, null, false, 3, New) :- \\
-\datalogspace {\bf group2}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
-\datalogspace RName := "SupRuleGroup3" + Pos. \\
+Figure~\ref{ch:magic:fig:rewrite6} contains the rules that create
+\ol{sup\_rule2}.  Rule~\ol{ms24} in the figure creates a new \ol{sup\_rule2}
+tuple, which contains a new identifier for the rule, and head predicate.  The
+magic predicate $m_p$ is the head predicate for this rule, and it is created by
+rule~\ol{ms25} in the figure.  Rule~\ol{ms26} creates a reference to
+supplementary predicate $sup_{i-1}$ in the body of \ol{sup\_rule2}.  And
+finally, rule~\ol{ms27} creates the actual rule reference.
 
-\end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal} Create the rule that feeds supplementary
-relation $sup_i$ values from $sup_{i-1}$ and the magic predicate goal node $G_i$.
-Finalize rule: $sup_i \ol{:-} sup_{i-1}, G_i$., where $G_i$ is a magic predicate. }
-\end{figure*}
+
+%\begin{figure*}[!t]
+%\ssp
+%\centering
+%\begin{boxedminipage}{\linewidth}
+%/* Create the group record that will contain the new rule identifier \\
+%and the new head predicate identifier. */ \\
+%ms28 {\bf sup\_rule3}(@A, Pid, Rid, Pos, f\_idgen(), f\_idgen()) :- \\
+%\datalogspace {\bf break}(@A, Pid, Rid, Name, Bound, Pos, NewRid, HeadFid, NewPos). \\
+%	
+%/* Create head predicate that references $sup_i$ in the new rule at position $0$. */ \\
+%ms29 {\bf sys::predicate}(@A, HeadFid, NewRid, false, Name, Tid, null, Schema, 0, null, 0) :- \\
+%\datalogspace {\bf sup\_rule3}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
+%\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema, Tid). \\
+%	
+%/* Create delta predicate that references  $sup_{i-1}$ (by looking up sup  \\
+%tuple in position $Pos - 1$) in the new rule at position $1$. */ \\
+%ms30 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1, null, 0) :- \\
+%\datalogspace {\bf sup\_rule3}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
+%\datalogspace {\bf sup}(@A, Pid, Rid, SupPos, Name, Schema, Tid), \\
+%\datalogspace SupPos == Pos - 1. \\
+%	
+%/* Create new subgoal $G_i$ that references the magic predicate in top level rule, placing \\
+%it in position $2$ (immediately following $sup_{i-1}$) in the new rule. */ \\
+%ms31 {\bf sys::predicate}(@A, Fid, NewRid, false, Name, Tid, null, Schema, 2, AM, New) :- \\
+%\datalogspace {\bf sup\_rule3}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
+%\datalogspace {\bf sys::predicate}(@A, Fid, Rid, NotIn, Name, Tid, ECA, Schema, Pos, AM, New). \\
+%	
+%/* Commit the new Rule. */ \\
+%ms32 {\bf sys::rule}(@A, NewRid, Pid, RName, HeadFid, null, false, 3, New) :- \\
+%\datalogspace {\bf sup\_rule3}(@A, Pid, Rid, Pos, NewRid, HeadFid), \\
+%\datalogspace RName := "SupRuleGroup3" + Pos. \\
+%
+%\end{boxedminipage}
+%\caption{\label{ch:magic:fig:rewrite7} Create the rule that feeds supplementary
+%relation $sup_i$ values from $sup_{i-1}$ and the magic predicate goal node $G_i$.
+%Finalize rule: sup\_rule3 $sup_i \ol{:-} sup_{i-1}, G_i$., where $G_i$ is a magic predicate. }
+%\end{figure*}
 
 \begin{figure*}[!t]
 \ssp
@@ -540,45 +673,86 @@ Finalize rule: $sup_i \ol{:-} sup_{i-1}, G_i$., where $G_i$ is a magic predicate
 /* Restart the rule rewrite process right after magic predicate in position  \\
 $SupPos$ of the top level rule. The {\bf restart} tuple contains identifiers  \\
 for the new rule identifier and its corresponding head predicate. */ \\
-ms33 {\bf restart}(@A, Pid, Rid, SupPos, f\_idgen(), f\_idgen(), 1) :- \\
+ms28 {\bf restart}(@A, Pid, Rid, Name, SupPos+1, f\_idgen(), f\_idgen()) :- \\
 \datalogspace {\bf break}(@A, Pid, Rid, Name, Bound, SupPos, NewRid, HeadFid, NewPos). \\
 	
 /* Create an event predicate in the rule for the next iteration that  \\
-references the $sup_i$ predicate. */ \\
-ms34 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, NewPos, null, 0) :- \\
-\datalogspace {\bf restart}(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos), \\
-\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema, Tid). \\
+references the magic predicate $m_p$. */ \\
+ms29 {\bf sys::predicate}(@A, f\_idgen(), NewRid, false, Name, Tid, "DELTA", Schema, 1) :- \\
+\datalogspace {\bf restart}(@A, Pid, Rid, Name, Pos, NewRid, HeadFid, NewPos), \\
+\datalogspace {\bf sup}(@A, Pid, Rid, Pos, \_, Schema, Tid). \\
 	
 /* Restart iterator by deducing a new {\bf rewriteIter} tuple containing \\
 the new identifiers (rule and head predicate) and new positions. */ \\
-ms35 {\bf rewriteIter}(@A, Pid, Rid, Pos+1, NewRid, HeadFid, NewPos+1) :- \\
-\datalogspace {\bf restart}(@A, Pid, Rid, Pos, NewRid, HeadFid, NewPos). \\
+ms30 {\bf rewriteIter}(@A, Pid, Rid, Pos, NewRid, HeadFid, 2) :- \\
+\datalogspace {\bf restart}(@A, Pid, Rid, Pos, \_, NewRid, HeadFid, NewPos). \\
 
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:mpgoal}Rules for starting the next iteration after
+\caption{\label{ch:magic:fig:rewrite7}Rules for starting the next iteration after
 encountering a magic predicate in the top level rule. }
 \end{figure*}
 
+The rules in Figure~\ref{ch:magic:fig:rewrite7} restart the traversal of the
+rewrite in the target rule.  The \ol{break} tuple contains the position of the
+goal node that represents the magic predicate.  Rule~\ol{ms28} derives a
+\ol{restart} tuples at the position following the magic predicate and creates
+the new rule and head predicate identifiers.  Rule~\ol{ms29} adds the magic
+predicate $m_p$ to the first position in the new rule for the next iteration.
+And finally, rule~\ol{ms30} generates a \ol{rewriteIter} tuple with the new
+position starting at $2$.
+
+
+\subsection{Termination}
+
+\begin{figure*}[!t]
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+/* Count the number of rules that will be rewritten. */ \\
+ms28 {\bf rewriteCount}(@A, Pid, a\_count<*>) :- \\
+\datalogspace {\bf commitMagicPred}(@A, Pid, Name, ...), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, Rid, HeadFid, ...), \\
+\datalogspace {\bf sys::predicate}(@A, HeadFid, Rid, \_, Name, ...). \\
+	
+/* Count the number of rules that have been rewritten. A rule \\
+has been fully rewritten when the \ol{rewriteIter} $Pos$ is at \\
+the last subgoal at position $Goals$. */ \\
+ms29 {\bf completeCount}(@A, Pid, a\_count<*>) :- \\
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, \ldots), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, Rid, \ldots, Goals), \\
+\datalogspace $Pos\ ==\ Goals$. \\
+	
+/* Since P2 does not support stratified Datalog we must manually detect  \\
+when the rewrite has completed. */ \\
+ms30 {\bf rewriteComplete}(@A, Pid) :-  \\
+\datalogspace {\bf rewriteCount}(@A, Pid, Count), \\
+\datalogspace {\bf completeCount}(@A, Pid, Count). \\
+
+/* Cleanup all rules that were rewritten. */ \\
+ms31 delete {\bf sys::rule}(@A, Rid, Pid, Rid, \ldots, Goals) :- \\
+\datalogspace {\bf rewriteComplete}(@A, Pid), \\
+\datalogspace {\bf rewriteIter}(@A, Pid, Rid, Pos, \ldots), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, Rid, \ldots, Goals), \\
+\datalogspace $Pos\ ==\ Goals$. \\
+
+/* Signal the completion of this rewrite. */ \\
+ms32 {\bf sys::program}(@A, Pid, Name, Rewrite, "magic-sets", Text, Msg, P2DL, Src) :- \\
+\datalogspace {\bf rewriteComplete}(@A, Pid), \\
+\datalogspace {\bf sys::program}(@A, Pid, Name, Rewrite, Stage, Text, Msg, P2DL, Src).
+
+\end{boxedminipage}
+\caption{\label{ch:magic:fig:rewrite7} Detect the termination of the magic-sets rewrite. 
+On termination, clean up old rule state and signal the completion of the rewrite.}
+\end{figure*}
+
+The final step in the rewrite is to detect when the rewrite has completed.  On
+completion, we must clean up all references to rules that were rewritten.  P2's
+lack of support for stratified Datalog means that we must detect the
+termination of the rewrite manually.  Our termination rules are shown in
+Figure~\ref{ch:magic:fig:rewrite7}.
+
 
 \section{Magic-sets by example}
-
-In the program rewrite phase, Ullman's algorithm traverses the rule/goal
-graph generating magic predicates for each ``goal'' vertex that is
-unique for its (IDB) predicate; in the example, there are multiple vertices
-with different adornments for \ol{link}, but only one for \ol{path},
-so only \ol{path} is chosen.  This magic predicate is inserted in
-the $0$-th position of all rules with the corresponding goal predicate
-as the rule head, with the bound variables of the signature as
-attributes. In the example, the magic predicate for \ol{path} has the
-form \ol{magic\_path(@X, Y)} since \ol{X, Y} are the bound 
-variables in the signature of the ``goal'' vertex.  Also
-\emph{supplementary} predicates are similarly created for all
-encountered ``rule'' vertices during the graph traversal and inserted
-within the corresponding original rule.  For example, {\tt sup\_r2\_1(@X,Y,Z,C1)} 
-is created for ``rule'' vertex $r_{2,1}$ with the bound variables of
-the adornments in the vertex, and placed in the original rule \ol{r2}
-between the \ol{link} and \ol{path} predicates.
-
 
 \begin{figure*}[!t]
 \ssp
@@ -608,107 +782,132 @@ r2\_g3c {\bf path}(@X, Y, P, C) :- \\
 Query: {\bf path}(@LOCALHOST, "localhost:10000", P, C).
 \end{boxedminipage}
 \caption{\label{ch:evita:fig:magicSP}A magic-sets rewrite of
-      the rules in Figure~\ref{ch:evita:fig:querySP} (materialize statements not shown).}
+      the rules in Figure~\ref{ch:magic:fig:basicSP} (materialize statements not shown).}
 \end{figure*}
 
-Finally, in the filter population phase, the algorithm maintains the
-magic predicate relation, which was placed within the rewritten program
-in the previous phases.  Any a priori known bindings about the root goal vertex
+In this section we summarize the two phases of our rewrite by stepping through
+its execution on the shortest path program (Figure~\ref{ch:magic:fig:basicSP}).
+The Rule/Goal graph for this program was presented in
+Figure~\ref{ch:magic:fig:rggraph}. We now focus on the final rewritten 
+program, which is shown in Figure~\ref{ch:magic:fig:magicSP}.
+
+A transitive closure over the Rule/Goal graph generates magic and supplementary
+predicates specific to each ``goal'' vertex in the \ol{magicPred} table.  In
+the example, there are multiple vertices with different adornments for
+\ol{link}, but only one for \ol{path}, so only \ol{path} is considered.  The
+\ol{path} magic predicate is inserted in the $1^{st}$ position of all rules
+with the \ol{path} predicate as the rule head.  Furthermore, the \ol{path}
+magic predicate includes the bound variables from the \ol{path} head predicate
+relative to the \ol{path} adornment (signature).  In the example, the adornment
+for \ol{path} is $bbff$ and the schema (for both rules~\ol{r1} and \ol{r2}) is
+$[@X,Y,P,C]$.  Therefore, the \ol{path} magic predicate has the form
+\ol{magic\_path(@X, Y)} since \ol{X, Y} are the bound variables in the
+signature of the ``goal'' vertex.  Also \emph{supplementary} predicates are
+similarly created for all encountered ``rule'' vertices during the graph
+traversal and inserted within the corresponding original rule.  For example,
+{\tt sup\_r2\_1(@X,Y,Z,C1)} is created for ``rule'' vertex $r_{2,1}$ with the
+bound variables of the adornments in the vertex, and placed in the original
+rule \ol{r2} between the \ol{link} and \ol{path} predicates.
+
+Also during the second phase transitive closure, the algorithm maintains the
+magic predicate relation, which was placed within the rewritten program.  Any 
+a priori known bindings about the root goal vertex
 (e.g., from the user's query) are placed in the magic relation. In the example, the 
 fact ``\ol{magic\_path(LOCALHOST, "localhost:10000").}'' is put into the
 database from the bindings in the \ol{path} query.  Also, any edges in
 the rule/goal graph that start from a rule vertex and end at a goal vertex, with a
 unique adornment (i.e., upward arrows in the recursive tree that constitutes the graph), are written as
 rules that generate new magic tuples from new tuples of the rule
-node's supplementary predicate. In the example, rule \ol{r2\_g1a}~\footnote{Rule names that
-deal with magic and supplementary predicate maintenance were named according
-to Ullman's rule groups. For instance, rules named \ol{r*\_g3[a-c]} follow rule group 3
-and rule \ol{r2\_g1a} follows rule group 1.}  adds
-more magic facts as more \ol{sup\_r2\_1} tuples are produced.
+node's supplementary predicate. In the example, rule \ol{r2\_g1a}
+%~\footnote{Rule names that
+%deal with magic and supplementary predicate maintenance were named according
+%to Ullman's rule groups. For instance, rules named \ol{r*\_g3[a-c]} follow rule group 3
+%and rule \ol{r2\_g1a} follows rule group 1.}  
+adds more magic facts as more \ol{sup\_r2\_1} tuples are produced.
 
-Our rewrite implementation of this algorithm first traverses every rule from
-head predicate to body predicates from left to right, constructing the
-rule/goal graph in the recursive manner of the program analysis, in a single
-fixpoint.  Then the new program rules (and replacement of old rules) for the
-program rewrite and filter population phases are performed via a traversal of
-the newly constructed rule/goal graph in a subsequent fixpoint.  Finally,
-initial magic facts are created by direct translation from the query.  Other
-details that we elide here involve detecting eligibility of a predicate for a
-magic-sets rewrite (whether or not it has a unique adornment in the rule/goal
-graph), and state cleanup.
+%Our rewrite implementation of this algorithm first traverses every rule from
+%head predicate to body predicates from left to right, constructing the
+%rule/goal graph in the recursive manner of the program analysis, in a single
+%fixpoint.  Then the new program rules (and replacement of old rules) for the
+%program rewrite and filter population phases are performed via a traversal of
+%the newly constructed rule/goal graph in a subsequent fixpoint.  Finally,
+%initial magic facts are created by direct translation from the query.  Other
+%details that we elide here involve detecting eligibility of a predicate for a
+%magic-sets rewrite (whether or not it has a unique adornment in the rule/goal
+%graph), and state cleanup.
+%
+%\begin{figure*}
+%\ssp
+%\begin{boxedminipage}{\linewidth}
+%{\bf materialize}(sup,infinity,infinity,keys(2,3,4)). \\
+%{\bf materialize}(adornment,infinity,infinity,keys(2,5,6)). \\
+%{\bf materialize}(idbPredicate,infinity,infinity,keys(2,3)). \\
+%\\
+%mg1 {\bf goalCount}(@A, Pid, PredName, a\_count$<*>$) :- \\
+%\datalogspace {\bf idbPredicate}(@A, Pid, PredName), \\
+%\datalogspace {\bf adornment}(@A, Pid, Rid, Pos, PredName, Sig). \\
+%\\
+%mg2 {\bf magicPred}(@A, Pid, GoalName, Sig) :- \\
+%\datalogspace {\bf goalCount}(@A, Pid, GoalName, Count), \\
+%\datalogspace {\bf adornment}(@A, Pid, \_, \_, GoalName, Sig). \\
+%\datalogspace Count == 1. \\
+%\\
+%mg3 {\bf sup}(@A, Pid, Rid, Pos, Name, Schema) :- \\
+%\datalogspace {\bf magicPred}(@A, Pid, Name, Sig), \\
+%\datalogspace {\bf rule}(@A, Rid, Pid, \_, HeadPid, \_, \_, \_), \\
+%\datalogspace {\bf predicate}(@A, HeadPid, Rid, \_, Name, \_, \_, Schema, \_, \_, \_), \\
+%\datalogspace Schema := {\em f\_project}(Sig, Schema), \\
+%\datalogspace Name := "magic\_" + Name, Pos := 0. \\
+%\\
+%mg4 {\bf supNext}(@A, Pid, Rid, Pos+1, Schema) :- \\
+%\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema). \\
+%\\
+%mg5 {\bf sup}(@A, Pid, Rid, Pos, Name, Schema) :- \\
+%\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, PrevSupSchema),\\
+%\datalogspace {\bf rule}(@A, Rid, Pid, RuleName, \_, \_, \_, \_),\\
+%\datalogspace {\bf predicate}(@A, \_, Rid, \_, \_, \_, \_, Schema, Pos, \_, \_),\\
+%\datalogspace Name := "sup\_" + RuleName + "\_" + {\em f\_tostr}(Pos),\\
+%\datalogspace Schema := {\em f\_merge}(PrevSupSchema, PredSchema).\\
+%\\
+%mg6 {\bf adornment}(@A, Pid, Rid, Pos, PredName, Sig) :- \\
+%\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, PrevSupSchema),\\
+%\datalogspace {\bf idbPredicate}(@A, Pid, PredName), \\
+%\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, \_),\\
+%\datalogspace {\bf predicate}(@A, \_, Rid, \_, PredName, \_, \_,Schema, Pos, \_, \_),\\ 
+%\datalogspace Sig := {\em f\_adornment}(PrevSupSchema, Schema).
+%\end{boxedminipage}
+%\caption{\label{ch:evita:fig:magicRules}Rule/Goal graph traversal rules.}
+%\end{figure*}
+%
+%To give a flavor of the \OVERLOG implementation of Magic Sets,
+%Figure~\ref{ch:evita:fig:magicRules} shows six rules that build the state
+%necessary in the magic-sets rewrite by traversing the rule/goal graph.  The
+%\ol{adornment} predicate contains the predicate name ($PredName$) and an
+%adornment string ($Sig$), which is initially populated with the query predicate
+%adornments.  Rule \ol{mg1} counts the number of adornments for each {\em IDB}
+%predicate.  If this count is unique ($Count == 1$) in rule \ol{mg2}, then a
+%\ol{magicPred} tuple is created.  Rule \ol{mg3} triggers on a \ol{magicPred}
+%tuple and, for each rule whose head predicate is named by the \ol{magicPred}
+%tuple, it generates a \ol{sup} predicate with a $Schema$ attribute containing
+%the bound variables that exist at the given rule position.  Rule \ol{mg4}
+%detects a new \ol{sup} predicate (like the one generated for the rule head) and
+%triggers an event for the subsequent \ol{sup} predicate position in the given
+%rule.  The three way join in rule \ol{mg5} produces a tuple that contains the
+%schema of the previous \ol{sup} predicate ($PrevSupSchema$) and the schema of
+%the predicate ($Schema$) in the subsequent rule position, should one exist.
+%The head \ol{sup} predicate schema in rule \ol{mg5} contains all the variables
+%from the previous \ol{sup} predicate and the schema of the current predicate,
+%since this schema represents the bound variables that will exist in the
+%subsequent rule position.  Rule \ol{mg6} creates an \ol{adornment} out of the
+%predicate in the given rule position, if that predicate is part of the {\em
+%IDB}.  The {\em f\_adornment} function creates a new signature from the bound
+%variables in the $PrevSupSchema$ attribute, and the variables in the predicate
+%$Schema$ attribute.  At the end of the rule/goal graph traversal, those
+%predicates that define a unique adornment are converted into special magic
+%predicates, and the rules that mention these magic predicates are rewritten
+%using the information contained in the \ol{sup} table.
 
-\begin{figure*}
-\ssp
-\begin{boxedminipage}{\linewidth}
-{\bf materialize}(sup,infinity,infinity,keys(2,3,4)). \\
-{\bf materialize}(adornment,infinity,infinity,keys(2,5,6)). \\
-{\bf materialize}(idbPredicate,infinity,infinity,keys(2,3)). \\
-\\
-mg1 {\bf goalCount}(@A, Pid, PredName, a\_count$<*>$) :- \\
-\datalogspace {\bf idbPredicate}(@A, Pid, PredName), \\
-\datalogspace {\bf adornment}(@A, Pid, Rid, Pos, PredName, Sig). \\
-\\
-mg2 {\bf magicPred}(@A, Pid, GoalName, Sig) :- \\
-\datalogspace {\bf goalCount}(@A, Pid, GoalName, Count), \\
-\datalogspace {\bf adornment}(@A, Pid, \_, \_, GoalName, Sig). \\
-\datalogspace Count == 1. \\
-\\
-mg3 {\bf sup}(@A, Pid, Rid, Pos, Name, Schema) :- \\
-\datalogspace {\bf magicPred}(@A, Pid, Name, Sig), \\
-\datalogspace {\bf rule}(@A, Rid, Pid, \_, HeadPid, \_, \_, \_), \\
-\datalogspace {\bf predicate}(@A, HeadPid, Rid, \_, Name, \_, \_, Schema, \_, \_, \_), \\
-\datalogspace Schema := {\em f\_project}(Sig, Schema), \\
-\datalogspace Name := "magic\_" + Name, Pos := 0. \\
-\\
-mg4 {\bf supNext}(@A, Pid, Rid, Pos+1, Schema) :- \\
-\datalogspace {\bf sup}(@A, Pid, Rid, Pos, Name, Schema). \\
-\\
-mg5 {\bf sup}(@A, Pid, Rid, Pos, Name, Schema) :- \\
-\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, PrevSupSchema),\\
-\datalogspace {\bf rule}(@A, Rid, Pid, RuleName, \_, \_, \_, \_),\\
-\datalogspace {\bf predicate}(@A, \_, Rid, \_, \_, \_, \_, Schema, Pos, \_, \_),\\
-\datalogspace Name := "sup\_" + RuleName + "\_" + {\em f\_tostr}(Pos),\\
-\datalogspace Schema := {\em f\_merge}(PrevSupSchema, PredSchema).\\
-\\
-mg6 {\bf adornment}(@A, Pid, Rid, Pos, PredName, Sig) :- \\
-\datalogspace {\bf supNext}(@A, Pid, Rid, Pos, PrevSupSchema),\\
-\datalogspace {\bf idbPredicate}(@A, Pid, PredName), \\
-\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, \_),\\
-\datalogspace {\bf predicate}(@A, \_, Rid, \_, PredName, \_, \_,Schema, Pos, \_, \_),\\ 
-\datalogspace Sig := {\em f\_adornment}(PrevSupSchema, Schema).
-\end{boxedminipage}
-\caption{\label{ch:evita:fig:magicRules}Rule/Goal graph traversal rules.}
-\end{figure*}
-
-To give a flavor of the \OVERLOG implementation of Magic Sets,
-Figure~\ref{ch:evita:fig:magicRules} shows six rules that build the state
-necessary in the magic-sets rewrite by traversing the rule/goal graph.  The
-\ol{adornment} predicate contains the predicate name ($PredName$) and an
-adornment string ($Sig$), which is initially populated with the query predicate
-adornments.  Rule \ol{mg1} counts the number of adornments for each {\em IDB}
-predicate.  If this count is unique ($Count == 1$) in rule \ol{mg2}, then a
-\ol{magicPred} tuple is created.  Rule \ol{mg3} triggers on a \ol{magicPred}
-tuple and, for each rule whose head predicate is named by the \ol{magicPred}
-tuple, it generates a \ol{sup} predicate with a $Schema$ attribute containing
-the bound variables that exist at the given rule position.  Rule \ol{mg4}
-detects a new \ol{sup} predicate (like the one generated for the rule head) and
-triggers an event for the subsequent \ol{sup} predicate position in the given
-rule.  The three way join in rule \ol{mg5} produces a tuple that contains the
-schema of the previous \ol{sup} predicate ($PrevSupSchema$) and the schema of
-the predicate ($Schema$) in the subsequent rule position, should one exist.
-The head \ol{sup} predicate schema in rule \ol{mg5} contains all the variables
-from the previous \ol{sup} predicate and the schema of the current predicate,
-since this schema represents the bound variables that will exist in the
-subsequent rule position.  Rule \ol{mg6} creates an \ol{adornment} out of the
-predicate in the given rule position, if that predicate is part of the {\em
-IDB}.  The {\em f\_adornment} function creates a new signature from the bound
-variables in the $PrevSupSchema$ attribute, and the variables in the predicate
-$Schema$ attribute.  At the end of the rule/goal graph traversal, those
-predicates that define a unique adornment are converted into special magic
-predicates, and the rules that mention these magic predicates are rewritten
-using the information contained in the \ol{sup} table.
-
-\subsection{Magic-sets in the Network}
+\section{Magic-sets in the Network}
 
 With the details of the magic-sets algorithm behind us, what is
 intuitively happening to the shortest-path snippet in
@@ -781,8 +980,7 @@ received from the network, and those generated locally for local consumption
 are pruned away by the rewrite.
 
 
-
 \section{Summary}
-\label{ch:evita:sec:summary}
+\label{ch:magic:sec:summary}
 
 
