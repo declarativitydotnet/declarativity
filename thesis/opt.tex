@@ -1,21 +1,31 @@
 \chapter[Declarative Optimization]{Declarative Optimization}
 \label{ch:opt}
 
-Having described the Evita Raced infrastructure, we now turn to the issue of
-specifying query optimizations in \OVERLOG.  In this section we describe three
-of the compiler stages we have developed for Evita Raced.
-Section~\ref{ch:evita:sec:systemr} discusses a dynamic programming optimizer
-stage akin to that of System R.  In Section~\ref{ch:evita:sec:cascades}, we
-present an optimization that performs a top-down search strategy, which is
-modeled after the Cascades optimizer.  Section~\ref{ch:evita:sec:magic}
-describes a stage that performs magic-sets rewrite on recursive \OVERLOG
-programs.  Finally, Section~\ref{ch:evita:sec:localization} describes our
-reimplementation in Evita Raced of the localization rewrite from Loo et
-al.~\cite{loo-sigmod06}.
+Previous chapters described the Evita Raced declarative architecture and its
+reuse of the query executor in a stylized fashion to serve as the engine
+beneath the query compilation process.  This resulted in an {\em economy of
+mechanism}~\cite{Saltzer75theprotection} not afforded by earlier extensible
+optimizers (i.e., EXODUS~\cite{exodus}, Starburst~\cite{phh92},
+Volcano~\cite{volcano}, OPT++~\cite{opt++}).  In Chapter~\ref{ch:magic}, we
+presented our first declarative optimization; the magic-sets rewrite, which is
+based on a transitive closure traversal over the rule/goal graph of an \OVERLOG
+program.
 
+We now turn our attention to cost-based optimizations, which are commonly based
+on dynamic programming techniques.  Section~\ref{ch:opt:sec:systemr} discusses
+a dynamic programming optimizer stage akin to that of System R.  In
+Section~\ref{ch:opt:sec:cascades}, we present a declarative version of the
+Cascades optimizer, which is structured around a dynamic programming technique
+called ``memoization.'' Based on our experience, we believe that declarative
+metacompilation is a clean, architecturally parsimonious way to build the next
+generation of extensible query optimizers for a wide variety of emerging
+application domains, where the relevant optimizations are likely to evolve over
+time.  We begin with a review of literature surrounding extensible query
+optimizers (Section~\ref{ch:opt:sec:related}) and conclude with some final
+thoughts on the Evita Raced work (Section~\ref{ch:opt:sec:conclude}).
 
 \section{Related Work}
-\label{ch:evita:sec:related}
+\label{ch:opt:sec:related}
 
 The pioneering work on extensible query optimizer architectures was done in the
 EXODUS~\cite{exodus} and Starburst~\cite{lohman,phh92} systems, which provided
@@ -35,7 +45,7 @@ individual plan transformations to extensibility; the actual search algorithms
 or transformation orderings of EXODUS, Volcano, Cascades, and the Starburst
 cost-based optimizer were confined to procedural code.  By contrast, Evita Raced
 does not embed a search algorithm, instead leaving that open to specification
-as needed.  As we show in Section~\ref{ch:evita:sec:systemr}, both the dynamic programming
+as needed.  As we show in Section~\ref{ch:opt:sec:systemr}, both the dynamic programming
 bottom-up strategy and the Cascades top-down strategy naturally fit to a
 Datalog-based rule language.
 
@@ -48,7 +58,7 @@ Evita Raced embraces these additional dimensions of extensibility introduced by
 Opt++, but provides them in a higher-level declarative programming framework.
 
 The cyclic dataflow used for stage scheduling in Evita Raced
-(Section~\ref{ch:evita:sec:stages}) resembles the continuous query engine of
+(Section~\ref{ch:opt:sec:stages}) resembles the continuous query engine of
 TelegraphCQ, with our StageScheduler and Demux elements working together to
 behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This
 connection occurred to us long after we developed our design, but in retrospect
@@ -58,7 +68,7 @@ streaming into TelegraphCQ.
 
 
 \section{System R Optimization}
-\label{ch:evita:sec:systemr}
+\label{ch:opt:sec:systemr}
 
 \begin{figure*}
 \ssp
@@ -116,7 +126,7 @@ streaming into TelegraphCQ.
       \end{algorithmic}
     {\bf end}
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:systemr}System R optimizer algorithm.}
+\caption{\label{ch:opt:fig:systemr}System R optimizer algorithm.}
 \end{figure*}
 
 The System R optimizer paper by Selinger, et al.  is the canonical textbook
@@ -132,37 +142,36 @@ statistics, especially in a distributed fashion over all relation partitions.
 
 Our focus in this section is on the basic dynamic programming algorithm for the
 state-space enumeration at the heart of the System R optimizer.
-Figure~\ref{ch:evita:fig:systemr} gives a (simplified) sketch of this
+Figure~\ref{ch:opt:fig:systemr} gives a (simplified) sketch of this
 algorithm.  It enumerates query plans for increasingly-large subgoals of the
 query optimizer.  It fills in a dynamic programming table (e.g., $plans$ in
-Figure~\ref{ch:evita:fig:systemr}) with plans that cover a given number of
+Figure~\ref{ch:opt:fig:systemr}) with plans that cover a given number of
 (relational algebra) predicates that appear in the query.  The dynamic
 programming task is to fill in this table with the lowest-estimated-cost query
 plan among all plans producing an {\em equivalent} output relation (i.e., plans
 composed of the same terms).  The \ol{bestplan} procedure in
-Figure~\ref{ch:evita:fig:systemr} captures the essence of generating and
+Figure~\ref{ch:opt:fig:systemr} captures the essence of generating and
 choosing optimal plans with a given number of predicates.
 
-In the System R optimizer, the {\em principle of optimality} is assumed to hold: the
-lowest-cost solution to some plan will be built from the optimal solutions to
-subplans.  Thus dynamic programming can proceed in ``bottom-up'' fashion.  In a
-given program $P$ to be optimized, each rule's event predicate is the
-``outermost,'' streaming relation in a query plan for the rule.  For a given
-rule $r \in P$, the optimizer generates plans of size $k$ terms by appending a
-single (thus unused) term from the rule body to the optimal plan of size $k-1$
-terms, as shown in the first loop of \ol{bestplan} in Figure~\ref{ch:evita:fig:systemr}.
-There are many additional details that we have chosen to gloss over in the
-pseudocode.  
-
-For instance, avoid combining a k-way plan with a 1-way plan if there is no
-join predicate between them, unless all predicates have been used up (i.e.,
-postpone Cartesian products).  We handle this in our \OVERLOG rules by ensuring
-the cost of such an option is greater than any other option that includes join
-predicates.  We now turn to describe the \OVERLOG rules for plan generation and
-conclude with the rules for best plan selection.
+In the System R optimizer, the {\em principle of optimality} is assumed to
+hold: the lowest-cost solution to some plan will be built from the optimal
+solutions to subplans.  Thus dynamic programming can proceed in ``bottom-up''
+fashion.  In a given program $P$ to be optimized, each rule's event predicate
+is the ``outermost,'' streaming relation in a query plan for the rule.  For a
+given rule $r \in P$, the optimizer generates plans of size $k$ terms by
+appending a single (thus unused) term from the rule body to the optimal plan of
+size $k-1$ terms, as shown in the first loop of \ol{bestplan} in
+Figure~\ref{ch:opt:fig:systemr}.  There are many additional details that we
+have chosen to gloss over in the pseudocode.  For instance, avoid combining a
+k-way plan with a 1-way plan if there is no join predicate between them, unless
+all predicates have been used up (i.e., postpone Cartesian products).  We
+handle this in our \OVERLOG rules by ensuring the cost of such an option is
+greater than any other option that includes join predicates.  We now turn to
+describe the \OVERLOG rules for plan generation and conclude with the rules for
+best plan selection.
 
 \subsection{Plan Generation}
-\label{ch:evita:sec:plangen}
+\label{ch:opt:sec:plangen}
 
 \begin{figure*}
 \ssp
@@ -171,7 +180,7 @@ conclude with the rules for best plan selection.
 pg1 {\bf plan}(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, \\
 \datalogspace \xspace \xspace Plan, Schema, Card, Cost, Pos, AM, Sort) :- \\
 \datalogspace {\bf systemr::programEvent}(@A, Pid, \_, \_, \_, \_, \_, \_),\\
-\datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, \_, \_, Schema, Pos, \_, \_),\\
+\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, \_, \_, Schema, Pos, \_, \_),\\
 \datalogspace Pos == $1$,\\
 \datalogspace PlanID := {\em f\_idgen()}, SubPlanID := $null$,\\
 \datalogspace Type := "Predicate", TypeID := PredID,\\
@@ -179,10 +188,10 @@ pg1 {\bf plan}(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, \\
 \datalogspace Card := $1$, Cost := $1$,\\
 \datalogspace AM := "STREAM", Sort := $null$.
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:planseed}Plan seed rule.}
+\caption{\label{ch:opt:fig:planseed}Plan seed rule.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:systemr} presents the System R algorithm for plan
+Figure~\ref{ch:opt:fig:systemr} presents the System R algorithm for plan
 generation in two phases.  The first is generating all access methods for a
 given relation mentioned in the query (e.g., in the ``from'' clause).
 Subsequent to that, a second phase enumerates all possible join orders and
@@ -193,19 +202,19 @@ design, our first phase simply generates a plan that listens for such event
 tuples.  Extending this rule to consider access methods would entail adding a
 predicate that references all access methods to a given relation.
 
-Figure~\ref{ch:evita:fig:planseed} shows the optimizer rule that creates the
+Figure~\ref{ch:opt:fig:planseed} shows the optimizer rule that creates the
 initial plan for each rule from the event predicate.  The \ol{plan} tuple
 contains a query plan for a given rule, and the plan's \ol{size} reflects the
 number of term identifiers in the $Plan$ attribute (i.e., the number of leaves
 in the plan tree).  The optimizer listens on the \ol{programEvent} event stream
 in rule \ol{pg1}, which initiates the optimization process.  The
-\ol{programEvent} tuple is subsequently joined with the \ol{rule} table along
+\ol{programEvent} tuple is subsequently joined with the \ol{sys::rule} table along
 the $Pid$ (program identifier) attribute to obtain the set of rules defined in
 the input program.  The resulting set of rule tuples are each joined with the
-\ol{predicate} table along the $Rid$ (rule identifier) attribute.  The result
+\ol{sys::predicate} table along the $Rid$ (rule identifier) attribute.  The result
 of this join produces a tuple for each predicate term defined by a given rule.
 The predicate term assigned to position~$1$ ($Pos == 1$) is by convention the
-event predicate term.  For each event \ol{predicate} tuple in each rule of the
+event predicate term.  For each event \ol{sys::predicate} tuple in each rule of the
 input program, rule \ol{pg1} adds a new plan to the \ol{plan} table.  The
 $Plan$ attribute represents the initial plan list, starting with the term
 identifier ($PredID$) that identifies streaming predicates.  Plan generation
@@ -234,10 +243,10 @@ pg2 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, "Predicate", PredID, \\
 \datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, OuterPlan, \\
 \datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, \_),  \\   
-\datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
-\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
 \datalogspace $PredPos < TermCount$,\\
-\datalogspace {\bf table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
+\datalogspace {\bf sys::table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
 \datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
 \datalogspace Card := OuterCard * TCard / $10$,\\
 \datalogspace Cost := OuterCost + (OuterCard * TCard),\\
@@ -245,11 +254,11 @@ pg2 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, "Predicate", PredID, \\
 \datalogspace Plan := {\em f\_cons}(PredID, OuterPlan), \\
 \datalogspace Schema := {\em f\_merge}(OuterSchema, PredSchema).\\
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:plangen1}nested-loop join method.}
+\caption{\label{ch:opt:fig:plangen1}nested-loop join method.}
 \end{figure*}
 
 Any table predicate appearing in a rule body is given a nested-loop-join plan,
-shown by rule~\ol{pg2} in Figure~\ref{ch:evita:fig:plangen1}.  The rule is
+shown by rule~\ol{pg2} in Figure~\ref{ch:opt:fig:plangen1}.  The rule is
 triggered on an update to the \ol{bestPlan} relation (described in
 Section~\ref{}), which contains the plan identifier ($PlanID$) used to select
 the reference plan in the \ol{plan} relation.  Each plan tuple contains a list
@@ -258,7 +267,7 @@ referenced by the $OuterPlan$ variable in the \ol{plan} predicate of
 rule~\ol{pg2}.
 
 The next step is to extend the \ol{plan} tuple with a ``new'' table predicate,
-which is done by joining with the \ol{predicate} relation along the same rule
+which is done by joining with the \ol{sys::predicate} relation along the same rule
 identifier ($Rid$).  The result of this join operation produces all predicates
 mentioned in the rule.  To get only the table predicates we join with the
 \ol{table} predicate.  The selection predicate $PredPos < TermCount$ ensures that
@@ -278,11 +287,11 @@ pg3 {\bf plan}(@A, ...) :-\\
 \datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, OuterPlan, \\
 \datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, \_),  \\   
-\datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
-\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
 \datalogspace $PredPos < TermCount$,\\
-\datalogspace {\bf table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
-\datalogspace {\bf index}(@A, Iid, Tid, Key, Type, Selectivity),\\
+\datalogspace {\bf sys::table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
+\datalogspace {\bf sys::index}(@A, Iid, Tid, Key, Type, Selectivity),\\
 \datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
 \datalogspace {\em f\_indexMatch}(OuterSchema, PredSchema, Key),\\
 \datalogspace Card   := OuterCard * (Selectivity * TCard),\\
@@ -290,12 +299,12 @@ pg3 {\bf plan}(@A, ...) :-\\
 \datalogspace AM := {\em f\_cons}(Type, Iid),\\
 \datalogspace ...
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:plangen2}index-nested-loop join method (diff from Figure~\ref{ch:evita:fig:plangen1}).}
+\caption{\label{ch:opt:fig:plangen2}index-nested-loop join method (diff from Figure~\ref{ch:opt:fig:plangen1}).}
 \end{figure*}
 
 An index-nested-loop join plan is generated by rule \ol{pg3} in
-Figure~\ref{ch:evita:fig:plangen2}.  Like rule~\ol{pg2}, it joins the
-\ol{bestPlan}, \ol{plan}, \ol{predicate}, and \ol{table} predicates to
+Figure~\ref{ch:opt:fig:plangen2}.  Like rule~\ol{pg2}, it joins the
+\ol{bestPlan}, \ol{plan}, \ol{sys::predicate}, and \ol{sys::table} predicates to
 get all table predicates referenced by the target rule.  That result is
 subsequently joined with the (additional) \ol{index} predicate, which adds
 index information to the result tuples.  The function {\em f\_indexMatch} tests
@@ -322,7 +331,7 @@ merge-join operator.  The cost of a merge-join operator depends on need to
 presort either relation.
 
 \subsection{Best plan selection}
-\label{ch:evita:sec:bestplan}
+\label{ch:opt:sec:bestplan}
 
 \begin{figure*}
 \ssp
@@ -338,9 +347,9 @@ bp2 {\bf bestPlan}(@A, Pid, Rid, PlanID, Plan2, Cost) :- \\
 \\
 bp3 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, Plan, \_, \_, Cost, \_, \_, Sort, \_), \\
-\datalogspace {\bf rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
-\datalogspace {\bf predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
-\datalogspace {\bf select}(@A, Sid, Rid, Pred, \_, \_), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
+\datalogspace {\bf sys::select}(@A, Sid, Rid, Pred, \_, \_), \\
 \datalogspace // participates in a later join OR is a prefix of a grouping attribute \\ 
 \datalogspace ({\em f\_contains}(PredID, Plan) ==  $false$ \&\& Pred.contains(Sort)) $||$ \\
 \datalogspace (PredPos == TermCount \&\& PredSchema.isGroupingAttribute(Sort)). \\
@@ -349,13 +358,12 @@ bp4 {\bf bestPlan}(@A, Pid, Rid, PlanID, Plan2, Cost) :- \\
 \datalogspace {\bf bestCostPlan}(@A, Pid, Rid, Plan1, Sort1, Cost), \\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, Plan2, \_, \_, Cost, \_, \_, Sort2, \_), \\
 \datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
-\datalogspace {\em f\_setequals}(Plan1, Plan2), Sort1 == Sort2.\\
-\\            
+\datalogspace {\em f\_setequals}(Plan1, Plan2), Sort1 == Sort2.
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:bestplan}Best plan selection.}
+\caption{\label{ch:opt:fig:bestplan}Best plan selection.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:bestplan} shows the rules that select the best plan
+Figure~\ref{ch:opt:fig:bestplan} shows the rules that select the best plan
 from a set of equivalent plans, in terms of the output result set and the
 ordering properties of the result set.  The \ol{bestCostPlan} predicate of
 rule~\ol{bp1} contains the plan with the minimum cost from the set of
@@ -367,7 +375,7 @@ of the sort attribute in the group condition {\emph enables} the handling of
 what Selinger calls ``interesting orders''~\cite{selinger}, along with optimal
 subplans.
 
-The remain rules deal with populating the \ol{bestPlan} table with the optimal
+The remaining rules populate the \ol{bestPlan} table with the optimal
 unordered and interestingly ordered plans.  Rule~\ol{bp2} selects the best
 unordered plan (no ordering attributes $Sort == null$).  An interesting order
 is determined in rule~\ol{bp3} by considering the Sort attribute of a plan with
@@ -403,15 +411,43 @@ a count aggregation over the table attributes, grouped by the bucket boundaries)
 stage that generates ew-histograms in this fashion consists of $23$ rules ($92$ lines). The 
 histogram data is stored in relational format with each row corresponding to a single bucket.
 To exploit these histograms, the cost and selectivity estimation in the \ol{plan} generation rules
-in Figures~\ref{ch:evita:fig:plangen1} and~\ref{ch:evita:fig:plangen2} are modified to incorporate
+in Figures~\ref{ch:opt:fig:plangen1} and~\ref{ch:opt:fig:plangen2} are modified to incorporate
 a join with the histogram data relation, and based on the bucket boundaries obtain density 
 estimations for a given selection predicate.
 
-\section{A top-down optimizer}
-\label{ch:evita:sec:cascades}
+\subsection{Termination}
+\label{ch:opt:sec:termination}
+
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+t1 {\bf rules}(@A, Pid, a\_count$<$Rid$>$) :-\\
+\datalogspace {\bf programEvent}(@A, Pid, \ldots), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots). \\
+
+t2 {\bf completeRule}(@A, Pid, Rid) :- \\
+\datalogspace {\bf bestPlan}(@A, Pid, Rid, \_, \_, Size, Cost), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots, Goals), \\
+\datalogspace $Size\ ==\ Goals - 1$. \\
+
+t3 {\bf completeRuleCount}(@A, Pid, a\_count$<$Rid$>$) :- \\
+\datalogspace {\bf completeRule}(@A, Pid, Rid). \\
+
+t4 {\bf sys::program}(@A, Pid, Name, Rewrite, "systemr", Text, Msg, P2DL, Src) :- \\
+\datalogspace {\bf completeRuleCount}(@A, Pid, Count), \\
+\datalogspace {\bf rules}(@A, Pid, Count), \\
+\datalogspace {\bf sys::program}(@A, Pid, Name, Rewrite, Stage, Text, Msg, P2DL, Src).
+
+\end{boxedminipage}
+\caption{\label{ch:opt:fig:termination}System R termination rules.}
+\end{figure*}
+
+\section{Cascades Optimization}
+\label{ch:opt:sec:cascades}
 
 The bottom-up, dynamic programming search strategy described in
-Section~\ref{ch:evita:sec:systemr} is a natural fit to a Datalog-based rule
+Section~\ref{ch:opt:sec:systemr} is a natural fit to a Datalog-based rule
 language.  One might think a top-down Cascades-style optimization
 strategy~\cite{cascades} would be hard to implement since \OVERLOG, like
 Datalog, is evaluated in a bottom-up fashion.  This is partially true.  Since
@@ -444,12 +480,12 @@ within a group.
 
 We now describe the declarative rules for performing our version of the
 Cascades top-down optimization.  The rules are divided into three modules, the
-search strategy (Figure~\ref{ch:evita:fig:cascades_top_down}), plan generation
-(Figure~\ref{ch:evita:fig:cascades_plan}), and winner selection
-(Figure~\ref{ch:evita:fig:cascades_winner}) The rules for winner selection and
+search strategy (Figure~\ref{ch:opt:fig:cascades_top_down}), plan generation
+(Figure~\ref{ch:opt:fig:cascades_plan}), and winner selection
+(Figure~\ref{ch:opt:fig:cascades_winner}) The rules for winner selection and
 plan generation may remind the reader of the best plan selection and plan
 generation rules in the System R optimization
-(Section~\ref{ch:evita:sec:systemr}).  However, the rules for search strategy
+(Section~\ref{ch:opt:sec:systemr}).  However, the rules for search strategy
 are unique to this optimizer, and will be the focus our attention.
 We note that the $9$ rules described here form the
 heart of the Cascades optimization in P2, consisting of a total $23$ rules
@@ -485,7 +521,7 @@ cst3 {\bf branch}(Group, BranchId+1, Cursor, Bound) :- \\
 \datalogspace Bound := $Cost < OldBound$ ? Cost : OldBound. \\
   
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:cascades_top_down} Cascades top down search strategy rules.}
+\caption{\label{ch:opt:fig:cascades_top_down} Cascades top down search strategy rules.}
 \end{figure*}
 
 The optimization begins when the root group (e.g., [ABC]) is inserted into the
@@ -494,7 +530,7 @@ attribute, that provides a cursor to the underlining predicates in the group.
 The cursor will generating all subgroups of the given group (e.g., cursor for
 group [ABC] will generate subgroups [AB], [BC], [AC]~\footnote{The subgroup
 cursors will further generate groups [A], [B], and [C].}).  Rule~\ol{cs2} in
-Figure~\ref{ch:evita:fig:cascades_top_down} creates a \ol{branch} tuple from
+Figure~\ref{ch:opt:fig:cascades_top_down} creates a \ol{branch} tuple from
 the initial \ol{group} tuple, using the {\emph cursor} method to create an
 initial cursor at position $0$.  A branch contains an upper bound (initialized
 to infinity) that is used to prune the cost of plans contained within the given
@@ -556,12 +592,12 @@ p3 {\bf plan}(PlanId, Group, "index-loop", OuterGroup, InnerGroup, Card, Cost) :
 \datalogspace PlanId := "index-loop" + Group.id(). \\
   
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:cascades_plan} Cascades plan generation rules.}
+\caption{\label{ch:opt:fig:cascades_plan} Cascades plan generation rules.}
 \end{figure*}
 
-Figure~\ref{ch:evita:fig:cascades_plan} gives three rules for generating plans
+Figure~\ref{ch:opt:fig:cascades_plan} gives three rules for generating plans
 in the Cascades optimizer.  The rules are very similar to the plan generation
-rules in the System R optimizer (Section{ch:evita:sec:systemr) but are based on
+rules in the System R optimizer (Section~\ref{ch:opt:sec:systemr}) but are based on
 {\emph winner} plans from relevant subgroups.  The schema of the \ol{plan}
 table has also changed to reference groups instead of actual plans, as
 indicated by the $OuterGroup$ and $InnerGroup$ variables in rules~\ol{p2} and
@@ -609,10 +645,10 @@ wc3 {\bf bestBranchCost}(Group, BranchId, {\bf min}$<Cost>$) :- \\
 \datalogspace {\bf plan}(PlanId, Group, BranchId, Method, \_, \_, \_, Cost). \\
   
 \end{boxedminipage}
-\caption{\label{ch:evita:fig:cascades_winner} Cascades winner selection rules.}
+\caption{\label{ch:opt:fig:cascades_winner} Cascades winner selection rules.}
 \end{figure*}
 
-The rules in Figure~\ref{ch:evita:fig:cascades_winner} select a {\emph winner} plan
+The rules in Figure~\ref{ch:opt:fig:cascades_winner} select a {\emph winner} plan
 from the plans deduced for a given group. We begin with rule~\ol{wc3}, which
 determines the optimal plan in a given group. The cost of this optimal plan is
 used to update the upper bound for the next branch taken by the search strategy.
@@ -652,7 +688,7 @@ winner has been chosen.
 %updated with the winning cost before proceeding to the next predicate.
 
 \section{Discussion}
-\label{ch:evita:sec:discussion}
+\label{ch:opt:sec:discussion}
 
 When we started this work, the vision of declaratively specified query
 optimization was appealing thanks to its elegance and its promise of usability
@@ -727,7 +763,7 @@ infrastructure could accelerate the ability of the P2 group to pursue
 modifications to \OVERLOG itself.
 
 \section{Summary}
-\label{ch:evita:sec:summary}
+\label{ch:opt:sec:summary}
 The Evita Raced metacompilation framework allows \OVERLOG compilation tasks to be written in \OVERLOG and
 executed in the P2 runtime engine. It provides significant extensibility via a relatively clean declarative
 language. Many of the tasks of query optimization -- dynamic programming, dependency-graph construction
@@ -735,7 +771,7 @@ and analysis, statistics gathering -- appear to be well served by a recursive qu
 metacompilation also leads to a very tight implementation with significant reuse of code needed for
 runtime processing.
 
-Even with the caveats expressed in Section~\ref{ch:evita:sec:discussion}, we are convinced that a declarative metacompiler
+Even with the caveats expressed in Section~\ref{ch:opt:sec:discussion}, we are convinced that a declarative metacompiler
 is much easier to program and extend than the monolithic query optimizers we have worked on previously.
 We are now at a  point where we can add significant features (e.g., histograms, broadcast rewrites, 
 stratification tests) in an hour or two, where they would otherwise have taken days or weeks of work
