@@ -1544,6 +1544,16 @@ author = {Leonard Shapiro and Yubo Fan and Yu Zhang and David Maier and Paul Ben
   year =         2009
 }
 
+@misc{java-history,
+  title =        "The History of Java Technology",
+  booktitle = {Sun Developer Network. ca. 1995. Retrieved 2010-04-30},
+  note = "http://www.java.com/en/javahistory/"
+}
+@misc{java,
+	title = "Java Programming Lanuage",
+	address = "http://www.java.com/"
+}
+
 @misc{hadoop,
   author =       "Owen O'Malley",
   title =        "Hadoop Map/Reduce Architecture",
@@ -1577,11 +1587,66 @@ author = {Leonard Shapiro and Yubo Fan and Yu Zhang and David Maier and Paul Ben
   year =         2006
 }
 
-@inproceedings{hive,
+@inproceedings{zookeeper,
+	 author = {Junqueira, Flavio P. and Reed, Benjamin C.},
+	  title = {The life and times of a zookeeper},
+	   booktitle = {Proceedings of the twenty-first annual symposium on Parallelism in algorithms and architectures},
+	    series = {SPAA '09},
+	     year = {2009},
+	      isbn = {978-1-60558-606-9},
+	       location = {Calgary, AB, Canada},
+	        pages = {46--46},
+		 numpages = {1},
+		  url = {http://doi.acm.org/10.1145/1583991.1584007},
+		   doi = {http://doi.acm.org/10.1145/1583991.1584007},
+		    acmid = {1584007},
+		     publisher = {ACM},
+		      address = {New York, NY, USA},
+		       keywords = {atomic broadcast, coordination, distributed algorithms, fault-tolerance, replication},
+}
+
+@inproceedings{hive-vldb,
   author = "Ashish Thusoo and others",
   title = "Hive - A Warehousing Solution Over a {Map-Reduce} Framework",
   booktitle = "VLDB",
   year = 2009
+}
+
+@misc{jaql,
+ author = {K. Beyer and V. Ercegovac and E. Shekita},
+ title = "Jaql: A JSON query language",
+ address = "http://www.jaql.org/"
+}
+
+@article{scope,
+	  author    = {Ronnie Chaiken and
+                 Bob Jenkins and
+                Per-{\AA}ke Larson and
+               Bill Ramsey and
+                    Darren Shakib and
+                    Simon Weaver and
+                    Jingren Zhou},
+	    title     = {SCOPE: easy and efficient parallel processing of massive
+		                   data sets},
+	      journal   = {PVLDB},
+	        volume    = {1},
+		  number    = {2},
+		    year      = {2008},
+		      pages     = {1265-1276},
+		        ee        = {http://www.vldb.org/pvldb/1/1454166.pdf},
+			  bibsource = {DBLP, http://dblp.uni-trier.de}
+}
+
+@misc{hbase,
+	author = "Apache",
+	address = "http://hbase.apache.org/",
+	note = "Apache HBase project"
+}
+
+@misc{cassandra,
+	author = "Apache",
+	address = "http://cassandra.apache.org/",
+	note = "The Apache Cassandra Project develops a highly scalable second-generation distributed database."
 }
 
 @misc{mahout,
@@ -1591,7 +1656,14 @@ author = {Leonard Shapiro and Yubo Fan and Yu Zhang and David Maier and Paul Ben
  note={\url{http://mloss.org/software/view/144/}}
 }
 
-@misc{jira,
+@inproceedings{zaharia-late,
+  author = {Matei Zaharia and Andy Konwinski and Anthony D. Joseph and Y Katz and Ion Stoica},
+  title = {Improving MapReduce Performance in Heterogeneous Environments},
+  booktitle = {In Proc. of the 8th Symposium on Operating Systems Design and Implementation (OSDI ’08) (San Diego CA},
+  year = {2008}
+}
+
+@misc{jira-2141,
   key =          "LATE Hadoop Jira",
   title =        "Hadoop Jira Issue Tracker",
   note =
@@ -1634,13 +1706,6 @@ author = {Leonard Shapiro and Yubo Fan and Yu Zhang and David Maier and Paul Ben
   volume =       50,
   number =       1,
   year =         2003
-}
-
-@inproceedings{late-sched,
-  author =       {M. Zaharia and others},
-  title =        {Improving {MapReduce} Performance in Heterogeneous Environments},
-  booktitle =    {OSDI},
-  year =         2008
 }
 
 @inproceedings{lbtrust,
@@ -1895,13 +1960,13 @@ author = {Leonard Shapiro and Yubo Fan and Yu Zhang and David Maier and Paul Ben
   year =         1997
 }
 
-@inproceedings{pig,
+@inproceedings{pig-sigmod,
   author =       {Christopher Olston and Benjamin Reed and Utkarsh
                   Srivastava and Ravi Kumar and Andrew Tomkins},
   title =        {{Pig Latin}: a not-so-foreign language for data
                   processing},
   booktitle =    {SIGMOD},
-  year =         2008,
+  year =         2008
 }
 
 @article{sawzall,

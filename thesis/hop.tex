@@ -226,7 +226,7 @@ MapReduce clusters.
 \label{ch:hop:sec:inter-pipe}
 
 Many practical computations cannot be expressed as a single MapReduce job, and
-the outputs of higher-level languages like Pig~\cite{pig} typically involve
+the outputs of higher-level languages like Pig~\cite{pig-sigmod} typically involve
 multiple jobs.  In the traditional Hadoop architecture, the output of each job
 is written to HDFS in the reduce step and then immediately read back from HDFS
 by the map step of the next job. Furthermore, the {\JT} cannot schedule a
@@ -563,7 +563,7 @@ to extract information from a data set, and then waits to view the
 results before proceeding with the next step in the data analysis
 process. This trend has accelerated with the development of high-level
 query languages that are executed as MapReduce jobs, such as
-Hive~\cite{hive}, Pig~\cite{pig}, and Sawzall~\cite{sawzall}.
+Hive~\cite{hive-vldb}, Jaql~\cite{jaql}, Pig~\cite{pig-sigmod}, and Sawzall~\cite{sawzall}.
 
 Traditional MapReduce implementations provide a poor interface for interactive
 data analysis, because they do not emit any output until the job has been
