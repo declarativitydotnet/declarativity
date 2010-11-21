@@ -1,90 +1,59 @@
-\chapter[Data-Centric Programming in the Datacenter]{Data-Centric Programming in the Datacenter}
-\label{ch:mrback}
-
-Today's cloud interfaces are convenient for launching multiple independent
-instances of traditional single-node services, but writing truly distributed
-software remains a significant challenge.  Distributed applications still
-require a developer to orchestrate concurrent computation and communication
-across machines, in a manner that is robust to delays and failures.  Writing and
-debugging such code is difficult even for experienced infrastructure
-programmers, and drives away many creative software designers who might
-otherwise have innovative uses for cloud computing platforms.
-
-Although distributed programming remains hard today, one important subclass is
-relatively well-understood by programmers: data-parallel computations expressed
-using interfaces like MapReduce~\cite{mapreduce-osdi}, Dryad~\cite{dryad}, and
-SQL\@.  These programming models substantially raise the level of abstraction
-for programmers: they mask the coordination of threads and events, and instead
-ask programmers to focus on applying functional or logical expressions to
-collections of data.  These expressions are then auto-parallelized via a
-dataflow runtime that partitions and shuffles the data across machines in the
-network. Although easy to learn, these programming models have traditionally
-been restricted to batch-oriented computations and data analysis tasks --- a
-rather specialized subset of distributed and parallel computing.
+\chapter[MapReduce: From an Elephant's Perspective]{Hadoop}
+\label{ch:hadoop}
 
 In this chapter, we review the MapReduce programming model and describe the
 salient features of Hadoop, a popular open-source implementation of MapReduce.
-We chose Hadoop because we were amazed by its complex Java-based implementation of
-an elegantly simple data processing model. Much of this complexity lies in the scheduling
-component responsible for executing MapReduce operators on cluster nodes. We asked ourselves
-whether it really takes over $6,000$ lines of code to schedule MapReduce. Furthermore, there is an almost 
-endless list of feature requests, many of which target scheduling policies, for Hadoop. Unfortunately,
-most of these features will never make it into a release since they would either take too long to 
-implement or are incompatible with the current code structure. Again, we pondered on whether this 
-was due to the present complexity in the Hadoop implementation.
-
-The remainder of this dissertation documents our exploration in answering the above concerns. We stop
-short of defining a new language for programming the cloud. Rather, we address the need for a new language
-that permits declarative specifications of high level functionality (i.e., scheduling). 
-In Chapter~\ref{ch:boom}, we describe an API-compliant reimplementation of the Hadoop 
-MapReduce scheduler written in the \OVERLOG declarative language. The resulting declarative scheduler
-models the present Hadoop scheduling policy using an order-of-magnitude less code and was implemented in
-a few weeks time. In Chapter~\ref{ch:hop}, we present a pipelined version of the Hadoop MapReduce engine, 
-where "map" and "reduce" operators no longer need to complete before emitting output data. This extension to 
-the MapReduce model brings with it new scheduling challenges that we were able to easily address in our 
-declarative scheduler.
+We focus on the Hadoop systems aspects relevant to the remaining chapters of
+this thesis.  We begin in Section~\ref{ch:hadoop:sec:progmodel} with the
+MapReduce programming model, which is based on two operations; map and reduce.
+In Section~\ref{ch:hadoop:sec:hadoop}, we present an overview of Hadoop;
+considered the most popular open source implementation of MapReduce.  We
+conclude this chapter with a summary of the modifications that we made to
+Hadoop, and the reasons for these changes.
 
 \section{MapReduce Programming Model}
-\label{ch:mrback:sec:progmodel}
-To use MapReduce, the programmer expresses their desired computation as a series
-of \emph{jobs}. The input to a job is an input specification that will yield
-key-value pairs. Each job consists of two stages: first, a user-defined
+\label{ch:hadoop:sec:progmodel}
+
+To use MapReduce, the programmer expresses their desired computation as a
+series of \emph{jobs}.  The input to a job is an input specification that will
+yield key-value pairs.  Each job consists of two stages: first, a user-defined
 \emph{map} function is applied to each input record to produce a list of
-intermediate key-value pairs. Second, a user-defined \emph{reduce} function is
+intermediate key-value pairs.  Second, a user-defined \emph{reduce} function is
 called once for each distinct key in the map output and passed the list of
 intermediate values associated with that key.  The MapReduce framework
 automatically parallelizes the execution of these functions and ensures fault
 tolerance.
 
 Optionally, the user can supply a \emph{combiner}
-function~\cite{mapreduce-osdi}. Combiners are similar to reduce functions,
+function~\cite{mapreduce-osdi}, which will be applied to the intermediate results
+between the map and reduce steps.  Combiners are similar to reduce functions,
 except that they are not passed \emph{all} the values for a given key: instead,
 a combiner emits an output value that summarizes the input values it was
-passed. Combiners are typically used to perform map-side ``pre-aggregation,''
+passed.  Combiners are typically used to perform map-side ``pre-aggregation,''
 which reduces the amount of network traffic required between the map and reduce
 steps.
 
 \section{Hadoop MapReduce}
-Hadoop is composed of \emph{Hadoop MapReduce}, an implementation of
-MapReduce designed for large clusters, and the \emph{Hadoop
-  Distributed File System} (HDFS), a file system optimized for
-batch-oriented workloads such as MapReduce. In most Hadoop jobs, HDFS
-is used to store both the input to the map step and the output of the
-reduce step. Note that HDFS is \emph{not} used to store intermediate
-results (e.g., the output of the map step): these are kept on each
+\label{ch:hadoop:sec:hadoop}
+
+Hadoop is composed of \emph{Hadoop MapReduce}, an implementation of MapReduce
+designed for large clusters, and the \emph{Hadoop Distributed File System}
+(HDFS), a file system optimized for batch-oriented workloads such as MapReduce.
+In most Hadoop jobs, HDFS is used to store both the input to the map step and
+the output of the reduce step.  Note that HDFS is \emph{not} used to store
+intermediate results (e.g., the output of the map step): these are kept on each
 node's local file system.
 
-A Hadoop installation consists of a single master node and many worker
-nodes. The master, called the \emph{JobTracker}, is responsible for
-accepting jobs from clients, dividing those jobs into \emph{tasks},
-and assigning those tasks to be executed by worker nodes. Each worker
-runs a \emph{TaskTracker} process that manages the execution of the
-tasks currently assigned to that node. Each {\TT} has a fixed number
-of slots for executing tasks (two maps and two reduces by
-default). A heartbeat protocol between each {\TT} and the {\JT} is used
-to update the {\JT}'s bookkeeping of the state of running tasks, and
-drive the scheduling of new tasks: if the \JT identifies free {\TT}
-slots, it will schedule further tasks on the {\TT}.
+A Hadoop installation consists of a single master node and many worker nodes.
+The master, called the \emph{JobTracker}, is responsible for accepting jobs
+from clients, dividing those jobs into \emph{tasks}, and assigning those tasks
+to be executed by worker nodes.  Each worker runs a \emph{TaskTracker} process
+that manages the execution of the tasks currently assigned to that node.  Each
+{\TT} has a fixed number of slots for executing tasks (two maps and two reduces
+by default).  A heartbeat protocol between each {\TT} and the {\JT} is used to
+update the {\JT}'s bookkeeping of the state of running tasks, and drive the
+scheduling of new tasks: if the \JT identifies free {\TT} slots, it will
+schedule further tasks on the {\TT}.
 
 \subsection{Map Task Execution}
 \label{ch:mrback:sec:maptask}
@@ -106,9 +75,9 @@ public interface Mapper<K1, V1, K2, V2> {
 \label{fig:mapfunction}
 \end{figure*}
 
-Each map task is assigned a portion of the input file called a \emph{split}. By
-default, a split contains a single HDFS block (64MB by default), so the total
-number of file blocks determines the number of map tasks.
+Each map task is assigned a portion of the input file called a \emph{split}.
+By default, a split contains a single HDFS block (64MB by default), so the
+total number of file blocks determines the number of map tasks.
 
 The execution of a map task is divided into two phases.
 \begin{enumerate}
@@ -122,29 +91,29 @@ The execution of a map task is divided into two phases.
   then informs the {\JT} that the task has finished executing.
 \end{enumerate}
 
-Figure~\ref{fig:mapfunction} contains the interface that must be
-implemented by user-defined map functions. After the \emph{map}
-function has been applied to each record in the split, the
-\emph{close} method is invoked. The third argument to the \emph{map} method 
-specifies an \emph{OutputCollector} instance, which accumulates the output records 
-produced by the map function. The output of the map step is consumed by the reduce step, 
-so the OutputCollector stores map output in a format that is easy for reduce tasks to
-consume. Intermediate keys are assigned to reducers by applying a partitioning
-function, so the OutputCollector applies that function to each key produced by
-the map function, and stores each record and partition number in an in-memory
-buffer. The OutputCollector spills this buffer to disk when it reaches capacity.
+Figure~\ref{fig:mapfunction} contains the interface that must be implemented by
+user-defined map functions.  After the \emph{map} function has been applied to
+each record in the split, the \emph{close} method is invoked.  The third
+argument to the \emph{map} method specifies an \emph{OutputCollector} instance,
+which accumulates the output records produced by the map function.  The output
+of the map step is consumed by the reduce step, so the OutputCollector stores
+map output in a format that is easy for reduce tasks to consume.  Intermediate
+keys are assigned to reducers by applying a partitioning function, so the
+OutputCollector applies that function to each key produced by the map function,
+and stores each record and partition number in an in-memory buffer.  The
+OutputCollector spills this buffer to disk when it reaches capacity.
 
-A spill of the in-memory buffer involves first sorting the records in
-the buffer by partition number and then by key. The buffer content is
-written to the local file system as an index file and a data file
-(Figure~\ref{ch:mrback:fig:mapoutput}). The index file points to the offset of
-each partition in the data file. The data file contains only the
-records, which are sorted by the key within each partition segment.
+A spill of the in-memory buffer involves first sorting the records in the
+buffer by partition number and then by key.  The buffer content is written to
+the local file system as an index file and a data file
+(Figure~\ref{ch:mrback:fig:mapoutput}).  The index file points to the offset of
+each partition in the data file.  The data file contains only the records,
+which are sorted by the key within each partition segment.
 
-During the \emph{commit} phase, the final output of the map task is generated by
-merging all the spill files produced by this task into a single pair of data and
-index files. These files are registered with the {\TT} before the task
-completes. The \TT will read these files when servicing requests from reduce
+During the \emph{commit} phase, the final output of the map task is generated
+by merging all the spill files produced by this task into a single pair of data
+and index files.  These files are registered with the {\TT} before the task
+completes.  The \TT will read these files when servicing requests from reduce
 tasks.
 
 \begin{figure}[t]
@@ -230,38 +199,45 @@ further recovery steps are needed.
 %   HDFS and then reading it back again is inefficient.
 % \end{itemize}
 
+
 \section{A Brave New MapReduce World}
+\label{ch:hadoop:sec:conclude}
 
-The MapReduce interface is a good example of capturing the minimum essentials of an 
-abstraction, making it easy to build many higher-order constructs (e.g., data analysis~\cite{pig}, SQL~\cite{hive}, machine 
-learning~\cite{mahout}) while allowing significant flexibility in the system implementation. 
-Fault-tolerance was an early part of the MapReduce system design, and one of its most attractive
-features. The fault-tolerance model is predicated on the batch-oriented nature of MapReduce, allowing the recovery 
-of a task to simply be restarting it on some (possibly alternate) machine. Since no state, in the form of output data, is 
-allowed to exit a task (map or reduce), no further recovery actions are required.
+The MapReduce interface is a good example of capturing the minimum essentials
+of an abstraction, making it easy to build many higher-order constructs (e.g.,
+data analysis~\cite{pig-sigmod}, SQL~\cite{hive-vldb}, machine learning~\cite{mahout})
+while allowing significant flexibility in the system implementation.
+Fault-tolerance was an early part of the MapReduce system design, and one of
+its most attractive features.  The fault-tolerance model is predicated on the
+batch-oriented nature of MapReduce, allowing the recovery of a task to simply
+be restarting it on some (possibly alternate) machine.  Since no state, in the
+form of output data, is allowed to exit a task (map or reduce), no further
+recovery actions are required.
 
-Optimization at the MapReduce level often comes in the form of scheduling policies that primarily focus on job 
-response time. The runtime of a MapReduce job is determined by its slowest tasks. The slowest map task determines 
-the finishing time of the {\em shuffle} phase since reduce tasks are not able to enter the {\em reduce} phase 
-until they have received all the map outputs that belong to them. The slowest reduce task determines the finishing 
-time of the overall job since a job does not complete until all reduce tasks complete. Speculation is a 
-response-time optimization that executes clones of tasks deemed to be slow. Alternative speculation policies 
-for identifying and speculatively scheduling these 'straggler' tasks exist~\cite{mapreduce-osdi, late-sched}, 
-but there is no consensus on a policy that works well for all jobs and cluster configurations.  
+Optimization at the MapReduce level often comes in the form of scheduling
+policies that primarily focus on job response time.  The runtime of a MapReduce
+job is determined by its slowest tasks.  The slowest map task determines the
+finishing time of the {\em shuffle} phase since reduce tasks are not able to
+enter the {\em reduce} phase until they have received all the map outputs that
+belong to them.  The slowest reduce task determines the finishing time of the
+overall job since a job does not complete until all reduce tasks complete.
+Speculation is a response-time optimization that executes clones of tasks
+deemed to be slow.  Alternative speculation policies for identifying and
+speculatively scheduling these 'straggler' tasks exist~\cite{mapreduce-osdi,
+zaharia-late}, but there is no consensus on a policy that works well for all jobs
+and cluster configurations.
 
-In Chapter~\ref{ch:boom}, we describe an implementation of the Hadoop MapReduce engine in the \OVERLOG language. 
-This declarative specification of Hadoop enables us to build alternative scheduling policies and optimizations in 
-a high level query language improving the development cycle and decreasing the lines of code by {\em orders of magnitude},
-all while supporting a richer suite of scheduling strategies. In Chapter~\ref{ch:hop}, we move from a batch-oriented 
-execution model to a pipelined model where tasks incrementally send their output. Pipelining enables two new features 
-in the context of MapReduce: online aggregation~\cite{onlineagg} and continuous queries. We show that a pipelined 
-implementation of MapReduce does not sacrifice the original system interface or its ability to tolerate faults. 
-A pipelined MapReduce model extends the range of scheduling alternatives, which we easily support through 
-policies written in \OVERLOG. 
-
-
-
-
-
-
+In Chapter~\ref{ch:boom}, we describe an implementation of the Hadoop MapReduce
+engine in the \OVERLOG language.  This declarative specification of Hadoop
+enables us to build alternative scheduling policies and optimizations in a high
+level query language improving the development cycle and decreasing the lines
+of code by {\em orders of magnitude}, all while supporting a richer suite of
+scheduling strategies.  In Chapter~\ref{ch:hop}, we move from a batch-oriented
+execution model to a pipelined model where tasks incrementally send their
+output.  Pipelining enables two new features in the context of MapReduce:
+online aggregation~\cite{onlineagg} and continuous queries.  We show that a
+pipelined implementation of MapReduce does not sacrifice the original system
+interface or its ability to tolerate faults.  A pipelined MapReduce model
+extends the range of scheduling alternatives, which we easily support through
+policies written in \OVERLOG.
 
