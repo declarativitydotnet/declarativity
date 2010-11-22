@@ -1,4 +1,4 @@
-\documentclass{acm_proc_article-sp}
+\documentclass{sig-alternate}
 
 \usepackage[usenames, dvipsnames]{color}
 \usepackage{times}
@@ -49,21 +49,9 @@ morekeywords={declare,table,scratch,channel}
 %\renewcommand*\thelstnumber{\the\value{lstnumber}:}
 
 
-\linespread{0.975}
-
+%\linespread{0.975}
 
 \usepackage{txfonts}
-%\newcommand{\DT}{\mathcal{T}}
-%\newcommand{\DS}{\mathcal{S}}
-\newcommand{\DT}{T}
-\newcommand{\DS}{S}
-\newcommand{\Consts}{\mathcal{C}}
-\newcommand{\Vars}{\mathcal{A}}
-%\newcommand{\pos}{\protect{$_{pos}$}}
-%\newcommand{\nega}{\protect{$_{neg}$}}
-% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
-\newcommand{\pos}{\_pos}
-\newcommand{\nega}{\_neg}
 
 % \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 % \newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
@@ -73,26 +61,8 @@ morekeywords={declare,table,scratch,channel}
 % \newcommand{\kc}[1]{{\textcolor{cyan}{#1 -- kc}}}
 \newcommand{\smallurl}[1]{{\small \url{#1}}}
 
-
-\newtheorem{example}{Example}
-\newtheorem{definition}{Definition}
-\newtheorem{lemma}{Lemma}
-\newtheorem{observation}{Observation}
-
-%\def\slang{synchronous Dedalus\xspace}
-\def\lang{\textsc{Dedalus}\xspace}
-\def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
-%\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
-\newcommand{\naive}      {na\"{\i}ve\xspace}
-\newcommand{\Naive}      {Na\"{\i}ve\xspace}
-%dedalus environment for code
-
-\newenvironment{Dedalus}{
-\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
-\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
-{\end{alltt}\end{minipage}\vspace{0.5em}}
-
-\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+\CopyrightYear{2011}
+\conferenceinfo{CIDR}{'11 Asilomar, California USA}
 
 \begin{document}
 \title{Consistency Analysis in Bloom: a CALM and Collected Approach}
@@ -184,6 +154,6 @@ of a distributed ``shopping cart'' application in Bloom.  We also sketch the fea
 \bibliography{cidr11,declarativity}}
 %\end{spacing}
 
-\input{demo}
+%\input{demo}
 
 \end{document}

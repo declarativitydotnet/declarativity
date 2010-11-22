@@ -24,8 +24,7 @@ The prototype version of Bloom we describe here is embodied in an implementation
 %Future versions of Bloom may do away with some of the syntactic idiosyncracies of Ruby, but it has been useful to stay grounded in the specific syntax of one widely-accepted language, at least in our early work.
 %In the remainder of the paper, when we refer to Bloom we mean the language supported by the current Bud prototype.
 
-\noindent\textbf{Bloom Basics}\\
-\noindent
+\vspace{9pt}\noindent\textbf{Bloom Basics}\\
 Bloom programs are bundles of declarative statements about collections of ``facts'' or tuples, akin to SQL views or Datalog rules.  Bloom statements can only reference data that is local to a node.  Bloom rules are defined with respect to atomic ``timesteps,'' which can be implemented via successive rounds of evaluation. In each timestep, certain ``ground facts'' exist in collections due to persistence or the arrival of messages from outside agents (e.g., the network or system clock).  The statements in a Bloom program specify the derivation of additional facts, which can be declared to exist either in the current timestep, at the very next timestep, or at some time in the future at a remote node.  A Bloom program also specifies the way that facts persist (or do not persist) across consecutive timesteps on a single node.  Bloom is a side-effect free language with no ``mutable state'': if a fact is defined at a given timestep, its existence at that timestep cannot be refuted by any expression in the language.  This technicality is key to avoiding many of the complexities involved in reasoning about earlier ``stateful'' rule languages.  The paper on Dedalus discusses these points in more detail~\cite{dedalus-techr}.
 
 \begin{figure}
@@ -59,21 +58,21 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 	\label{tab:bloom}
 \end{figure}
 
-\noindent\textbf{State in Bloom}\\ \noindent Bloom programs manage state using
-four collection types described in the top of Figure~\ref{tab:bloom}. Each
-object of these types is defined with a relational-style schema of named
-columns, including an optional subset of those columns that forms a primary
-key.  Line~\ref{line:dec_table} of Figure~\ref{fig:declarations} shows the
-definition of a \textbf{table} with 4 columns \texttt{session}, \texttt{reqid},
-\texttt{item} and \texttt{action}; the primary key is \texttt{(session,
-reqid)}. In Bud, the type system for the columns is taken from Ruby, so it is
-possible to have a column based on any Ruby class the programmer cares to
-define or import.  In Bud, a tuple in a Bloom collection is simply a Ruby array
-containing as many elements as the columns of the collection's schema.  As in
-other object-relational ADT schemes like Postgres~\cite{postgres-adt}, column
-values can be manipulated using their own (non-destructive) methods, but the
-Bloom language has no knowledge of those types and can only reference the
-column values as opaque objects.  
+\vspace{9pt}\noindent\textbf{State in Bloom}\\
+Bloom programs manage state using four collection types described in
+the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a
+relational-style schema of named columns, including an optional subset of those
+columns that forms a primary key.  Line~\ref{line:dec_table} of
+Figure~\ref{fig:declarations} shows the definition of a \textbf{table} with 4
+columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; the
+primary key is \texttt{(session, reqid)}. In Bud, the type system for the
+columns is taken from Ruby, so it is possible to have a column based on any Ruby
+class the programmer cares to define or import.  In Bud, a tuple in a Bloom
+collection is simply a Ruby array containing as many elements as the columns of
+the collection's schema.  As in other object-relational ADT schemes like
+Postgres~\cite{postgres-adt}, column values can be manipulated using their own
+(non-destructive) methods, but the Bloom language has no knowledge of those
+types and can only reference the column values as opaque objects.
 
 Persistence in Bloom is determined by the type of the collection.
 \textbf{scratch} collections are handy for transient data like network messages
@@ -168,10 +167,7 @@ end
 \vspace{-2pt}
 \end{figure}
 
-
-
-\textbf{Bloom Statements}\\
-\noindent
+\vspace{9pt}\noindent \textbf{Bloom Statements}\\
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
 of declarative relational statements that define the contents of derived
 collections.  The syntax is:\\ \noindent
@@ -230,7 +226,7 @@ Conventional wisdom in certain quarters says that rule-based languages are unten
 
 \input{destructive}
 
-\textbf{Bud Implementation}\\
+\vspace{9pt}\noindent \textbf{Bud Implementation}\\
 Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 1400 lines of Ruby code, developed in approximately two person-months of part-time effort.
 %\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
 
