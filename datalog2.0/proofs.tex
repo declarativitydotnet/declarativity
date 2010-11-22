@@ -223,11 +223,9 @@ A simple temporally stratifiable \slang program that is not syntactically strati
 \begin{Dedalus}
 persist[p\pos, p\nega, 3]  
   
-r1
 p_pos(A, B, T) \(\leftarrow\)
   insert\_p(A, B, T);
 
-r2  
 p_neg(A, B, T) \(\leftarrow\)
   p_pos(A, B, T),
   delete\_p(T);
