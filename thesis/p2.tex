@@ -1,20 +1,21 @@
 \chapter[P2: A Logical Beginning]{P2: A Logical Beginning}
 \label{ch:p2}
 
-Our journey begins with the Berkeley Declarative Networking Project, which
-introduced our declarative language {\em \OVERLOG} and its runtime {\em P2}.
-The project aim was to make it easy to implement and deploy overlay networks by
-allowing specifications in a high-level declarative language to be directly
-executed on nodes that span the Internet.  These overlay specifications,
-expressed in \OVERLOG rules, contained {\em orders of magnitude} fewer lines of
-code than corresponding overlay implementations written in an imperative
-language (e.g., C/C++).  We implemented and deployed a Narada-style mesh
-network~\cite{chu00case}, using only 12 rules, and the Chord structured
-overlay~\cite{chord} in only 35 rules~\cite{p2:sosp}, versus thousands of lines
-of code for the MIT Chord reference implementation.  Our experience with
-overlay implementations has shown that relations, together with a recursive
-query language, can fairly naturally represent the persistent routing state of
-the overlays we considered~\cite{loo-sigmod06, p2:sosp}.
+Our journey begins at U.C.  Berkeley in $2003$ with the Declarative Networking
+project, which introduced the declarative language {\em \OVERLOG} and its
+companion runtime {\em P2}.  The project aim was to make it easy to implement
+and deploy overlay networks by allowing specifications in a high-level
+declarative language to be directly executed on nodes that span the Internet.
+These overlay specifications, expressed in \OVERLOG rules, contained {\em
+orders of magnitude} fewer lines of code than corresponding overlay
+implementations written in an imperative language (e.g., C/C++).  The project
+implemented, and deployed, declarative versions of a Narada-style mesh
+network~\cite{chu00case}, using only 12 ``rules'', and the Chord structured
+overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}, versus thousands of
+lines of code for the MIT Chord reference implementation.  The many
+contributions made during the project has shown that relations, together with a
+recursive query language, can fairly naturally represent the persistent routing
+state of the overlays we considered~\cite{loo-sigmod06, p2:sosp}.
 
 The \OVERLOG language is an extension of Datalog, which we introduce in
 Section~\ref{ch:p2:sec:datalog}.  In Section~\ref{ch:p2:sec:overlog} we
@@ -31,49 +32,50 @@ P2 can manage structured data tuples flowing through a broad range of query
 processing elements, which may accumulate significant state and perform
 substantial asynchronous processing.  Like Click, P2 stresses high-performance
 transfers of data units, as well as dataflow elements with both ``push'' and
-``pull'' modalities.
-
-This chapter is an overview of some of the many contributions made during the
-course of the Declarative Networking project~\cite{boon-thesis}.  In
-Section~\ref{ch:p2:sec:datalog}, we review the Datalog language, which is a
-logic-based language that is suitable for database systems and it provides the
-foundation for our \OVERLOG language.  Section~\ref{ch:p2:sec:overlog} provides
-our first look at the \OVERLOG language, and describes the extensions that it
-made to Datalog.  In Section~\ref{ch:p2:sec:p2}, we introduce the P2 runtime
-system that we developed for executing \OVERLOG programs in a networked
-environment.  We conclude in Section~\ref{ch:p2:sec:summary} with a summary of
-the many contributions made during the Declarative Networking project before
-presenting the final chapter of this project in Chapter~\ref{ch:evita}.
+``pull'' modalities.  We conclude in Section~\ref{ch:p2:sec:summary} with a
+summary of the ``networking'' portion of the Declarative Networking project
+before presenting its final chapter in Chapter~\ref{ch:evita}.
 
 \section{Introduction to Datalog}
 \label{ch:p2:sec:datalog}
 
-We begin with a short review of Datalog, following the conventions in
-Ramakrishnan and Ullman's survey~\ref{deductive-database}.  Datalog drew
-inspiration from the Prolog language~\cite{prolog}, which was one of the first
-logic programming languages.  Both Datalog and Prolog consists of a set of
-declarative {\em rules} and an optional {\em query}.  A rule has the form $p :-
-q_1, q_2, \ldots, q_n$, which consists of a disjunction of literals.
-Informally, a Datalog rules reads ''{\bf if} $q_1$ and $q_2$ and $\ldots$ and
-$q_n$ is true {\bf then} $p$ is true``.  Literals are either {\em predicates}
-over {\em fields} (variables and constants), or function symbols applied to
-fields.  The predicate appearing to the left of the \ol{:-} symbol is the
-head predicate, and those to the right are body predicates or ``subgoals.'' 
-Recursion is expressed by rules that refer to each other in a cyclic
-fashion. That is, the head predicate also appears as a subgoal in the rule.
+This discussion on Datalog follows from the description in Ramakrishnan and
+Ullman's survey~\cite{deductive-database}, and the many superb course
+notes~\cite{ullmanNotes} on the subject.  Datalog drew inspiration from the
+Prolog language, which was one of the first logic programming languages.  Both
+Datalog and Prolog consists of a set of declarative {\em rules} and an optional
+{\em query}.  A rule has the form $p\ \text{\ol{:-}}\ q_1,\ q_2,\ \ldots,\ q_n$, which consists
+of a disjunction of literals.  Informally, a Datalog rules reads ''{\bf if}
+$q_1$ and $q_2$ and $\ldots$ and $q_n$ is true {\bf then} $p$ is true``.
+Literals are either {\em predicates} over {\em fields} (variables and
+constants), or function symbols applied to fields.  The predicate appearing to
+the left of the \ol{:-} symbol is the head predicate, and those to the right
+are body predicates or ``subgoals.'' Recursion is expressed by rules that refer
+to each other in a cyclic fashion.  That is, the head predicate also appears as
+a subgoal in the rule, or indirectly through some other.
 
-Datalog has two notions of predicates appearing in a program.  A predicate
-whose relation is stored in the database is called an extensional database
-(EDB) relation, while those that are defined by logical rules are called
-intensional database (IDB) predicates.  In loose terms, the EDB represents the
-input to the Datalog program, and the IDB is its output.  Datalog, unlike
-Prolog, evaluates its rules in a bottom up fashion, starting with the facts the
-EDB, and deriving new facts through rule deductions.  A key consequence of a
+Two common notions are used when referring to the predicates that appear in a
+program.  A predicate whose relation is stored in the database is called an
+{\emph extensional database} (EDB) relation, while those that are defined by
+logical rules are called {\emph intensional database} (IDB) predicates.  Datalog
+came from the database community, as opposed to Prolog coming from the programming
+language community. Therefore, Datalog facts are assumed to be tuples sorted in
+a database, that may not necessarily fit in memory. EDB tuples are those that live
+in the database perminately, while IDB predicates are ``views'' (or stored
+queries) over the database. 
+
+During evaluation, EDB data tuples represent the input to the Datalog program,
+and the IDB tuple derivations are the output.  Datalog, unlike Prolog,
+evaluates its rules in a bottom up fashion, starting with the facts the EDB,
+and deriving new facts through rule deductions.  A key consequence of a
 bottom-up evaluation strategy is that it can efficiently handle ``large data''
-sets, whose size exceeds the capacity of a machine's main memory~\ref{ullman}.
-Prolog on the other hand is evaluated tuple at a time, which precludes the
-use of efficient relational operators (i.e., select, project, join) in
-the evaluator.
+sets, whose size well exceeds the capacity of a machine's main memory.  Prolog
+on the other hand is evaluated tuple at a time, which precludes the use of
+efficient relational operators (i.e., select, project, join) in the evaluator.
+Instead, Prolog is confined to the main memory system boundaries since its
+``graph'' based algorithm requires all facts be accounted for at once.
+
+\subsection{Our first Datalog Program}
 
 \begin{figure*}
 \ssp
@@ -97,20 +99,27 @@ Figure~\ref{ch:p2:fig:datalogPath} provides our first look at a program
 expressed as a set of Datalog rules.  The program derives all reachable paths
 from a set of known links.  The first two {\bf link} terms represent facts in
 the underlining EDB.  Any predicates that appears in the head of a rule (e.g.,
-{\bf path} in rules~\ol{R1} and \ol{R2}) are part of the IDB.  The first two
-\ol{link} predicates in Figure~\ref{ch:p2:fig:datalogPath} represent facts that
-are part of the EDB.  These \ol{link} tuples are used in rule~\ol{R1} to derive
-an initial set of \ol{path} tuples.  The rule reads ``if there exists a
-\ol{link} from $X$ to $Y$ at cost $C$, then there exists a \ol{path} from $X$
-to $Y$ consisting of nodes $X, Y$ at cost $C$.'' Subsequent to that,
-rule~\ol{R2} performs a transitive closure over the set of \ol{link} and
-\ol{path} tuples.  Rule~\ol{R2} reads ``if there is a link from $X$ to $Z$ at
-cost $C$, and there is a \ol{path} from $Z$ to $Y$ over $P2$ at cost $C2$, then
-there is a path from $X$ to $Y$ through $X, P2$ at cost $C1+C3$.'' A query
-predicate is also present at the bottom of Figure~\ref{ch:p2:fig:datalogPath}
-that asks for all paths that start from ``localhost:10000.''
+{\bf path} in rules~\ol{R1} and \ol{R2}) are part of the IDB, by definition.
 
-\subsection{Safety Constraint}
+Derivations proceed from the rule body (those predicates to the right of
+\ol{:-}) and projecting onto the rule head (to the left of \ol{:-}).  The
+\ol{link} fact tuples are used in the evaluation of rule~\ol{R1} to derive an
+initial set of \ol{path} tuples.  The rule reads ``if there exists a \ol{link}
+from $X$ to $Y$ at cost $C$, then there exists a \ol{path} from $X$ to $Y$
+consisting of nodes $X, Y$ at cost $C$.'' Both initial facts meet this criterion.
+
+Subsequent to that, rule~\ol{R2} performs a transitive closure over any
+\ol{link} {\bf and} \ol{path} tuples.  The rule reads ``if there is a link from
+$X$ to $Z$ at cost $C$, and there is a \ol{path} from $Z$ to $Y$ over $P2$ at
+cost $C2$, then there is a path from $X$ to $Y$ through $X, P2$ at cost
+$C1+C3$.'' A path from ``localhost:10000'' to ``localhost:10002'' meets this
+criterion, and will be added to the IDB \ol{path} relation.  A final query
+predicate is also present at the bottom of Figure~\ref{ch:p2:fig:datalogPath}
+that asks for all paths that start from ``localhost:10000.'' The \ol{path}
+tuples start from ``localhost:10000'' and end at ``localhost:10001'' and
+``localhost:10002'' both meet the constraints imposed by this query.
+
+\subsection{Safety First}
 
 There are constraints that must be in place for a Datalog program to make
 sense as operations on finite relations. A ``safe'' Datalog rule is one
@@ -124,25 +133,26 @@ $P$ variable in the \ol{path} head predicate.
 R3 {\bf path}(X,Y,P,C) :- \\
 \datalogspace {\bf link}(X, Y, C). \\
 \end{minipage}
-
-Rule~\ol{R3} defines an infinite number of \ol{path} tuples since
-we can substitute $P$ with any path. The ``safety'' restriction of 
-Datalog, and its restriction to set semantics, is crucial to the
-termination of a set of rules when applied to a finite EDB. The reader
-can assume these restrictions throughout this thesis.
+Rule~\ol{R3} defines an infinite number of \ol{path} tuples since we can
+substitute $P$ with any list of strings (for example).  The ``safety''
+restriction of Datalog is a prerequisite to ensuring a finite solution (IDB)
+from a finite input (EDB).  Datalog further constraints its output (IDB) to be
+restricted to set semantics, as opposed to bag semantics that allow duplicates.
+The reader can assume these safe restrictions throughout this thesis.
 
 \subsection{Evaluation}
 
 We now turn to the evaluation of a set of Datalog rules, which is performed in
-a bottom-up fashion, starting with a set of baseline facts.  There are two
+a bottom-up fashion, starting with a set of known EDB facts.  There are two
 popular approaches to evaluating a set of Datalog rules.  The first approach is
 called ``Naive Evaluation'', which is an iterative algorithm that repeatedly
-applies all known facts to the program rules.  It starts with the facts
-contained in the EDB and, by applying those facts to the rule bodies, derives
-the initial set of IDB facts.  It repeats the process of deriving new IDB facts
-by applying {\emph all} known facts (both EDB and IDB) to rule bodies.  The
-evaluation terminates when it reaches a ``fixed point'', which occurs when no
-new facts can be inferred.
+applies all known facts to the program rules, in some stylized set-oriented
+fashion.  It starts with the facts contained in the EDB and it, iteratively
+executes a select-project-join SPJ query against the predicates in the rule
+body, to continually derive new IDB facts.  It repeats its iterative loop until
+no new facts can be inferred from its currently {\emph all} known facts (both
+EDB and IDB).  The marks the termination condition for the evaluation, commonly
+referred to as a ``fixed point.''
 
 \begin{figure*}
 \ssp
@@ -151,19 +161,20 @@ new facts can be inferred.
       	\STATE Empty all IDB facts
 	\STATE /* Base case: initialize IDB */
         \STATE Evaluate rules with subgoals that involve EDB predicates only
-	\STATE Initialize $\delta$-IDB relations to be corresponding IDB relations
-	\STATE /* Repeat while new tuples exist in any $\delta p$ relation in $\delta$-IDB */
-	\WHILE{$\delta$-IDB != $\emptyset$}
-        \FORALL{predicate $\delta p$ in $\delta$-IDB}
+	\STATE Initialize $\delta IDB_0$ relations to be corresponding IDB relations
+	\STATE /* Repeat while predicates exist in $\delta IDB_i$ */
+	\WHILE{$\delta IDB_{i-1}\ !=\ \emptyset$}
+	\FORALL{predicate $\delta p$ in $\delta IDB_{i-1}$}
         	\FORALL{rules~$r$ that reference $p$ as the head predicate}
                 	\STATE /* Compute new $\delta p$ as follows */
-			\FORALL{subgoals $delta G_i \in \delta$-IDB from the body of $r$}
+			\FORALL{subgoals $delta G_i \in \delta IDB_{i-1}$ from the body of $r$}
 				\STATE Fix other $k$ subgoals $G_{k\ != i}$ to regular IDB relations
 				\STATE Evaluate rule relative to the tuples in $delta G_i$ 
 				\STATE Add all derivations to $\delta p$
 			\ENDFOR
         	\ENDFOR
 		\STATE Remove from $\delta p$, all facts already present in $p$ IDB relation
+		\STATE $\delta IDB_i$\ =\ $\delta IDB_i\ \cup\ p$\ if\ $\delta p$ contains facts
         \ENDFOR
 	\ENDWHILE
     \end{algorithmic}
@@ -175,45 +186,50 @@ The second approach, which is also optimal, adds a condition to the iteration
 loop of the ``Naive Evaluation'' algorithm.  ``Seminaive Evaluation'' is based
 on the principle that if a fact is derived during round~$i$ then it must have
 been inferred from a rule in which one or more subgoals were instantiated with
-facts that were inferred in round~$i-1$.  Figure~\ref{ch:p2:fig:seminaive}
-describes the algorithm that performs a seminaive evaluation over a set of
-Datalog rules.  In the first step, it evaluates the rules against the EDB facts
-to derive an initial set of IDB facts, which is subsequently used to represent
-the $\delta$-IDB.  We then enter an iteration loop, which repeatedly derives
-new facts in the IDB relations mentioned in $\delta$-IDB.  We start by
-considering a single $\delta p$ predicate in $\delta$-IDB that contains the
-facts derived in the previous iteration, and therefore contained within the IDB
-relation $p$.  To derive new facts for $\delta p$, we consider those rules~$r$
-that refer to predicate $p$ in the rule head.  These rules are evaluated using
-only subgoals mentioned in $\delta$-IDB.  Following the evaluation of each such
-rule, we remove all tuples from $\delta p$ that existed in the previous
-iteration.  The algorithm terminates when no new derivations were made to any
-IDB relations.
+facts that were inferred in round~$i-1$.  
+
+Figure~\ref{ch:p2:fig:seminaive} describes the algorithm that performs a
+seminaive evaluation over a set of Datalog rules.  Let $\delta IDB_{i-1}$
+represent the IDB predicates that received derivations during iteration $i-1$.
+In the first step, it evaluates the rules against the EDB facts to derive an
+initial set of IDB facts for iteration~$0$.  We then enter the loop, where we
+carry out further iterations~$i\ >\ 0$.
+
+Each iteration~$i$ derives new facts from the IDB relations mentioned in
+$\delta IDB$.  We start by considering a single $\delta p$ predicate in $\delta
+IDB_{i-1}$, and consider those rules~$r$ that refer to predicate $p$ in the
+rule head.  We derive new $p$ facts from these rules using only the predicates
+mentioned in $\delta IDB$.  Following the evaluation of each such rule, we
+remove all facts in $\delta p$ that were derived in previous iterations.  If
+there exists remaining tuples then we add $\delta p$ to the next iterations
+$\delta IDB$ predicate set.  The algorithm terminates when no new derivations
+were made to any IDB relations, and hence no new $\delta$ predicates added to
+$\delta IDB_i$.
 
 
 \subsection{Fixed Point Semantics}
 
 Datalog is monotonic since it does not contain the notion of deletions.  The
 evaluation of a program proceeds as a series of deductions to the IDB.  Since
-Datalog is ``set oriented'', only new deductions will be added to the IDB, and
-therefore it is guaranteed to terminate when no new deductions can be made.  A
-Datalog program is said to be at a ``fixed point'' when no further deductions
-can be made relative to the EDB and IDB relations.  In the absence of negated
-subgoals, the derivations made during the evaluation represent a {\emph unique
-minimal model}.  They are unique in the sense that we will always derive the
-same IDB tuples given the same EDB tuples.  The result represents a minimal
-model since we cannot add or take away any fact and still have a model
+Datalog has ``set semantics'', only new deductions will be added to the IDB,
+and therefore it is guaranteed to terminate under safety constraints.  A
+Datalog program is said to be at a {\emph fixed point} when no further
+deductions can be made relative to the EDB and IDB relations.  In the absence
+of negated subgoals, the derivations made during the evaluation represent a
+{\emph unique minimal model}.  Uniqueness comes from the fact that we will
+always derive the same IDB tuples given the same EDB tuples.  The result is a
+minimal model since we cannot add or take away any fact and still have a model
 consistent with the database.
 
 \subsection{Negation and Stratification}
 
-The last subject we will cover in this section is handling negated
-subgoals in a Datalog rule. There is a large body of work on this subject
-that we will not address here, since it is not necessary in our context.
-We will discuss the notion of stratified negation, which ensures that
-a set of Datalog rules with negated subgoals will reach a minimal fixed point
-evaluation. But first we review the issues surrounding negations in rule
-bodies.
+The last subject we will touch on in this section is handling of negated
+subgoals Datalog rules.  There is a large body of work on this subject that we
+will not address here, but some of it will appear in later chapters.  For now,
+we introduce the notion of stratified negation, which ensures that a set of
+Datalog rules with negated subgoals will reach a unique minimal model following
+a fixed point evaluation.  But first we review the issues surrounding negations
+in rule bodies.
 
 \begin{figure*}
 \centering
@@ -231,26 +247,27 @@ R5 {\bf detour}(X, Y) :- \\
 \end{figure*}
 
 Consider rule~\ol{R4} in Figure~\ref{ch:p2:fig:negation}, which formulates a
-\ol{path} from a \ol{link} if $X$ and $Y$ does not represent a detour.
+\ol{path} from a \ol{link} if $X$ and $Y$ does not cross a detour.
 Unfortunately, the complement of the \ol{detour} relation is not a well-defined
-term since we do not know its domain of possible values.  Moreover, we cannot
-specify its relation prior to seminaive evaluation, since rule~\ol{R5}
+term since we do not know the domain of its possible values.  Moreover, we cannot
+specify this complete relation prior to evaluation, since rule~\ol{R5}
 references the \ol{detour} predicate in the head.  
 
-If we were to evaluate the rules in Figure~\ref{ch:p2:fig:negation}
-then we could end up with \ol{path} tuples that represent
-detours. To see this, lets assume that we start by evaluating rule~\ol{R4}
-with the \ol{link} relation. The plan for the negated \ol{detour} is models
-an anti-join operation, where tuples from \ol{link} pass if they do not exist
-in the \ol{detour} relation. Since we have not evaluated rule~\ol{R5},
-all tuples in \ol{link} will produce a deduction to the \ol{path} relation
-in rule~\ol{R4}. Subsequently evaluating rule~\ol{R5} would derive our
-\ol{detour} tuples, but it would be too late in the sense that we have already
-made incorrect deductions via rule~\ol{R4}.
+If we were to evaluate the rules in Figure~\ref{ch:p2:fig:negation} in an
+ad-hoc fashion then we could end up with \ol{path} tuples that cross detours.
+To see this, lets assume that we start by evaluating rule~\ol{R4} with the
+initial facts in the \ol{link} relation.  The execution plan for the negated
+\ol{detour} is similar to an anti-join operation, where tuples from \ol{link}
+pass if they do not already exist in the current \ol{detour} relation.  Since
+we have not evaluated rule~\ol{R5} yet, all tuples in \ol{link} will pass the
+anti-join case and produce a set of \ol{path} deductions in rule~\ol{R4}.
+Subsequently evaluating rule~\ol{R5} would finally give us our \ol{detour}
+facts, but this would be too late in the sense that we have already made
+incorrect deductions.
 
-The reader may realize that by evaluating rule~\ol{R5} first, we will get the
+The reader may realize that by evaluating rule~\ol{R5} first would get us the
 correct deductions in rule~\ol{R4}.  This is indeed correct, and this ordering
-of predicates deductions forms the basic idea behind stratified Datalog.
+of predicate evaluations forms the basic idea behind stratified Datalog.
 Before we get to that definition, lets first understand how the dependencies of
 a Datalog program is represented graphically.
 
@@ -275,18 +292,19 @@ From Figure~\ref{ch:p2:fig:negation}, rule~\ol{R4} forms the $path \rightarrow
 link$ and $path \rightarrow detour$ dependencies, while rule~\ol{R5} forms the
 $detour {\neg \atop \rightarrow} link$ negated dependency. 
 
-We now formally define the stratum of an IDB predicate to be the largest number
-of $\neg$ on a path from that predicate, in the dependency graph. The dependency
-graph in Figure~\ref{ch:p2:fig:dependency} places predicates \ol{detour} and \ol{link}
-in the lowest stratum~$0$, while the \ol{path} predicate is in stratum~$1$. If all
-IDB predicates have a finite stratum, then the Datalog program is stratified. If any
-IDB predicate has an infinite stratum, then the program is unstratified. An IDB
-predicate is assigned an infinite stratum if it is on a path that contains a cycle 
-(due to recursion), and there exists a negated edge along that path. 
+The stratum of an IDB predicate is defined to be the largest number of $\neg$
+on a path from that predicate, in the dependency graph.  The dependency graph
+in Figure~\ref{ch:p2:fig:dependency} places predicates \ol{detour} and
+\ol{link} in the lowest stratum~$0$, while the \ol{path} predicate is in
+stratum~$1$.  If all IDB predicates have a finite stratum, then the Datalog
+program is {\emph stratified}.  If any IDB predicate has an infinite stratum,
+then the program is unstratified.  An IDB predicate is assigned an infinite
+stratum if it is on a path that contains a cycle (due to arbitrary recursion),
+and there exists a negated edge along that recursive path.
 
 We evaluate a stratified Datalog program using the seminaive algorithm of
-Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- we order the
-$\delta$-IDB predicates by their assigned stratum.  If the program is
+Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- topologically sort
+the IDB predicates (in $\delta IDB$) by their assigned stratum.  If the program is
 stratified then any negated subgoal (e.g., \ol{detour}) has already had its
 relation fully evaluated.  The result of this evaluation is a {\emph stratified
 model}. We revisit the notion of stratified Datalog throughout this thesis. It turns
@@ -519,6 +537,7 @@ matches, which are then converted into actions: network messages to be sent, or
 table updates to be performed.
 
 \section{Summary}
+\label{ch:p2:sec:summary}
 
 While ostensibly a network protocol engine, architecturally P2 resembles a
 fairly traditional shared-nothing parallel query processor, targeted at both
