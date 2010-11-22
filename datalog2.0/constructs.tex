@@ -181,23 +181,14 @@ process tuples according to a data-dependent order, rather than as a set.
 
 Aggregate functions simplify our discussion of queues.  Mumick and Shmueli observe correspondences in the expressivity of Datalog with stratified negation and stratified aggregation functions~\cite{mumickshmueli}.  Adding aggregation to our language does not affect its expressive power, but is useful for writing natural constructs for distributed computing including queues and ordering.  
 
-In \slang we allow aggregate functions $\rho_1 - \rho_n$ to appear in the head
-of a deductive rule of the form:
-
-%%\dedalus{p(\(A_1\), \(\ldots\), \(A_n\), \(\rho_1\)(\(A_{n+1}\)), \(\ldots\), \(\rho_m\)(\(A_{n+m}\))) \(\leftarrow\)}
+In \slang we allow aggregate functions to appear in the heads
+of deductive rules in the form:
 
 \begin{dedalus}
-p($A_1, \ldots, A_n, \rho_1(A_{n+1}), \ldots, \rho_m(A_{n+m})) \leftarrow$
-\end{dedalus}
-%%\linebreak
-
-\hspace{5mm}
-$q_1$
-\begin{dedalus}
-($A_1, \ldots, A_{n}, A_{n+1}), \ldots, q_m(A_1, \ldots, A_{n}, A_{n+m}$);
+p($A_1, \ldots, A_n, \rho_1(A_{n+1}), \ldots, \rho_m(A_{n+m}))$
 \end{dedalus}
 
-According to this rule, the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$---akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.
+In such a rule (whose body must bind $A_1, \ldots, A_{n + m}$), the predicate $p$ contains one row for each satisfying assignment of $A_1, \ldots, A_n$---akin to the distinct ``groups'' of SQL's ``GROUP BY'' notation.
 
 
 
