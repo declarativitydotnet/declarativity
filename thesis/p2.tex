@@ -70,10 +70,10 @@ evaluates its rules in a bottom up fashion, starting with the facts the EDB,
 and deriving new facts through rule deductions.  A key consequence of a
 bottom-up evaluation strategy is that it can efficiently handle ``large data''
 sets, whose size well exceeds the capacity of a machine's main memory.  Prolog
-on the other hand is evaluated tuple at a time, which precludes the use of
-efficient relational operators (i.e., select, project, join) in the evaluator.
-Instead, Prolog is confined to the main memory system boundaries since its
-``graph'' based algorithm requires all facts be accounted for at once.
+on the other hand is evaluated tuple at a time using an algorithm that
+precludes the use of efficient relational operators (i.e., select, project,
+join).  As a result, Prolog is confined to the main memory system boundaries since
+its ``graph'' based algorithm requires all facts be accounted for at once.
 
 \subsection{Our first Datalog Program}
 
@@ -311,6 +311,13 @@ model}. We revisit the notion of stratified Datalog throughout this thesis. It t
 out that the P2 system does not supported stratified Datalog, which significantly
 complicated made many of our \OVERLOG programs mentioned in Chapters~\ref{ch:evita}, 
 \ref{ch:magic} and~\ref{ch:opt}.
+
+\subsection{Local Stratification}
+NOTE: talk about the lack of stratification here and then mention our 
+problems with it in subsequent chapters.
+Define: local stratification in last section of Datalog intro.
+In fact all program from the declarative networking project that route
+tuples along some minimum path require local stratification.
 
 
 \section{\OVERLOG: The P2 Query Language}
