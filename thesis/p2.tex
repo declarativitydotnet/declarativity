@@ -418,11 +418,8 @@ to Datalog, which we review before describing the P2 runtime.
 \ssp
 \begin{boxedminipage}{\linewidth}
 {\bf materialize}(link,infinity,infinity,keys(1,2)). \\
-{\bf materialize}(path,1,infinity,keys(1,2,3)).  \\
-{\bf materialize}(shortestPath,1,infinity,keys(1,2,3)). \\
-
-{\bf link}("localhost:10000", "localhost:10001", 1). \\
-{\bf link}("localhost:10001", "localhost:10002", 1). \\
+{\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
+{\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
 
 R1{\bf path}(@X, Y, P, C) :- \\
 \datalogspace {\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
@@ -604,8 +601,11 @@ provided by the clock and network, conditions are checked via the dataflow
 engine for matches, which are then converted into actions: network messages to
 be sent, or table updates to be performed.  The ``event'' portion of ECA is
 implemented by the driver loop and the ``demux'' (router) element in
-Figure~\ref{ch:p2:fig:dataflow}.  Next, we describe the elements that implement
-the {\emph condition} and {\emph action} processing logic.
+Figure~\ref{ch:p2:fig:dataflow}.  We also note here that P2 has the notion of a
+{\emph floating} EDB, that consists of the single tuple at the head of the \ol{net in}
+queue.  This sole tuple is the input to the ``current'' Datalog-style fixed point.
+Next, we describe the elements that implement the {\emph condition} and {\emph
+action} processing logic.
 
 \subsection{Dataflow Elements} 
 \label{ch:p2:sec:dataflow_elements}

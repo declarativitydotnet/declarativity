@@ -525,10 +525,106 @@ networking system that runs on wireless sensor nodes~\cite{chu-sensys07}.
 \section{The Delta Rewrite}
 \label{ch:evita:sec:delta}
 
-In this section we describe our declarative implementation of the delta rewrite for
-\OVERLOG rules. The rewrite itself consists of a mere $12$ rules, which includes 
-rules for handling the Evita Raced API and cleanup rules that
-remove rules that were rewritten, and therefore no longer needed. 
+In this section we describe our declarative implementation of the delta rewrite
+for \OVERLOG rules.  The rewrite itself consists of a mere $12$ rules, which
+includes rules for handling the Evita Raced API and cleanup rules that remove
+rules that were rewritten, and therefore no longer needed. Before diving into
+the specific rules for the rewrite we describe it by example.
+
+\subsection{Delta by Example}
+
+\begin{figure*}[!t]
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+{\bf materialize}(link,infinity,infinity,keys(1,2)). \\
+{\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
+{\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
+  
+R1 {\bf path}(@X, Y, P, C) :- \\
+\datalogspace {\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
+\\
+R2 {\bf path}(@X, Y, P, C) :- \\
+\datalogspace {\bf link}(@X, Z, C1), {\bf path}(@Z, Y, P2, C2),\\
+\datalogspace f\_contains(X, P2) == false, \\
+\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+
+R4 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
+\datalogspace {\bf path}(@X, Y, P, C). \\ 
+
+R5 {\bf shortestPath}(@X, Y, P, C) :- \\
+\datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).
+
+\end{boxedminipage}
+\caption{\label{ch:evita:fig:basicSP}Relevant rules copied from Figure~\ref{ch:p2:fig:overlogSP}.}
+\end{figure*}
+
+Consider the shortest path program in Figure~\ref{ch:evita:fig:basicSP} copied
+over from Figure~\ref{ch:p2:fig:overlogSP}.  First thing to notice is the {\bf
+materialize} statements at the top.  They indicate that non-zero lifetime
+tables should exist for \ol{link}, \ol{path}, and \ol{shortestPath} tuples,
+along with the appropriate primary key columns.  Since there is no such
+definition for \ol{minCostPath} tuples, it will represent an event tuple that
+will trigger rule~\ol{R5} when ``pulled'' from the event queue. The question
+then is, what will trigger the other rules to produce a \ol{minCostPath} tuple.
+
+\begin{figure*}[!t]
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+{\bf materialize}(link,infinity,infinity,keys(1,2)). \\
+{\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
+{\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
+  
+R1 {\bf path}(@X, Y, P, C) :- \\
+\datalogspace $\delta${\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
+\\
+R2a {\bf path}(@X, Y, P, C) :- \\
+\datalogspace $\delta${\bf link}(@X, Z, C1), {\bf path}(@Z, Y, P2, C2),\\
+\datalogspace f\_contains(X, P2) == false, \\
+\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+
+R2b {\bf path}(@X, Y, P, C) :- \\
+\datalogspace $\delta${\bf path}(@Z, Y, P2, C2), {\bf link}(@X, Z, C1) \\
+\datalogspace f\_contains(X, P2) == false, \\
+\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+
+
+R4 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
+\datalogspace $\delta${\bf path}(@X, Y, P, C). \\ 
+
+R5 {\bf shortestPath}(@X, Y, P, C) :- \\
+\datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).
+
+\end{boxedminipage}
+\caption{\label{ch:evita:fig:basicSPDelta}Delta rewrite rules from Figure~\ref{ch:evita:fig:basicSP}.}
+\end{figure*}
+
+This is the purpose of the delta rewrite, which converts the rules in
+Figure~\ref{ch:evita:fig:basicSP} into the rules shown in
+Figure~\ref{ch:evita:fig:basicSPDelta}.  The $\delta$ predicate is shown (by
+convention) at the front of the rule.  Rule~\ref{R5} already contains an {\emph
+event} predicate in its rule, and will be planned to trigger off of that
+\ol{minCostPath} event, followed by a join with the \ol{path} relation, and
+then a projection/insertion into the \ol{shortestPath} relation.  The remaining
+rules are converted into a $\delta$ form that can be installed into the P2-ECA
+runtime.  We start with rule~\ol{R1}, which contains the single subgoal
+\ol{link}.  The delta rewrite will rewrite annotate this predicate with a delta
+annotation that informs the planner to trigger the rule when an event
+(receive/insert/delete) corresponds to its name.  The same thing occurs in
+rule~\ol{R4} w.r.t., \ol{plan} tuples.
+
+We come to rule~\ol{R3}, which has two subgoals \ol{link} and \ol{path}, both
+of which are materialized tables.  In this case, we must break the rule into
+two disjoint rules (one of each subgoal).  The first of these rules will
+trigger on the (say) \ol{link} tuple, then join with \ol{path} and select out
+those that overlap.  The second will trigger on the \ol{path} tuple, and join
+with \ol{link} as well as select out overlapping paths.  Both of these rules
+will project onto the \ol{path} relation, followed by a write to the \ol{main
+mem} \ol{path} relation.
+
+
+\subsection{Declarative Delta}
 
 \begin{figure*}[!t]
 \ssp
@@ -695,43 +791,66 @@ stage.
 \section{The Localization Rewrite}
 \label{ch:evita:sec:local}
 
+\begin{figure*}[!t]
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+R2a {\bf link\_copy}(@Z, X, Z, C1) :- \\
+\datalogspace {\bf link}(@X, Z, C1). \\
+
+R2b {\bf path}(@X, Y, P, C) :- \\
+\datalogspace {\bf link\_copy}(@Z, X, Z, C1), {\bf path}(@Z, Y, P2, C2),\\
+\datalogspace f\_contains(X, P2) == false, \\
+\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+
+\end{boxedminipage}
+\caption{\label{ch:evita:fig:basicSPLocal}The localized version of rule~\ol{R2} in
+Figure~\ref{ch:evita:fig:basicSP}.}
+\end{figure*}
+
 Finally, we briefly describe the localization compiler stage, which turns a
 rule with multiple location specifiers in its body to many rules, each of which
 has a single location specifier in its body; this essentially turns a
 distributed join into a set of local joins with partial result transmissions
-among the rules involved~\cite{loo-sigmod06}.  This rewrite was part of the original P2
-system, but implemented in C++ and woven into the monolithic compiler.
+among the rules involved~\cite{loo-sigmod06}.  This rewrite was part of the
+original P2 system, but implemented in C++ and woven into the monolithic
+compiler. 
 
-In Evita Raced, the localization stage traverses distributed rules in
+We start with an example description using rule~\ol{R2} from
+Figure~\ol{ch:evita:basicSP}.  This rule is rewritten into the two rules shown
+in Figure~\ref{ch:evita:fig:basicSP}.  The \ol{link\_copy} predicate is an
+{\emph event} predicate that copies the \ol{link} tuples at node $X$ to node
+$Z$.  This will result in a network transfer if these attribute values are not
+equal.  On node $Z$, the \ol{link\_copy} tuples will appear in rule~\ol{R2b}
+and complete the condition of rule~\ol{R2}, sending the result back to node
+$X$.
+
+Declaratively, the localization stage traverses distributed rules in
 left-to-right order starting with first body predicates (rules with local-only
 body predicates are selected out early in the stage).  The location attribute
 of the current predicate in this traversal is stored along with the cursor
-information of the traversal.  A {\em breakpoint} is generated if the traversal
-reaches a predicate with location attribute that differs from the previous.
+information of the traversal.  A {\em breakpoint} is derived if the traversal
+reaches a predicate with a location attribute that differs from the previous.
 The breakpoint triggers a {\em split} rule at the given position, which creates
-a new {\em glue} predicate $IR_p$, and two new rules defined as follows.
+a new {\em glue} predicate $IR_copy$, and two new rules defined as follows.
 \begin{CompactEnumerate} 
-\item $IR_p$ :- (predicates to the left, excluding the breakpoint).  
-\item (original rule head predicate) :- $IR_p$, (predicates to the right, including
+\item {\bf IR\_copy} :- (predicates to the left, excluding the breakpoint).  
+\item (original rule head predicate) :- {\bf IR\_copy}, (predicates to the right, including
   the breakpoint).  
 \end{CompactEnumerate} 
-The location attribute in the $IR_p$ predicate is taken from the predicate at
-the breakpoint position.  The other attributes in the $IR_p$ predicate are
-taken from the predicates to the left of (and not including) the breakpoint,
-which represents the schema of the intermediate result prior to the breakpoint
-position predicate.  The algorithm then removes the original rule, and moves
-recursively on the second rule, which is considered the original rule in the
-above discussion.  The recursion terminates at the rightmost predicate
-position.
+The location attribute in the {\bf IR\_copy} predicate is taken from the
+predicate at the breakpoint position.  The other attributes in the {\bf
+IR\_copy} predicate are taken from the predicates to the left of (and not
+including) the breakpoint, which represents the schema of the intermediate
+result prior to the breakpoint position predicate.  The algorithm then removes
+the original rule, and moves recursively on the second rule, which is
+considered the original rule in the above discussion.  The recursion terminates
+at the rightmost predicate position.
 
 The localization stage is not an optimization per se, but rather a program
-rewrite necessary to make distributed rules executable.
-% Any program that contains distributed rules must go through this compilation
-% stage.
-The \OVERLOG program for localization consists of only 28 rules.  The original
-P2 code that performed this task in P2 consisted of approximately 400 lines of
-% carefully crafted
-C++.
+rewrite necessary to make distributed rules executable.  The entire \OVERLOG
+program for localization consists of only 12 rules.  The original P2 code that
+performed this task in P2 consisted of approximately 400 lines of C++.
 
 \section{Summary} 
 \label{ch:evita:sec:summary} 
