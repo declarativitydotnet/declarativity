@@ -21,9 +21,11 @@ derivations.  Similarly, Timed Concurrent Constraint Programming (TCCP)~\cite{td
 by outputting a new (possibly diminished) store and constraint program at each timestep.  
 
 Our temporal approach to representing state change most closely resembles the
-Statelog language~\cite{statelog}.  We were unaware of the Statelog work when formalizing the 
-notions of persistence via induction and temporal stratification, and were surprised
-(and encouraged) to observe very similar ideas in Statelog.  By contrast, our motivation is
+Statelog language~\cite{statelog}.  
+%We were unaware of the Statelog work when formalizing the 
+%notions of persistence via induction and temporal stratification, and were surprised
+%(and encouraged) to observe very similar ideas in Statelog.  
+By contrast, our motivation is
 the logical specification and implementation of distributed systems, and our 
 principal contribution is the use of time to model both local state change and communication
 over unreliable networks.
@@ -33,7 +35,7 @@ concurrent systems in terms of constraints over valuations of state, and tempora
 %%The notion of 
 %%\emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering'' is similar to our declarative definition 
 %%of table persistence.  
-Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (\texttt{next} and \texttt{async}), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
+Two distinguishing features of \lang with respect to TLA+ are our minimalist use of temporal constructs (\texttt{next} and \texttt{async}), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
 
 \subsection{Distributed Systems}
 
