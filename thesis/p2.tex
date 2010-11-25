@@ -103,8 +103,8 @@ assume these safe restrictions in all the rules presented in this thesis.
 \begin{figure*}
 \ssp
 \begin{boxedminipage}{\linewidth}
-{\bf link}("localhost:10000", "localhost:10001"). \\
-{\bf link}("localhost:10001", "localhost:10002"). \\
+{\bf link}("localhost:10000", "localhost:10001", 1). \\
+{\bf link}("localhost:10001", "localhost:10002", 1). \\
 \\
 R1 {\bf path}(X, Y, cons(X, Y), C) :- \\
 \datalogspace {\bf link}(X, Y, C). \\
@@ -227,14 +227,14 @@ consistent with the database.
 
 \subsection{Negation and Stratification}
 
-We now touch on the subject of handling negated subgoals in the body of a
-Datalog rule.  There is a large body of work on this subject that we will not
-address here since it does not pertain to the content of this thesis.  Our goal
-instead is to introduce the reader to the notion of stratified negation, which
-ensures that a set of Datalog rules with negated subgoals will ``make sense'',
-which commonly means that we reach a unique minimal model following a fixed
-point evaluation.  Before getting to that definition, we review some semantic
-issues raised by negated subgoals in Datalog.
+We touch on the subject of handling negated subgoals in the body of a Datalog
+rule.  There is a large body of work on this subject that we will not address
+here since it does not pertain to the content of this thesis.  Our goal instead
+is to introduce the reader to the notion of stratified negation, which ensures
+that a set of Datalog rules with negated subgoals will ``make sense'', which
+commonly means that we reach a unique minimal model following a fixed point
+evaluation.  Before getting to that definition, we review some semantic issues
+raised by negated subgoals in Datalog.
 
 \begin{figure*}
 \centering
@@ -255,8 +255,8 @@ Consider rule~\ol{R4} in Figure~\ref{ch:p2:fig:negation}, which formulates a
 \ol{path} from a \ol{link} if $X$ and $Y$ does not cross a detour.
 Unfortunately, the complement of the \ol{detour} relation is not a well-defined
 term since we do not know the domain of its possible values.  Moreover, we cannot
-specify this complete relation prior to evaluation, since rule~\ol{R5}
-references the \ol{detour} predicate in the head.  
+specify this complete relation prior to evaluation, since \ol{detour}
+is an IDB predicate.
 
 If we were to evaluate the rules in Figure~\ref{ch:p2:fig:negation} in an
 ad-hoc fashion then we could end up with \ol{path} tuples that cross detours.
@@ -274,7 +274,7 @@ The reader may realize that by evaluating rule~\ol{R5} first would get us the
 correct deductions in rule~\ol{R4}.  This is indeed correct, and this ordering
 of predicate evaluations forms the basic idea behind stratified Datalog.
 Before we get to that definition, lets first understand how the dependencies of
-a Datalog program is represented graphically.
+a Datalog program are represented graphically.
 
 \begin{figure*} 
 \ssp
@@ -308,24 +308,97 @@ stratum if it is on a path that contains a cycle (due to arbitrary recursion),
 and there exists a negated edge along that recursive path.
 
 We evaluate a stratified Datalog program using the seminaive algorithm of
-Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- topologically sort
-the IDB predicates (in $\delta IDB$) by their assigned stratum.  If the program is
+Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- we topologically
+sort the IDB predicates (in $\delta IDB$) by their assigned stratum, and obey
+this order in the evaluation loop.  This order ensures that if the program is
 stratified then any negated subgoal (e.g., \ol{detour}) has already had its
-relation fully evaluated.  The result of this evaluation is a {\emph stratified
-model}. We revisit the notion of stratified Datalog throughout this thesis. It turns
-out that the P2 system does not supported stratified Datalog, which significantly
-complicated made many of our \OVERLOG programs mentioned in Chapters~\ref{ch:evita}, 
-\ref{ch:magic} and~\ref{ch:opt}.
+relation fully evaluated.  The result of this evaluation is called a {\emph
+stratified model}.  We revisit the notion of stratified Datalog throughout this
+thesis.  It turns out that the P2 system does not supported stratified Datalog,
+which significantly complicated made many of our \OVERLOG programs mentioned in
+Chapters~\ref{ch:evita}, \ref{ch:magic} and~\ref{ch:opt}. Fortunately, there
+is another class of Datalog programs that are {\emph locally} stratified, which
+we describe next.
 
 \subsection{Local Stratification}
-NOTE: talk about the lack of stratification here and then mention our 
-problems with it in subsequent chapters.
-Define: local stratification in last section of Datalog intro.
-In fact all program from the declarative networking project that route
-tuples along some minimum path require local stratification.
+
+The definition of stratified Datalog is based on cycles through negations in
+the dependency graph of a collection of rules.  An extension to this definition
+is a class of locally stratified programs.  These programs are not necessary
+stratified according the their rules, but they are stratified when we
+instantiate those rules with a specific collection of data.  Many of the
+programs presented in this thesis fall into the class of local stratification.
+
+\begin{figure*}
+\ssp
+\begin{boxedminipage}{\linewidth}
+{\bf link}("localhost:10000", "localhost:10001", 1). \\
+{\bf link}("localhost:10001", "localhost:10002", 1). \\
+\\
+R1 {\bf path}(X, Y, cons(X, Y), C) :- \\
+\datalogspace {\bf link}(X, Y, C). \\
+\\       
+R2 {\bf path}(X, Y, cons(P1, P2), C1+C2) :- \\
+\datalogspace {\bf link}(X, Z, C1), {\bf shortestPath}(Z, Y, P2, C2), \\
+\datalogspace $f\_contains(X,\ P2)\ ==\ false$. \\ 
+
+R3 {\bf minCostPath}(X, Y, min$<$C$>$) :-  \\
+\datalogspace {\bf path}(X, Y, P, C).
+
+R4 {\bf shortestPath}(X, Y, P, C) :- \\
+\datalogspace {\bf minCostPath}(X, Y, C), {\bf path}(X, Y, P, C).\\
+
+\end{boxedminipage}
+\caption{\label{ch:p2:fig:datalogSP}Shortest path variant of Figure~\ref{ch:p2:fig:datalogPath}.}
+\end{figure*}
+
+Consider the variant of the path program in Figure~\ref{ch:p2:fig:datalogSP},
+which modifies rule~\ol{R2} to formulate new paths from the \ol{shortestPath} 
+relation, rather than the \ol{path} relation.  Two extra rules \ol{R3} and \ol{R4} are used to
+derive the shortest path from the \ol{path} relation.  Rule~\ol{R3} selects the
+minimum cost path from $X$ to $Y$, and rule~\ol{R4} selects the actual minimum
+path based on the minimum cost metric.
+
+\begin{figure*} 
+\ssp
+\begin{center}
+\includegraphics[scale=1]{figures/dependency-graph2}
+\caption{\label{ch:p2:fig:dependency2}Dependency graph for predicates 
+appearing in Figure~\ref{ch:p2:fig:datalogSP}. A cycle through an aggreagation
+appears in bold. }
+\end{center} 
+\end{figure*}
+
+The dependency graph for this program is shown in
+Figure~\ref{ch:p2:fig:datalogSP}.  This program is not stratified since there
+is a recursive path in the rule dependency graph that traverses an aggregation.
+Like negations, aggregations impose stratification boundaries.  Intuitively, we
+need to derive all \ol{path} tuples before we can identify the one that is the
+minimum cost.  As a result, the Datalog program in
+Figure~\ref{ch:p2:fig:datalogSP} is not stratified, but it is locally
+stratified.
+
+Assume that this program is evaluated using the algorithm describe in
+Figure~\ref{ch:p2:fig:seminaive}. The bottom-up evaluation will start by
+deriving all paths of length $1$ using rule~\ol{R1}, then using rule~\ol{R2}
+to derive paths of length $2, 3, \cdots$ until no such paths exist. As a
+result of this evaluation order, our {\bf min} aggregation will never see
+data (i.e., a \ol{path} tuple) that disputes and earlier deduction. That is,
+the naive and seminaive evaluations derive a \ol{path} tuples of length $k$ from
+\ol{path} tuples using \ol{path} tuples of length $k-1$~\footnote{This assumes
+that the cost of a \ol{path} tuple is proportional to it's length.}. 
+
+Many of the programs described in this thesis are not stratified, and of those,
+all are locally stratified.  For example, the System R rules presented in
+Chapter~\ref{ch:opt} perform a {\bf min} aggregation on the cost metric of a
+query plan.  This is used to select the ``best plan'' among the set of
+equivalent plans in a given level (plan size) of the System R dynamic program.
+The ``best plan'' is then recursively used to construct plans for the next
+level.  Since we never consider a level twice, this optimization is locally
+stratified.
 
 
-\section{\OVERLOG: The P2 Query Language}
+\section{\OVERLOG: Our first look}
 \label{ch:p2:sec:overlog}
 
 \OVERLOG is based on the traditional recursive query language, Datalog.  As in
@@ -347,21 +420,21 @@ to Datalog, which we review before describing the P2 runtime.
 {\bf materialize}(link,infinity,infinity,keys(1,2)). \\
 {\bf materialize}(path,1,infinity,keys(1,2,3)).  \\
 {\bf materialize}(shortestPath,1,infinity,keys(1,2,3)). \\
-\\
-{\bf link}("localhost:10000", "localhost:10001"). \\
-{\bf link}("localhost:10001", "localhost:10002"). \\
-\\
+
+{\bf link}("localhost:10000", "localhost:10001", 1). \\
+{\bf link}("localhost:10001", "localhost:10002", 1). \\
+
 R1{\bf path}(@X, Y, P, C) :- \\
 \datalogspace {\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
-\\       
+
 R2 {\bf path}(@X,Y,P,C) :- \\
 \datalogspace {\bf link}(@X, Z, C1), {\bf path}(@Z, Y, P2, C2), \\
 \datalogspace $f\_contains(X,P2) == false$, \\
 \datalogspace P := f\_cons(X,P2), C := C1 + C2. \\ 
-\\      
+
 R4 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
 \datalogspace {\bf path}(@X, Y, P, C). \\
-\\
+
 R5 {\bf shortestPath}(@X, Y, P, C) :- \\
 \datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).\\
 \end{boxedminipage}
@@ -409,12 +482,12 @@ local events, which are considered to be live simultaneously with the event
 fact.  This three-part definition defines the semantics for a single P2 node at
 a snapshot in time.  P2 has no defined semantics across time and space (in the
 network); we describe the relevant operational semantics of the prototype in
-Section~\ref{sec:eventloop}.
+Section~\ref{ch:p2:sec:p2}.
      
 \subsection{Deletions and Updates}
 
 \OVERLOG, like SQL, supports declarative expressions that identify tuples to be
-deleted in a deferred manner after query execution completes.  To this end, any
+deleted in a deferred manner after the query execution completes.  To this end, any
 \OVERLOG rule in a program can be prefaced by the keyword \ol{delete}.  The
 program is run to fixpoint, after which the tuples derived in {\tt delete}
 rules -- as well as other tuples derivable from those -- are removed from
@@ -466,87 +539,158 @@ push-based elements as well.  As in Click, whenever a pull-based element and a
 push-based element need to be connected, an explicit ``glue'' element (either a
 pull-to-push driver, or a queue element) serves to bridge the two.  More
 details of this dataflow coordination are presented in the original P2
-paper~\cite{p2:sosp}.
+paper~\cite{p2:sosp}.  Here we focus on the dataflow architecture
+(Section~\ref{ch:p2:sec:dataflow}), which affects the language semantics, and
+the dataflow processing elements (Section~\ref{ch:p2:sec:dataflow_elements}).
 
-\subsection{Dataflow Elements} 
+\subsection{Dataflow Architecture}
+\label{ch:p2:sec:dataflow}
 
-The set of elements provided in P2 includes a suite of operators familiar from
-relational query engines: selection, projection, and in-memory indexes.  P2
-supports joins of two relations in a manner similar to the symmetric hash join:
-it takes an arriving tuple from one relation, inserts it into an in-memory
-table for that relation, and probes for matches in an access method over the
-other relation (either an index or a scan).  The work described in
-Chapter~\ref{ch:evita} extended this suite to include sorting and merge-joins,
-which allowed us to explore some traditional query optimization opportunities
-and trade-offs (Section~\ref{ch:evita:sec:systemr}).
+\begin{figure*} 
+\ssp
+\begin{center}
+\includegraphics[scale=0.6]{figures/p2-arch}
+\caption{\label{ch:p2:fig:dataflow}P2 Dataflow Architecture.}
+\end{center} 
+\end{figure*}
 
-P2 currently has no support for persistent storage, beyond the ability to read
-input streams from comma-separated-value files.  Its tables are stored in
-memory-based balanced trees that are instantiated at program startup;
-additional such trees are constructed by the planner as secondary indexes to
-support query predicates.
+P2 consist of a dataflow of processing elements, queues, and a single driver
+loop.  Figure~\ref{ch:p2:fig:dataflow} provides a high level view of this
+architecture, which contains a number of different queuing elements.  The
+\ol{event} queue is the primary input queue that contains the tuples that the
+system is currently processing.  The \ol{net in} and \ol{main mem} secondary
+input queues feed the event queue with a tuple when none current exist in it.
 
-P2 also provides a number of elements used for networking, which handle issues
-like packet fragmentation and assembly, congestion control, multiplexing and
-demultiplexing, and so on; these are composable in ways that are of interest to
-network protocol designers~\cite{condie-hotnets05}.  The basic pattern that the
-reader should assume is that each P2 node has a single IP port for
-communication, and the dataflow graph is ``wrapped'' in elements that handle
-network ingress with translation of packets into tuples, and network egress
-with translation of tuples into packets.
+There are three output queues in the system.  The choice of which queue depends
+on the location attribute of the tuple.  If the tuple is local to the current
+P2 instance, and its lifetime is greater than zero, then it will be added to
+the \ol{main mem} queue.  If the tuple is remote, it is added to the \ol{net
+out} queue.  The third output queue is the \ol{event} queue.  Local output
+tuples that have a zero lifetime are directly added to the this queue.  This
+architecture decision led to a unique fixpoint that had ramifications in the
+\OVERLOG language layer.
 
-\subsection{The P2 Event Loop}
-\label{sec:eventloop}
+A Datalog fixed point occurs when all input queues have been completely drained.
+This is guaranteed to occur during quiescent network periods, which allow
+us to drain the \ol{net in} queue. Buried inside the dataflow architecture of
+P2 lies another fixpoint-like marker. A P2 dataflow fixpoint occurs when the
+\ol{event} queue has been drained, after processing at least one tuple. We describe
+this by example.
 
-The control flow in the P2 runtime is driven by a fairly traditional event loop
-that responds to any network or timer event by invoking an appropriate dataflow
-segment to handle the event.
+Assume a single tuple in the \ol{net in} input queue, and all other queues are
+empty.  The driver will execute a ``pull-push'' element on the input of the
+\ol{event} queue that will dequeue the tuple in the \ol{net in} queue and add
+it to the \ol{event} queue.  In an iterative loop, the driver will dequeue a
+single tuple from the \ol{event} queue and execute it in the processing
+elements, which derive some number of new deductions.  If any of those
+deductions contain local tuples with a zero lifetime, then they are reinserted
+into the \ol{event} queue.  The driver loop continues to process \ol{event}
+tuples until the \ol{event} queue is again empty.  At that point, it declares a
+dataflow fixpoint, which triggers a flush of the ``insertion'' writes from the
+\ol{main mem} queue.  If no ``insertion'' tuples exist then a flush of the
+``deletion'' tuples occur, and the corresponding deletion events are added to
+the \ol{event} queue.  
 
-The basic control loop in P2 works as follows:
-\begin{CompactEnumerate}
-    \item An event is taken from the system input queue, corresponding to a single newly-arrived tuple, which is either an {\em insert} tuple (i.e., the result of a normal deduction) or a {\em delete} tuple (the result of a \ol{delete} rule or a primary-key update).  We will refer to this tuple as the {\em current tuple}.
-    \item The value of the system clock is noted in a variable we will call the {\em current time}.  This is the time that will be used to determine the liveness of soft-state tuples.  
-    %(Note that any event tuples that arrived previously will no longer be live in any event table, which guarantees the single-event semantics described above.)
-    \item The current tuple is, logically, appended to its table.
-    \item If the current tuple is an insert tuple, the dataflow corresponding to the \OVERLOG program is initiated and run to a local fixpoint following traditional Datalog semantics, with the following exception: during processing, any non-local derived tuples are buffered in a {\em send queue}, as are any derived tuples to be deleted.
-    \item If, instead, the current tuple is a delete tuple, the dataflow
-    is run to a local fixpoint, but newly-derived local tuples
-    (including the current tuple) are copied to a {\em delete queue},
-    and newly-derived non-local tuples are marked as delete tuples
-    before being placed in the send queue so as to cascade the deletions
-    to remote nodes' databases.
-    \item All tuples in the delete queue are deleted from their associated tables, and the delete queue is emptied.
-    \item The send queue is flushed across the network, with any local updates inserted into the local input queue.
-\end{CompactEnumerate}
-
-Unlike Datalog, \OVERLOG must run in the continuous processing context of
-networking, over streams of tuples representing system events.  This inherently
-requires more than the single computation of a fixpoint as described in the
-Datalog literature.  P2 has modified its handling of this issue since the
-initial paper~\cite{p2:sosp}.  P2 nests a fairly traditional declarative
-Datalog fixpoint execution within an operationally defined local event loop at
-each node.  An input queue is kept at each P2 node, to hold tuples that
-correspond to network messages and clock interrupts.  Each tuple in the queue
-is tagged with the name of a relation in the schema of the Datalog database.
-The loop begins by noting the local wall-clock time, and deleting from all
-tables any tuples whose soft-state lifetime has expired; this includes event
-tuples from the previous iteration of the loop.  At that point, a tuple is
-dequeued from the input queue and inserted into its associated table.  At that
-point, the \OVERLOG program is run to fixpoint atomically, nearly as if it were
-a traditional single Datalog program.  One exception to traditional Datalog is
-the handling of derived tuples with remote location specifiers; these are
-placed directly into network queues for subsequent processing.  Another
-exception involves rules that have {\em actions} in the head -- these actions
-can be table insertion or deletion; derived tuples in such rules are also
-enqueued for subsequent processing.  When fixpoint is reached, the queued
-network messages are sent to their destinations, and the table actions are
-carried out on the database.  This completes one iteration of the event loop.
+After all insertion and deletion tuples have been processed by the initial
+\ol{net in} input tuple, the system declares a global fixpoint, which is
+semantically equivalent to a Datalog fixpoint.  On a global fixpoint, the
+driver loop will flush all tuples in the \ol{net out} queue, triggering a
+transfer of those tuples to the corresponding P2 instance.  The driver loop
+returns to the \ol{net in} queue for the next tuple to process.
 
 From this perspective, the P2 runtime looks quite a bit like an
-Event-Condition-Action system with dataflow underneath: events are provided by
-the clock and network, conditions are checked via the dataflow engine for
-matches, which are then converted into actions: network messages to be sent, or
-table updates to be performed.
+Event-Condition-Action (ECA) system with dataflow underneath: events are
+provided by the clock and network, conditions are checked via the dataflow
+engine for matches, which are then converted into actions: network messages to
+be sent, or table updates to be performed.  The ``event'' portion of ECA is
+implemented by the driver loop and the ``demux'' (router) element in
+Figure~\ref{ch:p2:fig:dataflow}.  Next, we describe the elements that implement
+the {\emph condition} and {\emph action} processing logic.
+
+\subsection{Dataflow Elements} 
+\label{ch:p2:sec:dataflow_elements}
+
+The set of elements provided in P2 includes a suite of operators familiar from
+relational query engines: selection, projection, and in-memory indexes.  These
+operators are strung together to implement the logical {\emph condition} of the 
+processing loop.  P2 supports joins of two relations in a manner similar to the
+symmetric hash join: it takes an arriving tuple from one relation, inserts it
+into an in-memory table for that relation, and probes for matches in an access
+method over the other relation (either an index or a scan).  The work described
+in Chapter~\ref{ch:evita} extended this suite to include sorting and
+merge-joins, which allowed us to explore some traditional query optimization
+opportunities and trade-offs (Section~\ref{ch:evita:sec:systemr}).
+
+P2 consists of exactly two logical {\emph actions}: a local database write and
+a network send.  We first describe the details of behind a database write.  An
+\ol{event} tuple is modeled as transient database write, and therefore its
+action is the reinsertion into the \ol{event} queue.  P2 does not currently
+have support for persistent storage, beyond the ability to read input streams
+from comma-separated-value files.  Its tables are stored in memory-based
+balanced trees that are instantiated at program startup; additional such trees
+are constructed by the planner as secondary indexes to support query
+predicates.  A write to the database is applied to the memory-based table, and
+a relevant (insert/delete) \ol{event} is enqueued into the \ol{main mem} queue.
+
+The action for a remote output tuple is simply to enqueue it on the \ol{net
+out} queue.  When this queue is eventually flushed, it will be sent out over
+the network.  As part of the same dataflow, P2 provides a number of elements
+used for networking, which handle issues like packet fragmentation and
+assembly, congestion control, multiplexing and demultiplexing, and so on; these
+are composable in ways that are of interest to network protocol
+designers~\cite{condie-hotnets05}.  The basic pattern that the reader should
+assume is that each P2 node has a single IP port for communication, and the
+dataflow graph is ``wrapped'' in elements that handle network ingress with
+translation of packets into tuples, and network egress with translation of
+tuples into packets.
+
+%\subsubsection{Driver Loop}
+
+%We now describe the complete control flow in the P2 runtime.  As mentioned
+%above, it is driven by a fairly traditional event loop that responds to any
+%network (or timer) event by invoking an appropriate dataflow segment to handle
+%the event.
+%
+%The basic control loop in P2 works as follows:
+%\begin{CompactEnumerate}
+%    \item An event is taken from the system input queue, corresponding to a single newly-arrived tuple, which is either an {\em insert} tuple (i.e., the result of a normal deduction) or a {\em delete} tuple (the result of a \ol{delete} rule or a primary-key update).  We will refer to this tuple as the {\em current tuple}.
+%    \item The value of the system clock is noted in a variable we will call the {\em current time}.  This is the time that will be used to determine the liveness of soft-state tuples.  
+%    %(Note that any event tuples that arrived previously will no longer be live in any event table, which guarantees the single-event semantics described above.)
+%    \item The current tuple is, logically, appended to its table.
+%    \item If the current tuple is an insert tuple, the dataflow corresponding to the \OVERLOG program is initiated and run to a local fixpoint following traditional Datalog semantics, with the following exception: during processing, any non-local derived tuples are buffered in a {\em send queue}, as are any derived tuples to be deleted.
+%    \item If, instead, the current tuple is a delete tuple, the dataflow
+%    is run to a local fixpoint, but newly-derived local tuples
+%    (including the current tuple) are copied to a {\em delete queue},
+%    and newly-derived non-local tuples are marked as delete tuples
+%    before being placed in the send queue so as to cascade the deletions
+%    to remote nodes' databases.
+%    \item All tuples in the delete queue are deleted from their associated tables, and the delete queue is emptied.
+%    \item The send queue is flushed across the network, with any local updates inserted into the local input queue.
+%\end{CompactEnumerate}
+
+%Unlike Datalog, \OVERLOG must run in the continuous processing context of
+%networking, over streams of tuples representing system events.  This inherently
+%requires more than the single computation of a fixpoint as described in the
+%Datalog literature.  P2 has modified its handling of this issue since the
+%initial paper~\cite{p2:sosp}.  P2 nests a fairly traditional declarative
+%Datalog fixpoint execution within an operationally defined local event loop at
+%each node.  An input queue is kept at each P2 node, to hold tuples that
+%correspond to network messages and clock interrupts.  Each tuple in the queue
+%is tagged with the name of a relation in the schema of the Datalog database.
+%The loop begins by noting the local wall-clock time, and deleting from all
+%tables any tuples whose soft-state lifetime has expired; this includes event
+%tuples from the previous iteration of the loop.  At that point, a tuple is
+%dequeued from the input queue and inserted into its associated table.  At that
+%point, the \OVERLOG program is run to fixpoint atomically, nearly as if it were
+%a traditional single Datalog program.  One exception to traditional Datalog is
+%the handling of derived tuples with remote location specifiers; these are
+%placed directly into network queues for subsequent processing.  Another
+%exception involves rules that have {\em actions} in the head -- these actions
+%can be table insertion or deletion; derived tuples in such rules are also
+%enqueued for subsequent processing.  When fixpoint is reached, the queued
+%network messages are sent to their destinations, and the table actions are
+%carried out on the database.  This completes one iteration of the event loop.
+
 
 \section{Summary}
 \label{ch:p2:sec:summary}
