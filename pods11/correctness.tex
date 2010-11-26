@@ -1,0 +1,19 @@
+\section{Correctness Criteria}
+
+We introduce two correctness criteria for distributed systems: eventual consistency and confluence.
+
+Give some intuition about why they're different.  An example of a nonconfluent program that is eventually consistent.
+
+\subsection{Eventual Consistency}
+
+{\em Eventual consistency} means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.  This is equivalent to the definition in (cite Peter's paper about EC).  Vogels' presented several operational definitions of eventual consistency which we contrast below:
+
+(Todo)
+
+E.C. is related to confluence possibly by some spacetime substitution.  Something like: we take our program, and have it only performs one node of the replication (nondeterministically commits to a node via committed choice???), and convert nondeterministic choice into replication (only a finite number of meaningful interleavings of messages -- how do we discover???), then this program is confluent iff the original program is E.C.
+
+\subsection{Confluence}
+
+{\em Confluence} means that there is a unique ultimate model.
+
+When does a \lang program have a unique ultimate model?  While it is the presence of choice or asynchrony that causes multiple stable models, these multiple stable models sometimes give rise to a unique ultimate model.
