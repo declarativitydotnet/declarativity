@@ -1,0 +1,10 @@
+\section{Introduction}
+Logic languages have promise... blah blah
+People have tried before to model async distributed systems with logic... blah blah... attempts were ad-hoc
+Identify salient issue that separates an asynchronous distributed system from a centralized system: things may be non-atomic, and things may be out-of-order
+Attractive formalization of representation of distributed systems in logic unifies these two salient issues into a notion of ``time''
+This formalism helps us gain new insight into the correctness of distributed systems; specifically:
+We explore two correctness criteria for distributed systems:
+(1) the system is deterministic (confluent)
+(2) any execution of the system preserves eventual consistency
+We identify the model theoretic notions that guarantee these results, and provide (and prove) a spectrum of conservative tests that can aid the programmer in crafting a distributed system that meets these criteria

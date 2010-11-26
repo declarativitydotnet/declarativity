@@ -1,0 +1,114 @@
+\section{\large \bf \lang}
+\label{sec:slang}
+
+We start with Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation.  We assume the existence of an ordering \dedalus{<} over all elements in the universe.  We will henceforth refer to Datalog$\lnot$ as ``Datalog''.  Each predicate has a distinguished {\em temporal attribute}, and only a {\em temporal variable} may appear here.  The balance of the arguments are {\em data} arguments, and may not contain temporal variables.  We posit the existence of an infinite unary relation \dedalus{time} $= \mathbb{N}$, and an infinite binary relation \dedalus{successor} $:= {(a,b) | a,b \in \mathbb{N} \land b = a + 1}$.  To model network nondeterminisim, we allow the use of Sacaa and Zaniolo's \dedalus{choice} construct to bind a rule's head temporal attribute.
+
+\wrm{make this discussion of location specifiers jibe more}
+ To this end \lang adopts the ``horizontal partitioning'' convention introduced by Loo et al. and used in many subsequent efforts~\cite{Loo:2005}. To represent a distributed system, we consider some number of agents, each running a copy of the same program against a disjoint subset ({\em horizontal partition}) of each predicate's contents.  We require one attribute in each predicate to be used to identify the partitioning for tuples in that predicate. We call such an attribute a {\em location specifier}, and prefix it with a \dedalus{\#} symbol in Dedalus.
+Finally, we constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.
+
+\lang requires that all atoms in each rule body use the same temporal variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
+
+\begin{enumerate}
+\item The rule is called an {\em atemporal rule} if its head temporal variable is the same as its body temporal variable;
+\item The rule is called an {\em inductive rule} if its head temporal variable is the \dedalus{successor} of its body temporal variable;
+\item The rule is called an {\em asynchronous rule} if its head temporal variable is constrained using the \dedalus{choice} construct over all body variables (including the body temporal variable).
+\end{enumerate}
+
+\begin{example}
+The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
+\\
+deductive:
+\begin{Dedalus}
+p(A, B, T) \(\leftarrow\) e(A, B, T);
+\end{Dedalus}
+\\
+inductive:
+\begin{Dedalus}
+q(A, B, S) \(\leftarrow\) e(A, B, T), successor(T, S);
+\end{Dedalus}
+\\
+asynchronous:
+\begin{Dedalus}
+r(A, B, S) \(\leftarrow\) e(A, B, T), time(S), choose((A, B, T), (S));
+\end{Dedalus}
+\end{example}
+
+Since unification on the temporal attribute is required in every rule body, we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we mayomit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  Below, we rewrite the above rules using this syntax sugar:
+
+\begin{example}
+The following are examples of sugared well-formed deductive, inductive, and asynchronous rules, respectively.
+\\
+deductive:
+\begin{Dedalus}
+p(A, B) \(\leftarrow\) e(A, B);
+\end{Dedalus}
+\\
+inductive:
+\begin{Dedalus}
+q(A, B)@next \(\leftarrow\) e(A, B, T);
+\end{Dedalus}
+\\
+asynchronous:
+\begin{Dedalus}
+r(A, B)@async \(\leftarrow\) e(A, B, T);
+\end{Dedalus}
+\end{example}
+
+
+\wrm{note that communication rules required to be asynchronous}
+First, by restricting bodies to a single agent, the only communication
+modeled in \lang occurs via communication rules.  Second, because
+all communication rules are asynchronous, agents may only learn about
+time values at another agent by receiving messages (with unbounded
+delay) from that agent.  Note that this model says nothing about the
+relationship between the agents' clocks; they could be
+non-monotonically increasing, or they could respect a global order.
+
+\subsection{Semantics}
+The semantics of a \lang program can be characterized by the {\em stable model semantics} for logic programming.  Intuitively, a stable model of a \lang program is a trace of its distributed execution.  Stable models may be infinite.
+
+(Insert some stuff on modelling persistence versus events)
+This definition of persistence suggests we define the output of the program as the facts (not including their timestamp attributes) that are eventually always true.  We call this the {\em ultimate model}.
+
+Ultimate models are always finite in \dedalus because there are no function symbols, a finite number of predicate symbols of fixed arity, and a finite number of constant symbols.  Therefore an upper bound on the size of any ultimate model is $|P| * |C| ^ max_arity$.
+
+A Dedalus program may only have a finite number of different ultimate models; in other words there are only finitely many meaningful orderings of messages.  Note, however, that infinitely many messages may be sent, since the trace (stable model) may be of infinite size.
+
+A Dedalus program without asynchronous rules has a single stable model.  This corresponds to its perfect model evaluated with a local stratification on time.
+
+Clearly, a Dedalus program with asynchronous rules may have multiple stable models corresponding to multiple possible non-deterministic choices of timestamps.
+
+\begin{lemma}
+Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible [CRON Conjecture]
+\end{lemma}
+\begin{proof}
+Proof.
+\end{proof}
+
+\subsection{Operational Interpretation}
+\lang programs are intended to capture the execution of an asynchronous distributed system.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.
+
+For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
+suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
+
+Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
+predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
+what is known at that instant.
+ Inductive and asynchronous 
+ rules are {\em temporal}---their consequents are defined to
+be true ``at a different time'' than their antecedents.
+
+In the following Lemma, we assume something about Vector Clocks or Lamport Clocks -- figure it out.
+
+\begin{lemma}
+The traces that are modeled by \lang are exactly the traces that would come up in a real distributed system.
+\end{lemma}
+\begin{proof}
+Proof. (Maybe consult Rusty here)
+\end{proof}
+
+
+\subsection{Complexity}
+
+The language of confluent \lang programs is equal to the language of PSPACE, provided we introduce a \dedalus{bit} relation as described in Immerman.  Prove this.

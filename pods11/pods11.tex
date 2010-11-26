@@ -1,0 +1,106 @@
+\documentclass{sig-alternate}
+
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{times}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{url}
+\usepackage{amsmath, amssymb}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+\usepackage{alltt}
+\usepackage{appendix}
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+
+\pdfinfo{/Title (A Model-Theoretic Exploration of Distributed Systems)}
+
+\usepackage{txfonts}
+\newcommand{\Tau}{\mathcal{T}}
+\newcommand{\SDedalus}{\mathcal{S}}
+\newcommand{\Consts}{\mathcal{C}}
+\newcommand{\Vars}{\mathcal{A}}
+%\newcommand{\pos}{\protect{$_{pos}$}}
+%\newcommand{\nega}{\protect{$_{neg}$}}
+% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
+\newcommand{\pos}{\_pos}
+\newcommand{\nega}{\_neg}
+\newcommand{\eat}[1]{}
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+\newtheorem{example}{Example}
+\newdef{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{observation}{Observation}
+
+%\def\slang{synchronous Dedalus\xspace}
+\def\lang{\textsc{Dedalus}\xspace}
+\def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
+%\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
+\newcommand{\naive}      {na\"{\i}ve\xspace}
+\newcommand{\Naive}      {Na\"{\i}ve\xspace}
+%dedalus environment for code
+
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+
+
+\begin{document}
+
+%\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+\title{A Model-Theoretic Exploration of Distributed Systems}
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+\numberofauthors{6}
+
+\author{
+%
+William R. Marczak \quad Peter Alvaro \quad Joseph M. Hellerstein \quad Neil Conway \quad Russell Sears
+\\\\
+%
+\fontsize{10}{10}\selectfont\itshape 
+%\vspace{0.05in}
+University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
+%
+\{wrm,palvaro,hellerstein\}@cs.berkeley.edu
+%
+}
+
+\toappear{}
+
+\maketitle
+
+\begin{abstract} 
+%
+We present a formal definition of the Dedalus language and prove conjectures posed in \wrm{cite Joe}.
+%
+\end{abstract}
+
+\input{intro}
+\input{foundation}
+\input{correctness}
+\input{relwork}
+\bibliographystyle{abbrv}
+\bibliography{pods,declarativity}
+
+%%\appendix
+%%\input{appendix}
+
+%%\input{attic}
+
+\end{document}
