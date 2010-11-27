@@ -1,4 +1,3 @@
-%\documentclass{sig-alternate}
 \documentclass[runningheads,a4paper]{llncs}
 
 \usepackage[usenames, dvipsnames]{color}
@@ -13,8 +12,6 @@
 
 \usepackage{alltt}
 \usepackage{appendix}
-%\usepackage{algorithm}
-%\usepackage{algorithmic}
 \newcommand{\keywords}[1]{\par\addvspace\baselineskip
 \noindent\keywordname\enspace\ignorespaces#1}
 
@@ -25,9 +22,6 @@
 \newcommand{\SDedalus}{\mathcal{S}}
 \newcommand{\Consts}{\mathcal{C}}
 \newcommand{\Vars}{\mathcal{A}}
-%\newcommand{\pos}{\protect{$_{pos}$}}
-%\newcommand{\nega}{\protect{$_{neg}$}}
-% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
 \newcommand{\pos}{\_pos}
 \newcommand{\nega}{\_neg}
 
@@ -38,17 +32,10 @@
 \newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
 \newcommand{\smallurl}[1]{{\small \url{#1}}}
 
-%\newtheorem{example}{Example}
-%\newdef{definition}{Definition}
-%\newtheorem{lemma}{Lemma}
-%\newtheorem{observation}{Observation}
-%\def\slang{synchronous Dedalus\xspace}
 \def\lang{\textsc{Dedalus}\xspace}
 \def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
-%\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
 \newcommand{\naive}      {na\"{\i}ve\xspace}
 \newcommand{\Naive}      {Na\"{\i}ve\xspace}
-%dedalus environment for code
 
 \newenvironment{Dedalus}{
 \vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
@@ -62,14 +49,8 @@
 
 \mainmatter  % start of an individual contribution
 
-%\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
 \title{{\Large{\bf\lang}}:
 Datalog in Time and Space} 
-%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
-%
-% You need the command \numberofauthors to handle the "boxing"
-% and alignment of the authors under the title, and to add
-% a section for authors number 4 through n.
 
 \titlerunning{{\bf\lang}: Datalog in Time and Space}
 
@@ -87,29 +68,11 @@ Yahoo! Research:
 \email{sears@yahoo-inc.com}
 }
 
-%\author{
-%
-%Peter Alvaro$^\ast$ \quad William R. Marczak$^\ast$ \quad Neil
-%Conway$^\ast$  \\
-%Joseph M. Hellerstein$^\ast$ \quad 
-%David Maier$^\dagger$ \quad Russell Sears$^\ast$ 
-%\\\\
-%
-%\fontsize{10}{10}\selectfont\itshape 
-%\vspace{0.05in}
-%$^\ast$University of California, Berkeley \quad $^\dagger$Portland State
-%University\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
-%
-%\{palvaro,wrm,nrc,hellerstein,sears\}@cs.berkeley.edu \quad maier@cs.pdx.edu
-%
-%}
 
-%\toappear{}
 
 \maketitle
 
 \begin{abstract} 
-%
 Recent research has explored using Datalog-based
 languages to express a distributed system as a set of logical
 invariants.  Two properties of distributed
@@ -146,8 +109,6 @@ rich distributed services and protocols, and provides both cleaner semantics and
 
 \input{constructs}
 \input{safety}
-%%\input{proofs}
-%\input{update}
 \input{async}
 \input{broadcast}
 \input{relwork}
@@ -156,9 +117,6 @@ rich distributed services and protocols, and provides both cleaner semantics and
 \bibliographystyle{abbrv}
 \bibliography{datalog2.0,declarativity}
 
-%%\appendix
-%%\input{appendix}
 
-%%\input{attic}
 
 \end{document}
