@@ -28,22 +28,15 @@ a finite execution.  Safety in Datalog is traditionally ensured
 through the following syntactic constraints:
 
 \begin{enumerate}
-%
 \item No functions are allowed.
-%
 \item Variables are \emph{range restricted}: all attributes of the head goal
 appear in a non-negated body subgoal.
-%
 \item The EDB is finite.
-%
 \end{enumerate}
 
 These constraints ensure that the Herbrand Universe is finite: any atom that
 may be deduced by a safe program may only take its attributes from the 
 set of all constant symbols appearing in the program and EDB\@.
-%%~\nrc{Don't know what this means, but I suspect it is fancy-pants language for no good reason.}
-%%\paa{ignoring this provocative comment.}
-%%\wrm{lol.}
 In fact, the set of all possible assignments of these constants to predicate
 attributes, representing every possible interpretation, is itself finite. 
 
@@ -52,103 +45,55 @@ leads to an infinite set of facts, \slang programs violate this
 definition of safety.  However, \dedalus{successor} models time, not computation;
 later sections explain how \lang implementations avoid enumerating the contents
 of \dedalus{successor} at runtime.
-%%\wrm{whats pailiative (helping fix the problem) here???}.  
 This section
 introduces a notion of termination that allows us to reason about the safety of
 \slang programs.
 
-%\nrc{Seems like there ought to be more here. Why do I care about the
-%  preceding text? What does it have to do with the following text?}
 
-%Since the Herbrand Universe is finite, any instantiation of predicates with
-%constants is finite.  Every possible interpretation (set of ground atoms) of
-%a logic program comes from this finite instantiation, so any possible
-%interpretation is finite
   
-%\paa{the idea is: safe=finite.  herbrand universe=finite, so any instantiation of predicates with constants is finite.
-%every possible interpretation (set of atoms) of a LP comes from this instantition.  so any possible interpretation is finite.
-%a model is an interpretation in which all heads are true when the body is true.  all models are finite.  the minimal model
-%is clearly finite.}
 
-%\subsection{Temporal Safety}
 
-%%\wrm{show some examples before restricting to temporal safety!!  maybe even
-%%show that some unsafe programs have safe equivalents.}
 
 A \slang program containing only deductive rules is informally equivalent to a
 Datalog program in which all predicates have no time suffix.  If all the rules
 in such a program meet the conditions above, then clearly we would like them to meet \slang's definition of safety. 
-%%\rcs{this used to say conditions 1 and 2, but it is possible that our program is infinitely long...  Also, ``clearly they are safe'' is strange, given that we haven't defined 
-%%safety yet, so I reworded.}
 
 
 
 \begin{definition}
-%
 A rule is \emph{instantaneously safe} if it is deductive,  function-free and range-restricted.
 A \slang program is instantaneously safe if its deductive reduction is instantaneously safe.
-%
 \end{definition}
 
-%Inductive rules may be unsafe.  Consider the \dedalus{successor} relation described above.  According to our
-%intuitive interpretation, this relation models the passage of time, in order to
-%establish a temporal order among ground atoms. 
 
 The \dedalus{successor} relation complicates the discussion of safety, as it
 introduces the countably infinite set $\mathbb{Z}$ to our
-%Herbrand
 universe of constants.
-%Clearly, a naive interpretation of time can lead to unsafe programs:
-%\rcs{how is this any more unsafe than succ(x+1) :- succ(x)?  Suggested text:}
 
-%The infinte \dedalus{successor} relation complicates our discussion of safety;
 Consider the following \slang program, which derives a single, persistent fact:
 
-%Consider the \dedalus{successor} relation described above.  According to our
-%intuitive interpretation, this relation models the passage of time, in order to
-%establish a temporal order among ground atoms. 
-%%\wrm{we're ignoring entanglement here}
-%Recall that {\em successor} is the standard strict total order on
-%$\mathbb{Z}$, lol, don't know how I accidentally wrote the above incorrect
-%sentence all over the paper
-%Recall that \dedalus{successor} is an infinite relation.  Clearly, a naive
-%interpretation of time can lead to unsafe programs:
 
-%%No reason to re-define a strict total order here...
-%\begin{itemize}
 
-%\item $\forall A,B \in \mathbb{Z} : successor(A, B) \Rightarrow B > A$ (i.e. whenever $successor(A,B)$ is true, then $B > A$)
 
-%\item $\forall A \in \mathbb{Z} : \exists! B \in \mathbb{Z} : successor(A,B)$ (i.e. every integer has a successor)
 
-%\end{itemize}
 
-%\wrm{we'd expect a lot more properties of successor than the ones you mentioned.  so instead of trying to think of them all, i just narrowed down what you wrote.}
 
-%This implies that successor is infinite (as we'd expect time to be), and is problematic because it leads to unsafe programs.
 
 
 \begin{example}
 \label{ex:tempsafe}
-%
 An unsafe \slang instance?
 \\
-%%\begin{Dedalus}
-%%p\pos(A, B)@next \(\leftarrow\) p\pos(A, B), \(\lnot\)p\nega(A, B);
-%%\end{Dedalus}
 \begin{Dedalus}
 persist[p\pos, p\nega, 2]
 p(1, 2)@123;
 \end{Dedalus}
 
-%%\paa{we shouldn't \emph{ever} need to write out r2, right?}
 
 The single ground fact will cause one deduction for each tuple in
 \dedalus{successor}.  Since \dedalus{successor} is infinite, the corresponding
 Datalog
-%%\rcs{what should we call this?}
 program is unsafe.  
-%
 \end{example}
 
 However, observe that each of these deductions produces a tuple that changes
@@ -156,97 +101,40 @@ only in its time suffix.  We find it useful to distinguish between unsafe
 programs and programs that, given a finite EDB, eventually derive only tuples
 that are equivalent except in their time suffixes.
 
-%%\wrm{$<$don't really get whats going on$>$}
-%%Consider a \emph{derivation tree} as defined by Levy et al~\cite{levy}.  
-%%\paa{he's halevy now.  should it be halevy et al?  or is that confusing?  I blame alon.}
-%%According to their definition,
-%%two goal nodes $g_1$ and $g_2$ are \emph{identical} if they have the same predicate symbol and, in each argument
-%%position, the same variables.  Two nodes are \emph{equivalent} if there exists a one-to-one mapping
-%%$\phi$ from $V(g_1) \to V(g_2)$ such that $\phi(g_1) = g_2$.
 
 
-%%\paa{I may have made a mess of this.  derivation trees are probably more machinery than we need to describe, for
-%%the purposes of the definition of a 'stable inference', the 1-step deduction of an atom from another atom having the same
-%%name and the same values for all attributes but time}
-%%\wrm{I still don't know why we need to use derivation trees here.}
-%%\wrm{Define 'derivation'.  Joe sez: "Here I think you just need an appropriate reference for derivation trees, along with some simple intuition.  I believe the right ref is %%"Constraints and Redundancy in Datalog", Levy/Sagiv, PODS 92."}
 
-%%\begin{definition}
-%%An \emph{inference} is a single step in a derivation, corresponding to a goal node, its child rule node, and the child goal
-%%nodes of this rule node.  
-%%\end{definition}
 
-%%\paa{or... ditch all this stuff about derivations, define an 'inference' as a single deduction of an atom from established atoms;
-%%ie the single evaluation of a rule, and proceed from here with the definitions}
 
-%%\textbf{alternate derivation-free definition:}
-%%\begin{definition}
-%%An \emph{inference} is the deduction of an atom from established atoms via the application of a rule.
-%%\end{definition}
-%%\wrm{what's a rule application?}
 
-%%\begin{definition}
-%%A \emph{stable inference} has a goal $\gamma'$ with time suffix $\Tau$ derived
-%%from a child goal $\gamma$ with time suffix $\Tau-1$, such that $\gamma$ differs from
-%%$\gamma'$ only in its time suffix.
-%
-%%\end{definition}
 
-%%In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
-%%minus $\Tau$.\wrm{$<$/dont really get whats going on$>$}.
 
-%%\wrm{How about we delete everything above and just say this:}
 
-%%To distinguish between programs that 
-%%produce these infinite \emph{void inductions} and those that correspond 
-%%intuitively to the Datalog notion of unsafe programs, we introduce the concept of
-%%\emph{temporal safety}.
 
-%%\begin{definition}
-%%An intensional predicate $e$ in a program $P$ is called an \emph{event predicate} if there exist
-%%in $P$ no rules with $e$ in their head. \wrm{how is this different from an EDB predicate??}
-%%\end{definition}
 
 \begin{definition}
-%
 Two sets of ground atoms $\Gamma$ and $\Gamma'$ are \emph{equivalent modulo
 time} if each atom $\gamma \in \Gamma$ has a corresponding atom $\gamma' \in
 \Gamma'$ such that $\gamma$ and $\gamma'$ have the same predicate symbol, and
 the same assignment of constants to attributes for all attributes except the
 time suffix.
-%
 \end{definition}
 
-%%In other words, $\pi_\xi(\gamma')$ is equivalent to $\pi_\xi(\gamma)$, where $\xi$ is the set of attributes in $\gamma$
-%%minus $\Tau$.\rcs{either define pi, write out ``projection'', or drop this paragraph}
 
 \begin{definition}
-%
 We say a \slang instance is \emph{quiescent at time $T$} if the set of all
 atoms with time suffix $T$ is equivalent modulo time to the set of all atoms
 with time suffix $T-1$.
-%%\rcs{what is a true atom?  Why distinguish between true atoms and false atoms?  Surely the neg tuples will match as well.  If not, then the program has somehow not quiesced...}
 \end{definition}
 
-%%\paa{well, there are some problems with this.  first, facts are only in the EDB, you mean atom,
-%%second, this is never true because of the time suffix (unless you mean to have defined ``fact''
-%%precisely as $\pi_\xi(p)$ for any predicate p.)  what I was trying to do was define quiescence in terms
-%%of inference; a quiescent DB is one for which all inferences are stable.}
 
-%was formerly an observation -wrm
 \begin{lemma}
-%
 A \slang instance that is quiescent at time $T$ will be quiescent until
 timestamp of the next EDB fact $V$, i.e.\ for all $U \in \mathbb{Z}: V > U \ge
 T$.  If no EDB fact has a timestamp greater than $T$, then the instance will be
 henceforth quiescent.
-%%\rcs{what does it mean for an edb fact to be true at time $T$?  It would be better to say that there is no EDB fact with timestamp T, since we're trying to ground the discussion without talking about time.}
-%
 \end{lemma}
-%
 \begin{proof}
-%
-%%\wrm{sightly ???}
 A \slang program admits only deductive and inductive rules, which derive
 new tuples at the same time as their ground tuples or in the immediate next
 timestep.  Thus, the set of tuples true at time $T$ is completely determined by
@@ -257,20 +145,14 @@ If the instance is quiescent at $T$, then given ${\bf A}$, the set of atoms
 with timestamp $T-1$, and the EDB at $T$, the program entails ${\bf
 A}$ at timestamp $T$.  Thus in the absence of EDB facts at $T+1$, it entails
 ${\bf A}$ at $T+1$.
-%
 \end{proof}
 
 \begin{definition}
-%
 A \slang instance with finite EDB is \emph{temporally safe} if it is henceforth
 quiescent after some time $T$.
-%
 \end{definition}
-%%\wrm{the following doesn't seem like a definition, seems more like a test for temporal safety}
-%%\begin{definition}
 
 \begin{definition}
-%
 Given the depends-on relation $\succ$ and its transitive closure $\succ^{*}$,
 an intensional predicate $e$ in a program $P$ is called an \emph{instantaneous
 predicate} if for every predicate $p$ for which $e \succ^{*} p$ (ie, $e$
@@ -280,29 +162,18 @@ predicate.
 
 \end{definition}
 
-%%A rule is temporally safe if:
 We propose the following conservative test for temporal safety.  A program is
 guaranteed to be temporally safe if every rule is either:
 
 \begin{enumerate}
-%
 \item An instantaneously safe rule, or
-%
 \item An inductive rule in which the head predicate occurs also in the
 body with the same variable bindings for all attributes save the time suffix,
 or
-%%occurs also in the body with the same assignment of variables and constants to attributes.
-%
 \item An inductive rule that has at least one instantaneous predicate as a
 positive subgoal in the body.
-%
 \end{enumerate}
 
-%%\paa{maybe this is too greedy.  rule 1 above defines "instantaneous safety" or classical datalog-type safety.  
-%%if all deductive rules respect rule 1, we are instantaneously finite.  the other two rules describe temporal safety
-%%as such.  that is to say: any deductive rule that is range-restricted and function-free is instantaneously safe (deductive rules do
-%%not reference the infinite relation \emph{successor}.  instantaneously safe <=> safe in datalog) further, any instantaneously safe rule is temporally safe.  
-%%also, rules that are (2,3) are temporally safe.}
 
 While a temporally safe program is henceforth quiescent after some time $T$,
 a temporally unsafe program changes infinitely.  Note that
@@ -310,13 +181,9 @@ the \slang program in Example~\ref{ex:tempsafe} is temporally safe because
 the basic persistence macro creates a rule that satisfies the second condition above.
 
 \begin{lemma} 
-%
 A temporally stratifiable \slang instance is temporally safe if it has a finite EDB and every rule is one of the kinds 1-3 above.
-%
 \end{lemma}
-%
 \begin{proof}
-%
 Assume the program is temporally unsafe.  That is, there exists no time $T$
 such that $\forall U \ge T$, the set of all atoms with timestamp $U$ is
 equivalent modulo time to the set of all atoms with timestamp $T-1$.  Let $E$
@@ -364,12 +231,10 @@ without loss of generality, the body contains $R$.  Thus, the program is syntact
 
 Thus, the program is temporally unstratifiable, which contradicts our
 assumption.
-%
 \end{proof}
 
 \begin{example}
 A \slang instance with a temporally unsafe deductive rule.
-%%\rcs{is this even a \slang instance?  Is it a Datalog instance?  Perhaps this example belongs earlier in the text, where we define range-restricted.}
 
 
 \begin{Dedalus}
@@ -383,7 +248,6 @@ could range over an infinite set of constants.
 
 
 \begin{example} 
-%
 A \slang instance that is temporally unsafe due to infinite oscillation.
 
 \begin{Dedalus}
@@ -394,75 +258,25 @@ flip\_flop(0, 1)@1;
 The above program exemplifies temporally unsafe induction. Even though it
 contains no function symbols and all variables are range-restricted, it
 entails infinite oscillation of the \emph{flip\_flop} predicate.  
-%because the \emph{p} predicate occurs in the head with a different variable
-%binding than in the body, and because there are no positive event predicates
-%in the body.  
-%%\wrm{this makes me a bit uncomfortable.
-%%we've defined a conservative test for temporal safety.  so if something fails
-%%the test, it's not necessariliy temporally unsafe.}
 \end{example}
 
 We can imagine interesting examples of temporally unsafe programs, and do not forbid them
 in \slang. 
-%%\wrm{joe sez "discuss safety is wil, but-out regured"}
 
-%%By providing a conservative syntactic check for temporal safety, we ensure that \slang
-%%programs have 
 
-%An inductive rule cannot cause infinite oscillation if it has a positive event predicate in its body, because we are assuming a finite EDB.
 
-%%However, we observe that all of these deductions are uninteresting, as they are
-%%deterministically related to the EDB.  To avoid performing such deductions, we
-%%restrict {\em successor} to range over the subset of $\mathbb{Z}$ consisting of
-%%the consecutive natural numbers between the minimum and maximum timestamp
-%%specified in the (finite) EDB ($\{123, 124\}$ in this example) \wrm{this is without NDB right?}.  If we extended the EDB with the additional facts:
 
-%But if \emph{successor} is infinite, many of these deductions may be \emph{void}in some sense, i.e. functionally determined based on the EDB. \wrm{is functionally determined a real term?}
-%In effect, an EDB that is given in its totality determines a window over successor that is relevant to any computation that must be performed.  \wrm{what about NDB?}
-%It is easy to see that in this example, we need only consider a successor relation that contains a single tuple \{123, 124\}.
 
-%%\begin{Dedalus}
-%%delete p(1, 2)@456;
-%%p(?, ?)@789; \wrm{we're still doing queries?}
-%%\end{Dedalus}
 
-%%Evaluating the \lang instance would require \emph{successor} to range over the
-%%subset of consecutive natural numbers $[123, 790]$.
 
-%%\begin{definition}
-%%A \emph{post-hoc} evaluation is an evaluation of a \lang instance where
-%%{\em successor} ranges over the finite subset of $\mathbb{Z}$ described above.
-%%\end{definition}
 
-%%In a post-hoc evaluation, we can derive {\em successor} from the EDB as part of
-%%the fixpoint computation.  We first define a predicate \emph{event\_time} that
-%%contains the union of the time attributes from the EDB:
 
-%%$event\_time(\Tau) \leftarrow \displaystyle\bigvee_{p \in EDB} p([...], \Tau)$
 
-%%\wrm{I wasn't a fan of expressing a query plan in a Datalog rule...  But we can
-%%talk about this}
 
-%%We then populate \emph{successor} with \lang program shown below:
-%with arithmetic and aggregate functions, as shown below.
 
-%%\begin{Dedalus}
-%%smax(max<N>) \(\leftarrow\) event\_time(N);
-%%smin(min<N>) \(\leftarrow\) event\_time(N);
 
-%%successor(N, N + 1) \(\leftarrow\) smin(N);
 
-%%successor(S, S + 1) \(\leftarrow\) 
-%%    successor(N, S),
-%%    smax(M),
-%%    N <= M;
-%%\end{Dedalus}
 
-%%\wrm{Not sure what the point of this is...}
-%%Since {\em successor} is finite in a post-hoc evaluation, we may evaluate the
-%%ntire \lang instance in a single fixpoint.
 
-%In a post-hoc evaluation, time is in some sense ``instantaneous" in that all values of the successor relation are considered in a single
-%fixpoint computation.  The complete program is safe if the EDB is finite.
 
 
