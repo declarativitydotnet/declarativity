@@ -36,6 +36,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 		\textbf{table} & A collection whose contents persist across timesteps.\\
 		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
 		\textbf{channel} & A scratch collection with one attribute designated as the {\em location specifier}. Tuples ``appear'' at the address stored in their location specifier.\\
+    \textbf{interface} & A scratch collection specially designated as a point of dataflow composition with other modules.  An interface is typed as either \texttt{input} or \texttt{output}, and may only compose with an interface of the opposite type.\\
 		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The spec for a \textbf{periodic} is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
 		\hline
 	\end{tabular}
@@ -48,9 +49,10 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 				\hline 
 		\texttt{=} & \textbf{scratch} & rhs defines the contents of the lhs for the current timestep.  lhs must not appear in lhs of any other statement.\\
 		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep.\\
-		\texttt{$<$+} & \textbf{table}, \textbf{scratch}, & lhs will include the content of the rhs in the\\
-		              & \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay.\\
+		\texttt{$<$+} & \textbf{table}, \textbf{scratch}, & lhs will include the content of the rhs in the next timestep.\\
+		              %& \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay.\\
 		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be missing from the lhs at the start of  the next timestep.\\
+		\texttt{$<\sim$} & \textbf{channel} & tuples in the rhs will appear in the (remote) lhs at some future time.\\
 		\hline
 	\end{tabular}
 	\end{small}
@@ -59,13 +61,18 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 \end{figure}
 
 \vspace{9pt}\noindent\textbf{State in Bloom}\\
-Bloom programs manage state using four collection types described in
+Bloom programs manage state using five collection types described in
 the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a
 relational-style schema of named columns, including an optional subset of those
-columns that forms a primary key.  Line~\ref{line:dec_table} of
-Figure~\ref{fig:declarations} shows the definition of a \textbf{table} with 4
-columns \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; the
-primary key is \texttt{(session, reqid)}. In Bud, the type system for the
+columns that forms a primary key.  
+Line~\ref{line:dec_chan} of
+Figure~\ref{fig:declarations} shows the definition of a \textbf{channel} with 6
+columns \texttt{server}, \texttt{client}, \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; the
+primary key is \texttt{(server, client, session, reqid)}. \texttt{server} is annotated with the location
+specifier ``@,''
+indicating that tuples inserted into the channel will appear at the address
+in the first attribute of the tuple.
+In Bud, the type system for the
 columns is taken from Ruby, so it is possible to have a column based on any Ruby
 class the programmer cares to define or import.  In Bud, a tuple in a Bloom
 collection is simply a Ruby array containing as many elements as the columns of
@@ -75,8 +82,9 @@ Postgres~\cite{postgres-adt}, column values can be manipulated using their own
 types and can only reference the column values as opaque objects.
 
 Persistence in Bloom is determined by the type of the collection.
-\textbf{scratch} collections are handy for transient data like network messages
-and for ``macro'' definitions that enable code reuse. The contents of a
+\textbf{scratch} collections are handy for transient data like network messages,
+external interfaces,
+and ``macro'' definitions that enable code reuse. The contents of a
 \textbf{table} persist across consecutive timesteps (until that persistence is
 interrupted via a Bloom statement containing the \texttt{$<$-} operator
 described below). Although there are precise declarative semantics for this
@@ -101,6 +109,12 @@ the address in their location specifier via a best-effort unordered network
 protocol like UDP, and the definition of a \textbf{periodic} collection
 instructs the runtime to ``inject'' facts at regular wall-clock intervals to
 ``drive'' further derivations.
+
+Bloom programs compose with other Bloom programs and with external callers at unidirectional
+\textbf{scratch} collections called \textbf{interfaces}.  A well-formed composition pairs
+every input and output with an interface of the complementary kind.  Line~\ref{line:dec_in_interface} in 
+Figure~\ref{fig:declarations} defines an intput interface with the same schema as the \texttt{action\_msg}
+channel.
 
 \begin{comment}
 \begin{figure}[t]
@@ -149,15 +163,27 @@ instructs the runtime to ``inject'' facts at regular wall-clock intervals to
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
-class BasicCartServer < Bud
-	def state
-		table :cart_action, ['session', 'reqid'], ['item', 'action'] (*\label{line:dec_table}*)
-		scratch :status, ['server', 'client', 'session', 'item'],
-												['cnt']
-		channel :action_msg, 0, ['server', 'client', 'session',
-																 'item', 'action', 'reqid']
-	end
-	[...]
+module CartProtocol
+  def state
+    super
+    channel :action_msg, (*\label{line:dec_chan}*)
+      ['@server', 'client', 'session', 'reqid'], ['item', 'action']
+    channel :checkout_msg,
+      ['@server', 'client', 'session', 'reqid']
+    channel :response_msg,
+      ['@client', 'server', 'session', 'item'], ['cnt']
+  end
+end
+
+module CartClientProtocol
+  def state
+    super
+    interface input, :client_action, (*\label{line:dec_in_interface}*)
+      ['server', 'session', 'reqid'], ['item', 'action'] 
+    interface input, :client_checkout, ['server', 'session', 'reqid']
+    interface output, :client_response, 
+      ['client', 'server', 'session'], ['item', 'cnt']
+  end
 end
 \end{lstlisting}
 \vspace{-10pt}
@@ -176,7 +202,7 @@ $<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
 the operator are instances of (a subclass of) a Ruby class called
 \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
 module supporting typical collection methods.  Figure~\ref{tab:bloom} describes
-the four operators that can be used to define the contents of the left-hand
+the five operators that can be used to define the contents of the left-hand
 side (lhs) in terms of the right-hand side (rhs).
 
 As in Datalog or SQL, the lhs of a statement may be referenced recursively in
@@ -198,6 +224,35 @@ be used in the rhs of a statement.\footnote{For clarity, we write out the join c
 Line~\ref{line:dis_join_action_msg_member} of Figure~\ref{fig:pdg-disorderly}
 shows a join between \texttt{action\_msg} and \texttt{member}.
 
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module CartClient
+  include CartProtocol
+  include CartClientProtocol
+
+  declare
+  def client
+    action_msg <~ client_action.map do |a| 
+      [a.server, @addy, a.session, a.reqid, a.item, a.action]
+    end
+    checkout_msg <~ client_checkout.map do |a| 
+      [a.server, @addy, a.session, a.reqid]
+    end
+    client_response <= response_msg.map {|r| r }
+  end
+end
+
+\end{lstlisting}
+\vspace{-10pt}
+\caption{Shopping cart client implementation}
+\label{fig:cart_client}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+
+
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
 
@@ -218,22 +273,28 @@ The constructs above form the core of the Bloom language.
 % \wrm{Wow you guys are citation aces, I couldn't find this paper online.  Anyway, it's not turing complete if we view time as a stage/iteration variable -- i.e. FOL with "as much time as you need to compute" only gets us PSPACE.  However, if we view time as data (i.e. allow the infinite successor relation into the Herbrand universe), then we get turing completeness.}
 Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.%  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
 
+While subclassing is appropriate in certain contexts, Bud supports more general abstraction and reuse via 
+Ruby's mixin functionality.  Modules defining collections and rules may be freely combined, subject to the restriction
+that the dataflow be fully specified by connecting all input and output interfaces.  A common pattern is the
+specification of abstract interfaces like those in Figure~\ref{fig:declarations}, which may be concretized by 
+mixing in rules that connect input to output interfaces with Bud rules.  Figure~\ref{fig:cart_client} supplies
+a simple concrete implementation of the CartClient protocol specified in Figure~\ref{fig:declarations}, leaving
+unspecified the server logic that reads \texttt{action\_msg} and \texttt{checkout\_msg} and writes to
+\texttt{response\_msg}.
+
+
 %\jmh{Can remove this paragraph is we're short on space, but it's a critique we will definitely hear.}
 %nrc: Cut this for space; also because omitting this won't cause the submission to be rejected.
 \begin{comment}
 Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions.  In fact, we demonstrate below that the pure logic-programming roots of Bloom can allow programmers to reason about many program interactions in a much deeper way than traditional imperative languages.
 \end{comment}
-
-\input{destructive}
+%\input{destructive}
 
 \vspace{9pt}\noindent \textbf{Bud Implementation}\\
 Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 1400 lines of Ruby code, developed in approximately two person-months of part-time effort.
 %\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
 
 
-\begin{comment}
 A Bud program is just a Ruby class definition.  To make it operational, a small amount of imperative Ruby code is needed to create an instance of the class and invoke the Bud \texttt{run} method.  This imperative code can then be launched on as many nodes as desired (e.g., via the popular Capistrano package for Ruby deployments).  Messages targeted at those nodes are handled according to the Bud specification.  As an alternative to the \texttt{run} method, the Bud class also provides a \texttt{tick} method that can be used to force evaluation of a single timestep; this is useful for debugging Bloom code with standard Ruby debugging tools, or for executing a Bud specification that is intended as a ``one-shot'' query.
 
-\jmh{The next paragraph could easily be chopped.  The preceding paragraph too, but it's more important to understand how things work.}
 Because Bud is pure Ruby, some programmers may choose to embed it as a Domain-Specific Language within traditional imperative Ruby code.  In fact, nothing prevents a subclass of Bud from having both Bloom code in \texttt{declare} methods and imperative code in traditional Ruby methods.  This is a fairly common usage model, akin to using the Ruby on Rails package to integrate declarative data management statements with imperative Ruby. A mixture of declarative Bloom methods and imperative Ruby allows the full range of existing Ruby code---including the extensive RubyGems repositories---to be combined with checkable distributed Bloom programs. The analyses we describe in the remaining sections still apply in these cases; the imperative Ruby code interacts with the Bloom logic in the same way as any external agent sending network messages.
-\end{comment}
