@@ -25,22 +25,30 @@ the logical specification and implementation of distributed systems, and our
 principal contribution is the use of time to model both local state change and communication
 over unreliable networks.
 
-Lamport's TLA+~\cite{tla} is a language for specifying 
-concurrent systems in terms of constraints over valuations of state, and temporal logic that describes admissible transitions.  
-Two distinguishing features of \lang with respect to TLA+ are our minimalist use of temporal constructs (\texttt{next} and \texttt{async}), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
+Lamport's TLA+~\cite{tla} is a language for specifying concurrent systems in
+terms of constraints over valuations of state and temporal logic that describes
+admissible transitions.  Two distinguishing features of \lang with respect to
+TLA+ are our minimalist use of temporal constructs (\texttt{next} and
+\texttt{async}), and our unified treatment of temporal and other attributes of
+facts; this enables the full literature of Datalog to be applied to both
+temporal and instantaneous properties of programs.
 
 \subsection{Distributed Systems}
 
-Significant recent work (\cite{boom-eurosys,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
-primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
-a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
-Existing distributed deductive languages such as NDlog and Overlog adopt a
-\emph{chain of fixpoints} interpretation. Evaluation proceeds in three phases:
+Significant recent work
+(\cite{boom-eurosys,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on
+applying deductive database languages to the problem of specifying and
+implementing network protocols and distributed systems.  Implementing
+distributed systems entails a data store that changes over time, so any useful
+implementation of such a language addresses the updateable state issue in some
+manner.  Existing distributed deductive languages such as NDlog and Overlog
+adopt a \emph{chain of fixpoints} interpretation. Evaluation proceeds in three
+phases:
 
 \begin{enumerate}
 \item Input from the external world, including network messages, clock interrupts and host language calls, is collected.
 \item Time is frozen, the union of the local store and the batch of events is taken as EDB, and the program is run to fixpoint.
-\item The deductions that cause side effects (e.g., updates, messages and host language callbacks) are dealt with.  
+\item The deductions that cause side effects (e.g., deletions, updates, network messages and host language callbacks) are dealt with.  
 \end{enumerate}
 
 Unfortunately, the language descriptions give no careful specification of how and when deletions and updates

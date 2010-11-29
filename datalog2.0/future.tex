@@ -1,37 +1,34 @@
 \section{Conclusion}
+Datalog has inspired a variety of recent applied work, which touts the benefits
+of declarative specifications for practical implementations.  We have developed
+substantial experience building distributed
+systems~\cite{boom-eurosys,Alvaro2009I-Do-Declare:-C,Chu:2007,Loo2009-CACM}
+using hybrid declarative/imperative languages such as
+Overlog~\cite{Loo2009-CACM}.  While our experience with those languages was
+largely positive, the combination of Datalog and imperative constructs often
+clouded our understanding of the ``correct'' execution of single-node programs
+that performed state updates.  This work developed in large part as a reaction
+to the semantic difficulties presented by these distributed logic languages.
 
+Through its reification of time as data, \lang allowed us to achieve the goal of
+a purely declarative language, without sacrificing the ability to express
+two critical features of practical distributed systems: mutable state and
+asynchronous communication. We believe that \lang is as expressive as Overlog,
+but formalizing this intuition is difficult because the semantics of Overlog are
+not well specified.  Instead, we are currently validating the practicality of
+our work by ``porting'' many of our Overlog programs to \lang.
 
-
-Datalog has inspired a variety of recent applied work, which touts the benefits of declarative specifications for practical implementations.  
-We have developed substantial experience building significant
-distributed systems~\cite{boom-eurosys,Alvaro2009I-Do-Declare:-C,Chu:2007,Loo2009-CACM} using hybrid
-declarative/imperative languages such as Overlog~\cite{Loo2009-CACM}.
-While our experience with those languages was largely positive, the 
-combination of Datalog and imperative constructs 
-often clouded  our understanding of the
-``correct'' execution of single-node programs that performed state
-updates.  
-This work developed in large part as a reaction to the semantic difficulties
-presented by these distributed logic languages.  
-
-Through its reification of time as data, \lang allowed us to 
-achieve the goal of a declarative language without sacrificing critically expressive features for the distributed systems domain.
-We believe that \lang is as expressive as Overlog, but formalizing this intuition is difficult because the semantics of Overlog are not well specified.  Instead, we are currently validating our practicality by ``porting'' many of our Overlog programs to \lang.
-
-
-
-In \lang, state update and communication differ from logical
-deductions only in terms of timing.
-In the local case, this allows us to express state update without giving up the clean semantics of Datalog; unlike
-Datalog extensions that use imperative constructs to provide such
-functionality, each \lang rule expresses a logical invariant that will
-hold over all program executions.  
-However, interactions with external processes, and primitives such as
-asynchronous and unreliable communication introduce nondeterminism
-which \lang models with \dedalus{choose}.  
-Our hope is that modeling external processes and events with a single
-primitive will simplify formal program verification techniques for the distributed systems domain.  Two natural directions in this vein are to determine for a given \lang program whether Church-Rosser confluence holds for all models produced by \dedalus{choice}, or to capture finer-grained notions like serializability of such models with respect to transaction identifiers embedded in EDB facts.  
-
-
-
-
+In \lang, state update and communication differ from logical deduction only in
+terms of timing.  In the local case, this allows us to express state update
+without giving up the clean semantics of Datalog; unlike Datalog extensions that
+use imperative constructs to provide such functionality, each \lang rule
+expresses a logical invariant that will hold over all program executions.
+However, interactions with external processes and asynchronous communication
+introduce nondeterminism which \lang models with \dedalus{choose}.  Our hope is
+that modeling external processes and events with a single primitive will
+simplify efforts to formally verify the correctness of distributed systems
+implemented using \lang. Two natural directions in this vein are to determine
+for a given \lang program whether Church-Rosser confluence holds for all models
+produced by \dedalus{choice}, or to capture finer-grained notions like
+serializability of such models with respect to transaction identifiers embedded
+in EDB facts.
