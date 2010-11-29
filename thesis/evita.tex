@@ -850,7 +850,9 @@ at the rightmost predicate position.
 The localization stage is not an optimization per se, but rather a program
 rewrite necessary to make distributed rules executable.  The entire \OVERLOG
 program for localization consists of only 12 rules.  The original P2 code that
-performed this task in P2 consisted of approximately 400 lines of C++.
+performed this task in P2 consisted of approximately 400 lines of C++ scattered
+throughout the entire ~$50414$ lines of code ($10794$ lines of .C files under
+p2core alone).
 
 \section{Summary} 
 \label{ch:evita:sec:summary} 
@@ -876,4 +878,5 @@ within an extensible, declarative program manipulation framework.  More
 generally, we believe that metacompilation is a good design philosophy not only
 for our work, but for the upcoming generation of declarative engines being
 proposed in many fields.
+
 
