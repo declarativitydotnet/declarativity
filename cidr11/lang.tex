@@ -49,7 +49,7 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 				\hline 
 		\texttt{=} & \textbf{scratch} & rhs defines the contents of the lhs for the current timestep.  lhs must not appear in lhs of any other statement.\\
 		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep.\\
-		\texttt{$<$+} & \textbf{table}, \textbf{scratch}, & lhs will include the content of the rhs in the next timestep.\\
+		\texttt{$<$+} & \textbf{table}, \textbf{scratch} & lhs will include the content of the rhs in the next timestep.\\
 		              %& \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay.\\
 		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be missing from the lhs at the start of  the next timestep.\\
 		\texttt{$<\sim$} & \textbf{channel} & tuples in the rhs will appear in the (remote) lhs at some future time.\\
@@ -81,17 +81,17 @@ Postgres~\cite{postgres-adt}, column values can be manipulated using their own
 (non-destructive) methods, but the Bloom language has no knowledge of those
 types and can only reference the column values as opaque objects.
 
-Persistence in Bloom is determined by the type of the collection.
-\textbf{scratch} collections are handy for transient data like network messages,
-external interfaces,
-and ``macro'' definitions that enable code reuse. The contents of a
-\textbf{table} persist across consecutive timesteps (until that persistence is
-interrupted via a Bloom statement containing the \texttt{$<$-} operator
-described below). Although there are precise declarative semantics for this
-persistence~\cite{dedalus}, it is convenient to think operationally as
-follows: \textbf{scratch} collections are ``emptied'' before each timestep,
-\textbf{table}s are ``stored'' collections, and the \texttt{$<$-} operator
-represents batch ``deletion'' before the beginning of the next timestep.
+The persistence of a tuple is determined by the type of the collection that
+contains the tuple. \textbf{scratch} collections are handy for transient data
+like network messages, intermediate results, and ``macro'' definitions that
+enable code reuse. The contents of a \textbf{table} persist across consecutive
+timesteps (until that persistence is interrupted via a Bloom statement
+containing the \texttt{$<$-} operator described below). Although there are
+precise declarative semantics for this persistence~\cite{dedalus}, it is
+convenient to think operationally as follows: \textbf{scratch} collections are
+``emptied'' before each timestep begins, \textbf{table}s are ``stored''
+collections (akin to tables in SQL), and the \texttt{$<$-} operator represents
+batch ``deletion'' before the beginning of the next timestep.
 
 The facts of the ``real world,'' including network messages and the passage of
 wall-clock time, are captured via \textbf{channel} and \textbf{periodic}
@@ -113,7 +113,7 @@ instructs the runtime to ``inject'' facts at regular wall-clock intervals to
 Bloom programs compose with other Bloom programs and with external callers at unidirectional
 \textbf{scratch} collections called \textbf{interfaces}.  A well-formed composition pairs
 every input and output with an interface of the complementary kind.  Line~\ref{line:dec_in_interface} in 
-Figure~\ref{fig:declarations} defines an intput interface with the same schema as the \texttt{action\_msg}
+Figure~\ref{fig:declarations} defines an input interface with the same schema as the \texttt{action\_msg}
 channel.
 
 \begin{comment}
@@ -273,6 +273,8 @@ The constructs above form the core of the Bloom language.
 % \wrm{Wow you guys are citation aces, I couldn't find this paper online.  Anyway, it's not turing complete if we view time as a stage/iteration variable -- i.e. FOL with "as much time as you need to compute" only gets us PSPACE.  However, if we view time as data (i.e. allow the infinite successor relation into the Herbrand universe), then we get turing completeness.}
 Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.%  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
 
+% TODO: work on this
+\vspace{9pt}\noindent \textbf{Bloom Interfaces}\\
 While subclassing is appropriate in certain contexts, Bud supports more general abstraction and reuse via 
 Ruby's mixin functionality.  Modules defining collections and rules may be freely combined, subject to the restriction
 that the dataflow be fully specified by connecting all input and output interfaces.  A common pattern is the
