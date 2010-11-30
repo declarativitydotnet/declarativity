@@ -132,29 +132,31 @@ set of \ol{path} tuples.  The rule reads ``if there exists a \ol{link} from $X$
 to $Y$ at cost $C$, then there exists a \ol{path} from $X$ to $Y$ consisting of
 nodes $X, Y$ at cost $C$.'' Both initial facts meet this criterion.
 
-Subsequent to that, rule~\ol{R2} performs a transitive closure over any
-\ol{link} {\bf and} \ol{path} tuples.  The rule reads ``if there is a link from
-$X$ to $Z$ at cost $C$, and there is a \ol{path} from $Z$ to $Y$ over $P2$ at
-cost $C2$, then there is a path from $X$ to $Y$ using path ($X,\ P2$) at cost
-$C1+C3$.'' A path from ``localhost:10000'' to ``localhost:10002'', via
-``localhost:10001'', satisfies this criterion, and such a fact is added to the
-\ol{path} IDB relation.  The query predicate, shown at the bottom
-of Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start at
-``localhost:10000.'' The \ol{path} tuples that begin with ``localhost:10000'' and
-end at ``localhost:10001'' and ``localhost:10002'' both meet this query constraint.
+Rule~\ol{R2} expresses a transitive closure over the \ol{link} {\bf and}
+\ol{path} relations.  The rule reads ``if there is a link from $X$ to $Z$ at cost
+$C$, and there is a \ol{path} from $Z$ to $Y$ over $P2$ at cost $C2$, then
+there is a path from $X$ to $Y$ using path ($X,\ P2$) at cost $C1+C3$.'' A path
+from ``localhost:10000'' to ``localhost:10002'', via ``localhost:10001'',
+satisfies this criterion, and such a fact is added to the \ol{path} IDB
+relation.  The query predicate, shown at the bottom of
+Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start at
+``localhost:10000.'' The \ol{path} tuples that begin with ``localhost:10000''
+and end at ``localhost:10001'' and ``localhost:10002'' both meet this query
+constraint.
 
 \subsection{Evaluation of Datalog Rules}
 
 We now turn to the evaluation of a set of Datalog rules, which is performed in
-a bottom-up fashion, starting with a set of known EDB facts.  There are two
-popular approaches to evaluating a set of Datalog rules.  The first approach is
-called {\emph naive evaluation}, which is an iterative algorithm that
-repeatedly applies all known facts to the program rules, in some stylized
-set-oriented fashion.  Starting with the facts contained in the EDB, the naive
-evaluator iteratively executes a select-project-join SPJ query against the
-predicates in the rule body, to continually derive new IDB facts.  The process
-is repeated until no new facts can be inferred, which marks the termination
-condition for the evaluation, commonly referred to as a ``fixed point.''
+a bottom-up fashion, starting with the set of known EDB facts.  Two popular
+approaches are used to evaluate a set of Datalog rules.  The first is called
+{\emph naive evaluation}, which is an iterative algorithm that repeatedly
+applies all known facts to the program rules, in some stylized set-oriented
+fashion.  Starting with the facts contained in the EDB, the naive evaluator
+iteratively executes a select-project-join SPJ query against the predicates in
+the rule body, to continually derive new IDB facts.  Each iteration applies all
+the facts contained in the EDB and IDB to the rule set.  The process repeats
+until no new facts can be inferred, marking the end of the evaluation, which
+is commonly referred to as a ``fixed point.''
 
 \begin{figure*}
 \ssp
@@ -184,11 +186,11 @@ condition for the evaluation, commonly referred to as a ``fixed point.''
 \caption{\label{ch:p2:fig:seminaive}Seminaive Evaluation over a set of Datalog rules.}
 \end{figure*}
 
-Each iteration of the naive algorithm uses all known facts in the database when
+Each iteration of this naive algorithm uses all known facts in the database when
 deriving new facts.  A second approach, which is also the optimal approach,
-adds a condition to this iteration loop that prunes the facts that were not
-derived in the previous iteration.  The remaining facts, if any, are then used
-in the subsequent iteration.  The {\emph seminaive evaluation} algorithm is
+adds a condition to the iteration loop that prunes the facts that were not
+derived in the previous round.  The remaining facts, if any, are then used
+in the subsequent iteration.  This {\emph seminaive evaluation} algorithm is
 based on the principle that if a fact is derived during round~$i$ then it must
 have been inferred from a rule in which one or more subgoals were instantiated
 with facts that were inferred in round~$i-1$.
@@ -418,7 +420,7 @@ relational selection) or an {\em assignment}~\footnote{\OVERLOG's assignments
 are strictly syntactic replacements of variables with expressions; they are
 akin to ``\#define'' macros in C++.}.  An example \OVERLOG program is shown in
 Figure~\ref{ch:p2:fig:overlogSP}.  \OVERLOG introduces some notable extensions
-to Datalog, which we review before describing the P2 runtime.
+to Datalog, which we describe before presenting the P2 runtime.
 
 \begin{figure*}
 \ssp
@@ -506,7 +508,7 @@ deletion of the original fact is deferred until after the fixpoint is computed.
 \subsection{A Canonical Example}
 \label{ch:p2:sec:declnet}
 
-To illustrate the specifics of \OVERLOG, we review the shortest paths example
+To illustrate the specifics of \OVERLOG, we describe the shortest paths example
 in Figure~\ref{ch:p2:fig:overlogSP}, which is similar to that
 of~\cite{loo-sigmod06}, but with fully-realized \OVERLOG syntax that runs in
 P2.  The three \ol{materialize} statements specify that \ol{link}, \ol{path}
@@ -621,7 +623,7 @@ into an in-memory table for that relation, and probes for matches in an access
 method over the other relation (either an index or a scan).  The work described
 in Chapter~\ref{ch:evita} extended this suite to include sorting and
 merge-joins, which allowed us to explore some traditional query optimization
-opportunities and trade-offs (Section~\ref{ch:evita:sec:systemr}).
+opportunities and trade-offs (Section~\ref{ch:opt:sec:systemr}).
 
 P2 consists of exactly two logical {\emph actions}: a local database write and
 a network send.  We first describe the details of behind a database write.  An
