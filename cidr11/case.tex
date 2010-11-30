@@ -17,6 +17,17 @@ module KVSProtocol
   end
 end
 
+\end{lstlisting}
+\vspace{-10pt}
+\caption{Key/value store protocol.}
+\label{fig:kvs-proto}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
 module BasicKVS
   include KVSProtocol
 
@@ -27,8 +38,8 @@ module BasicKVS
 
   declare
   def mutate
-    bigtable <+ kvput.map {|p| [p.key, p.value] }
-    jst = join [bigtable, kvput], [bigtable.key, kvput.key]
+    bigtable <+ kvput.map {|p| [p.key, p.value] } (*\label{line:des_declare}*)
+    jst = join [bigtable, kvput], [bigtable.key, kvput.key] 
     bigtable <- jst.map {|b, p| b }
   end
 
@@ -44,9 +55,56 @@ end
 
 \end{lstlisting}
 \vspace{-10pt}
-\caption{Key/value store protocol and implementation.}
-\label{fig:pdg-disorderly}
+\caption{Key/value store implementation.}
+\label{fig:kvs-impl}
 \end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module ReplicatedKVS
+  include BasicKVS
+  include MulticastProtocol
+
+  def state
+    interface input, :kvput, ['client', 'key', 'reqid'], ['value']
+  end
+
+  declare
+  def local_indir
+    send_mcast <= kvput.map do |k|  
+      unless members.include? [k.client]
+        [k.reqid, [@addy, k.key, k.reqid, k.value]]                           
+      end
+    end
+    
+    kvput <= mcast_done.map {|m| m.payload } 
+
+    kvput <= pipe_chan.map do |d|
+      if d.payload.fetch(1) != @addy
+        d.payload
+      end
+    end
+  end
+end
+
+\end{lstlisting}
+\vspace{-10pt}
+\caption{Replicated key/value store.}
+\label{fig:kvs-repl}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=1.1\linewidth]{fig/mittalk_legend.pdf}
+\vspace{-10pt}
+\caption{Visual analysis legend.}
+\label{fig:analysis-legend}
 \vspace{-2pt}
 \end{figure}
 
@@ -109,6 +167,9 @@ end
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
+
+
+
 
 
 \begin{figure}[t]
@@ -225,18 +286,6 @@ end
 \end{figure}
 
 
-%%\wrm{Re-do case studies in Bud} \wrm{Break cart development down into
-%%iterations} \wrm{How does the language naturally lead us to an order
-%%independent style?  Talk about inserting all sorts of exotic stuff like queues
-%%if we want a highly order-dependent imperative style.}
-
-\begin{comment}
-
-\jmh{We discussed the following on the phone.  (1) Handle shopping in two styles: destructive updates, and disorderly accumulation of increment/decrement.  (2) Do analysis on them to detect need for coordination in only the first, show that (annotated) 2PC removes the compiler warning.  (3) Deploy destructive+2PC on EC2 and show practical benefits of avoiding coordination.  (4) Evolve the program with new rules for checkout and/or inventory, show how the disorderly version is no longer monotonic.  Fix that  with 2PC where needed.  Also make sure the destructive version works with the new rules.  Now show that the disorderly version is still better than the destructive one, by coordinating only where needed.}
-
-\jmh{Finally, show what would happen if you didn't coordinate the inventory bit, but tracked taint.  Note that tainted output is the stuff where programmers need to write compensation logic.}
-
-\end{comment}
 
 In this section, we develop two different designs for a distributed shopping-cart
 application in Bloom.\footnote{The complete source code for 
@@ -245,6 +294,8 @@ First, we implement a ``destructive,'' state-modifying
 shopping cart application using a simple key-value store (also written in Bloom).
 Second, we implement a ``disorderly'' cart that accumulates updates in a 
 set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.  
+
+\subsection{A ``destructive'' shopping cart}
 
 We begin with a shopping cart built on a key-value storage abstraction.  Each
 cart is a \texttt{(key,value)} pair, where \texttt{key} is a unique session
@@ -255,24 +306,17 @@ the key is replaced by a new value that reflects the effect of the
 update. Deletion requests are ignored if the item they refer to does not exist
 in the cart.
 
-Figure~\ref{fig:pdg-destructive} shows the Bloom code for this design.  The
-\textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} module (10
-lines of Bloom not shown here), which the shopping cart extends via
-inheritance; it represents the input interface to the key-value store.
-%; it is used in a manner analogous to the \emph{put} function for hash tables.  
-The set of shopping carts is represented by the persistent \textbf{table} \texttt{bigtable}, which is replicated
-%%The \texttt{bigtable} replicas are kept consistent 
-by shipping \texttt{kvput} tuples between replicas upon updates. 
-%%\wrm{this doesn't guarantee consistency... might be better to say "bigtable is replicated..."}.
-% Ideally, when all messages have been delivered, every server should have an 
-% identical copy of \texttt{bigtable}.
+Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
+\textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} protocol shown
+in Figure~\ref{fig:kvs-proto}; it represents the input interface to the key-value store.
+Any collection of Bud rules that implement the protocol can be used, but to satisfy
+our requirement that the data be replicated we must use an implementation that replicates
+the contents of the store to multiple servers.
 
-%%\paa{TODO:}\jmh{Any reason not to move line 28 to the top and reference it here?}
-In line~\ref{line:des_client_action}, the client transmits
+In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client transmits
 \texttt{client\_action} tuples that correspond to cart updates over the
 \texttt{action\_msg} \textbf{channel} to an individually chosen server replica.
 We assume that the client has already chosen a server based on load balancing.
-%\jmh{say how chosen.} \jmh{which server replica?  all server replicas??} 
 For each such arriving tuple, line~\ref{line:des_bigtable_check} checks
 \texttt{bigtable} to see if a record exists for the session associated with the
 \texttt{action\_msg}.  If none is there (i.e., this is the first update for a
@@ -283,16 +327,14 @@ join conditions in
 lines~\ref{line:des_join_bigtable_action_msg_beg}--\ref{line:des_join_bigtable_action_msg_end}
 are satisfied and lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end}
 ``replace'' the item array at the next timestep with a new version.  
-%\jmh{lines 15 and 16 do not fit my definition of Bloom above.  Not sure how to
-%deal with that.} %\jmh{I added a note above that we allow simple
-%side-effect-free Ruby expressions.}
 Whenever a \texttt{checkout\_msg} appears in a server replica, the
 \texttt{bigtable} tuple associated with the given session is identified (via
 the join on
 lines~\ref{line:des_checkout_join_beg}--\ref{line:des_checkout_join_end}), and
 the item array in its value field is sent back to the client.  
 
-%\jmh{Note that checkout is idempotent because checkout\_msg is a persisted set?}
+
+\subsection{A ``disorderly'' shopping cart}
 
 Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart
 implementation, in which updates are monotonically accumulated during shopping
@@ -350,9 +392,10 @@ see if the \texttt{action\_msg} originated inside the quorum.
 
 
 
-%%\jmh{need an explanation of lines 5-9, or an alternative syntax (see below or implement LOJ).  %%In the last sentence do you mean lines 24-30?  Won't 28-30 result in each node multicasting %%checkouts to each other node, i.e. $n^2$ messages?}
+%%\vspace{9pt}\noindent \textbf{Analysis}\\
+\subsection{Analysis}
 
-\vspace{9pt}\noindent \textbf{Analysis}\\
+
 %For each cart, we apply whole-program analysis techniques to discover points
 %of order.
 The Bud interpreter automatically generates a graphical
@@ -381,12 +424,7 @@ describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability
 %figure as details from the KV store that are beyond the scope....}
 %collapsing the mutually dependent collections into a single node.
 Points of order are indicated in the graph by an edge with a white circle.
- Any negated edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.
-
-
-%\jmh{the subsequent discussion should be pared down and made simple.  updates are non-monotonic.  we see it in the points of order.  If we resolve using coordination a la 2PC, we get a %round of coord for every client action.  This is the kind of thing Amazon didn't like for %availability.  However, if we examine the disorderly figure, we see that the point of order is at %checkout only, which is what Amazon wanted.}
-
-%%
+ Any negated edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis visualizations.
 
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order

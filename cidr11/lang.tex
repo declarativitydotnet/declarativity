@@ -234,7 +234,7 @@ module CartClient
   declare
   def client
     action_msg <~ client_action.map do |a| 
-      [a.server, @addy, a.session, a.reqid, a.item, a.action]
+      [a.server, @addy, a.session, a.reqid, a.item, a.action] (*\label{line:des_client_action}*)
     end
     checkout_msg <~ client_checkout.map do |a| 
       [a.server, @addy, a.session, a.reqid]
