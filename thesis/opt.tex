@@ -22,7 +22,7 @@ generation of extensible query optimizers for a wide variety of emerging
 application domains, where the relevant optimizations are likely to evolve over
 time.  We begin with a review of literature surrounding extensible query
 optimizers (Section~\ref{ch:opt:sec:related}) and conclude with some final
-thoughts on the Evita Raced work (Section~\ref{ch:opt:sec:conclude}).
+thoughts on the Evita Raced work (Section~\ref{ch:opt:sec:summary}).
 
 \section{Related Work}
 \label{ch:opt:sec:related}
@@ -58,7 +58,7 @@ Evita Raced embraces these additional dimensions of extensibility introduced by
 Opt++, but provides them in a higher-level declarative programming framework.
 
 The cyclic dataflow used for stage scheduling in Evita Raced
-(Section~\ref{ch:opt:sec:stages}) resembles the continuous query engine of
+(Section~\ref{ch:evita:sec:stages}) resembles the continuous query engine of
 TelegraphCQ, with our StageScheduler and Demux elements working together to
 behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This
 connection occurred to us long after we developed our design, but in retrospect
@@ -180,7 +180,7 @@ System R rules for generating plans (\ol{plan} tuples) from the predicates in
 the rule body.  Are rules for selecting a best plan are discussed in
 Section~\ref{ch:opt:sec:bestplan}.  We then conclude with a description of
 estimating selectivities our termination rules in
-Section~\ref{ch:opt:sec:systemrend}.
+Section~\ref{ch:opt:sec:termination}.
 
 \subsection{Plan Generation}
 \label{ch:opt:sec:plangen}
