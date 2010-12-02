@@ -7,22 +7,24 @@ beneath the query compilation process.  This resulted in an {\em economy of
 mechanism}~\cite{Saltzer75theprotection} not afforded by earlier extensible
 optimizers (i.e., EXODUS~\cite{exodus}, Starburst~\cite{phh92},
 Volcano~\cite{volcano}, OPT++~\cite{opt++}).  In Chapter~\ref{ch:magic}, we
-presented our first declarative optimization; the magic-sets rewrite, which is
-based on a transitive closure traversal over the rule/goal graph of an \OVERLOG
-program.
+presented our first optimization stage; the magic-sets rewrite, which we
+declaratively expressed as a transitive closure over the rule/goal graph of an
+\OVERLOG program.
 
-We now turn our attention to cost-based optimizations, which are commonly based
-on dynamic programming techniques.  Section~\ref{ch:opt:sec:systemr} discusses
-a dynamic programming optimizer stage akin to that of System R.  In
+In this chapter we turn our attention to cost-based optimizations, which are
+commonly based on dynamic programming techniques.  We begin in
+Section~\ref{ch:opt:sec:related} with a review of literature; focusing on
+extensible query optimizers.  Section~\ref{ch:opt:sec:systemr} discusses a
+dynamic programming optimizer stage akin to that of System R.  In
 Section~\ref{ch:opt:sec:cascades}, we present a declarative version of the
-Cascades optimizer, which is structured around a dynamic programming technique
-called ``memoization.'' Based on our experience, we believe that declarative
-metacompilation is a clean, architecturally parsimonious way to build the next
-generation of extensible query optimizers for a wide variety of emerging
-application domains, where the relevant optimizations are likely to evolve over
-time.  We begin with a review of literature surrounding extensible query
-optimizers (Section~\ref{ch:opt:sec:related}) and conclude with some final
-thoughts on the Evita Raced work (Section~\ref{ch:opt:sec:summary}).
+Cascades branch-and-bound optimizer, which is structured around a dynamic
+programming technique called ``memoization.'' Based on our experience, we
+believe that declarative metacompilation is a clean, architecturally
+parsimonious way to build the next generation of extensible query optimizers
+for a wide variety of emerging application domains, where the relevant
+optimizations are likely to evolve over time.  We conclude in
+Section~\ref{ch:opt:sec:summary} with some final thoughts and summarize our
+overall experience with Evita Raced.
 
 \section{Related Work}
 \label{ch:opt:sec:related}
@@ -57,15 +59,6 @@ vs.  bottom-up state-space enumeration, but also randomized search algorithms.
 Evita Raced embraces these additional dimensions of extensibility introduced by
 Opt++, but provides them in a higher-level declarative programming framework.
 
-The cyclic dataflow used for stage scheduling in Evita Raced
-(Section~\ref{ch:evita:sec:stages}) resembles the continuous query engine of
-TelegraphCQ, with our StageScheduler and Demux elements working together to
-behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This
-connection occurred to us long after we developed our design, but in retrospect
-the analogy is quite natural: Evita Raced stages are akin to TelegraphCQ's
-``installed'' continuous queries, and P2's \OVERLOG queries are akin to data
-streaming into TelegraphCQ.
-
 
 \section{System R Optimization}
 \label{ch:opt:sec:systemr}
@@ -79,50 +72,50 @@ streaming into TelegraphCQ.
       	\STATE /* Base case: access methods to relations in Q */
   	\FORALL{base relations $R \in Q$}
 		\STATE Find all access methods to $R$ and store in $AM$
-		\STATE Include index scans iff there exists sargable predicates 
+		\STATE Include index scans if there exists sargable predicates 
   	\ENDFOR
 	\STATE
-  	\FORALL{$p \in AM$}
+  	\FORALL{access method plans $p \in AM$}
 		\IF{$p$ is the cheapest unordered access method \OR 
-		    $p$ is the cheapest access method for some "interesting order"}
+		    $p$ is the cheapest access method with an "interesting order"}
 			\STATE $plans[1] = plans[1] \bigcup p$ 
 		\ENDIF
  	\ENDFOR
 	\STATE
-	\STATE $bp$ = bestplan($|Q|$) /* Get best plans for query Q */
+	\STATE $BP$ = bestplan(number\_of\_predicates($Q$)) // Get best plans for query Q 
 	\IF{$Q$ contains a GROUP BY or ORDER BY}
-	 	\STATE $cp$ = cheapest plan $p \in bp$ w.r.t. relevant interesting order 
+	 	\STATE $cp$ = cheapest plan in $BP$ relevant to the interesting order 
 		\IF{$cp == null$}
-			\STATE $cp$ = cheapest overall plan $p \in bp$ + sort operator
+			\STATE $cp$ = cheapest overall plan in $BP$ + a sort operator
 		\ENDIF
 		\RETURN $cp$
 	\ELSE
-	 	\RETURN cheapest overall plan $p \in cp$ /* irrespective of ``interesting orders'' */ 
+	 	\RETURN cheapest overall plan in $BP$ // irrespective of interesting orders
 	\ENDIF
     \end{algorithmic}
   {\bf end} \\
   \\
-  {\bf def} bestplan(n)
+  {\bf def} bestplan(k)
     \begin{algorithmic}[1]
-  	\IF{$plans[n] = \emptyset$}
-		\FORALL{$p_1 \in plans[1]$} 
-			\STATE $P_{n-1}$ = bestplan(n -1)
-			\FORALL{$p_{n-1} \in P_{n - 1}$}
-			\STATE /* if $p_1$ and $p_{n-1}$ have non-overlapping query predicates */
-				\IF{$p_1 \bigcap p_{n-1} = \emptyset$}
-					\STATE $plans[n] = plans[n] \bigcup$ all (left-outer) join methods for $p_1$ and $p_{n-1}$
-				\ENDIF
+  	\IF{$plans[k] = \emptyset$}
+		\FORALL{access method plans $p_1 \in plans[1]$} 
+			\STATE $BP_{k-1}$ = bestplan($k\ -\ 1$) // Get best plans of size $k\ -\ 1$
+			\FORALL{best plans $bp_{k-1} \in BP_{k-1}$}
+			\IF{$p_1\ \text{\bf notin}\ bp_{k-1}$}
+				\STATE $plans[k] = plans[k] \bigcup$ all (left-outer) join methods 
+				       for $bp_{k-1}$ (outer) and $p_1$ (inner)
+			\ENDIF
 			\ENDFOR
 		\ENDFOR
 		\STATE
-		\FORALL{$p \in plans[n]$}
-			\IF{$p$ is not the cheapest unordered plan among its equivalent plans \OR
-			    $p$ is not the cheapest ``interesting ordered'' plan among its equivalent plans}
-				\STATE delete $p$ from $plans[n]$
+		\FORALL{plans $p_k \in plans[k]$}
+			\IF{$p_k$ is not the cheapest unordered plan among its equivalent plans \OR
+			    $p_k$ is not the cheapest ``interesting ordered'' plan among its equivalent plans}
+				\STATE delete $p_k$ from $plans[k]$
 			\ENDIF
 		\ENDFOR
 	\ENDIF
-	\RETURN plans[n]
+	\RETURN $plans[k]$ // Returns the set of best plans of size $k$
       \end{algorithmic}
     {\bf end}
 \end{boxedminipage}
@@ -144,43 +137,44 @@ Our focus in this section is on the basic dynamic programming algorithm for the
 state-space enumeration at the heart of the System R optimizer.
 Figure~\ref{ch:opt:fig:systemr} gives a (simplified) sketch of this
 algorithm.  It enumerates query plans for increasingly-large subgoals of the
-query optimizer.  It fills in a dynamic programming table (e.g., $plans$ in
+query optimizer.  It fills in a dynamic programming table (i.e., $plans$ in
 Figure~\ref{ch:opt:fig:systemr}) with plans that cover a given number of
 (relational algebra) predicates that appear in the query.  The dynamic
 programming task is to fill in this table with the lowest-estimated-cost query
 plan among all plans producing an {\em equivalent} output relation (i.e., plans
 composed of the same terms).  The \ol{bestplan} procedure in
 Figure~\ref{ch:opt:fig:systemr} captures the essence of generating and
-choosing optimal plans with a given number of predicates.
+choosing optimal plans among a set of equivalent plans.
 
 In the System R optimizer, the {\em principle of optimality} is assumed to
-hold: the lowest-cost solution to some plan will be built from the optimal
-solutions to subplans.  Thus dynamic programming can proceed in ``bottom-up''
-fashion.  In a given program $P$ to be optimized, each rule's event predicate
-is the ``outermost,'' streaming relation in a query plan for the rule.  For a
-given rule $r \in P$, the optimizer generates plans of size $k$ terms by
-appending a single (thus unused) term from the rule body to the optimal plan of
-size $k-1$ terms, as shown in the first loop of \ol{bestplan} in
+hold: the lowest-cost solution to some plan is constructed from the optimal
+solutions to subplans.  Thus dynamic programming can proceed in a ``bottom-up''
+fashion.  For a given rule, the optimizer generates plans of size $k$ terms by
+appending a single (unused) term from the rule body to the optimal plan of size
+$k-1$ terms, as shown in the first loop of \ol{bestplan} in
 Figure~\ref{ch:opt:fig:systemr}.  There are many additional details that we
 have chosen to gloss over in the pseudocode.  For instance, avoid combining a
 k-way plan with a 1-way plan if there is no join predicate between them, unless
 all predicates have been used up (i.e., postpone Cartesian products).  We
 handle this in our \OVERLOG rules by ensuring the cost of such an option is
-greater than any other option that includes join predicates.  
+greater than any other option that includes join predicates.  Also, in the
+context of a P2 program, each rule's event predicate is the ``outermost''
+streaming relation in a query plan for the rule.  The event predicate
+effectively represents the access methods in our System R rules.
 
 We now turn to describe the \OVERLOG rules for plan generation and conclude
 with the rules for best plan selection.  Our declarative optimizer adds two new
 tables (\ol{plan} and \ol{bestPlan}) to the Metacompiler Catalog.  The
-\ol{plan} table identifies the subgoal and method (i.e., join) for evaluating
-that subgoal.  Each \ol{plan} tuple contains an identifier, which the
-\ol{bestPlan} table uses to reference optimal plans.  The $Planner$ stage will
-generate the physical dataflow plan based on the access and join methods
-contained in these relations.  Section~\ref{ch:opt:sec:plangen} presents our
-System R rules for generating plans (\ol{plan} tuples) from the predicates in
-the rule body.  Are rules for selecting a best plan are discussed in
-Section~\ref{ch:opt:sec:bestplan}.  We then conclude with a description of
-estimating selectivities our termination rules in
-Section~\ref{ch:opt:sec:termination}.
+\ol{plan} table identifies the subgoal and join method for evaluating that
+subgoal as the ``inner'' relation.  Each \ol{plan} tuple contains an
+identifier, which the \ol{bestPlan} table uses to reference optimal plans.  The
+$Planner$ stage will generate the physical dataflow plan based on the access
+and join methods contained in these relations.
+Section~\ref{ch:opt:sec:plangen} presents our System R rules for generating
+plans (\ol{plan} tuples) from the predicates in the rule body.  Are rules for
+selecting a best plan are discussed in Section~\ref{ch:opt:sec:bestplan}.  We
+then conclude with a description of estimating selectivities our termination
+rules in Section~\ref{ch:opt:sec:termination}.
 
 \subsection{Plan Generation}
 \label{ch:opt:sec:plangen}
@@ -204,45 +198,49 @@ pg1 {\bf plan}(@A, Pid, Rid, PlanID, SubPlanID, Type, TypeID, \\
 \end{figure*}
 
 Figure~\ref{ch:opt:fig:systemr} presents the System R algorithm for plan
-generation in two phases.  The first is generating all access methods for a
-given relation mentioned in the query (e.g., in the ``from'' clause).
-Subsequent to that, a second phase enumerates all possible join orders and
-methods.  Recall in Section ? that P2 converts a rule into an
+generation in two phases.  The first phase generates all access methods for all
+relations mentioned in the query (e.g., in the ``from'' clause).  Subsequent to
+that, the second phase enumerates all possible join orders and methods.  Recall
+from Section~\ref{ch:evita:sec:delta} that P2 converts a rule into an
 event-condition-action (ECA) form, where the event predicate represents a
 stream of tuples from the table reference.  As a consequence of this dataflow
 design, our first phase simply generates a plan that listens for such event
-tuples.  Extending this rule to consider access methods would entail adding a
-predicate that references all access methods to a given relation.
+tuples.  The reader can assume the delta rewrite stage executes before the
+System R optimizer stage.  
+%Extending this rule to consider access methods would
+%entail adding a predicate that references all access methods to a given
+%relation.
 
 Figure~\ref{ch:opt:fig:planseed} shows the optimizer rule that creates the
-initial plan for each rule from the event predicate.  The \ol{plan} tuple
-contains a query plan for a given rule, and the plan's \ol{size} reflects the
-number of term identifiers in the $Plan$ attribute (i.e., the number of leaves
-in the plan tree).  The optimizer listens on the \ol{programEvent} event stream
-in rule \ol{pg1}, which initiates the optimization process.  The
-\ol{programEvent} tuple is subsequently joined with the \ol{sys::rule} table along
-the $Pid$ (program identifier) attribute to obtain the set of rules defined in
-the input program.  The resulting set of rule tuples are each joined with the
-\ol{sys::predicate} table along the $Rid$ (rule identifier) attribute.  The result
-of this join produces a tuple for each predicate term defined by a given rule.
-The predicate term assigned to position~$1$ ($Pos == 1$) is by convention the
-event predicate term.  For each event \ol{sys::predicate} tuple in each rule of the
-input program, rule \ol{pg1} adds a new plan to the \ol{plan} table.  The
+initial plan for each rule from the event predicate.  A \ol{plan} tuple
+represents a query plan for a given rule, and the plan's \ol{size} reflects the
+number of term identifiers covered in the $Plan$ attribute (i.e., the number of
+leaves in the plan tree).  The optimizer listens on the
+\ol{systemr::programEvent} event stream in rule \ol{pg1}, which initiates the
+optimization process.  The \ol{systemr::programEvent} tuple is subsequently
+joined with the \ol{sys::rule} table along the $Pid$ (program identifier)
+attribute to obtain the set of rules defined in the input program.  The
+resulting set of rule tuples are each joined with the \ol{sys::predicate} table
+along the $Rid$ (rule identifier) attribute.  The result of this join produces
+a tuple for each predicate term defined by a given rule.  The predicate term
+assigned to position~$1$ ($Pos == 1$) is by convention the event predicate
+term.  For each event \ol{sys::predicate} tuple in each rule of the input
+program, rule \ol{pg1} adds a ``size~$1$'' plan to the \ol{plan} table.  The
 $Plan$ attribute represents the initial plan list, starting with the term
 identifier ($PredID$) that identifies streaming predicates.  Plan generation
 proceeds by appending term identifiers to this list when constructing new plans
 from optimal subplans.
 
 The \OVERLOG optimizer defines a set of plan generation rules that together
-perform the induction step of the dynamic program.  Each rule extends a best
+perform the induction step of the dynamic program.  These rules extend a best
 plan of $k$ terms with a $(k+1)^{st}$, thus far unused term from the rule body.
-If the new term considered is a table predicate, then the new plan
-annotated with an appropriate join method, which takes the optimal subplan and
-``joins it'' with the predicate table.  The join methods supported by P2
-include scanned and index-nested-loop-join, as well as merge-join.  A plan
-tuple also carries with it an associated cost, which only considers CPU costs
-since all P2 relations reside in memory.  We now turn to the description of the
-rules that generate plans for nested-loop-join, index nested-loop-join, and
+If the new term considered is a table predicate, then the new plan is annotated
+with an appropriate join method, which takes the optimal subplan and ``joins
+it'' with the predicate table.  The join methods supported by P2 include
+scanned and index-nested-loop join, as well as sort-merge join.  A plan tuple
+also carries with it an associated cost, which only considers CPU costs since
+all P2 relations reside in memory.  We now turn to the description of the rules
+that generate plans for nested-loop-join, index nested-loop-join, and
 sort-merge join methods.
 
 \begin{figure*}
@@ -250,14 +248,14 @@ sort-merge join methods.
 \centering
 \begin{boxedminipage}{\linewidth}
 \linenumbers
-pg2 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, "Predicate", PredID, \\
+pg2 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, PredID, \\
 \datalogspace \xspace Plan, Schema, Card, Cost, OuterPos+$1$, JM, $null$) :-\\
 \datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, OuterPlan, \\
 \datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, \_),  \\   
 \datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
 \datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
-\datalogspace $PredPos < TermCount$,\\
+\datalogspace $PredPos > 0$,\\
 \datalogspace {\bf sys::table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
 \datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
 \datalogspace Card := OuterCard * TCard / $10$,\\
@@ -269,26 +267,26 @@ pg2 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, "Predicate", PredID, \\
 \caption{\label{ch:opt:fig:plangen1}nested-loop join method.}
 \end{figure*}
 
-Any table predicate appearing in a rule body is given a nested-loop-join plan,
-shown by rule~\ol{pg2} in Figure~\ref{ch:opt:fig:plangen1}.  The rule is
+Any table predicate appearing in a rule body is given a nested-loop join plan,
+derived by rule~\ol{pg2} in Figure~\ref{ch:opt:fig:plangen1}.  The rule is
 triggered on an update to the \ol{bestPlan} relation (described in
-Section~\ref{}), which contains the plan identifier ($PlanID$) used to select
-the reference plan in the \ol{plan} relation.  Each plan tuple contains a list
-of the predicate identifiers that already appear in it.  This list is
-referenced by the $OuterPlan$ variable in the \ol{plan} predicate of
-rule~\ol{pg2}.
+Section~\ref{ch:opt:fig:bestplan}), which contains the plan identifier
+($PlanID$) used to select the reference plan in the \ol{plan} relation.  Each
+plan tuple contains a list of the predicate identifiers that already appear in
+it.  This list is referenced by the $OuterPlan$ variable in the \ol{plan}
+predicate of rule~\ol{pg2}.
 
 The next step is to extend the \ol{plan} tuple with a ``new'' table predicate,
-which is done by joining with the \ol{sys::predicate} relation along the same rule
-identifier ($Rid$).  The result of this join operation produces all predicates
-mentioned in the rule.  To get only the table predicates we join with the
-\ol{table} predicate.  The selection predicate $PredPos < TermCount$ ensures that
-we do not consider the rule head predicate (last in the rule's terms by
+which is done by joining with the \ol{sys::predicate} relation along the same
+rule identifier ($Rid$).  The result of this join operation produces all
+predicates mentioned in the rule.  To get only the table predicates we join
+with the \ol{sys::table} predicate.  The selection predicate $PredPos > 0$
+ensures that we do not consider the rule head predicate (the zeroth term by
 convention).  The function $f\_contains$ tests for containment of the predicate
 in the subplan (outer plan).  The tuples that meet the constraints imposed thus
 far represent new table predicates that can be used to extend the optimal plan.
-We need only assign annotate the new (projected) plan tuple with a join method
-(NESTED\_LOOP), associated cost (based on cardinality estimates), a new
+These new \ol{plan} tuple deductions contain the desired join method
+(NESTED\_LOOP), an associated cost (based on cardinality estimates), a new
 predicate list (see $Plan$ variable), and a new schema (see $Schema$ variable).
 
 \begin{figure*}
@@ -301,7 +299,7 @@ pg3 {\bf plan}(@A, ...) :-\\
 \datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, \_),  \\   
 \datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
 \datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
-\datalogspace $PredPos < TermCount$,\\
+\datalogspace $PredPos > 0$,\\
 \datalogspace {\bf sys::table}(@A, Tid, \_, \_, \_, \_, TCard, \_),\\
 \datalogspace {\bf sys::index}(@A, Iid, Tid, Key, Type, Selectivity),\\
 \datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
@@ -316,31 +314,57 @@ pg3 {\bf plan}(@A, ...) :-\\
 
 An index-nested-loop join plan is generated by rule \ol{pg3} in
 Figure~\ref{ch:opt:fig:plangen2}.  Like rule~\ol{pg2}, it joins the
-\ol{bestPlan}, \ol{plan}, \ol{sys::predicate}, and \ol{sys::table} predicates to
-get all table predicates referenced by the target rule.  That result is
-subsequently joined with the (additional) \ol{index} predicate, which adds
+\ol{bestPlan}, \ol{plan}, \ol{sys::predicate}, and \ol{sys::table} predicates
+to get all table predicates referenced by the target rule.  That result is
+subsequently joined with the (additional) \ol{sys::index} predicate, which adds
 index information to the result tuples.  The function {\em f\_indexMatch} tests
 if the index can be used to perform the join using attributes from the best
 plan schema ($OuterSchema$) and attributes from the predicate table
 ($PredSchema$).  Any tuple results from this plan are assigned cardinality and
 cost estimates based on some cost function, which uses the additional index
-selectivity information given by the $Selectivity$ \ol{index} predicate
+selectivity information given by the $Selectivity$ \ol{sys::index} predicate
 attribute.  We also support range predicates in our index-nested-loop join
 plans but do not discuss them in detail as they are quite similar to the
 nested-loop cases above.
 
-A merge-join performs a join of a plan with a table predicate mentioned in the
-rule body along some sorting attribute.  The tuple set from the outer plan and
-the predicate table must be ordered by the sorting attribute.  The output of a
-merge-join operation preserves the sorting attribute order.  Therefore, the
-\ol{plan} predicate generated by the merge-join rule includes the sorting
-attribute in the value of the $Sort$ \ol{plan} predicate.  We note that the
-$Sort$ attribute in the \ol{table} plan table identifies the sorting attribute
-of the table.  A $null$ valued $Sort$ attribute, in either the outer relation
-\ol{plan} predicate or the inner relation \ol{table} predicate, means that the
-relation is not known to be ordered, and must be presorted prior to the
-merge-join operator.  The cost of a merge-join operator depends on need to
-presort either relation.
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+pg4 {\bf plan}(@A, Pid, Rid, {\em f\_idgen()}, PlanID, PredID, \\
+\datalogspace \xspace Plan, Schema, Card, Cost, OuterPos+$1$, JM, Sort) :-\\
+\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, OuterPlan, \\
+\datalogspace \datalogspace OuterSchema, OuterCard, OuterCost, OuterPos, \_, OuterSort),  \\   
+\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, \_, Tid, \_, PredSchema, PredPos, \_, \_),\\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, \_, \_, \_, TermCount), \\
+\datalogspace $PredPos > 0$,\\
+\datalogspace {\bf sys::table}(@A, Tid, \_, \_, \_, \_, TCard, TableSort),\\
+\datalogspace {\em f\_contains}(PredID, OuterPlan) == $false$,\\
+\datalogspace Card   := OuterCard * (TCard / 10),\\
+\datalogspace JM     := {\em f\_sortPlan}(OuterSort, OuterSchema, PredSchema, TableSort), \\
+\datalogspace Cost   := {\em f\_sortCost}(JM, OuterCard, TCard), \\
+\datalogspace Sort   := {\em f\_sortJoinAttributes}(OuterSort, OuterSchema, PredSchema, TableSort), \\  
+\datalogspace Plan   := {\em f\_cons}(PredID, OuterPlan), \\
+\datalogspace Schema := {\em f\_merge}(OuterSchema, PredSchema).\\
+\end{boxedminipage}
+\caption{\label{ch:opt:fig:plangen3}sort-merge join method.}
+\end{figure*}
+
+Figure~\ref{ch:opt:fig:plangen3} shows are rule for generating a sort-merge
+join plan, which considers a best plan and a new table predicate joined along
+some sorting attribute.  The tuples from the outer plan and the inner table
+predicate can be ordered by the sorting attribute, or not.  We note that the
+$TableSort$ attribute in the \ol{sys::table} plan table identifies the sorting
+attribute of the inner table, while $OuterSort$ refers to the outer tuple set.
+The join method variable $JM$ is given value that indicates the need to presort
+either of the join inputs, or not.  The output of a merge-join operation
+preserves the join attribute order, which is assigned using the {\em
+f\_sortJoinAttributes} function.  The \ol{plan} predicate generated by the
+merge-join rule includes this sorting attribute in the value of the $Sort$
+variable.  The cost of a merge-join operator depends on need to presort either
+relation.  The {\em f\_sortCost} function considers these factors based on the
+assigned join method and the join input cardinalities.
 
 \subsection{Best plan selection}
 \label{ch:opt:sec:bestplan}
@@ -349,17 +373,16 @@ presort either relation.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-bp1 {\bf bestCostPlan}(@A, Pid, Rid, Plan, Sort, {\small \bf a\_min}<Cost>) :- \\
-\datalogspace {\bf plan}(@A, Pid, Rid, \ldots, Plan, \ldots, Cost, \ldots, Sort). \\
+bp1 {\bf bestOverallCost}(@A, Pid, Rid, {\small \bf a\_min}<Cost>) :- \\
+\datalogspace {\bf plan}(@A, Pid, Rid, \ldots, Cost, \ldots, Sort). \\
 
-bp2 {\bf bestPlan}(@A, Pid, Rid, PlanID, Plan2, Cost) :- \\
-\datalogspace {\bf bestCostPlan}(@A, Pid, Rid, Plan1, Sort, Cost), \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Plan2, \ldots, Cost, \ldots, Sort), \\
-\datalogspace Sort == $null$.\\
+bp2 {\bf bestOrderCost}(@A, Pid, Rid, Sort, {\small \bf a\_min}<Cost>) :- \\
+\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Cost, \ldots, Sort). \\
 
 bp3 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
 \datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, PlanSchema, \ldots, Sort), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, HeadPid, \ldots), \\
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, HeadPredID, \ldots), \\
 \datalogspace // The head predicate \\
 \datalogspace {\bf sys::predicate}(@A, Pid, Rid, HeadPredID, \ldots, HeadPredSchema, \ldots),\\
 \datalogspace // A rule body predicate \\
@@ -370,11 +393,13 @@ bp3 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
 \datalogspace f\_contains(f\_joincond(PlanSchema, BodyPredSchema), Sort)) $||$ \\
 \datalogspace f\_isPrefix(Sort, HeadPredSchema) ==  $true$.  \\
 
-bp4 {\bf bestPlan}(@A, Pid, Rid, PlanID, Plan2, Cost) :- \\
-\datalogspace {\bf bestCostPlan}(@A, Pid, Rid, Plan1, Sort1, Cost), \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \_, \_, \_, Plan2, \_, \_, Cost, \_, \_, Sort2, \_), \\
-\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
-\datalogspace {\em f\_setequals}(Plan1, Plan2), Sort1 == Sort2.
+bp4 {\bf bestPlan}(@A, Pid, Rid, PlanID) :- \\
+\datalogspace {\bf bestOverallCost}(@A, Pid, Rid, Cost), \\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Cost), \\
+
+bp4 {\bf bestPlan}(@A, Pid, Rid, PlanID) :- \\
+\datalogspace {\bf bestOrderCost}(@A, Pid, Rid, Sort, Cost), \\
+\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Cost, Sort), \\
 \end{boxedminipage}
 \caption{\label{ch:opt:fig:bestplan}Best plan selection.}
 \end{figure*}
@@ -474,64 +499,62 @@ stage name.
 The bottom-up, dynamic programming search strategy described in
 Section~\ref{ch:opt:sec:systemr} is a natural fit to a Datalog-based rule
 language.  One might think a top-down Cascades-style optimization
-strategy~\cite{cascades} would be hard to implement since \OVERLOG, like
-Datalog, is evaluated in a bottom-up fashion.  This is partially true.  Since
-the System R search strategy conforms to the \OVERLOG evaluation strategy, it
-did not require explicit rules for its traversal through the plan space.  That is,
-the System R search strategy was implicitly implemented by the \OVERLOG
-bottom-up evaluation.  A top-down search strategy, on the other hand, requires
-extra logic to guide the search through the plan space in
-a top-down order.  The logic of a top-down search strategy follows a dynamic
-programming technique called memoization, which turns out to be just as natural
-and intuitive in \OVERLOG, and hence easily implemented in Evita
-Raced.  In this section, we describe our implementation of the Cascades
-branch-and-bound algorithm in \OVERLOG.
-%, consisting of a mere $33$ rules ($204$ lines).
+strategy~\cite{cascades} would be difficult to implement since \OVERLOG, like
+Datalog, is evaluated in a bottom-up fashion.  This is partially true but still
+relatively painless.  Since the System R search strategy conforms to the
+\OVERLOG evaluation strategy, we did not write explicit rules for traversing
+through the plan space.  That is, the System R search strategy was implicitly
+implemented by the \OVERLOG bottom-up evaluation.  A top-down search strategy,
+on the other hand, requires extra logic to guide the search through the plan
+space in a top-down order.  The logic of a top-down search strategy follows a
+dynamic programming technique called memoization, which turns out to be just as
+natural and intuitive in \OVERLOG, and hence easily implemented in Evita Raced.
 
-The remainder of this section is organized as follows.  In
-Section~\ref{ch:opt:sec:overview} we provide a short description of the
-Cascades branch-and-bound optimization.  We then move to the detailed
-description of our declarative rules for performing this optimization.  Our
-rules are divided into three modules, the search strategy
+In this section, we describe our implementation of the Cascades
+branch-and-bound algorithm expressed in \OVERLOG.  We begin in
+Section~\ref{ch:opt:sec:overview} with a short description of the Cascades
+branch-and-bound algorithm.  This is followed by a detailed description of our
+declarative rules for performing this optimization in Evita Raced.  Our rules
+are divided into three modules: the search strategy
 (Section~\ref{ch:opt:sec:cascades_search}), plan generation
 (Section~\ref{ch:opt:sec:cascades_plan}), and winner selection
 (Section~\ref{ch:opt:sec:cascades_winner}).  The rules for plan generation and
 winner selection may remind the reader of the plan generation and best plan
-selection System R rules in the previous section.  However, the rules for
-search strategy are unique to this optimizer, and will be the focus our
-attention.
+rules in the previous System R section.  However, the rules for search strategy
+are unique to this optimizer, and will be the focus our attention.
 
 \subsection{Overview}
 \label{ch:opt:sec:overview}
 
 Our description of the Cascades optimizer follows the notation of Shapiro, et.
 al~\cite{Shapiro-opt}.  In Cascades, plans are classified into {\em groups},
-which is an equivalence class of expressions (predicates) that produce the same
-result.  During the optimization, each group (e.g., [ABC]) represents a
-container that references all physical plans (e.g., \{[AB] sort-merge-join
-[C]\}, \{[B] nested-loop-join [AC]\}, \ldots) that make up the group.  In order
-to keep the search space small, a group only references top-level plans through
-{\emph multiexpressions}, which are expressions whose operator takes other
-groups as input (e.g., multiexpression \{[AB] sort-merge-join [C]\} takes groups [AB] and
-[C] as input).  Associated with each group is a {\emph winner's circle}, which
-identifies the optimal plan within a given group, and will be the plan chosen
-to represent a given group referenced by a multiexpression.  In the discussion
-that follows, a when we indicate a {\emph plan} we mean a given multiexpression
-within a group.
+which is an equivalence class of expressions (i.e., predicates) that produce
+the same result.  During the optimization, each group (e.g., [ABC]) represents
+a container that references all physical plans (e.g., \{[AB] sort-merge-join
+[C]\}, \{[B] nested-loop-join [AC]\}, \ldots) that involve subexpression in
+that group.  In order to keep the search space small, a group only references
+top-level plans through {\emph multiexpressions}, which are expressions whose
+operator takes other groups as input (e.g., multiexpression \{[AB]
+sort-merge-join [C]\} takes groups [AB] and [C] as input).  Associated with
+each group is a {\emph winner's circle}, which identifies the optimal plan
+within a given group, and will be the plan chosen to represent a given group
+referenced by a multiexpression.  In the discussion that follows, when we
+indicate a {\emph plan} we mean a given multiexpression within a group.
 
 At a high level our declarative rules for implementing the Cascades optimizer
 perform the following deductions.  The optimizer generates groups in a top-down
 order and within each group it performs a bottom-up search for the cheapest
 plan, called the {\em winner}.  An upper bound is assigned to each group,
-contained in the \ol{branch} table, and initialized to $inifinty$, which is
-updated as new (cheaper) plans for the given group are discovered.  A plan (and
-all its subplans) is pruned if its cost exceeds the group upper bound.  The
-optimization terminates when a root group (containing all expressions in the
-query) has been fully explored and a winner has been chosen. 
+contained in the \ol{branch} table, and initialized to $inifinty$.  The upper
+bound is then updated as new (cheaper) plans for the given group are
+discovered.  A plan (and all its subplans) is pruned if its cost exceeds the
+group upper bound.  The optimization terminates when a root group (containing
+all expressions in the query) has been fully explored and a winner has been
+chosen.
 
 The schema for our Cascades optimizer differs from prior Evita Raced stages.
 In order to provide a cleaner implementation, some of our attributes are
-actually objects that encapsulate related values and functions. 
+actually objects that encapsulate related values and function methods. 
 
 
 \subsection{Search strategy}
@@ -541,46 +564,75 @@ actually objects that encapsulate related values and functions.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-cst1 {\bf group}(Group, Schema) :- \\
-\datalogspace {\bf branch}(Group, \_, Cursor, Bound), \\
-\datalogspace $Cursor != null$, \\
-\datalogspace Group := Cursor.current(), \\
-\datalogspace Schema := Group.schema(). \\
-\\
-cst2 {\bf branch}(Group, 0, Cursor, Bound) :- \\
-\datalogspace {\bf group}(Group, Schema), \\
-\datalogspace Cursor := Group.cursor(), \\
-\datalogspace Bound  := $infinity$. \\
-\\
-cst3 {\bf branch}(Group, BranchId+1, Cursor, Bound) :- \\
-\datalogspace {\bf bestBranchCost}(Group, BranchId, Cost), \\
-\datalogspace {\bf branch}(Group, BranchId, Cursor, OldBound), \\
-\datalogspace $Cursor != null$, \\
-\datalogspace Cursor := Cursor.next(), \\
+/* Initialize the top-level group */ \\
+bb1 {\bf group}(@A, Rid, a\_list$<PredID>$, a\_list$<Schema>$) :- \\
+\datalogspace {\bf systemr::programEvent}(@A, Pid, \ldots),\\
+\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Schema, Pos,\ldots),\\
+\datalogspace $Pos\ >\ 1$. // Exclude the head and event predicates \\
+
+/* Initialize a new branch and bound on the given group. */ \\
+bb2 {\bf branch}(@A, Rid, Group, Schema, 0, Bound) :- \\
+\datalogspace {\bf group}(@A, Rid, Group, Schema), \\
+\datalogspace Bound := $infinity$. \\
+
+/* Extract the subgroup of predicates that don't include position $Pos$ */ \\
+bb3 {\bf group}(@A, Rid, SubGroup, SubSchema) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
+\datalogspace $Pos\ <\ f\_sizeof(Group)$, \\
+\datalogspace SubGroup  := {\em f\_cdr}(Group, Pos), \\
+\datalogspace SubSchema := {\em f\_cdr}(Schema, Pos). \\
+
+/* Extract the subgroup of consisting of the predicate at position $Pos$ */ \\
+bb4 {\bf group}(@A, Rid, SubGroup, SubSchema) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
+\datalogspace $Pos\ <\ f\_sizeof(Group)$, \\
+\datalogspace SubGroup := {\em f\_car}(Group, Pos), \\
+\datalogspace SubSchema := {\em f\_car}(Schema, Pos). \\
+
+/* Move the branch position forward when the branch group is complete. */ \\
+bb5 {\bf branch}(@A, Rid, Group, Schema, Pos+1, Bound) :- \\
+\datalogspace {\bf branchComplete}(@A, Rid, Group, Pos, Cost), \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
+\datalogspace $Pos < f\_sizeof(Group)$, \\
 \datalogspace Bound := $Cost < OldBound$ ? Cost : OldBound. \\
+
+/* The branch group is complete when we receive an update to the  \\
+   \ol{plan} relation. */ \\
+bp6 {\bf branchComplete}(@A, Rid, Group, Pos, Cost) :- \\
+\datalogspace {\bf plan}(@A, Rid, Group, Method, PlanID, InnerGroup, OuterGroup, Card, Cost), \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, \_). \\
   
 \end{boxedminipage}
-\caption{\label{ch:opt:fig:cascades_top_down} Cascades top down search strategy rules.}
+\caption{\label{ch:opt:fig:cascades_top_down} Cascades top-down search strategy rules.}
 \end{figure*}
 
 The optimization begins when the root group (e.g., [ABC]) is inserted into the
-\ol{group} table.  A \ol{group} tuple contains an object, as its first
-attribute, that provides a cursor to the underlining predicates in the group.
-The cursor will generating all subgroups of the given group (e.g., cursor for
-group [ABC] will generate subgroups [AB], [BC], [AC]~\footnote{The subgroup
-cursors will further generate groups [A], [B], and [C].}).  Rule~\ol{cs2} in
-Figure~\ref{ch:opt:fig:cascades_top_down} creates a \ol{branch} tuple from
-the initial \ol{group} tuple, using the {\emph cursor} method to create an
-initial cursor at position $0$.  A branch contains an upper bound (initialized
-to infinity) that is used to prune the cost of plans contained within the given
-group.  An insertion into the \ol{branch} table triggers rule~\ol{cst1}, which
-inserts the ``current'' subgroup referenced by the cursor object, should one
-exists (i.e., no cursor exists for groups containing a single predicate).  When
-all plans for the current subgroup have been explored, and a winner selected,
-rule~\ol{cst3} advances the cursor to the next subgroup.  This process
-completes when the group cursor contains no more subgroups, at which point a
-winner can be chosen for the group.
+\ol{group} table, and a \ol{branch} tuple is created to initiate a depth-first
+traversal over the plan space.  This is initiated by rule~\ol{bb1} of
+Figure~\ref{ch:opt:fig:cascades_top_down}, when the \ol{cascades::programEvent}
+tuple is received.  The rule subsequently aggregates lists of the predicate
+identifiers and predicate schemas along each rule in the program.  The
+predicate identifier list will represent the group identifier, containing all the
+predicates in the rule body.  Rule~\ol{bb2} is triggered when such an update occurs
+in the \ol{group} relation.  It creates a \ol{branch} tuple containing the
+group information, an initial branch position, and the initial bound for this
+branch group.  Rules~\ol{bb3} and \ol{bb4} react to this \ol{branch} update by
+creating new subgroups, the first excluding the predicate at the branch position
+$Pos$, and the second including only this predicate at $Pos$.
 
+The \ol{branch} tuples will trigger the generation of \ol{plan} tuples using
+the rules described in Section~\ref{ch:opt:sec:cascades_plan}.  Here, we must
+ensure that we do not update the branch position until all plans for the
+current branch position are present.  We can detect this by simply waiting for
+an update to the \ol{plan} relation that is related to the current \ol{branch}
+group.  If even one \ol{plan} tuple for a given group exists in the \ol{plan}
+relation then all \ol{plan} tuples for that group are present.  This is
+because, in the next section, we will ``concurrently'' derive all the \ol{plan}
+tuples for a given group.  Until we get to those rules, assume that
+rule~\ol{bp6} creates a \ol{branchComplete} tuple when any \ol{plan} tuple is
+derived for the given group.  This will prompt rule~\ol{bb5} to move the
+\ol{branch} tuple position forward by one, with a bound that considers the
+cost of the \ol{plan} in the previous branch.
 
 \subsection{Plan Generation}
 \label{ch:opt:sec:cascades_plan}
@@ -589,81 +641,116 @@ winner can be chosen for the group.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-p1 {\bf plan}(PlanId, Group, BranchId, "tablescan", null, null, Card, Cost) :- \\
-\datalogspace {\bf branch}(Group, BranchId, Cursor, Bound), \\
-\datalogspace {\bf table}(Name, $\ldots$, Size), \\
-\datalogspace $Group.size() == 1$, \\
-\datalogspace $Group.tablePredicate() == Name$, \\
-\datalogspace PlanId := "tablescan" + Group.id(), \\
-\datalogspace Card := Size, \\
-\datalogspace Cost := Size. \\
-\\
-p2 {\bf plan}(PlanId, Group, ``nested-loop'', OuterGroup, InnerGroup, Card, Cost) :- \\
-\datalogspace {\bf branch}(Group, BranchId, Cursor, Bound), \\
-\datalogspace {\bf winner}(OuterGroup, OuterPlanId, OuterCard, OuterCost), \\
-\datalogspace {\bf winner}(InnerGroup, InnerPlanId, InnerCard, InnerCost), \\
-\datalogspace {\bf group}(OuterGroup, OuterSchema), \\
-\datalogspace {\bf group}(InnerGroup, InnerSchema), \\
-\datalogspace $OuterGroup.insersect(InnerGroup) ==  null$, \\
-\datalogspace $OuterSchema.joinsWith(InnerSchema) ==  true$, \\
-\datalogspace $InnerGroup.size() == 1$, \\
-\datalogspace Cost := $OuterSchema.joinsWith(InnerSchema)$ ? \\
+bp7 {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
+\datalogspace $f\_sizeof(Group)\ ==\ 1$, \\
+\datalogspace PlanID := {\em f\_cons}(``delta'', Group), \\
+\datalogspace Sort := $null$, \\
+\datalogspace OuterGroup := Group, \\
+\datalogspace InnerGroup := $null$, \\
+\datalogspace Card := 1, \\
+\datalogspace Cost := 1. \\
+
+bp8 {\bf plan}(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup, Card, Cost) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
+\datalogspace {\bf winner}(@A, Rid, OuterGroup, OuterPlanId), \\
+\datalogspace {\bf plan}(@A, Rid, OuterGroup, OuterPlanID, OuterSort, \_, \_, OuterCard, OuterCost), \\
+\datalogspace {\bf group}(@A, Rid, OuterGroup, OuterSchema), \\
+
+\datalogspace {\bf group}(@A, Rid, InnerGroup, InnerSchema), \\
+\datalogspace {\bf sys::table}(@A, Tid, TableName, \ldots, InnerCard, InnerSort),\\
+\datalogspace $f\_sizeof(InnerGroup)\ ==\ 1$ \&\& $f\_get(InnerGroup, 0)\ ==\ TableName$, \\
+\datalogspace $f\_combine(OuterGroup, InnerGroup)\ ==\ Group$, \\
+\datalogspace Cost := $f\_joinsWith(OuterSchema, InnerSchema)$ ? \\
 \datalogspace \datalogspace OuterCost + (OuterCard * InnerCost) : infinity, \\
-\datalogspace $Cost < Bound$, \\
-\datalogspace Card := $OuterSchema.joinsWith(InnerSchema)$ ? \\
+\datalogspace $Cost\ <\ Bound$, \\
+\datalogspace Card := $f\_joinsWith(OuterSchema, InnerSchema)$ ? \\
 \datalogspace \datalogspace (OuterCard * InnerCard) / 3 : (OuterCard * InnerCard), \\
-\datalogspace PlanId := ``nested-loop'' + Group.id(). \\
-\\
-p3 {\bf plan}(PlanId, Group, "index-loop", OuterGroup, InnerGroup, Card, Cost) :- \\
-\datalogspace {\bf branch}(Group, BranchId, Cursor, Bound), \\
-\datalogspace {\bf winner}(OuterGroup, OuterPlanId, OuterCard, OuterCost), \\
-\datalogspace {\bf winner}(InnerGroup, InnerPlanId, InnerCard, InnerCost), \\
-\datalogspace {\bf group}(OuterGroup, OuterSchema), \\
-\datalogspace {\bf group}(InnerGroup, InnerSchema), \\
-\datalogspace $OuterGroup.insersect(InnerGroup) ==  null$, \\
-\datalogspace $OuterSchema.joinsWith(InnerSchema) ==  true$, \\
-\datalogspace $InnerGroup.size() == 1$, \\
-\datalogspace {\bf index}(IndexId, Tablename, IndexColumn), \\
-\datalogspace $InnerGroup.tablePredicate() == Tablename$, \\
-\datalogspace $OuterSchema.join(InnerSchema).contains(IndexColumn) ==  true$, \\
-\datalogspace Cost := OuterCost + OuterCard, \\
-\datalogspace $Cost < Bound$, \\
-\datalogspace Card := (OuterCard * InnerCard) / 3, \\ 
-\datalogspace PlanId := "index-loop" + Group.id(). \\
-  
+\datalogspace PlanId := {\em f\_cons}(``nested-loop'', OuterPlanID, Tid). \\
+
 \end{boxedminipage}
-\caption{\label{ch:opt:fig:cascades_plan} Cascades plan generation rules.}
+\caption{\label{ch:opt:fig:cascades_plan1} Cascades plan generation rules for event
+predicates and nested-loop join method.}
 \end{figure*}
 
-Figure~\ref{ch:opt:fig:cascades_plan} gives three rules for generating plans
-in the Cascades optimizer.  The rules are very similar to the plan generation
-rules in the System R optimizer (Section~\ref{ch:opt:sec:systemr}) but are based on
-{\emph winner} plans from relevant subgroups.  The schema of the \ol{plan}
-table has also changed to reference groups instead of actual plans, as
-indicated by the $OuterGroup$ and $InnerGroup$ variables in rules~\ol{p2} and
-\ol{p3}.
+In this section, we will present our rules for generating \ol{plan} tuples for
+the group indicated by a \ol{branch} tuple.  A \ol{plan} tuple is equivalent to
+the description of a multiexpression in Section~\ref{ch:opt:sec:overview}.
+Figure~\ref{ch:opt:fig:cascades_plan1} gives the first, of two, group of rules
+the derive \ol{plan} tuples.  Rule~\ol{bp7} handles the case of a single
+predicate identifier in the $Group$ attribute.  The plan in this case consists
+of the single streaming delta predicate, with appropriate cardinality and cost
+values.  This delta plan is assigned the single predicate group as the outer
+group, and $null$ as its inner group.
 
-The plan generation rules are evaluated in a bottom-up fashion by deducing new
-plans for a given group.  The \ol{branch} tuple for a given group triggers
-each rule.  If the group contains a single table predicate ($Group.size == 1$
-in rule~\ol{p1}) then a {\emph table scan} access method is deduced with a cost based
-on the number of tuples in the table.  This access method will be selected as
-the winner for the single predicate group.  Since P2 only has a table scan
-access method we do not consider other access methods (e.g., index).
-Additional access methods would include appropriate rules in the form of
-Rule~\ol{p1}.
+This brings us to rule~\ol{bp8}, which is the our first rule that generates a
+\ol{plan} tuple involving a join method, specifically nested-loop join.  A
+\ol{branch} tuple with a group, containing at least two predicates, is ``joined
+with'' the \ol{winner} relation.  The \ol{winner} relation is described in the
+following section, but its purpose is to identify the winning plan, for each
+interesting order, in its group.  In rule~\ol{bp8}, we use the ``winning'' plan
+as the ``outer plan'', and join it with a table predicate that when combined
+with the outer subgroup, formulates the branch group under consideration.  The
+sorting order produced by this plan is the same as the order of the ``outer
+plan.'' Another difference with these rules is that the plan identifier
+($PlanID$) holds the actual plan.  This is used by another stage to annotate
+the relevant \ol{sys::predicate} facts with the desired order and join method.
+We include these rules in the overall Cascades rule count, but forgo its
+description since it does not add any new information.
 
-Rules~\ol{p2} and \ol{p3} consider joins of two subgroups (an $OuterPlan$ and
-$InnerPlan$) for nested-loop and index-loop join methods.  The rules reference
-the optimal plan, contained in the \ol{winner} table, for each subgroup in
-order to derive an overall cost for the plan with the given join method.  Each
-rule also ensures that the inner plan contains a single table predicate
-(left-deep plans only) and that the subgroups do not overlap in the predicates
-the consider ($OuterGroup.insersect(InnerGroup) == null$).  We avoid cross
-product plans be giving such plans a high cost ($infinity$), which forces such
-plans to be considered last.  Since rule~\ol{p3} considers an index-loop join
-method, it must check for the existence of an index on the inner predicate that
-matches the join attribute.
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+bp9 {\bf plan}(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup, Card, Cost) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
+\datalogspace {\bf winner}(@A, Rid, OuterGroup, OuterPlanId), \\
+\datalogspace {\bf plan}(@A, Rid, OuterGroup, OuterPlanID, OuterSort, \_, \_, OuterCard, OuterCost), \\
+\datalogspace {\bf group}(@A, Rid, OuterGroup, OuterSchema), \\
+
+\datalogspace {\bf group}(@A, Rid, InnerGroup, InnerSchema), \\
+\datalogspace {\bf sys::table}(@A, Tid, TableName, \ldots, InnerCard, InnerSort),\\
+\datalogspace {\bf sys::index}(@A, Iid, Tid, Key, Type, Selectivity), \\
+\datalogspace $f\_sizeof(InnerGroup)\ ==\ 1$ \&\& $f\_get(InnerGroup, 0)\ ==\ TableName$, \\
+
+\datalogspace $f\_combine(OuterGroup, InnerGroup)\ ==\ Group$, \\
+\datalogspace $f\_joinCol(OuterSchema, InnerSchema)$ == $f\_get(InnerSchema, Key)$, \\
+\datalogspace Cost := OuterCost + OuterCard, \\
+\datalogspace $Cost\ <\ Bound$, \\
+\datalogspace Card := OuterCard * (InnerCard * Selectivity), \\ 
+\datalogspace PlanId := {\em f\_cons}("index-loop", OuterPlanID, Tid, Iid). \\
+
+bp10 {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
+\datalogspace {\bf winner}(@A, Rid, OuterGroup, OuterPlanId), \\
+\datalogspace {\bf plan}(@A, Rid, OuterGroup, OuterPlanID, OuterSort, \_, \_, OuterCard, OuterCost), \\
+\datalogspace {\bf group}(@A, Rid, OuterGroup, OuterSchema), \\
+
+\datalogspace {\bf group}(@A, Rid, InnerGroup, InnerSchema), \\
+\datalogspace {\bf sys::table}(@A, Tid, TableName, \ldots, InnerCard, InnerSort),\\
+\datalogspace $f\_sizeof(InnerGroup)\ ==\ 1$ \&\& $f\_get(InnerGroup, 0)\ ==\ TableName$, \\
+
+\datalogspace $f\_combine(OuterGroup, InnerGroup)\ ==\ Group$, \\
+\datalogspace Sort := {\em f\_joinAttribute}(OuterSort, OuterSchema, InnerSort, InnerSchema), \\
+\datalogspace Cost := {\em f\_sortJoinCost}(OuterSort, OuterCard, InnerSort, InnerCard), \\
+\datalogspace $Cost\ <\ Bound$, \\
+\datalogspace Card := (OuterCard * InnerCard) / 3. \\
+\datalogspace PlanId := {\em f\_cons}(``sort-merge'', OuterPlanID, Tid, Sort).
+
+\end{boxedminipage}
+\caption{\label{ch:opt:fig:cascades_plan2} Cascades plan generation rules for index-loop
+and sort-merge join methods.}
+\end{figure*}
+
+Figure~\ref{ch:opt:fig:cascades_plan2} contains the remaining \ol{plan}
+generation rules that cover are remaining index-loop and sort-merge join
+methods.  As in the respective System R rules, we need to consider various
+properties of these joins.  In rule~\ol{bp9} we consider an index-loop join on
+the outer ``winning'' plans with an inner table predicate that includes an
+index definition relevant to the joining attributes.  In rule~\ol{bp10}, the
+sort-merge join along the same set of predicates is derived.  The cost of this
+plan depends on the order of the outer and inner tuples.  The output is ordered
+by the join attributes used for these two inputs.
 
 \subsection{Winner Selection}
 \label{ch:opt:sec:cascades_winner}
@@ -672,50 +759,47 @@ matches the join attribute.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-wc1 {\bf winner}(Group, PlanId, Schema, Cost) :- \\
-\datalogspace {\bf bestCost}(Group, Cost), \\
-\datalogspace {\bf branch}(Group, \_, Cursor, \_), \\
-\datalogspace $Cursor ==  null$,
-\datalogspace {\bf group}(Group, Schema), \\
-\datalogspace {\bf plan}(PlanId, Group, \_, \_, \_, \_, \_, Cost). \\
-\\
-wc2 {\bf bestCost}(Group, {\bf min}$<Cost>$) :- \\
-\datalogspace {\bf bestBranchCost}(Group, BranchId, Cost). \\
-\\
-wc3 {\bf bestBranchCost}(Group, BranchId, {\bf min}$<Cost>$) :- \\
-\datalogspace {\bf plan}(PlanId, Group, BranchId, Method, \_, \_, \_, Cost). \\
-  
+bb11 {\bf bestOverallCost}(@A, Rid, Group, {\bf min}$<Cost>$) :- \\
+\datalogspace {\bf plan}(@A, Rid, Group, \_, \_, \_, \_, \_, Cost). \\
+
+bb12 {\bf bestOrderCost}(@A, Rid, Group, Sort, {\bf min}$<Cost>$) :- \\
+\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
+\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, \_, Cost). \\
+
+bb13 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
+\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost).
+\datalogspace {\bf sys::rule}(@A, Rid, Pid, HeadPredID, \ldots), \\
+\datalogspace // The head predicate \\
+\datalogspace {\bf sys::predicate}(@A, Pid, Rid, HeadPredID, \ldots, HeadPredSchema, \ldots),\\
+\datalogspace // A rule body predicate \\
+\datalogspace {\bf sys::predicate}(@A, Pid, Rid, BodyPredID, \ldots, BodyPredSchema, \ldots),\\
+\datalogspace $HeadPredID != BodyPredID$ \\
+\datalogspace // participates in a later join OR is a prefix of a grouping attribute \\ 
+\datalogspace ({\em f\_contains}(BodyPredID, Plan) ==  $false$ \&\& \\
+\datalogspace f\_contains(f\_joincond(PlanSchema, BodyPredSchema), Sort)) $||$ \\
+\datalogspace f\_isPrefix(Sort, HeadPredSchema) ==  $true$.  \\
+
+bb14 {\bf winner}(@A, Rid, Group, PlanId) :- \\
+\datalogspace {\bf bestOverallCost}(@A, Rid, Group, Cost), \\
+\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, Card, Cost). \\
+
+bb15 {\bf winner}(@A, Rid, Group, PlanId) :- \\
+\datalogspace {\bf bestOrderCost}(@A, Rid, Group, Sort, Cost), \\
+\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, Card, Cost).
+
 \end{boxedminipage}
 \caption{\label{ch:opt:fig:cascades_winner} Cascades winner selection rules.}
 \end{figure*}
 
 The rules in Figure~\ref{ch:opt:fig:cascades_winner} select a {\emph winner}
-plan from the plans deduced for a given group.  We begin with rule~\ol{wc3},
-which determines the optimal plan in a given group.  The cost of this optimal
-plan is used to update the upper bound for the next branch taken by the search
-strategy.  Rule~\ol{wc2} further aggregates the result of rule~\ol{wc3} to
-determine the best overall plan for a given group, which is used to select a
-winner for the group in rule~\ol{wc1}.  We must ensure however that a winner is
-only selected when the group has been fully explored, which occurs after the
-cursor ($Cursor$) in the \ol{branch} table for the group takes on a $null$
-value.
-
-%Suppose the initial query is $A \Join B \Join C$.  The optimizer first
-%initalizes the \ol{winner} relation with the root group [ABC]. 
-%A single
-%rule seeds the recursive rule \ol{c1} in Figure~\ref{ch:evita:fig:bb} by
-%initializing the \ol{branch} relation with a tuple that defines the root group
-%(i.e., $ABC$) and starts the optimization at position $0$ with predicates ($A$,
-%$B$, $C$) and a bound of \ol{infinity}.  The recursion proceeds in a top-down
-%fashion.  In the first step a new \ol{branch} tuple is generated that removes
-%the predicate in position $0$ generating the group $BC$.  Another rule will
-%generate a branch group $A$ at the same time.  The recursion returns when a
-%winner for group $ABC$ has been discovered, which occurs when groups $A$ and
-%$BC$ have been fully explored and the \ol{next} branch position (e.g., $1$) is
-%set for group $ABC$.  A group has been fully explored when its branch position
-%reaches the end.  As new winners are discovered the \ol{Bound} variable is
-%updated with the winning cost before proceeding to the next predicate.
-
+plan from the plans deduced for a given group. We begin at rule~\ol{bb11},
+which determines the cost of the optimal plan regardless of order. Rule~\ol{bb12}
+follows by determining the best cost plan for each interesting order. The familiar
+rule~\ol{bb13} from System R determines the orders that are interesting, based
+on grouping and joining attributes. The final two rules identify
+the \ol{winner} plans for the given group. In rule~\ol{bb14}, we ensure that
+the best overall plan is part of the \ol{winner} relation, and rule~\ol{bb15}
+adds in optimal plans with interesting orders.
 
 \subsection{Termination}
 \label{ch:opt:sec:cascadesend}
