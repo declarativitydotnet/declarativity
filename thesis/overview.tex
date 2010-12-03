@@ -67,7 +67,8 @@ cassandra}.  These {\emph cloud computing} applications are being used by large
 Internet companies to mine information from massive amount of data, using the
 computational power and storage of a data center (the cloud), at an unforeseen
 scale.  The information compiled by these cloud applications translate to
-bottom line returns.  Unfortunately, they take time to get right, and once
+bottom line returns, and innovate along new Internet services based on
+extracted trends.  Unfortunately, they take time to get right, and once
 written, are incredibly difficult to extend with new features.  We believe a
 declarative approach is in order.
 
@@ -76,13 +77,13 @@ during the early stages of the {\em Berkeley Orders Of Magnitude} (\BOOM)
 project, which evaluates the use of a declarative language in building
 distributed system software for today's data center architecture (clusters of
 commodity machines).  As we have already alluded, building and debugging
-distributed software remains extremely difficult in today's language of choice
--- Java.  We conjecture that by adopting a \emph{data-centric} approach to
-system design and by employing \emph{declarative} programming languages, a
-broad range of distributed software functionality can be recast naturally in a
-data-parallel programming model.  Our hope is that this model can significantly
-raise the level of abstraction for programmers, improving code simplicity,
-speed of development, ease of software evolution, and program correctness.
+distributed software remains extremely difficult in today's Java environment.
+We conjecture that by adopting a \emph{data-centric} approach to system design
+and by employing \emph{declarative} programming languages, a broad range of
+distributed software functionality can be recast naturally in a data-parallel
+programming model.  Our hope is that this model can significantly raise the
+level of abstraction for programmers, improving code simplicity, speed of
+development, ease of software evolution, and program correctness.
 
 To evaluate this conjecture, we used the \OVERLOG language to implement an
 API-compatible version of the Hadoop MapReduce scheduler.  Not only did we
@@ -98,9 +99,8 @@ properties can be achieved in orders-of-magnitude less code.  In
 Chapter~\ref{ch:hop}, we look at moving beyond a batch-oriented execution model
 in MapReduce to a more online execution model by pipelining data between system
 operators.  This extension brings with it a number of scheduling challenges,
-which we solve using our declarative scheduling framework.  Finally, we
-conclude in Chapter~\ref{ch:conclusion} with a discussion of future directions.
-
+which we solve in our declarative scheduling framework.  Finally, we conclude
+in Chapter~\ref{ch:conclusion} with a discussion of future directions.
 
 
 
