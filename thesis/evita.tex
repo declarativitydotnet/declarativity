@@ -40,20 +40,21 @@ involves compiling an \OVERLOG program into a relational representation.
 Compiling code into data is necessary in order to then express compilation
 steps (i.e., rewrites, optimizations) as queries.  In
 Section~\ref{ch:evita:sec:catalog} we describe the schema of the compiled code,
-which is packaged with a schema in a Metacompiler Catalog relation.  The
-architecture of Evita Raced is described in Section~\ref{ch:evita:sec:arch},
-which consists of a dataflow of compilation steps and a scheduler to determine
-compilation step order.  A given compilation step is called a {\em stage},
-which can be written in either C++ or \OVERLOG.
-Section~\ref{ch:evita:sec:bootstrap} describes our four basic C++ stages,
-which bootstrap the compiler into a state that permits the subsequent dynamic
+which is packaged in a Metacompiler Catalog.  The architecture of Evita Raced
+is described in Section~\ref{ch:evita:sec:arch} as a dataflow of compilation
+steps and a scheduler to determine compilation step order.  A given compilation
+step is called a {\em stage}, which can be written in either C++ or \OVERLOG.
+Section~\ref{ch:evita:sec:bootstrap} describes our four basic C++ stages that
+bootstrap the compiler into a state that permits the subsequent dynamic
 installation of our \OVERLOG stages.  In Section~\ref{ch:evita:sec:delta}, we
-present our first declarative compilation stage (packaged with Evita Raced):
-the delta rewrite~\cite{loo-sigmod06}.  This is followed by
-Section~\ref{ch:evita:sec:local}, which describes our \OVERLOG rules for
-performing the localization rewrite~\cite{p2:sosp} on a set of distributed
-(join) rules.  Some final thoughts on the Evita Raced architecture are
-presented in Section~\ref{ch:evita:sec:summary}.
+present our first declarative compilation stage: the delta
+rewrite~\cite{loo-sigmod06} for rewriting a rule into a form suitable for
+seminaive evaluation.  In Section~\ref{ch:evita:sec:local}, we describe our
+\OVERLOG rules for expressing the localization rewrite~\cite{p2:sosp}, which
+rewrites distributed (join) rules into a locally executable form.  We conclude
+in Section~\ref{ch:evita:sec:summary} with some final thoughts on the Evita
+Raced architecture.  The next two chapters then describe our primary use of
+Evita Raced for expressing query optimizations.
 
 \section{Declarative Compilation}
 \label{ch:evita:sec:compile}
@@ -149,7 +150,7 @@ added to the system.
 StageScheduler $(Section~\ref{ch:evita:sec:stageschedule})$ & C++ & 
 Coordinates the compilation of stages.\\ \hline
 Parser $(Section~\ref{ch:evita:sec:parser})$  & C++ & 
-Bison based parser. Populates Metacompiler Catalog using program AST.\\ \hline
+Bison based parser engineered to populate the Metacompiler Catalog with data from the program AST.\\ \hline
 Planner $(Section~\ref{ch:evita:sec:planner})$ & C++ & 
 Generates a dataflow description from the program data contained in the Metacompiler Catalog.\\ \hline
 Installer $(Section~\ref{ch:evita:sec:installer})$ & C++  & 
@@ -157,17 +158,13 @@ Instantiates C++ dataflow objects from a dataflow description. \\ \hline
 Delta Rewrite $(Section~\ref{ch:evita:sec:delta})$ & \OVERLOG & 
 Converts rules based on materialized tables into an ECA form. \\ \hline
 Localization $(Section~\ref{ch:evita:sec:local})$ & \OVERLOG   & 
-Rewrites rules containing a distributed joins into a  localized form. \\ \hline
+Rewrites distributed (join) rules into a locally executable form. \\ \hline
 Magic-sets $(Chapter~\ref{ch:magic})$  & \OVERLOG & 
 Rewrites rules to include magic predicates, which act as selection predicates for constants contained in query predicates. \\ \hline
 System~R $(Section~\ref{ch:opt:sec:systemr})$ & \OVERLOG  & 
-Performs System R dynamic programming optimization on all rules. \\ \hline
+Performs the System R dynamic programming optimization on an \OVERLOG program. \\ \hline
 Cascades $(Section~\ref{ch:opt:sec:cascades})$ & \OVERLOG  & 
 Query optimization based on a top-down search strategy. \\  \hline
-%Debug print & \OVERLOG & 
-%Add special pretty printer predicates, interposed in certain rules. The Planner stage 
-%translates these printer predicates into dataflow objects that print the tuples
-%that pass through. \\ \hline
 \end{tabular} 
 \caption{Primary Evita Raced compiler stages. }
 \label{tbl:stages}
