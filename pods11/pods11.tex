@@ -35,10 +35,11 @@
 \newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
 \newcommand{\smallurl}[1]{{\small \url{#1}}}
 
-\newtheorem{example}{Example}
+\newtheorem{theorem}{Theorem}[section]
+\newdef{example}{Example}
 \newdef{definition}{Definition}
-\newtheorem{lemma}{Lemma}
-\newtheorem{corollary}{Corollary}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
 
 %\def\slang{synchronous Dedalus\xspace}
 \def\lang{\textsc{Dedalus}\xspace}
@@ -93,13 +94,14 @@ We present a formal definition of the Dedalus language and prove conjectures pos
 
 \input{intro}
 \input{foundation}
-\input{correctness}
+\input{confluence}
+\input{consistency}
 \input{relwork}
 \bibliographystyle{abbrv}
 \bibliography{pods,declarativity}
 
-%%\appendix
-%%\input{appendix}
+\appendix
+\input{appendix}
 
 %%\input{attic}
 
