@@ -1,0 +1,10 @@
+\section{Eventual Consistency}
+
+{\em Eventual consistency} means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.  This is equivalent to the definition in (cite Peter's paper about EC).  Vogels' presented several operational definitions of eventual consistency \wrm{which are basically totally different, do we include here or not?  to discuss tomorrow}
+
+\begin{lemma}
+Eventual consistency of a \lang program is undecidable
+\end{lemma}
+\begin{proof}
+Proof sketch: convert Datalog program to \lang program that for a given key, replicates each different value to a different node; do this for all possible keys and values (exponentialy many).  Ask if each program is eventually consistent.  At the end, you've inferred functional dependencies in a Datalog program, which we know is undecidable.
+\end{proof}
