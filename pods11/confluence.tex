@@ -125,3 +125,11 @@ The ultimate model contains \dedalus{odd()} if there are an odd number of \dedal
 
 \subsection{Coordination}
 Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, similarly to the way that Datalog programs with negation have a model called the {\em perfect model} which corresponds to intuition.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultiamte models).
+
+\wrm{describe coordination protocols as ``all-in'' protocols}
+
+\wrm{Achieving the perfect ultimate model may lead to liveness problems (if we admit losses?)}
+
+\wrm{introduce timers/boomerangs into ``all-in'' which lead to non-determinism in coordination.  tie into usages of paxos/2pc?}
+
+Programs with non-deterministic coordination are no longer confluent.
