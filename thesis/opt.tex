@@ -629,7 +629,7 @@ bb5 {\bf branch}(@A, Rid, Group, Schema, Pos+1, Bound) :- \\
 \datalogspace $Pos < f\_sizeof(Group)$, \\
 \datalogspace Bound := $Cost < OldBound$ ? Cost : OldBound. \\
 
-/* The branch group is complete when we receive an update to the  \\
+/* A branch for a specific group is complete when we receive an update to the  \\
    \ol{plan} relation. */ \\
 bp6 {\bf branchComplete}(@A, Rid, Group, Pos, Cost) :- \\
 \datalogspace {\bf plan}(@A, Rid, Group, Method, PlanID, InnerGroup, OuterGroup, Card, Cost), \\
@@ -794,13 +794,20 @@ System R declarative optimizer.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
+/* Determine the best overall cost for a given plan. */ \\
 bb11 {\bf bestOverallCost}(@A, Rid, Group, {\bf min}$<Cost>$) :- \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
+\datalogspace $f\_sizeof(Group)\ ==\ Pos$, \\
 \datalogspace {\bf plan}(@A, Rid, Group, \_, \_, \_, \_, \_, Cost). \\
 
+/* Determine the best cost plan for each ordered result. */ \\
 bb12 {\bf bestOrderCost}(@A, Rid, Group, Sort, {\bf min}$<Cost>$) :- \\
-\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
-\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, \_, Cost). \\
+\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
+\datalogspace $f\_sizeof(Group)\ ==\ Pos$, \\
+\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, \_, Cost), \\
+\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID). \\
 
+/* Identify interesting ordered plans. */ \\
 bb13 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
 \datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost), \\
 \datalogspace {\bf sys::rule}(@A, Rid, Pid, HeadPredID, \ldots), \\
@@ -814,10 +821,12 @@ bb13 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
 \datalogspace f\_contains(f\_joincond(PlanSchema, BodyPredSchema), Sort)) $||$ \\
 \datalogspace f\_isPrefix(Sort, HeadPredSchema) ==  $true$.  \\
 
+/* Choose a winner based on the best overall cost. */ \\
 bb14 {\bf winner}(@A, Rid, Group, PlanId) :- \\
 \datalogspace {\bf bestOverallCost}(@A, Rid, Group, Cost), \\
 \datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, Card, Cost). \\
 
+/* Choose a winner from each interesting ordered plans. */ \\
 bb15 {\bf winner}(@A, Rid, Group, PlanId) :- \\
 \datalogspace {\bf bestOrderCost}(@A, Rid, Group, Sort, Cost), \\
 \datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, Card, Cost).
@@ -831,12 +840,19 @@ plan from the plans deduced for a given group.  We begin at rule~\ol{bb11},
 which determines the cost of the optimal plan regardless of order.  This
 ensures that an ordered plan with this best cost is chosen regardless of its
 order being interesting.  Rule~\ol{bb12} follows by determining the best cost
-plan for each interesting order.  The familiar rule~\ol{bb13}, also appearing
-as the \ol{sr8} System R rule, determines the orders that are interesting,
-based on grouping and joining attributes.  The final two rules identify the
-\ol{winner} plans for the given group.  In rule~\ol{bb14}, we ensure that the
-best overall plan is part of the \ol{winner} relation, and rule~\ol{bb15} adds
-in optimal plans with interesting orders.
+plan for each interesting order.  These two rules identify the best cost plans
+for a given group.  The familiar rule~\ol{bb13}, also appearing as the \ol{sr8}
+System R rule, determines the orders that are interesting, based on grouping
+and joining attributes.
+
+Due to P2's lack of stratified Datalog support, we must predicated the
+evaluation of rules~\ol{bb11} and~\ol{bb12} on the \ol{branch} tuple's group
+position attribute.  When a group has been fully explored its \ol{branch}
+position ($Pos$) is equal to the number of terms in the $Group$ variable.  If
+we omit this constraint, then we would prematurely derive \ol{winner} tuples in
+the final two rules: rule~\ol{bb14} ensures that the best overall plan is part
+of the \ol{winner} relation, and rule~\ol{bb15} derives a \ol{winner} tuple for
+each interesting orders.
 
 \subsection{Termination}
 \label{ch:opt:sec:cascadesend}
