@@ -1,8 +1,27 @@
 \section{Introduction}
 
-Much prior work on logic programming in distributed systems promises that the high-level declarative nature of these languages may ease verification of important distributed systems properties.  Recently, Hellerstein posited several conjectures relating logic programming analyses with checking distributed system correctness criteria such as eventual consistency and confluence \wrm{cite}.  
+The discourse in the distributed systems literature is about ensuring that programs can only result in desirable behaviors.  The tradition of protocols for coordination is all about enforcing these properties, not checking them.
 
-We provide a formal description of \lang, a logic language for distributed systems, which captures the salient issues in asynchronous distributed systems: things may be non-atomic, and things may be out-of-order.  \lang attractively formalizes these two issues by adding a notion of ``time'' to logic languages.
-We also present an operational characterization of distributed systems, and prove that \lang models exactly the executions that arise in the real world.   
+Moreover, the need for these properties is usually motivated by reasoning about
+read/write conflicts, making worst-case assumptions about the semantics of dataflows
+dependent on those reads and writes.  \wrm{for example...}
 
-We explore eventual consistency and confluence through this formalism, proving that in general, it is undecidable to guarantee these in \lang.  This motivates our identification of conservative, statically checkable conditions that can aid programmers in crafting a distributed system that meets these criteria, including an analysis that we previously suggested in \wrm{cite CIDR} is valid, and expand it.
+We provide a formal description of \lang, a logic language for distributed systems, which captures the salient issues in asynchronous distributed systems: things may be non-atomic, and things may be out-of-order.  \lang attractively formalizes these two issues by adding a notion of ``time'' to logic languages.  We also present an operational characterization of distributed systems, and prove that \lang models exactly the executions that arise in the real world.
+
+One might ask instead the more general question of when coordination protocols are
+needed, and whether a more refined understanding of program logic can obviate the need
+for coordination in more cases than read-write analyses might suggest.  We attack this
+question on a number of fronts:
+
+We identify a broad range of programs--all of monotonic Dedalus--in which traditional
+distributed systems coordination protocols are completely unnecessary, since we show
+these programs are confluent regardless of the ordering of reads and writes. Given the
+expressive power of this class, we essentially are providing a formal argument for the
+popular notion that ``it is often OK to do without coordination in distributed systems''. This line of reasoning also provides a conservative syntactic  check (monotonicity) for confluence in a distributed logic program written in a language like Dedalus or Bloom.
+
+Unfortunately, we show that confluence is undecidable for the family of Dedalus
+programs including negation.  In the presence of negation, we turn our attention to the
+problem of using coordination in a judicious way.  We identify families of coordinated
+Dedalus programs that are confluent, which correspond to familiar notions of stratified
+evaluation of Datalog.  We show how to coerce arbitrary Dedalus programs into
+coordinated Dedalus programs.  Etc..
