@@ -1,20 +1,65 @@
 \section{Confluence}
 
+For many distributed computations, achieving a deterministic answer (ultimate model) independent of any network nondeterminism is ideal.
+
 \begin{definition}
-A \lang program is {\em confluent} if it has a unique ultimate model.
+A \lang program is {\em confluent} if, for any EDB, it has a unique ultimate model.
 \end{definition}
+
+In general, \lang programs are not necessarily confluent.
+
+\begin{example}
+\label{ex:nonconfluent}
+A non-confluent \lang program.
+
+\begin{Dedalus}
+p(x)@async <- p_edb(X);
+q(X)@next <- p(X), !q(_);
+q(X)@next <- q(X);
+\end{Dedalus}
+\end{example}
+
+In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the non-deterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are asigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
+
+Unfortunately, confluence is undecidable for \lang programs, as the following Lemma shows.
 
 \begin{lemma}
 \label{lem:confluence-undecidable}
 Confluence of a \lang program is undecidable.
 \end{lemma}
 \begin{proof}
-See appendix.
+We reduce the undecidable problem of determining whether a two-counter machine accepts any input to confluence of a \lang program.  See appendix for details.
 \end{proof}
 
-This undecidability result sets the stage for various conservative conditions to guarantee confluence.  Furthermore, we explain how some non-confluent programs have an ``intuitive'' or ``natural'' unique ultimate model that can be induced by augmenting the program with additional logic.
+Fortunately, as we show, there is a rich class of programs that can be statically detected as confluent.  Furthermore, many other programs have a ``natural'' ultimate model that corresponds to intuition; we show how to induce this ultimate model by augmenting the program.
 
-First, we explain the sources of non-confluence in \lang programs.
+First, we provide some intuition for the sources of non-confluence in \lang programs.  In Example~\ref{ex:nonconfluent}, we saw a \lang program that was non-confluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
+
+\begin{example}
+Another non-confluent \lang program.
+
+\begin{Dedalus}
+q(X)@async <- q_edb(X);
+r(X)@async <- r_edb(X);
+p(X) <- q(X), !r(X);
+p(X)@next <- p(X);
+\end{Dedalus}
+\end{example}
+
+The above example is non-confluent becuase if an \dedalus{r} fact is assigned an earlier timestamp than its corresponding \dedalus{q} fact, the ultimate model contains no corresponding \dedalus{p} fact; otherwise, the ultimate model contains the \dedalus{p} fact.
+
+\begin{example}
+A non-confluent \lang program without negation.
+
+\begin{Dedalus}
+q(X)@async <- q_edb(X);
+r(X)@async <- r_edb(X);
+p(X) <- q(X), r(X);
+p(X)@next <- p(X);
+\end{Dedalus}
+\end{example}
+
+The above example illustrates that even without negation, multiple ultimate models may be induced.
 
 \begin{definition}
 A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear in the program.
@@ -31,33 +76,8 @@ A negation-free \lang program with guarded asynchrony is confluent.
 Sketch: only possible way two ultimate models are different is if two facts (or predicates, e.g. ``!'' on facts) join in one trace, but not the other.  If the program has guarded asynchrony, then it is impossible for a join to succeed in one trace and not another.
 \end{proof}
 
-If either qualification is false, problems can result, as illustrated in the following two examples.
+If either qualification is false, problems can result, as we have previously illustrated.
 
-\begin{example}
-A non-confluent \lang program with negation and guarded asynchrony.
-
-\begin{Dedalus}
-q(X)@async <- q_edb(X);
-r(X)@async <- r_edb(X);
-p(X) <- q(X), !r(X);
-p(X)@next <- p(X);
-\end{Dedalus}
-\end{example}
-
-In the above example, if the timestamp of a \dedalus{q} fact is chosen later than the timestamp of its corresponding \dedalus{r} fact, then \dedalus{p} is in the ultimate model.  Otherwise, \dedalus{p} is not in the ultimate model.
-
-\begin{example}
-A non-confluent negation-free \lang program without guarded asynchrony.
-
-\begin{Dedalus}
-q(X)@async <- q_edb(X);
-r(X)@async <- r_edb(X);
-p(X) <- q(X), r(X);
-p(X)@next <- p(X);
-\end{Dedalus}
-\end{example}
-
-In the above example, if the timestamp of a \dedalus{q} fact is the same as the timestamp of its corresponding \dedalus{r} fact, then \dedalus{p} is in the ultimate model.  Otherwise \dedalus{p} is not in the ultimate model.
 
 We can generalize the above example by the notion of a {\em monotonic property}.
 
@@ -121,15 +141,73 @@ even() <- !odd();
 
 The ultimate model contains \dedalus{odd()} if there are an odd number of \dedalus{b\_edb(I)} facts, and \dedalus{even()} otherwise.  Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{even()} is not supported by only monotonic properties, thus the program is not logically monotonic.
 
-\wrm{Example of a Dedalus program that is nonconfluent (and thus not logically monotonic)}
-
-\subsection{Coordination}
+\subsection{Perfect Ultimate Model}
 Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, similarly to the way that Datalog programs with negation have a model called the {\em perfect model} which corresponds to intuition.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultiamte models).
 
-\wrm{describe coordination protocols as ``all-in'' protocols}
+Consider the following program:
 
-\wrm{Achieving the perfect ultimate model may lead to liveness problems (if we admit losses?)}
+\begin{Dedalus}
+statement(#L, S, X)@async <- statement_edb(#S, X), listener(L);
+s_false(#L, S, X)@async <- statement_edb(#S, X), false_edb(#S, X), listener(L);
 
-\wrm{introduce timers/boomerangs into ``all-in'' which lead to non-determinism in coordination.  tie into usages of paxos/2pc?}
+true(X) <- statement(_, S, X), !s_false(_, S, X);
+false(X) <- statement(_, S, X), s_false(_, S, X);
+statement(L, S, X)@next <- statement(L, S, X);
+false(X)@next <- false(X);
+true(X)@next <- true(X);
+\end{Dedalus}
 
-Programs with non-deterministic coordination are no longer confluent.
+Intuitively this program represents a group of nodes (the ``sayers'') making statements to another group of nodes called ``listeners''.  The sayers also occasionally remark that a statement is false (but a sayer may only declare one of his statements to be false -- not the statement of another sayer).  One may expect the contents of \dedalus{true} to contain all statements that are not \dedalus{false}.  However, this is not necessarily the case.  Recall that the un-sugared version of the third rule is:
+
+\begin{Dedalus}
+true(X,T) <- statement(X,T), !false(X,T);
+\end{Dedalus}
+
+Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
+
+\begin{definition}
+The {\em perfect ultimate model} of a \lang program without recursion through negation is the ultimate model you get by ``ensuring that a set is completed before it is negated''. \wrm{make more formal}
+\end{definition}
+
+Clearly, the perfect ultimate model is one of the ultimate models -- in the above program, it is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.
+
+In particular, it is represented by any stable model where no \dedalus{false} message arrives after the first \dedalus{statement} message has arrived.  We show an example of how this condition can be emulated by modifying the program.
+
+We add the following two rules to compute counts of false messages at each sayer, and each listener:
+
+\begin{Dedalus}
+count_false_sent(#L, S, count<X>) <- false_edb(S, X), listener(L);
+count_false_recv(S, count<X>) <- s_false(_, S, X);
+\end{Dedalus}
+
+Furthermore, we replace the rule above that defines \dedalus{true} with the one below:
+
+\begin{Dedalus}
+true(X) <- statement(_, S, X), !s_false(_, S, X), count_false_recv(S, X), count_false_sent(_, S, X)
+\end{Dedalus}
+
+Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false (i.e., the counts match). 
+
+\wrm{Note, however, that it's fine for the receiver count to have intermediate values, as these are not persisted.}
+\wrm{Example that shows coordination across all nodes?}
+
+\subsubsection{Coordination}
+Given any \lang program without recursion through negation, we can automatically instrument it with coordination to achieve the ultimate model, using the following algorithm:
+
+1. Build a predicate dependency graph of the program.
+2. For any asynchronous edge that can reach a predicate with negation or aggregation, have each node send a count of messages in the async predicate, and coordinate over all nodes, as above.
+
+Note that this process introduces additional asynchronous edges.  These asynchronous edges need not be coordinated \wrm{in fact, due to the syntactic restrictions in the foundation, they CAN'T be coordinated, becuase that would entail taking the count of a count}.
+
+
+\subsubsection{Non-Deterministic Coordination}
+
+Achieving the perfect ultimate model comes at the expense of liveness -- if a node or link fails before the coordination is completed, the coordination logic will wait for a response that may never arrive.  To guarantee liveness, a simple modification is to make coordination non-deterministic by adding a timeout, which, when elapsed, causes the coordination to succeed.
+
+We can model timeouts as local messages.  For example:
+
+\begin{Dedalus}
+boomerang(#M)@async <- me(#M);
+\end{Dedalus}
+
+Upon a timeout, we close a world 
