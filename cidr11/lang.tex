@@ -24,7 +24,9 @@ The prototype version of Bloom we describe here is embodied in an implementation
 %Future versions of Bloom may do away with some of the syntactic idiosyncracies of Ruby, but it has been useful to stay grounded in the specific syntax of one widely-accepted language, at least in our early work.
 %In the remainder of the paper, when we refer to Bloom we mean the language supported by the current Bud prototype.
 
-\vspace{9pt}\noindent\textbf{Bloom Basics}\\
+%\vspace{9pt}\noindent\textbf{Bloom Basics}\\
+\subsection{Bloom Basics}
+
 Bloom programs are bundles of declarative statements about collections of ``facts'' or tuples, akin to SQL views or Datalog rules.  Bloom statements can only reference data that is local to a node.  Bloom rules are defined with respect to atomic ``timesteps,'' which can be implemented via successive rounds of evaluation. In each timestep, certain ``ground facts'' exist in collections due to persistence or the arrival of messages from outside agents (e.g., the network or system clock).  The statements in a Bloom program specify the derivation of additional facts, which can be declared to exist either in the current timestep, at the very next timestep, or at some time in the future at a remote node.  A Bloom program also specifies the way that facts persist (or do not persist) across consecutive timesteps on a single node.  Bloom is a side-effect free language with no ``mutable state'': if a fact is defined at a given timestep, its existence at that timestep cannot be refuted by any expression in the language.  This technicality is key to avoiding many of the complexities involved in reasoning about earlier ``stateful'' rule languages.  The paper on Dedalus discusses these points in more detail~\cite{dedalus}.
 
 \begin{figure}
@@ -60,7 +62,9 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 	\label{tab:bloom}
 \end{figure}
 
-\vspace{9pt}\noindent\textbf{State in Bloom}\\
+%\vspace{9pt}\noindent\textbf{State in Bloom}\\
+\subsection{State in Bloom}
+
 Bloom programs manage state using five collection types described in
 the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a
 relational-style schema of named columns, including an optional subset of those
@@ -160,6 +164,9 @@ channel.
 
 \end{comment}
 
+
+
+
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
@@ -193,7 +200,42 @@ end
 \vspace{-2pt}
 \end{figure}
 
-\vspace{9pt}\noindent \textbf{Bloom Statements}\\
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module CartClient
+  include CartProtocol
+  include CartClientProtocol
+
+  declare
+  def client
+    action_msg <~ client_action.map do |a| 
+      [a.server, @addy, a.session, a.reqid, a.item, a.action] (*\label{line:des_client_action}*)
+    end
+    checkout_msg <~ client_checkout.map do |a| 
+      [a.server, @addy, a.session, a.reqid]
+    end
+    client_response <= response_msg.map {|r| r }
+  end
+end
+
+\end{lstlisting}
+\vspace{-10pt}
+\caption{Shopping cart client implementation}
+\label{fig:cart_client}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+
+
+
+
+
+
+%\vspace{9pt}\noindent \textbf{Bloom Statements}\\
+\subsection{Bloom Statements}
+
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
 of declarative relational statements that define the contents of derived
 collections.  The syntax is:\\ \noindent
@@ -224,32 +266,7 @@ be used in the rhs of a statement.\footnote{For clarity, we write out the join c
 Line~\ref{line:dis_join_action_msg_member} of Figure~\ref{fig:pdg-disorderly}
 shows a join between \texttt{action\_msg} and \texttt{member}.
 
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-module CartClient
-  include CartProtocol
-  include CartClientProtocol
 
-  declare
-  def client
-    action_msg <~ client_action.map do |a| 
-      [a.server, @addy, a.session, a.reqid, a.item, a.action] (*\label{line:des_client_action}*)
-    end
-    checkout_msg <~ client_checkout.map do |a| 
-      [a.server, @addy, a.session, a.reqid]
-    end
-    client_response <= response_msg.map {|r| r }
-  end
-end
-
-\end{lstlisting}
-\vspace{-10pt}
-\caption{Shopping cart client implementation}
-\label{fig:cart_client}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
 
 
 
@@ -292,7 +309,9 @@ Conventional wisdom in certain quarters says that rule-based languages are unten
 \end{comment}
 %\input{destructive}
 
-\vspace{9pt}\noindent \textbf{Bud Implementation}\\
+%\vspace{9pt}\noindent \textbf{Bud Implementation}\\
+\subsection{Bud Implementation}
+
 Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 1400 lines of Ruby code, developed in approximately two person-months of part-time effort.
 %\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
 

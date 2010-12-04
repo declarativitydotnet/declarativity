@@ -5,121 +5,6 @@
 
 
 
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-module KVSProtocol
-  def state
-    super
-    interface input, :kvput, ['client', 'key', 'reqid'], ['value']
-    interface input, :kvget, ['reqid'], ['key']
-    interface output, :kvget_response, ['reqid'], ['key', 'value']
-  end
-end
-
-\end{lstlisting}
-\vspace{-10pt}
-\caption{Key/value store protocol.}
-\label{fig:kvs-proto}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-module BasicKVS
-  include KVSProtocol
-
-  def state
-    super
-    table :bigtable, ['key'], ['value']
-  end
-
-  declare
-  def mutate
-    bigtable <+ kvput.map {|p| [p.key, p.value] } (*\label{line:des_declare}*)
-    jst = join [bigtable, kvput], [bigtable.key, kvput.key] 
-    bigtable <- jst.map {|b, p| b }
-  end
-
-  declare
-  def get
-    getj = join [kvget, bigtable], [kvget.key, bigtable.key]
-    kvget_response <= getj.map do |g, t|
-      [g.reqid, t.key, t.value]
-    end
-  end
-end
-
-
-\end{lstlisting}
-\vspace{-10pt}
-\caption{Key/value store implementation.}
-\label{fig:kvs-impl}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-module ReplicatedKVS
-  include BasicKVS
-  include MulticastProtocol
-
-  def state
-    interface input, :kvput, ['client', 'key', 'reqid'], ['value']
-  end
-
-  declare
-  def local_indir
-    send_mcast <= kvput.map do |k|  
-      unless members.include? [k.client]
-        [k.reqid, [@addy, k.key, k.reqid, k.value]]                           
-      end
-    end
-    
-    kvput <= mcast_done.map {|m| m.payload } 
-
-    kvput <= pipe_chan.map do |d|
-      if d.payload.fetch(1) != @addy
-        d.payload
-      end
-    end
-  end
-end
-
-\end{lstlisting}
-\vspace{-10pt}
-\caption{Replicated key/value store.}
-\label{fig:kvs-repl}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=1.1\linewidth]{fig/mittalk_legend.pdf}
-\vspace{-10pt}
-\caption{Visual analysis legend.}
-\label{fig:analysis-legend}
-\vspace{-2pt}
-\end{figure}
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
-\vspace{-10pt}
-\caption{Key/value store analysis.}
-\label{fig:pdg-kvs-analysis}
-\vspace{-2pt}
-\end{figure}
-
-
-
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -153,10 +38,10 @@ module DestructiveCart
 
   declare
   def finish
-    kvget <= checkout_msg.map{|c| [c.reqid, c.session] }
+    kvget <= checkout_msg.map{|c| [c.reqid, c.session] (*\label{line:kvget-beg}*)
     response_msg <~ join([kvget_response, checkout_msg],
     [kvget_response.key, checkout_msg.session]).map do |r, c|
-      [r.client, r.server, r.key, r.value]
+      [r.client, r.server, r.key, r.value] (*\label{line:kvget-end}*)
     end
   end
 end
@@ -192,18 +77,23 @@ module DisorderlyCart
     super
     table :cart_action, ['session', 'item', 'action', 'reqid']
     table :action_cnt, ['session', 'item', 'action'], ['cnt']
-    scratch :status, ['server', 'client', 'session', 'item'], ['cnt']
+    scratch :status, 
+      ['server', 'client', 'session', 'item'], ['cnt']
   end
 
   declare
   def saved
-    cart_action <= action_msg.map { |c| [c.session, c.item, c.action, c.reqid] }
+    cart_action <= action_msg.map do |c| 
+      [c.session, c.item, c.action, c.reqid] 
+    end
     action_cnt <= cart_action.group(
       [cart_action.session, cart_action.item, cart_action.action],
       count(cart_action.reqid))
     action_cnt <= cart_action.map do |a|
-       unless cart_action.map{|c| [c.session, c.item] if c.action == "D"}.include? [a.session, a.item]}
-        [a.session, a.item, 'D', 0]
+      unless cart_action.map do |c| 
+        [c.session, c.item] if c.action == "D"
+      end.include? [a.session, a.item]}
+          [a.session, a.item, 'D', 0]
       end
     end
   end
@@ -212,7 +102,8 @@ module DisorderlyCart
   def consider
     status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c|
       if a1.session == a2.session and a1.item == a2.item
-      and a1.session == c.session and a1.action == "A" and a2.action == "D"
+      and a1.session == c.session and a1.action == "A" 
+      and a2.action == "D"
         [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
       end
     end
@@ -328,10 +219,11 @@ lines~\ref{line:des_join_bigtable_action_msg_beg}--\ref{line:des_join_bigtable_a
 are satisfied and lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end}
 ``replace'' the item array at the next timestep with a new version.  
 Whenever a \texttt{checkout\_msg} appears in a server replica, the
-\texttt{bigtable} tuple associated with the given session is identified (via
-the join on
-lines~\ref{line:des_checkout_join_beg}--\ref{line:des_checkout_join_end}), and
-the item array in its value field is sent back to the client.  
+%%\texttt{bigtable} tuple associated with the given session is identified (via
+%%the join on
+%%lines~\ref{line:des_checkout_join_beg}--\ref{line:des_checkout_join_end}), and
+%%the item array in its value field is sent back to the client.  
+ \texttt{kvget} and \texttt{kvget\_response} interfaces to KeyValueStore are used to retrieve the cart state associated with the given session (Lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).  
 
 
 \subsection{A ``disorderly'' shopping cart}
@@ -396,40 +288,10 @@ see if the \texttt{action\_msg} originated inside the quorum.
 \subsection{Analysis}
 
 
-%For each cart, we apply whole-program analysis techniques to discover points
-%of order.
-The Bud interpreter automatically generates a graphical
-representation of dependencies between collections in a program
-(Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
-%The Bud interpreter automatically generates a graphical representation of the
-%dependency graph of collections through rules, (and hence the flow of tuples)
-%as a staged dataflow.
-Each node in the graph is either a collection or a cluster of collections; \textbf{table}s are shown as rectangles, ephemeral
-collections (\textbf{scratch} and \textbf{channel}) are depicted as ovals, and clusters (described below) as octagons.  A
-directed edge from node $A$ to node $B$ indicates that $B$ appears in the
-lhs of a Bloom rule with $A$ referenced directly, or through a join expression,
-in the rhs.  An edge is annotated based on the operator symbol in the rule and
-the type of $B$.  If the rule is ``inductive''---i.e., has the \texttt{$<$+}
-operator and a {\bf table} lhs---then the edge is marked with a $+$.  If the
-rule is ``asynchronous''---i.e., a rule with the \texttt{$<$+} operator and a {\bf
-channel} lhs---then the edge is a dashed line.  If the rule involves
-non-monotonicity (aggregation or negation) over $A$, then the edge is marked with a $\lnot$.
-%result in edges marked with a $\lnot$.
-To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into a octagonal ``temporal cluster,'' 
-which can be viewed abstractly as a single, nonmonotonic node in the 
-dataflow.\footnote{Datalog aficionados may be troubled by our mention of cycles
-involving negation in the dependency graph.  In~\cite{dedalus} we
-describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability.}
-%\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro %this without any intuition.  You should also dismiss the particular collection names in this 
-%figure as details from the KV store that are beyond the scope....}
-%collapsing the mutually dependent collections into a single node.
-Points of order are indicated in the graph by an edge with a white circle.
- Any negated edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis visualizations.
-
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
-Figure~\ref{fig:pdg-destructive-analysis} presents the analysis of the 
+Figure~\ref{fig:pdg-destructive} presents the analysis of the 
 ``destructive'' shopping cart variant.  Note that
 because all dependencies are analyzed, collections defined in the superclass
 but not referenced in the code sample
