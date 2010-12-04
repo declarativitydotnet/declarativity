@@ -39,17 +39,16 @@ Points of order are indicated in the graph by an edge with a white circle.
  Any negated edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis visualizations.
 
 
-Figure~\ref{analysis-legend}
 
-\subsection{Interface}
+\subsection{KVS Interface}
 
-Figure~\ref{fig:kvs-proto} gives an abstract specification of a key-value store representing
+Figure~\ref{fig:kvs-proto} provides an abstract specification of a key-value store:
 its interface to other Bloom programs or the external world.  
 We may interact with any implementation of the store
 by supplying inputs to \texttt{kvput} and \texttt{kvget} and by reading output from
 \texttt{kvget\_response}.  
-Specifically, we may interact with a key-value store much as we would expect to interact
-with a hash table: we store key-value pairs by inserting them into \texttt{kvput}, and 
+Much as we would expect to interact
+with a hash table, we store key-value pairs by inserting them into \texttt{kvput}, and 
 retrieve the value associated with a given key by inserting a tuple containing that key
 into \texttt{kvget} and reading the result out of \texttt{kvget\_response}.  In each case,
 we also require the caller to supply a unique request identifier \texttt{reqid} to differentiate
@@ -60,7 +59,7 @@ and postpone committing to a particular implementation until runtime.
 
 
 
-\subsection{Implementation}
+\subsection{KVS Implementation}
 
 Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
 realization of a key-value store.  Line~\ref{line:kvs-state} declares a \textbf{table}
@@ -76,10 +75,25 @@ new tuple derived at line~\ref{line:kvs-put}), the old value associated with the
 does not exist in \texttt{bigtable}.  
 
 
-\subsection{Replicated implementation}
+\subsection{Replicated KVS implementation}
 
 Figure~\ref{fig:kvs-repl} extends the basic KVS module to support replication of the store
-state.
+state.  It does so by mixing in MulticastProtocol, which provides the input interface 
+\texttt{send\_mcast} and the output interface \texttt{mcast\_done}.  Line~\ref{line:rep-put}
+declares an additional input interface (\texttt{kvput}) with the same name as the input
+interface of the mixed in module BasicKVS.  This allows the writer of ReplicatedKVS to 
+interpose additional logic between calls to KVSProtocol's input interface and the now 
+``protected'' input interface of BasicKVS.  In ReplicatedKVS, references to \texttt{kvput}
+appearing in the LHS of rules are resolved to the \texttt{kvput} provided by BasicKVS, 
+while references in the RHS of rules resolve to the local \texttt{kvput}.
+Note that this is unambiguous, because it is meaningless for a module to insert into its own input or to read data from its own output interfaces.
+
+Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
+\texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall} into \texttt{send\_mcast}
+if the originating address is not another replica (line~\ref{line:not-rep}).  The internal
+\texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
+at the master replica (line~\ref{line:mcast-done}, or whenever a multicast is received at 
+a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
 
 \subsection{Analyses}
 
@@ -197,24 +211,24 @@ module ReplicatedKVS
   include MulticastProtocol
 
   def state
-    interface input, :kvput, ['client', 'key', 'reqid'], ['value']
+    interface input, :kvput, ['client', 'key', 'reqid'], ['value']  (*\label{line:rep-put}*)
   end
 
   declare
   def local_indir
-    send_mcast <= kvput.map do |k|  
-      unless members.include? [k.client]
-        [k.reqid, [@addy, k.key, k.reqid, k.value]]                           
+    send_mcast <= kvput.map do |k| (*\label{line:send-mcast-beg}*)
+      unless members.include? [k.client]  (*\label{line:not-rep}*)
+        [k.reqid, [@addy, k.key, k.reqid, k.value]]   (*\label{line:marshall}*)            
       end
-    end
+    end (*\label{line:send-mcast-end}*)
     
-    kvput <= mcast_done.map {|m| m.payload } 
+    kvput <= mcast_done.map {|m| m.payload }  (*\label{line:mcast-done}*)
 
-    kvput <= pipe_chan.map do |d|
+    kvput <= pipe_chan.map do |d| (*\label{line:mcast-peer-beg}*)
       if d.payload.fetch(1) != @addy
         d.payload
       end
-    end
+    end (*\label{line:mcast-peer-end}*)
   end
 end
 
