@@ -1,15 +1,15 @@
 \section{Eventual Consistency}
 
-In distributed systems, non-determinism that introduces different ultimate models is often accepted, as long as each ultimate model satisfies a certain property.  We formalize this notion through {\em constraints}.
+In the previous section, we generalized the notion of confluence to allow for the modeling of failures.  However, it is often the case that other generalizations are accepted in the distributed systems domain, as long as each ultimate model satisfies a certain property.  We formalize this notion through {\em constraints}.
 
 \begin{definition}
-A {\em constraint} is a rule that defines \dedalus{fail()}.  We say a constraint is {\em violated} if the ultimate model contains \dedalus{fail()}; otherwise the constraint is {\em satisfied}
+A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if any ultimate model contains \dedalus{fail()}; otherwise all constraints are {\em satisfied}.
 \end{definition}
 
 Any functional dependency may be encoded as a set of constraints.  The proof is straightforward so we omit it and instead provide the following example:
 
 \begin{example}
-A set of constraints expressing that the last two arguments of predicate \dedalus{p} are functionally dependent on the first two.
+A set of constraints expressing that the last two arguments of predicate \dedalus{p} are functionally dependent its first two.
 
 \begin{Dedalus}
 fail() <- p(A,B,C,_), p(A,B,D,_), C != D;
@@ -18,11 +18,11 @@ fail() <- p(A,B,_,C), p(A,B,_,D), C != D;
 \end{example}
 
 \begin{definition}
-A {\em replication rule} is a rule that 
+A {\em replication rule} is a rule that contains predicates in a single stratum \wrm{clarify}, and joins with a \dedalus{replica} table.  The head contains a body predicate, and it is an async rule.  The variable from the replica table appears in the location specifier of the head.
 \end{definition}
 
 \begin{definition}
-A \lang program is {\em eventually consistent} with respect to a set of constraints over replicated state if the constraints are satisfied.
+A \lang program is {\em eventually consistent} with respect to a set of functional dependencies \wrm{all of which must use an underscore for the location attribute} over replicated state if the constraints are satisfied for any EDB.
 \end{definition}
 
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
@@ -51,4 +51,12 @@ The above program is eventually consistent under the integrity constraint \dedal
 \begin{lemma}
 If a program $P$ satisfies an integrity constraint $I$, then any program obtained by adding replication rules to $P$ is eventually consistent with respect to $I$.
 \end{lemma}
+\begin{proof}
+Sketch: due to the restricted nature of replication rules (a replication rule does not introduce new facts into a predicate) and functional dependencies (they cannot constrain locations), replication rules cannot violate functional dependencies.
+\end{proof}
 
+Clearly, a functional dependency is either
+
+\begin{lemma}
+
+\end{lemma}
