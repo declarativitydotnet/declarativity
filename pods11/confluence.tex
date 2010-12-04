@@ -36,6 +36,7 @@ Fortunately, as we show, there is a rich class of programs that can be staticall
 First, we provide some intuition for the sources of non-confluence in \lang programs.  In Example~\ref{ex:nonconfluent}, we saw a \lang program that was non-confluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
 
 \begin{example}
+\label{ex:nonconfluent2}
 Another non-confluent \lang program.
 
 \begin{Dedalus}
@@ -144,18 +145,23 @@ The ultimate model contains \dedalus{odd()} if there are an odd number of \dedal
 \subsection{Perfect Ultimate Model}
 Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, similarly to the way that Datalog programs with negation have a model called the {\em perfect model} which corresponds to intuition.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultiamte models).
 
-Consider the following program:
+Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
 
+\begin{example}
+\label{ex:sayers}
 \begin{Dedalus}
+//sayer
 statement(#L, S, X)@async <- statement_edb(#S, X), listener(L);
 s_false(#L, S, X)@async <- statement_edb(#S, X), false_edb(#S, X), listener(L);
 
+//listener
 true(X) <- statement(_, S, X), !s_false(_, S, X);
 false(X) <- statement(_, S, X), s_false(_, S, X);
 statement(L, S, X)@next <- statement(L, S, X);
-false(X)@next <- false(X);
+s_false(L, S, X)@next <- s_false(L, S, X);
 true(X)@next <- true(X);
 \end{Dedalus}
+\end{example}
 
 Intuitively this program represents a group of nodes (the ``sayers'') making statements to another group of nodes called ``listeners''.  The sayers also occasionally remark that a statement is false (but a sayer may only declare one of his statements to be false -- not the statement of another sayer).  One may expect the contents of \dedalus{true} to contain all statements that are not \dedalus{false}.  However, this is not necessarily the case.  Recall that the un-sugared version of the third rule is:
 
@@ -166,7 +172,13 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program without recursion through negation is the ultimate model you get by ``ensuring that a set is completed before it is negated''. \wrm{make more formal}
+The {\em deductive reduction} of a \lang program is the program with all inductive and asynchronous rules replaced with deductive rules.
+\end{definition}
+
+Note that the deductive reduction of a \lang program is a Datalog program.
+
+\begin{definition}
+The {\em perfect ultimate model} of a \lang program whose deductive reduction is syntactically stratified (i.e. the \lang program has no recursion through negation) is the ultimate model you get by ``ensuring that a set is completed before it is negated''. \wrm{make more formal}
 \end{definition}
 
 Clearly, the perfect ultimate model is one of the ultimate models -- in the above program, it is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.
@@ -191,9 +203,12 @@ Now, independent of the assignment of timestamps, no statement from a sayer \ded
 \wrm{Note, however, that it's fine for the receiver count to have intermediate values, as these are not persisted.}
 \wrm{Example that shows coordination across all nodes?}
 
+\wrm{Talk about generalizing this test for universal constraint stratification}
+
 \subsubsection{Coordination}
 Given any \lang program without recursion through negation, we can automatically instrument it with coordination to achieve the ultimate model, using the following algorithm:
 
+\wrm{expand sketch -- break out algorithm environment?}
 1. Build a predicate dependency graph of the program.
 2. For any asynchronous edge that can reach a predicate with negation or aggregation, have each node send a count of messages in the async predicate, and coordinate over all nodes, as above.
 
@@ -202,12 +217,23 @@ Note that this process introduces additional asynchronous edges.  These asynchro
 
 \subsubsection{Non-Deterministic Coordination}
 
-Achieving the perfect ultimate model comes at the expense of liveness -- if a node or link fails before the coordination is completed, the coordination logic will wait for a response that may never arrive.  To guarantee liveness, a simple modification is to make coordination non-deterministic by adding a timeout, which, when elapsed, causes the coordination to succeed.
+Consider what happens when we admit transient and permanent failures of nodes and channels to the model.  It is now the case that non-failed nodes may forever wait for a message that will never arrive.  Thus, achieving the perfect ultimate model comes at the expense of liveness.  It may be desirable to accept that the message will never arrive, and proceed with the computation.
 
-We can model timeouts as local messages.  For example:
+Example~\ref{ex:nonconfluent} models exactly this -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
+
+We can instrument any \lang program without recursion through negation with non-deterministic coordination, using the following algorithm:
+
+\wrm{expand sketch}
+1. Build a predicate dependency graph of the program.
+2. For any asynchronous edge that can reach a predicate with negation or aggregation, drop in the pattern of example~\ref{ex:nonconfluent}.
+
+We consider example~\ref{ex:sayers} above.  Some ultimate models do not correspond to plausible failure scenarios -- for example, any ultimate model where a \dedalus{statement} is both \dedalus{true} and \dedalus{false}.  The instrumented version of the example would add the following rule:
 
 \begin{Dedalus}
-boomerang(#M)@async <- me(#M);
+c_false(L, S, X)@next <- s_false(L, S, X), !c_false(L, S, _);
 \end{Dedalus}
 
-Upon a timeout, we close a world 
+And would replace any instance of the predicate \dedalus{s\_false} in the ``listener'' rules with \dedalus{c\_false}.
+
+
+\wrm{connect with Paxos/2PC???}
