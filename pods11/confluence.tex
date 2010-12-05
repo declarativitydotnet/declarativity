@@ -124,7 +124,8 @@ Proof sketch: if the ultimate model is populated only by monotonic properties, w
 We now show that logical monotonicity is not necessary for confluence:
 
 \begin{example}
-Example of a confluent Dedalus program that is not logically monotonic:\\
+A confluent Dedalus program that is not logically monotonic.
+
 \begin{Dedalus}
 //client
 b(#s,I)@async :- b_edb(I);
@@ -149,10 +150,15 @@ Consider the following example, which is analogous to example~\ref{ex:nonconflue
 
 \begin{example}
 \label{ex:sayers}
+A non-confluent \lang program.
+
 \begin{Dedalus}
 //sayer
-statement(#L, S, X)@async <- statement_edb(#S, X), listener(L);
-s_false(#L, S, X)@async <- statement_edb(#S, X), false_edb(#S, X), listener(L);
+statement(#L, S, X)@async <- statement_edb(#S, X),
+                             listener(L);
+s_false(#L, S, X)@async <- statement_edb(#S, X),
+                           false_edb(#S, X),
+                           listener(L);
 
 //listener
 true(X) <- statement(_, S, X), !s_false(_, S, X);
@@ -188,14 +194,17 @@ In particular, it is represented by any stable model where no \dedalus{false} me
 We add the following two rules to compute counts of false messages at each sayer, and each listener:
 
 \begin{Dedalus}
-count_false_sent(#L, S, count<X>) <- false_edb(S, X), listener(L);
+count_false_sent(#L, S, count<X>) <- false_edb(S, X),
+                                     listener(L);
 count_false_recv(S, count<X>) <- s_false(_, S, X);
 \end{Dedalus}
 
 Furthermore, we replace the rule above that defines \dedalus{true} with the one below:
 
 \begin{Dedalus}
-true(X) <- statement(_, S, X), !s_false(_, S, X), count_false_recv(S, X), count_false_sent(_, S, X)
+true(X) <- statement(_, S, X), !s_false(_, S, X),
+           count_false_recv(S, X),
+           count_false_sent(_, S, X);
 \end{Dedalus}
 
 Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false (i.e., the counts match). 
@@ -217,7 +226,7 @@ Note that this process introduces additional asynchronous edges.  These asynchro
 
 \subsubsection{Non-Deterministic Coordination}
 
-Consider what happens when we admit transient and permanent failures of nodes and channels to the model.  It is now the case that non-failed nodes may forever wait for a message that will never arrive.  Thus, achieving the perfect ultimate model comes at the expense of liveness.  It may be desirable to accept that the message will never arrive, and proceed with the computation.
+Consider what happens when we admit transient and permanent failures of nodes and channels to the model.  It is now the case that nodes may forever wait for a message that will never arrive.  Thus, achieving the perfect ultimate model comes at the expense of liveness.  It may be desirable to accept that the message will never arrive, and proceed with the computation.
 
 Example~\ref{ex:nonconfluent} models exactly this -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
 
@@ -230,7 +239,8 @@ We can instrument any \lang program without recursion through negation with non-
 We consider example~\ref{ex:sayers} above.  Some ultimate models do not correspond to plausible failure scenarios -- for example, any ultimate model where a \dedalus{statement} is both \dedalus{true} and \dedalus{false}.  The instrumented version of the example would add the following rule:
 
 \begin{Dedalus}
-c_false(L, S, X)@next <- s_false(L, S, X), !c_false(L, S, _);
+c_false(L, S, X)@next <- s_false(L, S, X),
+                         !c_false(L, S, _);
 \end{Dedalus}
 
 And would replace any instance of the predicate \dedalus{s\_false} in the ``listener'' rules with \dedalus{c\_false}.
