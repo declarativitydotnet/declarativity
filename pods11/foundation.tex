@@ -9,7 +9,10 @@ p(X1, ..., Xn, count<Y>) <- ...;
 
 For each binding of \dedalus{X1, ..., Xn}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  Any column of a predicate that hosts a \dedalus{count} aggregate is considered to be of the {\em number} sort; any variable of the {\em number} sort can only be constrained by other variables of the {\em number} sort, and we forbid recursion through \dedalus{count}.
 
-Each predicate in \lang has a distinguished {\em temporal attribute}, of the {\em temporal} sort.  The balance of the arguments are {\em data} arguments, and may not contain any variable of the {\em temporal} sort.  \lang contains an infinite unary relation \dedalus{time} $= \mathbb{N}$, and an infinite binary relation \dedalus{successor} $:= {(a,b) | a,b \in \mathbb{N} \land b = a + 1}$, whose arguments are all of the {\em temporal} sort.  To model network nondeterminisim, we require the use of Sacc\`{a} and Zaniolo's \dedalus{choice} construct to bind a rule's head temporal attribute when modeling communication.  Later, when we discuss \lang with failure, we will add the element $\infty$ to \dedalus{time} to model infinite delay.
+Each predicate in \lang has a distinguished {\em temporal attribute}, of the {\em temporal} sort.  The balance of the arguments are {\em data} arguments, and may not contain any variable of the {\em temporal} sort.  \lang contains an infinite unary relation \dedalus{time} $= \mathbb{N}$, and an infinite binary relation \dedalus{successor} $:= \{(a,b) | a,b \in \mathbb{N} \land b = a + 1\}$, whose arguments are all of the {\em temporal} sort.  To model network nondeterminisim, we require the use of Sacc\`{a} and Zaniolo's \dedalus{choice} construct to bind a rule's head temporal attribute when modeling communication.
+
+\wrm{move this somewhere}
+{\bf Modeling failure:}  Later, when we discuss \lang with failure, we will add the element $\infty$ to \dedalus{time} to model transient or permanent channel failure, or transient node failure.  Furthermore, to model permanent node failure, we will assume all rules have the \dedalus{!fail()} predicate in their body, except for a single rule \dedalus{fail()@async <- enabled();}, and all programs have an \dedalus{enabled()} fact, where \dedalus{enabled} is a predicate symbol that does not otherwise appear in the program.  \wrm{Also, we assume durability through transient node failure?}  \wrm{Also note that failure makes confluence impossible}
 
 \lang requires that all atoms in each rule body use the same temporal variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
 
@@ -56,19 +59,23 @@ r(A, B)@async \(\leftarrow\) e(A, B, T);
 \end{Dedalus}
 \end{example}
 
-\lang adopts the ``horizontal partitioning'' conventionintroduced by Loo et al. and used in many subsequent efforts~\cite{Loo:2005}. To represent a distributed system, we consider some number of agents, each running a copyof the same program against a disjoint subset ({\em horizontal partition}) of each predicate's contents.  We require one attribute in each predicate tobe usedto identify the partitioning for tuples in that predicate. We call such an attribute a {\em location specifier}, and prefix it with a \dedalus{\#} symbol in Dedalus.
+\wrm{\lang only allows recursion through negation if the recursion passes through at least one \dedalus{@next} or \dedalus{@async}.}
 
-We constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule ``local,'' since its results can remain on the machine where they are computed.  If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  Communication rules are required to be asynchronous.
+\lang adopts the ``horizontal partitioning'' conventionintroduced by Loo et al. and used in many subsequent efforts~\cite{Loo:2005}. To represent a distributed system, we consider some number of agents, each running a copyof the same program against a disjoint subset ({\em horizontal partition}) of each predicate's contents.  We require one attribute in each predicate to be used to identify the partitioning for tuples in that predicate. We call such an attribute a {\em location specifier}, and prefix it with a \dedalus{\#} symbol in Dedalus.
+
+We constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule {\em local}.
+%since its results can remain on the machine where they are computed.
+If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  A communication rule must be asynchronous
 
 By restricting bodies to a single agent, the only communication
-modeled in \lang occurs via communication rules.  Second, because
+modeled in \lang is modeled by communication rules.  Second, because
 all communication rules are asynchronous, agents may only learn about
 time values at another agent by receiving messages (with unbounded
 delay) from that agent.  Note that this model says nothing about the
 relationship between the agents' clocks; they could be
 non-monotonically increasing, or they could respect a global order.
 
-\subsection{Design Rationale}
+\subsection{Design Rationale and Implications}
 
 Below we explain the rationale for certain choices.
 \wrm{We need to remember to mention the dual role of time.  Atomicity and non-determinism.  Say stuff about dense partial orders.}
@@ -77,22 +84,27 @@ Below we explain the rationale for certain choices.
 Distributed systems are noninflationary over time (they have intermediate states that we want to model, such as the case where a message hasn't been received yet, or a coordination protocol).  However, Datalog's {\em least fixpoint} operator is inflationary.  Reifying time into the langauge solves this problem.
 
 {\bf Locality in Time and Space:}
-Locality in space is so that the only communication modeled in \lang occurs via communication rules.  Locality in time seems a natural way to model noninflationary semantics.  \lang allows bounded nonlocality in time.  The following example joins \dedalus{p} from two timestamps in the past with \dedalus{q} in the current timestamp:
+\begin{definition}
+The {\em temporal diameter} of a \lang program is the number of ``old values'' accessible for a fact \wrm{formalize}.
+\end{definition}
 
-\begin{example}
-A \lang program with bounded locality.
+Every \lang program has a temporal diameter polynomial in the data size \wrm{or is this linear??}.\footnote{We can allow a program to have an unbounded temporal diameter by allowing {\em entanglement} between the {\em temporal} kind and the {\em data} kind.  This is sufficient to model an arbitrary Turing Machine in \lang (via substitution of \dedalus{finite\_succ} with \dedalus{successor} in the proof of Lemma~\ref{lem:} in the appendix.}.
 
-\begin{Dedalus}
-p_1(X,Y)@next \(\leftarrow\) p(X,Y);
-p_2(X,Y)@next \(\leftarrow\) p_1(X,Y);
-r(X,Y) \(\leftarrow\) p_2(X,Y), q(X,Y);
-\end{Dedalus}
-\end{example}
+%\begin{example}
+%A \lang program with a temporal diameter of 2.
+%
+%\begin{Dedalus}
+%p_1(X,Y)@next \(\leftarrow\) p(X,Y);
+%p_2(X,Y)@next \(\leftarrow\) p_1(X,Y);
+%r(X,Y) \(\leftarrow\) p_2(X,Y), q(X,Y);
+%\end{Dedalus}
+%\end{example}
 
 \subsection{Semantics}
 The semantics of a \lang program can be characterized by the {\em stable model semantics} \wrm{cite} for logic programming.  Intuitively, a stable model of a \lang program is a trace of its distributed execution.  The stable model contains all input, intermediate stages of the computation, and all messages sent.  Note that a stable model of a \lang program may be infinite, such as in the following example:
 
 \begin{example}
+\label{ex:flipflop}
 A \lang program with an infinite stable model.
 
 \begin{Dedalus}
@@ -103,14 +115,27 @@ flipflop(1,2)@1;
 
 \dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.
 
-\wrm{explain persistence}
-This definition of persistence suggests we define the output of the program as the facts (not including their timestamp attributes) that are eventually always true.  We call this the {\em ultimate model}.
+Such periodicities are not unfamiliar to the logic programming community.  
 
-Ultimate models are always finite in \dedalus because there are no function symbols, a finite number of predicate symbols of fixed arity, and a finite number of constant symbols.  Therefore an upper bound on the size of any ultimate model is $|P| * |C| ^ max_arity$.
+\begin{definition}
+A cycle is {\em nontrivially periodic} if its period is at least 2.  Otherwise, it is {\em trivially periodic}.
+\end{definition}
 
-A Dedalus program may only have a finite number of different ultimate models; in other words there are only finitely many meaningful orderings of messages.  This is because any ultimate model must be a subset of the set of all predicate symbols instantiated with all possible constant symbols.  Note, however, that infinitely many messages may be sent, since the trace (stable model) may be of infinite size.  The following example sends infinitely many messages:
+The program in Example~\ref{ex:flipflop} has a nontrivially periodic cycle of period 2.  Previous work in temporal deductive databases attempted to compute finite representations for such periodicities \wrm{cite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all trivially periodic cycles.  We adopt the latter approach of ignoring nontrivial periodicity when defining the output of a \lang program.
+
+\begin{definition}
+For each stable model, the nontrivially periodic cycles comprise an {\em ultimate model} for the program.  We represent a nontrivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.
+\end{definition}
+
+For example, the cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different nontrivial periodicities.
+
+The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
+
+Note that ultimate models are always of finite cardinality (polynomial in the input size) because only constants of the {\em data} kind appear in any ultimate model, and there are only finitely many such constants.  By the same reasoning, a \lang program may only have a finite number of different ultimate models (exponential in the input size), whereas it may have uncountably many stable models, as infinitely many messages may be sent:
 
 \begin{example}
+A \lang program with uncountably many stable models, but a single ultimate model.
+
 \begin{Dedalus}
 p(X,Y)@next \(\leftarrow\) p(X,Y);
 r(#X,Y)@async \(\leftarrow\) p(X,Y);
@@ -118,8 +143,6 @@ r(#X,Y)@async \(\leftarrow\) p(X,Y);
 \end{example}
 
 A Dedalus program without asynchronous rules has a single stable model.  This corresponds to its perfect model evaluated with a local stratification on time, as in \wrm{cite temporal stratification paper, Cleary I think?}.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs \wrm{cite}, so our usage here is consistent.
-
-Clearly, a Dedalus program with asynchronous rules may have multiple stable models corresponding to multiple possible non-deterministic choices of timestamps \wrm{cite Greco and Zaniolo choice}.
 
 \wrm{In the CRON conjecture below, we should explain how purely monotonic logic does not allow us to establish a ``happens before'' relation on network traffic.  If we can't express it, then intuitively it doesn't matter whether the execution abides by the property.}
 
@@ -146,14 +169,8 @@ g(1)@3;
 p(1)@3;
 \end{Dedalus}
 
-This lemma says that such situations do not produce stable models.  In other words, a combination of choices of timestamps does not lead to a stable model iff it causes recursion through negation, as in the above example.  Messages may arbirariliy time travel as long as they do not cause recursion through negation.
-
 \begin{proof}
-
-First part of the proof (recursion thru negation => no stable model) is easy, by the definition of the stable model reduction.
-
-Second part of the proof (no recursion thru negation => stable model).  If there's no recursion thru negation, then the program is locally stratified, thus there is a stable model.  (Is this cheating, or is it really that simple?)
-
+By the definition of the stable model semantics, such situations due not produce stable models \wrm{cite stable model paper}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
 \end{proof}
 
 \subsection{Operational Interpretation}
