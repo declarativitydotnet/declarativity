@@ -1,6 +1,6 @@
+\section{Proofs}
 \begin{proof}[of Lemma~\ref{lem:confluence-undecidable}]
-Our proof proceeds via construction of a two counter machine in \lang, inspired by the construction in \wrm{cite Undecidable Optimization Problems for Database Logic programs}. We briefly review two counter machines.  A two counter machine's state is captured in the state of its two counters (natural numbers), and in its control state.  A two counter machine has a transition function, which can be characterized as follows:
-
+Our proof proceeds via construction of a two counter machine in \lang, inspired by the construction in~\cite{undecidable-datalog}. We briefly review two counter machines.  A two counter machine's state is captured in the state of its two counters (natural numbers), and in its control state.  A two counter machine has a transition function, which can be characterized as follows:
 $$\delta: \Sigma \times \{=, >\} \times \{=, >\} \rightarrow \Sigma \times \{inc, dec\} \times \{inc, dec\}$$
 
 $\Sigma$ is a finite set of states (for simplicity we assume a finite subset of the natural numbers), $=$ indicates a counter is equal to zero, and $>$ indicates a counter is greater than zero.  $inc$ and $dec$ indicate that a counter should be incremented, or decremented respectively.

@@ -1,7 +1,7 @@
 \section{\large \bf \lang}
 \label{sec:slang}
 
-\lang is related to Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the universe.  We also admit the \dedalus{count} {\em aggregate}, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to \wrm{cite}, allows its use in the head of a rule, such as: 
+\lang is related to Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the universe.  We also admit the \dedalus{count} {\em aggregate}, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as: 
 
 \begin{Dedalus}
 p(X1, ..., Xn, count<Y>) <- ...;
@@ -101,7 +101,7 @@ Every \lang program has a temporal diameter polynomial in the data size \wrm{or 
 %\end{example}
 
 \subsection{Semantics}
-The semantics of a \lang program can be characterized by the {\em stable model semantics} \wrm{cite} for logic programming.  Intuitively, a stable model of a \lang program is a trace of its distributed execution.  The stable model contains all input, intermediate stages of the computation, and all messages sent.  Note that a stable model of a \lang program may be infinite, such as in the following example:
+The semantics of a \lang program can be characterized by the {\em stable model semantics}~\cite{stable-model} for logic programming.  Intuitively, a stable model of a \lang program is a trace of its distributed execution.  The stable model contains all input, intermediate stages of the computation, and all messages sent.  Note that a stable model of a \lang program may be infinite, such as in the following example:
 
 \begin{example}
 \label{ex:flipflop}
@@ -121,7 +121,7 @@ Such periodicities are not unfamiliar to the logic programming community.
 A cycle is {\em nontrivially periodic} if its period is at least 2.  Otherwise, it is {\em trivially periodic}.
 \end{definition}
 
-The program in Example~\ref{ex:flipflop} has a nontrivially periodic cycle of period 2.  Previous work in temporal deductive databases attempted to compute finite representations for such periodicities \wrm{cite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all trivially periodic cycles.  We adopt the latter approach of ignoring nontrivial periodicity when defining the output of a \lang program.
+The program in Example~\ref{ex:flipflop} has a nontrivially periodic cycle of period 2.  Previous work in temporal deductive databases attempted to compute finite representations for such periodicities~\cite{tdd-infinite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all trivially periodic cycles.  We adopt the latter approach of ignoring nontrivial periodicity when defining the output of a \lang program.
 
 \begin{definition}
 For each stable model, the nontrivially periodic cycles comprise an {\em ultimate model} for the program.  We represent a nontrivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.
@@ -142,12 +142,12 @@ r(#X,Y)@async \(\leftarrow\) p(X,Y);
 \end{Dedalus}
 \end{example}
 
-A Dedalus program without asynchronous rules has a single stable model.  This corresponds to its perfect model evaluated with a local stratification on time, as in \wrm{cite temporal stratification paper, Cleary I think?}.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs \wrm{cite}, so our usage here is consistent.
+A Dedalus program without asynchronous rules has a single stable model.  This corresponds to its perfect model evaluated with a local stratification on time, as in~\cite{deductiveupdates}.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}, so our usage here is consistent.
 
 \wrm{In the CRON conjecture below, we should explain how purely monotonic logic does not allow us to establish a ``happens before'' relation on network traffic.  If we can't express it, then intuitively it doesn't matter whether the execution abides by the property.}
 
 \begin{lemma}
-Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible.
+Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible~\footnote{This lemma is similar in spirit to Hellerstein's CRON conjecture~\cite{declarative-imperative}.}.
 \end{lemma}
 
 Note that we have not restricted \dedalus{async} to choose a timestamp in the future.  Thus, one may be concerned about a {\em temporal paradox}, such as the grandfather paradox.  A program that we might be worried about would be the following:
@@ -170,7 +170,7 @@ p(1)@3;
 \end{Dedalus}
 
 \begin{proof}
-By the definition of the stable model semantics, such situations due not produce stable models \wrm{cite stable model paper}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
+By the definition of the stable model semantics, such situations due not produce stable models~\cite{stable-model}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
 \end{proof}
 
 \subsection{Operational Interpretation}
