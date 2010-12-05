@@ -1,4 +1,4 @@
-\chapter[MapReduce: From an Elephant's Perspective]{Hadoop}
+\chapter[MapReduce: An Elephant's Perspective]{MapReduce: An Elephant's Perspective}
 \label{ch:hadoop}
 
 In this chapter, we review the MapReduce programming model and describe the
@@ -7,9 +7,10 @@ We focus on the Hadoop systems aspects relevant to the remaining chapters of
 this thesis.  We begin in Section~\ref{ch:hadoop:sec:progmodel} with the
 MapReduce programming model, which is based on two operations; map and reduce.
 In Section~\ref{ch:hadoop:sec:hadoop}, we present an overview of Hadoop;
-considered the most popular open source implementation of MapReduce.  We
-conclude this chapter with a summary of the modifications that we made to
-Hadoop, and the reasons for these changes.
+considered today as the most popular open source implementation of MapReduce.
+We conclude this chapter with a summary of this new programming model and
+application, and the direction that we will taking in the remaining chapters of
+this thesis.  \cite{foobar}
 
 \section{MapReduce Programming Model}
 \label{ch:hadoop:sec:progmodel}
@@ -71,7 +72,7 @@ public interface Mapper<K1, V1, K2, V2> {
 }
 \end{verbatim}
 \end{minipage}
-\caption{Map function interface.}
+\caption{Map function interface (Hadoop version 18.2).}
 \label{fig:mapfunction}
 \end{figure*}
 
@@ -157,7 +158,7 @@ public interface Reducer<K2, V2, K3, V3> {
 \end{verbatim}
 
 \end{minipage}
-\caption{Reduce function interface.}
+\caption{Reduce function interface (Hadoop version 18.2).}
 \label{fig:reducefunction}
 \end{figure*}
 

@@ -1,10 +1,30 @@
-\chapter[Declarative Scheduling in MapReduce]{Declarative Scheduling in MapReduce}
+\chapter[BOOM: Declarative Scheduling]{BOOM: Declarative Scheduling}
 \label{ch:boom}
 
+The Berkeley Orders Of Magnitude (BOOM) project began with an experiment in
+construction, by implementing a substantial piece of distributed software in a
+data-centric, declarative style.  Upon review of recent literature on
+data center infrastructure (e.g.,~\cite{chubby,gfs-sosp,dynamo,mapreduce-osdi}),
+we observed that most of the complexity in these systems relates to the
+management of various forms of asynchronously-updated state, including
+sessions, protocols and storage.  Although quite complex, few of these systems
+involve intricate, uninterrupted sequences of computational steps.  Hence, we
+suspected that data center infrastructure might be a good initial litmus test
+for our hypotheses about building distributed software.
+
+\emph{\BOOMA} is an API-compliant reimplementation of the HDFS distributed file
+system and the Hadoop MapReduce engine~\cite{boom}.  These two components were
+named \emph{\BOOM-FS} and \emph{\BOOM-MR}, respectively.  In writing \BOOMA, we
+preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
+internal state with a set of relations, and replaced key system logic with code
+written in a declarative language.  In this chapter, we focus on our
+implementation of \BOOM-MR, but provide some experimental evaluations of
+\BOOM-FS.
+
 The remainder of this chapter is organized as follows.
-Section~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG
-library/runtime that we used execute \OVERLOG programs within the (Java-based)
-Hadoop infrastructure.  Section~\ref{ch:boom:sec:port} presents BOOM-MR as a
+Section~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library that
+we used execute \OVERLOG programs within the (Java-based) Hadoop
+infrastructure.  Section~\ref{ch:boom:sec:port} presents BOOM-MR as a
 declarative MapReduce scheduler, and describes how we embedded it into the
 Hadoop system by replacing the existing scheduling code written in Java with
 \OVERLOG.  Section~\ref{ch:boom:sec:eval} evaluates the resulting declarative
@@ -12,28 +32,6 @@ scheduler against the original unmodified Hadoop scheduler by comparing the
 response times of jobs scheduled by both.  Finally,
 Section~\ref{ch:boom:sec:relwork} examines some of the related work and
 Section~\ref{ch:boom:sec:conclusion} provides a chapter summary.
-
-\section{Berkeley Orders Of Magnitude (BOOM)}
-
-The BOOM project began with an experiment in construction, by implementing a
-substantial piece of distributed software in a data-centric, declarative style.
-Upon review of recent literature on datacenter infrastructure
-(e.g.,~\cite{chubby,gfs-sosp,dynamo,mapreduce-osdi}), we observed that most of
-the complexity in these systems relates to the management of various forms of
-asynchronously-updated state, including sessions, protocols, and storage.
-Although quite complex, few of these systems involve intricate, uninterrupted
-sequences of computational steps.  Hence, we suspected that datacenter
-infrastructure might be a good initial litmus test for our hypotheses about
-building distributed software.
-
-\emph{\BOOMA} is an API-compliant reimplementation of the HDFS distributed file
-system and the Hadoop MapReduce engine~\cite{boom}.  These two components were
-named \emph{\BOOM-FS} and \emph{\BOOM-MR}, respectively.  In writing \BOOMA, we
-preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
-internal state with a set of relations, and replaced key system logic with code
-written in a declarative language.  In this dissertation, we focus on our
-implementation of \BOOM-MR but we do provide some experimental evaluations of
-\BOOM-FS.
 
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
