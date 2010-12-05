@@ -539,7 +539,7 @@ strategy~\cite{cascades} would be difficult to implement since \OVERLOG, like
 Datalog, is evaluated in a bottom-up fashion.  This is partially true but still
 relatively painless.  Since the System R search strategy conforms to the
 \OVERLOG evaluation strategy, we did not write explicit rules for traversing
-through the plan space.  That is, the System R search strategy was implicitly
+through its plan space.  That is, the System R search strategy was implicitly
 implemented by the \OVERLOG bottom-up evaluation.  A top-down search strategy,
 on the other hand, requires extra logic to guide the search through the plan
 space in a top-down order.  The logic of a top-down search strategy follows a
@@ -550,13 +550,13 @@ In this section, we describe our implementation of the Cascades
 branch-and-bound algorithm expressed in \OVERLOG.  We begin in
 Section~\ref{ch:opt:sec:overview} with a short description of the Cascades
 branch-and-bound algorithm.  This is followed by a detailed description of our
-declarative rules that express it using Evita Raced.  Our rules are divided
-into three modules: the search strategy
+declarative rules that we install into Evita Raced.  Our rules are divided
+into three modules: search strategy
 (Section~\ref{ch:opt:sec:cascades_search}), plan generation
-(Section~\ref{ch:opt:sec:cascades_plan}), and winner selection
+(Section~\ref{ch:opt:sec:cascades_plan}) and winner selection
 (Section~\ref{ch:opt:sec:cascades_winner}).  The rules for plan generation and
 winner selection may remind the reader of the plan generation and best plan
-rules in the previous System R section.  However, the rules for search strategy
+rules in the previous System R discussion.  However, the rules for search strategy
 are unique to this optimizer, and will be the focus our attention.
 
 \subsection{Overview}
@@ -566,20 +566,20 @@ Our description of the Cascades optimizer follows the notation of Shapiro, et
 al.~\cite{Shapiro-opt}.  Cascades' plans are classified into {\em groups},
 which is an equivalence class of expressions (i.e., predicates) that produce
 the same result.  During the optimization, each group (e.g., [ABC]) represents
-a container that references all physical plans (e.g., \{[AB] sort-merge-join
+a container that references physical plans (e.g., \{[AB] sort-merge-join
 [C]\}, \{[B] nested-loop-join [AC]\}, \ldots) over subexpressions in that
 group.  In order to keep the search space small, a group only references
 top-level plans through {\emph multiexpressions}, which are expressions whose
 operator takes other groups as input. For example, the multiexpression \{[AB]
-sort-merge-join [C]\}, takes groups [AB] and [C] as input, instead of the
-individual plans for these groups.  
+sort-merge-join [C]\}, takes groups [AB] and [C] as input, instead of the,
+possibly many, individual plans for these groups.  
 
 Associated with each group is a {\emph winner's circle}, which identifies the
-optimal plan within a given group, and will be the plan chosen to represent a
-given group referenced by a multiexpression.  In the discussion that follows,
+optimal plan within a given group, and will be the plan chosen to represent the
+group, referenced by top-level multiexpressions.  In the discussion that follows,
 when we indicate a {\emph plan} we mean a multiexpression within a group.
 
-At a high level, the branch-and-bound algorithm that implements the Cascades
+At a high level, the branch-and-bound algorithm that drives the Cascades
 optimizer performs the following actions.  The search strategy generates groups
 in a top-down order, and within each group it performs a bottom-up search for
 the cheapest plan, which is called the {\em winner}.  An upper bound,
@@ -587,7 +587,7 @@ initialized to $infinity$, is also assigned to each group.  This upper bound is
 updated as new (cheaper) plans for the given group are discovered.  A plan (and
 all of its subplans) is pruned if its cost exceeds the group upper bound.  The
 optimization terminates when a root group (containing all expressions in the
-query) has been fully explored and a winner has been chosen.  We now turn to
+query) has been fully explored, and a winner chosen.  We now ready to describe
 our declarative specification of the Cascades branch-and-bound optimization.
 
 \subsection{Search strategy}
@@ -644,7 +644,7 @@ The optimization begins when the root group (e.g., [ABC]) is inserted into the
 traversal over the plan space.  This is initiated by rule~\ol{bb1} of
 Figure~\ref{ch:opt:fig:cascades_top_down}, when the \ol{cascades::programEvent}
 tuple is received.  The rule subsequently aggregates lists of the predicate
-identifiers and predicate schemas along each rule in the program.  The
+identifiers and predicate schemas, along each rule in the program.  The
 predicate identifier list will represent the group identifier, containing all
 the predicates in the rule body.  Rule~\ol{bb2} is triggered when such an
 update occurs in the \ol{group} relation.  The rule creates a \ol{branch} tuple
@@ -662,10 +662,10 @@ group.  If even one \ol{plan} tuple for a given group exists in the \ol{plan}
 relation then all \ol{plan} tuples for that group are present.  This is
 because, in the next section, we will ``concurrently'' derive all the \ol{plan}
 tuples for a given group.  Until we get to those rules, assume that
-rule~\ol{bp6} creates a \ol{branchComplete} tuple when any \ol{plan} tuple is
-derived for the given group.  This will prompt rule~\ol{bb5} to move the
-\ol{branch} tuple position forward by one, with a bound that considers the
-cost of the \ol{plan} in the previous branch.
+rule~\ol{bp6} creates a \ol{branchComplete} tuple when any \ol{plan} tuple that
+is derived for the given group.  This will prompt rule~\ol{bb5} to move the
+\ol{branch} tuple position forward by one, with a bound that considers the cost
+of the \ol{plan} tuple in the previous branch.
 
 \subsection{Plan Generation}
 \label{ch:opt:sec:cascades_plan}
@@ -721,15 +721,17 @@ This brings us to rule~\ol{bp8}, which is the our first rule that generates a
 \ol{branch} tuple with a group, containing at least two predicates, is ``joined
 with'' the \ol{winner} relation.  The \ol{winner} relation is described in the
 following section, but its purpose is to identify the winning plan, for each
-interesting order, in its group.  In rule~\ol{bp8}, we use the ``winning'' plan
-as the ``outer plan'', and join it with a table predicate that when combined
-with the outer subgroup, formulates the branch group under consideration.  The
-sorting order produced by this plan is the same as the order of the ``outer
-plan.'' Another difference with these rules is that the plan identifier
-($PlanID$) holds the actual plan.  This is used by another stage to annotate
-the relevant \ol{sys::predicate} facts with the desired order and join method.
-We include these rules in the overall Cascades rule count, but forgo its
-description since it does not add any new information.
+interesting order, in its group.  In rule~\ol{bp8}, we use a ``winning'' {\em
+subplan} as the ``outer plan'', and join it with a table predicate that when
+combined with the outer subgroup, formulates the branch group under
+consideration.  The sorting order produced by this plan is the same as the
+order of the ``outer plan.'' Another difference with these rules is that the
+plan identifier ($PlanID$) holds the actual plan~\footnote{We note that this is the
+same strategy used in the System R \ol{plan} relation.  In both cases, another
+stage is used to annotate the relevant term relations (\ol{sys::predicate},
+\ol{sys::assign} and \ol{sys::select}) with the desired order and join method.
+We forgo the trivial $3$ rule description of this stage since it does not add
+any new insights.}.
 
 \begin{figure*}
 \ssp
@@ -837,13 +839,13 @@ bb15 {\bf winner}(@A, Rid, Group, PlanId) :- \\
 
 The rules in Figure~\ref{ch:opt:fig:cascades_winner} select a {\emph winner}
 plan from the plans deduced for a given group.  We begin at rule~\ol{bb11},
-which determines the cost of the optimal plan regardless of order.  This
-ensures that an ordered plan with this best cost is chosen regardless of its
-order being interesting.  Rule~\ol{bb12} follows by determining the best cost
-plan for each interesting order.  These two rules identify the best cost plans
-for a given group.  The familiar rule~\ol{bb13}, also appearing as the \ol{sr8}
-System R rule, determines the orders that are interesting, based on grouping
-and joining attributes.
+which determines the cost of the optimal plan regardless of order.  The
+\ol{bestOverallCost} tuple ensures that an ordered plan that is also optimal is
+chosen regardless of its order being interesting.  Rule~\ol{bb12} follows by
+determining the best cost plan for each interesting order.  These two rules
+identify the best cost plans for a given group.  The familiar rule~\ol{bb13},
+also appearing as the \ol{sr8} System R rule, determines the orders that are
+interesting, based on grouping and joining attributes.
 
 Due to P2's lack of stratified Datalog support, we must predicated the
 evaluation of rules~\ol{bb11} and~\ol{bb12} on the \ol{branch} tuple's group
