@@ -104,8 +104,8 @@ in all the rules presented in this thesis.
 \begin{figure*}
 \ssp
 \begin{boxedminipage}{\linewidth}
-{\bf link}("localhost:10000", "localhost:10001", 1). \\
-{\bf link}("localhost:10001", "localhost:10002", 1). \\
+{\bf link}(``node1'', ``node2'', 1). \\
+{\bf link}(``node2'', ``node3'', 1). \\
 \\
 R1 {\bf path}(X, Y, {\em cons}(X, Y), C) :- \\
 \datalogspace {\bf link}(X, Y, C). \\
@@ -114,7 +114,7 @@ R2 {\bf path}(X, Z, {\em cons}(X, P2), C1+C2) :- \\
 \datalogspace {\bf link}(X, Y, C1), {\bf path}(Y, Z, P2, C2), \\
 \datalogspace $f\_contains(X,\ P2)\ ==\ false$. \\
 
-Query {\bf path}(``localhost:10000'', Y, P, C).
+Query {\bf path}(``node1'', Y, P, C).
 \end{boxedminipage}
 \caption{\label{ch:p2:fig:datalogPath}Path program written in Datalog.}
 \end{figure*}
@@ -140,13 +140,12 @@ Rule~\ol{R2} expresses a transitive closure over the \ol{link} {\bf and}
 \ol{path} relations.  The rule reads ``if there is a link from $X$ to $Y$ at
 cost $C$, and there is a \ol{path} from $Y$ to $Z$ crossing $P2$ at cost $C2$,
 then there is a path from $X$ to $Z$ via ($X,\ P2$) at cost of $C1+C3$.'' A
-path from ``localhost:10000'' to ``localhost:10002'', through
-``localhost:10001'', satisfies this criterion, and such a tuple is presented by
-the \ol{path} IDB relation.  The query predicate, shown at the bottom of
-Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start at
-``localhost:10000.'' The \ol{path} tuples that begin with ``localhost:10000''
-and end at ``localhost:10001'' and ``localhost:10002'' (via
-``localhost:10001'') both meet this query constraint.
+path from ``node1'' to ``node3'', through ``node2'', satisfies this criterion,
+and such a tuple is presented by the \ol{path} IDB relation.  The query
+predicate, shown at the bottom of Figure~\ref{ch:p2:fig:datalogPath}, asks for
+all paths that start at ``node1.'' The \ol{path} tuples that begin
+with ``node1'' and end at ``node2'' and ``node3'' (via ``node2'') both meet
+this query constraint.
 
 \subsection{Evaluation of Datalog Rules}
 
@@ -342,8 +341,8 @@ rules.
 \begin{figure*}
 \ssp
 \begin{boxedminipage}{\linewidth}
-{\bf link}("localhost:10000", "localhost:10001", 1). \\
-{\bf link}("localhost:10001", "localhost:10002", 1). \\
+{\bf link}(``node1'', ``node2'', 1). \\
+{\bf link}(``node2'', ``node3'', 1). \\
 \\
 R1 {\bf path}(X, Y, {\em cons}(X, Y), C) :- \\
 \datalogspace {\bf link}(X, Y, C). \\
@@ -435,6 +434,9 @@ to Datalog, which we describe before presenting the P2 runtime.
 {\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
 {\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
 
+{\bf link}(``localhost:10000'', ``localhost:10001'', 1). \\
+{\bf link}(``localhost:10001'', ``localhost:10002'', 1). \\
+
 R1{\bf path}(@X, Y, P, C) :- \\
 \datalogspace {\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
 
@@ -448,6 +450,8 @@ R4 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
 
 R5 {\bf shortestPath}(@X, Y, P, C) :- \\
 \datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).\\
+
+Query {\bf shortestPath}(``localhost:10000'', Y, P, C).
 \end{boxedminipage}
 \caption{\label{ch:p2:fig:overlogSP}Shortest path program in \OVERLOG. \ol{a\_}
 prefixes introduce aggregate functions and \ol{f\_} prefixes introduce
