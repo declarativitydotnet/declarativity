@@ -25,7 +25,7 @@ A {\em constraint} is a rule whose head consists of a special predicate called \
 A \lang program is {\em eventually consistent} if it satisfies the following constraint for all predicates \dedalus{p}:
 
 \begin{Dedalus}
-fail() <- p(#Y,\bar{X}), !p(#Z,\bar{X}), replica(Y), replica(Z);
+fail() <- p(#Y,\(\bar{X}\)), !p(#Z,\(\bar{X}\)), replica(Y), replica(Z);
 \end{Dedalus}
 \wrm{This isn't a valid \lang rule because it doesn't unify on location specifier}
 \end{definition}
