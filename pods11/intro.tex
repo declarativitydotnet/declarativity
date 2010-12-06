@@ -6,12 +6,12 @@ Moreover, the need for these properties is usually motivated by reasoning about
 read/write conflicts, making worst-case assumptions about the semantics of dataflows
 dependent on those reads and writes.  \wrm{for example...}
 
-We provide a formal description of \lang, a logic language for distributed systems, which captures the salient issues in asynchronous distributed systems: things may be non-atomic, and things may be out-of-order.  \lang attractively formalizes these two issues by adding a notion of ``time'' to logic languages.  We also present an operational characterization of distributed systems, and prove that \lang models exactly the executions that arise in the real world.
-
 One might ask instead the more general question of when coordination protocols are
 needed, and whether a more refined understanding of program logic can obviate the need
 for coordination in more cases than read-write analyses might suggest.  We attack this
 question on a number of fronts:
+
+We provide a formal description of \lang, a logic language for distributed systems, which captures the salient issues in asynchronous distributed systems: things \paa{events? deductions?} may be non-atomic, and things may be out-of-order.  \lang attractively formalizes these two issues by adding a notion of ``time'' to logic languages.  We also present an operational characterization of distributed systems, and prove that \lang models exactly \paa{a superset of} the executions that arise in the real world.
 
 We identify a broad range of programs--all of monotonic Dedalus--in which traditional
 distributed systems coordination protocols are completely unnecessary, since we show
