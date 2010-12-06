@@ -29,6 +29,7 @@ fail() <- p(#Y,\(\bar{X}\)), !p(#Z,\(\bar{X}\)), replica(Y), replica(Z);
 \end{Dedalus}
 \wrm{This isn't a valid \lang rule because it doesn't unify on location specifier}
 \end{definition}
+\paa{this is too specific; there is more than one way to skin a cat.  why do we need to define replication in terms of participating rules?}
 
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
 
@@ -39,6 +40,8 @@ Eventual consistency of a \lang program is undecidable
 %Proof sketch: convert Datalog program to \lang program that for a given key, replicates each different value to a different node; do this for all possible keys and values (exponentialy many).  Ask if each program is eventually consistent.  At the end, you've inferred functional dependencies in a Datalog program, which we know is undecidable.
 Proof sketch: Assume two different 2CMs are modeled at two different replicas.  Deciding eventual consistency implies we can decide whether the two 2CMs accept the same input, which is undecidable.
 \end{proof}
+\paa{not sure I get it.  We are asking if a program is EC wrt a particular set of known constraints (those that 
+axiomatize ``replication'').  this is not tantamount to inferring FDs -- but it is query satisfiability, right?}
 
 %Adding {\em replication} \wrm{define} to a confluent program yields an eventually consistent program.  However, there are some eventually consistent programs that are not confluent.
 
@@ -52,7 +55,9 @@ r(#R, X) <- replica(R), s(X);
 \end{Dedalus}
 \end{example}
 
-The above program is eventually consistent under the integrity constraint \dedalus{fail() <- r(\_, X), r(\_, Y), X != Y;}, but it is not confluent: the second rule ensures that the contents of \dedalus{s} is the first \dedalus{p} fact to arrive.  Thus, the second rule induces multiple ultimate models if \dedalus{p\_edb} has more than one element.  However, all ultimate models satisfy the integrity constraint.
+The above program is eventually consistent under the integrity constraint \dedalus{fail() <- r(\_, X), r(\_, Y), X != Y;}, but it is not confluent: the second rule ensures that the contents of \dedalus{s} is the first \dedalus{p} fact to arrive.  Thus, the second rule induces multiple ultimate models if \dedalus{p\_edb} has more than one element.  However, all ultimate models satisfy the integrity constraint. \paa{not sure why this is interesting.  you are just saying hey, there's
+this nice property called confluence, and here's an arbitrary constraint, and note that the arbitrary constraint
+doesn't imply confluence.}
 
 \begin{lemma}
 If a program $P$ satisfies an integrity constraint $I$, then any program obtained by adding replication rules to $P$ is eventually consistent with respect to $I$.
