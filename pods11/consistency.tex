@@ -6,23 +6,28 @@ In the previous section, we generalized the notion of confluence to allow for th
 A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if any ultimate model contains \dedalus{fail()}; otherwise all constraints are {\em satisfied}.
 \end{definition}
 
-Any functional dependency may be encoded as a set of constraints.  The proof is straightforward so we omit it and instead provide the following example:
+%Any functional dependency may be encoded as a set of constraints.  The proof is straightforward so we omit it and instead provide the following example:
+%
+%\begin{example}
+%A set of constraints expressing that the last two arguments of predicate \dedalus{p} are functionally dependent its first two.
+%
+%\begin{Dedalus}
+%fail() <- p(A,B,C,_), p(A,B,D,_), C != D;
+%fail() <- p(A,B,_,C), p(A,B,_,D), C != D;
+%\end{Dedalus}
+%\end{example}
 
-\begin{example}
-A set of constraints expressing that the last two arguments of predicate \dedalus{p} are functionally dependent its first two.
+%\begin{definition}
+%A {\em replication rule} is a rule that contains predicates in a single stratum \wrm{clarify}, and joins with a \dedalus{replica} table.  The head contains a body predicate, and it is an async rule.  The variable from the replica table appears in the location specifier of the head.
+%\end{definition}
+
+\begin{definition}
+A \lang program is {\em eventually consistent} if it satisfies the following constraint for all predicates \dedalus{p}:
 
 \begin{Dedalus}
-fail() <- p(A,B,C,_), p(A,B,D,_), C != D;
-fail() <- p(A,B,_,C), p(A,B,_,D), C != D;
+fail() <- p(#Y,\bar{X}), !p(#Z,\bar{X}), replica(Y), replica(Z);
 \end{Dedalus}
-\end{example}
-
-\begin{definition}
-A {\em replication rule} is a rule that contains predicates in a single stratum \wrm{clarify}, and joins with a \dedalus{replica} table.  The head contains a body predicate, and it is an async rule.  The variable from the replica table appears in the location specifier of the head.
-\end{definition}
-
-\begin{definition}
-A \lang program is {\em eventually consistent} with respect to a set of functional dependencies \wrm{all of which must use an underscore for the location attribute} over replicated state if the constraints are satisfied for any EDB.
+\wrm{This isn't a valid \lang rule because it doesn't unify on location specifier}
 \end{definition}
 
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
@@ -31,10 +36,11 @@ A \lang program is {\em eventually consistent} with respect to a set of function
 Eventual consistency of a \lang program is undecidable
 \end{lemma}
 \begin{proof}
-Proof sketch: convert Datalog program to \lang program that for a given key, replicates each different value to a different node; do this for all possible keys and values (exponentialy many).  Ask if each program is eventually consistent.  At the end, you've inferred functional dependencies in a Datalog program, which we know is undecidable.
+%Proof sketch: convert Datalog program to \lang program that for a given key, replicates each different value to a different node; do this for all possible keys and values (exponentialy many).  Ask if each program is eventually consistent.  At the end, you've inferred functional dependencies in a Datalog program, which we know is undecidable.
+Proof sketch: Assume two different 2CMs are modeled at two different replicas.  Deciding eventual consistency implies we can decide whether the two 2CMs accept the same input, which is undecidable.
 \end{proof}
 
-Adding {\em replication} \wrm{define} to a confluent program yields an eventually consistent program.  However, there are some eventually consistent programs that are not confluent.
+%Adding {\em replication} \wrm{define} to a confluent program yields an eventually consistent program.  However, there are some eventually consistent programs that are not confluent.
 
 \begin{example}
 An eventually consistent program that is not confluent.
