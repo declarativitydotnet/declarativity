@@ -88,7 +88,26 @@ University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upsha
 
 \begin{abstract} 
 %
-We present a formal definition of the \lang language and prove conjectures.
+%We present a formal definition of the \lang language and prove conjectures.
+Programs written in declarative logic languages such as Datalog have a model-theoretic semantics that
+is independent of how the program is executed.  As a result, they are amenable to simple and powerful
+static analysis techniques to ensure, among other things, termination and the existence and uniqueness
+of a program result.  Recent distributed systems research has experimented with using variants of 
+Datalog to specify and implement large-scale practical systems, in some cases applying or reinterpreting
+existing analyses with respect to the new domain~\cite{dedalus}.  Continuing in this vein, it is only natural 
+to ask to what extent we can characterize notions of correctness and ``good behavior'' that are unique to distributed 
+systems, like determinism of distributed computations and eventual consistency of replicated state,
+ in a model theoretic framework, and whether we may add or adapt program analyses for these properties.
+
+In this paper, we define a model-theoretic notions of {\em confluence, consistency} and {\em eventual
+consistency}, which are based on the existence of an {\em ultimate models}, or equivalence classes among 
+distributed traces \paa{ummmm}.  We show that for programs that do not have a unique ultimate model, 
+there often exists a single ultimate model that corresponds to the intuitive semantics of the program,
+and which can be enforced via a program rewrite that adds additional {\em coordination} logic to the given
+program to suppress the other models.  We also show that in general, the problem of deciding whether a program
+is consistent or confluent for all EDBs is undecidable, and as a correlary that it is impossible in general to
+soundly and completely verify that a program is correctly ``coordinated.''  
+Nevertheless, we propose a set of conservative tests that suffice for a wide variety of practical systems.
 %
 \end{abstract}
 
