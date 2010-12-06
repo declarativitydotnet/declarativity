@@ -23,8 +23,8 @@ module DestructiveCart
         end
       end (*\label{line:des_bigtable_gen_end}*)
     end
-    joldstate = join [bigtable, action_msg], (*\label{line:des_join_bigtable_action_msg_beg}*)
-        [bigtable.key, action_msg.session]
+    joldstate = join [bigtable, action_msg],
+        [bigtable.key, action_msg.session]  (*\label{line:des_join_bigtable_action_msg}*)
     kvput <= joldstate.map do |b, a|
       if a.action == "A" (*\label{line:des_replace_beg}*)
         [a.server, a.client, a.session, 
@@ -48,7 +48,7 @@ end
 \end{lstlisting}
 \vspace{-10pt}
 \caption{(NEW) Destructive cart implementation.}
-\label{fig:dest_cart}
+\label{fig:dest-cart}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
@@ -202,7 +202,8 @@ Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
 in Figure~\ref{fig:kvs-proto}; it represents the input interface to the key-value store.
 Any collection of Bud rules that implement the protocol can be used, but to satisfy
 our requirement that the data be replicated we must use an implementation that replicates
-the contents of the store to multiple servers.
+the contents of the store to multiple servers (e.g., the ReplicatedKVS module shown in 
+figure~\ref{fig:kvs-repl}, mixed-in with some implementation of MulticastProtocol).
 
 In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client transmits
 \texttt{client\_action} tuples that correspond to cart updates over the
@@ -215,7 +216,7 @@ new session), then
 lines~\ref{line:des_bigtable_gen_beg}--\ref{line:des_bigtable_gen_end}
 generate an entry for the new session in \texttt{bigtable}.  Otherwise, the
 join conditions in
-lines~\ref{line:des_join_bigtable_action_msg_beg}--\ref{line:des_join_bigtable_action_msg_end}
+line~\ref{line:des_join_bigtable_action_msg}
 are satisfied and lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end}
 ``replace'' the item array at the next timestep with a new version.  
 Whenever a \texttt{checkout\_msg} appears in a server replica, the

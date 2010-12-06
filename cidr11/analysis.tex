@@ -92,20 +92,36 @@ Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that whe
 \texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall} into \texttt{send\_mcast}
 if the originating address is not another replica (line~\ref{line:not-rep}).  The internal
 \texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
-at the master replica (line~\ref{line:mcast-done}, or whenever a multicast is received at 
+at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is received at 
 a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
 
 \subsection{Analyses}
 
 
-Figure~\ref{fig:kvs-proto-pdg} presents a visual representation of the KVS protocol.  Data
+Figure~\ref{fig:kvs-proto} also presents a visual representation of the KVS protocol.  Data
 flows from the source node (an external caller) to on or both of \texttt{kvput} and 
 \texttt{kvget}, through some unknown dataflow, to \texttt{kvget\_response}.
 The existence of the red diamond labeled ``??'' indicates that the dataflow is underspecified:
 is must be ``completed'' by supplying dataflow that, at minimum, connects the input 
 interfaces to the output interface.
 
-Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS implementation.
+Figure~\ref{fig:kvs-impl} shows the visual analysis of the basic KVS implementation,
+which effectively supplies a concrete dataflow for the unspecified component in the previous
+graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a red octagon because they
+are part of a strongly connected component in the graph with both negative and temporal 
+edges.  Any data flowing from \texttt{kvput} to the sink must cross at least one nonmonotonic
+point of
+order (at ingress to the octagon) and possible an arbitrary number of them (via the
+octagon's self-edge), and an path from \texttt{kvget} to the sink must join state potentially
+affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget response}.
+
+Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable.  The 
+contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
+of its contents at the immediate previous state and the current input.  Hence the state
+of \texttt{bigtable} at any point in time may depend on the order of arrival of \texttt{kvput} 
+tuples.  We challenge the reader to implment the KeyValueProto interface in a way that
+has no such point of order.
+
 
 
 
@@ -139,19 +155,12 @@ end
 
 
 \end{lstlisting}
+\centering
+\includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
 \vspace{-10pt}
 \caption{Key/value store protocol.}
 \label{fig:kvs-proto}
 \end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
-\vspace{-10pt}
-\caption{Key-value store Protocol}
-\label{fig:kvs-proto-pdg}
 \vspace{-2pt}
 \end{figure}
 
@@ -185,6 +194,8 @@ end
 
 
 \end{lstlisting}
+\centering
+\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
 \caption{Key/value store implementation.}
 \label{fig:kvs-impl}
@@ -193,6 +204,7 @@ end
 \end{figure}
 
 
+\begin{comment}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
@@ -201,7 +213,7 @@ end
 \label{fig:pdg-kvs-analysis}
 \vspace{-2pt}
 \end{figure}
-
+\end{comment}
 
 \begin{figure}[t]
 \begin{scriptsize}
