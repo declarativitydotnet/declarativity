@@ -1,6 +1,6 @@
 \section{Confluence}
 
-For many distributed computations, achieving a deterministic answer (ultimate model) independent of any network nondeterminism is ideal.
+For many distributed computations, achieving a deterministic answer (ultimate model) independent of any network nondeterminism is desirable.
 
 \begin{definition}
 A \lang program is {\em confluent} if, for any EDB, it has a unique ultimate model.
@@ -103,12 +103,13 @@ all_responded()@next <- all_responded();
 \end{Dedalus}
 \end{example}
 
-The above program is monotonic. There is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even).  Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
+The above program is monotonic. There is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even).  \paa{this suggests that we can test if programs are monotonic, though everything up till now has been an attempt to define montonicity semantically...} Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
 
-We will see that all logically monotonic programs are confluent.  However, there are some non-logically-monotonic programs that are also confluent.
+We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic 
+are confluent.
 
 \begin{lemma}
-A monotonic property must be true in all traces of a program, given an EDB.
+A monotonic property is true in all traces of a program, given an EDB.
 \end{lemma}
 \begin{proof}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur).  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic.
@@ -178,13 +179,15 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-The {\em deductive reduction} of a \lang program is the program with all inductive and asynchronous rules replaced with deductive rules.
+A {\em temporally flattened} program is a \lang program with all inductive and asynchronous rules replaced with deductive rules.
 \end{definition}
 
-Note that the deductive reduction of a \lang program is a Datalog program.
+Note that a temporally flattened \lang program is a Datalog program.
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program whose deductive reduction is syntactically stratified (i.e. the \lang program has no recursion through negation) is the ultimate model you get by ``ensuring that a set is completed before it is negated''. \wrm{make more formal}
+The {\em perfect ultimate model} of a \lang program which is syntactically stratified when temporally flattened (i.e. the \lang program has no recursion through negation) is the ultimate model you get by ``ensuring that a set is completed before it is negated''. \wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
+programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
+corresponding to their ``coordinated'' evaluation(s)}
 \end{definition}
 
 Clearly, the perfect ultimate model is one of the ultimate models -- in the above program, it is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.
