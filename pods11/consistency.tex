@@ -1,47 +1,43 @@
 \section{Eventual Consistency}
 
-In the previous section, we generalized the notion of confluence to allow for the modeling of failures.  However, it is often the case that other generalizations are accepted in the distributed systems domain, as long as each ultimate model satisfies a certain property.  We formalize this notion through {\em constraints}.
+In the previous section, we relaxed confluence to allow greater availability.  However, traditionally in the distributed systems domain, systems are of such a large scale that replication of functionality is required to ensure good performance, fault tolerance, and availability, as the system scales.  This symmetry property implies a spectrum of natural correctness criteria called {\em consistency}.  In particular, {\em eventual consistency} is defined in the distributed systems domain as all replicas will eventually return the latest data after the last update is made.
+
+We formalize the notion of consistency using {\em constraints}.
 
 \begin{definition}
-A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if any ultimate model contains \dedalus{fail()}; otherwise all constraints are {\em satisfied}.
+A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  Since constraints are not meant to be executed, we do not require them to unify on location specifiers.
 \end{definition}
 
-%Any functional dependency may be encoded as a set of constraints.  The proof is straightforward so we omit it and instead provide the following example:
-%
-%\begin{example}
-%A set of constraints expressing that the last two arguments of predicate \dedalus{p} are functionally dependent its first two.
-%
-%\begin{Dedalus}
-%fail() <- p(A,B,C,_), p(A,B,D,_), C != D;
-%fail() <- p(A,B,_,C), p(A,B,_,D), C != D;
-%\end{Dedalus}
-%\end{example}
-
-%\begin{definition}
-%A {\em replication rule} is a rule that contains predicates in a single stratum \wrm{clarify}, and joins with a \dedalus{replica} table.  The head contains a body predicate, and it is an async rule.  The variable from the replica table appears in the location specifier of the head.
-%\end{definition}
+\wrm{It seems sensible to define the notion of a replicated predicate, rather than generalize to a replicated subset of a predicate}
+We augment the definition of a \lang program to include a set of {\em replicated predicates} -- predicates that will be eventually always identical on all replicas.
 
 \begin{definition}
-A \lang program is {\em eventually consistent} if it satisfies the following constraint for all predicates \dedalus{p}:
+\label{def:ec}
+A \lang program is {\em eventually consistent} if the following constraint is unsatisfiable for all replicated predicates \dedalus{p}:
 
 \begin{Dedalus}
 fail() <- p(#Y,\(\bar{X}\)), !p(#Z,\(\bar{X}\)), replica(Y), replica(Z);
 \end{Dedalus}
-\wrm{This isn't a valid \lang rule because it doesn't unify on location specifier}
 \end{definition}
 \paa{this is too specific; there is more than one way to skin a cat.  why do we need to define replication in terms of participating rules?}
 
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
 
 \begin{lemma}
-Eventual consistency of a \lang program is undecidable
+In general, proving unsatisfiability of constraints for all EDBs is undecidable.
 \end{lemma}
 \begin{proof}
-%Proof sketch: convert Datalog program to \lang program that for a given key, replicates each different value to a different node; do this for all possible keys and values (exponentialy many).  Ask if each program is eventually consistent.  At the end, you've inferred functional dependencies in a Datalog program, which we know is undecidable.
+Proved in~\cite{qs-datalog} for Datalog programs with IDB negation; any Datalog program has a corresponding \lang program consisting of the original rules converted into atemporal \lang rules in the obvious way.
+\end{proof}
+
+\begin{lemma}
+In particular, proving unsatisfiability of the constraint listed in Definition~\label{def:ec} is undecidable.
+\end{lemma}
+\begin{proof}
 Proof sketch: Assume two different 2CMs are modeled at two different replicas.  Deciding eventual consistency implies we can decide whether the two 2CMs accept the same input, which is undecidable.
 \end{proof}
-\paa{not sure I get it.  We are asking if a program is EC wrt a particular set of known constraints (those that 
-axiomatize ``replication'').  this is not tantamount to inferring FDs -- but it is query satisfiability, right?}
+%\paa{not sure I get it.  We are asking if a program is EC wrt a particular set of known constraints (those that 
+%axiomatize ``replication'').  this is not tantamount to inferring FDs -- but it is query satisfiability, right?}
 
 %Adding {\em replication} \wrm{define} to a confluent program yields an eventually consistent program.  However, there are some eventually consistent programs that are not confluent.
 
@@ -59,15 +55,11 @@ The above program is eventually consistent under the integrity constraint \dedal
 this nice property called confluence, and here's an arbitrary constraint, and note that the arbitrary constraint
 doesn't imply confluence.}
 
+\wrm{Define a replication protocol; explain when adding a replication protocol to a program preserves EC -- downstream confluence requirement, no upstream requirements.  replication protocol must not use negation??}
+
 \begin{lemma}
 If a program $P$ satisfies an integrity constraint $I$, then any program obtained by adding replication rules to $P$ is eventually consistent with respect to $I$.
 \end{lemma}
 \begin{proof}
 Sketch: due to the restricted nature of replication rules (a replication rule does not introduce new facts into a predicate) and functional dependencies (they cannot constrain locations), replication rules cannot violate functional dependencies.
 \end{proof}
-
-Clearly, a functional dependency is either
-
-\begin{lemma}
-
-\end{lemma}
