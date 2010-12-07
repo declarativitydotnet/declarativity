@@ -89,9 +89,24 @@ University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upsha
 \begin{abstract} 
 %
 %We present a formal definition of the \lang language and prove conjectures.
-An increasing amount of interest surrounds the use of logic langauges such as Datalog to ease designing and verifying the correctnes of large-scale asynchronous distributed systems.  While previous work demonstrated compactness of specification and efficiency of execution for practical systems, and resolved semantic difficulties, there has been limited prior work in applying the oft-praised analyzability of logic languages to the distributed systems domain, even though such applications have been conjectured.
 
-We focus on, and define model-theoretic notions for {\em determinism}, {\em consistency}, and {\em eventual consistency}, three correctness criteria that are popular in the distributed systems domain.  Unfortunately, we prove that these are undecidable properties in the general case.  However, we prove the conjecture that {\em monotonicity} of logic can be a powerful conservative test for these criteria, and leverage existing {\em stratification} analyses from logic programming to enforce monotonicity through {\em coordination protocols} in a large class of non-monotonic programs.
+An increasing amount of interest surrounds the use of logic languages such as
+Datalog to ease the design and verification of asynchronous distributed
+systems.  An oft-cited reason is the model-theoretic semantics of logic
+programming, which underpin a robust literature on analysis techniques to
+ensure, among other things, termination and the existince and uniqueness of a
+program result.  While prior work on logic programming for distributed systems
+has demonstrated compactness of representation and efficiency of execution, the
+tantalizing possibility of leveraging model theory to realize analysis
+techniques for distributed systems correctness criteria has gone largely
+unrealized.  In this paper, we define model-theoretic notions for two such
+criteria popular in the distributed systems domain: {\em determinism} and {\em
+eventual consistency}.  Unfortunately, we show that these are undecidable
+properties in the general case.  However, we prove the conjectured result that
+{\em monotonicity} of logic can be a powerful conservative test for these
+criteria, and we leverage existing static {\em stratification} checks from
+logic programming to enforce monotonicity in a large class of programs by
+instrumenting them with {\em coordination logic}.
 
 %However, using analyses from logic programming, including {\em stratification} analyses, 
 
