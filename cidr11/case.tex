@@ -3,178 +3,7 @@
 
 
 
-
-
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-
-module DestructiveCart
-  include CartProtocol
-  include KVSProtocol
-
-  declare (*\label{line:des_declare}*)
-  def queueing
-    kvput <= action_msg.map do |a|
-      if a.action == "A" (*\label{line:des_bigtable_gen_beg}*)
-        unless bigtable.map{|b| b.key}.include? a.session (*\label{line:des_bigtable_check}*)
-          [a.server, a.client, a.session, a.reqid, [a.item]]
-        end
-      end (*\label{line:des_bigtable_gen_end}*)
-    end
-    joldstate = join [bigtable, action_msg],
-        [bigtable.key, action_msg.session]  (*\label{line:des_join_bigtable_action_msg}*)
-    kvput <= joldstate.map do |b, a|
-      if a.action == "A" (*\label{line:des_replace_beg}*)
-        [a.server, a.client, a.session, 
-            a.reqid, (b.value.push(a.item))]
-      elsif a.action == "D"
-        [a.server, a.client, a.session, 
-            a.reqid, delete_one(b.value, a.item)]
-      end (*\label{line:des_replace_end}*)
-    end
-  end
-
-  declare
-  def finish
-    kvget <= checkout_msg.map{|c| [c.reqid, c.session] (*\label{line:kvget-beg}*)
-    response_msg <~ join([kvget_response, checkout_msg],
-    [kvget_response.key, checkout_msg.session]).map do |r, c|
-      [r.client, r.server, r.key, r.value] (*\label{line:kvget-end}*)
-    end
-  end
-end
-\end{lstlisting}
-\vspace{-10pt}
-\caption{(NEW) Destructive cart implementation.}
-\label{fig:dest-cart}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-
-
-
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.7\linewidth]{fig/destructive_kvs.pdf}
-\vspace{-10pt}
-\caption{Destructive cart analysis.}
-\label{fig:pdg-destructive-kvs-analysis}
-\vspace{-2pt}
-\end{figure}
-
-
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-module DisorderlyCart
-  include CartProtocol
-  def state
-    super
-    table :cart_action, ['session', 'item', 'action', 'reqid']
-    table :action_cnt, ['session', 'item', 'action'], ['cnt']
-    scratch :status, 
-      ['server', 'client', 'session', 'item'], ['cnt']
-  end
-
-  declare
-  def saved
-    cart_action <= action_msg.map do |c| 
-      [c.session, c.item, c.action, c.reqid] 
-    end
-    action_cnt <= cart_action.group(
-      [cart_action.session, cart_action.item, cart_action.action],
-      count(cart_action.reqid))
-    action_cnt <= cart_action.map do |a|
-      unless cart_action.map do |c| 
-        [c.session, c.item] if c.action == "D"
-      end.include? [a.session, a.item]}
-          [a.session, a.item, 'D', 0]
-      end
-    end
-  end
-
-  declare
-  def consider
-    status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c|
-      if a1.session == a2.session and a1.item == a2.item
-      and a1.session == c.session and a1.action == "A" 
-      and a2.action == "D"
-        [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
-      end
-    end
-    response_msg <~ status.map { |s| s }
-  end
-end
-
-\end{lstlisting}
-\vspace{-10pt}
-\caption{(NEW) Disorderly cart implementation.}
-\label{fig:dis_cart}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-
-
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-declare
-def accumulate
-	cart_action <= action_msg.map do |c| (*\label{line:dis_action_msg_beg}*)
-		[c.session, c.item, c.action, c.reqid]
-	end (*\label{line:dis_action_msg_end}*)
-
-	action_cnt <= cart_action.group( (*\label{line:dis_count_reqid_beg}*)
-					[cart_action.session, cart_action.item, cart_action.action],
-					count(cart_action.reqid)) (*\label{line:dis_count_reqid_end}*)
-end
-
-declare
-def summarize
-	status <= join([action_cnt, checkout_msg]).map do |a, c| (*\label{line:dis_checkout_no_item_beg}*)
-		if a.action == "Add" and not
-		   action_cnt.map{|d| d.id if d.action == "Del"}.include? a.id 
-			[a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
-		end 
-	end (*\label{line:dis_checkout_no_item_end}*)
-
-	status <= join([action_cnt, action_cnt,
-										checkout_msg]).map do |a1, a2, c| (*\label{line:dis_checkout_item_beg}*)
-		if a1.session == a2.session and a1.item == a2.item and
-			  a1.session == c.session and a1.action == "Add" and
-			  a2.action == "Del"
-			[a1.session, a1.item, a1.cnt - a2.cnt] (*\label{line:dis_status_diff}*)
-		end
-	end (*\label{line:dis_checkout_item_end}*)
-end
-
-declare 
-def communicate
-	response_msg <+ join([status, checkout_msg]).map do |s, c| (*\label{line:dis_checkout_response_beg}*)
-		if s.session == c.session
-			[c.client, c.server, s.session, s.item, s.cnt]
-		end
-	end (*\label{line:dis_checkout_response_end}*)
-
-	action_msg <+ join([action_msg, member]).map do |a, m| (*\label{line:dis_join_action_msg_member}*)
-		unless member.map{|nm| nm.player}.include? a.client
-			[m.player, a.server, a.session, a.item, a.action, a.reqid] (*\label{line:dis_multicast}*)
-		end 
-	end (*\label{line:dis_rep_end}*)
-end
-\end{lstlisting}
-\vspace{-10pt}
-\caption{Disorderly cart implementation.}
-\label{fig:pdg-disorderly}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
+\include{case_figs}
 
 
 
@@ -257,13 +86,14 @@ of additions and deletions (line~\ref{line:dis_status_diff}), or simply the
 number of additions if there are no deletions (line~\ref{line:dis_status_add}).
 Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \texttt{response} message to the client containing the final quantity
-(lines~\ref{line:dis_checkout_response_beg}--\ref{line:dis_checkout_response_end}).
-Because the disorderly implementation does not use a separate storage system,
-it includes its own logic for state replication
-(lines~\ref{line:dis_join_action_msg_member}--\ref{line:dis_rep_end}).
-Line~\ref{line:dis_multicast} ensures that only the replica contacted by the
-client performs a multicast, by probing the \textbf{table} \texttt{member} to
-see if the \texttt{action\_msg} originated inside the quorum.
+(lines~\ref{line:dis_checkout_response}).
+
+%Because the disorderly implementation does not use a separate storage system,
+%it includes its own logic for state replication
+%(lines~\ref{line:dis_join_action_msg_member}--\ref{line:dis_rep_end}).
+%Line~\ref{line:dis_multicast} ensures that only the replica contacted by the
+%client performs a multicast, by probing the \textbf{table} \texttt{member} to
+%see if the \texttt{action\_msg} originated inside the quorum.
 
 \begin{figure}[t]
 \centering
@@ -301,8 +131,7 @@ Although there is no
 non-monotonicity in 
 Figure~\ref{fig:pdg-destructive}, the underlying key-value store
 uses the non-monotonic \texttt{$<$-} operator to model updateable
-state.\footnote{Our full-length paper will discuss the non-monotonic nature of \texttt{$<$-}, and
-will expand the SCC to analyze the key-value store in detail.}
+state.
 The full-program analysis shown in Figure~\ref{fig:pdg-destructive-analysis}
 indicates that there are
 points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
