@@ -1,6 +1,6 @@
 \section{Eventual Consistency}
 
-In the previous section, we relaxed confluence to allow greater availability.  However, traditionally in the distributed systems domain, systems are of such a large scale that replication of functionality is required to ensure good performance, fault tolerance, and availability, as the system scales.  This symmetry property implies a spectrum of natural correctness criteria called {\em consistency}.  In particular, {\em eventual consistency} is defined in the distributed systems domain as all replicas will eventually return the latest data after the last update is made.
+In the previous section, we relaxed confluence to allow greater availability.  However, traditionally in the distributed systems domain, systems are of such a large scale that replication of functionality is required to ensure good performance, fault tolerance, and availability, as the system scales.  This symmetry property implies a spectrum of natural correctness criteria called {\em consistency} properties.  In particular, {\em eventual consistency} is defined in the distributed systems domain as all replicas will eventually return the latest data after the last update is made.
 
 We formalize the notion of consistency using {\em constraints}.
 
@@ -13,25 +13,28 @@ We augment the definition of a \lang program to include a set of {\em replicated
 
 \begin{definition}
 \label{def:ec}
-A \lang program is {\em eventually consistent} if the following constraint is unsatisfiable for all replicated predicates \dedalus{p}:
+A \lang program is {\em eventually consistent} if it is consistent under the following constraint, for all replicated predicates \dedalus{p}:
 
 \begin{Dedalus}
 fail() <- p(#Y,\(\bar{X}\)), !p(#Z,\(\bar{X}\)), replica(Y), replica(Z);
 \end{Dedalus}
 \end{definition}
-\paa{this is too specific; there is more than one way to skin a cat.  why do we need to define replication in terms of participating rules?}
+
+Note that an eventually consistent program is not necessarily confluent, and a confluent program is not necessarily eventually consistent.
+
+%\paa{this is too specific; there is more than one way to skin a cat.  why do we need to define replication in terms of participating rules?}
 
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
 
 \begin{lemma}
-In general, proving unsatisfiability of constraints for all EDBs is undecidable.
+In general, proving constraint satisfiability for all EDBs is undecidable.
 \end{lemma}
 \begin{proof}
 Proved in~\cite{qs-datalog} for Datalog programs with IDB negation; any Datalog program has a corresponding \lang program consisting of the original rules converted into atemporal \lang rules in the obvious way.
 \end{proof}
 
 \begin{lemma}
-In particular, proving unsatisfiability of the constraint listed in Definition~\label{def:ec} is undecidable.
+In particular, proving constraint satisfiability for the constraint listed in Definition~\label{def:ec} is undecidable.
 \end{lemma}
 \begin{proof}
 Proof sketch: Assume two different 2CMs are modeled at two different replicas.  Deciding eventual consistency implies we can decide whether the two 2CMs accept the same input, which is undecidable.
@@ -41,19 +44,19 @@ Proof sketch: Assume two different 2CMs are modeled at two different replicas.  
 
 %Adding {\em replication} \wrm{define} to a confluent program yields an eventually consistent program.  However, there are some eventually consistent programs that are not confluent.
 
-\begin{example}
-An eventually consistent program that is not confluent.
+%\begin{example}
+%An eventually consistent program that is not confluent.
+%
+%\begin{Dedalus}
+%p(X)@async <- p_edb(X);
+%s(X) <- p(X), !s(_);
+%r(#R, X) <- replica(R), s(X);
+%\end{Dedalus}
+%\end{example}
 
-\begin{Dedalus}
-p(X)@async <- p_edb(X);
-s(X) <- p(X), !s(_);
-r(#R, X) <- replica(R), s(X);
-\end{Dedalus}
-\end{example}
-
-The above program is eventually consistent under the integrity constraint \dedalus{fail() <- r(\_, X), r(\_, Y), X != Y;}, but it is not confluent: the second rule ensures that the contents of \dedalus{s} is the first \dedalus{p} fact to arrive.  Thus, the second rule induces multiple ultimate models if \dedalus{p\_edb} has more than one element.  However, all ultimate models satisfy the integrity constraint. \paa{not sure why this is interesting.  you are just saying hey, there's
-this nice property called confluence, and here's an arbitrary constraint, and note that the arbitrary constraint
-doesn't imply confluence.}
+%The above program is eventually consistent under the integrity constraint \dedalus{fail() <- r(\_, X), r(\_, Y), X != Y;}, but it is not confluent: the second rule ensures that the contents of \dedalus{s} is the first \dedalus{p} fact to arrive.  Thus, the second rule induces multiple ultimate models if \dedalus{p\_edb} has more than one element.  However, all ultimate models satisfy the integrity constraint. \paa{not sure why this is interesting.  you are just saying hey, there's
+%this nice property called confluence, and here's an arbitrary constraint, and note that the arbitrary constraint
+%doesn't imply confluence.}
 
 \wrm{Define a replication protocol; explain when adding a replication protocol to a program preserves EC -- downstream confluence requirement, no upstream requirements.  replication protocol must not use negation??}
 
