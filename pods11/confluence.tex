@@ -179,20 +179,25 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-A {\em temporally flattened} program is a \lang program with all inductive and asynchronous rules replaced with deductive rules.
+The {\em temporal flattening} of a \lang program is the original program with all inductive and asynchronous rules made atemporal.
 \end{definition}
 
-Note that a temporally flattened \lang program is a Datalog program.
+Note that the temporal flattening of a \lang program is a Datalog program.
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program which is syntactically stratified when temporally flattened (i.e. the \lang program has no recursion through negation) is the ultimate model you get by ``ensuring that a set is completed before it is negated''. \wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
-programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
-corresponding to their ``coordinated'' evaluation(s)}
+The {\em perfect ultimate model} of a \lang program whose temporal flattening is syntactically stratified is the ultimate model induced by ensuring that for every predicate that appears negated in the program, all facts in that predicate are known before the negation is applied.  In other words, one must have ``complete information'' before applying the closed-world assumption for negation.  This intuitively corresponds to the notion of stratified evaluation for Datalog programs, where a fixpoint is computed for each stratum in stratum order.
+%\wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
+%programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
+%corresponding to their ``coordinated'' evaluation(s)}
 \end{definition}
 
-Clearly, the perfect ultimate model is one of the ultimate models -- in the above program, it is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.
+\begin{definition}
+The {\em perfect ultimate model} of a \lang program whose temporal flattening is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program... \wrm{subsets are completed wrt the partial order}
+\end{definition}
 
-In particular, it is represented by any stable model where no \dedalus{false} message arrives after the first \dedalus{statement} message has arrived.  We show an example of how this condition can be emulated by modifying the program.
+There is always a stable model representing the perfect ultimate model of a \lang program whose flattening is syntactically stratified, because there is no recursion through negation, and Lemma~\ref{cron} tells us that any choice of timestamps is permissible in this case.
+
+In Example~\ref{ex:sayers}, the perfect ultimate model is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.  In particular, we can modify the program to be confluent with the perfect ultimate model by ensuring that negation is not applied until the \dedalus{false} set is complete.  It turns out we can generalize this into an algorithm for all \lang programs whose temporal flattening is syntactically stratified.
 
 We add the following two rules to compute counts of false messages at each sayer, and each listener:
 
