@@ -152,10 +152,10 @@ this query constraint.
 We now turn to the evaluation of a set of Datalog rules, which is performed in
 a bottom-up fashion, starting with the set of known EDB facts.  Two popular
 approaches are used to evaluate a set of Datalog rules.  The first is called
-{\emph naive evaluation}, which is an iterative algorithm that repeatedly
+{\emph na\"{\i}ve evaluation}, which is an iterative algorithm that repeatedly
 applies all known facts to the program rules, in some stylized set-oriented
 fashion, until no new knowledge is obtained.  Starting with the tuples
-contained in the EDB, the naive evaluator iteratively executes a
+contained in the EDB, the na\"{\i}ve evaluator iteratively executes a
 select-project-join SPJ query against the predicates in the rule body, to
 continually derive new IDB tuples.  Each iteration applies all the tuples
 contained in the EDB and IDB to the rule set.  The process repeats until no new
@@ -185,21 +185,21 @@ referred to as a ``fixed point.''
 	\ENDWHILE
     \end{algorithmic}
 \end{boxedminipage}
-\caption{\label{ch:p2:fig:seminaive}Seminaive Evaluation over a set of Datalog rules.}
+\caption{\label{ch:p2:fig:seminaive}Semina\"{\i}ve Evaluation over a set of Datalog rules.}
 \end{figure*}
 
-Each iteration of this naive algorithm uses all the data in the database when
-deriving new data.  A second approach, which is also the optimal approach, adds
-a condition to the iteration loop that prunes the data that was not derived in
-the previous round.  The remaining facts, if any, are then used in the
-subsequent iteration.  This {\emph seminaive evaluation} algorithm is based on
-the principle that ``if a fact is derived during round~$i$ then it must have been
-inferred from a rule in which one or more subgoals were instantiated with facts
-that were inferred in round~$i-1$.''~\cite{ullmanbook}
+Each iteration of this na\"{\i}ve algorithm uses all the data in the database
+when deriving new data.  A second approach, which is also the optimal approach,
+adds a condition to the iteration loop that prunes the data that was not
+derived in the previous round.  The remaining facts, if any, are then used in
+the subsequent iteration.  This {\emph semina\"{\i}ve evaluation} algorithm is
+based on the principle that ``if a fact is derived during round~$i$ then it
+must have been inferred from a rule in which one or more subgoals were
+instantiated with facts that were inferred in round~$i-1$.''~\cite{ullmanbook}
 
 Figure~\ref{ch:p2:fig:seminaive} describes the algorithm that performs a
-seminaive evaluation over a set of Datalog rules.  Let $\delta IDB_{i}$ be a
-set containing the IDB predicates that received derivations during iteration
+semina\"{\i}ve evaluation over a set of Datalog rules.  Let $\delta IDB_{i}$ be
+a set containing the IDB predicates that received derivations during iteration
 $i$.  In the first step, it evaluates the rules against the EDB tuples to
 derive an initial set of IDB tuples for iteration~$0$.  We then enter the loop,
 where we carry out further iterations~$i\ >\ 0$.
@@ -310,7 +310,7 @@ then the program is unstratified.  An IDB predicate is assigned an $\infty$
 stratum if it defines a negated subgoal on a path that contains a cycle (due
 to arbitrary recursion).
 
-We evaluate a stratified Datalog program using the seminaive algorithm of
+We evaluate a stratified Datalog program using the semina\"{\i}ve algorithm of
 Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- we topologically
 sort the IDB predicates (in $\delta IDB$) by their assigned stratum, and follow
 this order in the loop.  This order ensures that if the program is stratified
@@ -392,11 +392,11 @@ evaluation will start by deriving all paths of length $1$ using rule~\ol{R1},
 then using rule~\ol{R2} to derive paths of length $2, 3, \cdots$ (fully, in
 that order) until no such paths exist.  As a result of this {\emph derivation}
 order, our {\bf min} aggregation will never see a fact (i.e., a \ol{path}
-tuple) that disputes and earlier deduction.  That is, the naive and seminaive
-evaluations derive \ol{path} tuples of length $k$ from {\bf all} \ol{path}
-tuples of length $k-1$, and therefore it will not discover a path of length $j
-> k$ with a lower cost~\footnote{This assumes that the cost of a \ol{path}
-tuple is proportional to it's length i.e., the triangle inequality.}.
+tuple) that disputes and earlier deduction.  That is, the na\"{\i}ve and
+semina\"{\i}ve evaluations derive \ol{path} tuples of length $k$ from {\bf all}
+\ol{path} tuples of length $k-1$, and therefore it will not discover a path of
+length $j > k$ with a lower cost~\footnote{This assumes that the cost of a
+\ol{path} tuple is proportional to it's length i.e., the triangle inequality.}.
 
 Many of the programs described in this thesis are not stratified, and of those,
 all are locally stratified.  For example, the System R rules presented in

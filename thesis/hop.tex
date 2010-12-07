@@ -12,13 +12,14 @@ in large deployments, which have a high probability of slowdowns or failures at
 worker nodes. However, batch-processing is not a requirement for fault tolerance. 
 Moreover, batch-processing prevents many online data processing
 strategies~\cite{onlineagg, borealis, stream, tcq-cidr} and its aggressive materialization
-strategy can be costly in terms of energy efficiency~\cite{yanpei}.
+strategy can be costly in terms of efficiency e.g., energy~\cite{yanpei}.
 
-In this chapter, we propose a modified MapReduce architecture in which intermediate data is
-\emph{pipelined} between operators, while preserving the programming interfaces
-and fault tolerance models of previous MapReduce frameworks. To validate this
-design, we developed the Hadoop Online Prototype (HOP), a pipelining version of
-Hadoop.\footnote{The source code for HOP can be downloaded from \url{http://code.google.com/p/hop/}}
+In this chapter, we propose a modified MapReduce architecture in which
+intermediate data is \emph{pipelined} between operators, while preserving the
+programming interfaces and fault tolerance models of previous MapReduce
+frameworks.  To validate this design, we developed the Hadoop Online Prototype
+(HOP), a pipelining version of Hadoop.\footnote{The source code for HOP can be
+downloaded from \url{http://code.google.com/p/hop/}}
 
 Pipelining provides several important advantages to a MapReduce
 framework, but also raises new design challenges. We highlight the
@@ -49,77 +50,93 @@ potential benefits first:
   up to 25\% in some scenarios.
 \end{itemize}
 
-Pipelining raises several design challenges. First, Google's attractively simple
-MapReduce fault tolerance mechanism is predicated on the materialization of
-intermediate state. In Section~\ref{ch:hop:sec:ft}, we show that this can coexist with
-pipelining, by allowing producers to periodically ship data to consumers in
-parallel with their materialization.  A second challenge arises from the greedy
-communication implicit in pipelines, which is at odds with batch-oriented
-optimizations supported by ``combiners'': map-side code that reduces network
-utilization by performing pre-aggregation before
-communication. We discuss how the HOP design addresses this issue in
-Section~\ref{ch:hop:sec:intra-pipe}.  Finally, pipelining requires that producers and
-consumers are co-scheduled intelligently; we discuss our initial work on this
-issue in Section~\ref{ch:hop:sec:jolport}.
+Pipelining raises several design challenges.  First, Google's attractively
+simple MapReduce fault tolerance mechanism is predicated on the materialization
+of intermediate state.  In Section~\ref{ch:hop:sec:ft}, we show that this can
+coexist with pipelining, by allowing producers to periodically ship data to
+consumers in parallel with data materialization.  A second challenge arises
+from the greedy communication implicit in pipelines, which is at odds with
+batch-oriented optimizations supported by ``combiners'': map-side code that
+reduces network utilization by performing pre-aggregation before communication.
+We discuss how the HOP design addresses this issue in
+Section~\ref{ch:hop:sec:intra-pipe}.  Finally, pipelining requires that
+producers and consumers are co-scheduled intelligently; we discuss our initial
+work on this issue in Section~\ref{ch:hop:sec:jolport}.
 
-We develop the design of HOP's pipelining scheme in Section~\ref{ch:hop:sec:pipelining}, keeping the
-focus on traditional batch processing tasks.  In Section~\ref{ch:hop:sec:online} we
-show how HOP can support online aggregation for long-running jobs and illustrate
-the potential benefits of that interface for MapReduce tasks.  In
-Section~\ref{ch:hop:sec:continuous} we describe our support for continuous MapReduce
-jobs over data streams and demonstrate an example of near-real-time cluster
-monitoring. HOP presents new challenges and opportunities in terms of task scheduling.
-In Section~\ref{ch:hop:sec:boom} we discuss our port of the \BOOM-MR declarative scheduler to HOP. 
-We then present some new scheduling policies that deal with online aggregation and continuous jobs along 
-with a new speculation policy that is based on statistics collected by a continuous MapReduce job that monitors 
-the cluster. We conclude this chapter with some related work in Section~\ref{ch:hop:sec:relwork} and 
-postpone future work for Chapter~\ref{ch:conclusion}.
+We develop the design of HOP's pipelining scheme in
+Section~\ref{ch:hop:sec:pipelining}, keeping the focus on traditional batch
+processing tasks.  In Section~\ref{ch:hop:sec:online} we show how HOP can
+support online aggregation for long-running jobs and illustrate the potential
+benefits of that interface for MapReduce tasks.  In
+Section~\ref{ch:hop:sec:continuous} we describe our support for continuous
+MapReduce jobs over data streams and demonstrate an example of near-real-time
+cluster monitoring.  HOP presents new challenges and opportunities in terms of
+task scheduling.  In Section~\ref{ch:hop:sec:boom} we discuss our port of the
+\BOOM-MR declarative scheduler to HOP.  We then present some new scheduling
+policies that deal with online aggregation and continuous jobs along with a new
+speculation policy that is based on statistics collected by a continuous
+MapReduce job that monitors the cluster.  We conclude this chapter with some
+related work in Section~\ref{ch:hop:sec:relwork} and postpone future work for
+Chapter~\ref{ch:conclusion}.
 
 \section{Pipelined MapReduce}
 \label{ch:hop:sec:pipelining}
-%\begin{figure}[t]
-%  \centering
-%        \includegraphics[width=0.90\linewidth]{figures/dataflow_arch.pdf}
-%       \caption{Hadoop dataflow for batch (left) and pipelined (right) processing of MapReduce computations.}
-%        \label{fig:pipeline}
-%\end{figure}
 
 In this section we discuss our extensions to Hadoop to support pipelining
 between tasks (Section~\ref{ch:hop:sec:intra-pipe}) and between jobs
-(Section~\ref{ch:hop:sec:inter-pipe}).  We describe how our design supports fault
-tolerance (Section~\ref{ch:hop:sec:ft}). Section~\ref{ch:hop:sec:perf}
-compares the performance of pipelining and blocking execution modes. 
+(Section~\ref{ch:hop:sec:inter-pipe}).  We describe how our design supports
+fault tolerance (Section~\ref{ch:hop:sec:ft}) and compare the performance HOP
+under both pipelining and blocking execution modes
+(Section~\ref{ch:hop:sec:perf}).
 
-%Figure~\ref{fig:pipeline} depicts the dataflow of two MapReduce
-%implementations. The dataflow on the left corresponds to the output
-%materialization approach used by regular Hadoop; the dataflow on the right
-%allows pipelining. In the remainder of this section, we present our design and
-%implementation for the pipelined Hadoop dataflow. We describe how our design
-%supports fault tolerance (Section~\ref{ch:hop:sec:ft}), and discuss the interaction
-%between pipelining and task scheduling (Section~\ref{ch:hop:sec:pipeline-sched}).
+%\begin{figure}[t]
+%  \centering
+%  \includegraphics[width=0.90\linewidth]{figures/dataflow_arch.pdf}
+%  \caption{Hadoop dataflow for batch (left) and pipelined (right) processing of MapReduce computations.}
+%  \label{ch:hop:fig:pipeline}
+%\end{figure}
+%Figure~\ref{ch:hop:fig:pipeline} depicts the dataflow of two MapReduce
+%configurations.  The dataflow on the left describes the materialization
+%approach followed by stock Hadoop, while the dataflow on the right allows
+%pipelining.  In the remainder of this section, we present our design and
+%implementation for the pipelined Hadoop dataflow.  We describe how our design
+%supports fault tolerance (Section~\ref{ch:hop:sec:ft}), and discuss the
+%interaction between pipelining and task scheduling
+%(Section~\ref{ch:hop:sec:pipeline-sched}).
 
 \subsection{Pipelining Within A Job}
 \label{ch:hop:sec:intra-pipe}
-As described in Section~\ref{ch:mrback:sec:reducetask}, reduce tasks
-traditionally issue HTTP requests to \emph{pull} their output from
-each {\TT}. This means that map task execution is completely decoupled
-from reduce task execution. To support pipelining, we modified the map
-task to instead \emph{push} data to reducers as it is produced. To
-give an intuition for how this works, we begin by describing a
-straightforward pipelining design, and then discuss the changes we
-had to make to achieve good performance.
+
+As described in Section~\ref{ch:hadoop:sec:reducetask}, reduce tasks
+traditionally issue HTTP requests to \emph{pull} their input from each {\TT}
+that hosted a map task belonging to the same job.  A \TT is responsible for
+serving these HTTP requests, which could occur long after the map task's
+execution.  This means that map task execution is completely decoupled from
+reduce task execution.  To support pipelining, we modified the \TT serving
+component to \emph{push} data to reducers as it is produced by the map tasks.
+To give an intuition for how this works, we begin by describing a
+straightforward pipelining design, and then discuss the changes we had to make
+to achieve good performance.
 
 \subsubsection{Na\"{\i}ve Pipelining}
 \label{ch:hop:sec:naive}
+
 In our na\"{\i}ve implementation, we modified Hadoop to send data directly from
-map to reduce tasks. When a client submits a new job to Hadoop, the {\JT}
-assigns the map and reduce tasks associated with the job to the available {\TT}
-slots. For purposes of discussion, we assume that there are enough free slots to
-assign all the tasks for each job. We modified Hadoop so that each reduce task
-contacts every map task upon initiation of the job, and opens a TCP socket which
-will be used to pipeline the output of the map function. As each map output
-record is produced, the mapper determines which partition (reduce task) the
-record should be sent to, and immediately sends it via the appropriate socket.
+map to reduce tasks.  Immediately, this design couples the execution of map and
+reduce task executions, forcing us to schedule {\em all} reduce tasks before
+any one map task.  Consequently, this design does not scale, most notably when
+there is not sufficient reduce task slot capacity, but there are other
+ramifications that we discuss here before presenting the HOP design.
+
+Recall, that when a client submits a new job to Hadoop, the {\JT} assigns the
+map and reduce tasks associated with the job to the available {\TT} slots.  For
+purposes of this discussion, we must assume that there are enough free slots to
+assign all reduce tasks in a job.  We modified Hadoop so that each reduce task
+contacts every map task upon initiation of the job, and opens a TCP socket
+which will be used to pipeline the output of the map function.  As each map
+output record is produced, the mapper determines which partition (reduce task)
+the record should be sent to, and immediately sends it via the appropriate
+socket.
 
 A reduce task accepts the pipelined data it receives from each map task and
 stores it in an in-memory buffer, spilling sorted runs of the buffer to disk as
@@ -129,97 +146,102 @@ reduce function as normal.
 
 \subsubsection{Refinements}
 \label{ch:hop:sec:pipe-refine}
-While the algorithm described above is straightforward, it suffers
-from several practical problems. First, it is possible that there will
-not be enough slots available to schedule every task in a new
-job. Opening a socket between every map and reduce task also requires
-a large number of TCP connections. A simple tweak to the na\"{\i}ve
-design solves both problems: if a reduce task has not yet been
-scheduled, any map tasks that produce records for that partition
-simply write them to disk. Once the reduce task is assigned a slot, it
-can then pull the records from the map task, as in regular Hadoop.  To
-reduce the number of concurrent TCP connections, each reducer can be
-configured to pipeline data from a bounded number of mappers at once; the
-reducer will pull data from the remaining map tasks in the traditional
-Hadoop manner.
 
-% nrc: Not interesting?
+While the algorithm described above is straightforward, it suffers from several
+practical problems.  First, it is possible that there will not be enough slots
+available to schedule every task in a new job.  Opening a socket between every
+map and reduce task also requires a large number of TCP connections.  A simple
+tweak to the na\"{\i}ve design solves both problems: if a reduce task has not
+yet been scheduled, any map tasks that produce records for that partition
+simply write them to disk.  When the map task completes it registers the output
+it was not able to send with the host \TT serving component.  Once the reduce
+task is assigned a slot, it can then pull the records from the map task \TT, as
+in regular Hadoop.  To reduce the number of concurrent TCP connections, each
+reducer can be configured to pipeline data from a bounded number of mappers at
+once; the reducer will pull data from the remaining map tasks in the
+traditional Hadoop manner.
+
 Our initial pipelining implementation suffered from a second problem: the map
 function was invoked by the same thread that wrote output records to the
-pipeline sockets. This meant that if a network I/O operation blocked (e.g.,
+pipeline sockets.  This meant that if a network I/O operation blocked (e.g.,
 because the reducer was over-utilized), the mapper was prevented from doing
-useful work. Pipeline stalls should not prevent a map task from making
-progress---especially since, once a task has completed, it frees a {\TT} slot
-to be used for other purposes. We solved this problem by running the map
-function in a separate thread that stores its output in an in-memory buffer, and
-then having another thread periodically send the contents of the buffer to the
-connected reducers.
+useful work.  Pipeline stalls should not prevent a map task from making
+progress -- especially since, once a task has completed, it frees a {\TT} slot
+to be used for other purposes.  We solved this problem by running the map
+function in a separate thread that stores its output in an in-memory buffer,
+and then having another thread periodically send the contents of the buffer to
+the connected reducers.~\footnote{This code was based on the existing Hadoop
+SpillThread component, which is responsible for writing map output to disk
+concurrently with the ``map function.''}
 
 \subsubsection{Granularity of Map Output}
 \label{ch:hop:sec:mapout}
 
-Another problem with the na\"{\i}ve design is that it eagerly sends
-each record as soon as it is produced, which prevents the use of
-map-side combiners. Imagine a job where the reduce key has few
-distinct values (e.g., gender), and the reduce applies an aggregate
-function (e.g., count). As discussed in Section~\ref{ch:mrback:sec:progmodel},
-combiners allow map-side ``pre-aggregation'': by applying a
-reduce-like function to each distinct key at the mapper, network
-traffic can often be substantially reduced. Eagerly pipelining each
-record as it is produced prevents the use of map-side combiners.
+Another problem with the na\"{\i}ve design is that it eagerly sends each record
+as soon as it is produced, which prevents the use of map-side combiners.
+Imagine a job where the reduce key has few distinct values (e.g., gender), and
+the reduce applies an aggregate function (e.g., count).  As discussed in
+Section~\ref{ch:hadoop:sec:progmodel}, combiners allow map-side
+``pre-aggregation'': by applying a reduce-like function to each distinct key at
+the mapper, network traffic can often be substantially reduced.  Eagerly
+pipelining each record as it is produced prevents the use of map-side
+combiners.
 
-A related problem is that eager pipelining moves some of the sorting
-work from the mapper to the reducer. Recall from Section~\ref{ch:mrback:sec:maptask}
-that in the blocking architecture, map tasks generate sorted spill files: all the reduce
-task must do is merge together the pre-sorted map output for each
-partition. In the na\"{\i}ve pipelining design, map tasks send output
-records in the order in which they are generated, so the reducer must
-perform a full external sort. Because the number of map tasks
-typically far exceeds the number of reduces~\cite{mapreduce-osdi},
-moving more work to the reducer increased response time in our
-experiments.
+Another related problem is that eager pipelining moves some of the sorting work
+from the mapper to the reducer.  Recall from
+Section~\ref{ch:hadoop:sec:maptask} that in the blocking architecture, map
+tasks generate sorted spill files: all the reduce task must do is merge
+together the pre-sorted map output for each partition.  In the na\"{\i}ve
+pipelining design, map tasks send output records in the order in which they are
+generated, so a reducer (scheduled early) must perform a full external sort.
+Because the number of map tasks typically far exceeds the number of
+reduces~\cite{mapreduce-osdi}, moving more work to the reducer increased
+response time, as shown in our experiments (Section~\ref{ch:hop:sec:perf}).
 
 We addressed these issues by modifying the in-memory buffer design described in
-Section~\ref{ch:hop:sec:pipe-refine}. Instead of sending the buffer contents to
-reducers directly, we wait for the buffer to grow to a threshold
-size. The mapper then applies the combiner function, sorts the output by
-partition and reduce key, and writes the buffer to disk using the spill file
-format described in Figure~\ref{ch:mrback:fig:mapoutput}.
+Section~\ref{ch:hop:sec:pipe-refine}.  Instead of sending the buffer contents
+to reducers directly, we wait for the buffer to grow to a threshold size.  The
+mapper then applies the combiner function, sorts the output by partition and
+reduce key, and writes the buffer to disk using the Hadoop spill file format
+described in Figure~\ref{ch:hadoop:fig:mapoutput}.
 
-Next, we arranged for the {\TT} at each node to handle pipelining data to reduce
-tasks. Map tasks register spill files with the {\TT} via RPCs. If the reducers
-are able to keep up with the production of map outputs and the network is not a
-bottleneck, a spill file will be sent to a reducer soon after it has been
-produced (in which case, the spill file is likely still resident in the map
-machine's kernel buffer cache). However, if a reducer begins to fall behind, the
-number of unsent spill files will grow.
+Next, we arranged for the {\TT} serving component at each node to handle
+pipelining data to reduce tasks.  Map tasks register spill files with the {\TT}
+via RPCs~\footnote{We extended the existing RPC Hadoop interface to include
+information on individual spill files.  Having the spill files be in the same
+format allowed us to reuse much of the stock Hadoop serving code i.e., I/O file
+formats/streams.}.  If the reducers are able to keep up with the production of
+map outputs and the network is not a bottleneck, a spill file will be sent to a
+reducer soon after it has been produced (in which case, the spill file is
+likely still resident in the map machine's kernel buffer cache).  However, if a
+reducer begins to fall behind, the number of unsent spill files will grow.
 
 When a map task generates a new spill file, it first queries the {\TT} for the
-number of unsent spill files. If this number grows beyond a certain threshold
+number of unsent spill files.  If this number grows beyond a certain threshold
 (two unsent spill files in our experiments), the map task does not immediately
-register the new spill file with the {\TT}. Instead, the mapper will accumulate
-multiple spill files. Once the queue of unsent spill files falls below the
-threshold, the map task merges and combines the accumulated spill files into a
-single file, and then resumes registering its output with the {\TT}. This simple
-flow control mechanism has the effect of \emph{adaptively} moving load from the
-reducer to the mapper or vice versa, depending on which node is the current
-bottleneck.
+register the new spill file with the {\TT}.  Instead, the mapper will
+accumulate multiple spill files.  Once the queue of unsent spill files falls
+below the threshold, the map task merges and combines the accumulated spill
+files into a single file, and then resumes registering its output with the
+{\TT}.  This simple flow control mechanism has the effect of \emph{adaptively}
+moving load from the reducer to the mapper or vice versa, depending on which
+node is the current bottleneck.
 
 A similar mechanism is also used to control how aggressively the combiner
-function is applied. The map task records the ratio between the input and output
-data sizes whenever it invokes the combiner function. If the combiner is
-effective at reducing data volumes, the map task accumulates more spill files
-(and applies the combiner function to all of them) before registering that
-output with the {\TT} for pipelining.\footnote{Our current prototype uses a
-  simple heuristic: if the combiner reduces data volume by $\frac{1}{k}$ on
-  average, we wait until $k$ spill files have accumulated before registering
-  them with the {\TT}. A better heuristic would also account for the computational
-  cost of applying the combiner function.}
+function is applied.  The map task records the ratio between the input and
+output data sizes whenever it invokes the combiner function.  If the combiner
+is effective at reducing data volumes, the map task accumulates more spill
+files (and applies the combiner function to all of them) before registering
+that output with the {\TT} for pipelining.\footnote{Our current prototype uses
+a simple heuristic: if the combiner reduces data volume by $\frac{1}{k}$ on
+average, we wait until $k$ spill files have accumulated before registering them
+with the {\TT}.  A better heuristic would also account for the computational
+cost of applying the combiner function.}
 
 The connection between pipelining and adaptive query processing techniques has
-been observed elsewhere (e.g.,~\cite{eddies}). The adaptive scheme outlined
-above is relatively simple, but we believe that adapting to feedback along
-pipelines has the potential to significantly improve the utilization of
+been observed elsewhere (e.g.,~\cite{eddies, bamboo}).  The adaptive scheme
+outlined above is relatively simple, but we believe that adapting to feedback
+along pipelines has the potential to significantly improve the utilization of
 MapReduce clusters.
 
 \subsection{Pipelining Between Jobs}
@@ -287,6 +309,70 @@ speculative execution of ``backup'' tasks~\cite{mapreduce-osdi}.
 \subsection{Performance Evaluation}
 \label{ch:hop:sec:perf}
 
+A thorough performance comparison between pipelining and blocking is not the
+focus of this work.  Nevertheless, as future work we plan to investigate a
+rule-based (e.g., Evita Raced) optimizer for Hadoop MapReduce that considers
+pipelined plans in its search strategy.  In this section, we demonstrate that
+pipelining can reduce job completion times in some configurations and should be
+considered by any such optimizer.
+
+We report performance using both large (512MB) and small (32MB) HDFS block
+sizes using a single workload (a wordcount job over randomly-generated text).
+Since the words were generated using a uniform distribution, map-side combiners
+were ineffective for this workload.  We performed all experiments using
+relatively small clusters of Amazon EC2 nodes.  We also did not consider
+performance in an environment where multiple concurrent jobs are executing
+simultaneously.
+
+\subsubsection{Background and Configuration}
+
+Before diving into the performance experiments, it is important to further
+describe the division of labor in a HOP job, which is broken into task phases.
+A map task consists of two work phases: {\em map} and {\em sort}.  Much of the
+work performed during the job happens in the {\em map} phase, where the map
+function is applied to each record in the input and subsequently sent to an
+output buffer.  Once the entire input has been processed, the map task enters
+the {\em sort} phase, where a final merge sort of all intermediate spill files
+is performed before registering the final output with the \TT.  The progress
+reported by a map task corresponds to the {\em map} phase, which is overlapped
+with many in-memory record buffer sorts and subsequent spills to local files.
+
+A reduce task in HOP is divided into three work phases: {\em shuffle}, {\em
+reduce}, and {\em commit}.  In the {\em shuffle} phase, reduce tasks receive
+their portion of the output from each map.  In HOP, the {\em shuffle} phase
+consumes 75\% of the overall reduce task progress while the remaining 25\% is
+allocated to the {\em reduce} and {\em commit} phase.~\footnote{The stock
+version of Hadoop divides the reduce progress evenly among the three phases.
+We deviated from this approach because we wanted to focus more on the progress
+during the {\em shuffle} phase.} In the {\em shuffle} phase, reduce tasks
+periodically perform a merge sort on the already received map output.  These
+intermediate merge sorts decrease the amount of sorting work performed at the
+end of the {\em shuffle} phase.  After receiving its portion of data from all
+map tasks, the reduce task performs a final merge sort and enters the {\em
+reduce} phase.
+
+By pushing work from map tasks to reduce tasks more aggressively, pipelining
+can enable better overlapping of map and reduce computation, especially when
+the node on which a reduce task is scheduled would otherwise be underutilized.
+However, when reduce tasks are already the bottleneck, pipelining offers fewer
+performance benefits, and may even hurt performance by placing additional load
+on the reduce nodes.
+
+The {\em sort} phase in the map task minimizes the merging work that reduce
+tasks must perform at the end of the {\em shuffle} phase.  When pipelining is
+enabled, the {\em sort} phase is avoided since map tasks have already sent some
+fraction of the spill files to concurrently running reduce tasks.  Therefore,
+pipelining increases the merging workload placed on the reducer.  The adaptive
+pipelining scheme described in Section~\ref{ch:hop:sec:mapout} attempts to
+ensure that reduce tasks are not overwhelmed with additional load.
+
+We used two Amazon EC2 clusters depending on the size of the experiment:
+``small'' jobs used 10 worker nodes, while ``large'' jobs used 20.  Each node
+was an ``extra large'' EC2 instances with 15GB of memory and four virtual
+cores, each running at 2.4GHz with a 2GB L2 cache.
+
+\subsubsection{Small Job Results}
+
 \begin{figure*}[t]
 \ssp
 \begin{minipage}{0.5\linewidth}
@@ -300,7 +386,7 @@ speculative execution of ``backup'' tasks~\cite{mapreduce-osdi}.
 \caption{CDF of map and reduce task completion times for a 10GB wordcount job
   using 20 map tasks and 5 reduce tasks (512MB block size). The total job
   runtimes were 561 seconds for blocking and 462 seconds for pipelining.}
-\label{fig:wc1}
+\label{ch:hop:fig:wc1}
 \end{figure*}
 
 \begin{figure*}[t]
@@ -316,7 +402,7 @@ speculative execution of ``backup'' tasks~\cite{mapreduce-osdi}.
 \caption{CDF of map and reduce task completion times for a 10GB wordcount job
   using 20 map tasks and 20 reduce tasks (512MB block size). The total job
   runtimes were 361 seconds for blocking and 290 seconds for pipelining.}
-\label{fig:wc2}
+\label{ch:hop:fig:wc2}
 \end{figure*}
 
 \begin{figure*}[t]
@@ -332,21 +418,55 @@ speculative execution of ``backup'' tasks~\cite{mapreduce-osdi}.
 \caption{CDF of map and reduce task completion times for a 10GB wordcount job
   using 20 map tasks and 1 reduce task (512MB block size). The total job
   runtimes were 29 minutes for blocking and 34 minutes for pipelining.}
-\label{fig:wc3}
+\label{ch:hop:fig:wc3}
 \end{figure*}
 
-A thorough performance comparison between pipelining and blocking is not the
-focus of this dissertation. Nevertheless, as future work we plan to investigate a rule-based (e.g., Evita Raced)
-optimizer for Hadoop MapReduce that considers pipelined plans in its search strategy. In this 
-section, we demonstrate that pipelining can reduce job completion times in some configurations
-and should be considered by any such optimizer. 
 
-We report performance using both large (512MB) and small (32MB) HDFS block sizes
-using a single workload (a wordcount job over randomly-generated text). Since
-the words were generated using a uniform distribution, map-side combiners were
-ineffective for this workload. We performed all experiments using relatively
-small clusters of Amazon EC2 nodes. We also did not consider performance in an
-environment where multiple concurrent jobs are executing simultaneously.
+Our first experiment focused on the performance of small jobs in an
+underutilized cluster.  We ran a 10GB wordcount with a 512MB block size,
+yielding 20 map tasks (one per block).  We used 10 worker nodes and configured
+each worker to execute at most two map and two reduce tasks simultaneously.  We
+ran several experiments to compare the performance of blocking and pipelining
+using different numbers of reduce tasks.  For each experiment, we report the
+average progress over five separate runs. 
+
+Figure~\ref{ch:hop:fig:wc1} reports the results of a job configured with five
+reduce tasks.  A plateau can be seen at 75\% progress for both blocking and
+pipelining.  At this point in the job, all reduce tasks have completed the {\em
+shuffle} phase; the plateau is caused by the time taken to perform a final
+merge of all map output before entering the {\em reduce} phase.  Notice that
+the plateau for the pipelining case is shorter.  With pipelining, reduce tasks
+receive map outputs much earlier and can begin sorting earlier, thereby
+reducing the time required for the final merge.
+
+Figure~\ref{ch:hop:fig:wc2} reports the results with twenty reduce tasks.
+Using more reduce tasks decreases the amount of merging that any one reduce
+task must perform, which reduces the duration of the plateau at 75\% progress.
+In the blocking case, the plateau is practically gone.  However, with
+pipelining we still see a small plateau at 75\% that, through further analysis
+using \ol{iostat}, can be attributed to extra disk I/Os in the pipelining case.
+This extra memory pressure is due to diminished effectiveness of the combiner
+in the pipelining case.  Although the response time of pipelining job is better
+than the blocking, a job that contains a more effective combiner may be better
+executed in blocking mode.
+
+We further note that in both experiments, the map phase finishes faster with
+blocking than with pipelining.  This is because pipelining allows reduce tasks
+to begin executing more quickly; hence, the reduce tasks compete for resources
+with the map tasks, causing the map phase to take slightly longer.  In this
+case, the increase in map duration is outweighed by the increase in cluster
+utilization, resulting in shorter job completion times: pipelining reduced
+completion time by 17.7\% with 5 reducers and by 19.7\% with 20 reducers.
+
+Figure~\ref{ch:hop:fig:wc3} describes an experiment in which we ran a 10GB
+wordcount job using a single reduce task.  This caused job completion times to
+increase dramatically for both pipelining and blocking, because of the extreme
+load placed on the reduce node.  Pipelining delayed job completion by
+\texttildelow{}17\%, which suggests that our simple adaptive flow control
+scheme (Section~\ref{ch:hop:sec:mapout}) was unable to move load back to the
+map tasks aggressively enough.
+
+\subsubsection{Large Job Results}
 
 \begin{figure*}[t]
 \ssp
@@ -361,7 +481,7 @@ environment where multiple concurrent jobs are executing simultaneously.
 \caption{CDF of map and reduce task completion times for a 100GB wordcount job
   using 240 map tasks and 60 reduce tasks (512MB block size). The total job
   runtimes were 48 minutes for blocking and 36 minutes for pipelining.}
-\label{fig:wc4}
+\label{ch:hop:fig:wc4}
 \end{figure*}
 
 \begin{figure*}[t]
@@ -377,97 +497,9 @@ environment where multiple concurrent jobs are executing simultaneously.
 \caption{CDF of map and reduce task completion times for a 100GB wordcount job
   using 3120 map tasks and 60 reduce tasks (32MB block size). The total job
   runtimes were 42 minutes for blocking and 34 minutes for pipelining.}
-\label{fig:wc5}
+\label{ch:hop:fig:wc5}
 \end{figure*}
 
-\subsubsection{Background and Configuration}
-Before diving into the performance experiments, it is important to further
-describe the division of labor in a HOP job, which is broken into task phases. A
-map task consists of two work phases: {\em map} and {\em sort}. The majority
-of work is performed in the {\em map} phase, where the map function is applied
-to each record in the input and subsequently sent to an output buffer.  Once the
-entire input has been processed, the map task enters the {\em sort} phase, where
-a final merge sort of all intermediate spill files is performed before
-registering the final output with the \TT. The progress reported by a map task
-corresponds to the {\em map} phase only.
-
-A reduce task in HOP is divided into three work phases: {\em shuffle}, {\em
-  reduce}, and {\em commit}.  In the {\em shuffle} phase, reduce tasks receive
-their portion of the output from each map.  In HOP, the {\em shuffle} phase
-consumes 75\% of the overall reduce task progress while the remaining 25\% is
-allocated to the {\em reduce} and {\em commit} phase.\footnote{The stock version
-  of Hadoop divides the reduce progress evenly among the three phases. We
-  deviated from this approach because we wanted to focus more on the progress
-  during the {\em shuffle} phase.}  In the {\em shuffle} phase, reduce tasks
-periodically perform a merge sort on the already received map output. These
-intermediate merge sorts decrease the amount of sorting work performed at the
-end of the {\em shuffle} phase. After receiving its portion of data from all map
-tasks, the reduce task performs a final merge sort and enters the {\em reduce}
-phase.
-
-By pushing work from map tasks to reduce tasks more aggressively, pipelining can
-enable better overlapping of map and reduce computation, especially when the
-node on which a reduce task is scheduled would otherwise be
-underutilized. However, when reduce tasks are already the bottleneck, pipelining
-offers fewer performance benefits, and may even hurt performance by placing
-additional load on the reduce nodes.
-
-The {\em sort} phase in the map task minimizes the merging work that reduce
-tasks must perform at the end of the {\em shuffle} phase. When pipelining is
-enabled, the {\em sort} phase is avoided since map tasks have already sent some
-fraction of the spill files to concurrently running reduce tasks. Therefore,
-pipelining increases the merging workload placed on the reducer. The adaptive
-pipelining scheme described in Section~\ref{ch:hop:sec:mapout} attempts to ensure that
-reduce tasks are not overwhelmed with additional load.
-
-We used two Amazon EC2 clusters depending on the size of the experiment:
-``small'' jobs used 10 worker nodes, while ``large'' jobs used 20. Each node
-was an ``extra large'' EC2 instances with 15GB of memory and four virtual cores.
-
-\subsubsection{Small Job Results}
-Our first experiment focused on the performance of small jobs in an
-underutilized cluster. We ran a 10GB wordcount with a 512MB block size, yielding
-20 map tasks. We used 10 worker nodes and configured each worker to execute at
-most two map and two reduce tasks simultaneously. We ran several experiments to
-compare the performance of blocking and pipelining using different numbers of
-reduce tasks.
-
-Figure~\ref{fig:wc1} reports the results with five reduce tasks. A plateau can
-be seen at 75\% progress for both blocking and pipelining. At this point in the
-job, all reduce tasks have completed the {\em shuffle} phase; the plateau is
-caused by the time taken to perform a final merge of all map output before
-entering the {\em reduce} phase. Notice that the plateau for the pipelining case
-is shorter. With pipelining, reduce tasks receive map outputs earlier and can
-begin sorting earlier, thereby reducing the time required for the final merge.
-
-Figure~\ref{fig:wc2} reports the results with twenty reduce tasks. Using more
-reduce tasks decreases the amount of merging that any one reduce task must
-perform, which reduces the duration of the plateau at 75\% progress. In the
-blocking case, the plateau is practically gone.%  However, with pipelining we
-% still see a small plateau at 75\%, which means that the final sort spilled to
-% disk. Since the combiner is not executed on the full map output, pipelining can
-% add extra memory pressure over blocking. That extra memory pressure for this
-% experiment was not enough slow pipelining down over blocking. However, a job
-% that contains a more effective combiner may be better executed in blocking
-% mode.
-
-Note that in both experiments, the map phase finishes faster with blocking than
-with pipelining. This is because pipelining allows reduce tasks to begin
-executing more quickly; hence, the reduce tasks compete for resources with the
-map tasks, causing the map phase to take slightly longer. In this case, the
-increase in map duration is outweighed by the increase in cluster utilization,
-resulting in shorter job completion times: pipelining reduced completion time by
-17.7\% with 5 reducers and by 19.7\% with 20 reducers.
-
-Figure~\ref{fig:wc3} describes an experiment in which we ran a 10GB wordcount
-job using a single reduce task. This caused job completion times to increase
-dramatically for both pipelining and blocking, because of the extreme load
-placed on the reduce node. Pipelining delayed job completion by
-\texttildelow{}17\%, which suggests that our simple adaptive flow control scheme
-(Section~\ref{ch:hop:sec:mapout}) was unable to move load back to the map tasks
-aggressively enough.
-
-\subsubsection{Large Job Results}
 Our second set of experiments focused on the performance of somewhat larger
 jobs. We increased the input size to 100GB (from 10GB) and the number of worker
 nodes to 20 (from 10). Each worker was configured to execute at most four map
@@ -478,39 +510,41 @@ block sizes. We were interested in blocking performance with small block sizes
 because blocking can effectively emulate pipelining if the block size is small
 enough.
 
-Figure~\ref{fig:wc4} reports the performance of a 100GB wordcount job with 512MB
-blocks, which resulted in 240 map tasks, scheduled in three waves of 80 tasks
-each. The 60 reduce tasks were coscheduled with the first wave of map tasks. In
-the blocking case, the reduce tasks began working as soon as they received the
-output of the first wave, which is why the reduce progress begins to climb
-around four minutes (well before the completion of all maps). Pipelining was
-able to achieve significantly better cluster utilization, and hence reduced job
-completion time by \texttildelow{}25\%.
+Figure~\ref{ch:hop:fig:wc4} reports the performance of a 100GB wordcount job
+with 512MB blocks, which resulted in 240 map tasks, scheduled in three waves of
+80 tasks each.  The 60 reduce tasks were coscheduled with the first wave of map
+tasks.  In the blocking case, the reduce tasks began working as soon as they
+received the output of the first wave, which is why the reduce progress begins
+to climb around four minutes (well before the completion of all maps).
+Pipelining was able to achieve significantly better cluster utilization, and
+hence reduced job completion time by \texttildelow{}25\%.
 
-% Comparing the reduce progress in blocking to pipelining, we see that reduce
-% tasks make more progress during the {\em shuffle} phase when pipelining is
-% enabled. What is even more interesting is that the {\em reduce} phase is also
-% shorter in the case of pipelining. The reason for this is subtle; all reduce
-% tasks enter the {\em phase} around the same time since data is shipped in
-% smaller increments. In the blocking case, when the final wave of map tasks
-% finish they all try to send the entire output to reduce tasks at the same time,
-% which increases the variance on receiving the complete output from all map
-% tasks. That is, some reduce tasks enter the {\em reduce} phase well in advance
-% of others.
+Comparing the reduce progress in blocking to pipelining, we see that reduce
+tasks make more progress during the {\em shuffle} phase when pipelining is
+enabled. What is even more interesting is that the {\em reduce} phase is also
+shorter in the case of pipelining. The reason for this is subtle; all reduce
+tasks enter the {\em phase} around the same time since data is shipped in
+smaller increments. In the blocking case, when the final wave of map tasks
+finish they all try to send the entire output to reduce tasks at the same time,
+which increases the variance on receiving the complete output from all map
+tasks. That is, some reduce tasks enter the {\em reduce} phase well in advance
+of others.
 
-Figure~\ref{fig:wc5} reports the performance of blocking and pipelining using
-32MB blocks. While the performance of pipelining remained similar, the
-performance of blocking improved considerably, but still trailed somewhat behind
-pipelining. Using block sizes smaller than 32MB did not yield a significant
-performance improvement in our experiments.
+Figure~\ref{ch:hop:fig:wc5} reports the performance of blocking and pipelining
+using 32MB blocks.  While the performance of pipelining remained similar, the
+performance of blocking improved considerably, but still trailed somewhat
+behind pipelining.  Using block sizes smaller than 32MB did not yield a
+significant performance improvement in our experiments.
 
 % \subsection{Discussion}
 
-% As mentioned before, a complete performance evaluation is beyond the scope for this paper and we leave
-% such a study for future work. The focus here was to provide some initial insight into the performance benefits
-% of pipelining. We also wanted to evaluate the adaptive policy of our pipelining scheme. To this end, we
-% found such a policy paramount in discovering the right amount of pipelining to perform based on runtime
-% factors; network capacity and reduce task (consumer) load.
+% As mentioned before, a complete performance evaluation is beyond the scope
+% for this paper and we leave such a study for future work.  The focus here was
+% to provide some initial insight into the performance benefits of pipelining.
+% We also wanted to evaluate the adaptive policy of our pipelining scheme.  To
+% this end, we found such a policy paramount in discovering the right amount of
+% pipelining to perform based on runtime factors; network capacity and reduce
+% task (consumer) load.
 
 %\begin{figure*}[t]
 %\begin{minipage}{0.5\linewidth}
@@ -628,29 +662,27 @@ are enough reduce slots available.
 
 \subsubsection{Progress Metric}
 \label{ch:hop:sec:online-metric}
-Hadoop provides support for monitoring the progress of task
-executions. As each map task executes, it is assigned a \emph{progress
-  score} in the range [0,1], based on how much of its input the map
-task has consumed. We reused this feature to determine how much
-progress is represented by the current input to a reduce task, and
-hence to decide when a new snapshot should be taken.
 
-First, we modified the spill file format depicted in
-Figure~\ref{ch:mrback:fig:mapoutput} to include the map's current progress
-score. When a partition in a spill file is sent to a reducer, the
-spill file's progress score is also included. To compute the progress
-score for a snapshot, we take the average of the progress scores
-associated with each spill file used to produce the snapshot.
+Hadoop provides support for monitoring the progress of task executions.  As
+each map task executes, it is assigned a \emph{progress score} in the range
+[0,1], based on how much of its input the map task has consumed.  We reused
+this feature to determine how much progress is represented by the current input
+to a reduce task, and hence to decide when a new snapshot should be taken.
+When the transfer of a spill file to a reduce task occurs, we include a small
+amount of meta-data that indicates the map's current progress score, relative
+to that spill file.  To compute the overall progress score for a reduce step
+snapshot, we take the average of the progress scores associated with each map's
+data residing on the reduce task prior to executing the snapshot. 
 
-Note that it is possible that a map task might not have pipelined
-\emph{any} output to a reduce task, either because the map task has
-not been scheduled yet (there are no free {\TT} slots), the map tasks does 
-not produce any output for the given reduce task, or because the reduce task has 
-been configured to only pipeline data from at most $k$ map tasks concurrently. 
-To account for this, we need to scale the progress metric to reflect the portion 
-of the map tasks that a reduce task has pipelined data from: if a reducer is 
-connected to $\frac{1}{n}$ of the total number of map tasks in the job, we divide
-the average progress score by $n$.
+Note that it is possible to have a map task that has not pipelined \emph{any}
+output to a reduce task, either because the map task has not been scheduled yet
+(there are no free {\TT} slots), the map tasks does not produce any output for
+the given reduce task, or because the reduce task has been configured to only
+pipeline data from at most $k$ map tasks concurrently.  To account for this, we
+need to scale the progress metric to reflect the portion of the map tasks that
+a reduce task has pipelined data from: if a reducer is connected to
+$\frac{1}{n}$ of the total number of map tasks in the job, we divide the
+average progress score by $n$.
 
 This progress metric could easily be made more sophisticated: for example, an
 improved metric might include the selectivity ($|output|/|input|$) of each map task, the
@@ -669,30 +701,27 @@ represents an opportunity for future work.
 
 Online aggregation is particularly useful when applied to a long-running
 analysis task composed of multiple MapReduce jobs.  As described in
-Section~\ref{ch:hop:sec:inter-pipe}, our version of Hadoop allows the output of a
-reduce task to be sent directly to map tasks. This feature can be used to
+Section~\ref{ch:hop:sec:inter-pipe}, our version of Hadoop allows the output of
+a reduce task to be sent directly to map tasks.  This feature can be used to
 support online aggregation for a sequence of jobs.
 
-Suppose that $j_1$ and $j_2$ are two MapReduce jobs, and $j_2$
-consumes the output of $j_1$. When $j_1$'s reducers compute a snapshot
-to perform online aggregation, that snapshot is written to HDFS, and
-also sent directly to the map tasks of $j_2$. The map and reduce steps
-for $j_2$ are then computed as normal, to produce a snapshot of
-$j_2$'s output. This process can then be continued to support online
-aggregation for an arbitrarily long sequence of jobs.
+Suppose that $j_1$ and $j_2$ are two MapReduce jobs, and $j_2$ consumes the
+output of $j_1$.  When $j_1$'s reducers compute a snapshot to perform online
+aggregation, that snapshot is written to HDFS, and also sent directly to the
+map tasks of $j_2$.  The map and reduce steps for $j_2$ are then computed as
+normal, to produce a snapshot of $j_2$'s output.  This process can then be
+continued to support online aggregation for an arbitrarily long sequence of
+jobs.
   
-Unfortunately, inter-job online aggregation has some drawbacks. First,
-the output of a reduce function is not ``monotonic'': the output of a
-reduce function on the first 50\% of the input data may not be
-obviously related to the output of the reduce function on the first
-25\%. Thus, as new snapshots are produced by $j_1$, $j_2$ must be
-recomputed from scratch using the new snapshot. As with inter-job
-pipelining (Section~\ref{ch:hop:sec:inter-pipe}), this could be optimized for
-reduce functions that are declared to be distributive or algebraic
-aggregates~\cite{datacube}.
+Unfortunately, inter-job online aggregation has some drawbacks.  First, the
+output of a reduce function is not ``monotonic'': the output of a reduce
+function on the first 50\% of the input data may not be obviously related to
+the output of the reduce function on the first 25\%.  Thus, as new snapshots
+are produced by $j_1$, $j_2$ must be recomputed from scratch using the new
+snapshot.  As with inter-job pipelining (Section~\ref{ch:hop:sec:inter-pipe}),
+this could be optimized for reduce functions that are declared to be
+distributive or algebraic aggregates~\cite{datacube}.
 
-%%Fault tolerance with inter-job online aggregation is handled in three
-%%cases. 
 To support fault tolerance for multi-job online aggregation, we consider three
 cases. Tasks that fail in $j_1$ recover as described in Section~\ref{ch:hop:sec:ft}.
 If a task in $j_2$ fails, the system simply restarts the failed task. Since
@@ -737,15 +766,16 @@ stored in HDFS and then wait for snapshots with a higher progress score.
 \end{figure}
 
 To evaluate the effectiveness of online aggregation, we performed two
-experiments on Amazon EC2 using different data sets and query workloads. In our
-first experiment, we wrote a ``Top-$K$'' query using two MapReduce jobs: the
-first job counts the frequency of each word and the second job selects the $K$
-most frequent words. We ran this workload on 5.5GB of Wikipedia article text
-stored in HDFS, using a 128MB block size. We used a 60-node EC2 cluster; each
-node was a ``high-CPU medium'' EC2 instance with 1.7GB of RAM and 2 virtual
-cores. A virtual core is the equivalent of a 2007-era 2.5Ghz Intel Xeon
-processor. A single EC2 node executed the Hadoop \JT\ and the HDFS \NN, while
-the remaining nodes served as slaves for running the {\TT}s and HDFS {\DN}s.
+experiments on Amazon EC2 using different data sets and query workloads.  In
+our first experiment, we wrote a ``Top-$K$'' query using two MapReduce jobs:
+the first job counts the frequency of each word and the second job selects the
+$K$ most frequent words.  We ran this workload on 5.5GB of Wikipedia article
+text stored in HDFS, using a 128MB block size.  We used a 60-node EC2 cluster;
+each node was a ``high-CPU medium'' EC2 instance with 1.7GB of RAM and 2
+virtual cores.  A virtual core is the equivalent of a 2007-era 2.5Ghz Intel
+Xeon processor.  A single EC2 node executed the Hadoop \JT\ and the HDFS \NN,
+while the remaining nodes served as slaves for running the {\TT}s and HDFS
+{\DN}s.
 
 % To evaluate inter-job dataflow with online aggregation we wrote a
 % Top-$K$ query using two MapReduce jobs and executed it on 5.5GB of
@@ -770,13 +800,13 @@ the remaining nodes served as slaves for running the {\TT}s and HDFS {\DN}s.
 % execution, contributing to the early completion time of the job.
 
 Figure~\ref{fig:topkonlinewiki} shows the results of inter-job online
-aggregation for a Top-100 query. Our accuracy metric for this experiment is
-post-hoc --- we note the time at which the Top-$K$ words in the snapshot are the
-Top-$K$ words in the final result. Although the final result for this job did
-not appear until nearly the end, we did observe the Top-5, 10, and 20 values at
-the times indicated in the graph. The Wikipedia data set was biased toward these
-Top-K words (e.g., ``the'', ``is'', etc.), which remained in their correct
-position throughout the lifetime of the job.
+aggregation for a Top-100 query.  Our accuracy metric for this experiment is
+post-hoc --- we note the time at which the Top-$K$ words in the snapshot are
+the Top-$K$ words in the final result.  Although the final result for this job
+did not appear until nearly the end, we did observe the Top-5, 10, and 20
+values at the times indicated in the graph.  The Wikipedia data set was biased
+toward these Top-K words (e.g., ``the'', ``is'', etc.), which remained in their
+correct position throughout the lifetime of the job.
 
 \subsubsection{Approximation Metrics}
 
@@ -1061,13 +1091,13 @@ pipelines or even DAGs of such jobs that we plan to investigate in future.
 \begin{boxedminipage}{\linewidth}
 H1 {\bf scheduledReduceTasks}(JobId, count$<$TaskId$>$) :- \\
 \datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, StartTime, ...), \\
-\datalogspace $Type == "reduce"$, \\
-\datalogspace $StartTime > 0$; \\
+\datalogspace $Type\ ==\ "reduce"$, \\
+\datalogspace $StartTime\ >\ 0$; \\
 
 H2 {\bf canScheduleMaps}(JobId) :- \\
 \datalogspace {\bf job}(JobId, ..., JobType, ReduceTaskCount), \\
 \datalogspace {\bf scheduledReduceTasks}(JobId, Count), \\
-\datalogspace $JobType == "online" || JobType == "continuous"$, \\
+\datalogspace $JobType == "online"\ ||\ JobType == "continuous"$, \\
 \datalogspace $ReduceTaskCount == Count$; \\
 
 H3 {\bf canScheduleMaps}(JobId) :- \\
@@ -1080,21 +1110,30 @@ indicates when a job is able to schedule map tasks.}
 \end{figure}
 
 
-Online aggregation and continuous jobs require a scheduling policy that
-ensures execution of the entire pipeline. For a single job, this translates into a policy that
-schedules the reduce tasks before scheduling any map tasks for the given job. Not scheduling
-a reduce task in advance of the map tasks can result in significant bias results for the online 
-aggregation case and significant memory pressure in the continuous job case. 
+Online aggregation and continuous jobs rely on a scheduling policy that ensures
+the execution of the entire pipeline.  In the case of online aggregation, a
+more complete pipeline provides more accurate estimates since unscheduled
+partitions (i.e., groups) may contain important data.  For continuous jobs,
+scheduling the entire pipeline is a requirement in order to avoid the memory
+pressure in storing the (continuously arriving) data for an unscheduled
+operator.  For a single job, we created a policy that schedules the reduce
+tasks before any map tasks in the same job.  Not scheduling a reduce task in
+advance of the map tasks can result in significant biased results in the online
+aggregation case and significant memory pressure in the continuous job case.
 
-Figure~\ref{ch:hop:fig:schedmaps} shows three rules that together determine when a job is allowed
-to schedule map tasks. A separate admission controller rule ensures that the number of reduce tasks for an
-online aggregation or continuous job fits within the current cluster-wide slot capacity. For each job, rule H1 counts the 
-number of reduce tasks currently scheduled. The job relation includes the number of reduce tasks and, as part of the HOP 
-port, the job type. If the job type is either "online" or "continuous" then rule H2 will indicate that map tasks can be scheduled
-when the scheduled reduce task count is equal to the number of reduce tasks in the job. Rule H3 applies
-to all other job types, and it simply asserts that map tasks can be scheduled for the corresponding job. 
-The \ol{canScheduleMaps} predicate is added to rules that determine the scheduling of map tasks 
-(e.g., rule S4 in Figure~\ref{ch:boom:fig:schedule}).
+Figure~\ref{ch:hop:fig:schedmaps} shows three rules that together determine
+when a job is allowed to schedule map tasks.  A separate admission controller
+rule ensures that the number of reduce tasks for an online aggregation or
+continuous job fits within the current cluster-wide slot capacity.  For each
+job, rule H1 counts the number of reduce tasks currently scheduled.  The job
+relation includes the number of reduce tasks and, as part of the HOP port, the
+job type.  If the job type is either "online" or "continuous" then rule H2 will
+indicate that map tasks can be scheduled when the scheduled reduce task count
+is equal to the number of reduce tasks in the job.  Rule H3 applies to all
+other job types, and it simply asserts that map tasks can be scheduled for the
+corresponding job.  The \ol{canScheduleMaps} predicate is added to rules that
+determine the scheduling of map tasks (e.g., rule S4 in
+Figure~\ref{ch:boom:fig:schedule}).
 
 \section{Real-time monitoring with \JOL}
 \label{ch:hop:sec:jolmonitor}

@@ -57,7 +57,7 @@ scheduling of new tasks: if the \JT identifies free {\TT} slots, it will
 schedule further tasks on the {\TT}.
 
 \subsection{Map Task Execution}
-\label{ch:mrback:sec:maptask}
+\label{ch:hadoop:sec:maptask}
 
 \begin{figure*}[t]
 \ssp
@@ -107,7 +107,7 @@ OutputCollector spills this buffer to disk when it reaches capacity.
 A spill of the in-memory buffer involves first sorting the records in the
 buffer by partition number and then by key.  The buffer content is written to
 the local file system as an index file and a data file
-(Figure~\ref{ch:mrback:fig:mapoutput}).  The index file points to the offset of
+(Figure~\ref{ch:hadoop:fig:mapoutput}).  The index file points to the offset of
 each partition in the data file.  The data file contains only the records,
 which are sorted by the key within each partition segment.
 
@@ -122,11 +122,11 @@ tasks.
   \centering
   \includegraphics[scale=0.8]{figures/spill_file.pdf}
   \caption{Map task index and data file format (2 partition/reduce case).}
-  \label{ch:mrback:fig:mapoutput}
+  \label{ch:hadoop:fig:mapoutput}
 \end{figure}
 
 \subsection{Reduce Task Execution}
-\label{ch:mrback:sec:reducetask}
+\label{ch:hadoop:sec:reducetask}
 The execution of a reduce task is divided into three phases.
 \begin{enumerate}
 \item The \emph{shuffle} phase fetches the reduce task's input

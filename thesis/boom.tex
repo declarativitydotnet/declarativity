@@ -36,17 +36,17 @@ Section~\ref{ch:boom:sec:conclusion} provides a chapter summary.
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
 
-P2's lack of support for stratified Datalog forced us to implement 
-a number of imperative hacks. Most of these hacks involved detecting
-the termination of a group of rules, which would have been implicitly handled
-by imposing a stratum boundary (e.g., count aggregate). Our workaround involved
-adding a number of conditions that detected the stratum boundary. This
-was a hard lesson, which led us to develop an entirely new \OVERLOG
-implementation that supports stratified Datalog. We present this new
-system, called \JOL, in the next chapter.
+P2's lack of support for stratified Datalog forced us to implement a number of
+imperative hacks that often involved (event) manipulations of the underlying
+dataflow fixpoints.  Most of these hacks were required for detecting the
+termination of a group of rules, which would have been implicitly handled by
+imposing a natural stratum boundary (e.g., count aggregate).  Our workaround
+involved adding a number of conditions that detected the stratum boundary, and
+ensuring that these ``conditions'' were computed in separate P2 dataflow
+fixpoints.  This was a hard lesson, which led us to develop an entirely new
+\OVERLOG implementation that supports stratified Datalog.  We present this new
+system, called \JOL, here.
 
-The original \OVERLOG implementation (\emph{P2}) is aging and targeted at network
-protocols, so we developed a new Java-based \OVERLOG runtime we call \emph{\JOL.}
 Like P2, \JOL compiles \OVERLOG programs into pipelined dataflow graphs of
 operators (similar to ``elements'' in the Click modular router~\cite{click}).
 \JOL provides \emph{metaprogramming} support akin to P2's Evita Raced
@@ -55,15 +55,24 @@ representation that is captured in rows of tables.  Program testing,
 optimization and rewriting can be written concisely as metaprograms in \OVERLOG
 that manipulate those tables.
 
-Because the Hadoop stack is implemented in Java, we anticipated the need for
-tight integration between \OVERLOG and Java code. Hence, \JOL supports Java-based
-extensibility in the model of Postgres~\cite{postgres}.  It supports Java
-classes as abstract data types, allowing Java objects to be stored in fields of
-tuples, and Java methods to be invoked on those fields from \OVERLOG.  \JOL also
-allows Java-based aggregation functions to run on sets of column values, and
-supports Java \emph{table functions}: Java iterators producing tuples, which can
-be referenced in \OVERLOG rules as ordinary relations. We made significant use of
-each of these features in \BOOMA.
+The original \OVERLOG implementation ({\em P2}) is aging, and lacked support
+for Java, so we developed a new Java-based \OVERLOG runtime we call {\em \JOL.}
+We originally developed \JOL as a Datalog (only) library for the Pig
+system~\cite{pig-sigmod}.  The idea was for \JOL, along with the Evita Raced
+extensions, to be the rule-based optimizer for the PigLatin language.  This
+initial version of \JOL was used to perform a number of heuristic~\footnote{Pig
+had no support for statistics at the time.} rewrites for PigLatin queries, and
+it can be applied to Pig through a patch~\cite{jira-360}.
+
+The \JOL system matured when we targeted the Hadoop stack, which required tight
+integration between \OVERLOG and Java code.  The latest version of \JOL
+includes Java-based extensibility in the model of Postgres~\cite{postgres}.  It
+supports Java classes as abstract data types, allowing Java objects to be
+stored in fields of tuples, and Java methods to be invoked on those fields from
+\OVERLOG.  \JOL also allows Java-based aggregation functions to run on sets of
+column values, and supports Java \emph{table functions}: Java iterators
+producing tuples, which can be referenced in \OVERLOG rules as ordinary
+relations.  We made significant use of each of these features in \BOOMA.
 
 %In addition, inspired by the ideas of Evita Raced, we metaprogrammed \JOL's
 %core execution loop and scheduler in \OVERLOG as well.  Rather than using a
@@ -77,103 +86,119 @@ each of these features in \BOOMA.
 \section{\BOOM-MR: A Declarative MapReduce Scheduler}
 \label{ch:boom:sec:port}
 
-We used \BOOM-MR to explore embedding a data-centric rewrite of a non-trivial
-component into an existing procedural system.  MapReduce scheduling policies
-are one issue that has been treated in recent literature
-(e.g.,~\cite{zaharia-late,delay-sched}).  To enable credible work on MapReduce
-scheduling, we wanted to remain true to the basic structure of the Hadoop
-MapReduce codebase, so we proceeded by understanding that code, mapping its
-core state into a relational representation, and then writing \OVERLOG rules to
-manage that state in the face of new messages delivered by the existing Java
-APIs.  We follow that structure in our discussion.
+In this section, we describe our declarative version of the Hadoop MapReduce
+scheduled, which we call \BOOM-MR.  We used \BOOM-MR to explore embedding a
+data-centric rewrite of a non-trivial component into an existing procedural
+system.  MapReduce scheduling policies are one issue that has been treated in
+recent literature (e.g.,~\cite{zaharia-late,delay-sched}).  To enable credible
+work on MapReduce scheduling, we wanted to remain true to the basic structure
+of the Hadoop MapReduce codebase, so we proceeded by understanding that code,
+mapping its core state into a relational representation, and then writing
+\OVERLOG rules to manage that state in the face of new messages delivered by
+the existing Java APIs.  
 
-%\subsection{Hadoop MapReduce}
-%In Hadoop MapReduce, there is a single master node called the \emph{\JT} which
-%manages a number of worker nodes called \emph{{\TT}s}.  A job is divided into a
-%set of map and reduce \emph{tasks}. The {\JT} assigns tasks to worker nodes.  Each
-%map task reads an input chunk from the distributed file system, runs a
-%user-defined map function, and partitions output key/value pairs into hash
-%buckets on the local disk.  Reduce tasks are created for each hash
-%bucket.  Each reduce task fetches the corresponding hash buckets from all
-%mappers, sorts locally by key, runs a user-defined reduce function and writes
-%the results to the distributed file system.
+Section~\ref{ch:boom:sec:hadoop} provides quick review of the Hadoop MapReduce
+scheduler component.  In Section~\ref{ch:boom:sec:tables} we capture the
+entities and relationships of the Hadoop scheduler in four table catalog.
+Using these tables, we develop a scheduling policy in
+Section~\ref{ch:boom:sec:scheduler} that models the FIFO policy in stock
+Hadoop, but using fewer lines of code.  We then add to it, in
+Section~\ref{ch:boom:sec:late}, the LATE policy scheduling ``speculative''
+tasks.  Our declarative LATE port took {\em orders of magnitude} less time and
+code, compared to the Java port~\cite{jira-2141}, once the basic relational
+infrastructure was in place.
 
-%Each {\TT} has a fixed number of slots for executing tasks (two maps and two
-%reduces by default). A heartbeat protocol between each {\TT} and the {\JT} is
-%used to update the {\JT}'s bookkeeping of the state of running tasks, and drive
-%the scheduling of new tasks: if the {\JT} identifies free {\TT} slots, it will
-%schedule further tasks on the {\TT}. Also, Hadoop will attempt to schedule
-%\emph{speculative} tasks to reduce a job's response time if it detects
-%``straggler'' nodes~\cite{mapreduce-osdi}.
+\subsection{Hadoop MapReduce Scheduler}
+\label{ch:boom:sec:hadoop}
+
+Recall in Hadoop MapReduce, there is a single master node called the \emph{\JT}
+which manages a number of worker nodes called \emph{{\TT}s}.  A job is divided
+into a set of map and reduce \emph{tasks}.  The {\JT} assigns tasks to worker
+nodes.  Each map task reads an input chunk from the distributed file system,
+runs a user-defined map function, and partitions output key/value pairs into
+hash buckets on the local disk.  Reduce tasks are created for each hash bucket.
+Each reduce task fetches the corresponding hash buckets from all mappers, sorts
+locally by key, runs a user-defined reduce function and writes the results to
+the distributed file system.
+
+Each {\TT} has a fixed number of slots for executing tasks (two maps and two
+reduces by default).  A heartbeat protocol between each {\TT} and the {\JT} is
+used to update the {\JT}'s bookkeeping of the state of running tasks, and drive
+the scheduling of new tasks: if the {\JT} identifies free {\TT} slots, it will
+schedule further tasks on the {\TT}.  Also, Hadoop will attempt to schedule
+\emph{speculative} tasks to reduce a job's response time if it detects
+``straggler'' nodes~\cite{mapreduce-osdi}.
 
 \subsection{Table-izing MapReduce}
-\label{sec:mr-overlog}
-Our initial goal was to port the Hadoop {\JT} code to \OVERLOG.  We began by identifying
-the key state maintained by the {\JT}.  This state includes both data structures
-to track the ongoing status of the system and transient state in the form of
-messages sent and received by the {\JT}.  We captured this information in four
-\OVERLOG tables, shown in Table~\ref{ch:boom:tbl:hcatalog}.
+\label{ch:boom:sec:tables}
+
+Our initial goal was to port the Hadoop \JT code to \OVERLOG.  We began by
+identifying the key state maintained by the {\JT}.  This state includes both
+data structures to track the ongoing status of the system and transient state
+in the form of messages sent and received by the {\JT}.  We captured this
+information the four \OVERLOG tables shown in Table~\ref{ch:boom:tbl:hcatalog}.
 
 \begin{table}
 \ssp
 \centering
 \begin{tabular}{|l|l|l|} \hline
 \textit{Name}   & \textit{Description} & \textit{Relevant attributes} \\ \hline\hline
-job         & Job definitions   & \underline{jobid}, priority, submit\_time, status, jobConf \\ \hline
-task         & Task definitions  & \underline{jobid}, \underline{taskid}, type, partition, status \\ \hline
-taskAttempt  & Task attempts      & \underline{jobid}, \underline{taskid}, \underline{attemptid}, progress, \\
-             &       & state, phase, tracker, input\_loc, start, finish \\ \hline
-taskTracker  & {\TT} state  & \underline{name}, hostname, state, \\
-             &       & map\_count, reduce\_count, max\_map, max\_reduce\\ \hline
+job         & Job definitions   & \underline{JobId}, Priority, SubmitTime, Status, JobConf \\ \hline
+task         & Task definitions  & \underline{JobId}, \underline{TaskId}, Type, Partition, Status \\ \hline
+taskAttempt  & Task attempts      & \underline{JobId}, \underline{TaskId}, \underline{AttemptId}, Progress, \\
+             &       & State, Phase, Tracker, InputLoc, Start, Finish \\ \hline
+taskTracker  & {\TT} State  & \underline{Name}, Hostname, State, \\
+             &       & MapCount, ReduceCount, MaxMap, MaxReduce\\ \hline
 \end{tabular}
 \caption{\BOOM-MR relations defining {\JT} state.}
 \label{ch:boom:tbl:hcatalog}
 \end{table}
 
-The \emph{job} relation contains a single row for each job submitted to the
+The \ol{job} relation contains a single row for each job submitted to the
 {\JT}. In addition to some basic metadata, each job tuple contains an attribute
-called \emph{jobConf} that holds a Java object constructed by legacy Hadoop
-code, which captures the configuration of the job. The \emph{task} relation
+called $JobConf$ that holds a Java object constructed by legacy Hadoop
+code, which captures the configuration of the job. The \ol{task} relation
 identifies each task within a job. The attributes of this relation identify the
 task type (map or reduce), the input ``partition'' (a chunk for map tasks, a
 bucket for reduce tasks), and the current running status.
 
 A task may be attempted more than once, due to speculation or if the initial
-execution attempt failed.  The \emph{taskAttempt} relation maintains the state
+execution attempt failed.  The \ol{taskAttempt} relation maintains the state
 of each such attempt.  In addition to a progress percentage and a state
 (running/completed), reduce tasks can be in any of three phases: copy, sort, or
-reduce. The \emph{tracker} attribute identifies the {\TT} that is assigned to
+reduce. The $Tracker$ attribute identifies the {\TT} that is assigned to
 execute the task attempt. Map tasks also need to record the location of their
-input data, which is given by \emph{input\_loc}. 
+input data, which is given by $InputLoc$. 
 
-The \emph{taskTracker} relation identifies each {\TT} in the cluster with a unique name.
-The hostname, current running state, and task workload of the \TT are also part of this relation. 
-The map\_count and reduce\_count attributes indicate how many map and reduce tasks are currently 
-running on the \TT. The maximum number of map and reduce tasks that the \TT is able to support are 
-given by the max\_map and max\_reduce attributes; this is in keeping with Hadoop which specifies 
-these values in each message from a \TT to the \JT. 
+The \ol{taskTracker} relation identifies each {\TT} in the cluster with a
+unique name.  The hostname, current running state, and task workload of the \TT
+are also part of this relation.  The $MapCount$ and $ReduceCount$ attributes
+indicate how many map and reduce tasks are currently running on the \TT.  The
+maximum number of map and reduce tasks that the \TT is able to support are
+given by the $MaxMap$ and $MaxReduce$ attributes; this is in keeping with
+Hadoop which specifies these values in each message from a \TT to the \JT.
 
 \OVERLOG rules are used to update the {\JT}'s tables by converting inbound messages
-into \emph{job}, \emph{taskAttempt} and \emph{taskTracker} tuples. These rules
+into \ol{job}, \ol{taskAttempt} and \ol{taskTracker} tuples. These rules
 are mostly straightforward. Scheduling decisions are encoded in the
-\emph{taskAttempt} table, which assigns tasks to {\TT}s. A scheduling policy is
-simply a set of rules that join against the \emph{taskTracker} relation to find
+\ol{taskAttempt} table, which assigns tasks to {\TT}s. A scheduling policy is
+simply a set of rules that join against the \ol{taskTracker} relation to find
 \TT{}s with unassigned slots, and schedules tasks by inserting tuples into
-\emph{taskAttempt}. This architecture makes it easy for new scheduling policies
+\ol{taskAttempt}. This architecture makes it easy for new scheduling policies
 to be defined.
 
 \subsection{MapReduce Scheduling in \OVERLOG}
+\label{ch:boom:sec:scheduler}
 
-MapReduce scheduling has been the subject of recent research, and one
-of our early motivations for building \BOOMA was to make that research
-extremely easy to carry out. In our initial \BOOM-MR prototype, we
-implemented Hadoop's default First-Come-First-Served policy for task
-scheduling, which was captured in 9 rules (96 lines) of scheduler
-policy. Next, we implemented the recently-proposed LATE
-policy~\cite{zaharia-late} to evaluate both (a) the difficulty of
-prototyping a new policy, and (b) the faithfulness of our
-\OVERLOG-based execution to that of Hadoop using two separate
-scheduling algorithms.
+MapReduce scheduling has been the subject of recent research, and one of our
+early motivations for building \BOOMA was to make this research extremely easy
+to carry out.  In our initial \BOOM-MR prototype, we implemented Hadoop's
+default First-Come-First-Served (or FIFO) policy for task scheduling, which was
+captured in 9 rules (96 lines) of scheduler policy.  Next, we implemented the
+recently-proposed LATE policy~\cite{zaharia-late} to evaluate both (a) the
+difficulty of prototyping a new policy, and (b) the faithfulness of our
+\OVERLOG-based execution to that of Hadoop using two separate scheduling
+algorithms.
 
 \subsubsection{First-Come-First-Served Scheduling}
 
@@ -182,50 +207,57 @@ scheduling algorithms.
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-S1 {\bf minPriority}(min$<$Priority$>$) :- \\
+\ol{s1} {\bf minPriority}(min$<$Priority$>$) :- \\
 \datalogspace {\bf job}(JobId, Priority, Status, SubmitTime, ...), \\
 \datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, StartTime, ...), \\
 \datalogspace $StartTime < 0$; \\
 	
-S2 {\bf minPriorityStartTime}(Priority, min$<$SubmitTime$>$) :- \\
+\ol{s2} {\bf minPriorityStartTime}(Priority, min$<$SubmitTime$>$) :- \\
 \datalogspace {\bf job}(JobId, Priority, Status, SubmitTime, ...), \\
 \datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, StartTime, ...), \\
 \datalogspace $StartTime < 0$; \\
 
-S3 {\bf highestPriorityJob}(JobId) :- \\
+\ol{s3} {\bf highestPriorityJob}(JobId) :- \\
 \datalogspace {\bf minPriority}(Priority), \\
 \datalogspace {\bf minPriorityStartTime}(Priority, StartTime), \\
 \datalogspace {\bf job}(JobId, Priority, Status, SubmitTime, ...); \\
 \end{boxedminipage}
-\caption{\label{fig:planseed}The highest priority job that still has unscheduled tasks ($StartTime < 0$).}
+\caption{\label{ch:boom:fig:joborder}The highest priority job that still has unscheduled tasks ($StartTime < 0$).}
 \end{figure}
 
 In this section, we outline the declarative specification for Hadoop's default
-task scheduling policy. The policy schedules tasks from the job with the
-highest priority. A job's scheduling order is defined by its {\em priority} followed by its 
-{\em submit\_time}. The tasks from the job that is first in the scheduling order are
-scheduled before any other tasks from other jobs. 
+task scheduling policy.  The policy schedules tasks from the job with the
+highest priority.  A job's scheduling order is defined by its $Priority$
+followed by its $SubmitTime$ attributes.  The tasks from the job that is first
+in the scheduling order are scheduled before any other tasks from other jobs.
 
-Figure~\ref{fig:joborder} contains three rules that identify the job whose tasks are considered first
-when \TT slots are available. Rule S1 identifies the job with the minimum priority. Rule S2 determines,
-for each priority, the job with the earliest submit time. Both S1 and S2 only consider jobs that have unscheduled
-tasks, which is indicated by a negative $StartTime$ in the task relation. Rule S3 joins the result of rules S1 and S2
-to identify the overall highest priority job. 
+Figure~\ref{ch:boom:fig:joborder} captures this constraint in three rules, which
+identify the job whose tasks are considered first when \TT slots are available.
+Rule \ol{s1} identifies the job with the minimum priority, while rule~\ol{s2}
+determines, for each priority, the job with the earliest submit time.  Both
+\ol{s1} and \ol{s2} only consider jobs that have unscheduled tasks, which are
+identified by a negative $StartTime$ value in the \ol{task} relation.  Rule
+\ol{s3} joins the result of rules \ol{s1} and \ol{s2} to identify the overall
+highest priority job with unscheduled tasks.
 
-We now turn to scheduling individual tasks from the highest priority job. Tasks are scheduled when
-a \TT performs a heartbeat exchange with the \JT and has some number of available map or reduce 
-task slots. Scheduling a reduce task is based solely on slot availability; if a reduce slot is available then
-schedule a reduce task from the job with the highest priority. To avoid data movement costs, the default policy
-will consider the location of the input to the map task and try to schedule the map task close to a machine 
-that hosts its input data. During a heartbeat exchange with a \TT that has available map slots, the \JT will schedule 
-map tasks from the highest priority job whose input data resides closest to the \TT. Ideally, the input to the map task resides 
-on the same machine or rack but if not then an arbitrary map task is scheduled. 
+Scheduling individual tasks from the highest priority job occurs when a \TT
+performs a heartbeat exchange with the \JT and has some number of available map
+or reduce task slots.  A all tasks are scheduled based solely on slot
+availability; if a task slot is available then schedule a task from the job
+with the highest priority.  To avoid data movement costs, the default policy
+will consider the location of the input to the map task and try to schedule the
+map task close to a machine that hosts its input data.  During a heartbeat
+exchange with a \TT that has available map slots, the \JT will schedule map
+tasks from the highest priority job whose input data resides closest to the
+\TT.  Ideally, the input to the map task resides on the same machine or rack
+but if not then an arbitrary map task is scheduled, without considering other
+queued jobs.
 
 \begin{figure}
 \ssp
 \centering
 \begin{boxedminipage}{\linewidth}
-S4 {\bf mapTaskLocality}(TaskId, Tracker, Locality) :- \\
+s4 {\bf mapTaskLocality}(TaskId, Tracker, Locality) :- \\
 \datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, ReduceSlots), \\
 \datalogspace {\bf hightestPriorityJob}(JobId), \\
 \datalogspace {\bf task}(JobId, TaskId, Type, \_, InputSplits, StartTime, \_), \\
@@ -240,7 +272,7 @@ S4 {\bf mapTaskLocality}(TaskId, Tracker, Locality) :- \\
 \datalogspace \datalogspace \} \\
 \datalogspace \}; \\
 	
-S5 {\bf schedule}(Tracker, bottomK$<$MapID, MapSlots$>$) :- \\
+s5 {\bf schedule}(Tracker, bottomK$<$MapID, MapSlots$>$) :- \\
 \datalogspace {\bf mapTaskLocality}(TaskId, Tracker, Locality), \\
 \datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, ReduceSlots), \\
 \datalogspace $MapSlots > 0$, \\
@@ -250,37 +282,46 @@ S5 {\bf schedule}(Tracker, bottomK$<$MapID, MapSlots$>$) :- \\
 \caption{\label{ch:boom:fig:schedule} Map task locality priority scheduler.}
 \end{figure}
 
-Figure~\ref{ch:boom:fig:schedule} shows two rules that together implement the default Hadoop map task locality priority scheduler.
-When a \TT heartbeat is received, rule S4 assigns a locality metric to unscheduled tasks that belong to the highest priority job. \JOL
-supports the ability to add Java code at the end of a rule body, delineated within brackets \{ ... \}. This Java code will only see
-those tuples that represent actual deductions from the rule body. In rule S4, the bracketed Java code assigns a Locality metric 
-according to the proximity of the heartbeat \TT to the map input data.
+Figure~\ref{ch:boom:fig:schedule} shows two rules that together implement this
+default Hadoop policy, which schedules map tasks near the data.  When a \TT
+heartbeat is received, rule \ol{s4} assigns a locality metric to unscheduled
+tasks that belong to the highest priority job.  \JOL supports the ability to
+add Java code at the end of a rule body, delineated within brackets \{ ...  \}.
+This Java code executes last in the rule body, and will only see those tuples
+that represent actual deductions.  In rule \ol{s4}, the bracketed Java code
+assigns a Locality metric according to the proximity of the heartbeat \TT to
+the map input data.
 
-The result of rule S4 is evaluated in rule S5, which schedules the map tasks whose inputs reside closest to 
-the heartbeat \TT. The {\bf bottomK} aggregate orders the {\em MapID}s from lowest to highest {\em Locality} and 
-chooses the lowest map tasks in this order, not exceeding the number of available map slots ({\em MapSlots}). Each result 
-tuple from rule S5 is converted into schedule action message that is returned to the \TT. The reduce task scheduling 
-rule simply schedules reduces tasks from the highest priority job based on the reduce slot capacity of the heartbeat \TT. 
+The result of rule \ol{s4} is evaluated in rule \ol{s5}, which schedules the
+map tasks whose inputs reside closest to the heartbeat \TT.  The {\bf bottomK}
+aggregate orders the $MapID$s from lowest to highest $Locality$ and chooses the
+lowest map tasks in this order, not exceeding the number of available map slots
+($MapSlots$).  Each result tuple from rule \ol{s5} is converted, through a few
+imperative steps in the Java language, into a schedule action message that is
+returned to the \TT in its RPC call to the \JT.  The reduce task scheduling
+rule simply schedules reduces tasks from the highest priority job based on the
+reduce slot capacity of the heartbeat \TT, as per stock Hadoop.
 
 \subsection{Task Speculation in \OVERLOG}
+\label{ch:boom:sec:late}
 
 \begin{figure}[p]
 \ssp
 \begin{boxedminipage}{\linewidth}
 
 // Compute progress rate per task \\
-L1 {\bf taskPR}(JobId, TaskId, Type, ProgressRate) :- \\
+\ol{l1} {\bf taskPR}(JobId, TaskId, Type, ProgressRate) :- \\
 \datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, \_, Status), \\
 \datalogspace $Status.state() != FAILED$,  \\
 \datalogspace Time := $Status.finish() > 0$ ? Status.finish() : currentTimeMillis(), \\
 \datalogspace ProgressRate := Status.progress() / (Time - Status.start()); \\
 
 // For each job, compute 25th pctile rate across tasks \\
-L2 {\bf slowTaskThreshold}(JobId, Type, percentile$<$0.25, PRate$>$) :- \\
+\ol{l2} {\bf slowTaskThreshold}(JobId, Type, percentile$<$0.25, PRate$>$) :- \\
 \datalogspace {\bf taskPR}(JobId, TaskId, Type, PRate); \\
 
 // Compute progress rate per tracker \\
-L3 {\bf trackerPR}(Tracker, JobId, Type, avg$<$PRate$>$) :- \\ 
+\ol{l3} {\bf trackerPR}(Tracker, JobId, Type, avg$<$PRate$>$) :- \\ 
 \datalogspace {\bf task}(JobId, TaskId, Type, \_), \\
 \datalogspace {\bf taskAttempt}(JobId, TaskId, \_, Progress, State, Phase, Tracker, Start, Finish), \\
 \datalogspace $State != FAILED$, \\
@@ -288,11 +329,11 @@ L3 {\bf trackerPR}(Tracker, JobId, Type, avg$<$PRate$>$) :- \\
 \datalogspace PRate := Progress / (Time - Start);  \\
 
 // For each job, compute 25th pctile rate across trackers \\
-L4 {\bf slowNodeThreshold}(JobId, Type, percentile<0.25, AvgPRate>) :- \\
+\ol{l4} {\bf slowNodeThreshold}(JobId, Type, percentile<0.25, AvgPRate>) :- \\
 \datalogspace {\bf trackerPR}(\_, JobId, Type, AvgPRate); \\
 
 // Compute available map/reduce slots \\
-L5 {\bf speculativeCap}(sum<MapSlots>, sum<ReduceSlots>) :- \\
+\ol{l5} {\bf speculativeCap}(sum<MapSlots>, sum<ReduceSlots>) :- \\
 \datalogspace {\bf taskTracker}( ... MapCount, ReduceCount, MaxMap, MaxReduce), \\
 \datalogspace MapSlots := 0.1 * (MaxMap - MapCount), \\
 \datalogspace ReduceSlots := 0.1 * (MaxReduce - ReduceCount); \\
@@ -302,43 +343,47 @@ L5 {\bf speculativeCap}(sum<MapSlots>, sum<ReduceSlots>) :- \\
 \end{figure}
 
 With the basic scheduling logic behind us, we turn now to the topic of
-scheduling speculative tasks. The LATE policy presents a scheme for 
-scheduling speculative tasks based on {\em straggler} tasks~\cite{zaharia-late}.
-There are two aspects to each policy:
-choosing which tasks to speculatively re-execute, and choosing {\TT}s
-to run those tasks.  Original Hadoop re-executes a task if its
-progress is more than 0.2 (on a scale of $[0..1]$) below the mean
-progress of similar tasks; it assigns speculative tasks using the same
-policy as it uses for initial tasks. LATE chooses tasks to re-execute
-via an {\em estimated finish time} metric based on the task's
-\emph{progress rate}. Moreover, it avoids assigning speculative tasks
-to {\TT}s that exhibit slow performance executing similar tasks, in
-hopes of preventing the creation of new stragglers.
+scheduling speculative tasks.  The LATE policy presents a scheme for scheduling
+speculative tasks based on {\em straggler} tasks~\cite{zaharia-late}.  There
+are two aspects to each policy: choosing which tasks to speculatively
+re-execute, and choosing {\TT}s to run those tasks.  Original Hadoop
+re-executes a task if its progress is more than 0.2 (on a scale of $[0..1]$)
+below the mean progress of similar tasks; it assigns speculative tasks using
+the same policy as it uses for initial tasks.  LATE chooses tasks to re-execute
+via an {\em estimated finish time} metric based on the task's \emph{progress
+rate}.  Moreover, it avoids assigning speculative tasks to {\TT}s that exhibit
+slow performance executing similar tasks, in hopes of preventing the creation
+of new stragglers.
 
 The LATE policy is specified in the paper via just three lines of pseudocode,
-which make use of three performance statistics called {\em SlowNodeThreshold},
-{\em SlowTaskThreshold}, and {\em SpeculativeCap}.  The first two of these
-statistics correspond to the 25th percentiles of progress rates across {\TT}s
-and across tasks, respectively.  The {\em SpeculativeCap} indicates the maximum
-number of speculative tasks allowed at any given time, which is suggested to be
-set at 10\% of the total available task slots~\cite{zaharia-late}.
+which make use of three performance statistics called $SlowNodeThreshold$,
+$SlowTaskThreshold$ and $SpeculativeCap$.  The first two of these statistics
+correspond to the $25^{th}$ percentiles of progress rates across {\TT}s and
+across tasks, respectively.  The $SpeculativeCap$ indicates the maximum number
+of speculative tasks allowed at any given time, which is suggested to be set at
+$10\%$ of the total available task slots~\cite{zaharia-late}.
 
 We compute these thresholds via the five \OVERLOG rules shown in
-Figure~\ref{fig:latePolicy}. A task is only considered for speculation if its progress rate falls 
-below the SlowTaskThreshold in its given category: job identifier (JobID) and task type (Type).  
-Queries L1 and L2 maintain this threshold value for each category. Query L1 determines the progress 
-rate for a given task based on its current progress and running time. Query L2 computes the SlowTaskThreshold, 
-for each category, by determining the lower 25th percentile of the progress rates. 
+Figure~\ref{fig:latePolicy}.  A task is only considered for speculation if its
+progress rate falls below the $SlowTaskThreshold$ in its given category: job
+identifier ($JobID$) and task type ($Type$).  Queries \ol{l1} and \ol{l2}
+maintain this threshold value for each category.  Query \ol{l1} determines the
+progress rate for a given task based on its current progress and running time.
+Query \ol{l2} computes the $SlowTaskThreshold$, for each category, by
+determining the lower $25^{th}$ percentile of the progress rates.
 
-The LATE policy ensures that speculative tasks execute on ``fast'' nodes by pruning \TT 
-nodes whose rate of progress for a given task category fall below some threshold. 
-Queries L3 and L4 maintain this threshold value for each category. The first query L3, computes 
-the average progress that a given \TT has made for each task category and stores that result in 
-the trackerPR table. Query L4 computes the SlowNodeThreshold for each category by determining the 25th 
-percentile for each category of progress rates stored in the trackerPR table. Finally, query L5 counts the number of
-slots that can be used for task speculation. Integrating the rules into \BOOM-MR required modifying two 
-additional \OVERLOG rules that identify tasks to speculatively re-execute, and choose {\TT}s for scheduling those
-tasks, all while obeying the SpeculativeCap value.
+The LATE policy ensures that speculative tasks execute on ``fast'' nodes by
+pruning \TT nodes whose rate of progress for a given task category fall below
+some threshold.  Queries \ol{l3} and \ol{l4} maintain this threshold value for
+each category.  The first query \ol{l3}, computes the average progress that a
+given \TT has made for each task category and stores that result in the
+\ol{trackerPR} table.  Query \ol{l4} computes the $SlowNodeThreshold$ for each
+category by determining the 25th percentile for each category of progress rates
+stored in the \ol{trackerPR} table.  Finally, query \ol{l5} counts the number
+of slots that can be used for task speculation.  Integrating the rules into
+\BOOM-MR required modifying two additional \OVERLOG rules that identify tasks
+to speculatively re-execute, and choose {\TT}s for scheduling those tasks, all
+while obeying the SpeculativeCap value.
 
 \section{Evaluation}
 \label{ch:boom:sec:eval}

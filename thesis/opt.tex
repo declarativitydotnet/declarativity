@@ -908,7 +908,7 @@ P2's notion of consecutive Datalog-style fixpoints, especially in networked
 environments, still has many rough edges, both on the design and on the
 engineering front.  Because deep down P2's runtime is an event-driven execution
 engine, its basic unit of atomicity is akin to a single iteration through a
-recursive query evaluation strategy like semi-naive evaluation, generating a
+recursive query evaluation strategy like semina\"{\i}ve evaluation, generating a
 set of derived actions (tuples to be inserted, deleted, transmitted remotely,
 or evaluated locally for further deduction) from a single incoming event, and
 committing changes to the database atomically upon completion of such a
