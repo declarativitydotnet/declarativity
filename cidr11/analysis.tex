@@ -4,7 +4,7 @@ Bloom programs define unordered collections and rules that describe transformati
 these collections.  A Bloom program may therefore be viewed as a dataflow graph with external 
 inputs as sources, outputs as sinks and collections as internal nodes.  Given this view,
 we may adapt powerful static analyses from the logic programming literature which are 
-expresses as properties of the dataflow graphs.
+expressed as properties of the dataflow graphs.
 
 In this section, we implement a simple key-value store in Bud, and analyze the implied
 dataflow.  We begin with an interface for an abstract store, and evolve it first into a single-site
@@ -42,8 +42,8 @@ Points of order are indicated in the graph by an edge with a white circle.
 
 \subsection{KVS Interface}
 
-Figure~\ref{fig:kvs-proto} provides an abstract specification of a key-value store:
-its interface to other Bloom programs or the external world.  
+Figure~\ref{fig:kvs-proto} provides an abstract specification of a key-value store,
+comprising its interface to other Bloom programs or the external world.  
 We may interact with any implementation of the store
 by supplying inputs to \texttt{kvput} and \texttt{kvget} and by reading output from
 \texttt{kvget\_response}.  
@@ -65,9 +65,9 @@ Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
 realization of a key-value store.  Line~\ref{line:kvs-state} declares a \textbf{table}
 called \texttt{bigtable} that stores the internal, persistent state of the store.
 When a \texttt{kvput} tuple appears, its key-value pair is placed in \texttt{bigtable} in the
-immediate next timestep(line~\ref{line:kvs-put}).  If a value for the given key already 
+immediate next timestep (line~\ref{line:kvs-put}).  If a value for the given key already 
 exists in \texttt{bigtable}, we wish to replace it with the newer value.  Line~\ref{line:kvs-join}
-joins the input interface and internal state: if a row already exists for the current key,  
+joins the input interface with the internal state: if a row already exists for the current key,  
 the join collection \texttt{jst} will contain a tuple that is the concatenation of the matching
 tuples from \texttt{bigtable} and \texttt{kvput}.  In this event, line~\ref{line:kvs-clean}
 states that in the immediate next timestep (and hence concurrently with the appearance of the
@@ -89,8 +89,10 @@ while references in the RHS of rules resolve to the local \texttt{kvput}.
 Note that this is unambiguous, because it is meaningless for a module to insert into its own input or to read data from its own output interfaces.
 
 Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
-\texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall} into \texttt{send\_mcast}
-if the originating address is not another replica (line~\ref{line:not-rep}).  The internal
+\texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall}) into \texttt{send\_mcast}
+if the originating address is not another replica (line~\ref{line:not-rep}), as this would indicate
+that the current replica is not the master for this update.  
+The internal
 \texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
 at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is received at 
 a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
@@ -99,21 +101,21 @@ a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
 
 
 Figure~\ref{fig:kvs-proto} also presents a visual representation of the KVS protocol.  Data
-flows from the source node (an external caller) to on or both of \texttt{kvput} and 
+flows from the source node (an external caller) to one or both of \texttt{kvput} and 
 \texttt{kvget}, through some unknown dataflow, to \texttt{kvget\_response}.
 The existence of the red diamond labeled ``??'' indicates that the dataflow is underspecified:
 is must be ``completed'' by supplying dataflow that, at minimum, connects the input 
 interfaces to the output interface.
 
 Figure~\ref{fig:kvs-impl} shows the visual analysis of the basic KVS implementation,
-which effectively supplies a concrete dataflow for the unspecified component in the previous
+which supplies a concrete dataflow for the unspecified component in the previous
 graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a red octagon because they
 are part of a strongly connected component in the graph with both negative and temporal 
 edges.  Any data flowing from \texttt{kvput} to the sink must cross at least one nonmonotonic
 point of
 order (at ingress to the octagon) and possible an arbitrary number of them (via the
-octagon's self-edge), and an path from \texttt{kvget} to the sink must join state potentially
-affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget response}.
+octagon's self-edge), and any path from \texttt{kvget} to the sink must join state potentially
+affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget response}).
 
 Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable.  The 
 contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
