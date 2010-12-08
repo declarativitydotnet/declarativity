@@ -137,11 +137,10 @@ all_responded()@next <- all_responded();
 
 The above program is monotonic. There is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even).  \paa{this suggests that we can test if programs are monotonic, though everything up till now has been an attempt to define montonicity semantically...} Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
 
-We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic 
-are confluent.
+We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
 
 \begin{lemma}
-A monotonic property is true in all traces of a program, given an EDB.
+If a monotonic property is true in any trace of a program, given an EDB, it is true in all traces.
 \end{lemma}
 \begin{proof}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur).  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic.
@@ -151,7 +150,10 @@ Proof sketch: assume a monotonic property is true in one trace and false in anot
 Logical monotonicity is a sufficient condition for confluence.
 \end{corollary}
 \begin{proof}
-Proof sketch: if the ultimate model is populated only by monotonic properties, which are true in all traces, then there is a unique ultimate model.
+Proof sketch: If a particular ultimate model is populated by atoms that depend only on monotonic properties, then those atoms occur in any ultimate model of the program.  If all ultimate models
+are populated in such a way, they are indeed all the same, unique ultimate model.
+%which are true in all traces, then there is a unique ultimate model.
+
 \end{proof}
 
 We now show that logical monotonicity is not necessary for confluence:
