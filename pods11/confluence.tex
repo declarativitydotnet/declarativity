@@ -269,18 +269,38 @@ Given any \lang program without recursion through negation, we can automatically
 p_count_send(#Y,Src,count<*>)@async <- p_local(Y,\(\bar{X}\)),
                                        local(Src);
 p_send(#Y,Src,\(\bar{X}\))@async <- p_local(Y,\(\bar{X}\)), local(Src);
-p(Y,\(\bar{X}\)) <- p_send(Y,_,\(\bar{X}\));
+p_send(Y,Src,\(\bar{X}\))@next <- p_send(Y,Src,\(\bar{X}\));
 p_count_recv(Src,count<*>) <- p_send(_,Src,\(\bar{X}\));
 p_incomplete() <- node(Src), !p_count_recv(Src, _);
 p_incomplete() <- node(Src), !p_count_send(_,Src,_);
 p_incomplete() <- p_count_recv(Src, C1),
                   p_count_send(_, Src, C2), C1 < C2;
-p_complete() <- !p_incomplete();
+p(Y,\(\bar{X}\)) <- p_send(Y,_,\(\bar{X}\)), !p_incomplete();
+
 \end{Dedalus}
-5. Add \dedalus{p\_complete()} to the body of any rule that applies negation to any predicate above \dedalus{p}.
 
-Note that this process introduces additional asynchronous edges.  These asynchronous edges need not be coordinated \wrm{in fact, due to the syntactic restrictions in the foundation, they CAN'T be coordinated, becuase that would entail taking the count of a count}.
+The following lemma says that this coordination actually computes the completion of the set:
 
+\begin{lemma}
+If there exists a fact $f$ in \dedalus{p} at time \dedalus{t}, and a fact $g$ in \dedalus{p} at time {t+1}, then $g$ is true at time \dedalus{t}.
+\end{lemma}
+\begin{proof}
+Too hungry to prove at the moment.
+\end{proof}
+
+Corollary: the coordinated program is confluent.
+
+The following lemma says that, in the absence of failure, this coordination induces an ultimate model which was part of the original program (except, with the \dedalus{p\_send} predicate in it too):
+\begin{lemma}
+Blah
+\end{lemma}
+\begin{proof}
+Blah
+\end{proof}
+
+Note that this process introduces additional asynchronous edges.  These asynchronous edges need not be coordinated. \wrm{Argue that the transformation is idempotent -- if I write my program with this protocol in it already, applying the transformation again does not break the coordination.}
+
+\wrm{For universal constraint stratification, change the algorithm to do subsets and iterate over any constraints..  Probably need to rewrite the algorithm above, and present strat as a special case of UCS}
 
 \subsubsection{Non-Deterministic Coordination}
 
