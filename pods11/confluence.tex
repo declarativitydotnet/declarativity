@@ -226,7 +226,7 @@ The {\em perfect ultimate model} of a \lang program whose temporal flattening is
 \end{definition}
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program whose temporal flattening is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program... \wrm{subsets are completed wrt the partial order}
+The {\em perfect ultimate model} of a \lang program whose temporal flattening is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program subsets are completed in the partial order associated with the stratification.
 \end{definition}
 
 There is always a stable model representing the perfect ultimate model of a \lang program whose flattening is syntactically stratified, because there is no recursion through negation, and Lemma~\ref{cron} tells us that any choice of timestamps is permissible in this case.
@@ -259,9 +259,25 @@ Now, independent of the assignment of timestamps, no statement from a sayer \ded
 \subsubsection{Coordination}
 Given any \lang program without recursion through negation, we can automatically instrument it with coordination to achieve the ultimate model, using the following algorithm:
 
-\wrm{expand sketch -- break out algorithm environment?}
-1. Build a predicate dependency graph of the program.
-2. For any asynchronous edge that can reach a predicate with negation or aggregation, have each node send a count of messages in the async predicate, and coordinate over all nodes, as above.
+1. Build a predicate dependency graph of the program. \wrm{explain the PDG earlier}
+2. Let \dedalus{p} be an asynchronous predicate, from which a negated or aggregated predicate is reachable above.
+3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location specifier.
+4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, \dedalus{p\_complete}, and \dedalus{p\_send} are fesh predicate names.
+
+\noindent
+\begin{Dedalus}
+p_count_send(#Y,Src,count<*>)@async <- p_local(Y,\(\bar{X}\)),
+                                       local(Src);
+p_send(#Y,Src,\(\bar{X}\))@async <- p_local(Y,\(\bar{X}\)), local(Src);
+p(Y,\(\bar{X}\)) <- p_send(Y,_,\(\bar{X}\));
+p_count_recv(Src,count<*>) <- p_send(_,Src,\(\bar{X}\));
+p_incomplete() <- node(Src), !p_count_recv(Src, _);
+p_incomplete() <- node(Src), !p_count_send(_,Src,_);
+p_incomplete() <- p_count_recv(Src, C1),
+                  p_count_send(_, Src, C2), C1 < C2;
+p_complete() <- !p_incomplete();
+\end{Dedalus}
+5. Add \dedalus{p\_complete()} to the body of any rule that applies negation to any predicate above \dedalus{p}.
 
 Note that this process introduces additional asynchronous edges.  These asynchronous edges need not be coordinated \wrm{in fact, due to the syntactic restrictions in the foundation, they CAN'T be coordinated, becuase that would entail taking the count of a count}.
 
@@ -276,16 +292,18 @@ We can instrument any \lang program without recursion through negation with non-
 
 \wrm{expand sketch}
 1. Build a predicate dependency graph of the program.
-2. For any asynchronous edge that can reach a predicate with negation or aggregation, drop in the pattern of example~\ref{ex:nonconfluent}. \paa{huh?}
+2. Let \dedalus{p} be an asynchronous predicate from which a negated or aggregated predicate is reachable above.
+3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_send} where that is a fresh predicate name.
+4. Insert the following rule
+\begin{Dedalus}
+p(\(\bar{X}\)) <- p_send(\(\bar{X}\)), !p(\(\bar{_}\));
+\end{Dedalus}
 
 We consider example~\ref{ex:sayers} above.  Some ultimate models do not correspond to plausible failure scenarios -- for example, any ultimate model where a \dedalus{statement} is both \dedalus{true} and \dedalus{false}.  The instrumented version of the example would add the following rule:
 
 \begin{Dedalus}
 c_false(L, S, X)@next <- s_false(L, S, X),
-                         !c_false(L, S, _);
+                         !c_false(_, _, _);
 \end{Dedalus}
 
 And would replace any instance of the predicate \dedalus{s\_false} in the ``listener'' rules with \dedalus{c\_false}.
-
-
-\wrm{connect with universal constraint stratification}
