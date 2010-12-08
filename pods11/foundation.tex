@@ -7,7 +7,7 @@
 p(X1, ..., Xn, count<Y>) <- ...;
 \end{Dedalus}
 
-For each binding of \dedalus{X1, ..., Xn}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  
+For each binding of \dedalus{X1, ..., Xn}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  It is also permissible to use the symbol \dedalus{*} as the argument to a count; this counts the number of distinct satisfying assignments to all body variables.
 %Any column of a predicate that hosts a \dedalus{count} aggregate is considered to be of the {\em number} sort; any variable of the {\em number} sort can only be constrained by other variables of the {\em number} sort, and 
 We forbid recursion through \dedalus{count}.
 
