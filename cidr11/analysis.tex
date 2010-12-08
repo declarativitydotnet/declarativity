@@ -27,7 +27,7 @@ rule is ``asynchronous''---i.e., a rule with the \texttt{$<$+} operator and a {\
 channel} lhs---then the edge is a dashed line.  If the rule involves
 non-monotonicity (aggregation or negation) over $A$, then the edge is marked with a $\lnot$.
 %result in edges marked with a $\lnot$.
-To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into a octagonal ``temporal cluster,'' 
+To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into an octagonal ``temporal cluster,'' 
 which can be viewed abstractly as a single, nonmonotonic node in the 
 dataflow.\footnote{Datalog aficionados may be troubled by our mention of cycles
 involving negation in the dependency graph.  In~\cite{dedalus} we
@@ -119,7 +119,7 @@ Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable
 contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
 of its contents at the immediate previous state and the current input.  Hence the state
 of \texttt{bigtable} at any point in time may depend on the order of arrival of \texttt{kvput} 
-tuples.  We challenge the reader to implment the KeyValueProto interface in a way that
+tuples.  We challenge the reader to implement the KeyValueProto interface in a way that
 has no such point of order.
 
 
