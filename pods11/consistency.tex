@@ -1,6 +1,10 @@
 \section{Eventual Consistency}
 
-In the previous section, we relaxed confluence to allow greater availability.  However, traditionally in the distributed systems domain, systems are of such a large scale that replication of functionality is required to ensure good performance, fault tolerance, and availability, as the system scales.  This symmetry property implies a spectrum of natural correctness criteria called {\em consistency} properties.  In particular, {\em eventual consistency} is defined in the distributed systems domain as all replicas will eventually return the latest data after the last update is made.
+In the previous section, we relaxed confluence to allow greater availability.
+
+However, many distributed systems are of such a large scale that replication of functionality is required to ensure good performance, fault tolerance, and availability.  This symmetry property implies a spectrum of natural correctness criteria called {\em consistency} properties.  In particular, {\em eventual consistency} is defined in the distributed systems domain as all replicas will eventually have a piece of data after the last update is made.
+
+\wrm{Note that we're ignoring failure in this section}
 
 We formalize the notion of consistency using {\em constraints}.
 
@@ -8,8 +12,7 @@ We formalize the notion of consistency using {\em constraints}.
 A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  Since constraints are not meant to be executed, we do not require them to unify on location specifiers.
 \end{definition}
 
-\wrm{It seems sensible to define the notion of a replicated predicate, rather than generalize to a replicated subset of a predicate}
-We augment the definition of a \lang program to include a set of {\em replicated predicates} -- predicates that will be eventually always identical on all replicas.
+In order to talk about eventual consistency, we need to differentiate replicated data from partitioned data, and define a set of replicas.  It seems sensible to do this on the predicate level, rather than generalizing to replicated subsets of predicates.  We augment the definition of a \lang program to include a set of {\em replicated predicates}, and a set of {\em replicas} represented by a unary \dedalus{replica} predicate.
 
 \begin{definition}
 \label{def:ec}
@@ -18,12 +21,13 @@ A \lang program is {\em eventually consistent} if it is consistent under the fol
 \begin{Dedalus}
 fail() <- p(#Y,\(\bar{X}\)), !p(#Z,\(\bar{X}\)), replica(Y), replica(Z);
 \end{Dedalus}
+
+In other words, the constraint is violated whenever a fact in a replicated predicate exists at some replica, but does not exist at some other replica.
 \end{definition}
 
-Note that an eventually consistent program is not necessarily confluent, and a confluent program is not necessarily eventually consistent.
+Note that an eventually consistent program is not necessarily confluent---for example, symmetrically replicating the results of a non-deterministic operation---and a confluent program is not necessarily eventually consistent---for example, a program that deterministically improperly replicates.  Like confluence, however, eventual consistency is undecidable.
 
 %\paa{this is too specific; there is more than one way to skin a cat.  why do we need to define replication in terms of participating rules?}
-
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
 
 \begin{lemma}
@@ -58,11 +62,21 @@ Proof sketch: Assume two different 2CMs are modeled at two different replicas.  
 %this nice property called confluence, and here's an arbitrary constraint, and note that the arbitrary constraint
 %doesn't imply confluence.}
 
-\wrm{Define a replication protocol; explain when adding a replication protocol to a program preserves EC -- downstream confluence requirement, no upstream requirements.  replication protocol must not use negation??}
+How can conservative checks and coordination help us enforce eventual consistency?  One way is to insert a replication protocol into a \lang program.  Note that just as the coordination protocols we insert may be too conservative in waiting, the replication protocols we insert may conservatively send too many network messages.  
+
+We can instrument an arbitrary \lang program to enable eventual consistency by inserting the following replication rule for all predicates \dedalus{p}, where \dedalus{rep\_p} is a fresh predicate symbol not otherwise used in the program.
+
+\begin{Dedalus}
+rep_p(#R,\(\bar{X}\))@async <- replica(#R), p(\(\bar{X}\));
+\end{Dedalus}
+
+We must then rewrite the program above \dedalus{p} to use \dedalus{rep\_p} wherever \dedalus{p} was required.  It must also be the case that the program above \dedalus{p} is confluent (of course this does not imply the program as a whole is confluent).  We require confluence in order to ensure determinism at each replica.  We disallow recursion through replication.  If these conditions are met, the program is eventually consistent.  Note that this definition is flexible enough to admit any scheme where clients are updating and querying replicas.
+
+\wrm{examples?}
 
 \begin{lemma}
-If a program $P$ satisfies an integrity constraint $I$, then any program obtained by adding replication rules to $P$ is eventually consistent with respect to $I$.
+If a program $P$ is rewritten with replication using the above procedure, it is eventually consistent.  \wrm{Furthermore, any FDs are preserved??}
 \end{lemma}
 \begin{proof}
-Sketch: due to the restricted nature of replication rules (a replication rule does not introduce new facts into a predicate) and functional dependencies (they cannot constrain locations), replication rules cannot violate functional dependencies.
+Sketch: it is easy to verify that \dedalus{rep\_p} is correctly replicated for all replicated predicates \dedalus{p}; thus eventual consistency constraints are satisfied.
 \end{proof}
