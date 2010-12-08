@@ -6,7 +6,14 @@ For many distributed computations, achieving a deterministic answer (ultimate mo
 A \lang program is {\em confluent} if, for any EDB, it has a unique ultimate model.
 \end{definition}
 
-In general, \lang programs are not necessarily confluent.
+Datalog programs without negation are trivially confluent, as they are certain to have
+only one stable model.  The same is true of both negation-free and temporally stratified \lang programs that do not use the  {\em choice} construct.  Cast in operational terms this is
+unsurprising: programs with no sources of nondeterminism have deterministic executions.
+
+Any \lang programs that use {\em async} rules have an infinite 
+number of stable models, but as we will see, in many cases these correspond to a
+unique ultimate model.
+In general, however, \lang programs are not necessarily confluent even in the absence of negation.
 
 \begin{example}
 \label{ex:nonconfluent}
@@ -31,13 +38,15 @@ Confluence of a \lang program is undecidable.
 We reduce the undecidable problem of determining whether a two-counter machine accepts any input to confluence of a \lang program.  See appendix for details.
 \end{proof}
 
-Fortunately, as we show, there is a rich class of programs that can be statically detected as confluent.  Furthermore, many other programs have a ``natural'' ultimate model that corresponds to intuition; we show how to induce this ultimate model by augmenting the program.
+Fortunately, as we will show, there is a rich class of programs that can be statically detected as confluent.  Furthermore, many other programs have a ``natural'' ultimate model that corresponds to intuition; we show how to induce this ultimate model by augmenting the program.
 
-First, we provide some intuition for the sources of non-confluence in \lang programs.  In Example~\ref{ex:nonconfluent}, we saw a \lang program that was non-confluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
+\subsection{Sources of difluence}
+
+First, we provide some intuition for the sources of difluence in \lang programs.  In Example~\ref{ex:nonconfluent}, we saw a \lang program that was difluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
 
 \begin{example}
 \label{ex:nonconfluent2}
-Another non-confluent \lang program.
+A \lang program in which difluence is caused by negating an incomplete set.
 
 \begin{Dedalus}
 q(X)@async <- q_edb(X);
@@ -47,10 +56,11 @@ p(X)@next <- p(X);
 \end{Dedalus}
 \end{example}
 
-The above example is non-confluent becuase if an \dedalus{r} fact is assigned an earlier timestamp than its corresponding \dedalus{q} fact, the ultimate model contains no corresponding \dedalus{p} fact; otherwise, the ultimate model contains the \dedalus{p} fact.
+The above example is difluent because if an \dedalus{r} fact is assigned an earlier timestamp than its corresponding \dedalus{q} fact, the ultimate model contains no corresponding \dedalus{p} fact; otherwise, the ultimate model contains the \dedalus{p} fact.
+In operational terms, \dedalus{r} and \dedalus{q} do not commute.
 
 \begin{example}
-A non-confluent \lang program without negation.
+A difluent \lang program without negation.
 
 \begin{Dedalus}
 q(X)@async <- q_edb(X);
@@ -60,7 +70,7 @@ p(X)@next <- p(X);
 \end{Dedalus}
 \end{example}
 
-The above example illustrates that even without negation, multiple ultimate models may be induced.
+The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
 
 \begin{definition}
 A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear in the program.
@@ -71,16 +81,38 @@ A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates a
 \end{definition}
 
 \begin{lemma}
+\label{lem:guarding}
 A negation-free \lang program with guarded asynchrony is confluent.
 \end{lemma}
 \begin{proof}
 Sketch: only possible way two ultimate models are different is if two facts (or predicates, e.g. ``!'' on facts) join in one trace, but not the other.  If the program has guarded asynchrony, then it is impossible for a join to succeed in one trace and not another.
+
+
+\paa{a great windy attempt at proof}
+Towards a proof by contradiction, consider a negation-free \lang program that 
+induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
+that is true in one but
+not in another model, and $p$ must be persistent, or it would not be
+in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
+implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
+choice of timestamp via an {\em async} rule, then certainly there is only one stable model of the
+program, so there must be at least one {\em async} rule.  If $p$ is derived directly from 
+an {\em async} rule via a series of derivation steps without any joins, then every stable
+model will have an identical tuple in $p$, modulo time, and hence the same ultimate model.
+Therefore, $a$ must have at least one join in its derivation following an {\em async} rule,
+which suceeded in this stable model but did not succeed in another.  Guarded joins always
+eventually succeed, and by assumption, every {\em async}-derived predicate is guarded.
+Hence $a$ must exist in all ultimate models.
+
 \end{proof}
+
 
 If either qualification is false, problems can result, as we have previously illustrated.
 
 
-We can generalize the above example by the notion of a {\em monotonic property}.
+\subsection{Monotonic Properties}
+
+We can generalize Lemma~\ref{lem:guarding} by the notion of a {\em monotonic property}.
 
 \begin{definition}
 If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
