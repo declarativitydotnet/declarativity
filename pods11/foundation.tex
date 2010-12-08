@@ -108,7 +108,7 @@ Every \lang program has a temporal diameter polynomial in the data size \wrm{or 
 %\end{example}
 
 \subsection{Semantics}
-The semantics of a \lang program can be characterized by the {\em stable model semantics}~\cite{stable-model} for logic programming.  Intuitively, a stable model of a \lang program is a trace of its \paa{a single execution, right?} distributed execution.  The stable model contains all input, intermediate stages of the computation, and all messages sent.  Note that a stable model of a \lang program may be infinite, such as in the following example:
+The semantics of a \lang program can be characterized by the {\em stable model semantics}~\cite{stable-model} for logic programming.  Intuitively, a stable model of a \lang program is a trace of one of its possible distributed executions.  The stable model contains all input, intermediate stages of the computation, and all messages sent.  Note that a stable model of a \lang program may be infinite, such as in the following example:
 
 \begin{example}
 \label{ex:flipflop}
@@ -131,7 +131,7 @@ A cycle is {\em nontrivially periodic} if its period is at least 2.  Otherwise, 
 The program in Example~\ref{ex:flipflop} has a nontrivially periodic cycle of period 2.  Previous work in temporal deductive databases attempted to compute finite representations for such periodicities~\cite{tdd-infinite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all trivially periodic cycles.  We adopt the latter approach of ignoring nontrivial periodicity when defining the output of a \lang program.
 
 \begin{definition}
-For each stable model, the nontrivially \paa{?? you mean trivially, right?} periodic cycles comprise an {\em ultimate model} for the program.  We represent a nontrivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.
+For each stable model, the trivially periodic cycles comprise an {\em ultimate model} for the program.  We represent a nontrivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.
 \end{definition}
 
 For example, the cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different nontrivial periodicities.
