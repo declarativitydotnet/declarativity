@@ -83,12 +83,7 @@ A module which uses a key-value store but is indifferent
 to the specifics of the implementation may simply mix in this protocol specification
 and postpone committing to a particular implementation until runtime.
 
-
-
 \subsection{KVS Implementation}
-
-
-
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
@@ -115,8 +110,6 @@ module BasicKVS
     end
   end
 end
-
-
 \end{lstlisting}
 \centering
 %%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
@@ -142,8 +135,6 @@ does not exist in \texttt{bigtable}.
 
 
 \subsection{Replicated KVS implementation}
-
-
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
@@ -152,6 +143,7 @@ module ReplicatedKVS
   include MulticastProtocol
 
   def state
+    super
     interface input, :kvput, ['client', 'key', 'reqid'], ['value']  (*\label{line:rep-put}*)
   end
 
@@ -172,8 +164,6 @@ module ReplicatedKVS
     end (*\label{line:mcast-peer-end}*)
   end
 end
-
-
 \end{lstlisting}
 \vspace{-10pt}
 \caption{Replicated key/value store.}
@@ -183,16 +173,19 @@ end
 \end{figure}
 
 
-Figure~\ref{fig:kvs-repl} extends the basic KVS module to support replication of the store
-state.  It does so by mixing in MulticastProtocol, which provides the input interface 
-\texttt{send\_mcast} and the output interface \texttt{mcast\_done}.  Line~\ref{line:rep-put}
-declares an additional input interface (\texttt{kvput}) with the same name as the input
-interface of the mixed in module BasicKVS.  This allows the writer of ReplicatedKVS to 
-interpose additional logic between calls to KVSProtocol's input interface and the now 
-``protected'' input interface of BasicKVS.  In ReplicatedKVS, references to \texttt{kvput}
-appearing in the LHS of rules are resolved to the \texttt{kvput} provided by BasicKVS, 
-while references in the RHS of rules resolve to the local \texttt{kvput}.
-Note that this is unambiguous, because it is meaningless for a module to insert into its own input or to read data from its own output interfaces.
+Figure~\ref{fig:kvs-repl} extends the basic KVS module to support replication of
+the store state.  It does so by mixing in MulticastProtocol, which provides the
+input interface \texttt{send\_mcast} and the output interface
+\texttt{mcast\_done}.  Line~\ref{line:rep-put} declares an additional input
+interface (\texttt{kvput}) with the same name as the input interface of the
+mixed in module BasicKVS.  This allows the writer of ReplicatedKVS to interpose
+additional logic between calls to KVSProtocol's input interface and the now
+``protected'' input interface of BasicKVS.  In ReplicatedKVS, references to
+\texttt{kvput} appearing in the LHS of rules are resolved to the \texttt{kvput}
+provided by BasicKVS, while references in the RHS of rules resolve to the local
+\texttt{kvput}.  Note that this is unambiguous, because it is meaningless for a
+module to insert into its own input or to read data from its own output
+interfaces.
 
 Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
 \texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall}) into \texttt{send\_mcast}
@@ -201,7 +194,7 @@ that the current replica is not the master for this update.
 The internal
 \texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
 at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is received at 
-a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
+a peer replica (lines~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
 
 \subsection{Analyses}
 
