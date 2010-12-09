@@ -1,20 +1,33 @@
 \section{Confluence}
 
-For many distributed computations, achieving a deterministic answer (ultimate model) independent of any network nondeterminism is desirable.
+For many distributed computations, achieving a determistic result for every input is desirable.  Recall that non-determinism only arises due to \dedalus{choice}, which only occurs in asynchronous rules to model network non-determinism.  Model-theoretically, a non-deterministic result is manifest in multiple ultimate models.
 
 \begin{definition}
-A \lang program is {\em confluent} if, for any EDB, it has a unique ultimate model.
+A \lang program is {\em confluent} (has a deterministic output) if, for every EDB, it has a unique ultimate model.  A non-confluent program is referred to as {\em diffluence}.
 \end{definition}
 
-Datalog programs without negation are trivially confluent, as they are certain to have
-only one stable model.  The same is true of both negation-free and temporally stratified \lang programs that do not use the  {\em choice} construct.  Cast in operational terms this is
-unsurprising: programs with no sources of nondeterminism have deterministic executions.
+Unfortunately, confluence is an undecidable property of \lang programs:
 
-Any \lang programs that use {\em async} rules have an infinite 
-number of stable models, but as we will see, in many cases these correspond to a
-unique ultimate model.
-In general, however, \lang programs are not necessarily confluent even in the absence of negation.
+\begin{lemma}
+\label{lem:confluence-undecidable}
+Confluence of a \lang program is undecidable.
+\end{lemma}
+\begin{proof}
+We reduce the undecidable problem of determining whether a two-counter machine accepts any input to confluence of a \lang program.  See appendix for details.
+\end{proof}
 
+Given undecidability, we will first identify classes of programs that have a unique ultimate model.  However, in general, a \lang program may encode many ultimate models.  We will show that every \lang program has a ``natural'' ultimate model that is preferrable to all other ultimate models, and corresponds to intuition.  We show how to induce this ultimate model by rewriting the program.
+
+%Fortunately, as we will show, there is a rich class of programs that can be statically detected as confluent.  Furthermore, many other programs have a ``natural'' ultimate model
+%that corresponds to intuition; we show how to induce this ultimate model by augmenting the program.
+%We will first consider programs that we can statically check as having a unique ultimate model.
+%However, a \lang program may encode many ultimate models, so there is a question as to which ultimate model is preferable.
+%\lang programs without negation are trivially confluent, as they are certain to have
+%only one stable model.  The same is true of both negation-free and temporally stratified \lang programs that do not use the  {\em choice} construct.
+%Cast in operational terms this is
+%unsurprising: programs with no sources of nondeterminism have deterministic executions.
+
+\eat{
 \begin{example}
 \label{ex:nonconfluent}
 A non-confluent \lang program.
@@ -27,50 +40,61 @@ q(X)@next <- q(X);
 \end{example}
 
 In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the non-deterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are asigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
+}
 
-Unfortunately, confluence is undecidable for \lang programs, as the following Lemma shows.
+\subsection{Sources of Diffluence}
 
-\begin{lemma}
-\label{lem:confluence-undecidable}
-Confluence of a \lang program is undecidable.
-\end{lemma}
-\begin{proof}
-We reduce the undecidable problem of determining whether a two-counter machine accepts any input to confluence of a \lang program.  See appendix for details.
-\end{proof}
+%Any \lang programs that use asynchronous rules have an infinite
+%number of stable models, but as we will see, in many cases these correspond to a
+%unique ultimate model.
+%In general, however, \lang programs are not necessarily confluent even in the absence of negation.
+First, we provide some intuition for the sources of diffluence in \lang programs.  
+%In Example~\ref{ex:nonconfluent}, we saw a \lang program that was difluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
 
-Fortunately, as we will show, there is a rich class of programs that can be statically detected as confluent.  Furthermore, many other programs have a ``natural'' ultimate model that corresponds to intuition; we show how to induce this ultimate model by augmenting the program.
-
-\subsection{Sources of difluence}
-
-First, we provide some intuition for the sources of difluence in \lang programs.  In Example~\ref{ex:nonconfluent}, we saw a \lang program that was difluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
+\begin{definition}
+If removing negation from a \lang program results in fewer ultimate models, we say the program has {\em nondeterministic world closing}.
+\end{definition}
 
 \begin{example}
 \label{ex:nonconfluent2}
-A \lang program in which difluence is caused by negating an incomplete set.
+A \lang program whose diffluence is caused by nondeterministic world closing.
 
 \begin{Dedalus}
-q(X)@async <- q_edb(X);
-r(X)@async <- r_edb(X);
-p(X) <- q(X), !r(X);
-p(X)@next <- p(X);
+q()@async <- q_edb();
+r()@async <- r_edb();
+p() <- q(), !r();
+p()@next <- p();
+q()@next <- q();
+r()@next <- r();
 \end{Dedalus}
+
+Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.   We will see later how, using intuition from stratification to deterministically close worlds, we can induce confluence with an ultimate model that corresponds to intuition.
 \end{example}
 
-The above example is difluent because if an \dedalus{r} fact is assigned an earlier timestamp than its corresponding \dedalus{q} fact, the ultimate model contains no corresponding \dedalus{p} fact; otherwise, the ultimate model contains the \dedalus{p} fact.
-In operational terms, \dedalus{r} and \dedalus{q} do not commute.
+\begin{definition}
+If a negation-free \lang program is diffluent, we say the program has {\em nondeterministic coincidence}.
+\end{definition}
 
 \begin{example}
-A difluent \lang program without negation.
+\label{ex:diffluent-noneg}
+A \lang program whose diffluence is caused by nondeterministic coincidence.
 
 \begin{Dedalus}
-q(X)@async <- q_edb(X);
-r(X)@async <- r_edb(X);
-p(X) <- q(X), r(X);
-p(X)@next <- p(X);
+q()@async <- q_edb();
+r()@async <- r_edb();
+p() <- q(), r();
+p()@next <- p();
+q()@next <- q();
 \end{Dedalus}
+
+This example demonstrates that negation is not required for diffluence.  Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule.  As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
 \end{example}
 
-The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
+%The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
+
+Ruling out both nondeterministic world closing and nondeterministic coincidence yields confluence.
+
+\wrm{end bill makeover}
 
 \begin{definition}
 A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear in the program.
