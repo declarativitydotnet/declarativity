@@ -77,11 +77,25 @@ University of California, Berkeley
 \maketitle
 
 \begin{abstract}
-Distributed programming has become a topic of widespread interest, and many programmers now wrestle with tradeoffs between data consistency, availability and latency.  Distributed transactions are often rejected as an undesirable tradeoff today, but in the absence of transactions there are few concrete principles or tools to help programmers design and verify the correctness of their applications.
+  Distributed programming has become a topic of widespread interest, and many
+  programmers now wrestle with tradeoffs between data consistency, availability
+  and latency.  Distributed transactions are often rejected as an undesirable
+  tradeoff today, but in the absence of transactions there are few concrete
+  principles or tools to help programmers design and verify the correctness of
+  their applications.
 
-We address this situation with the \emph{CALM} principle, which connects the idea of distributed consistency to program tests for logical monotonicity.  We then introduce \emph{Bloom}, a distributed programming language that is amenable to high-level consistency analysis and encourages order-insensitive programming.  We present a prototype implementation of Bloom as a domain-specific language in Ruby. We also propose a static analysis technique that identifies {\em points of order} in Bloom programs: code locations where programmers need to inject coordination logic to ensure consistency.  
-We illustrate these ideas in the context of two variants
-of a distributed ``shopping cart'' application in Bloom.  We also sketch the feasibility of code rewrites to support runtime annotation of data consistency, a topic for a longer paper.
+  We address this situation with the \emph{CALM} principle, which connects the
+  idea of distributed consistency to program tests for logical monotonicity.  We
+  then introduce \emph{Bloom}, a distributed programming language that is
+  amenable to high-level consistency analysis and encourages order-insensitive
+  programming.  We present a prototype implementation of Bloom as a
+  domain-specific language in Ruby. We also propose a static analysis technique
+  that identifies {\em points of order} in Bloom programs: code locations where
+  programmers need to inject coordination logic to ensure consistency.  We
+  illustrate these ideas in the context of two variants of a distributed
+  ``shopping cart'' application in Bloom.  We also sketch the feasibility of
+  code rewrites to support runtime annotation of data consistency, a topic for a
+  longer paper.
 \end{abstract}
 
 \input{intro}
