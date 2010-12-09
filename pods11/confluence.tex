@@ -113,10 +113,11 @@ Sketch: only possible way two ultimate models are different is if two facts (or 
 
 
 \paa{a great windy attempt at proof}
+\wrm{yeah, this is right, need to define terms though-- define ``ground atom'' as ``first time something in the ultimate model is true before it is eventually always true'', change ``join'' to ``unification'', change ``eventually always succeed'' to ``eventually always satisfied'' or something, define ``modulo time'' define ``identical tuple''.  i'll let you fix this. you can delete my sketch above too}
 Towards a proof by contradiction, consider a negation-free \lang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
-not in another model, and $p$ must be persistent, or it would not be
+not in another model, and $p$ must be persistent \wrm{eventually always true}, or it would not be
 in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
 choice of timestamp via an {\em async} rule, then certainly there is only one stable model of the
@@ -148,16 +149,17 @@ Intuitively, a monotonic property represents some knowledge that never becomes u
 fact that will never be true.  We may define monotonic properties constructively as follows.
 
 \paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
+\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
 
 \begin{definition}
-A fact in a persistent relation is a monotonic property.
+A fact in a persistent relation is a monotonic property. \wrm{what's a persistent relation?} \wrm{also, we should start from EDB, and say that's a persistent relation}
 \end{definition}
 
 Facts in persistent relations cannot be retracted once they are asserted.  They begin false
 (insofar as their compliment can be asserted), and if they become true remain so.
 
 \begin{definition}
-A  fact defined with even depth of negation over a monotonic property is also a monotonic property.
+A fact defined with even depth of negation over a monotonic property is also a monotonic property. \wrm{think this is better said as ``all paths through the PDG contain an even depth to the monotonic property''}
 \end{definition}
 
 The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
@@ -207,7 +209,7 @@ If a monotonic property is true in any trace of a program, given an EDB, it is t
 \begin{proof}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur).  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic.
 \end{proof}
-\paa{I don't really get the proof.  what does it mean for a property to observe a condition?}
+\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
 \begin{corollary}
 Logical monotonicity is a sufficient condition for confluence.
@@ -333,6 +335,8 @@ Given any \lang program without recursion through negation, we can automatically
 2. Let \dedalus{p} be an asynchronous predicate, from which a negated or aggregated predicate is reachable above.
 3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location specifier.
 4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, \dedalus{p\_complete}, and \dedalus{p\_send} are fesh predicate names.
+
+\wrm{we'll be waiting for ever for counts of zero...}
 
 \noindent
 \begin{Dedalus}
