@@ -215,22 +215,16 @@ module CartClient
     checkout_msg <~ client_checkout.map do |a| 
       [a.server, @addy, a.session, a.reqid]
     end
-    client_response <= response_msg.map {|r| r }
+    client_response <= response_msg
   end
 end
-
 \end{lstlisting}
 \vspace{-10pt}
-\caption{Shopping cart client implementation}
+\caption{Shopping cart client implementation.}
 \label{fig:cart_client}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
-
-
-
-
-
 
 
 %\vspace{9pt}\noindent \textbf{Bloom Statements}\\

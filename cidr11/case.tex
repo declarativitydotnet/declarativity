@@ -60,10 +60,6 @@ end
 \vspace{-2pt}
 \end{figure}
 
-
-
-
-
 We begin with a shopping cart built on a key-value storage abstraction.  Each
 cart is a \texttt{(key,value)} pair, where \texttt{key} is a unique session
 identifier and \texttt{value} is an object containing the session's state,
@@ -112,6 +108,7 @@ Whenever a \texttt{checkout\_msg} appears in a server replica, the
 \begin{lstlisting}
 module DisorderlyCart
   include CartProtocol
+
   def state
     super
     table :cart_action, ['session', 'item', 'action', 'reqid']
@@ -147,7 +144,6 @@ module DisorderlyCart
     response_msg <~ status.map { |s| s } (*\label{line:dis_checkout_response}*)
   end
 end
-
 \end{lstlisting}
 \vspace{-10pt}
 \caption{Disorderly cart implementation.}
@@ -155,8 +151,6 @@ end
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
-
-
 
 Figure~\ref{fig:dis-cart} shows an alternative shopping cart
 implementation, in which updates are monotonically accumulated during shopping
