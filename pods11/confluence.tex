@@ -202,20 +202,27 @@ A confluent Dedalus program that is not logically monotonic.
 
 \begin{Dedalus}
 //client
-b(#s,I)@async :- b_edb(I);
+b(#s, I)@async :- b_edb(I);
 
 //server
-b(N,I)@next <- b(N,I), !dequeued(I);
-b_lt(i,j) <- b(_,i), b(_,j), i < j;
-dequeued(i)@next <- b(_,i), !b_lt(_,i);
-odd()@next <- odd(), !dequeued(_);
-odd()@next <- dequeued(), even();
-even() <- !odd();
+b(N, I)@next <- b(N, I), !dequeued(I);
+b_lt(I, J) <- b(_, I), b(_, J), I < J;
+dequeued(I)@next <- b(_, I), !b_lt(_, I);
+mem(I) <- dequeued(I), !bt_lt(_, _);
+
 \end{Dedalus}
 \wrm{or, just consider the 2 counter machine...?}
 \end{example}
 
-The ultimate model contains \dedalus{odd()} if there are an odd number of \dedalus{b\_edb(I)} facts, and \dedalus{even()} otherwise.  Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{even()} is not supported by only monotonic properties, thus the program is not logically monotonic.
+%odd()@next <- odd(), !dequeued(_);
+%odd()@next <- dequeued(), even();
+%even() <- !odd();
+
+\paa{does this work?}
+%The ultimate model contains \dedalus{odd()} if there are an odd number of \dedalus{b\_edb(I)} %facts, and \dedalus{even()} otherwise.  
+This program has a single ultimate model in which \dedalus{mem()} contains the highest
+element in \dedalus{b\_edb()} according to the order \dedalus{<}.
+Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{mem()} is not supported by only monotonic properties, thus the program is not logically monotonic.
 
 \subsection{Perfect Ultimate Model}
 Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultimate models).
