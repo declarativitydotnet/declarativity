@@ -11,7 +11,8 @@ In this section, we develop two different designs for a distributed shopping-car
 application in Bloom.\footnote{The complete source code for 
 both implementations can be found at \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}
 First, we implement a ``destructive,'' state-modifying
-shopping cart application using a simple key-value store (also written in Bloom).
+shopping cart application using the simple key-value store we developed in the
+previous section.
 Second, we implement a ``disorderly'' cart that accumulates updates in a 
 set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.  
 
@@ -28,11 +29,12 @@ in the cart.
 
 Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
 \textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} protocol shown
-in Figure~\ref{fig:kvs-proto}; it represents the input interface to the key-value store.
+in Figure~\ref{fig:kvs-proto}.
 Any collection of Bud rules that implement the protocol can be used, but to satisfy
 our requirement that the data be replicated we must use an implementation that replicates
-the contents of the store to multiple servers (e.g., the ReplicatedKVS module shown in 
-figure~\ref{fig:kvs-repl}, mixed-in with some implementation of MulticastProtocol).
+the contents of the store to multiple servers.  Optimistically assuming that the program is
+otherwise consistent, we here use the ReplicatedKVS module shown in 
+figure~\ref{fig:kvs-repl}, and will later mix in  BestEffortMulticast, an implementation of MulticastProtocol with low message complexity.
 
 In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client transmits
 \texttt{client\_action} tuples that correspond to cart updates over the
@@ -47,7 +49,8 @@ generate an entry for the new session in \texttt{bigtable}.  Otherwise, the
 join conditions in
 line~\ref{line:des_join_bigtable_action_msg}
 are satisfied and lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end}
-``replace'' the item array at the next timestep with a new version.  
+``replace'' the item array at the next timestep with a new version, via the 
+built-in overwriting capability provided by KeyValueStore.  
 Whenever a \texttt{checkout\_msg} appears in a server replica, the
 %%\texttt{bigtable} tuple associated with the given session is identified (via
 %%the join on
@@ -58,7 +61,7 @@ Whenever a \texttt{checkout\_msg} appears in a server replica, the
 
 \subsection{A ``disorderly'' shopping cart}
 
-Figure~\ref{fig:pdg-disorderly} shows an alternative shopping cart
+Figure~\ref{fig:dis-cart} shows an alternative shopping cart
 implementation, in which updates are monotonically accumulated during shopping
 in a disorderly set, and summed up only at checkout.
 Lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} insert client updates into the persistent
