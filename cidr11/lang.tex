@@ -14,12 +14,28 @@ guarantees about order of execution and communication. By contrast, set-oriented
 approaches like SQL and batch dataflow approaches like MapReduce translate
 better to architectures with loose control over ordering.
 
-Bloom is designed in the tradition of programming styles that are ``disorderly'' by nature.  State is captured in unordered relations.  Computation is expressed in logic: an unordered set of declarative rules, each consisting of an unordered set of predicates.  As we discuss below, mechanisms for imposing order are available when needed, but the programmer is provided with tools to evaluate the need for these mechanisms as special-case behaviors, rather than a default model.  The result is code that runs naturally on distributed machines with a minimum of coordination overhead.
+Bloom is designed in the tradition of programming styles that are ``disorderly''
+by nature.  State is captured in unordered relations.  Computation is expressed
+in logic: an unordered set of declarative rules, each consisting of an unordered
+set of predicates.  As we discuss below, mechanisms for imposing order are
+available when needed, but the programmer is provided with tools to evaluate the
+need for these mechanisms as special-case behaviors, rather than a default
+model.  The result is code that runs naturally on distributed machines with a
+minimum of coordination overhead.
  
-Unlike earlier efforts such as Prolog, active database languages,
-and our own Overlog language for distributed systems~\cite{p2}, Bloom is {\em purely declarative}: the syntax of a program contains the full specification of its semantics, and there is no need for the programmer to understand or reason about the behavior of the evaluation engine.  Bloom is based on a formal temporal logic called Dedalus~\cite{dedalus}.
+Unlike earlier efforts such as Prolog, active database languages, and our own
+Overlog language for distributed systems~\cite{p2}, Bloom is {\em purely
+  declarative}: the syntax of a program contains the full specification of its
+semantics, and there is no need for the programmer to understand or reason about
+the behavior of the evaluation engine.  Bloom is based on a formal temporal
+logic called Dedalus~\cite{dedalus}.
 
-The prototype version of Bloom we describe here is embodied in an implementation we call {\em Bud} (Bloom Under Development).  Bud is a subset of the popular Ruby scripting language and is evaluated by a stock Ruby interpreter via a \textbf{Bud} Ruby class.  Compared to other logic languages, we feel it has a familiar and programmer-friendly flavor, and we believe that its learning curve will be quite flat for programmers familiar with modern scripting languages.
+The prototype version of Bloom we describe here is embodied in an implementation
+we call {\em Bud} (Bloom Under Development).  Bud is a subset of the popular
+Ruby scripting language and is evaluated by a stock Ruby interpreter via a
+\textbf{Bud} Ruby class.  Compared to other logic languages, we feel it has a
+familiar and programmer-friendly flavor, and we believe that its learning curve
+will be quite flat for programmers familiar with modern scripting languages.
 %nrc: Cut because it seemed unimportant
 %Future versions of Bloom may do away with some of the syntactic idiosyncracies of Ruby, but it has been useful to stay grounded in the specific syntax of one widely-accepted language, at least in our early work.
 %In the remainder of the paper, when we refer to Bloom we mean the language supported by the current Bud prototype.
@@ -27,7 +43,24 @@ The prototype version of Bloom we describe here is embodied in an implementation
 %\vspace{9pt}\noindent\textbf{Bloom Basics}\\
 \subsection{Bloom Basics}
 
-Bloom programs are bundles of declarative statements about collections of ``facts'' or tuples, akin to SQL views or Datalog rules.  Bloom statements can only reference data that is local to a node.  Bloom rules are defined with respect to atomic ``timesteps,'' which can be implemented via successive rounds of evaluation. In each timestep, certain ``ground facts'' exist in collections due to persistence or the arrival of messages from outside agents (e.g., the network or system clock).  The statements in a Bloom program specify the derivation of additional facts, which can be declared to exist either in the current timestep, at the very next timestep, or at some time in the future at a remote node.  A Bloom program also specifies the way that facts persist (or do not persist) across consecutive timesteps on a single node.  Bloom is a side-effect free language with no ``mutable state'': if a fact is defined at a given timestep, its existence at that timestep cannot be refuted by any expression in the language.  This technicality is key to avoiding many of the complexities involved in reasoning about earlier ``stateful'' rule languages.  The paper on Dedalus discusses these points in more detail~\cite{dedalus}.
+Bloom programs are bundles of declarative statements about collections of
+``facts'' or tuples, akin to SQL views or Datalog rules.  Bloom statements can
+only reference data that is local to a node.  Bloom rules are defined with
+respect to atomic ``timesteps,'' which can be implemented via successive rounds
+of evaluation. In each timestep, certain ``ground facts'' exist in collections
+due to persistence or the arrival of messages from outside agents (e.g., the
+network or system clock).  The statements in a Bloom program specify the
+derivation of additional facts, which can be declared to exist either in the
+current timestep, at the very next timestep, or at some time in the future at a
+remote node.
+
+A Bloom program also specifies the way that facts persist (or do not persist)
+across consecutive timesteps on a single node.  Bloom is a side-effect free
+language with no ``mutable state'': if a fact is defined at a given timestep,
+its existence at that timestep cannot be refuted by any expression in the
+language.  This technicality is key to avoiding many of the complexities
+involved in reasoning about earlier ``stateful'' rule languages.  The paper on
+Dedalus discusses these points in more detail~\cite{dedalus}.
 
 \begin{figure}
 	\begin{small}
@@ -38,8 +71,8 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 		\textbf{table} & A collection whose contents persist across timesteps.\\
 		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
 		\textbf{channel} & A scratch collection with one attribute designated as the {\em location specifier}. Tuples ``appear'' at the address stored in their location specifier.\\
-    \textbf{interface} & A scratch collection specially designated as a point of dataflow composition with other modules.  An interface is typed as either \texttt{input} or \texttt{output}, and may only compose with an interface of the opposite type.\\
-		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The spec for a \textbf{periodic} is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
+    \textbf{interface} & A scratch collection specially designated as an interface point between modules.  An interface is typed as either \texttt{input} or \texttt{output} and may only compose with an interface of the opposite type.\\
+		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The definition of a periodic collection is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
 		\hline
 	\end{tabular}
 
@@ -53,8 +86,8 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep.\\
 		\texttt{$<$+} & \textbf{table}, \textbf{scratch} & lhs will include the content of the rhs in the next timestep.\\
 		              %& \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay.\\
-		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be missing from the lhs at the start of  the next timestep.\\
-		\texttt{$<\sim$} & \textbf{channel} & tuples in the rhs will appear in the (remote) lhs at some future time.\\
+		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be absent from the lhs at the start of  the next timestep.\\
+		\texttt{$<\sim$} & \textbf{channel} & tuples in the rhs will appear in the (remote) lhs at some non-deterministic future time.\\
 		\hline
 	\end{tabular}
 	\end{small}
@@ -65,25 +98,23 @@ Bloom programs are bundles of declarative statements about collections of ``fact
 %\vspace{9pt}\noindent\textbf{State in Bloom}\\
 \subsection{State in Bloom}
 
-Bloom programs manage state using five collection types described in
-the top of Figure~\ref{tab:bloom}. Each object of these types is defined with a
-relational-style schema of named columns, including an optional subset of those
-columns that forms a primary key.  
-Line~\ref{line:dec_chan} of
-Figure~\ref{fig:declarations} shows the definition of a \textbf{channel} with 6
-columns \texttt{server}, \texttt{client}, \texttt{session}, \texttt{reqid}, \texttt{item} and \texttt{action}; the
-primary key is \texttt{(server, client, session, reqid)}. \texttt{server} is annotated with the location
-specifier ``@,''
-indicating that tuples inserted into the channel will appear at the address
-in the first attribute of the tuple.
-In Bud, the type system for the
-columns is taken from Ruby, so it is possible to have a column based on any Ruby
-class the programmer cares to define or import.  In Bud, a tuple in a Bloom
-collection is simply a Ruby array containing as many elements as the columns of
-the collection's schema.  As in other object-relational ADT schemes like
-Postgres~\cite{postgres-adt}, column values can be manipulated using their own
-(non-destructive) methods, but the Bloom language has no knowledge of those
-types and can only reference the column values as opaque objects.
+Bloom programs manage state using five collection types described in the top of
+Figure~\ref{tab:bloom}. A collection is defined with a relational-style schema
+of named columns, including an optional subset of those columns that forms a
+primary key.  Lines~\ref{line:dec_chan_beg}--\ref{line:dec_chan_end} of
+Figure~\ref{fig:declarations} show the definition of a \textbf{channel} with 6
+columns \texttt{server}, \texttt{client}, \texttt{session}, \texttt{reqid},
+\texttt{item} and \texttt{action}; the primary key is \texttt{(server, client,
+  session, reqid)}. The \texttt{server} column is annotated with the location
+specifier \texttt{@}, indicating that tuples inserted into the channel will
+appear at the address in the first attribute of the tuple.  In Bud, the type
+system for columns is taken from Ruby, so it is possible to have a column based
+on any Ruby class the programmer cares to define or import.  In Bud, a tuple in
+a Bloom collection is simply a Ruby array containing as many elements as the
+columns of the collection's schema.  As in other object-relational ADT schemes
+like Postgres~\cite{postgres-adt}, column values can be manipulated using their
+own (non-destructive) methods, but the Bloom language has no builtin knowledge
+of those types and can only reference the column values as opaque objects.
 
 The persistence of a tuple is determined by the type of the collection that
 contains the tuple. \textbf{scratch} collections are handy for transient data
@@ -173,8 +204,8 @@ channel.
 module CartProtocol
   def state
     super
-    channel :action_msg, (*\label{line:dec_chan}*)
-      ['@server', 'client', 'session', 'reqid'], ['item', 'action']
+    channel :action_msg, (*\label{line:dec_chan_beg}*)
+      ['@server', 'client', 'session', 'reqid'], ['item', 'action'] (*\label{line:dec_chan_end}*)
     channel :checkout_msg,
       ['@server', 'client', 'session', 'reqid']
     channel :response_msg,
@@ -237,7 +268,7 @@ collections.  The syntax is:\\ \noindent
 $<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
 the operator are instances of (a subclass of) a Ruby class called
 \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
-module supporting typical collection methods.  Figure~\ref{tab:bloom} describes
+module supporting typical collection methods.  The bottom of Figure~\ref{tab:bloom} describes
 the five operators that can be used to define the contents of the left-hand
 side (lhs) in terms of the right-hand side (rhs).
 

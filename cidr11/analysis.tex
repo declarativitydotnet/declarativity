@@ -1,11 +1,10 @@
 \section{CALM Analysis}
-
-Bloom programs define unordered collections and rules that describe transformations over 
-these collections.  A Bloom program may be viewed as a dataflow graph with external 
-inputs and outputs as sources and sinks, respectively, collections as internal nodes,
-and rules as edges.  Given this view,
-we may adapt powerful static analyses from the logic programming literature which are 
-expressed as properties of such dataflow graphs.
+Bloom programs define unordered collections and statements that describe
+transformations over these collections.  A Bloom program may be viewed as a
+dataflow graph with external inputs and outputs as sources and sinks,
+respectively, collections as internal nodes, and rules as edges.  Given this
+view, we may adapt powerful static analyses from the logic programming
+literature which are expressed as properties of such dataflow graphs.
 
 In this section, we implement a simple key-value store in Bud, and analyze the implied
 dataflow.  We begin with an interface for an abstract store, and extend it first into a single-site
@@ -26,8 +25,7 @@ the type of $B$.  If the rule is ``inductive''---i.e., has the \texttt{$<$+}
 operator and a {\bf table} lhs---then the edge is marked with a $+$.  If the
 rule is ``asynchronous''---i.e., a rule with the \texttt{$<$+} operator and a {\bf
 channel} lhs---then the edge is a dashed line.  If the rule involves
-a nonmonotonic operation (aggregation or negation) over $A$, then the edge is marked with a $\lnot$.
-%result in edges marked with a $\lnot$.
+a nonmonotonic operation (aggregation or anti-join) over $A$, then the edge is marked with a $\lnot$.
 To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into an octagonal ``temporal cluster,'' 
 which can be viewed abstractly as a single, nonmonotonic node in the 
 dataflow.\footnote{Datalog aficionados may be troubled by our mention of cycles
@@ -114,7 +112,7 @@ end
 \centering
 %%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
-\caption{Key/value store implementation.}
+\caption{Simple key-value store implementation.}
 \label{fig:kvs-impl}
 \end{scriptsize}
 \vspace{-2pt}
@@ -166,7 +164,7 @@ module ReplicatedKVS
 end
 \end{lstlisting}
 \vspace{-10pt}
-\caption{Replicated key/value store.}
+\caption{Replicated key-value store.}
 \label{fig:kvs-repl}
 \end{scriptsize}
 \vspace{-2pt}
@@ -188,7 +186,7 @@ module to insert into its own input or to read data from its own output
 interfaces.
 
 Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
-\texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall}) into \texttt{send\_mcast}
+\texttt{kvput}, its contents are marshalled (line~\ref{line:marshall}) into \texttt{send\_mcast}
 if the originating address is not another replica (line~\ref{line:not-rep}), as this would indicate
 that the current replica is not the master for this update.  
 The internal
@@ -197,8 +195,6 @@ at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is r
 a peer replica (lines~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
 
 \subsection{Analyses}
-
-
 Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the KVS protocol.  Data
 flows from the source node (an external caller) to one or both of \texttt{kvput} and 
 \texttt{kvget}, through some unknown dataflow, to \texttt{kvget\_response}.
@@ -223,10 +219,6 @@ of \texttt{bigtable} at any point in time may depend on the order of arrival of 
 tuples.  We challenge the reader to implement the KeyValueProto interface in a way that
 has no such point of order.
 
-
-
-
-
 \begin{figure}[t]
 \centering
 \includegraphics[width=1.1\linewidth]{fig/mittalk_legend.pdf}
@@ -235,26 +227,6 @@ has no such point of order.
 \label{fig:analysis-legend}
 \vspace{-2pt}
 \end{figure}
-
-
-
-
-
-
-
-
-
-
-
-
-%%\begin{comment}
-
-%%\end{comment}
-
-
-
-
-
 
 \begin{figure}[t]
 \centering
@@ -269,7 +241,7 @@ has no such point of order.
 \centering
 \includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
-\caption{Key/value store analysis.}
+\caption{Key-value store analysis.}
 \label{fig:pdg-kvs-analysis}
 \vspace{-2pt}
 \end{figure}
