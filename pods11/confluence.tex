@@ -112,21 +112,49 @@ If either qualification is false, problems can result, as we have previously ill
 
 \subsection{Monotonic Properties}
 
+
 We can generalize Lemma~\ref{lem:guarding} by the notion of a {\em monotonic property}.
 
 \begin{definition}
 If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
 \end{definition}
 
-An example of a monotonic property would be a persistent fact, or the negation of a fact that is never true.  Intuitively, a monotonic property represents some knowledge that never becomes untrue as we learn more knowledge.
+%An example of a monotonic property would be a persistent fact, or the negation of a fact that is %%never true. 
+Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
+fact that will never be true.  We may define monotonic properties constructively as follows.
+
+\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
 
 \begin{definition}
-A \lang program is {\em monotonic} if for all facts in any ultimate model, the element of the trace corresponding to the first time the fact was true before being henceforth true was computed by only monotonic properties. \wrm{may need some slight tweaking}
+A fact in a persistent relation is a monotonic property.
+\end{definition}
+
+Facts in persistent relations cannot be retracted once they are asserted.  They begin false
+(insofar as their compliment can be asserted), and if they become true remain so.
+
+\begin{definition}
+A  fact defined with even depth of negation over a monotonic property is also a monotonic property.
+\end{definition}
+
+The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
+same as that the monotonic property.  In the absence of recursion, negation depth is a syntactically-checkable property.  Whenever there is recursion through negation
+(as in temporally stratified \lang programs~\ref{dedalus}), the negation depth is data-dependent.
+
+\begin{definition}
+A fact defined via a rule application all of whose subgoals are monotonic properties is a
+monotonic property.
+\end{definition}
+
+\begin{definition}
+%A \lang program is {\em monotonic} if for all facts in any ultimate model, the element of the %trace corresponding to the first time the fact was true before being henceforth true was 
+%computed by only monotonic properties. \wrm{may need some slight tweaking}
+A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.
 \end{definition}
 
 \begin{example}
-Example of a logically monotonic Dedalus program:\\
+%Example of a logically monotonic Dedalus program:\\
 \begin{Dedalus}
+response(X)@async <- response_edb(X);
 node(X)@next <- node(X);
 response(X)@next <- response(X);
 all_responded() <- !not_responded(_);
@@ -135,7 +163,17 @@ all_responded()@next <- all_responded();
 \end{Dedalus}
 \end{example}
 
-The above program is monotonic. There is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even).  \paa{this suggests that we can test if programs are monotonic, though everything up till now has been an attempt to define montonicity semantically...} Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
+The above program is very nearly monotonic. If we assume that the contents of \texttt{node}
+are fixed (e.g., it is EDB and given \emph{a priori}), there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even). 
+Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
+
+If the set \texttt{node} is not fixed, however, the program is not monotonic, because 
+\texttt{all\_responded} is defined with odd negation depth over \texttt{node}: adding a tuple
+to \texttt{node} may cause a fact in \texttt{all\_responded} to become false.  If such inserts
+are possible, maintenance of \texttt{node} will require coordination.  This is analogous to
+the problem of dynamic membership in quorum systems: quantifying over all (or a majority
+of) participants requires some static ``view'' of membership, and changing these views requires
+explicit coordination among participants.
 
 We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
 
@@ -145,6 +183,7 @@ If a monotonic property is true in any trace of a program, given an EDB, it is t
 \begin{proof}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur).  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic.
 \end{proof}
+\paa{I don't really get the proof.  what does it mean for a property to observe a condition?}
 
 \begin{corollary}
 Logical monotonicity is a sufficient condition for confluence.
@@ -179,7 +218,7 @@ even() <- !odd();
 The ultimate model contains \dedalus{odd()} if there are an odd number of \dedalus{b\_edb(I)} facts, and \dedalus{even()} otherwise.  Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{even()} is not supported by only monotonic properties, thus the program is not logically monotonic.
 
 \subsection{Perfect Ultimate Model}
-Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, similarly to the way that Datalog programs with negation have a model called the {\em perfect model} which corresponds to intuition.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultiamte models).
+Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultimate models).
 
 Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
 
