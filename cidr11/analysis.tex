@@ -1,21 +1,22 @@
 \section{CALM Analysis}
 
 Bloom programs define unordered collections and rules that describe transformations over 
-these collections.  A Bloom program may therefore be viewed as a dataflow graph with external 
-inputs as sources, outputs as sinks and collections as internal nodes.  Given this view,
+these collections.  A Bloom program may be viewed as a dataflow graph with external 
+inputs and outputs as sources and sinks, respectively, collections as internal nodes,
+and rules as edges.  Given this view,
 we may adapt powerful static analyses from the logic programming literature which are 
-expressed as properties of the dataflow graphs.
+expressed as properties of such dataflow graphs.
 
 In this section, we implement a simple key-value store in Bud, and analyze the implied
-dataflow.  We begin with an interface for an abstract store, and evolve it first into a single-site
+dataflow.  We begin with an interface for an abstract store, and extend it first into a single-site
 and finally into a replicated implementation.  Along the way, we use a dataflow visualization
-to reason about the completeness and correctness of the supplied implementations.
+to reason about the completeness and correctness of the evolving program.
 
 \subsection{Predicate Dependency Graphs}
 
 The Bud interpreter automatically generates a graphical
-representation of dependencies between collections in a program
-(Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
+representation of dependencies between collections in a program.
+%(Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
 Each node in the graph is either a collection or a cluster of collections; \textbf{table}s are shown as rectangles, ephemeral
 collections (\textbf{scratch} and \textbf{channel}) are depicted as ovals, and clusters (described below) as octagons.  A
 directed edge from node $A$ to node $B$ indicates that $B$ appears in the
@@ -25,7 +26,7 @@ the type of $B$.  If the rule is ``inductive''---i.e., has the \texttt{$<$+}
 operator and a {\bf table} lhs---then the edge is marked with a $+$.  If the
 rule is ``asynchronous''---i.e., a rule with the \texttt{$<$+} operator and a {\bf
 channel} lhs---then the edge is a dashed line.  If the rule involves
-non-monotonicity (aggregation or negation) over $A$, then the edge is marked with a $\lnot$.
+a nonmonotonic operation (aggregation or negation) over $A$, then the edge is marked with a $\lnot$.
 %result in edges marked with a $\lnot$.
 To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into an octagonal ``temporal cluster,'' 
 which can be viewed abstractly as a single, nonmonotonic node in the 
@@ -36,110 +37,11 @@ describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability
 %figure as details from the KV store that are beyond the scope....}
 %collapsing the mutually dependent collections into a single node.
 Points of order are indicated in the graph by an edge with a white circle.
- Any negated edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis visualizations.
+ Any nonmonotonic edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis visualizations.
 
 
 
 \subsection{KVS Interface}
-
-Figure~\ref{fig:kvs-proto} provides an abstract specification of a key-value store,
-comprising its interface to other Bloom programs or the external world.  
-We may interact with any implementation of the store
-by supplying inputs to \texttt{kvput} and \texttt{kvget} and by reading output from
-\texttt{kvget\_response}.  
-Much as we would expect to interact
-with a hash table, we store key-value pairs by inserting them into \texttt{kvput}, and 
-retrieve the value associated with a given key by inserting a tuple containing that key
-into \texttt{kvget} and reading the result out of \texttt{kvget\_response}.  In each case,
-we also require the caller to supply a unique request identifier \texttt{reqid} to differentiate
-tuples in the event of multiple concurrent requests.
-A module which uses a key-value store but is indifferent
-to the specifics of the implementation may simply mix in this protocol specification
-and postpone committing to a particular implementation until runtime.
-
-
-
-\subsection{KVS Implementation}
-
-Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
-realization of a key-value store.  Line~\ref{line:kvs-state} declares a \textbf{table}
-called \texttt{bigtable} that stores the internal, persistent state of the store.
-When a \texttt{kvput} tuple appears, its key-value pair is placed in \texttt{bigtable} in the
-immediate next timestep (line~\ref{line:kvs-put}).  If a value for the given key already 
-exists in \texttt{bigtable}, we wish to replace it with the newer value.  Line~\ref{line:kvs-join}
-joins the input interface with the internal state: if a row already exists for the current key,  
-the join collection \texttt{jst} will contain a tuple that is the concatenation of the matching
-tuples from \texttt{bigtable} and \texttt{kvput}.  In this event, line~\ref{line:kvs-clean}
-states that in the immediate next timestep (and hence concurrently with the appearance of the
-new tuple derived at line~\ref{line:kvs-put}), the old value associated with the given key
-does not exist in \texttt{bigtable}.  
-
-
-\subsection{Replicated KVS implementation}
-
-Figure~\ref{fig:kvs-repl} extends the basic KVS module to support replication of the store
-state.  It does so by mixing in MulticastProtocol, which provides the input interface 
-\texttt{send\_mcast} and the output interface \texttt{mcast\_done}.  Line~\ref{line:rep-put}
-declares an additional input interface (\texttt{kvput}) with the same name as the input
-interface of the mixed in module BasicKVS.  This allows the writer of ReplicatedKVS to 
-interpose additional logic between calls to KVSProtocol's input interface and the now 
-``protected'' input interface of BasicKVS.  In ReplicatedKVS, references to \texttt{kvput}
-appearing in the LHS of rules are resolved to the \texttt{kvput} provided by BasicKVS, 
-while references in the RHS of rules resolve to the local \texttt{kvput}.
-Note that this is unambiguous, because it is meaningless for a module to insert into its own input or to read data from its own output interfaces.
-
-Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
-\texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall}) into \texttt{send\_mcast}
-if the originating address is not another replica (line~\ref{line:not-rep}), as this would indicate
-that the current replica is not the master for this update.  
-The internal
-\texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
-at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is received at 
-a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
-
-\subsection{Analyses}
-
-
-Figure~\ref{fig:kvs-proto} also presents a visual representation of the KVS protocol.  Data
-flows from the source node (an external caller) to one or both of \texttt{kvput} and 
-\texttt{kvget}, through some unknown dataflow, to \texttt{kvget\_response}.
-The existence of the red diamond labeled ``??'' indicates that the dataflow is underspecified:
-is must be ``completed'' by supplying dataflow that, at minimum, connects the input 
-interfaces to the output interface.
-
-Figure~\ref{fig:kvs-impl} shows the visual analysis of the basic KVS implementation,
-which supplies a concrete dataflow for the unspecified component in the previous
-graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a red octagon because they
-are part of a strongly connected component in the graph with both negative and temporal 
-edges.  Any data flowing from \texttt{kvput} to the sink must cross at least one nonmonotonic
-point of
-order (at ingress to the octagon) and possible an arbitrary number of them (via the
-octagon's self-edge), and any path from \texttt{kvget} to the sink must join state potentially
-affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget response}).
-
-Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable.  The 
-contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
-of its contents at the immediate previous state and the current input.  Hence the state
-of \texttt{bigtable} at any point in time may depend on the order of arrival of \texttt{kvput} 
-tuples.  We challenge the reader to implement the KeyValueProto interface in a way that
-has no such point of order.
-
-
-
-
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=1.1\linewidth]{fig/mittalk_legend.pdf}
-\vspace{-10pt}
-\caption{Visual analysis legend.}
-\label{fig:analysis-legend}
-\vspace{-2pt}
-\end{figure}
-
-
-
-
 
 
 \begin{figure}[t]
@@ -166,15 +68,24 @@ end
 \vspace{-2pt}
 \end{figure}
 
+Figure~\ref{fig:kvs-proto} provides an abstract specification of a key-value store,
+comprising its interface to other Bloom programs or the external world.  
+We may interact with any implementation of the store
+by supplying inputs to \texttt{kvput} and \texttt{kvget} and by reading output from
+\texttt{kvget\_response}.  
+Much as we would expect to interact
+with a hash table, we store key-value pairs by inserting them into \texttt{kvput}, and 
+retrieve the value associated with a given key by inserting a tuple containing that key
+into \texttt{kvget} and reading the result out of \texttt{kvget\_response}.  In each case,
+we also require the caller to supply a unique request identifier \texttt{reqid} to differentiate
+tuples in the event of multiple concurrent requests.
+A module which uses a key-value store but is indifferent
+to the specifics of the implementation may simply mix in this protocol specification
+and postpone committing to a particular implementation until runtime.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
-\vspace{-10pt}
-\caption{Visualization of the key-value store protocol.}
-\label{fig:pdg-kvs-proto-analysis}
-\vspace{-2pt}
-\end{figure}
+
+
+\subsection{KVS Implementation}
 
 
 
@@ -216,17 +127,22 @@ end
 \vspace{-2pt}
 \end{figure}
 
+Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
+realization of a key-value store.  Line~\ref{line:kvs-state} declares a \textbf{table}
+called \texttt{bigtable} that stores the internal, persistent state of the store.
+When a \texttt{kvput} tuple appears, its key-value pair is placed in \texttt{bigtable} in the
+immediate next timestep (line~\ref{line:kvs-put}).  If a value for the given key already 
+exists in \texttt{bigtable}, we wish to replace it with the newer value.  Line~\ref{line:kvs-join}
+joins the input interface with the internal state: if a row already exists for the current key,  
+the join collection \texttt{jst} will contain a tuple that is the concatenation of the matching
+tuples from \texttt{bigtable} and \texttt{kvput}.  In this event, line~\ref{line:kvs-clean}
+states that in the immediate next timestep (and hence concurrently with the appearance of the
+new tuple derived at line~\ref{line:kvs-put}), the old value associated with the given key
+does not exist in \texttt{bigtable}.  
 
-%%\begin{comment}
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
-\vspace{-10pt}
-\caption{Key/value store analysis.}
-\label{fig:pdg-kvs-analysis}
-\vspace{-2pt}
-\end{figure}
-%%\end{comment}
+
+\subsection{Replicated KVS implementation}
+
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -257,10 +173,110 @@ module ReplicatedKVS
   end
 end
 
+
 \end{lstlisting}
 \vspace{-10pt}
 \caption{Replicated key/value store.}
 \label{fig:kvs-repl}
 \end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+
+Figure~\ref{fig:kvs-repl} extends the basic KVS module to support replication of the store
+state.  It does so by mixing in MulticastProtocol, which provides the input interface 
+\texttt{send\_mcast} and the output interface \texttt{mcast\_done}.  Line~\ref{line:rep-put}
+declares an additional input interface (\texttt{kvput}) with the same name as the input
+interface of the mixed in module BasicKVS.  This allows the writer of ReplicatedKVS to 
+interpose additional logic between calls to KVSProtocol's input interface and the now 
+``protected'' input interface of BasicKVS.  In ReplicatedKVS, references to \texttt{kvput}
+appearing in the LHS of rules are resolved to the \texttt{kvput} provided by BasicKVS, 
+while references in the RHS of rules resolve to the local \texttt{kvput}.
+Note that this is unambiguous, because it is meaningless for a module to insert into its own input or to read data from its own output interfaces.
+
+Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
+\texttt{kvput}, its contents are marshalled (Line~\ref{line:marshall}) into \texttt{send\_mcast}
+if the originating address is not another replica (line~\ref{line:not-rep}), as this would indicate
+that the current replica is not the master for this update.  
+The internal
+\texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
+at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is received at 
+a peer replica (line~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
+
+\subsection{Analyses}
+
+
+Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the KVS protocol.  Data
+flows from the source node (an external caller) to one or both of \texttt{kvput} and 
+\texttt{kvget}, through some unknown dataflow, to \texttt{kvget\_response}.
+The existence of the red diamond labeled ``??'' indicates that the dataflow is underspecified:
+is must be ``completed'' by supplying dataflow that, at minimum, connects the input 
+interfaces to the output interface.
+
+Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS implementation,
+which supplies a concrete dataflow for the unspecified component in the previous
+graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a red octagon because they
+are part of a strongly connected component in the graph with both negative and temporal 
+edges.  Any data flowing from \texttt{kvput} to the sink must cross at least one nonmonotonic
+point of
+order (at ingress to the octagon) and possible an arbitrary number of them (via the
+octagon's self-edge), and any path from \texttt{kvget} to the sink must join state potentially
+affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget response}).
+
+Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable.  The 
+contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
+of its contents at the immediate previous state and the current input.  Hence the state
+of \texttt{bigtable} at any point in time may depend on the order of arrival of \texttt{kvput} 
+tuples.  We challenge the reader to implement the KeyValueProto interface in a way that
+has no such point of order.
+
+
+
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=1.1\linewidth]{fig/mittalk_legend.pdf}
+\vspace{-10pt}
+\caption{Visual analysis legend.}
+\label{fig:analysis-legend}
+\vspace{-2pt}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+%%\begin{comment}
+
+%%\end{comment}
+
+
+
+
+
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
+\vspace{-10pt}
+\caption{Visualization of the key-value store protocol.}
+\label{fig:pdg-kvs-proto-analysis}
+\vspace{-2pt}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
+\vspace{-10pt}
+\caption{Key/value store analysis.}
+\label{fig:pdg-kvs-analysis}
 \vspace{-2pt}
 \end{figure}
