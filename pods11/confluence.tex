@@ -211,9 +211,9 @@ Proof sketch: assume a monotonic property is true in one trace and false in anot
 \end{proof}
 \paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
-\begin{corollary}
+\begin{theorem}
 Logical monotonicity is a sufficient condition for confluence.
-\end{corollary}
+\end{theorem}
 \begin{proof}
 Proof sketch: If a particular ultimate model is populated by atoms that depend only on monotonic properties, then those atoms occur in any ultimate model of the program.  If all ultimate models
 are populated in such a way, they are indeed all the same, unique ultimate model.
@@ -350,9 +350,13 @@ p_incomplete() <- node(Src), !p_count_send(_,Src,_);
 p_incomplete() <- p_count_recv(Src, C1),
                   p_count_send(_, Src, C2), C1 < C2;
 p(Y,\(\bar{X}\)) <- p_send(Y,_,\(\bar{X}\)), !p_incomplete();
-
 \end{Dedalus}
 
+\begin{theorem}
+The coordinated program is confluent, and the ultimate model is the same as one in the original program(except the \dedalus{p\_send} stuff.
+\end{theorem}
+
+We prove the theorem by way of the following two Lemmas.
 The following lemma says that this coordination actually computes the completion of the set:
 
 \begin{lemma}
@@ -377,6 +381,8 @@ Note that this process introduces additional asynchronous edges.  These asynchro
 \wrm{For universal constraint stratification, change the algorithm to do subsets and iterate over any constraints..  Probably need to rewrite the algorithm above, and present strat as a special case of UCS}
 
 \subsubsection{Non-Deterministic Coordination}
+
+\wrm{notion of consistently sealed ultimate model; explain why preferable; point out PUM is a CSUM}
 
 Consider what happens when we admit transient and permanent failures of nodes and channels to the model.  It is now the case that nodes may forever wait for a message that will never arrive.  Thus, achieving the perfect ultimate model comes at the expense of liveness.  It may be desirable to accept that the message will never arrive, and proceed with the computation.
 

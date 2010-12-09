@@ -12,6 +12,8 @@ We formalize the notion of consistency using {\em constraints}.
 A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  Since constraints are not meant to be executed, we do not require them to unify on location specifiers.
 \end{definition}
 
+\wrm{re-define these as constraints over an ultimate model}
+
 In order to talk about eventual consistency, we need to differentiate replicated data from partitioned data, and define a set of replicas.  It seems sensible to do this on the predicate level, rather than generalizing to replicated subsets of predicates.  We augment the definition of a \lang program to include a set of {\em replicated predicates}, and a set of {\em replicas} represented by a unary \dedalus{replica} predicate.
 
 \begin{definition}
@@ -30,12 +32,12 @@ Note that an eventually consistent program is not necessarily confluent---for ex
 %\paa{this is too specific; there is more than one way to skin a cat.  why do we need to define replication in terms of participating rules?}
 %means that all replicas eventually have the same replicated state, for any non-deterministic choices of time.  In other words, every ultimate model has the symmetry property that the contents of any replicated predicate is equivalent at all the replicas.
 
-\begin{lemma}
-In general, proving constraint satisfiability for all EDBs is undecidable.
-\end{lemma}
-\begin{proof}
-Proved in~\cite{qs-datalog} for Datalog programs with IDB negation; any Datalog program has a corresponding \lang program consisting of the original rules converted into atemporal \lang rules in the obvious way.
-\end{proof}
+%\begin{lemma}
+%In general, proving constraint satisfiability for all EDBs is undecidable.
+%\end{lemma}
+%\begin{proof}
+%Proved in~\cite{qs-datalog} for Datalog programs with IDB negation; any Datalog program has a corresponding \lang program consisting of the original rules converted into atemporal \lang rules in the obvious way.
+%\end{proof}
 
 \begin{lemma}
 In particular, proving constraint satisfiability for the constraint listed in Definition~\label{def:ec} is undecidable.
@@ -74,9 +76,9 @@ We must then rewrite the program above \dedalus{p} to use \dedalus{rep\_p} where
 
 \wrm{examples?}
 
-\begin{lemma}
+\begin{theorem}
 If a program $P$ is rewritten with replication using the above procedure, it is eventually consistent.  \wrm{Furthermore, any FDs are preserved??}
-\end{lemma}
+\end{theorem}
 \begin{proof}
 Sketch: it is easy to verify that \dedalus{rep\_p} is correctly replicated for all replicated predicates \dedalus{p}; thus eventual consistency constraints are satisfied.
 \end{proof}
