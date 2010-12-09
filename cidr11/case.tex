@@ -80,7 +80,7 @@ Lines~\ref{line:dis_checkout_no_item_beg}--\ref{line:dis_checkout_no_item_end}
 ensure that when a \texttt{checkout\_msg} tuple arrives, \texttt{status}
 contains a record for every added item for which there was no corresponding
 deletion in the session.
-Lines~\ref{line:dis_checkout_item_beg}--\ref{line:dis_checkout_item_end}
+Lines~\ref{line:dis-checkout-item-beg}--\ref{line:dis-checkout-item-end}
 additionally define \texttt{status} as the 3-way join of the
 \texttt{checkout\_msg} message and two copies of \texttt{action\_cnt}---one
 corresponding to additions and one to deletions.  Thus, for each item,
@@ -98,6 +98,7 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 %client performs a multicast, by probing the \textbf{table} \texttt{member} to
 %see if the \texttt{action\_msg} originated inside the quorum.
 
+\begin{comment}
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.6\linewidth]{fig/disorderly_base.pdf}
@@ -115,7 +116,7 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \label{fig:pdg-disorderly-analysis}
 \vspace{-2pt}
 \end{figure}
-
+\end{comment}
 
 
 %%\vspace{9pt}\noindent \textbf{Analysis}\\
@@ -125,17 +126,18 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 %%Intuitively, the ``destructive'' cart based on
 %%array mutation should be non-monotonic due to the transience of its state; this should make it sensitive to the order
 %%of its inputs.
-Figure~\ref{fig:pdg-destructive} presents the analysis of the 
+Figure~\ref{fig:pdg-destructive-kvs-analysis} presents the analysis of the 
 ``destructive'' shopping cart variant.  Note that
 because all dependencies are analyzed, collections defined in the superclass
 but not referenced in the code sample
 (e.g., \texttt{pipe\_chan}, \texttt{member}) also appear in the graph.
-Although there is no
+Although there is no syntactic
 non-monotonicity in 
-Figure~\ref{fig:pdg-destructive}, the underlying key-value store
-uses the non-monotonic \texttt{$<$-} operator to model updateable
-state.
-The full-program analysis shown in Figure~\ref{fig:pdg-destructive-analysis}
+Figure~\ref{fig:dest-cart}, the underlying key-value store
+uses the non-monotonic \texttt{$<$-} operator to model updateable state.
+Thus, while the details of the implementation are encapsulated by the key-value
+store's abstract interface, its points of order resurface in the full-program analysis.
+Figure~\ref{fig:pdg-destructive-kvs-analysis}
 indicates that there are
 points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
 and between the temporal cluster and itself.
@@ -144,8 +146,10 @@ and between the temporal cluster and itself.
 %%server replication (via the meta-edge in the temporal cycle from 
 %%\texttt{kvput} to itself) may affect the
 %%end results.  
-This figure tells the (sad!) story of how we could ensure consistency of the destructive cart implementation: introduce coordination
-between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  This fine-grained coordination is akin to ``eager replication''~\cite{dangers}. It would incur the latency of a round of messages per server per client update, decrease system throughput, and make the system fragile in the face of replica failures.
+This figure also tells the (sad!) story of how we could ensure consistency of the destructive cart implementation: introduce coordination
+between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  
+The programmer can easily achieve this coordination by supplying a ``reliable'' implementation
+of multicast that awaits acknowledgements from all replicas before reporting completion: this fine-grained coordination is akin to ``eager replication''~\cite{dangers}.  Unfortunately, it would incur the latency of a round of messages per server per client update, decrease system throughput, and make the system fragile in the face of replica failures.
 
 %One coordination technique would require the client to wait for all replicas to
 %successfully apply an update before sending a subsequent update.  This would
@@ -190,26 +194,19 @@ such informal reasoning can hide serious bugs. For example, consider what would 
 before any addition of that item: the delete would be ignored, leading to
 inconsistencies between replicas.
 
-A happier story emerges via the analysis of the disorderly implementation
-shown in Figure~\ref{fig:pdg-disorderly-analysis}.
-\begin{comment}
-%
-(owned by the client) via an asynchronous message, and that
-\texttt{action\_msg} derives itself via messages when it is replicated.
-However, the analysis shows that because these derivations are strictly
-monotonic, no points of order are crossed.  Hence, clients may send and servers
-may replicate updates without any coordination: regardless of timing and
-ordering, the end result will be the same.
+A happier story emerges from our analysis of the disorderly implementation.
+Figure~\ref{fig:pdg-disorderly-base} shows a visualization of the basic disorderly
+cart whose implementation is presented in Figure~\ref{fig:dis-cart}.  Its inputs and outputs
+are \textbf{channels} rather than \textbf{interfaces}, so the dataflow from source to 
+sink is not completed.  Before we can install the program we must mix in code that connects 
+input and output interfaces to \texttt{action\_msg}, \texttt{checkout\_msg}, and 
+\texttt{response\_msg}, as the CartClient (shown in Figure~\ref{fig:cart_client}) does.
+Note that the disorderly cart has points of order on all paths, but 
+there are no cycles.
 
-The analysis does indicate a point of order at checkout, when a
-\texttt{checkout} message is joined with an aggregate over the set of updates.
-While the accumulation of state has been monotonic, summarization of the cart
-state requires us to assume (or prove) that there will be no further updates.
-Consider a checkout message and a final update message racing from a client to
-one of the replicas: the order in which they arrive will surely affect the
-contents of the response message.
-%
-\end{comment}
+Figure~\ref{fig:pdg-disorderly-analysis} shows a complete implementation which mixes in 
+both the client code and logic that replicates the \texttt{cart\_action} table via a
+best-effort multicast protocol.
 Here we see that communication (via \texttt{action\_msg}) between client and
 server---and among server replicas---crosses no points of order, so all the
 communication related to shopping actions converges to the same final state without coordination.
@@ -242,7 +239,10 @@ ensure that the response to the client is deterministic and consistently replica
 % client is deterministic.
 % >>>>>>> .r5792
 
-\vspace{9pt} \noindent \textbf{Discussion}\\
+\paa{say something smart about guesses, memories and apologies here}
+
+%%\vspace{9pt} \noindent \textbf{Discussion}\\
+\subsection{Discussion}
 %Like ``embarrassing parallelism'' in parallel computing, 
 Strictly monotonic programs
 are rare in practice, so adding some amount of coordination is often required to
