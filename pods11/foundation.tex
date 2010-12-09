@@ -1,7 +1,7 @@
 \section{\large \bf \lang}
 \label{sec:slang}
 
-\lang is related to Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the universe.  We also admit the \dedalus{count} {\em aggregate}, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as: 
+\lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the universe.  We also admit the \dedalus{count} {\em aggregate}, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as: 
 
 \begin{Dedalus}
 p(X1, ..., Xn, count<Y>) <- ...;
@@ -107,6 +107,9 @@ Every \lang program has a temporal diameter polynomial in the data size \wrm{or 
 %\end{Dedalus}
 %\end{example}
 
+\wrm{synchronous systems are captured by \lang with no @async}
+\wrm{explain motivation for non-determinism.  why don't we just treat the whole world as synchronous?}
+
 \subsection{Semantics}
 The semantics of a \lang program can be characterized by the {\em stable model semantics}~\cite{stable-model} for logic programming.  Intuitively, a stable model of a \lang program is a trace of one of its possible distributed executions.  The stable model contains all input, intermediate stages of the computation, and all messages sent.  Note that a stable model of a \lang program may be infinite, such as in the following example:
 
@@ -181,6 +184,8 @@ By the definition of the stable model semantics, such situations due not produce
 \end{proof}
 
 \subsection{Operational Interpretation}
+\wrm{talk about operational interpretation of choice}
+
 \lang programs are intended to capture the execution of an asynchronous distributed system.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.
 
 For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
@@ -202,6 +207,6 @@ For any \lang program, the family of ultimate models is the same as the elements
 \end{proof}
 
 
-\subsection{Complexity}
-
-The language of confluent \lang programs is equal to the language of PSPACE, provided we introduce a \dedalus{bit} relation as described in Immerman.  The main part of the proof is that adding recursion or choice to FO[PFP] does not screw things up.  \wrm{This may not be important for the paper, but I feel we should at least mention something offhand so people don't think ``wow you've got this language but can it really express a wide range of distributed systems?''  Also, the fact that it corresponds so well with existing languages suggests it's a natural characterization.}
+%\subsection{Complexity}
+%
+%The language of confluent \lang programs is equal to the language of PSPACE, provided we introduce a \dedalus{bit} relation as described in Immerman.  The main part of the proof is that adding recursion or choice to FO[PFP] does not screw things up.  \wrm{This may not be important for the paper, but I feel we should at least mention something offhand so people don't think ``wow you've got this language but can it really express a wide range of distributed systems?''  Also, the fact that it corresponds so well with existing languages suggests it's a natural characterization.}
