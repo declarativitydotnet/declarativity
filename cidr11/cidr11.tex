@@ -66,96 +66,34 @@ morekeywords={declare,table,scratch,channel,interface,include}
 
 \begin{document}
 \title{Consistency Analysis in Bloom: a CALM and Collected Approach}
-\numberofauthors{4}
 
+\numberofauthors{4}
 \author{
-\alignauthor
-Peter Alvaro
-\alignauthor
-Neil Conway
-\alignauthor
-Joseph M. Hellerstein
-\and
-\alignauthor
-William R. Marczak
+Peter Alvaro, Neil Conway, Joseph M. Hellerstein, William R. Marczak \vspace{12pt} \\
+\{palvaro, nrc, hellerstein, wrm\}@cs.berkeley.edu \\
+University of California, Berkeley
 }
 
 \maketitle
 
-\begin{abstract} 
-% NEW
-
-%Consistency is often important for applications that manage replicated state.
+\begin{abstract}
 Distributed programming has become a topic of widespread interest, and many programmers now wrestle with tradeoffs between data consistency, availability and latency.  Distributed transactions are often rejected as an undesirable tradeoff today, but in the absence of transactions there are few concrete principles or tools to help programmers design and verify the correctness of their applications.
-% \jmh{I disagree strongly with this first sentence.  Let's rewrite the abstract to be shorter, too.}
-% All applications that manage replicated state must ensure that the state
-% remains consistent.
-% Database programming models provide strong consistency guarantees by exposing
-% transactions, which allow atomic, arbitrary updates of replicated state.  Such
-% distributed transactions entail a large performance penalty in messaging costs,
-% and may harm applications' tolerance to partitions.  These pitfalls have motivated
-% the recent interest in ``eventual consistency,'' a programming model that
-% only guarantees the eventual receipt of all messages.  Building atop this
-% foundation is a challenging task: programmers must ensure that application
-% semantics are insensitive to arbitrary message delay and reordering.
 
 We address this situation with the \emph{CALM} principle, which connects the idea of distributed consistency to program tests for logical monotonicity.  We then introduce \emph{Bloom}, a distributed programming language that is amenable to high-level consistency analysis and encourages order-insensitive programming.  We present a prototype implementation of Bloom as a domain-specific language in Ruby. We also propose a static analysis technique that identifies {\em points of order} in Bloom programs: code locations where programmers need to inject coordination logic to ensure consistency.  
 We illustrate these ideas in the context of two variants
 of a distributed ``shopping cart'' application in Bloom.  We also sketch the feasibility of code rewrites to support runtime annotation of data consistency, a topic for a longer paper.
-
-% OLD
-%All applications that manage replicated state have consistency requirements.
-%Distributed transactions allow atomic, arbitrary updates of replicated state,\wrm{confluence seems
-%to be missing here.  also, i don't need transactional consistency if i never
-%read, for example.}, but require consensus protocols like two-phase commit,
-%whose message delays can greatly increase transaction time. Distributed system
-%designers must choose between \wrm{maybe one way to change
-%this is to say -- as an alternative to these expensive strong consistency things,
-%many have advocated a programming style that only guarantees message delivery,
-%and relies on the programmer to manage confluence via a custom protocol}
-%expensive consistency measures and ``eventually consistent'' infrastructures,
-%which ensure that all messages reach their destinations without guarantees
-%about timing or order.  Arguing the correctness of such applications often
-%involves showing that high-level application semantics are insensitive to the
-%order of physical I/O to an underlying data store \wrm{i don't know much about databases, but when i hear ``physical I/O to a data store'' i imagine some disk head bouncing around a disk doing I/Os.  this seems irrelevant to me -- i think the important part is showing that the program is a deterministic function of the program inputs -- in other words, insensitive to any re-ordering, delay, or co-incidence on the channel} (e.g., a shopping cart
-%application may be built atop a loosely consistent key/value store because the
-%operations of updating a cart are commutative).  This places a significant
-%burden on the programmer \wrm{because the programmer doesn't have any tools to assist them with this}, and the end result is an informal consistency
-%argument.  In this paper, we introduce a distributed programming language that
-%is order-independent by default\nrc{Should we name the language? Do we want to
-%  say this paper ``introduces'' the new lang?}, encouraging a style of programming that is
-%insensitive to reordering and message delay.  Using the CALM principle \wrm{better be a theorem, because we need to prove it in this paper},
-%which establishes a connection between logical monotonicity,
-%nondeterminism in message delay
-%and deterministic program results in the face of channel re-ordering, we provide
-%a full-program static analysis to check for confluence.\nrc{Confluence has not
-%  been defined.}  The analysis
-%guarantees consistency of distributed state \wrm{still uncomfortable here -- if the analysis returns ``true'', your distributed state is not necessarily consistent.  maybe you replicate to N replicas, but all clients read from replica 1.  in that case, the state need only be consistent at replica 1.  also, if you add coordination, you might make your program confluent (such as in the previous example) but without coordinating distributed state},
-%or identify ``points of order'' where it may be necessary to constrain the
-%order of certain operations \wrm{in other words -- it may be necessary to defer visibility of updates} to ensure consistency by augmenting the program
-%with coordination protocols \wrm{not sure what a coordination protocol is}.
-%To demonstrate these techniques, we implement several variants of a distributed ``shopping
-%cart'' application, apply our analysis technique to do XYZ, and evaluate the
-%performance of the resulting programs.
-
 \end{abstract}
 
 \input{intro}
 \input{calm}
 \input{lang}
-%\jmh{I removed the ``analysis'' section.  The idea of Points of Order and coordination should go in the CALM section, and be hammered home in the ``case'' section}
 \input{analysis}
 \input{case}
 \input{relwork}
 \input{conclusion}
 \input{acks}
 
-{\scriptsize
-%\begin{spacing}{0.9}
 \bibliographystyle{abbrv}
-\bibliography{cidr11,declarativity}}
-%\end{spacing}
-
-%\input{demo}
+\bibliography{cidr11,declarativity}
 
 \end{document}
