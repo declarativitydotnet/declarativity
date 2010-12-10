@@ -39,7 +39,7 @@ monotonicity are well understood. A simple syntactic check is often sufficient:
 if the program does not contain any of the symbols in the language that
 correspond to non-monotonic operators (e.g., \texttt{NOT IN} or aggregate
 symbols), then it is monotonic and can be implemented without coordination,
-regardless of any read-write dataflow dependencies in the code.  As students of the logic programming literature will recognize~\cite{localstrat,ross-modular,ross-strat}, these conservative
+regardless of any read-write dataflow dependencies in the code.  As students of the logic programming literature will recognize~\cite{local-strat,ross-modular,ross-strat}, these conservative
 checks can be refined further to consider semantics of predicates in the
 language. For example, the expression ``\texttt{MIN(x) $< 100$}'' is monotonic
 despite containing an aggregate, by virtue of the semantics of \texttt{MIN} and
