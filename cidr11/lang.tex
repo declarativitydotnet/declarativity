@@ -268,31 +268,29 @@ the \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a
 scalar operation to every tuple in a collection; this can be used to implement
 relational selection and projection. For example,
 lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of
-Figure~\ref{fig:pdg-disorderly} project the \texttt{action\_msg} collection to
+Figure~\ref{fig:dis-cart} project the \texttt{action\_msg} collection to
 its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.
 \texttt{BudCollection} defines a \texttt{group} method similar to SQL's
 \texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
 lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
-Figure~\ref{fig:pdg-disorderly} compute the count of unique \texttt{reqid}
+Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid}
 values for every combination of values for \texttt{session}, \texttt{item} and
 \texttt{action}.  Multiway joins are specified using the \texttt{join} method,
 which produces an anonymous \textbf{scratch} collection that can be used in the
-rhs of a statement.\footnote{For clarity, we write out the join condition
-  explicitly. Bloom provides syntax sugar for common join types (e.g., natural
-  join).}  Line~\ref{line:dis_join_action_msg_member} of
-Figure~\ref{fig:pdg-disorderly} shows a join between \texttt{action\_msg} and
-\texttt{member}.
+rhs of a statement. Line~\ref{line:kvs-join} of
+Figure~\ref{fig:kvs-impl} shows a join between \texttt{bigtable} and
+\texttt{kvput}.
 
-
-
-
+% nrc: No longer true
+% \footnote{For clarity, we write out the join condition
+%   explicitly. Bloom provides syntax sugar for common join types (e.g., natural
+%   join).}  
 
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
-
 Programmers declare Bloom statements within methods of a Bud subclass
 definition that are flagged with the \texttt{declare} modifier (e.g.,
-line~\ref{line:des_declare} of Figure~\ref{fig:pdg-destructive}). The semantics
+line~\ref{line:des_declare} of Figure~\ref{fig:dest-cart}). The semantics
 of a Bloom program are defined by the union of all the \texttt{declare}
 methods; the order of statements is immaterial. Dividing statements into multiple
 methods improves the readability of the program and allows use of Ruby's method

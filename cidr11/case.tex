@@ -16,7 +16,6 @@ set-wise fashion, summing up the updates at checkout into a final result.  These
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
-
 module DestructiveCart
   include CartProtocol
   include KVSProtocol
@@ -133,13 +132,13 @@ module DisorderlyCart
         [c.client, c.server, a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
       end
     end (*\label{line:dis_checkout_no_item_end}*)
-    status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c|
+    status <= join([action_cnt, action_cnt, checkout_msg]).map do |a1, a2, c| (*\label{line:dis_checkout_item_beg}*)
       if a1.session == a2.session and a1.item == a2.item
       and a1.session == c.session and a1.action == "A" 
       and a2.action == "D"
-        [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
+        [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt] (*\label{line:dis_status_diff}*)
       end
-    end
+    end (*\label{line:dis_checkout_item_end}*)
     response_msg <~ status (*\label{line:dis_checkout_response}*)
   end
 end
@@ -170,7 +169,7 @@ Lines~\ref{line:dis_checkout_no_item_beg}--\ref{line:dis_checkout_no_item_end}
 ensure that when a \texttt{checkout\_msg} tuple arrives, \texttt{status}
 contains a record for every added item for which there was no corresponding
 deletion in the session.
-Lines~\ref{line:dis-checkout-item-beg}--\ref{line:dis-checkout-item-end}
+Lines~\ref{line:dis_checkout_item_beg}--\ref{line:dis_checkout_item_end}
 additionally define \texttt{status} as the 3-way join of the
 \texttt{checkout\_msg} message and two copies of \texttt{action\_cnt}---one
 corresponding to additions and one to deletions.  Thus, for each item,
