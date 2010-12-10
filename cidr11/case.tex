@@ -78,8 +78,9 @@ otherwise consistent, we here use the ReplicatedKVS module shown in
 figure~\ref{fig:kvs-repl}, and will later mix in BestEffortMulticast, an
 implementation of MulticastProtocol with low message complexity \jmh{Probably we don't want to talk about ``complexity''.  Reword?}.
 
-\jmh{I think a lot of the refs and line numbers in this paragraph are broken!!}
-In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client
+\jmh{Some confusion here where you refer to lines of different figures without clear context switches.  Please check and fix!}
+Our discussion begins by returning to the CartClient code of Figure~\ref{fig:cart_client}.
+In line~\ref{line:des_client_action} of that figure, the client
 transmits \texttt{client\_action} tuples that correspond to cart updates over
 the \texttt{action\_msg} channel to an individually chosen server replica.  We
 assume that the client has already chosen a server based on load balancing.  For
@@ -320,7 +321,7 @@ in code that connects input and output interfaces to \texttt{action\_msg},
 Figure~\ref{fig:cart_client}) does.  Note that the disorderly cart has points of
 order on all paths, but there are no cycles.
 
-Figure~\ref{fig:pdg-disorderly-analysis} shows a complete implementation which mixes in 
+Figure~\ref{fig:pdg-disorderly-analysis} shows the analysis for a complete implementation that mixes in 
 both the client code and logic that replicates the \texttt{cart\_action} table via a
 best-effort multicast protocol.
 Here we see that communication (via \texttt{action\_msg}) between client and
@@ -334,7 +335,7 @@ requires us to assume (or rather, prove) that there will be no further cart acti
 %Consider a checkout message and a final update message racing from a client
 %to one of the replicas: the order in which they arrive will surely affect
 %the contents of the response message.  
-The story of coordination in this graph is much happier: to
+The coordination in this graph is much lighter-weight: to
 ensure that the response to the client is deterministic and consistently replicated, we need to coordinate once per {\em session} (at checkout), rather than once per shopping action.  This is analogous to the desired behavior in practice~\cite{quicksand}.
 % =======
 %
