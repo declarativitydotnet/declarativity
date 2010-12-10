@@ -1,6 +1,9 @@
 \section{Confluence}
 
-For many distributed computations, achieving a determistic result for every input is desirable.  Recall that non-determinism only arises due to \dedalus{choice}, which only occurs in asynchronous rules to model network non-determinism.  Model-theoretically, a non-deterministic result is manifest in multiple ultimate models.
+For many distributed computations, achieving a determistic result for every input is desirable.  Recall that non-determinism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
+%which only occurs in asynchronous rules to model network non-determinism.  
+which model temporal non-determinism in unreliable networks.
+Model-theoretically, a non-deterministic result is manifest in multiple ultimate models.
 
 \begin{definition}
 A \lang program is {\em confluent} (has a deterministic output) if, for every EDB, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
@@ -73,7 +76,13 @@ Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{
 
 \begin{definition}
 If a negation-free \lang program is diffluent, we say the program has {\em nondeterministic coincidence}.
+
+\paa{isn't this backwards?  you are really saying, if a neg-free program is diffluent, it must be
+the case that it has nondeterministic coincidence, because we're pretty sure (I think I mostly proved it...) that's the only other thing that can cause diffluence... but for this definition,
+don't we just want to define ``unguarded asynchrony'' here?}
+
 \end{definition}
+
 
 \begin{example}
 \label{ex:diffluent-noneg}
