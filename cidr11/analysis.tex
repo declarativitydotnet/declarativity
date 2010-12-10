@@ -56,9 +56,11 @@ provides a legend for the analysis visualizations.
 \begin{lstlisting}
 module KVSProtocol
   def state
-    interface input, :kvput, ['client', 'key', 'reqid'], ['value']
+    interface input, :kvput, 
+      ['client', 'key', 'reqid'], ['value']
     interface input, :kvget, ['reqid'], ['key']
-    interface output, :kvget_response, ['reqid'], ['key', 'value']
+    interface output, :kvget_response, 
+      ['reqid'], ['key', 'value']
   end
 end
 \end{lstlisting}
@@ -95,19 +97,19 @@ module BasicKVS
   include KVSProtocol
 
   def state
-    table :bigtable, ['key'], ['value'] (*\label{line:kvs-state}*)
+    table :kvstate, ['key'], ['value'] (*\label{line:kvs-state}*)
   end
 
   declare
   def mutate
-    bigtable <+ kvput.map {|p| [p.key, p.value]} (*\label{line:kvs-put}*)
-    jst = join [bigtable, kvput], [bigtable.key, kvput.key] (*\label{line:kvs-join}*)
-    bigtable <- jst.map {|b, p| b} (*\label{line:kvs-clean}*)
+    kvstate <+ kvput.map {|p| [p.key, p.value]} (*\label{line:kvs-put}*)
+    jst = join [kvstate, kvput], [kvstate.key, kvput.key] (*\label{line:kvs-join}*)
+    kvstate <- jst.map {|b, p| b} (*\label{line:kvs-clean}*)
   end
 
   declare
   def get
-    getj = join [kvget, bigtable], [kvget.key, bigtable.key] (*\label{line:kvs-getjoin}*)
+    getj = join [kvget, kvstate], [kvget.key, kvstate.key] (*\label{line:kvs-getjoin}*)
     kvget_response <= getj.map do |g, t|
       [g.reqid, t.key, t.value]
     end
@@ -125,18 +127,18 @@ end
 
 Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
 realization of a key-value store.  Line~\ref{line:kvs-state} declares a table
-called \texttt{bigtable} that contains the internal, persistent state of the
+called \texttt{kvstate} that contains the internal, persistent state of the
 store.  When a \texttt{kvput} tuple appears, its key-value pair is placed in
-\texttt{bigtable} in the immediate next timestep (line~\ref{line:kvs-put}).  If
-a value for the given key already exists in \texttt{bigtable}, we wish to
+\texttt{kvstate} in the immediate next timestep (line~\ref{line:kvs-put}).  If
+a value for the given key already exists in \texttt{kvstate}, we wish to
 replace it with the newer value.  Line~\ref{line:kvs-join} joins the input
 interface with the internal state: if a row already exists for the current key,
 the join collection \texttt{jst} will contain a tuple that is the concatenation
-of the matching tuples from \texttt{bigtable} and \texttt{kvput}.  In this
+of the matching tuples from \texttt{kvstate} and \texttt{kvput}.  In this
 event, line~\ref{line:kvs-clean} states that in the immediate next timestep (and
 hence concurrently with the appearance of the new tuple derived at
 line~\ref{line:kvs-put}), the old value associated with the given key does not
-exist in \texttt{bigtable}.
+exist in \texttt{kvstate}.
 
 
 \subsection{Replicated KVS implementation}
@@ -211,19 +213,19 @@ interfaces to the output interface.
 
 Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS
 implementation, which supplies a concrete dataflow for the unspecified component
-in the previous graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a
+in the previous graph.  \texttt{kvstate} and \texttt{jst} are collapsed into a
 red octagon because they are part of a strongly connected component in the graph
 with both negative and temporal edges.  Any data flowing from \texttt{kvput} to
 the sink must cross at least one nonmonotonic point of order (at ingress to the
 octagon) and possible an arbitrary number of them (via the octagon's self-edge),
 and any path from \texttt{kvget} to the sink must join state potentially
-affected by nonmonotonicity (because \texttt{bigtable} is used to derive
+affected by nonmonotonicity (because \texttt{kvstate} is used to derive
 \texttt{kvget\_response}).
 
 Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is
-unavoidable.  The contents of \texttt{bigtable} at a given time are defined (in
+unavoidable.  The contents of \texttt{kvstate} at a given time are defined (in
 part; line~\ref{line:kvs-clean}) in terms of its contents at the immediate
-previous state and the current input.  Hence the state of \texttt{bigtable} at
+previous state and the current input.  Hence the state of \texttt{kvstate} at
 any point in time may depend on the order of arrival of \texttt{kvput} tuples.
 % We challenge the reader to implement the KeyValueProto interface in a way that
 % has no such point of order.
