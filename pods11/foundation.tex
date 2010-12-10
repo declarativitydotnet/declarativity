@@ -66,7 +66,7 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \end{example}
 
-When we talk about the {\em predicate dependency graph} (PDG) of a \lang program, we assume that it does not include the \dedalus{time} or \dedalus{successor} predicates~\footnote{We also assume that the graph does not include any predicates or rules added by rewriting \dedalus{choice}.}.
+
 
 \vspace{1em}
 \noindent {\bf EDB:}
@@ -137,6 +137,8 @@ A cycle is {\em nontrivially periodic} if its period is at least 2.  Otherwise, 
 
 The program in Example~\ref{ex:flipflop} has a nontrivially periodic cycle of period 2.  Previous work in temporal deductive databases attempted to compute finite representations for such periodicities~\cite{tdd-infinite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all trivially periodic cycles.  We adopt the latter approach of ignoring nontrivial periodicity when defining the output of a \lang program.
 
+\subsubsection{Ultimate Models}
+
 \begin{definition}
 For each stable model, the trivially periodic cycles comprise an {\em ultimate model} for the program.  We represent a nontrivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.  For example, the cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different nontrivial periodicities.
 \end{definition}
@@ -184,6 +186,21 @@ p(1)@3;
 \begin{proof}
 By the definition of the stable model semantics, such situations due not produce stable models~\cite{stable-model}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
 \end{proof}
+
+\subsubsection{Predicate Dependency Graphs}
+
+A \lang program may be represented as a directed graph of the dependencies
+among predicates called a \textbf{PDG}.
+Each predicate in the program corresponds to a node in the PDG.
+For every subgoal \texttt{B} appearing in the body of a rule with head \texttt{A},
+we add to the graph a directed edge from \texttt{B} to \texttt{A}.  The edges are annotated
+with a set of labels representing additional syntactic information that is relevant to 
+analysis.  In particular, if the subgoal is negated or the rule applies an aggregate function,
+its corresponding edge is labeled as nonmonotonic.  If the rule is inductive or asynchronous,
+it is labeled as such.
+
+In general, we do not include the \dedalus{time} or \dedalus{successor} predicates in PDGs,
+nor do we include any predicates or rules added by rewriting \dedalus{choice}.
 
 \subsection{Operational Interpretation}
 \wrm{talk about operational interpretation of choice}
