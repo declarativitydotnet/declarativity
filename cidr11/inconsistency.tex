@@ -29,13 +29,13 @@ envision building a system that facilitates running low-latency,
 logic as a background process. When the background process detects an
 inconsistency in the results produced by the foreground system (e.g., because a
 ``guess'' turns out to be mistaken), it can then take corrective action by
-generating an ``apology.'' Importantly, both of these subsystems are effectively
+generating an ``apology.'' Importantly, both of these subsystems are
 implementations of the same high-level design, except with different consistency
 and coordination requirements; hence, it should be possible to synthesize both
 variants of the program from the same source code. Throughout this
 process---making calculated ``guesses,'' storing appropriate ``memories,'' and
-generating appropriate ``apologies''---we see a significant opportunities to
-build scaffolding and tool support to lighten the burden on the programmer.
+generating appropriate ``apologies''---we see significant opportunities to build
+scaffolding and tool support to lighten the burden on the programmer.
 
 Finally, we hope to provide analysis techniques that can prove the consistency
 of the high-level workflow: i.e., prove that any combination of user behavior,
