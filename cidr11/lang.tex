@@ -151,7 +151,8 @@ detail in Section~\ref{sec:modularity}.
 module CartProtocol
   def state
     channel :action_msg, (*\label{line:dec_chan_beg}*)
-      ['@server', 'client', 'session', 'reqid'], ['item', 'action'] (*\label{line:dec_chan_end}*)
+      ['@server', 'client', 'session', 'reqid'],
+      ['item', 'action'] (*\label{line:dec_chan_end}*)
     channel :checkout_msg,
       ['@server', 'client', 'session', 'reqid']
     channel :response_msg,
@@ -163,7 +164,8 @@ module CartClientProtocol
   def state
     interface input, :client_action, (*\label{line:dec_in_interface}*)
       ['server', 'session', 'reqid'], ['item', 'action'] 
-    interface input, :client_checkout, ['server', 'session', 'reqid']
+    interface input, :client_checkout,
+      ['server', 'session', 'reqid']
     interface output, :client_response, 
       ['client', 'server', 'session'], ['item', 'cnt']
   end
@@ -273,36 +275,50 @@ Bud also includes some additional convenience methods that provide macros over t
 
 \jmh{More is needed here.  First, you need to introduce the use of interfaces: inputs on rhs of rules, outputs on lhs.  Two modules compose if they reference each other's interface collections in this pattern.  Note that this is local and synchronous composition at the interfaces, though a given module may itself have asynchronous or distributed behaviors inside.  Second, you need to talk about how we use Ruby's inheritance and mixin features.  This probably deserves a subsection on Modularity and Inheritance or something.}
 
-Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions, and which had little support
-for modularity and reuse of code.
+Conventional wisdom in certain quarters says that rule-based languages are
+untenable for large programs that evolve over time, since the interactions among
+rules become too difficult to understand.  We believe this concern is an
+artifact of early rule languages that mixed apparently declarative syntax with
+imperative constructs and assumptions, and which had little support for
+modularity and reuse of code.
 
- Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.   We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
+Bud takes advantage of the features of Ruby to enrich its declarative constructs
+with familiar programming metaphors that are popular with software developers.
+Like any Ruby class, a Bud class can be specialized via subclassing.  In
+particular, \texttt{declare} methods can be overridden in subclasses or in
+specific instances, allowing for selective rewriting of encapsulated bundles of
+statements.  We have found that the combination of Bloom's logic programming
+with Ruby's object-oriented inheritance and method overriding has been both
+natural and useful.
 
-While subclassing is appropriate in certain contexts, Bud supports more general abstraction and reuse via 
-Ruby's mixin functionality.  Modules defining collections and rules may be freely combined, subject to the restriction
-that the dataflow be fully specified by connecting all input and output interfaces.  A common pattern is the
-specification of abstract interfaces like those in Figure~\ref{fig:declarations}, which may be concretized by 
-mixing in rules that connect input to output interfaces with Bud rules.  Figure~\ref{fig:cart_client} supplies
-a simple concrete implementation of the CartClient protocol specified in Figure~\ref{fig:declarations}, leaving
-unspecified the server logic that reads \texttt{action\_msg} and \texttt{checkout\_msg} and writes to
+While subclassing is appropriate in certain contexts, Bud supports more general
+abstraction and reuse via Ruby's mixin functionality.  Modules defining
+collections and rules may be freely combined, subject to the restriction that
+the dataflow be fully specified by connecting all input and output interfaces.
+A common pattern is the specification of abstract interfaces like those in
+Figure~\ref{fig:declarations}, which may be concretized by mixing in rules that
+connect input to output interfaces with Bud rules.  Figure~\ref{fig:cart_client}
+supplies a simple concrete implementation of the CartClient protocol specified
+in Figure~\ref{fig:declarations}, leaving unspecified the server logic that
+reads \texttt{action\_msg} and \texttt{checkout\_msg} and writes to
 \texttt{response\_msg}.
 
-A well-formed mixin
-composition pairs every input and output with an interface of the complementary
-kind.  Line~\ref{line:dec_in_interface} in Figure~\ref{fig:declarations} defines
-an input interface with the same schema as the \texttt{action\_msg} channel.
-In addition to rule-level overriding via \texttt{declare} described above, Bloom supports interface-level
-overriding: a module may override interfaces defined by other mixins by simply redeclaring the interface.
-Internally, these redundantly-named interfaces exist in the namespace of the module that declared them,
-but only need to be referenced by a fully-qualified name if their use is otherwise ambiguous.  
-If an input interface appears in the LHS of a rule in a module that declared the interface, it is rewritten to
-reference the interface with the same name in a mixed-in class, as it is meaningless for a module to insert 
-into its own input interface.  The same is the case for output interfaces appearing in the RHS of rules.
- This feature allows programmers to reuse existing modules and interpose additional logic in a style reminiscent
-of superclass invocation in object-oriented languages.  We provide an example of interface overriding in
-Section~\ref{sec:rep-kvs}
-
-
+A well-formed mixin composition pairs every input and output with an interface
+of the complementary kind.  Line~\ref{line:dec_in_interface} in
+Figure~\ref{fig:declarations} defines an input interface with the same schema as
+the \texttt{action\_msg} channel.  In addition to rule-level overriding via
+\texttt{declare} described above, Bloom supports interface-level overriding: a
+module may override interfaces defined by other mixins by simply redeclaring the
+interface.  Internally, these redundantly-named interfaces exist in the
+namespace of the module that declared them, but only need to be referenced by a
+fully-qualified name if their use is otherwise ambiguous.  If an input interface
+appears in the LHS of a rule in a module that declared the interface, it is
+rewritten to reference the interface with the same name in a mixed-in class, as
+it is meaningless for a module to insert into its own input interface.  The same
+is the case for output interfaces appearing in the RHS of rules.  This feature
+allows programmers to reuse existing modules and interpose additional logic in a
+style reminiscent of superclass invocation in object-oriented languages.  We
+provide an example of interface overriding in Section~\ref{sec:rep-kvs}
 
 %\vspace{9pt}\noindent \textbf{Bud Implementation}\\
 \subsection{Bud Implementation}
