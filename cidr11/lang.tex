@@ -100,7 +100,7 @@ Bloom programs manage state using five collection types described in the top of
 Figure~\ref{tab:bloom}. A collection is defined with a relational-style schema
 of named columns, including an optional subset of those columns that forms a
 primary key.  Lines~\ref{line:dec_chan_beg}--\ref{line:dec_chan_end} of
-Figure~\ref{fig:declarations} show the definition of a \textbf{channel} with 6
+Figure~\ref{fig:declarations} show the definition of a channel with 6
 columns \texttt{server}, \texttt{client}, \texttt{session}, \texttt{reqid},
 \texttt{item} and \texttt{action}; the primary key is \texttt{(server, client,
   session, reqid)}. The \texttt{server} column is annotated with the location
@@ -133,9 +133,9 @@ non-deterministic timesteps.  The paper on Dedalus delves deeper into the
 logical semantics of this non-determinism~\cite{dedalus}.  Note that failure of
 nodes or communication is captured here: it can be thought of as the repeated
 ``non-appearance'' of a fact at every timestep.  Again, it is convenient to
-think operationally as follows: facts in a \textbf{channel} are delivered to the
+think operationally as follows: facts in a channel are delivered to the
 address in their location specifier via a best-effort unordered network protocol
-like UDP, and the definition of a \textbf{periodic} collection instructs the
+like UDP, and the definition of a periodic collection instructs the
 runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further
 derivations.
 
@@ -276,7 +276,7 @@ lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
 Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid}
 values for every combination of values for \texttt{session}, \texttt{item} and
 \texttt{action}.  Multiway joins are specified using the \texttt{join} method,
-which produces an anonymous \textbf{scratch} collection that can be used in the
+which produces an anonymous scratch collection that can be used in the
 rhs of a statement. Line~\ref{line:kvs-join} of
 Figure~\ref{fig:kvs-impl} shows a join between \texttt{bigtable} and
 \texttt{kvput}.
@@ -322,7 +322,6 @@ unspecified the server logic that reads \texttt{action\_msg} and \texttt{checkou
 \begin{comment}
 Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions.  In fact, we demonstrate below that the pure logic-programming roots of Bloom can allow programmers to reason about many program interactions in a much deeper way than traditional imperative languages.
 \end{comment}
-%\input{destructive}
 
 %\vspace{9pt}\noindent \textbf{Bud Implementation}\\
 \subsection{Bud Implementation}
@@ -331,6 +330,25 @@ Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at
 %\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
 
 
-A Bud program is just a Ruby class definition.  To make it operational, a small amount of imperative Ruby code is needed to create an instance of the class and invoke the Bud \texttt{run} method.  This imperative code can then be launched on as many nodes as desired (e.g., via the popular Capistrano package for Ruby deployments).  Messages targeted at those nodes are handled according to the Bud specification.  As an alternative to the \texttt{run} method, the Bud class also provides a \texttt{tick} method that can be used to force evaluation of a single timestep; this is useful for debugging Bloom code with standard Ruby debugging tools, or for executing a Bud specification that is intended as a ``one-shot'' query.
+A Bud program is just a Ruby class definition.  To make it operational, a small
+amount of imperative Ruby code is needed to create an instance of the class and
+invoke the Bud \texttt{run} method.  This imperative code can then be launched
+on as many nodes as desired (e.g., via the popular Capistrano package for Ruby
+deployments).  Messages targeted at those nodes are handled according to the Bud
+specification.  As an alternative to the \texttt{run} method, the Bud class also
+provides a \texttt{tick} method that can be used to force evaluation of a single
+timestep; this is useful for debugging Bloom code with standard Ruby debugging
+tools or for executing a Bud program that is intended as a ``one-shot'' query.
 
-Because Bud is pure Ruby, some programmers may choose to embed it as a Domain-Specific Language within traditional imperative Ruby code.  In fact, nothing prevents a subclass of Bud from having both Bloom code in \texttt{declare} methods and imperative code in traditional Ruby methods.  This is a fairly common usage model, akin to using the Ruby on Rails package to integrate declarative data management statements with imperative Ruby. A mixture of declarative Bloom methods and imperative Ruby allows the full range of existing Ruby code---including the extensive RubyGems repositories---to be combined with checkable distributed Bloom programs. The analyses we describe in the remaining sections still apply in these cases; the imperative Ruby code interacts with the Bloom logic in the same way as any external agent sending network messages.
+Because Bud is pure Ruby, some programmers may choose to embed it as a
+Domain-Specific Language within traditional imperative Ruby code.  In fact,
+nothing prevents a subclass of Bud from having both Bloom code in
+\texttt{declare} methods and imperative code in traditional Ruby methods.  This
+is a fairly common usage model, akin to using the Ruby on Rails package to
+integrate declarative data management statements with imperative Ruby. A mixture
+of declarative Bloom methods and imperative Ruby allows the full range of
+existing Ruby code---including the extensive RubyGems repositories---to be
+combined with checkable distributed Bloom programs. The analyses we describe in
+the remaining sections still apply in these cases; the imperative Ruby code
+interacts with the Bloom logic in the same way as any external agent sending
+network messages.
