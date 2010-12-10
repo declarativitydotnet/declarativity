@@ -1,34 +1,33 @@
 \section{\large \bf \lang}
 \label{sec:slang}
 
-\wrm{EDB given without timestamps.  EDB at time 0}
-\wrm{define notion of a PDG}
+\lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$, represented by the unary relation \dedalus{time}). The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe.
 
-\lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the universe.  We also admit the \dedalus{count} {\em aggregate}, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as: 
+We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{\left(a,b\right) | a + b = 1\}$.  We also admit Saca\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacaa-zaniolo}---a model-theoretic characterization of non-determinism using stable models, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
+
+We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
 \begin{Dedalus}
-p(X1, ..., Xn, count<Y>) <- ...;
+p(\(\bar{X}\), count<Y>) <- ...;
 \end{Dedalus}
 
-For each binding of \dedalus{X1, ..., Xn}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  It is also permissible to use the symbol \dedalus{*} as the argument to a count; this counts the number of distinct satisfying assignments to all body variables.
-%Any column of a predicate that hosts a \dedalus{count} aggregate is considered to be of the {\em number} sort; any variable of the {\em number} sort can only be constrained by other variables of the {\em number} sort, and 
-We forbid recursion through \dedalus{count}.
+For each binding of variables in \dedalus{\(\bar{X}\)}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  It is also permissible to use the symbol \dedalus{*} as the argument to a count if \dedalus{\(\bar{X}\)} is ommitted; this counts the number of distinct satisfying assignments to all body variables.
 
-Each predicate in \lang has a distinguished {\em temporal attribute}, of the {\em temporal} sort.  The balance of the arguments are {\em data} arguments, and may not contain any variable of the {\em temporal} sort.  \lang contains an infinite unary relation \dedalus{time} $= \mathbb{N}$, and an infinite binary relation \dedalus{successor} $:= \{(a,b) | a,b \in \mathbb{N} \land b = a + 1\}$, whose arguments are all of the {\em temporal} sort.  To model network nondeterminisim, we require the use of Sacc\`{a} and Zaniolo's \dedalus{choice} construct to bind a rule's head temporal attribute when modeling communication.
+We presently outline restrictions on \lang.
 
-\wrm{move this somewhere?  or don't wory about node failure}
-{\bf Modeling failure:}  Later, when we discuss \lang with failure, we will add the element $\infty$ to \dedalus{time} to model transient or permanent channel failure, or transient node failure.  Furthermore, to model permanent node failure, we will assume all rules have the \dedalus{!fail()} predicate in their body, except for a single rule \dedalus{fail()@async <- enabled();}, and all programs have an \dedalus{enabled()} fact, where \dedalus{enabled} is a predicate symbol that does not otherwise appear in the program.  \wrm{Also, we assume durability through transient node failure?}  \wrm{Also note that failure makes confluence impossible}
-
-\lang requires that all atoms in each rule body use the same temporal variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
+\vspace{1em}
+\noindent {\bf Temporal Attributes:}
+\lang requires that all atoms in each rule body use the same variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
 
 \begin{enumerate}
-\item The rule is called an {\em atemporal rule} if its head temporal variable is the same as its body temporal variable;
-\item The rule is called an {\em inductive rule} if its head temporal variable is the \dedalus{successor} of its body temporal variable;
-\item The rule is called an {\em asynchronous rule} if its head temporal variable is constrained using the \dedalus{choice} construct over all body variables (including the body temporal variable).
+\item The rule is called a {\em deductive} rule if its head temporal variable is the same as its body temporal variable;
+\item The rule is called an {\em inductive} rule if its head temporal variable is the \dedalus{successor} of its body temporal variable;
+\item The rule is called an {\em asynchronous} rule if its head temporal variable is constrained using the \dedalus{choice} construct over all body variables (including the body temporal variable).
 \end{enumerate}
 
 \begin{example}
-The following are examples of well-formed deductive, inductive, and asynchronous rules, respectively.
+\label{ex:nonsugared}
+Examples of well-formed deductive, inductive, and asynchronous rules, respectively, where \dedalus{S} and \dedalus{T} are variables ranging over the temporal universe.
 \\\\
 deductive:
 \begin{Dedalus}
@@ -36,19 +35,22 @@ p(A, B, T) <- e(A, B, T);
 \end{Dedalus}
 inductive:
 \begin{Dedalus}
-q(A, B, S) <- e(A, B, T), successor(T, S);
+q(A, B, S) <- e(A, B, T), successor(S, T);
 \end{Dedalus}
 asynchronous:
 \begin{Dedalus}
 r(A, B, S) <- e(A, B, T), time(S),
-              choose((A, B, T), (S));
+              choice((A, B, T), (S));
 \end{Dedalus}
 \end{example}
 
-Since unification on the temporal attribute is required in every rule body, we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we may omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  Below, we rewrite the above rules using this syntax sugar:
+\dedalus{choice} and \dedalus{successor} are prohibited in rules, except as described above.
+
+Since unification on the temporal attribute is required in every rule body, we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we may omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
 
 \begin{example}
-The following are examples of sugared well-formed deductive, inductive, and asynchronous rules, respectively.
+\label{ex:sugared}
+The rules from Example~\ref{ex:nonsugared} in sugared form.
 \\\\
 deductive:
 \begin{Dedalus}
@@ -56,49 +58,46 @@ p(A, B) \(\leftarrow\) e(A, B);
 \end{Dedalus}
 inductive:
 \begin{Dedalus}
-q(A, B)@next \(\leftarrow\) e(A, B, T);
+q(A, B)@next \(\leftarrow\) e(A, B);
 \end{Dedalus}
 asynchronous:
 \begin{Dedalus}
-r(A, B)@async \(\leftarrow\) e(A, B, T);
+r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \end{example}
 
-\wrm{\lang only allows recursion through negation if the recursion passes through at least one \dedalus{@next} or \dedalus{@async}.}
+When we talk about the {\em predicate dependency graph} (PDG) of a \lang program, we assume that it does not include the \dedalus{time} or \dedalus{successor} predicates~\footnote{We also assume that the graph does not include any predicates or rules added by rewriting \dedalus{choice}.}.
 
-\lang adopts the ``horizontal partitioning'' conventionintroduced by Loo et al. and used in many subsequent efforts~\cite{Loo:2005}. To represent a distributed system, we consider some number of agents, each running a copyof the same program against a disjoint subset ({\em horizontal partition}) of each predicate's contents.  We require one attribute in each predicate to be used to identify the partitioning for tuples in that predicate. We call such an attribute a {\em location specifier}, and prefix it with a \dedalus{\#} symbol in Dedalus.
+By convention, EDB facts are supplied without a time suffix, and are true at all times.
 
-We constrain \lang rules so that the location specifier variable in each body predicate be the same---i.e.\ the body contains tuples from exactly one partition of the database, logically colocated (on a single ``machine'').  If the head of the rule has the same location specifier variable as the body, we call the rule {\em local}.
-%since its results can remain on the machine where they are computed.
-If the head has a different variable in its location specifier, we call the rule a {\em communication rule}.  A communication rule must be asynchronous
+\vspace{1em}
+\noindent {\bf Distribution:}
+\lang requires that all atoms with partitioned predicates in each rule body use the same variable symbol in their location attribute---i.e.\ the rule is an implication over data located in exactly one partition of the database, logically collocated (on a single ``machine'').  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}, and must be an asynchronous rule.                                                              
 
-By restricting bodies to a single agent, the only communication
-modeled in \lang is modeled by communication rules.  Second, because
-all communication rules are asynchronous, agents may only learn about
-time values at another agent by receiving messages (with unbounded
-delay) from that agent.  Note that this model says nothing about the
-relationship between the agents' clocks; they could be
-non-monotonically increasing, or they could respect a global order.
+\vspace{1em}
+\noindent {\bf Negation and Aggregation:}
+\lang restricts negation by requiring any recursion through negation to include either a temporal or asynchronous rule~\footnote{The only exception is the rewrite of \dedalus{choice}, which involves recursion through negation without any \dedalus{@next} or \dedalus{@async}.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.
 
-\subsection{Design Rationale and Implications}
 
-Below we explain the rationale for certain choices.
-\wrm{We need to remember to mention the dual role of time.  Atomicity and non-determinism.  Say stuff about dense partial orders.}
+%\wrm{move this somewhere?  or don't wory about node failure}
+%{\bf Modeling failure:}  Later, when we discuss \lang with failure, we will add the element $\infty$ to \dedalus{time} to model transient or permanent channel failure, or transient node failure.  Furthermore, to model permanent node failure, we will assume all rules have the \dedalus{!fail()} predicate in their body, except for a single rule \dedalus{fail()@async <- enabled();}, and all programs have an \dedalus{enabled()} fact, where \dedalus{enabled} is a predicate symbol that does not otherwise appear in the program.  \wrm{Also, we assume durability through transient node failure?}  \wrm{Also note that failure makes confluence impossible}
 
-{\bf Time:}
-We want to model intermediates states of distributed systems that are not necessarily models of the programs and their
-input (e.g., to represent states with messages that are in flight, in which the premises
-of certain implications hold but their conclusions do not).
-Moreover, distributed systems are often noninflationary over time.  However, Datalog's {\em least fixpoint} operator is inflationary.  Reifying time into the langauge solves both these problems.
+%\subsection{Design Rationale and Implications}
 
-{\bf Locality in Time and Space:}
-\begin{definition}
-The {\em temporal diameter} of a \lang program is the number of ``old values'' accessible for a fact \wrm{formalize}.
-\end{definition}
+%Below we explain the rationale for certain choices.
+%\wrm{We need to remember to mention the dual role of time.  Atomicity and non-determinism.  Say stuff about dense partial orders.}
 
-Every \lang program has a temporal diameter polynomial in the data size \wrm{or is this linear??}.\footnote{We can allow a program to have an unbounded temporal diameter by allowing {\em entanglement} between the {\em temporal} kind and the {\em data} kind.  This is sufficient to model an arbitrary Turing Machine in \lang (via substitution of \dedalus{finite\_succ} with \dedalus{successor} in the proof of Lemma~\ref{lem:} in the appendix.}.
-
-\paa{still not sure what we need this for}
+%{\bf Time:}
+%We want to model intermediates states of distributed systems that are not necessarily models of the programs and their
+%input (e.g., to represent states with messages that are in flight, in which the premises
+%of certain implications hold but their conclusions do not).
+%Moreover, distributed systems are often noninflationary over time.  However, Datalog's {\em least fixpoint} operator is inflationary.  Reifying time into the langauge solves both these problems.
+%{\bf Locality in Time and Space:}
+%\begin{definition}
+%The {\em temporal diameter} of a \lang program is the number of ``old values'' accessible for a fact \wrm{formalize}.
+%\end{definition}
+%Every \lang program has a temporal diameter polynomial in the data size \wrm{or is this linear??}.\footnote{We can allow a program to have an unbounded temporal diameter by allowing {\em entanglement} between the {\em temporal} kind and the {\em data} kind.  This is sufficient to model an arbitrary Turing Machine in \lang (via substitution of \dedalus{finite\_succ} with \dedalus{successor} in the proof of Lemma~\ref{lem:} in the appendix.}.
+%\paa{still not sure what we need this for}
 
 %\begin{example}
 %A \lang program with a temporal diameter of 2.
@@ -209,6 +208,14 @@ For any \lang program, the family of ultimate models is the same as the elements
 \begin{proof}
 \end{proof}
 
+\wrm{fit in}
+By restricting bodies to a single agent, the only communication
+modeled in \lang is modeled by communication rules.  Second, because
+all communication rules are asynchronous, agents may only learn about
+time values at another agent by receiving messages (with unbounded
+delay) from that agent.  Note that this model says nothing about the
+relationship between the agents' clocks; they could be
+non-monotonically increasing, or they could respect a global order.
 
 %\subsection{Complexity}
 %
