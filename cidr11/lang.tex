@@ -266,10 +266,6 @@ The constructs above form the core of the Bloom language.
 Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements. 
 
 % TODO: work on this
-\vspace{9pt}\noindent \textbf{Bloom Interfaces}\\
-\jmh{I think this needs to be more specific about interfaces, as I describe above, and needs to be somewhere other than this subsection on ``Bloom Statements''.  Now that I think about it, it should probably be the next subsection (before Bud Implementation), and prior comments should be turned into forward refs to it.}
-
-
 
 \subsection{Modularity and Encapsulation in Bloom}
 \label{sec:modularity}
@@ -296,8 +292,8 @@ composition pairs every input and output with an interface of the complementary
 kind.  Line~\ref{line:dec_in_interface} in Figure~\ref{fig:declarations} defines
 an input interface with the same schema as the \texttt{action\_msg} channel.
 In addition to rule-level overriding via \texttt{declare} described above, Bloom supports interface-level
-overriding: a module may override interfaces defined by other mix-ins by simply redeclaring the interface.
-Internally, these redudantly-named interfaces exist in the namespace of the module that declared them,
+overriding: a module may override interfaces defined by other mixins by simply redeclaring the interface.
+Internally, these redundantly-named interfaces exist in the namespace of the module that declared them,
 but only need to be referenced by a fully-qualified name if their use is otherwise ambiguous.  
 If an input interface appears in the LHS of a rule in a module that declared the interface, it is rewritten to
 reference the interface with the same name in a mixed-in class, as it is meaningless for a module to insert 
