@@ -138,55 +138,11 @@ like UDP, and the definition of a periodic collection instructs the
 runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further
 derivations.
 
-\jmh{More is needed here.  First, you need to introduce the use of interfaces: inputs on rhs of rules, outputs on lhs.  Two modules compose if they reference each other's interface collections in this pattern.  Note that this is local and synchronous composition at the interfaces, though a given module may itself have asynchronous or distributed behaviors inside.  Second, you need to talk about how we use Ruby's inheritance and mixin features.  This probably deserves a subsection on Modularity and Inheritance or something.}
-Bloom programs compose with other Bloom programs and with external callers at
-unidirectional scratch collections called \textbf{interfaces}.  A well-formed
-composition pairs every input and output with an interface of the complementary
-kind.  Line~\ref{line:dec_in_interface} in Figure~\ref{fig:declarations} defines
-an input interface with the same schema as the \texttt{action\_msg} channel.
 
-\begin{comment}
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{verbatim}
- 1      class SimplePQueue < Bud
- 2      def state
- 3        table :q, ['id'], ['payload']
- 4        table :min_id, ['id']
- 5        table :log, ['id'], ['payload']
- 6        scratch :newmins, ['id'], ['payload']
- 7        channel :output, 0, ['addr', 'id'], ['payload']
- 8      end
- 9    
-10      declare
-11      def dequeue
-12        # find min_id value, agg across all items (group=nil)
-13        min_id <= q.group(nil, min(q.id))
-14    
-15        # find the q items with min_id via natural join
-16        mins = natjoin [q, min_id] {|q, m| q }
-17    
-18        # idempotence: ignore items with id previously logged
-19        newmins <= mins.map do |q| 
-20          q unless log.map{|p| p.id}.include? q.id
-21        end
-22
-23        # in the next timestep, add newmins to log, delete from q
-24        log <+ newmins.map{|h| [h.id]}
-25        q <- mins.map {|q| q}
-26      
-27        # ship the min items via the output channel
-28        output <~ mins.map{|q| ['192.168.1.1:12345'] + q}
-29      end
-30    end
-\end{verbatim}
-\vspace{-10pt}
-\caption{Example Bloom code for dequeuing items from a priority queue.}
-\label{fig:queue}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
-\end{comment}
+Bloom programs compose with other Bloom programs and with external callers at
+unidirectional scratch collections called \textbf{interfaces}, which are described in more
+detail in Section~\ref{sec:modularity}.  
+
 
 
 \begin{figure}[t]
@@ -297,7 +253,8 @@ line~\ref{line:des_declare} of Figure~\ref{fig:dest-cart}). The semantics
 of a Bloom program are defined by the union of all the \texttt{declare}
 methods; the order of statements is immaterial. Dividing statements into multiple
 methods improves the readability of the program and allows use of Ruby's method
-overriding and inheritance features, as described below.  \jmh{See previous comment -- this may no longer be ``described below''.}
+overriding and inheritance features, as described below.  
+%\jmh{See previous comment -- this may no longer be ``described below''.}
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
@@ -306,10 +263,25 @@ The constructs above form the core of the Bloom language.
 % ; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{Papadimitriou85}.  
 % \jmh{Actually no ... papadimitriou85 ``a note on the expressive power of prolog'' shows that Datalog neg with finite successor is exactly PTIME.  If we can't get the right ref for this assertion, just remove it.}
 % \wrm{Wow you guys are citation aces, I couldn't find this paper online.  Anyway, it's not turing complete if we view time as a stage/iteration variable -- i.e. FOL with "as much time as you need to compute" only gets us PSPACE.  However, if we view time as data (i.e. allow the infinite successor relation into the Herbrand universe), then we get turing completeness.}
-Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.  \jmh{See previous comment -- this may be moved up.}%  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
+Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements. 
 
 % TODO: work on this
 \vspace{9pt}\noindent \textbf{Bloom Interfaces}\\
+\jmh{I think this needs to be more specific about interfaces, as I describe above, and needs to be somewhere other than this subsection on ``Bloom Statements''.  Now that I think about it, it should probably be the next subsection (before Bud Implementation), and prior comments should be turned into forward refs to it.}
+
+
+
+\subsection{Modularity and Encapsulation in Bloom}
+\label{sec:modularity}
+
+
+\jmh{More is needed here.  First, you need to introduce the use of interfaces: inputs on rhs of rules, outputs on lhs.  Two modules compose if they reference each other's interface collections in this pattern.  Note that this is local and synchronous composition at the interfaces, though a given module may itself have asynchronous or distributed behaviors inside.  Second, you need to talk about how we use Ruby's inheritance and mixin features.  This probably deserves a subsection on Modularity and Inheritance or something.}
+
+Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions, and which had little support
+for modularity and reuse of code.
+
+ Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.  \jmh{See previous comment -- this may be moved up.}%  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
+
 While subclassing is appropriate in certain contexts, Bud supports more general abstraction and reuse via 
 Ruby's mixin functionality.  Modules defining collections and rules may be freely combined, subject to the restriction
 that the dataflow be fully specified by connecting all input and output interfaces.  A common pattern is the
@@ -318,14 +290,14 @@ mixing in rules that connect input to output interfaces with Bud rules.  Figure~
 a simple concrete implementation of the CartClient protocol specified in Figure~\ref{fig:declarations}, leaving
 unspecified the server logic that reads \texttt{action\_msg} and \texttt{checkout\_msg} and writes to
 \texttt{response\_msg}.
-\jmh{I think this needs to be more specific about interfaces, as I describe above, and needs to be somewhere other than this subsection on ``Bloom Statements''.  Now that I think about it, it should probably be the next subsection (before Bud Implementation), and prior comments should be turned into forward refs to it.}
 
 
-%\jmh{Can remove this paragraph is we're short on space, but it's a critique we will definitely hear.}
-%nrc: Cut this for space; also because omitting this won't cause the submission to be rejected.
-\begin{comment}
-Conventional wisdom in certain quarters says that rule-based languages are untenable for large programs that evolve over time, since the interactions among rules become too difficult to understand.  We believe this concern is an artifact of early rule languages that mixed apparently declarative syntax with imperative constructs and assumptions.  In fact, we demonstrate below that the pure logic-programming roots of Bloom can allow programmers to reason about many program interactions in a much deeper way than traditional imperative languages.
-\end{comment}
+A well-formed
+composition pairs every input and output with an interface of the complementary
+kind.  Line~\ref{line:dec_in_interface} in Figure~\ref{fig:declarations} defines
+an input interface with the same schema as the \texttt{action\_msg} channel.
+
+
 
 %\vspace{9pt}\noindent \textbf{Bud Implementation}\\
 \subsection{Bud Implementation}
