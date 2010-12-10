@@ -48,7 +48,8 @@ module ReliableDelivery
   declare
   def done
     ack <~ pipe_chan.map {|p| [p.src, p.dst, p.ident]}
-    pipe_out <= join([ack, pipe], [ack.ident, pipe.ident]).map {|a, p| p}
+    pipe_out <= join([ack, pipe],
+                        [ack.ident, pipe.ident]).map {|a, p| p}
   end
 end
 \end{lstlisting}
