@@ -76,8 +76,6 @@ end
 module Multicast
   include MulticastProtocol
   include DeliveryProtocol
-  include Anise
-  annotator :declare
 
   declare
   def snd_mcast
