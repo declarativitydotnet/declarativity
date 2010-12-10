@@ -31,21 +31,21 @@ module DestructiveCart
       end (*\label{line:des_bigtable_gen_end}*)
     end
     joldstate = join [bigtable, action_msg],
-        [bigtable.key, action_msg.session]  (*\label{line:des_join_bigtable_action_msg}*)
+                        [bigtable.key, action_msg.session]  (*\label{line:des_join_bigtable_action_msg}*)
     kvput <= joldstate.map do |b, a|
       if a.action == "A" (*\label{line:des_replace_beg}*)
         [a.server, a.client, a.session, 
-            a.reqid, (b.value.push(a.item))]
+         a.reqid, b.value.push(a.item)]
       elsif a.action == "D"
         [a.server, a.client, a.session, 
-            a.reqid, delete_one(b.value, a.item)]
+         a.reqid, delete_one(b.value, a.item)]
       end (*\label{line:des_replace_end}*)
     end
   end
 
   declare
   def finish
-    kvget <= checkout_msg.map{|c| [c.reqid, c.session] (*\label{line:kvget-beg}*)
+    kvget <= checkout_msg.map{|c| [c.reqid, c.session]} (*\label{line:kvget-beg}*)
     response_msg <~ join([kvget_response, checkout_msg],
     [kvget_response.key, checkout_msg.session]).map do |r, c|
       [r.client, r.server, r.key, r.value] (*\label{line:kvget-end}*)
@@ -112,8 +112,8 @@ module DisorderlyCart
   def state
     table :cart_action, ['session', 'item', 'action', 'reqid']
     table :action_cnt, ['session', 'item', 'action'], ['cnt']
-    scratch :status, 
-      ['server', 'client', 'session', 'item'], ['cnt']
+    scratch :status, ['server', 'client', 'session', 'item'],
+                        ['cnt']
   end
 
   declare
@@ -140,7 +140,7 @@ module DisorderlyCart
         [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt]
       end
     end
-    response_msg <~ status.map { |s| s } (*\label{line:dis_checkout_response}*)
+    response_msg <~ status (*\label{line:dis_checkout_response}*)
   end
 end
 \end{lstlisting}

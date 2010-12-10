@@ -90,9 +90,9 @@ module BasicKVS
 
   declare
   def mutate
-    bigtable <+ kvput.map {|p| [p.key, p.value] } (*\label{line:kvs-put}*)
+    bigtable <+ kvput.map {|p| [p.key, p.value]} (*\label{line:kvs-put}*)
     jst = join [bigtable, kvput], [bigtable.key, kvput.key] (*\label{line:kvs-join}*)
-    bigtable <- jst.map {|b, p| b } (*\label{line:kvs-clean}*)
+    bigtable <- jst.map {|b, p| b} (*\label{line:kvs-clean}*)
   end
 
   declare
@@ -147,7 +147,7 @@ module ReplicatedKVS
       end
     end (*\label{line:send-mcast-end}*)
     
-    kvput <= mcast_done.map {|m| m.payload }  (*\label{line:mcast-done}*)
+    kvput <= mcast_done.map{|m| m.payload}  (*\label{line:mcast-done}*)
 
     kvput <= pipe_chan.map do |d| (*\label{line:mcast-peer-beg}*)
       if d.payload.fetch(1) != @addy
