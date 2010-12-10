@@ -44,7 +44,7 @@ will be quite flat for programmers familiar with modern scripting languages.
 \subsection{Bloom Basics}
 
 Bloom programs are bundles of declarative statements about collections of
-``facts'' or tuples, akin to SQL views or Datalog rules.  Bloom statements can
+``facts'' or tuples, similar to SQL views or Datalog rules.  Bloom statements can
 only reference data that is local to a node.  Bloom rules are defined with
 respect to atomic ``timesteps,'' which can be implemented via successive rounds
 of evaluation. In each timestep, certain ``ground facts'' exist in collections
@@ -123,33 +123,29 @@ enable code reuse. The contents of a \textbf{table} persist across consecutive
 timesteps (until that persistence is interrupted via a Bloom statement
 containing the \texttt{$<$-} operator described below). Although there are
 precise declarative semantics for this persistence~\cite{dedalus}, it is
-convenient to think operationally as follows: \textbf{scratch} collections are
-``emptied'' before each timestep begins, \textbf{table}s are ``stored''
-collections (akin to tables in SQL), and the \texttt{$<$-} operator represents
-batch ``deletion'' before the beginning of the next timestep.
+convenient to think operationally as follows: scratch collections are
+``emptied'' before each timestep begins, tables are ``stored'' collections
+(similar to tables in SQL), and the \texttt{$<$-} operator represents batch
+deletion before the beginning of the next timestep.
 
 The facts of the ``real world,'' including network messages and the passage of
 wall-clock time, are captured via \textbf{channel} and \textbf{periodic}
-collections; these are \textbf{scratch} collections whose contents ``appear''
-at non-deterministic timesteps. 
-% From a semantic point of view, all real-world non-determinism is captured
-% here as \emph{ temporal} non-determinism: the non-determinstic Bloom timestep
-% in which each fact eventually ``appears''.  
-The paper on Dedalus delves deeper into the logical semantics of this
-non-determinism~\cite{dedalus}.  Note that failure of nodes or
-communication is captured here: it can be thought of as the repeated
+collections; these are scratch collections whose contents ``appear'' at
+non-deterministic timesteps.  The paper on Dedalus delves deeper into the
+logical semantics of this non-determinism~\cite{dedalus}.  Note that failure of
+nodes or communication is captured here: it can be thought of as the repeated
 ``non-appearance'' of a fact at every timestep.  Again, it is convenient to
-think operationally as follows: facts in a \textbf{channel} are delivered to
-the address in their location specifier via a best-effort unordered network
-protocol like UDP, and the definition of a \textbf{periodic} collection
-instructs the runtime to ``inject'' facts at regular wall-clock intervals to
-``drive'' further derivations.
+think operationally as follows: facts in a \textbf{channel} are delivered to the
+address in their location specifier via a best-effort unordered network protocol
+like UDP, and the definition of a \textbf{periodic} collection instructs the
+runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further
+derivations.
 
-Bloom programs compose with other Bloom programs and with external callers at unidirectional
-\textbf{scratch} collections called \textbf{interfaces}.  A well-formed composition pairs
-every input and output with an interface of the complementary kind.  Line~\ref{line:dec_in_interface} in 
-Figure~\ref{fig:declarations} defines an input interface with the same schema as the \texttt{action\_msg}
-channel.
+Bloom programs compose with other Bloom programs and with external callers at
+unidirectional scratch collections called \textbf{interfaces}.  A well-formed
+composition pairs every input and output with an interface of the complementary
+kind.  Line~\ref{line:dec_in_interface} in Figure~\ref{fig:declarations} defines
+an input interface with the same schema as the \texttt{action\_msg} channel.
 
 \begin{comment}
 \begin{figure}[t]
@@ -281,7 +277,7 @@ relational selection and projection. For example,
 lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of Figure~\ref{fig:pdg-disorderly} project the
 \texttt{action\_msg} collection to its \texttt{session}, \texttt{item},
 \texttt{action} and \texttt{reqid} fields.  \texttt{BudCollection} defines a
-\texttt{group} method akin to SQL's \texttt{GROUP BY}, supporting the standard
+\texttt{group} method similar to SQL's \texttt{GROUP BY}, supporting the standard
 SQL aggregates; for example, lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
 Figure~\ref{fig:pdg-disorderly} compute the count 
 of unique \texttt{reqid} values for every combination of values for
