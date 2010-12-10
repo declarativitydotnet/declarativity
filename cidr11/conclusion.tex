@@ -1,4 +1,4 @@
-\section{Conclusion and Discussion}
+\section{Conclusion and Future Work}
 \label{sec:conclusion}
 In this paper, we make three main contributions.  First, we present the CALM
 principle, which connects the common practice of eventual consistency in
@@ -9,5 +9,16 @@ analysis techniques for identifying the points of order in a program. Finally,
 we present our Bloom prototype as an example of a practically-minded declarative
 programming language, with an initial implementation as a Domain-Specific
 Language within Ruby.
+
+We plan to extend the work described in this paper in several directions. First,
+we plan to build more complex distributed systems using Bloom; in the past, we
+have found that building real systems is a useful way to verify the practicality
+of a research language design~\cite{boom-eurosys}.  Second, we hope to expand
+the analysis techniques supported by our language; one natural direction would
+be to use work on duplicate-insensitive query processing to check for idempotent
+network protocols, an often-suggested design pattern for loosely-consistent
+distributed systems. We also hope to develop better tools and techniques for
+debugging and systematic testing of distributed systems developed in the Bloom
+language, perhaps by leveraging recent work on XXX. Finally, we are
 
 \jmh{Paragraph on What's Next.  One thing is to build big things and refine the language---remind them about Eurosys paper and promise more systems work.  Another is to take more advantage of the language for checking/testing properties---make mention of Haryadi's work and also Alloy-like things for debugging and proving properties. Additionally, we're nailing down the theory behind CALM and dealing with replica consistency directly, rather than just through ``order independence''.  Should we promise to connect better to transactional interleaving?}
