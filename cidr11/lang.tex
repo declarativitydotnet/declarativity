@@ -199,7 +199,6 @@ an input interface with the same schema as the \texttt{action\_msg} channel.
 \begin{lstlisting}
 module CartProtocol
   def state
-    super
     channel :action_msg, (*\label{line:dec_chan_beg}*)
       ['@server', 'client', 'session', 'reqid'], ['item', 'action'] (*\label{line:dec_chan_end}*)
     channel :checkout_msg,
@@ -211,7 +210,6 @@ end
 
 module CartClientProtocol
   def state
-    super
     interface input, :client_action, (*\label{line:dec_in_interface}*)
       ['server', 'session', 'reqid'], ['item', 'action'] 
     interface input, :client_checkout, ['server', 'session', 'reqid']

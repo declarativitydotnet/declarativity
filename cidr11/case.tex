@@ -110,7 +110,6 @@ module DisorderlyCart
   include CartProtocol
 
   def state
-    super
     table :cart_action, ['session', 'item', 'action', 'reqid']
     table :action_cnt, ['session', 'item', 'action'], ['cnt']
     scratch :status, 
