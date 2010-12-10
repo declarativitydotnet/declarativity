@@ -210,7 +210,7 @@ edges.  Any data flowing from \texttt{kvput} to the sink must cross at least one
 point of
 order (at ingress to the octagon) and possible an arbitrary number of them (via the
 octagon's self-edge), and any path from \texttt{kvget} to the sink must join state potentially
-affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget response}).
+affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget\_response}).
 
 Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable.  The 
 contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
