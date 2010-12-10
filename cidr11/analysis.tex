@@ -30,18 +30,15 @@ $+$. This indicates that facts traversing the edge ``spend'' a timestep to move
 from the rhs to the lhs. Similarly, if the rule uses the \texttt{$<\sim$}
 operator, the edge is a dashed line---this indicates that facts from the rhs
 appear at the lhs at a non-deterministic future time. If the rule involves a
-nonmonotonic operation (aggregation or anti-join), then the edge is marked with
-a $\lnot$.  To make the visualizations more readable, any strongly connected
-component with both a $\lnot$ and a $+$ edge is collapsed into an octagonal
-``temporal cluster,'' which can be viewed abstractly as a single, nonmonotonic
-node in the dataflow.\footnote{Datalog aficionados may be troubled by our
-  mention of cycles involving negation in the dependency graph.
-  In~\cite{dedalus} we describe why the inclusion of a $+$ edge in such a cycle
-  ensures stratifiability.}  \emph{Points of order} are indicated in the graph
-by an edge with a white circle.  Any nonmonotonic edge in the graph is a point
-of order, as are all edges incident to a temporal cluster, including any
-self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis
-visualizations.
+nonmonotonic operation (aggregation, anti-join, or the \texttt{$<$-} operator),
+then the edge is marked with a small circle.  To make the visualizations more
+readable, any strongly connected component marked with both a circle and a $+$
+edge is collapsed into an octagonal ``temporal cluster,'' which can be viewed
+abstractly as a single, nonmonotonic node in the dataflow. \emph{Points of
+  order} are indicated in the graph by an edge with a white circle.  Any
+nonmonotonic edge in the graph is a point of order, as are all edges incident to
+a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend}
+provides a legend for the analysis visualizations.
 
 \subsection{KVS Interface}
 
@@ -118,17 +115,19 @@ end
 \end{figure}
 
 Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
-realization of a key-value store.  Line~\ref{line:kvs-state} declares a \textbf{table}
-called \texttt{bigtable} that stores the internal, persistent state of the store.
-When a \texttt{kvput} tuple appears, its key-value pair is placed in \texttt{bigtable} in the
-immediate next timestep (line~\ref{line:kvs-put}).  If a value for the given key already 
-exists in \texttt{bigtable}, we wish to replace it with the newer value.  Line~\ref{line:kvs-join}
-joins the input interface with the internal state: if a row already exists for the current key,  
-the join collection \texttt{jst} will contain a tuple that is the concatenation of the matching
-tuples from \texttt{bigtable} and \texttt{kvput}.  In this event, line~\ref{line:kvs-clean}
-states that in the immediate next timestep (and hence concurrently with the appearance of the
-new tuple derived at line~\ref{line:kvs-put}), the old value associated with the given key
-does not exist in \texttt{bigtable}.  
+realization of a key-value store.  Line~\ref{line:kvs-state} declares a table
+called \texttt{bigtable} that contains the internal, persistent state of the
+store.  When a \texttt{kvput} tuple appears, its key-value pair is placed in
+\texttt{bigtable} in the immediate next timestep (line~\ref{line:kvs-put}).  If
+a value for the given key already exists in \texttt{bigtable}, we wish to
+replace it with the newer value.  Line~\ref{line:kvs-join} joins the input
+interface with the internal state: if a row already exists for the current key,
+the join collection \texttt{jst} will contain a tuple that is the concatenation
+of the matching tuples from \texttt{bigtable} and \texttt{kvput}.  In this
+event, line~\ref{line:kvs-clean} states that in the immediate next timestep (and
+hence concurrently with the appearance of the new tuple derived at
+line~\ref{line:kvs-put}), the old value associated with the given key does not
+exist in \texttt{bigtable}.
 
 
 \subsection{Replicated KVS implementation}
@@ -232,7 +231,7 @@ any point in time may depend on the order of arrival of \texttt{kvput} tuples.
 \centering
 \includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
 \vspace{-10pt}
-\caption{Visualization of the key-value store protocol.}
+\caption{Visualization of the abstract key-value store protocol.}
 \label{fig:pdg-kvs-proto-analysis}
 \vspace{-2pt}
 \end{figure}
@@ -241,7 +240,7 @@ any point in time may depend on the order of arrival of \texttt{kvput} tuples.
 \centering
 \includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
-\caption{Key-value store analysis.}
+\caption{Visualization of the single-site key-value store implementation.}
 \label{fig:pdg-kvs-analysis}
 \vspace{-2pt}
 \end{figure}
