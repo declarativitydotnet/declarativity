@@ -12,6 +12,9 @@ it first into a single-site and finally into a replicated implementation.  Along
 the way, we use a dataflow visualization to reason about the completeness and
 correctness of the evolving program.
 
+% TODO: tee-up points of order
+% TODO: tee-up divergence into PDGs
+
 \subsection{Predicate Dependency Graphs}
 The Bud interpreter can automatically generate a graph that represents the
 dependencies between collections in a program. Each node in the graph is either
@@ -27,16 +30,16 @@ $+$. This indicates that facts traversing the edge ``spend'' a timestep to move
 from the rhs to the lhs. Similarly, if the rule uses the \texttt{$<\sim$}
 operator, the edge is a dashed line---this indicates that facts from the rhs
 appear at the lhs at a non-deterministic future time. If the rule involves a
-nonmonotonic operation (aggregation or anti-join) over $A$, then the edge is
-marked with a $\lnot$.  To make the visualizations more readable, any strongly
-connected component with both a $\lnot$ and a $+$ edge is collapsed into an
-octagonal ``temporal cluster,'' which can be viewed abstractly as a single,
-nonmonotonic node in the dataflow.\footnote{Datalog aficionados may be troubled
-  by our mention of cycles involving negation in the dependency graph.
+nonmonotonic operation (aggregation or anti-join), then the edge is marked with
+a $\lnot$.  To make the visualizations more readable, any strongly connected
+component with both a $\lnot$ and a $+$ edge is collapsed into an octagonal
+``temporal cluster,'' which can be viewed abstractly as a single, nonmonotonic
+node in the dataflow.\footnote{Datalog aficionados may be troubled by our
+  mention of cycles involving negation in the dependency graph.
   In~\cite{dedalus} we describe why the inclusion of a $+$ edge in such a cycle
-  ensures stratifiability.}  Points of order are indicated in the graph by an
-edge with a white circle.  Any nonmonotonic edge in the graph is a point of
-order, as are all edges incident to a temporal cluster, including any
+  ensures stratifiability.}  \emph{Points of order} are indicated in the graph
+by an edge with a white circle.  Any nonmonotonic edge in the graph is a point
+of order, as are all edges incident to a temporal cluster, including any
 self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis
 visualizations.
 
@@ -62,20 +65,21 @@ end
 \vspace{-2pt}
 \end{figure}
 
-Figure~\ref{fig:kvs-proto} provides an abstract specification of a key-value store,
-comprising its interface to other Bloom programs or the external world.  
-We may interact with any implementation of the store
-by supplying inputs to \texttt{kvput} and \texttt{kvget} and by reading output from
-\texttt{kvget\_response}.  
-Much as we would expect to interact
-with a hash table, we store key-value pairs by inserting them into \texttt{kvput}, and 
-retrieve the value associated with a given key by inserting a tuple containing that key
-into \texttt{kvget} and reading the result out of \texttt{kvget\_response}.  In each case,
-we also require the caller to supply a unique request identifier \texttt{reqid} to differentiate
-tuples in the event of multiple concurrent requests.
-A module which uses a key-value store but is indifferent
-to the specifics of the implementation may simply mix in this protocol specification
-and postpone committing to a particular implementation until runtime.
+Figure~\ref{fig:kvs-proto} specifies a protocol for interacting with an abstract
+key-value store. The protocol comprises two input events (representing attempts
+to insert and fetch items from the store), and a single output event (which
+represents the outcome of a fetch operation). To use an implementation of this
+protocol, a Bloom program can store key-value pairs by inserting facts into
+\texttt{kvput}, and can retrieve the value associated with a key by inserting a
+fact into \texttt{kvget} and reading the response tuple that should eventually
+appear in \texttt{kvget\_response}. In each case, the client program must supply
+a unique request identifier (\texttt{reqid}) to differentiate tuples in the
+event of multiple concurrent requests.  A module which uses a key-value store
+but is indifferent to the specifics of the implementation may simply mix in this
+protocol specification and postpone committing to a particular implementation
+until runtime. As we will see shortly, an implementation of the
+\texttt{KVSProtocol} is a collection of Bud rules that read tuples from the
+protocol's input interfaces and send results to the output interface.
 
 \subsection{KVS Implementation}
 \begin{figure}[t]

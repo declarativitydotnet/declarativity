@@ -69,35 +69,32 @@ update. Deletion requests are ignored if the item they refer to does not exist
 in the cart.
 
 Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
-\textbf{scratch} \texttt{kvput} is defined by the \texttt{KeyValueStore} protocol shown
-in Figure~\ref{fig:kvs-proto}.
-Any collection of Bud rules that implement the protocol can be used, but to satisfy
-our requirement that the data be replicated we must use an implementation that replicates
-the contents of the store to multiple servers.  Optimistically assuming that the program is
-otherwise consistent, we here use the ReplicatedKVS module shown in 
-figure~\ref{fig:kvs-repl}, and will later mix in  BestEffortMulticast, an implementation of MulticastProtocol with low message complexity.
+\texttt{kvput} scratch collection is defined by the \texttt{KeyValueStore}
+protocol shown in Figure~\ref{fig:kvs-proto}.  Any collection of Bud rules that
+implement the protocol can be used, but to satisfy our requirement that the data
+be replicated we must use an implementation that replicates the contents of the
+store to multiple servers.  Optimistically assuming that the program is
+otherwise consistent, we here use the ReplicatedKVS module shown in
+figure~\ref{fig:kvs-repl}, and will later mix in BestEffortMulticast, an
+implementation of MulticastProtocol with low message complexity.
 
-In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client transmits
-\texttt{client\_action} tuples that correspond to cart updates over the
-\texttt{action\_msg} \textbf{channel} to an individually chosen server replica.
-We assume that the client has already chosen a server based on load balancing.
-For each such arriving tuple, line~\ref{line:des_bigtable_check} checks
-\texttt{bigtable} to see if a record exists for the session associated with the
-\texttt{action\_msg}.  If none is there (i.e., this is the first update for a
-new session), then
-lines~\ref{line:des_bigtable_gen_beg}--\ref{line:des_bigtable_gen_end}
-generate an entry for the new session in \texttt{bigtable}.  Otherwise, the
-join conditions in
-line~\ref{line:des_join_bigtable_action_msg}
-are satisfied and lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end}
-``replace'' the item array at the next timestep with a new version, via the 
-built-in overwriting capability provided by KeyValueStore.  
-Whenever a \texttt{checkout\_msg} appears in a server replica, the
-%%\texttt{bigtable} tuple associated with the given session is identified (via
-%%the join on
-%%lines~\ref{line:des_checkout_join_beg}--\ref{line:des_checkout_join_end}), and
-%%the item array in its value field is sent back to the client.  
- \texttt{kvget} and \texttt{kvget\_response} interfaces to KeyValueStore are used to retrieve the cart state associated with the given session (Lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).  
+In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client
+transmits \texttt{client\_action} tuples that correspond to cart updates over
+the \texttt{action\_msg} \textbf{channel} to an individually chosen server
+replica.  We assume that the client has already chosen a server based on load
+balancing.  For each such arriving tuple, line~\ref{line:des_bigtable_check}
+checks \texttt{bigtable} to see if a record exists for the session associated
+with the \texttt{action\_msg}.  If none is there (i.e., this is the first update
+for a new session), then
+lines~\ref{line:des_bigtable_gen_beg}--\ref{line:des_bigtable_gen_end} generate
+an entry for the new session in \texttt{bigtable}.  Otherwise, the join
+conditions in line~\ref{line:des_join_bigtable_action_msg} are satisfied and
+lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end} ``replace'' the
+item array at the next timestep with a new version, via the built-in overwriting
+capability provided by KeyValueStore.  Whenever a \texttt{checkout\_msg} appears
+in a server replica, the \texttt{kvget} and \texttt{kvget\_response} interfaces
+to KeyValueStore are used to retrieve the cart state associated with the given
+session (lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).
 
 
 \subsection{A ``disorderly'' shopping cart}
@@ -177,8 +174,8 @@ corresponding to additions and one to deletions.  Thus, for each item,
 of additions and deletions (line~\ref{line:dis_status_diff}), or simply the
 number of additions if there are no deletions (line~\ref{line:dis_status_add}).
 Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
-\texttt{response} message to the client containing the final quantity
-(lines~\ref{line:dis_checkout_response}).
+\texttt{response\_msg} to the client containing the final quantity
+(line~\ref{line:dis_checkout_response}).
 
 %Because the disorderly implementation does not use a separate storage system,
 %it includes its own logic for state replication
