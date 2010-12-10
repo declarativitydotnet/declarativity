@@ -62,22 +62,23 @@ end
 We begin with a shopping cart system built on a key-value storage abstraction.
 Each cart is a \texttt{(key,value)} pair, where \texttt{key} is a unique session
 identifier and \texttt{value} is an object containing the session's state,
-including a Ruby array that holds the items in the cart. Adding or deleting
+including a Ruby array that holds the items currently in the cart. Adding or deleting
 items from the cart result in ``destructive'' updates: the value associated with
 the key is replaced by a new value that reflects the effect of the
 update. Deletion requests are ignored if the item they refer to does not exist
 in the cart.
 
 Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
-\texttt{kvput} scratch collection is defined by the \texttt{KeyValueStore}
+\texttt{kvput} scratch collection is defined by including the \texttt{KeyValueStore}
 protocol shown in Figure~\ref{fig:kvs-proto}.  Any collection of Bud rules that
 implement the protocol can be used, but to satisfy our requirement that the data
 be replicated we must use an implementation that replicates the contents of the
 store to multiple servers.  Optimistically assuming that the program is
 otherwise consistent, we here use the ReplicatedKVS module shown in
 figure~\ref{fig:kvs-repl}, and will later mix in BestEffortMulticast, an
-implementation of MulticastProtocol with low message complexity.
+implementation of MulticastProtocol with low message complexity \jmh{Probably we don't want to talk about ``complexity''.  Reword?}.
 
+\jmh{I think a lot of the refs and line numbers in this paragraph are broken!!}
 In line~\ref{line:des_client_action} of Figure~\ref{fig:cart_client}, the client
 transmits \texttt{client\_action} tuples that correspond to cart updates over
 the \texttt{action\_msg} channel to an individually chosen server replica.  We
@@ -214,7 +215,7 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \centering
 \includegraphics[width=0.7\linewidth]{fig/destructive_kvs.pdf}
 \vspace{-10pt}
-\caption{Destructive cart analysis.}
+\caption{Destructive cart analysis.  \jmh{These figs are a bit too small -- when I print them they're illegible.}}
 \label{fig:pdg-destructive-kvs-analysis}
 \vspace{-2pt}
 \end{figure}

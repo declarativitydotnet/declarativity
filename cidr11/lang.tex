@@ -4,7 +4,7 @@
 % is well known to be hard---even in the absence of distributed issues like
 % component failure and message reordering.
 Bloom is based on the conjecture that many of the fundamental problems with
-parallel programming come from a legacy of assumptions regarding classical von
+parallel programming come from a legacy of ordering assumptions implicit in classical von
 Neumann architectures.  In the von Neumann model, state is captured in an
 ordered array of addresses, and computation is expressed via an ordered list of
 instructions.  Traditional imperative programming grew out of these pervasive
@@ -15,7 +15,7 @@ approaches like SQL and batch dataflow approaches like MapReduce translate
 better to architectures with loose control over ordering.
 
 Bloom is designed in the tradition of programming styles that are ``disorderly''
-by nature.  State is captured in unordered relations.  Computation is expressed
+by nature.  State is captured in unordered sets.  Computation is expressed
 in logic: an unordered set of declarative rules, each consisting of an unordered
 set of predicates.  As we discuss below, mechanisms for imposing order are
 available when needed, but the programmer is provided with tools to evaluate the
@@ -31,20 +31,21 @@ the behavior of the evaluation engine.  Bloom is based on a formal temporal
 logic called Dedalus~\cite{dedalus}.
 
 The prototype version of Bloom we describe here is embodied in an implementation
-we call {\em Bud} (Bloom Under Development).  Bud is a subset of the popular
+we call {\em Bud} (Bloom Under Development).  Bud is a domain-specific subset of the popular
 Ruby scripting language and is evaluated by a stock Ruby interpreter via a
 \textbf{Bud} Ruby class.  Compared to other logic languages, we feel it has a
 familiar and programmer-friendly flavor, and we believe that its learning curve
-will be quite flat for programmers familiar with modern scripting languages.
+will be relatively flat for programmers familiar with modern scripting languages.
+Bud uses a Ruby-flavored syntax, but this is not endemic; we have experimented with analogous Bloom embeddings in other languages including Python, Erlang and Scala, and they look similar in structure.
 %nrc: Cut because it seemed unimportant
 %Future versions of Bloom may do away with some of the syntactic idiosyncracies of Ruby, but it has been useful to stay grounded in the specific syntax of one widely-accepted language, at least in our early work.
-%In the remainder of the paper, when we refer to Bloom we mean the language supported by the current Bud prototype.
+In the remainder of the paper, when we refer to Bloom we mean the language supported by the Bud prototype.
 
 %\vspace{9pt}\noindent\textbf{Bloom Basics}\\
 \subsection{Bloom Basics}
 Bloom programs are bundles of declarative statements about collections of
 ``facts'' or tuples, similar to SQL views or Datalog rules.  Bloom statements can
-only reference data that is local to a node.  Bloom rules are defined with
+only reference data that is local to a node.  Bloom statements are defined with
 respect to atomic ``timesteps,'' which can be implemented via successive rounds
 of evaluation. In each timestep, certain ``ground facts'' exist in collections
 due to persistence or the arrival of messages from outside agents (e.g., the
@@ -70,7 +71,7 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 		\textbf{table} & A collection whose contents persist across timesteps.\\
 		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
 		\textbf{channel} & A scratch collection with one attribute designated as the {\em location specifier}. Tuples ``appear'' at the address stored in their location specifier.\\
-    \textbf{interface} & A scratch collection specially designated as an interface point between modules.  An interface is typed as either \texttt{input} or \texttt{output} and may only compose with an interface of the opposite type.\\
+    \textbf{interface} & A scratch collection specially designated as an interface point between modules.  An interface is typed as either \texttt{input} or \texttt{output} and may only \jmh{what does compose mean?} compose with an interface of the opposite type.\\
 		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The definition of a periodic collection is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
 		\hline
 	\end{tabular}
@@ -106,12 +107,11 @@ columns \texttt{server}, \texttt{client}, \texttt{session}, \texttt{reqid},
 specifier \texttt{@}, indicating that tuples inserted into the channel will
 appear at the address in the first attribute of the tuple.  In Bud, the type
 system for columns is taken from Ruby, so it is possible to have a column based
-on any Ruby class the programmer cares to define or import.  In Bud, a tuple in
+on any Ruby class the programmer cares to define or import, including nested Bud collections.  In Bud's implementation, a tuple in
 a Bloom collection is simply a Ruby array containing as many elements as the
 columns of the collection's schema.  As in other object-relational ADT schemes
 like Postgres~\cite{postgres-adt}, column values can be manipulated using their
-own (non-destructive) methods, but the Bloom language has no builtin knowledge
-of those types and can only reference the column values as opaque objects.
+own (non-destructive) methods. Bloom also provides for nesting and unnesting of collections using standard Ruby constructs like \texttt{reduce} and  \texttt{flat\_map}.
 
 The persistence of a tuple is determined by the type of the collection that
 contains the tuple. \textbf{scratch} collections are handy for transient data
@@ -138,6 +138,7 @@ like UDP, and the definition of a periodic collection instructs the
 runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further
 derivations.
 
+\jmh{More is needed here.  First, you need to introduce the use of interfaces: inputs on rhs of rules, outputs on lhs.  Two modules compose if they reference each other's interface collections in this pattern.  Note that this is local and synchronous composition at the interfaces, though a given module may itself have asynchronous or distributed behaviors inside.  Second, you need to talk about how we use Ruby's inheritance and mixin features.  This probably deserves a subsection on Modularity and Inheritance or something.}
 Bloom programs compose with other Bloom programs and with external callers at
 unidirectional scratch collections called \textbf{interfaces}.  A well-formed
 composition pairs every input and output with an interface of the complementary
@@ -250,22 +251,23 @@ end
 \subsection{Bloom Statements}
 
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
-of declarative relational statements that define the contents of derived
-collections.  The syntax is:\\ \noindent
+of declarative relational expressions that define the contents of derived
+collections.  However, they can be operationally interpreted as unordered bundles of instructions for ``accumulating'' data that are run to fixpoint.   The syntax is:\\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
 $<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
 the operator are instances of (a subclass of) a Ruby class called
 \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
 module supporting typical collection methods.  The bottom of Figure~\ref{tab:bloom} describes
 the five operators that can be used to define the contents of the left-hand
-side (lhs) in terms of the right-hand side (rhs).
+side (lhs) in terms of the right-hand side (rhs).  
+\jmh{We should probably add a table of BudCollection methods, and a mention of it here and in the next paragraph. Could include the commonly-used parts of Enumerable like map, reduce, flat\_map, include? and empty?, and some of the ones we wrote---group, argagg, argmax, argmin.  And then operations on BudCollections, i.e. join and its variants (natjoin, leftjoin).}
 
 As in Datalog or SQL, the lhs of a statement may be referenced recursively in
 its rhs, or recursion can be defined mutually across statements.  The rhs
 typically includes methods of \texttt{BudCollection} objects.  Most common is
 the \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a
 scalar operation to every tuple in a collection; this can be used to implement
-relational selection and projection. For example,
+relational selection and projection. For example, \jmh{change examples here to reference figures on this page if at all possible!}
 lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of
 Figure~\ref{fig:dis-cart} project the \texttt{action\_msg} collection to
 its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.
@@ -280,6 +282,8 @@ rhs of a statement. Line~\ref{line:kvs-join} of
 Figure~\ref{fig:kvs-impl} shows a join between \texttt{bigtable} and
 \texttt{kvput}.
 
+
+
 % nrc: No longer true
 % \footnote{For clarity, we write out the join condition
 %   explicitly. Bloom provides syntax sugar for common join types (e.g., natural
@@ -293,7 +297,7 @@ line~\ref{line:des_declare} of Figure~\ref{fig:dest-cart}). The semantics
 of a Bloom program are defined by the union of all the \texttt{declare}
 methods; the order of statements is immaterial. Dividing statements into multiple
 methods improves the readability of the program and allows use of Ruby's method
-overriding and inheritance features, as described below.
+overriding and inheritance features, as described below.  \jmh{See previous comment -- this may no longer be ``described below''.}
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
@@ -302,7 +306,7 @@ The constructs above form the core of the Bloom language.
 % ; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{Papadimitriou85}.  
 % \jmh{Actually no ... papadimitriou85 ``a note on the expressive power of prolog'' shows that Datalog neg with finite successor is exactly PTIME.  If we can't get the right ref for this assertion, just remove it.}
 % \wrm{Wow you guys are citation aces, I couldn't find this paper online.  Anyway, it's not turing complete if we view time as a stage/iteration variable -- i.e. FOL with "as much time as you need to compute" only gets us PSPACE.  However, if we view time as data (i.e. allow the infinite successor relation into the Herbrand universe), then we get turing completeness.}
-Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.%  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
+Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements.  More importantly, Bud takes advantage of the features of Ruby to enrich its declarative constructs with familiar programming metaphors that are popular with software developers.  Like any Ruby class, a Bud class can be specialized via subclassing.  In particular, \texttt{declare} methods can be overridden in subclasses or in specific instances, allowing for selective rewriting of encapsulated bundles of statements.  \jmh{See previous comment -- this may be moved up.}%  We have found that the combination of Bloom's logic programming with Ruby's object-oriented inheritance and method overriding has been both natural and useful.
 
 % TODO: work on this
 \vspace{9pt}\noindent \textbf{Bloom Interfaces}\\
@@ -314,6 +318,7 @@ mixing in rules that connect input to output interfaces with Bud rules.  Figure~
 a simple concrete implementation of the CartClient protocol specified in Figure~\ref{fig:declarations}, leaving
 unspecified the server logic that reads \texttt{action\_msg} and \texttt{checkout\_msg} and writes to
 \texttt{response\_msg}.
+\jmh{I think this needs to be more specific about interfaces, as I describe above, and needs to be somewhere other than this subsection on ``Bloom Statements''.  Now that I think about it, it should probably be the next subsection (before Bud Implementation), and prior comments should be turned into forward refs to it.}
 
 
 %\jmh{Can remove this paragraph is we're short on space, but it's a critique we will definitely hear.}
@@ -325,7 +330,7 @@ Conventional wisdom in certain quarters says that rule-based languages are unten
 %\vspace{9pt}\noindent \textbf{Bud Implementation}\\
 \subsection{Bud Implementation}
 
-Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 1400 lines of Ruby code, developed in approximately two person-months of part-time effort.
+Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 2400 lines of Ruby code, developed as a part-time effort by two of the authors over the course of a semester.
 %\footnote{The Bud gem depends on seven additional publicly-available Ruby gems for network event handling (\texttt{EventMachine}, \texttt{MsgPack}), metaprogramming (\texttt{ruby2ruby}, \texttt{ParseTree}, \texttt{sexp\_path}) and syntax niceties (\texttt{superators}, \texttt{anise}).}  This was possible in large part because modern scripting languages are moving closer to declarative programming, with rich support for collection types.  Like any rapid prototype, Bud is functional but not particularly efficient.  We plan to address runtime efficiency issues as we continue refining the syntax of Bloom and improving our ability to do code analysis of the sort described in the rest of the paper.
 
 
@@ -343,11 +348,9 @@ Because Bud is pure Ruby, some programmers may choose to embed it as a
 Domain-Specific Language within traditional imperative Ruby code.  In fact,
 nothing prevents a subclass of Bud from having both Bloom code in
 \texttt{declare} methods and imperative code in traditional Ruby methods.  This
-is a fairly common usage model, akin to using the Ruby on Rails package to
-integrate declarative data management statements with imperative Ruby. A mixture
+is a fairly common usage model for many domain-specific embedded languages. A mixture
 of declarative Bloom methods and imperative Ruby allows the full range of
 existing Ruby code---including the extensive RubyGems repositories---to be
 combined with checkable distributed Bloom programs. The analyses we describe in
 the remaining sections still apply in these cases; the imperative Ruby code
-interacts with the Bloom logic in the same way as any external agent sending
-network messages.
+interacts with the Bloom logic in the same way as any external agent sending and receiving network messages.
