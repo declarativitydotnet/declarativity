@@ -3,7 +3,7 @@
 For many distributed computations, achieving a determistic result for every input is desirable.  Recall that non-determinism only arises due to \dedalus{choice}, which only occurs in asynchronous rules to model network non-determinism.  Model-theoretically, a non-deterministic result is manifest in multiple ultimate models.
 
 \begin{definition}
-A \lang program is {\em confluent} (has a deterministic output) if, for every EDB, it has a unique ultimate model.  A non-confluent program is referred to as {\em diffluence}.
+A \lang program is {\em confluent} (has a deterministic output) if, for every EDB, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
 \end{definition}
 
 Unfortunately, confluence is an undecidable property of \lang programs:
