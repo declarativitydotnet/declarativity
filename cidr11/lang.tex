@@ -264,21 +264,24 @@ side (lhs) in terms of the right-hand side (rhs).
 As in Datalog or SQL, the lhs of a statement may be referenced recursively in
 its rhs, or recursion can be defined mutually across statements.  The rhs
 typically includes methods of \texttt{BudCollection} objects.  Most common is
-the \texttt{map} method of Ruby's \texttt{Enumerable} module, which is used to
-specify scalar operations on all tuples of a \texttt{BudCollection}, including
+the \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a
+scalar operation to every tuple in a collection; this can be used to implement
 relational selection and projection. For example,
-lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of Figure~\ref{fig:pdg-disorderly} project the
-\texttt{action\_msg} collection to its \texttt{session}, \texttt{item},
-\texttt{action} and \texttt{reqid} fields.  \texttt{BudCollection} defines a
-\texttt{group} method similar to SQL's \texttt{GROUP BY}, supporting the standard
-SQL aggregates; for example, lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
-Figure~\ref{fig:pdg-disorderly} compute the count 
-of unique \texttt{reqid} values for every combination of values for
-\texttt{session}, \texttt{item} and \texttt{action}.
-Multiway joins are specified using the \texttt{join} method, which produces an anonymous \textbf{scratch} collection that can
-be used in the rhs of a statement.\footnote{For clarity, we write out the join condition explicitly. Bloom provides syntax sugar for common join types (e.g., natural join).}
-Line~\ref{line:dis_join_action_msg_member} of Figure~\ref{fig:pdg-disorderly}
-shows a join between \texttt{action\_msg} and \texttt{member}.
+lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of
+Figure~\ref{fig:pdg-disorderly} project the \texttt{action\_msg} collection to
+its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.
+\texttt{BudCollection} defines a \texttt{group} method similar to SQL's
+\texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
+lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
+Figure~\ref{fig:pdg-disorderly} compute the count of unique \texttt{reqid}
+values for every combination of values for \texttt{session}, \texttt{item} and
+\texttt{action}.  Multiway joins are specified using the \texttt{join} method,
+which produces an anonymous \textbf{scratch} collection that can be used in the
+rhs of a statement.\footnote{For clarity, we write out the join condition
+  explicitly. Bloom provides syntax sugar for common join types (e.g., natural
+  join).}  Line~\ref{line:dis_join_action_msg_member} of
+Figure~\ref{fig:pdg-disorderly} shows a join between \texttt{action\_msg} and
+\texttt{member}.
 
 
 
