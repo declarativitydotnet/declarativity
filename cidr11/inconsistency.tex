@@ -18,24 +18,25 @@ automatically augment user code to propagate those labels through program logic
 in the manner of ``taint checking'' in program security~\cite{taint,asbestos}.
 Moreover, by identifying unresolved points of order, we can identify when
 program logic derives ``guesses'' from ``guarantees,'' and rewrite user code to
-label data appropriately.
+label data appropriately. By rewriting programs to log guesses that cross
+interface boundaries, we can also implement Helland and Campbell's idea of
+``memories'': a log of guesses that were sent outside the system.
 
-By rewriting programs to log guesses that cross interface boundaries, we can
-also implement Helland and Campbell's idea of ``memories'': a log of guesses
-that were sent outside the system.  If at a coarser time-scale, the logic of a
-program can establish the veracity of previous guesses (e.g., via periodic
-background coordination or external inputs), exception-handling rules can be
-invoked to send confirmations or ``make apologies'': contact customers, issue
-refunds, etc.
+Most of these patterns can be implemented as automatic program rewrites. We
+envision building a system that facilitates running low-latency,
+``guess''-driven decision making in the foreground, and expensive but consistent
+logic as a background process. When the background process detects an
+inconsistency in the results produced by the foreground system (e.g., because a
+``guess'' turns out to be mistaken), it can then take corrective action by
+generating an ``apology.'' Importantly, both of these subsystems are effectively
+implementations of the same high-level design, except with different consistency
+and coordination requirements; hence, it should be possible to synthesize both
+variants of the program from the same source code. Throughout this
+process---making calculated ``guesses,'' storing appropriate ``memories,'' and
+generating appropriate ``apologies''---we see a significant opportunities to
+build scaffolding and tool support to lighten the burden on the programmer.
 
-Most of these patterns can be implemented as automatic program rewrites.  We
-cannot fully automate the generation of ``apologies,'' since they are typically
-application-specific.  But we believe we can help there too, by generating code
-scaffolds for apology generation and issuance.  These could include background
-process scaffolds for resolving guesses via long-timescale coordination, and
-apology scaffolds for joining guesses that were incorrect with the history of
-messages that require apologies.  More ambitiously, we hope to provide analysis
-techniques that can prove the consistency of the high-level workflow: i.e.,
-prove that any combination of user behavior, background guess resolution, and
-apology logic will eventually lead to a consistent resolution of the business
-rules at both the user and system sides.
+Finally, we hope to provide analysis techniques that can prove the consistency
+of the high-level workflow: i.e., prove that any combination of user behavior,
+background guess resolution, and apology logic will eventually lead to a
+consistent resolution of the business rules at both the user and system sides.
