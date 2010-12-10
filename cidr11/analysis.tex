@@ -16,6 +16,15 @@ and correctness of the evolving program.
 % TODO: tee-up divergence into PDGs
 
 \subsection{Predicate Dependency Graphs}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.9\linewidth]{fig/mittalk_legend.pdf}
+\vspace{-10pt}
+\caption{Visual analysis legend.}
+\label{fig:analysis-legend}
+\vspace{-2pt}
+\end{figure}
+
 The Bud interpreter can automatically generate a graph that represents the
 dependencies between collections in a program. Each node in the graph is either
 a collection or a cluster of collections; tables are shown as rectangles,
@@ -139,7 +148,8 @@ module ReplicatedKVS
   include MulticastProtocol
 
   def state
-    interface input, :kvput, ['client', 'key', 'reqid'], ['value']  (*\label{line:rep-put}*)
+    interface input, :kvput, 
+      ['client', 'key', 'reqid'], ['value']  (*\label{line:rep-put}*)
   end
 
   declare
@@ -218,14 +228,7 @@ any point in time may depend on the order of arrival of \texttt{kvput} tuples.
 % We challenge the reader to implement the KeyValueProto interface in a way that
 % has no such point of order.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=1.1\linewidth]{fig/mittalk_legend.pdf}
-\vspace{-10pt}
-\caption{Visual analysis legend.}
-\label{fig:analysis-legend}
-\vspace{-2pt}
-\end{figure}
+
 
 \begin{figure}[t]
 \centering
