@@ -285,7 +285,7 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-The {\em temporal flattening} of a \lang program is the original program with all inductive and asynchronous rules made atemporal.
+The {\em temporal flattening} of a \lang program is the original program with all inductive and asynchronous rules made deductive.
 \end{definition}
 
 Note that the temporal flattening of a \lang program is a Datalog program.
