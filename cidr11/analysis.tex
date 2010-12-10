@@ -200,22 +200,24 @@ The existence of the red diamond labeled ``??'' indicates that the dataflow is u
 is must be ``completed'' by supplying dataflow that, at minimum, connects the input 
 interfaces to the output interface.
 
-Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS implementation,
-which supplies a concrete dataflow for the unspecified component in the previous
-graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a red octagon because they
-are part of a strongly connected component in the graph with both negative and temporal 
-edges.  Any data flowing from \texttt{kvput} to the sink must cross at least one nonmonotonic
-point of
-order (at ingress to the octagon) and possible an arbitrary number of them (via the
-octagon's self-edge), and any path from \texttt{kvget} to the sink must join state potentially
-affected by nonmonotonicity (because \texttt{bigtable} is used to derive \texttt{kvget\_response}).
+Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS
+implementation, which supplies a concrete dataflow for the unspecified component
+in the previous graph.  \texttt{bigtable} and \texttt{jst} are collapsed into a
+red octagon because they are part of a strongly connected component in the graph
+with both negative and temporal edges.  Any data flowing from \texttt{kvput} to
+the sink must cross at least one nonmonotonic point of order (at ingress to the
+octagon) and possible an arbitrary number of them (via the octagon's self-edge),
+and any path from \texttt{kvget} to the sink must join state potentially
+affected by nonmonotonicity (because \texttt{bigtable} is used to derive
+\texttt{kvget\_response}).
 
-Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is unavoidable.  The 
-contents of \texttt{bigtable} at a given time are defined (in part; line~\ref{line:kvs-clean}) in terms
-of its contents at the immediate previous state and the current input.  Hence the state
-of \texttt{bigtable} at any point in time may depend on the order of arrival of \texttt{kvput} 
-tuples.  We challenge the reader to implement the KeyValueProto interface in a way that
-has no such point of order.
+Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is
+unavoidable.  The contents of \texttt{bigtable} at a given time are defined (in
+part; line~\ref{line:kvs-clean}) in terms of its contents at the immediate
+previous state and the current input.  Hence the state of \texttt{bigtable} at
+any point in time may depend on the order of arrival of \texttt{kvput} tuples.
+% We challenge the reader to implement the KeyValueProto interface in a way that
+% has no such point of order.
 
 \begin{figure}[t]
 \centering
