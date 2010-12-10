@@ -1,0 +1,115 @@
+\section{Networking Modules}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+
+module DeliveryProtocol
+  def state
+    super
+    interface input, :pipe_in,
+      ['dst', 'src', 'ident'], ['payload']
+    interface output, :pipe_out,
+      ['dst', 'src', 'ident'], ['payload']
+    channel :pipe_chan,
+      ['@dst', 'src', 'ident'], ['payload']
+  end
+end
+
+
+module BestEffortDelivery
+  include DeliveryProtocol
+
+  def initialize(host, port, opts)
+    @addy = "#{host}:#{port}"
+    super
+  end
+
+  declare
+  def snd
+    pipe_chan <~ pipe_in.map{|p| p }
+  end
+
+  declare
+  def done
+    pipe_out <= pipe_in.map{|p| p }
+  end
+end
+
+module ReliableDelivery
+  include  BestEffortDelivery
+  def state
+    super
+    table :pipe, ['dst', 'src', 'ident'], ['payload']
+    channel :ack, ['@src', 'dst', 'ident']
+  end
+
+  declare
+  def remember
+    pipe <= pipe_in.map {|p| p }
+  end
+
+  declare
+  def done
+    ack <~ pipe_chan.map {|p| [p.src, p.dst, p.ident] }
+    pipe_out <= join([ack, pipe], [ack.ident, pipe.ident]).map {|a, p| p }
+  end
+end
+
+
+
+\end{lstlisting}
+\centering
+%%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
+\vspace{-10pt}
+\caption{Delivery modules.}
+\label{fig:kvs-impl}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+
+module MulticastProtocol
+  def state
+    super
+    table :members, ['peer']
+    interface input, :send_mcast, ['ident'], ['payload']
+    interface output, :mcast_done, ['ident'], ['payload']
+  end
+end
+
+module Multicast
+  include MulticastProtocol
+  include DeliveryProtocol
+  include Anise
+  annotator :declare
+
+  declare
+  def snd_mcast
+    pipe_in <= join([send_mcast, members]).map do |s, m|
+      [m.peer, @addy, s.ident, s.payload]
+    end
+  end
+
+  declare
+  def done_mcast
+    # override me
+    mcast_done <= pipe_out.map{|p| [p.ident, p.payload] }
+  end
+end
+
+
+
+\end{lstlisting}
+\centering
+%%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
+\vspace{-10pt}
+\caption{Multicast modules.}
+\label{fig:kvs-impl}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
