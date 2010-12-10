@@ -6,41 +6,41 @@ respectively, collections as internal nodes, and rules as edges.  Given this
 view, we may adapt powerful static analyses from the logic programming
 literature which are expressed as properties of such dataflow graphs.
 
-In this section, we implement a simple key-value store in Bud, and analyze the implied
-dataflow.  We begin with an interface for an abstract store, and extend it first into a single-site
-and finally into a replicated implementation.  Along the way, we use a dataflow visualization
-to reason about the completeness and correctness of the evolving program.
+In this section, we implement a simple key-value store in Bud and analyze the
+implied dataflow.  We begin with an interface for an abstract store, and extend
+it first into a single-site and finally into a replicated implementation.  Along
+the way, we use a dataflow visualization to reason about the completeness and
+correctness of the evolving program.
 
 \subsection{Predicate Dependency Graphs}
+The Bud interpreter can automatically generate a graph that represents the
+dependencies between collections in a program. Each node in the graph is either
+a collection or a cluster of collections; tables are shown as rectangles,
+ephemeral collections (scratch, periodic and channel) are depicted as ovals, and
+clusters (described below) as octagons.
 
-The Bud interpreter automatically generates a graphical
-representation of dependencies between collections in a program.
-%(Figures~\ref{fig:pdg-destructive-analysis} and \ref{fig:pdg-disorderly-analysis}).
-Each node in the graph is either a collection or a cluster of collections; \textbf{table}s are shown as rectangles, ephemeral
-collections (\textbf{scratch} and \textbf{channel}) are depicted as ovals, and clusters (described below) as octagons.  A
-directed edge from node $A$ to node $B$ indicates that $B$ appears in the
-lhs of a Bloom rule with $A$ referenced directly, or through a join expression,
-in the rhs.  An edge is annotated based on the operator symbol in the rule and
-the type of $B$.  If the rule is ``inductive''---i.e., has the \texttt{$<$+}
-operator and a {\bf table} lhs---then the edge is marked with a $+$.  If the
-rule is ``asynchronous''---i.e., a rule with the \texttt{$<$+} operator and a {\bf
-channel} lhs---then the edge is a dashed line.  If the rule involves
-a nonmonotonic operation (aggregation or anti-join) over $A$, then the edge is marked with a $\lnot$.
-To make the visualizations more readable, any strongly connected component with both a $\lnot$ and a $+$ edge is collapsed into an octagonal ``temporal cluster,'' 
-which can be viewed abstractly as a single, nonmonotonic node in the 
-dataflow.\footnote{Datalog aficionados may be troubled by our mention of cycles
-involving negation in the dependency graph.  In~\cite{dedalus} we
-describe why the inclusion of a $+$ edge in such a cycle ensures stratifiability.}
-%\jmh{capturing what? the fact that they must recurse over multiple timesteps? we can't just intro %this without any intuition.  You should also dismiss the particular collection names in this 
-%figure as details from the KV store that are beyond the scope....}
-%collapsing the mutually dependent collections into a single node.
-Points of order are indicated in the graph by an edge with a white circle.
- Any nonmonotonic edge in the graph is a point of order, as are all edges incident to a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis visualizations.
-
-
+A directed edge from node $A$ to node $B$ indicates that $B$ appears in the lhs
+of a Bloom rule with $A$ referenced directly, or through a join expression, in
+the rhs.  An edge is annotated based on the operator symbol in the rule. If the
+rule uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked with
+$+$. This indicates that facts traversing the edge ``spend'' a timestep to move
+from the rhs to the lhs. Similarly, if the rule uses the \texttt{$<\sim$}
+operator, the edge is a dashed line---this indicates that facts from the rhs
+appear at the lhs at a non-deterministic future time. If the rule involves a
+nonmonotonic operation (aggregation or anti-join) over $A$, then the edge is
+marked with a $\lnot$.  To make the visualizations more readable, any strongly
+connected component with both a $\lnot$ and a $+$ edge is collapsed into an
+octagonal ``temporal cluster,'' which can be viewed abstractly as a single,
+nonmonotonic node in the dataflow.\footnote{Datalog aficionados may be troubled
+  by our mention of cycles involving negation in the dependency graph.
+  In~\cite{dedalus} we describe why the inclusion of a $+$ edge in such a cycle
+  ensures stratifiability.}  Points of order are indicated in the graph by an
+edge with a white circle.  Any nonmonotonic edge in the graph is a point of
+order, as are all edges incident to a temporal cluster, including any
+self-edges.  Figure~\ref{fig:analysis-legend} provides a legend for the analysis
+visualizations.
 
 \subsection{KVS Interface}
-
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -53,9 +53,6 @@ module KVSProtocol
     interface output, :kvget_response, ['reqid'], ['key', 'value']
   end
 end
-
-
-
 \end{lstlisting}
 \centering
 %\includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
