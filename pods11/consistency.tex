@@ -9,10 +9,8 @@ However, many distributed systems are of such a large scale that replication of 
 We formalize the notion of consistency using {\em constraints}.
 
 \begin{definition}
-A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  Since constraints are not meant to be executed, we do not require them to unify on location specifiers.
+A {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  Since constraints are not meant to be executed, we do not require them to unify on location specifiers \wrm{explain why this is not a problem}.
 \end{definition}
-
-\wrm{re-define these as constraints over an ultimate model}
 
 In order to talk about eventual consistency, we need to differentiate replicated data from partitioned data, and define a set of replicas.  It seems sensible to do this on the predicate level, rather than generalizing to replicated subsets of predicates.  We augment the definition of a \lang program to include a set of {\em replicated predicates}, and a set of {\em replicas} represented by a unary \dedalus{replica} predicate.
 
@@ -26,6 +24,8 @@ fail() <- p(#Y,\(\bar{X}\)), !p(#Z,\(\bar{X}\)), replica(Y), replica(Z);
 
 In other words, the constraint is violated whenever a fact in a replicated predicate exists at some replica, but does not exist at some other replica.
 \end{definition}
+
+\wrm{this definition corresponds to peter's citation}
 
 Note that an eventually consistent program is not necessarily confluent---for example, symmetrically replicating the results of a non-deterministic operation---and a confluent program is not necessarily eventually consistent---for example, a program that deterministically improperly replicates.  Like confluence, however, eventual consistency is undecidable.
 
@@ -66,18 +66,29 @@ Proof sketch: Assume two different 2CMs are modeled at two different replicas.  
 
 How can conservative checks and coordination help us enforce eventual consistency?  One way is to insert a replication protocol into a \lang program.  Note that just as the coordination protocols we insert may be too conservative in waiting, the replication protocols we insert may conservatively send too many network messages.  
 
-We can instrument an arbitrary \lang program to enable eventual consistency by inserting the following replication rule for all predicates \dedalus{p}, where \dedalus{rep\_p} is a fresh predicate symbol not otherwise used in the program.
+
+\begin{definition}
+The {\em replication rule} for a predicate \dedalus{p}, where \dedalus{rep\_p} is a fresh predicate symbol not otherwise used in the program, is:
 
 \begin{Dedalus}
 rep_p(#R,\(\bar{X}\))@async <- replica(#R), p(\(\bar{X}\));
 \end{Dedalus}
+\end{definition}
+
+\begin{definition}
+A program is {\em downstream confluent} with respect to a predicate \dedalus{p} if \wrm{removing all rules and predicates yields a confluent program, and any EDB in the new program that's above an async edge in the original program should be delivered by async} yields a confluent program.
+\end{definition}
+
+We can instrument an arbitrary \lang program to enable eventual consistency by inserting a replication rule for all predicates \dedalus{p}.
+
 
 We must then rewrite the program above \dedalus{p} to use \dedalus{rep\_p} wherever \dedalus{p} was required.  It must also be the case that the program above \dedalus{p} is confluent (of course this does not imply the program as a whole is confluent).  We require confluence in order to ensure determinism at each replica.  We disallow recursion through replication.  If these conditions are met, the program is eventually consistent.  Note that this definition is flexible enough to admit any scheme where clients are updating and querying replicas.
 
 \wrm{examples?}
+\wrm{define downstream confluence}
 
 \begin{theorem}
-If a program $P$ is rewritten with replication using the above procedure, it is eventually consistent.  \wrm{Furthermore, any FDs are preserved??}
+If a program $P$ is rewritten with replication using the above procedure, it is eventually consistent.
 \end{theorem}
 \begin{proof}
 Sketch: it is easy to verify that \dedalus{rep\_p} is correctly replicated for all replicated predicates \dedalus{p}; thus eventual consistency constraints are satisfied.

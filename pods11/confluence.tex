@@ -305,6 +305,8 @@ There is always a stable model representing the perfect ultimate model of a \lan
 
 In Example~\ref{ex:sayers}, the perfect ultimate model is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.  In particular, we can modify the program to be confluent with the perfect ultimate model by ensuring that negation is not applied until the \dedalus{false} set is complete.  It turns out we can generalize this into an algorithm for all \lang programs whose temporal flattening is syntactically stratified.
 
+\wrm{for unstratifiable flattenings, we can introduce another notion of the ``synchronous flattening'', and fully order individual messages passing through an unstratifiable recursion through negation, and call this the perfect ultimate model...}
+
 We add the following two rules to compute counts of false messages at each sayer, and each listener:
 
 \begin{Dedalus}
@@ -382,7 +384,11 @@ Note that this process introduces additional asynchronous edges.  These asynchro
 
 \subsubsection{Non-Deterministic Coordination}
 
-\wrm{notion of consistently sealed ultimate model; explain why preferable; point out PUM is a CSUM}
+\begin{definition}
+A {\em consistently sealed ultimate model} ...
+\end{definition}
+
+\wrm{corresponds to the notion of timeouts in distributed systems}
 
 Consider what happens when we admit transient and permanent failures of nodes and channels to the model.  It is now the case that nodes may forever wait for a message that will never arrive.  Thus, achieving the perfect ultimate model comes at the expense of liveness.  It may be desirable to accept that the message will never arrive, and proceed with the computation.
 

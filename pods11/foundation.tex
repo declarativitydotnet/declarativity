@@ -2,6 +2,7 @@
 \label{sec:slang}
 
 \wrm{EDB given without timestamps.  EDB at time 0}
+\wrm{define notion of a PDG}
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the universe.  We also admit the \dedalus{count} {\em aggregate}, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as: 
 
@@ -15,7 +16,7 @@ We forbid recursion through \dedalus{count}.
 
 Each predicate in \lang has a distinguished {\em temporal attribute}, of the {\em temporal} sort.  The balance of the arguments are {\em data} arguments, and may not contain any variable of the {\em temporal} sort.  \lang contains an infinite unary relation \dedalus{time} $= \mathbb{N}$, and an infinite binary relation \dedalus{successor} $:= \{(a,b) | a,b \in \mathbb{N} \land b = a + 1\}$, whose arguments are all of the {\em temporal} sort.  To model network nondeterminisim, we require the use of Sacc\`{a} and Zaniolo's \dedalus{choice} construct to bind a rule's head temporal attribute when modeling communication.
 
-\wrm{move this somewhere}
+\wrm{move this somewhere?  or don't wory about node failure}
 {\bf Modeling failure:}  Later, when we discuss \lang with failure, we will add the element $\infty$ to \dedalus{time} to model transient or permanent channel failure, or transient node failure.  Furthermore, to model permanent node failure, we will assume all rules have the \dedalus{!fail()} predicate in their body, except for a single rule \dedalus{fail()@async <- enabled();}, and all programs have an \dedalus{enabled()} fact, where \dedalus{enabled} is a predicate symbol that does not otherwise appear in the program.  \wrm{Also, we assume durability through transient node failure?}  \wrm{Also note that failure makes confluence impossible}
 
 \lang requires that all atoms in each rule body use the same temporal variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
