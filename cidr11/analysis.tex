@@ -39,13 +39,13 @@ $+$. This indicates that facts traversing the edge ``spend'' a timestep to move
 from the rhs to the lhs. Similarly, if the rule uses the \texttt{$<\sim$}
 operator, the edge is a dashed line---this indicates that facts from the rhs
 appear at the lhs at a non-deterministic future time. If the rule involves a
-nonmonotonic operation (aggregation, anti-join, or the \texttt{$<$-} operator),
+non-monotonic operation (aggregation, anti-join, or the \texttt{$<$-} operator),
 then the edge is marked with a small circle.  To make the visualizations more
 readable, any strongly connected component marked with both a circle and a $+$
 edge is collapsed into an octagonal ``temporal cluster,'' which can be viewed
-abstractly as a single, nonmonotonic node in the dataflow. \emph{Points of
+abstractly as a single, non-monotonic node in the dataflow. \emph{Points of
   order} are indicated in the graph by an edge with a white circle.  Any
-nonmonotonic edge in the graph is a point of order, as are all edges incident to
+non-monotonic edge in the graph is a point of order, as are all edges incident to
 a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend}
 provides a legend for the analysis visualizations.
 
@@ -218,10 +218,10 @@ implementation, which supplies a concrete dataflow for the unspecified component
 in the previous graph.  \texttt{kvstate} and \texttt{jst} are collapsed into a
 red octagon because they are part of a strongly connected component in the graph
 with both negative and temporal edges.  Any data flowing from \texttt{kvput} to
-the sink must cross at least one nonmonotonic point of order (at ingress to the
+the sink must cross at least one non-monotonic point of order (at ingress to the
 octagon) and possible an arbitrary number of them (via the octagon's self-edge),
 and any path from \texttt{kvget} to the sink must join state potentially
-affected by nonmonotonicity (because \texttt{kvstate} is used to derive
+affected by non-monotonicity (because \texttt{kvstate} is used to derive
 \texttt{kvget\_response}).
 
 Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is
