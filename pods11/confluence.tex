@@ -374,7 +374,7 @@ We prove the theorem by way of the following two Lemmas.
 The following lemma says that this coordination actually computes the completion of the set:
 
 \begin{lemma}
-If there exists a fact $f$ in \dedalus{completed\_p} at time \dedalus{t}, and a fact $g$ in \dedalus{completed\_p} at time {t+1}, then $g$ is true at time \dedalus{t}.
+If there exists a fact $f$ in \dedalus{completed\_p} with timestamp \dedalus{t}, and a fact $g$ in \dedalus{completed\_p} with timestamp \dedalus{s} $>$ \dedalus{t}, then $g$ also exists with timestamp \dedalus{t}.
 \end{lemma}
 \begin{proof}
 Too hungry to prove at the moment.
