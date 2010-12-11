@@ -4,9 +4,9 @@ In this section, we present two variants of a key-value store (KVS) implemented
 using Bloom. We begin with an abstract protocol that any key-value store will
 satisfy, and then provide both single-node and replicated implementations of
 this protocol. We then introduce a graphical visualization of the dataflow in a
-Bloom program, and use this visualization to reason about the \emph{points of
-  order} in our programs: places in the program where additional coordination
-may be required to guarantee consistent results (Section~\ref{sec:calm}).
+Bloom program and use this visualization to reason about the \emph{points of
+  order} in our programs: places where additional coordination may be required
+to guarantee consistent results (Section~\ref{sec:calm}).
 
 \subsection{Abstract Key-Value Store Protocol}
 
@@ -171,11 +171,7 @@ references to \texttt{kvput} appearing in the lhs of rules are resolved to the
 \texttt{kvput} provided by BasicKVS, while references in the rhs of rules
 resolve to the local \texttt{kvput}.  This is unambiguous, because a module
 cannot insert into its own input or read from its own output
-interfaces. Nevertheless, the current syntax for achieving this is somewhat
-cryptic; it might be improved by the addition of a namespace-like concept.
-\paa{we probably don't want to say this.  the idea of the above is that it
-is ``sugar'' for implicit namespaces.  another option would be to make them
-explicit.}
+interfaces.
 
 \subsection{Predicate Dependency Graphs}
 \begin{figure}[t]
@@ -247,7 +243,7 @@ unavoidable.  The contents of \texttt{kvstate} at a given time are defined (in
 part; line~\ref{line:kvs-clean}) in terms of its contents at the immediate
 previous state and the current input.  Hence the state of \texttt{kvstate} at
 any point in time may depend on the order of arrival of \texttt{kvput} tuples.
-We challenge the reader to implement the KeyValueProto interface in a way that
+We challenge the reader to implement the KVSProtocol interface in a way that
 has no such point of order.
 \paa{I vote to keep the previous line, but am willing to be overridden.  
 I am conjecturing that it isn't possible to implement a k/v store with the

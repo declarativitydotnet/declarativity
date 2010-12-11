@@ -42,13 +42,13 @@ module ReliableDelivery
   def state
     table :send_buf, ['dst', 'src', 'ident'], ['payload']
     channel :ack, ['@src', 'dst', 'ident']
-    periodic :retry, 10
+    periodic :timer, 10
   end
 
   declare
   def remember
     send_buf <= pipe_in
-    pipe_chan <~ join([send_buf, retry]).map{|p, t| p }
+    pipe_chan <~ join([send_buf, timer]).map{|p, t| p}
   end
 
   declare
