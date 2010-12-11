@@ -1,4 +1,4 @@
-\section{Managing Inconsistency}
+\section{Tolerating Inconsistency}
 \label{sec:inconsistency}
 The analysis technique describing in the preceding sections provides a
 conservative test for when temporal non-determinism may lead to
@@ -6,7 +6,7 @@ non-deterministic results. One solution to this situation is to resolve the
 non-determinism by introducing coordination. However, in many cases adding
 additional coordination is undesirable (e.g., for latency or availability
 reasons). Even here, we think that Bloom can improve distributed programming by
-assisting programmers with the task of \emph{managing inconsistency}, rather
+assisting programmers with the task of \emph{tolerating inconsistency}, rather
 than resolving it via coordination.  A notable example of how to manage
 inconsistency is presented by Helland and Campbell, who reflect on their
 experience programming with patterns of ``memories, guesses and
