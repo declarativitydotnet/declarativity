@@ -4,15 +4,6 @@
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
-module DeliveryProtocol
-  def state
-    interface input, :pipe_in,
-      ['dst', 'src', 'ident'], ['payload']
-    interface output, :pipe_out,
-      ['dst', 'src', 'ident'], ['payload']
- end
-end
-
 module BestEffortDelivery
   include DeliveryProtocol
 
@@ -33,30 +24,6 @@ module BestEffortDelivery
   declare
   def done
     pipe_out <= pipe_in
-  end
-end
-
-module ReliableDelivery
-  include  BestEffortDelivery
-
-  def state
-    table :send_buf, ['dst', 'src', 'ident'], ['payload']
-    channel :ack, ['@src', 'dst', 'ident']
-    periodic :timer, 10
-  end
-
-  declare
-  def remember
-    send_buf <= pipe_in
-    pipe_chan <~ join([send_buf, timer]).map{|p, t| p}
-  end
-
-  declare
-  def done
-    ack <~ pipe_chan.map{|p| [p.src, p.dst, p.ident]}
-    send_done = join [ack, send_buf], [ack.ident, send_buf.ident]
-    pipe_out <= send_done.map{|a, sb| sb}
-    send_buf <- send_done.map{|a, sb| sb}
   end
 end
 \end{lstlisting}

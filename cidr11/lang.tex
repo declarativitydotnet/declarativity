@@ -138,67 +138,62 @@ derivations.
 
 Bloom programs compose with other Bloom programs and with external callers at
 unidirectional scratch collections called \textbf{interfaces}, which are described in more
-detail in Section~\ref{sec:modularity}.  
+detail in Section~\ref{sec:modularity}.
 
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
-module CartProtocol
+module DeliveryProtocol
   def state
-    channel :action_msg, (*\label{line:dec_chan_beg}*)
-      ['@server', 'client', 'session', 'reqid'],
-      ['item', 'action'] (*\label{line:dec_chan_end}*)
-    channel :checkout_msg,
-      ['@server', 'client', 'session', 'reqid']
-    channel :response_msg,
-      ['@client', 'server', 'session', 'item'], ['cnt']
-  end
+    interface input, :pipe_in,
+      ['dst', 'src', 'ident'], ['payload']
+    interface output, :pipe_out,
+      ['dst', 'src', 'ident'], ['payload']
+ end
 end
 
-module CartClientProtocol
-  def state
-    interface input, :client_action, (*\label{line:dec_in_interface}*)
-      ['server', 'session', 'reqid'], ['item', 'action'] 
-    interface input, :client_checkout,
-      ['server', 'session', 'reqid']
-    interface output, :client_response, 
-      ['client', 'server', 'session'], ['item', 'cnt']
-  end
-end
-\end{lstlisting}
-\vspace{-10pt}
-\caption{Example Bloom collection declarations.}
-\label{fig:declarations}
-\end{scriptsize}
-\vspace{-2pt}
-\end{figure}
+module ReliableDelivery
+  include DeliveryProtocol
 
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-module CartClient
-  include CartProtocol
-  include CartClientProtocol
+  def state
+    channel :data_chan, ['@dst', 'src', 'ident'], ['payload']
+    channel :ack_chan, ['@src', 'dst', 'ident']
+    table :send_buf, ['dst', 'src', 'ident'], ['payload']
+    periodic :timer, 10
+  end
 
   declare
-  def client
-    action_msg <~ client_action.map do |a| 
-      [a.server, @addy, a.session, a.reqid, a.item, a.action] (*\label{line:des_client_action}*)
-    end
-    checkout_msg <~ client_checkout.map do |a| 
-      [a.server, @addy, a.session, a.reqid]
-    end
-    client_response <= response_msg
+  def send_packet
+    send_buf <= pipe_in
+    data_chan <~ pipe_in
+  end
+
+  declare
+  def timer_retry
+    data_chan <~ join([send_buf, timer]).map{|p, t| p}
+  end
+
+  declare
+  def send_ack
+    ack_chan <~ data_chan.map{|p| [p.src, p.dst, p.ident]}
+  end
+
+  declare
+  def recv_ack
+    got_ack = join [ack_chan, send_buf],
+                      [ack_chan.ident, send_buf.ident]
+    pipe_out <= got_ack.map{|a, sb| sb}
+    send_buf <- got_ack.map{|a, sb| sb}
   end
 end
 \end{lstlisting}
+\centering
 \vspace{-10pt}
-\caption{Shopping cart client implementation.}
-\label{fig:cart_client}
+\caption{An example Bloom program.}
+\label{fig:bloom-example}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
-
 
 \subsection{Bloom Statements}
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
