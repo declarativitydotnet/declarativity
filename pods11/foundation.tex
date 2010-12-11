@@ -3,7 +3,7 @@
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$, represented by the unary relation \dedalus{time}). The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe.
 
-We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{\left(a,b\right) | a + b = 1\}$.  We also admit Saca\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacaa-zaniolo}---a model-theoretic characterization of non-determinism using stable models, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
+We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{\left(a,b\right) | a + b = 1\}$.  We also admit Saca\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacaa-zaniolo}---a model-theoretic characterization of non-determinism using stable models~\cite{stable-model}, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -46,7 +46,7 @@ r(A, B, S) <- e(A, B, T), time(S),
 
 \dedalus{choice} and \dedalus{successor} are prohibited in rules, except as described above.
 
-Since unification on the temporal attribute is required in every rule body, we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we may omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
+Since unification on the temporal attribute is required in every rule body, we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
 
 \begin{example}
 \label{ex:sugared}
@@ -66,6 +66,7 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \end{example}
 
+When we talk about the {\em predicate dependency graph} (PDG) of a \lang program, we assume that it does not include the \dedalus{time} or \dedalus{successor} predicates~\footnote{We also assume that the graph does not include any predicates or rules added by rewriting \dedalus{choice}.}.  In addition to marking edges in the graph as negated, we will keep track of which edges are \dedalus{@async} or \dedalus{@next}---we will refer to such edges as {\em temporal edges}.
 
 
 \vspace{1em}
@@ -78,7 +79,7 @@ By convention, EDB facts are supplied without a time suffix, and are true at all
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
-\lang restricts negation by requiring any recursion through negation to include either a temporal or asynchronous rule~\footnote{The only exception is the rewrite of \dedalus{choice}, which involves recursion through negation without any \dedalus{@next} or \dedalus{@async}.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.
+\lang restricts negation by requiring any recursion through negation to include a temporal edge~\footnote{The only exception is the rewrite of \dedalus{choice}, which involves recursion through negation without any temporal edges.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.
 
 
 %\wrm{move this somewhere?  or don't wory about node failure}
