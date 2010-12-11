@@ -5,11 +5,11 @@ shopping-cart service in Bloom.\footnote{The complete source code for both
   implementations can be found at
   \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}  First, we
 implement a ``destructive,'' state-modifying shopping cart application using the
-simple key-value store we developed in the previous section.  Second, we
-implement a ``disorderly'' cart that accumulates updates in a set-wise fashion,
-summing up the updates at checkout into a final result.  These two different
-designs illustrate our analysis tools and the way they inform design decisions
-for distributed programming.
+key-value store we developed in the previous section.  Second, we implement a
+``disorderly'' cart that accumulates updates in a set-wise fashion, summing up
+the updates at checkout into a final result.  These two different designs
+illustrate our analysis tools and the way they inform design decisions for
+distributed programming.
 
 \subsection{A ``destructive'' shopping cart}
 
@@ -68,16 +68,11 @@ the key is replaced by a new value that reflects the effect of the
 update. Deletion requests are ignored if the item they refer to does not exist
 in the cart.
 
-Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
-\texttt{kvput} scratch collection is defined by including the
-\texttt{KeyValueStore} protocol shown in Figure~\ref{fig:kvs-proto}.  Any
-collection of Bud rules that implement the protocol can be used, but to satisfy
-our requirement that the data be replicated we must use an implementation that
-replicates the contents of the store to multiple servers.  Optimistically
-assuming that the program is otherwise consistent, we here use the ReplicatedKVS
-module shown in Figure~\ref{fig:kvs-repl}, and will later mix in
-BestEffortMulticast, an implementation of MulticastProtocol with low message
-complexity \jmh{Probably we don't want to talk about ``complexity''.  Reword?}.
+Figure~\ref{fig:dest-cart} shows the Bloom code for this design. The
+\texttt{kvput} collection is provided by the abstract KVSProtocol described in
+Section~\ref{sec:kvs}. Our shopping cart service would work with any concrete
+realization of the KVSProtocol; we will choose to use the replicated key-value
+store (Section~\ref{sec:rep-kvs}) to provide fault-tolerance.
 
 \jmh{Some confusion here where you refer to lines of different figures without clear context switches.  Please check and fix!}
 Our discussion begins by returning to the CartClient code of Figure~\ref{fig:cart_client}.

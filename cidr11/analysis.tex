@@ -1,11 +1,12 @@
 \section{Case Study: Key-Value Store}
-In this section, we present two variants of a key-value store implemented using
-Bloom. We begin with an abstract protocol that any key-value store will satisfy,
-and then provide both single-node and replicated implementations of this
-protocol. We then introduce a graphical visualization of the dataflow in a Bloom
-program, and use this visualization to reason about the \emph{points of order}
-in our programs: places in the program where additional coordination may be
-required to guarantee consistent results (Section~\ref{sec:calm}).
+\label{sec:kvs}
+In this section, we present two variants of a key-value store (KVS) implemented
+using Bloom. We begin with an abstract protocol that any key-value store will
+satisfy, and then provide both single-node and replicated implementations of
+this protocol. We then introduce a graphical visualization of the dataflow in a
+Bloom program, and use this visualization to reason about the \emph{points of
+  order} in our programs: places in the program where additional coordination
+may be required to guarantee consistent results (Section~\ref{sec:calm}).
 
 \subsection{Abstract Key-Value Store Protocol}
 
@@ -61,18 +62,18 @@ module BasicKVS
   end
 
   declare
-  def mutate
+  def do_put
     kvstate <+ kvput.map{|p| [p.key, p.value]} (*\label{line:kvs-put}*)
     jst = join [kvstate, kvput], [kvstate.key, kvput.key] (*\label{line:kvs-join}*)
     kvstate <- jst.map{|b, p| b} (*\label{line:kvs-clean}*)
   end
 
   declare
-  def get
+  def do_get
     getj = join [kvget, kvstate], [kvget.key, kvstate.key] (*\label{line:kvs-getjoin}*)
     kvget_response <= getj.map do |g, t|
       [g.reqid, t.key, t.value]
-1    end
+    end
   end
 end
 \end{lstlisting}
@@ -114,13 +115,16 @@ module ReplicatedKVS
   end
 
   declare
-  def local_indir
+  def replicate
     send_mcast <= kvput.map do |k| (*\label{line:send-mcast-beg}*)
       unless members.include? [k.client]  (*\label{line:not-rep}*)
         [k.reqid, [@addy, k.key, k.reqid, k.value]]   (*\label{line:marshall}*)            
       end
     end (*\label{line:send-mcast-end}*)
-    
+  end
+
+  declare
+  def apply_put
     kvput <= mcast_done.map{|m| m.payload}  (*\label{line:mcast-done}*)
 
     kvput <= pipe_chan.map do |d| (*\label{line:mcast-peer-beg}*)
