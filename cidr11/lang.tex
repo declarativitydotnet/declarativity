@@ -181,7 +181,7 @@ module ReliableDelivery
   declare
   def recv_ack
     got_ack = join [ack_chan, send_buf],
-                      [ack_chan.ident, send_buf.ident]
+                   [ack_chan.ident, send_buf.ident]
     pipe_out <= got_ack.map{|a, sb| sb}
     send_buf <- got_ack.map{|a, sb| sb}
   end
