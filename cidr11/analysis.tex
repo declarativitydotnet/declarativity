@@ -173,6 +173,9 @@ resolve to the local \texttt{kvput}.  This is unambiguous, because a module
 cannot insert into its own input or read from its own output
 interfaces. Nevertheless, the current syntax for achieving this is somewhat
 cryptic; it might be improved by the addition of a namespace-like concept.
+\paa{we probably don't want to say this.  the idea of the above is that it
+is ``sugar'' for implicit namespaces.  another option would be to make them
+explicit.}
 
 \subsection{Predicate Dependency Graphs}
 \begin{figure}[t]
@@ -244,8 +247,11 @@ unavoidable.  The contents of \texttt{kvstate} at a given time are defined (in
 part; line~\ref{line:kvs-clean}) in terms of its contents at the immediate
 previous state and the current input.  Hence the state of \texttt{kvstate} at
 any point in time may depend on the order of arrival of \texttt{kvput} tuples.
-% We challenge the reader to implement the KeyValueProto interface in a way that
-% has no such point of order.
+We challenge the reader to implement the KeyValueProto interface in a way that
+has no such point of order.
+\paa{I vote to keep the previous line, but am willing to be overridden.  
+I am conjecturing that it isn't possible to implement a k/v store with the
+desired replacing semantics without points of order (at least on kvget)}
 
 
 
