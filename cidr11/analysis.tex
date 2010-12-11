@@ -65,9 +65,8 @@ module KVSProtocol
 end
 \end{lstlisting}
 \centering
-%\includegraphics[width=0.4\linewidth]{fig/kvs_proto_pdg.pdf}
 \vspace{-10pt}
-\caption{Key-value store protocol.}
+\caption{Abstract key-value store protocol.}
 \label{fig:kvs-proto}
 \end{scriptsize}
 \vspace{-2pt}
@@ -75,21 +74,24 @@ end
 
 Figure~\ref{fig:kvs-proto} specifies a protocol for interacting with an abstract
 key-value store. The protocol comprises two input events (representing attempts
-to insert and fetch items from the store), and a single output event (which
+to insert and fetch items from the store) and a single output event (which
 represents the outcome of a fetch operation). To use an implementation of this
 protocol, a Bloom program can store key-value pairs by inserting facts into
-\texttt{kvput}, and can retrieve the value associated with a key by inserting a
-fact into \texttt{kvget} and reading the response tuple that should eventually
-appear in \texttt{kvget\_response}. In each case, the client program must supply
-a unique request identifier (\texttt{reqid}) to differentiate tuples in the
-event of multiple concurrent requests.  A module which uses a key-value store
-but is indifferent to the specifics of the implementation may simply mix in this
-protocol specification and postpone committing to a particular implementation
-until runtime. As we will see shortly, an implementation of the
-\texttt{KVSProtocol} is a collection of Bud rules that read tuples from the
-protocol's input interfaces and send results to the output interface.
+\texttt{kvput}. To retrieve the value associated with a key, the client program
+can insert a fact into \texttt{kvget} and then wait for a response tuple to
+eventually appear in \texttt{kvget\_response}. In both cases, the client program
+must supply a unique request identifier (\texttt{reqid}) to differentiate tuples
+in the event of multiple concurrent requests.
 
-\subsection{KVS Implementation}
+A module which uses a key-value store but is indifferent to the specifics of the
+implementation may simply mix in this protocol specification and postpone
+committing to a particular implementation until runtime. As we will see shortly,
+an implementation of the \texttt{KVSProtocol} is a collection of Bud rules that
+read tuples from the protocol's input interfaces and send results to the output
+interface.
+
+\subsection{Single-Node Key-Value Store}
+\label{sec:simple-kvs}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
@@ -102,9 +104,9 @@ module BasicKVS
 
   declare
   def mutate
-    kvstate <+ kvput.map {|p| [p.key, p.value]} (*\label{line:kvs-put}*)
+    kvstate <+ kvput.map{|p| [p.key, p.value]} (*\label{line:kvs-put}*)
     jst = join [kvstate, kvput], [kvstate.key, kvput.key] (*\label{line:kvs-join}*)
-    kvstate <- jst.map {|b, p| b} (*\label{line:kvs-clean}*)
+    kvstate <- jst.map{|b, p| b} (*\label{line:kvs-clean}*)
   end
 
   declare
@@ -119,29 +121,26 @@ end
 \centering
 %%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
-\caption{Single-site key-value store implementation.}
+\caption{Single-node key-value store implementation.}
 \label{fig:kvs-impl}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
 
-Figure~\ref{fig:kvs-impl} completes the specification by supplying a very simple
-realization of a key-value store.  Line~\ref{line:kvs-state} declares a table
-called \texttt{kvstate} that contains the internal, persistent state of the
-store.  When a \texttt{kvput} tuple appears, its key-value pair is placed in
-\texttt{kvstate} in the immediate next timestep (line~\ref{line:kvs-put}).  If
-a value for the given key already exists in \texttt{kvstate}, we wish to
-replace it with the newer value.  Line~\ref{line:kvs-join} joins the input
-interface with the internal state: if a row already exists for the current key,
-the join collection \texttt{jst} will contain a tuple that is the concatenation
-of the matching tuples from \texttt{kvstate} and \texttt{kvput}.  In this
-event, line~\ref{line:kvs-clean} states that in the immediate next timestep (and
-hence concurrently with the appearance of the new tuple derived at
-line~\ref{line:kvs-put}), the old value associated with the given key does not
-exist in \texttt{kvstate}.
+Figure~\ref{fig:kvs-impl} contains a simple single-node implementation of the
+abstract key-value store protocol. Key-value pairs are stored in a persistent
+table called \texttt{kvstate} (line~\ref{line:kvs-state}). When a \texttt{kvput}
+tuple appears, its key-value pair is stored in \texttt{kvstate} at the immediately
+next timestep (line~\ref{line:kvs-put}).  If the given key already exists in
+\texttt{kvstate}, we want to replace the key's old value. This is done by
+joining \texttt{kvput} against the current version of \texttt{kvstate}
+(line~\ref{line:kvs-join}). If a matching tuple is found, the old key-value pair
+is removed from \texttt{kvstate} at the beginning of the next timestep
+(line~\ref{line:kvs-clean}). Note that we also insert the new key-value pair
+into \texttt{kvstate} in the next timestep (line~\ref{line:kvs-put});
+hence, we implement an overwriting update as an atomic deletion and insertion.
 
-
-\subsection{Replicated KVS implementation}
+\subsection{Replicated Key-Value Store}
 \label{sec:rep-kvs}
 
 \begin{figure}[t]
@@ -152,8 +151,8 @@ module ReplicatedKVS
   include MulticastProtocol
 
   def state
-    interface input, :kvput, 
-      ['client', 'key', 'reqid'], ['value']  (*\label{line:rep-put}*)
+    interface input, :kvput, (*\label{line:rep-put-beg}*)
+      ['client', 'key', 'reqid'], ['value']  (*\label{line:rep-put-end}*)
   end
 
   declare
@@ -181,29 +180,38 @@ end
 \vspace{-2pt}
 \end{figure}
 
+Next, we extend the basic key-value store implementation to support replication
+(Figure~\ref{fig:kvs-repl}). To communicate between replicas, we use a simple
+multicast library implemented in Bloom; the complete source code for this
+library can be found in Appendix~\ref{app:network-code}. To multicast messages
+using this library, a Bloom program inserts a fact into \texttt{send\_mcast}; a
+corresponding fact appears in \texttt{mcast\_done} when the multicast operation
+has completed.\footnote{XXX: error handling.} The multicast library also
+provides the membership of the multicast group in a table called
+\texttt{members}.
 
-Figure~\ref{fig:kvs-repl} extends the basic KVS module to support replication of
-the store state.  It does so by mixing in MulticastProtocol, which provides the
-input interface \texttt{send\_mcast} and the output interface
-\texttt{mcast\_done}.  Line~\ref{line:rep-put} declares an additional input
-interface (\texttt{kvput}) with the same name as the input interface of the
-mixed in module BasicKVS.  This allows the writer of ReplicatedKVS to interpose
-additional logic between calls to KVSProtocol's input interface and the now
-``protected'' input interface of BasicKVS.  In ReplicatedKVS, references to
-\texttt{kvput} appearing in the LHS of rules are resolved to the \texttt{kvput}
-provided by BasicKVS, while references in the RHS of rules resolve to the local
-\texttt{kvput}.  Note that this is unambiguous, because it is meaningless for a
-module to insert into its own input or to read data from its own output
-interfaces.
+Our replicated key-value store is implemented by sub-classing the single-node
+key-value store described in the previous section. When a new key is inserted by
+a client, we multicast the insertion to the other replicas
+(lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end}). To avoid repeated
+multicasts of the same inserted key, we avoid multicasting updates we receive
+from another replica (line~\ref{line:not-rep}). We apply an update to our local
+\texttt{kvstate} table in two cases: (1) if a multicast succeeds at the node
+that originated it (line~\ref{line:mcast-done}) (2) whenever a multicast is
+received at a peer replica
+(lines~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
 
-Thus, lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end} ensure that when an external caller inserts a tuple into
-\texttt{kvput}, its contents are marshalled (line~\ref{line:marshall}) into \texttt{send\_mcast}
-if the originating address is not another replica (line~\ref{line:not-rep}), as this would indicate
-that the current replica is not the master for this update.  
-The internal
-\texttt{kvput} interface of BasicKVS is stimulated in one of two cases: if multicast succeeds
-at the master replica (line~\ref{line:mcast-done}), or whenever a multicast is received at 
-a peer replica (lines~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
+Note that the implementation of ReplicatedKVS wants to ``intercept''
+\texttt{kvput} events from clients, and only apply them to the underlying
+single-node key-value store when certain conditions are met. To achieve this, we
+``override'' the declaration of the \texttt{kvput} input interface
+(lines~\ref{line:rep-put-beg}--\ref{line:rep-put-end}). In ReplicatedKVS,
+references to \texttt{kvput} appearing in the LHS of rules are resolved to the
+\texttt{kvput} provided by BasicKVS, while references in the RHS of rules
+resolve to the local \texttt{kvput}.  Note that this is unambiguous, because a
+module cannot insert into its own input or read from its own output
+interfaces. Nevertheless, the current syntax for achieving this is somewhat
+cryptic; it might be improved by the addition of a namespace-like concept.
 
 \subsection{Analyses}
 Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the KVS protocol.  Data
@@ -247,7 +255,7 @@ any point in time may depend on the order of arrival of \texttt{kvput} tuples.
 \centering
 \includegraphics[width=0.5\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
-\caption{Visualization of the single-site key-value store.}
+\caption{Visualization of the single-node key-value store.}
 \label{fig:pdg-kvs-analysis}
 \vspace{-2pt}
 \end{figure}
