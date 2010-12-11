@@ -3,13 +3,80 @@
 In this section, we develop two different designs for a distributed
 shopping-cart service in Bloom.\footnote{The complete source code for both
   implementations can be found at
-  \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}  First, we
-implement a ``destructive,'' state-modifying shopping cart application using the
-key-value store we developed in the previous section.  Second, we implement a
-``disorderly'' cart that accumulates updates in a set-wise fashion, summing up
+  \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}  After
+presenting the abstract shopping cart protocol and a simple client program, we
+implement a ``destructive,'' state-modifying shopping cart service that uses the
+key-value store we developed in the Section~\ref{sec:kvs}. Second, we illustrate
+a ``disorderly'' cart that accumulates updates in a set-wise fashion, summing up
 the updates at checkout into a final result.  These two different designs
 illustrate our analysis tools and the way they inform design decisions for
 distributed programming.
+
+\subsection{Shopping Cart Client}
+An abstract shopping cart protocol is presented in
+Figure~\ref{fig:declarations}. Figure~\ref{fig:cart-client} contains a simple
+shopping cart client program: it takes input facts from a client
+(\texttt{client\_action} and \texttt{client\_checkout} requests) and sends them
+to the shopping cart service using the CartProtocol.
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module CartProtocol
+  def state
+    channel :action_msg, (*\label{line:dec_chan_beg}*)
+      ['@server', 'client', 'session', 'reqid'],
+      ['item', 'action'] (*\label{line:dec_chan_end}*)
+    channel :checkout_msg,
+      ['@server', 'client', 'session', 'reqid']
+    channel :response_msg,
+      ['@client', 'server', 'session', 'item'], ['cnt']
+  end
+end
+
+module CartClientProtocol
+  def state
+    interface input, :client_action, (*\label{line:dec_in_interface}*)
+      ['server', 'session', 'reqid'], ['item', 'action'] 
+    interface input, :client_checkout,
+      ['server', 'session', 'reqid']
+    interface output, :client_response, 
+      ['client', 'server', 'session'], ['item', 'cnt']
+  end
+end
+\end{lstlisting}
+\vspace{-10pt}
+\caption{Abstract shopping cart protocol.}
+\label{fig:declarations}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module CartClient
+  include CartProtocol
+  include CartClientProtocol
+
+  declare
+  def client
+    action_msg <~ client_action.map do |a| 
+      [a.server, @addy, a.session, a.reqid, a.item, a.action] (*\label{line:des_client_action}*)
+    end
+    checkout_msg <~ client_checkout.map do |a| 
+      [a.server, @addy, a.session, a.reqid]
+    end
+    client_response <= response_msg
+  end
+end
+\end{lstlisting}
+\vspace{-10pt}
+\caption{Shopping cart client implementation.}
+\label{fig:cart_client}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
 
 \subsection{A ``destructive'' shopping cart}
 
