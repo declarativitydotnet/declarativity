@@ -3,7 +3,7 @@
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$, represented by the unary relation \dedalus{time}). The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe.
 
-We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{\left(a,b\right) | b = a + 1\}$.  We also admit Saca\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacaa-zaniolo}---a model-theoretic characterization of non-determinism using cyclic negation and the stable model semantics~\cite{stable-model}, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
+We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -17,9 +17,7 @@ We presently outline restrictions on \lang.
 
 \vspace{1em}
 \noindent {\bf Temporal Attributes:}
-\lang requires that all atoms in each rule body use the same variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained 
-%by exactly one of the following methods:
-in exactly one of the following ways:
+\lang requires that all atoms in each rule body use the same variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
 
 \begin{enumerate}
 \item The rule is called a {\em deductive} rule if its head temporal variable is the same as its body temporal variable;
@@ -118,10 +116,8 @@ By convention, EDB facts are supplied without a time suffix, and are true at all
 %\wrm{explain motivation for non-determinism.  why don't we just treat the whole world as synchronous?}
 
 \subsection{Semantics}
-Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  The \dedalus{choice} construct induces multiple stable models that model possible message re-ordering and delay.  Intuitively, a stable model of a \lang program is a trace of one of its possible distributed executions.  However, there are two issues with considering a stable model as the {\em output} of a distributed program.  %First, permuting the timesteps of two messages may not meaningfully affect the program's %behavior, and 
-First, different choices of timestamps will not always meaninfully affect a program's results
-or behavior; in such cases, multiple stable models correspond to a single observable ``output.''
-Second, a stable model of a \lang program may be infinite, such as in the following example:
+Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model.~\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different non-deterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible delays and interleavings of messages.
+%A stable model of a \lang program is a trace of one of its possible distributed executions,.
 
 However, there are two issues with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may be infinite.
 
@@ -189,9 +185,18 @@ Note that ultimate models are always of finite cardinality because the only cons
 %By the definition of the stable model semantics, such situations due not produce stable models~\cite{stable-model}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
 %\end{proof}
 
-\begin{lemma}
-Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps induces a stable model~\footnote{This lemma is similar in spirit to Hellerstein's CRON conjecture~\cite{declarative-imperative}.}.
-\end{lemma}
+%\subsubsection{Predicate Dependency Graphs}
+%A \lang program may be represented as a directed graph of the dependencies
+%among predicates called a \textbf{PDG}.
+%Each predicate in the program corresponds to a node in the PDG.
+%For every subgoal \texttt{B} appearing in the body of a rule with head \texttt{A},
+%we add to the graph a directed edge from \texttt{B} to \texttt{A}.  The edges are annotated
+%with a set of labels representing additional syntactic information that is relevant to 
+%analysis.  In particular, if the subgoal is negated or the rule applies an aggregate function,
+%its corresponding edge is labeled as nonmonotonic.  If the rule is inductive or asynchronous,
+%it is labeled as such.
+%In general, we do not include the \dedalus{time} or \dedalus{successor} predicates in PDGs,
+%nor do we include any predicates or rules added by rewriting \dedalus{choice}.
 
 \subsection{Operational Interpretation}
 %\wrm{talk about operational interpretation of choice}
