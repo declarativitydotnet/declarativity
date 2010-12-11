@@ -176,7 +176,7 @@ A fact in a persistent predicate is a monotonic property.
 \wrm{also, we should start from EDB, and say that's a persistent relation}
 \paa{need to clearly define EDB in dedalus.  those predicates appearing only in the RHS 
 of rules, which furthermore are persistent?  what do we call those predicates for which the 
-latter is false?}
+latter is false?} \wrm{There are no predicates for which the latter is false I guess.  Does that seem reasonable?}
 \end{definition}
 
 Note that facts in simply persistent relations cannot be retracted once they are asserted.  They begin false
@@ -184,7 +184,7 @@ Note that facts in simply persistent relations cannot be retracted once they are
 
 \begin{definition}
 A fact defined with even depth of negation over a monotonic property is also a monotonic property. \wrm{think this is better said as ``all paths through the PDG contain an even depth to the monotonic property''}
-\paa{hm, but a PDG is syntactic and we are defining these things in terms of derivations and facts}
+\paa{hm, but a PDG is syntactic and we are defining these things in terms of derivations and facts} \wrm{oh right.  i was just trying to get accross ``all paths to EDB need to be even'' rather than ``only one path to EDB needs to be even'' which is incorrect, and it kind of sounds like this now to me.  maybe ``derivation tree'' or something?}
 \end{definition}
 
 The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
