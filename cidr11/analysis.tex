@@ -167,8 +167,8 @@ Note that the implementation of ReplicatedKVS wants to ``intercept''
 BasicKVS module when certain conditions are met. To achieve this, we
 ``override'' the declaration of the \texttt{kvput} input interface
 (lines~\ref{line:rep-put-beg}--\ref{line:rep-put-end}). In ReplicatedKVS,
-references to \texttt{kvput} appearing in the LHS of rules are resolved to the
-\texttt{kvput} provided by BasicKVS, while references in the RHS of rules
+references to \texttt{kvput} appearing in the lhs of rules are resolved to the
+\texttt{kvput} provided by BasicKVS, while references in the rhs of rules
 resolve to the local \texttt{kvput}.  This is unambiguous, because a module
 cannot insert into its own input or read from its own output
 interfaces. Nevertheless, the current syntax for achieving this is somewhat
