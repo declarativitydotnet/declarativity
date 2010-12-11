@@ -138,12 +138,9 @@ like UDP, and the definition of a periodic collection instructs the
 runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further
 derivations.
 
-
 Bloom programs compose with other Bloom programs and with external callers at
 unidirectional scratch collections called \textbf{interfaces}, which are described in more
 detail in Section~\ref{sec:modularity}.  
-
-
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -205,9 +202,7 @@ end
 \end{figure}
 
 
-%\vspace{9pt}\noindent \textbf{Bloom Statements}\\
 \subsection{Bloom Statements}
-
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
 of declarative relational expressions that define the contents of derived
 collections.  However, they can be operationally interpreted as unordered bundles of instructions for ``accumulating'' data that are run to fixpoint.   The syntax is:\\ \noindent
@@ -240,13 +235,6 @@ rhs of a statement. Line~\ref{line:kvs-join} of
 Figure~\ref{fig:kvs-impl} shows a join between \texttt{kvstate} and
 \texttt{kvput}.
 
-
-
-% nrc: No longer true
-% \footnote{For clarity, we write out the join condition
-%   explicitly. Bloom provides syntax sugar for common join types (e.g., natural
-%   join).}  
-
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
 Programmers declare Bloom statements within methods of a Bud subclass
@@ -269,18 +257,18 @@ Bud also includes some additional convenience methods that provide macros over t
 
 % TODO: work on this
 
-\subsection{Modularity and Encapsulation in Bloom}
+\subsection{Modularity and Encapsulation}
 \label{sec:modularity}
-
-
 \jmh{More is needed here.  First, you need to introduce the use of interfaces: inputs on rhs of rules, outputs on lhs.  Two modules compose if they reference each other's interface collections in this pattern.  Note that this is local and synchronous composition at the interfaces, though a given module may itself have asynchronous or distributed behaviors inside.  Second, you need to talk about how we use Ruby's inheritance and mixin features.  This probably deserves a subsection on Modularity and Inheritance or something.}
 
+\begin{comment}
 Conventional wisdom in certain quarters says that rule-based languages are
 untenable for large programs that evolve over time, since the interactions among
 rules become too difficult to understand.  We believe this concern is an
 artifact of early rule languages that mixed apparently declarative syntax with
 imperative constructs and assumptions, and which had little support for
 modularity and reuse of code.
+\end{comment}
 
 Bud takes advantage of the features of Ruby to enrich its declarative constructs
 with familiar programming metaphors that are popular with software developers.
