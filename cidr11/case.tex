@@ -91,9 +91,8 @@ in line~\ref{line:des_join_kvstate_action_msg} are satisfied and
 lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end} ``replace'' the
 item array at the next timestep with a new version, via the built-in overwriting
 capability provided by the key-value store.  Whenever a \texttt{checkout\_msg}
-appears at a server replica, the \texttt{kvget} and \texttt{kvget\_response}
-interfaces provided by KVSProtocol are used to retrieve the cart state
-associated with the given session
+appears at a server replica, the key-value store is queried to retrieve the cart
+state associated with the given session
 (lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).
 
 
