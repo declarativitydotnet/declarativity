@@ -64,8 +64,8 @@ module BasicKVS
   declare
   def do_put
     kvstate <+ kvput.map{|p| [p.key, p.value]} (*\label{line:kvs-put}*)
-    jst = join [kvstate, kvput], [kvstate.key, kvput.key] (*\label{line:kvs-join}*)
-    kvstate <- jst.map{|b, p| b} (*\label{line:kvs-clean}*)
+    prev = join [kvstate, kvput], [kvstate.key, kvput.key] (*\label{line:kvs-join}*)
+    kvstate <- prev.map{|b, p| b} (*\label{line:kvs-clean}*)
   end
 
   declare
@@ -146,10 +146,10 @@ Next, we extend the basic key-value store implementation to support replication
 (Figure~\ref{fig:kvs-repl}). To communicate between replicas, we use a simple
 multicast library implemented in Bloom; the complete source code for this
 library can be found in Appendix~\ref{app:network-code}. To send a multicast, a
-Bloom program inserts a fact into \texttt{send\_mcast}; a corresponding fact
-appears in \texttt{mcast\_done} when the multicast has completed.\footnote{XXX:
-  error handling.} The multicast library also provides the membership of the
-multicast group in a table called \texttt{members}.
+program inserts a fact into \texttt{send\_mcast}; a corresponding fact appears
+in \texttt{mcast\_done} when the multicast is complete.\footnote{XXX: error
+  handling.} The multicast library also exports the membership of the multicast
+group in a table called \texttt{members}.
 
 Our replicated key-value store is implemented on top of the single-node
 key-value store described in the previous section. When a new key is inserted by
@@ -169,8 +169,8 @@ BasicKVS module when certain conditions are met. To achieve this, we
 (lines~\ref{line:rep-put-beg}--\ref{line:rep-put-end}). In ReplicatedKVS,
 references to \texttt{kvput} appearing in the LHS of rules are resolved to the
 \texttt{kvput} provided by BasicKVS, while references in the RHS of rules
-resolve to the local \texttt{kvput}.  Note that this is unambiguous, because a
-module cannot insert into its own input or read from its own output
+resolve to the local \texttt{kvput}.  This is unambiguous, because a module
+cannot insert into its own input or read from its own output
 interfaces. Nevertheless, the current syntax for achieving this is somewhat
 cryptic; it might be improved by the addition of a namespace-like concept.
 
@@ -185,38 +185,37 @@ cryptic; it might be improved by the addition of a namespace-like concept.
 \end{figure}
 
 Now that we have introduced two concrete implementations of the abstract
-key-value store protocol, we now turn to analyzing the properties of these
-programs. First, we introduce the graphical dataflow representation used by our
-analysis; we then discuss the dataflow graphs generated for the key-value store
-programs in the following section.
+key-value store protocol, we turn to analyzing the properties of these
+programs. We begin by describing the graphical dataflow representation used by
+our analysis. In the next section, we discuss the dataflow graphs generated for
+the two key-value store implementations.
 
 A Bloom program may be viewed as a dataflow graph with external input interfaces
 as sources, external output interfaces as sinks, collections as internal nodes,
 and rules as edges. This graph represents the dependencies between the
 collections in a program, and can be generated automatically by the Bud
-interpreter. A list of the different symbols and annotations in the graphical
-visualization can be found in Figure~\ref{fig:analysis-legend}; we provide a
-brief summary below.
+interpreter. Figure~\ref{fig:analysis-legend} contains a list of the different
+symbols and annotations in the graphical visualization; we provide a brief
+summary below.
 
 Each node in the graph is either a collection or a cluster of collections;
 tables are shown as rectangles, ephemeral collections (scratch, periodic and
 channel) are depicted as ovals, and clusters (described below) as octagons. A
 directed edge from node $A$ to node $B$ indicates that $B$ appears in the lhs of
-a Bloom rule with $A$ referenced directly, or through a join expression, in the
-rhs.  An edge is annotated based on the operator symbol in the rule. If the rule
-uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked with
-$+$. This indicates that facts traversing the edge ``spend'' a timestep to move
-from the rhs to the lhs. Similarly, if the rule uses the \texttt{$<\sim$}
-operator, the edge is a dashed line---this indicates that facts from the rhs
-appear at the lhs at a non-deterministic future time. If the rule involves a
-non-monotonic operation (aggregation, anti-join, or the \texttt{$<$-} operator),
-then the edge is marked with a small circle.  To make the visualizations more
-readable, any strongly connected component marked with both a circle and a $+$
-edge is collapsed into an octagonal ``temporal cluster,'' which can be viewed
-abstractly as a single, non-monotonic node in the dataflow. \emph{Points of
-  order} are indicated in the graph by an edge with a white circle.  Any
-non-monotonic edge in the graph is a point of order, as are all edges incident
-to a temporal cluster, including any self-edges.
+a Bloom rule that references $A$ in the rhs, either directly or through a join
+expression. An edge is annotated based on the operator symbol in the rule. If
+the rule uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked
+with ``$+/-$''. This indicates that facts traversing the edge ``spend'' a
+timestep to move from the rhs to the lhs. Similarly, if the rule uses the
+\texttt{$<\sim$} operator, the edge is a dashed line---this indicates that facts
+from the rhs appear at the lhs at a non-deterministic future time. If the rule
+involves a non-monotonic operation (aggregation, anti-join, or the \texttt{$<$-}
+operator), then the edge is marked with a white circle.  To make the
+visualizations more readable, any strongly connected component marked with both
+a circle and a $+/-$ edge is collapsed into an octagonal ``temporal cluster,''
+which can be viewed abstractly as a single, non-monotonic node in the
+dataflow. Any non-monotonic edge in the graph is a \emph{point of order}, as are
+all edges incident to a temporal cluster, including any self-edges.
 
 \subsection{Analysis}
 Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the
@@ -225,20 +224,20 @@ the protocol's interfaces: data is inserted into the input interfaces
 (\texttt{kvput} and \texttt{kvget}), and results eventually appear in the output
 interface (\texttt{kvget\_response}). Naturally, the abstract protocol does not
 specify a connection between the input and output events; this is indicated in
-the diagram by the red diamond, which denotes an underspecified program. A
+the diagram by the red diamond, which denotes an underspecified dataflow. A
 concrete realization of the key-value store protocol must, at minimum, supply a
 dataflow that connects an input interface to the output interface.
 
-Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS
-implementation, which supplies a concrete dataflow for the unspecified component
-in the previous graph.  \texttt{kvstate} and \texttt{jst} are collapsed into a
-red octagon because they are part of a strongly connected component in the graph
-with both negative and temporal edges.  Any data flowing from \texttt{kvput} to
-the sink must cross at least one non-monotonic point of order (at ingress to the
-octagon) and possible an arbitrary number of them (via the octagon's self-edge),
-and any path from \texttt{kvget} to the sink must join state potentially
-affected by non-monotonicity (because \texttt{kvstate} is used to derive
-\texttt{kvget\_response}).
+Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the single-node
+KVS implementation, which supplies a concrete dataflow for the unspecified
+component in the previous graph.  \texttt{kvstate} and \texttt{prev} are
+collapsed into a red octagon because they are part of a strongly connected
+component in the graph with both negative and temporal edges.  Any data flowing
+from \texttt{kvput} to the sink must cross at least one non-monotonic point of
+order (at ingress to the octagon) and possible an arbitrary number of them (via
+the octagon's self-edge), and any path from \texttt{kvget} to the sink must join
+state potentially affected by non-monotonicity (because \texttt{kvstate} is used
+to derive \texttt{kvget\_response}).
 
 Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is
 unavoidable.  The contents of \texttt{kvstate} at a given time are defined (in
