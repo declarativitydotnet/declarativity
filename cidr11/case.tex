@@ -74,25 +74,27 @@ Section~\ref{sec:kvs}. Our shopping cart service would work with any concrete
 realization of the KVSProtocol; we will choose to use the replicated key-value
 store (Section~\ref{sec:rep-kvs}) to provide fault-tolerance.
 
-\jmh{Some confusion here where you refer to lines of different figures without clear context switches.  Please check and fix!}
-Our discussion begins by returning to the CartClient code of Figure~\ref{fig:cart_client}.
-In line~\ref{line:des_client_action} of that figure, the client
-transmits \texttt{client\_action} tuples that correspond to cart updates over
-the \texttt{action\_msg} channel to an individually chosen server replica.  We
+\jmh{Some confusion here where you refer to lines of different figures without
+  clear context switches.  Please check and fix!}  Our discussion begins by
+returning to the CartClient code of Figure~\ref{fig:cart_client}.  In
+line~\ref{line:des_client_action} of that figure, the client transmits
+\texttt{client\_action} tuples that correspond to cart updates over the
+\texttt{action\_msg} channel to an individually chosen server replica.  We
 assume that the client has already chosen a server based on load balancing.  For
 each such arriving tuple, line~\ref{line:des_kvstate_check} checks
 \texttt{kvstate} to see if a record exists for the session associated with the
 \texttt{action\_msg}.  If none is there (i.e., this is the first update for a
 new session), then
-lines~\ref{line:des_kvstate_gen_beg}--\ref{line:des_kvstate_gen_end} generate
-an entry for the new session in \texttt{kvstate}.  Otherwise, the join
-conditions in line~\ref{line:des_join_kvstate_action_msg} are satisfied and
+lines~\ref{line:des_kvstate_gen_beg}--\ref{line:des_kvstate_gen_end} generate an
+entry for the new session in \texttt{kvstate}.  Otherwise, the join conditions
+in line~\ref{line:des_join_kvstate_action_msg} are satisfied and
 lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end} ``replace'' the
 item array at the next timestep with a new version, via the built-in overwriting
-capability provided by KeyValueStore.  Whenever a \texttt{checkout\_msg} appears
-in a server replica, the \texttt{kvget} and \texttt{kvget\_response} interfaces
-to KeyValueStore are used to retrieve the cart state associated with the given
-session (lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).
+capability provided by the key-value store.  Whenever a \texttt{checkout\_msg}
+appears at a server replica, the \texttt{kvget} and \texttt{kvget\_response}
+interfaces provided by KVSProtocol are used to retrieve the cart state
+associated with the given session
+(lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).
 
 
 \subsection{A ``disorderly'' shopping cart}
