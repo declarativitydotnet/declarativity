@@ -48,7 +48,7 @@ module ReliableDelivery
   declare
   def remember
     send_buf <= pipe_in
-    pipe_chan <~ join([pipe, retry]).map{|p, t| p }
+    pipe_chan <~ join([send_buf, retry]).map{|p, t| p }
   end
 
   declare
