@@ -1,15 +1,15 @@
 \section{Case Study}
 \label{sec:case}
-
-
-In this section, we develop two different designs for a distributed shopping-cart
-application in Bloom.\footnote{The complete source code for 
-both implementations can be found at \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}
-First, we implement a ``destructive,'' state-modifying
-shopping cart application using the simple key-value store we developed in the
-previous section.
-Second, we implement a ``disorderly'' cart that accumulates updates in a 
-set-wise fashion, summing up the updates at checkout into a final result.  These two different designs illustrate our analysis tools and the way they inform design decisions for distributed programming.  
+In this section, we develop two different designs for a distributed
+shopping-cart application in Bloom.\footnote{The complete source code for both
+  implementations can be found at
+  \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}  First, we
+implement a ``destructive,'' state-modifying shopping cart application using the
+simple key-value store we developed in the previous section.  Second, we
+implement a ``disorderly'' cart that accumulates updates in a set-wise fashion,
+summing up the updates at checkout into a final result.  These two different
+designs illustrate our analysis tools and the way they inform design decisions
+for distributed programming.
 
 \subsection{A ``destructive'' shopping cart}
 
@@ -69,14 +69,15 @@ update. Deletion requests are ignored if the item they refer to does not exist
 in the cart.
 
 Figure~\ref{fig:dest-cart} shows the Bloom code for this design.  The
-\texttt{kvput} scratch collection is defined by including the \texttt{KeyValueStore}
-protocol shown in Figure~\ref{fig:kvs-proto}.  Any collection of Bud rules that
-implement the protocol can be used, but to satisfy our requirement that the data
-be replicated we must use an implementation that replicates the contents of the
-store to multiple servers.  Optimistically assuming that the program is
-otherwise consistent, we here use the ReplicatedKVS module shown in
-figure~\ref{fig:kvs-repl}, and will later mix in BestEffortMulticast, an
-implementation of MulticastProtocol with low message complexity \jmh{Probably we don't want to talk about ``complexity''.  Reword?}.
+\texttt{kvput} scratch collection is defined by including the
+\texttt{KeyValueStore} protocol shown in Figure~\ref{fig:kvs-proto}.  Any
+collection of Bud rules that implement the protocol can be used, but to satisfy
+our requirement that the data be replicated we must use an implementation that
+replicates the contents of the store to multiple servers.  Optimistically
+assuming that the program is otherwise consistent, we here use the ReplicatedKVS
+module shown in Figure~\ref{fig:kvs-repl}, and will later mix in
+BestEffortMulticast, an implementation of MulticastProtocol with low message
+complexity \jmh{Probably we don't want to talk about ``complexity''.  Reword?}.
 
 \jmh{Some confusion here where you refer to lines of different figures without clear context switches.  Please check and fix!}
 Our discussion begins by returning to the CartClient code of Figure~\ref{fig:cart_client}.
@@ -151,15 +152,15 @@ end
 \vspace{-2pt}
 \end{figure}
 
-Figure~\ref{fig:dis-cart} shows an alternative shopping cart
-implementation, in which updates are monotonically accumulated during shopping
-in a disorderly set, and summed up only at checkout.
-Lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} insert client updates into the persistent
-table \texttt{cart\_action}.  Lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} define
-\texttt{action\_cnt} as an aggregate over \texttt{cart\_action}, in the style
-of an SQL \texttt{GROUP BY} statement: for each item associated with a cart, we
-separately count the number of times it was added and the number of times it
-was deleted.
+Figure~\ref{fig:dis-cart} shows an alternative shopping cart implementation, in
+which updates are monotonically accumulated in a set, and summed up only at
+checkout.  Lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end}
+insert client updates into the persistent table \texttt{cart\_action}.
+Lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} define
+\texttt{action\_cnt} as an aggregate over \texttt{cart\_action}, in the style of
+an SQL \texttt{GROUP BY} statement: for each item associated with a cart, we
+separately count the number of times it was added and the number of times it was
+deleted.
 %Lines 5--16 define the collection \texttt{status} as the union of the session,
 %item and action fields resulting from a 3-way join between the
 %\texttt{checkout} message and two copies of \texttt{action\_cnt}---one
@@ -334,26 +335,23 @@ ensure that the response to the client is deterministic and consistently replica
 % client is deterministic.
 % >>>>>>> .r5792
 
-%%\vspace{9pt} \noindent \textbf{Discussion}\\
 \subsection{Discussion}
-%Like ``embarrassing parallelism'' in parallel computing, 
-Strictly monotonic programs
-are rare in practice, so adding some amount of coordination is often required to
-ensure consistency. In this running example we studied
-two candidate implementations of a simple distributed application with the aid of
-our language and program analysis. Both programs have points of order, but the analysis tool helped us reason about their relative coordination costs.  Deciding that the disorderly
-approach is ``better'' required us to apply domain knowledge: checkout is a coarser-grained coordination point than cart actions and their replication.
-%---this is not unlike synchronizing on read rather than write in write-dominant systems generally.  
-% Our analysis assisted us by highlighting the few locations where program correctness may depend upon costly synchronization, which may
-% result in decreased throughput and availability.  
+Strictly monotonic programs are rare in practice, so adding some amount of
+coordination is often required to ensure consistency. In this running example we
+studied two candidate implementations of a simple distributed application with
+the aid of our language and program analysis. Both programs have points of
+order, but the analysis tool helped us reason about their relative coordination
+costs.  Deciding that the disorderly approach is ``better'' required us to apply
+domain knowledge: checkout is a coarser-grained coordination point than cart
+actions and their replication.
 
 By providing the programmer with a set of abstractions that are predominantly
 order-independent, Bloom encourages a style of programming that minimizes
-coordination requirements. But as we see in our destructive cart implementation,
+coordination requirements. But as we see in the destructive cart program,
 it is nonetheless possible to use Bloom to write code in an imperative,
 order-sensitive style. Our analysis tools provide assistance in this regard.  Given a
 particular implementation with points of order, Bloom's static analysis can help
-a programmer iteratively refine their program: either to ``push back'' the
+a developer iteratively refine their program---either to ``push back'' the
 points to as late as possible in the dataflow, as we did in this example, or to
 ``localize'' points of order by moving them to locations in the program's dataflow
 where the coordination can be implemented on individual nodes without
