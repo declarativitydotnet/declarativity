@@ -151,7 +151,7 @@ appears in \texttt{mcast\_done} when the multicast has completed.\footnote{XXX:
   error handling.} The multicast library also provides the membership of the
 multicast group in a table called \texttt{members}.
 
-Our replicated key-value store is implemented by subclassing the single-node
+Our replicated key-value store is implemented on top of the single-node
 key-value store described in the previous section. When a new key is inserted by
 a client, we multicast the insertion to the other replicas
 (lines~\ref{line:send-mcast-beg}--\ref{line:send-mcast-end}). To avoid repeated
