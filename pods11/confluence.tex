@@ -340,52 +340,47 @@ Now, independent of the assignment of timestamps, no statement from a sayer \ded
 \wrm{Talk about generalizing this test for universal constraint stratification}
 
 \subsubsection{Coordination}
-Given any \lang program without recursion through negation, we can automatically instrument it with coordination to achieve the ultimate model, using the following algorithm:
+Given any \lang program without recursion through negation, we can automatically instrument it with coordination to achieve the perfect ultimate model, using the following algorithm:
 
 1. Build a predicate dependency graph of the program. \wrm{explain the PDG earlier}
 2. Let \dedalus{p} be an asynchronous predicate, from which a negated or aggregated predicate is reachable above.
 3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location specifier.
-4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, \dedalus{p\_complete}, and \dedalus{p\_send} are fesh predicate names.
-
-\wrm{we'll be waiting for ever for counts of zero...}
+4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, and \dedalus{completed\_p} are fesh predicate names.
 
 \noindent
 \begin{Dedalus}
 p_count_send(#Y,Src,count<*>)@async <- p_local(Y,\(\bar{X}\)),
                                        local(Src);
+p_count_send(#Y,Src,0)@async <- !p_local(Y,\(\bar{_}\)), local(Src),
+                                node(Y);
 p_send(#Y,Src,\(\bar{X}\))@async <- p_local(Y,\(\bar{X}\)), local(Src);
-p_send(Y,Src,\(\bar{X}\))@next <- p_send(Y,Src,\(\bar{X}\));
 p_count_recv(Src,count<*>) <- p_send(_,Src,\(\bar{X}\));
+p(Y,\(\bar{X}\)) <- p_send(_,Y,\(\bar{X}\));
+p(Y,\(\bar{X}\))@next <- p(Y,\(\bar{X}\));
 p_incomplete() <- node(Src), !p_count_recv(Src, _);
 p_incomplete() <- node(Src), !p_count_send(_,Src,_);
 p_incomplete() <- p_count_recv(Src, C1),
                   p_count_send(_, Src, C2), C1 < C2;
-p(Y,\(\bar{X}\)) <- p_send(Y,_,\(\bar{X}\)), !p_incomplete();
+completed_p(Y,\(\bar{X}\)) <- p(Y,\(\bar{X}\)), !p_incomplete();
 \end{Dedalus}
 
+5. For any instance of \dedalus{p} in the body of a rule in the original program, replace it with \dedalus{completed\_p}.
+
 \begin{theorem}
-The coordinated program is confluent, and the ultimate model is the same as one in the original program(except the \dedalus{p\_send} stuff.
+The coordinated program is confluent.
 \end{theorem}
 
 We prove the theorem by way of the following two Lemmas.
 The following lemma says that this coordination actually computes the completion of the set:
 
 \begin{lemma}
-If there exists a fact $f$ in \dedalus{p} at time \dedalus{t}, and a fact $g$ in \dedalus{p} at time {t+1}, then $g$ is true at time \dedalus{t}.
+If there exists a fact $f$ in \dedalus{completed\_p} at time \dedalus{t}, and a fact $g$ in \dedalus{completed\_p} at time {t+1}, then $g$ is true at time \dedalus{t}.
 \end{lemma}
 \begin{proof}
 Too hungry to prove at the moment.
 \end{proof}
 
 Corollary: the coordinated program is confluent.
-
-The following lemma says that, in the absence of failure, this coordination induces an ultimate model which was part of the original program (except, with the \dedalus{p\_send} predicate in it too):
-\begin{lemma}
-Blah
-\end{lemma}
-\begin{proof}
-Blah
-\end{proof}
 
 Note that this process introduces additional asynchronous edges.  These asynchronous edges need not be coordinated. \wrm{Argue that the transformation is idempotent -- if I write my program with this protocol in it already, applying the transformation again does not break the coordination.}
 
