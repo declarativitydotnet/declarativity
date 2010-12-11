@@ -37,10 +37,10 @@ attempts to insert and fetch items from the store) and a single output interface
 (which represents the outcome of a fetch operation). To use an implementation of
 this protocol, a Bloom program can store key-value pairs by inserting facts into
 \texttt{kvput}. To retrieve the value associated with a key, the client program
-inserts a fact into \texttt{kvget} and then looks for the corresponding response
-tuple in \texttt{kvget\_response}. In both cases, the client program must supply
-a unique request identifier (\texttt{reqid}) to differentiate tuples in the
-event of multiple concurrent requests.
+inserts a fact into \texttt{kvget} and looks for a corresponding response tuple
+in \texttt{kvget\_response}. For both put and get operations, the client program
+must supply a unique request identifier (\texttt{reqid}) to differentiate tuples
+in the event of multiple concurrent requests.
 
 A module which uses a key-value store but is indifferent to the specifics of the
 implementation may simply mix in this protocol specification and postpone
