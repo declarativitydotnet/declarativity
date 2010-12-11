@@ -123,20 +123,22 @@ module DisorderlyCart
 
   declare
   def finalize
-    del_items = action_cnt.map{|a| a.item if a.action == "Del"}
-    status <= join([action_cnt, checkout_msg]).map do |a, c| (*\label{line:dis_checkout_no_item_beg}*)
+    del_items = action_cnt.map{|a| a.item if a.action == "Del"} (*\label{line:dis_checkout_no_item_beg}*)
+    status <= join([action_cnt, checkout_msg]).map do |a, c|
       if a.action == "Add" and not del_items.include? a.item
         [c.client, c.server, a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
       end
     end (*\label{line:dis_checkout_no_item_end}*)
-    status <= join([action_cnt, action_cnt, checkout_msg]).map 
-        do |a1, a2, c| (*\label{line:dis_checkout_item_beg}*)
-      if a1.session == a2.session and a1.item == a2.item
-      and a1.session == c.session and a1.action == "A" 
-      and a2.action == "D"
+
+    status <= join([action_cnt, action_cnt, (*\label{line:dis_checkout_item_beg}*)
+                       checkout_msg]).map do |a1, a2, c|
+      if a1.session == a2.session and
+          a1.item == a2.item and a1.session == c.session and
+          a1.action == "A" and a2.action == "D"
         [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt] (*\label{line:dis_status_diff}*)
       end
     end (*\label{line:dis_checkout_item_end}*)
+
     response_msg <~ status (*\label{line:dis_checkout_response}*)
   end
 end
