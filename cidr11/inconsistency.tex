@@ -1,17 +1,15 @@
 \section{Managing Inconsistency}
 \label{sec:inconsistency}
-The analysis technique described in the preceding sections identifies programs
-whose output may depend on the order in which tuples are delivered by a
-non-deterministic 
-
- conservatively
-identifies program fragments that may be 
-\jmh{First sentence here is no good.  I assume it will get changed?}
-We have more ideas about codifying best practices of distributed programming in
-software tools, which we hope to present in a full paper.  Chief among these is
-to provide programmer tools for \emph{managing inconsistency}, rather than
-resolving it via coordination.  Helland and Campbell reflect on their experience
-programming with patterns of ``memories, guesses and
+The analysis technique describing in the preceding sections provides a
+conservative test for when temporal non-determinism may lead to
+non-deterministic results. One solution to this situation is to resolve the
+non-determinism by introducing coordination. However, in many cases adding
+additional coordination is undesirable (e.g., for latency or availability
+reasons). Even here, we think that Bloom can improve distributed programming by
+assisting programmers with the task of \emph{managing inconsistency}, rather
+than resolving it via coordination.  A notable example of how to manage
+inconsistency is presented by Helland and Campbell, who reflect on their
+experience programming with patterns of ``memories, guesses and
 apologies''~\cite{quicksand}.  We provide a sketch here of ideas for converting
 these patterns into developer tools.
 
