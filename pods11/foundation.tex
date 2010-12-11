@@ -3,7 +3,7 @@
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$, represented by the unary relation \dedalus{time}). The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe.
 
-We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{\left(a,b\right) | a + b = 1\}$.  We also admit Saca\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacaa-zaniolo}---a model-theoretic characterization of non-determinism using stable models~\cite{stable-model}, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
+We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -40,7 +40,7 @@ q(A, B, S) <- e(A, B, T), successor(S, T);
 asynchronous:
 \begin{Dedalus}
 r(A, B, S) <- e(A, B, T), time(S),
-              choice((A, B, T), (S));
+              choice((A, B, T), (S)), S > T;
 \end{Dedalus}
 \end{example}
 
@@ -66,7 +66,7 @@ r(A, B)@async \(\leftarrow\) e(A, B);
 \end{Dedalus}
 \end{example}
 
-When we talk about the {\em predicate dependency graph} (PDG) of a \lang program, we assume that it does not include the \dedalus{time} or \dedalus{successor} predicates~\footnote{We also assume that the graph does not include any predicates or rules added by rewriting \dedalus{choice}.}.  In addition to marking edges in the graph as negated, we will keep track of which edges are \dedalus{@async} or \dedalus{@next}---we will refer to such edges as {\em temporal edges}.
+When we talk about the {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program, we assume that it does not include the \dedalus{time} or \dedalus{successor} predicates~\footnote{We also assume that the graph does not include any predicates or rules added by rewriting \dedalus{choice}.}.  In addition to marking edges in the graph as negated, we will keep track of which edges are \dedalus{@async} or \dedalus{@next}---we will refer to such edges as {\em temporal edges}.
 
 
 \vspace{1em}
@@ -112,11 +112,14 @@ By convention, EDB facts are supplied without a time suffix, and are true at all
 %\end{Dedalus}
 %\end{example}
 
-\wrm{synchronous systems are captured by \lang with no @async}
-\wrm{explain motivation for non-determinism.  why don't we just treat the whole world as synchronous?}
+%\wrm{synchronous systems are captured by \lang with no @async}
+%\wrm{explain motivation for non-determinism.  why don't we just treat the whole world as synchronous?}
 
 \subsection{Semantics}
-Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  The \dedalus{choice} construct induces multiple stable models that model possible message re-ordering and delay.  Intuitively, a stable model of a \lang program is a trace of one of its possible distributed executions.  However, there are two issues with considering a stable model as the {\em output} of a distributed program.  First, permuting the timesteps of two messages may not meaningfully affect the program's behavior, and second, a stable model of a \lang program may be infinite, such as in the following example:
+Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model.~\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different non-deterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible delays and interleavings of messages.
+%A stable model of a \lang program is a trace of one of its possible distributed executions,.
+
+However, there are two issues with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may be infinite.
 
 \begin{example}
 \label{ex:flipflop}
@@ -127,27 +130,23 @@ flipflop(Y,X)@next \(\leftarrow\) flipflop(X,Y);
 flipflop(1,2)@1;
 \end{Dedalus}
 
-\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.
+\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  In other words \dedalus{flipflop(1,2), flipflop(2,1)} is a cycle of period 2.
 \end{example}
 
-Such periodicities are not unfamiliar to the logic programming community.  
+%by regarding the output of the program as those facts that are eventually always true.  Thus, if two stable models differ only momentarily, but are ``eventually the same,'' we regard these stable models as producing the same output.
+
+We address both concerns in our definition of an {\em ultimate model}.
+
+%\subsubsection{Ultimate Models}
 
 \begin{definition}
-A cycle is {\em nontrivially periodic} if its period is at least 2.  Otherwise, it is {\em trivially periodic}.
-\end{definition}
-
-The program in Example~\ref{ex:flipflop} has a nontrivially periodic cycle of period 2.  Previous work in temporal deductive databases attempted to compute finite representations for such periodicities~\cite{tdd-infinite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all trivially periodic cycles.  We adopt the latter approach of ignoring nontrivial periodicity when defining the output of a \lang program.
-
-\subsubsection{Ultimate Models}
-
-\begin{definition}
-For each stable model, the trivially periodic cycles comprise an {\em ultimate model} for the program.  We represent a nontrivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.  For example, the cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different nontrivial periodicities.
+For each stable model, the cycles of period 1---so-called {\em trivially periodic} cycles---comprise an {\em ultimate model} for the program.  We represent a trivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.  For example, the trivially periodic cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different trivial periodicities.
 \paa{don't we mean ``trivially'' every place it says ``nontrivially'' above?}
 \end{definition}
 
-The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
+%The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
+Note that ultimate models are always of finite cardinality because the only constant symbols that may appear in the ultimate model are those from the EDB, which is finite, and finitely many numbers generated by \dedalus{count}.  By the same reasoning, a \lang program may only have a finite number of different ultimate models.  As long as two stable models have the same nontrivial periodicities, they result in the same ultimate model, regardless of any other differences in their behavior over time.
 
-Note that ultimate models are always of finite cardinality because only constants part of the input---and finitely many numbers generated by \dedalus{count}---may appear in the ultimate model.  By the same reasoning, a \lang program may only have a finite number of different ultimate models, whereas it may have infinitely many stable models, as infinitely many messages may be sent.
 %\begin{example}
 %A \lang program with uncountably many stable models, but a single ultimate model.
 %
@@ -157,57 +156,52 @@ Note that ultimate models are always of finite cardinality because only constant
 %\end{Dedalus}
 %\end{example}
 
-A \lang program without asynchronous rules has a single stable model.  This corresponds to its perfect model evaluated with a local stratification on temporal attributes.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}, so our usage here is consistent.
 
-\wrm{re-frame the CRON conjecture as part of proving equivalence to the operational formalism}
-\wrm{In the CRON conjecture below, we should explain how purely monotonic logic does not allow us to establish a ``happens before'' relation on network traffic.  If we can't express it, then intuitively it doesn't matter whether the execution abides by the property.}
+%\wrm{re-frame the CRON conjecture as part of proving equivalence to the operational formalism}
+%\wrm{In the CRON conjecture below, we should explain how purely monotonic logic does not allow us to establish a ``happens before'' relation on network traffic.  If we can't express it, then intuitively it doesn't matter whether the execution abides by the property.}
+%\begin{lemma}
+%Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible~\footnote{This lemma is similar in spirit to Hellerstein's CRON conjecture~\cite{declarative-imperative}.}.
+%\end{lemma}
+%
+%Note that we have not restricted \dedalus{async} to choose a timestamp in the future.  Thus, one may be concerned about a {\em temporal paradox}, such as the grandfather paradox.  A program that we might be worried about would be the following:
+%
+%\begin{Dedalus}
+%g(X)@next \(\leftarrow\) g(X), !del_g(X);
+%del_g(X)@async \(\leftarrow\) p(X), g(X);
+%p(1)@3;
+%g(1)@1;
+%\end{Dedalus}
+%
+%Taking the operational interpretation, we might posit the folowing trace, where \dedalus{p(1)@3, g(1)@3} cause \dedalus{del\_g(1)@2} in the past, implying that \dedalus{g(1)@3} should never have existed:
+%
+%\begin{Dedalus}
+%g(1)@1;
+%g(1)@2;
+%del_g(1)@2;
+%g(1)@3;
+%p(1)@3;
+%\end{Dedalus}
+%
+%\begin{proof}
+%By the definition of the stable model semantics, such situations due not produce stable models~\cite{stable-model}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
+%\end{proof}
 
-\begin{lemma}
-Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible~\footnote{This lemma is similar in spirit to Hellerstein's CRON conjecture~\cite{declarative-imperative}.}.
-\end{lemma}
-
-Note that we have not restricted \dedalus{async} to choose a timestamp in the future.  Thus, one may be concerned about a {\em temporal paradox}, such as the grandfather paradox.  A program that we might be worried about would be the following:
-
-\begin{Dedalus}
-g(X)@next \(\leftarrow\) g(X), !del_g(X);
-del_g(X)@async \(\leftarrow\) p(X), g(X);
-p(1)@3;
-g(1)@1;
-\end{Dedalus}
-
-Taking the operational interpretation, we might posit the folowing trace, where \dedalus{p(1)@3, g(1)@3} cause \dedalus{del\_g(1)@2} in the past, implying that \dedalus{g(1)@3} should never have existed:
-
-\begin{Dedalus}
-g(1)@1;
-g(1)@2;
-del_g(1)@2;
-g(1)@3;
-p(1)@3;
-\end{Dedalus}
-
-\begin{proof}
-By the definition of the stable model semantics, such situations due not produce stable models~\cite{stable-model}.  Whereas, if recursion through negation is unsatisfiable, all choices of timestamps produce stable models.
-\end{proof}
-
-\subsubsection{Predicate Dependency Graphs}
-
-A \lang program may be represented as a directed graph of the dependencies
-among predicates called a \textbf{PDG}.
-Each predicate in the program corresponds to a node in the PDG.
-For every subgoal \texttt{B} appearing in the body of a rule with head \texttt{A},
-we add to the graph a directed edge from \texttt{B} to \texttt{A}.  The edges are annotated
-with a set of labels representing additional syntactic information that is relevant to 
-analysis.  In particular, if the subgoal is negated or the rule applies an aggregate function,
-its corresponding edge is labeled as nonmonotonic.  If the rule is inductive or asynchronous,
-it is labeled as such.
-
-In general, we do not include the \dedalus{time} or \dedalus{successor} predicates in PDGs,
-nor do we include any predicates or rules added by rewriting \dedalus{choice}.
+%\subsubsection{Predicate Dependency Graphs}
+%A \lang program may be represented as a directed graph of the dependencies
+%among predicates called a \textbf{PDG}.
+%Each predicate in the program corresponds to a node in the PDG.
+%For every subgoal \texttt{B} appearing in the body of a rule with head \texttt{A},
+%we add to the graph a directed edge from \texttt{B} to \texttt{A}.  The edges are annotated
+%with a set of labels representing additional syntactic information that is relevant to 
+%analysis.  In particular, if the subgoal is negated or the rule applies an aggregate function,
+%its corresponding edge is labeled as nonmonotonic.  If the rule is inductive or asynchronous,
+%it is labeled as such.
+%In general, we do not include the \dedalus{time} or \dedalus{successor} predicates in PDGs,
+%nor do we include any predicates or rules added by rewriting \dedalus{choice}.
 
 \subsection{Operational Interpretation}
-\wrm{talk about operational interpretation of choice}
-
-\lang programs are intended to capture the execution of an asynchronous distributed system.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.
+%\wrm{talk about operational interpretation of choice}
+A \lang program is intended to capture the execution of an asynchronous distributed system.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.
 
 For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
 suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
