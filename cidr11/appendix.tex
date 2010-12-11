@@ -42,24 +42,25 @@ module ReliableDelivery
   def state
     table :send_buf, ['dst', 'src', 'ident'], ['payload']
     channel :ack, ['@src', 'dst', 'ident']
+    periodic :retry, 10
   end
 
   declare
   def remember
-    send_buf <= pipe_in.map
+    send_buf <= pipe_in
+    pipe_chan <~ join([pipe, retry]).map{|p, t| p }
   end
 
   declare
   def done
     ack <~ pipe_chan.map{|p| [p.src, p.dst, p.ident]}
-    pipe_out <= join([ack, send_buf],
-                        [ack.ident, send_buf.ident]).map{|a, sb| sb}
-    # XXX: remove ACK'd tuples from send_buf
+    send_done = join [ack, send_buf], [ack.ident, send_buf.ident]
+    pipe_out <= send_done.map{|a, sb| sb}
+    send_buf <- send_done.map{|a, sb| sb}
   end
 end
 \end{lstlisting}
 \centering
-%%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
 \caption{Delivery modules.}
 \label{fig:delivery-impl}
