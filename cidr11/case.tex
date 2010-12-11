@@ -88,7 +88,7 @@ module DestructiveCart
   include KVSProtocol
 
   declare (*\label{line:des_declare}*)
-  def queueing
+  def do_action
     kvput <= action_msg.map do |a|
       if a.action == "A" (*\label{line:des_kvstate_gen_beg}*)
         unless kvstate.map{|b| b.key}.include? a.session (*\label{line:des_kvstate_check}*)
@@ -96,9 +96,10 @@ module DestructiveCart
         end
       end (*\label{line:des_kvstate_gen_end}*)
     end
-    joldstate = join [kvstate, action_msg],
-                        [kvstate.key, action_msg.session]  (*\label{line:des_join_kvstate_action_msg}*)
-    kvput <= joldstate.map do |b, a|
+
+    old_state = join [kvstate, action_msg],
+                     [kvstate.key, action_msg.session]  (*\label{line:des_join_kvstate_action_msg}*)
+    kvput <= old_state.map do |b, a|
       if a.action == "A" (*\label{line:des_replace_beg}*)
         [a.server, a.client, a.session, 
          a.reqid, b.value.push(a.item)]
@@ -110,11 +111,12 @@ module DestructiveCart
   end
 
   declare
-  def finish
+  def do_checkout
     kvget <= checkout_msg.map{|c| [c.reqid, c.session]} (*\label{line:kvget-beg}*)
-    response_msg <~ join([kvget_response, checkout_msg],
-    [kvget_response.key, checkout_msg.session]).map do |r, c|
-      [r.client, r.server, r.key, r.value] (*\label{line:kvget-end}*)
+    lookup = join [kvget_response, checkout_msg],
+                  [kvget_response.key, checkout_msg.session]
+    response_msg <~ lookup.map do |r, c|
+      [c.client, c.server, c.session, r.key, r.value] (*\label{line:kvget-end}*)
     end
   end
 end
@@ -157,7 +159,7 @@ entry for the new session in \texttt{kvstate}.  Otherwise, the join conditions
 in line~\ref{line:des_join_kvstate_action_msg} are satisfied and
 lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end} ``replace'' the
 item array at the next timestep with a new version, via the built-in overwriting
-capability provided by the key-value store.  Whenever a \texttt{checkout\_msg}
+capability provided by the key-value store.  When a \texttt{checkout\_msg}
 appears at a server replica, the key-value store is queried to retrieve the cart
 state associated with the given session
 (lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).
@@ -175,11 +177,11 @@ module DisorderlyCart
     table :cart_action, ['session', 'item', 'action', 'reqid']
     table :action_cnt, ['session', 'item', 'action'], ['cnt']
     scratch :status, ['server', 'client', 'session', 'item'],
-                        ['cnt']
+                     ['cnt']
   end
 
   declare
-  def becoming
+  def do_action
     cart_action <= action_msg.map do |c|  (*\label{line:dis_action_msg_beg}*)
       [c.session, c.item, c.action, c.reqid] 
     end (*\label{line:dis_action_msg_end}*)
@@ -189,7 +191,7 @@ module DisorderlyCart
   end
 
   declare
-  def finalize
+  def do_checkout
     del_items = action_cnt.map{|a| a.item if a.action == "Del"} (*\label{line:dis_checkout_no_item_beg}*)
     status <= join([action_cnt, checkout_msg]).map do |a, c|
       if a.action == "Add" and not del_items.include? a.item
@@ -198,10 +200,10 @@ module DisorderlyCart
     end (*\label{line:dis_checkout_no_item_end}*)
 
     status <= join([action_cnt, action_cnt, (*\label{line:dis_checkout_item_beg}*)
-                       checkout_msg]).map do |a1, a2, c|
-      if a1.session == a2.session and
-          a1.item == a2.item and a1.session == c.session and
-          a1.action == "A" and a2.action == "D"
+                    checkout_msg]).map do |a1, a2, c|
+      if a1.session == a2.session and a1.item == a2.item and
+         a1.session == c.session and
+         a1.action == "A" and a2.action == "D"
         [c.client, c.server, a1.session, a1.item, a1.cnt - a2.cnt] (*\label{line:dis_status_diff}*)
       end
     end (*\label{line:dis_checkout_item_end}*)
