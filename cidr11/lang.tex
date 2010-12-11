@@ -31,17 +31,17 @@ the behavior of the evaluation engine.  Bloom is based on a formal temporal
 logic called Dedalus~\cite{dedalus}.
 
 The prototype version of Bloom we describe here is embodied in an implementation
-we call {\em Bud} (Bloom Under Development).  Bud is a domain-specific subset of the popular
-Ruby scripting language and is evaluated by a stock Ruby interpreter via a
-\textbf{Bud} Ruby class.  Compared to other logic languages, we feel it has a
-familiar and programmer-friendly flavor, and we believe that its learning curve
-will be relatively flat for programmers familiar with modern scripting languages.
-Bud uses a Ruby-flavored syntax, but this is not endemic; we have experimented with analogous Bloom embeddings in other languages including Python, Erlang and Scala, and they look similar in structure.
-%nrc: Cut because it seemed unimportant
-%Future versions of Bloom may do away with some of the syntactic idiosyncracies of Ruby, but it has been useful to stay grounded in the specific syntax of one widely-accepted language, at least in our early work.
-In the remainder of the paper, when we refer to Bloom we mean the language supported by the Bud prototype.
+we call {\em Bud} (Bloom Under Development).  Bud is a domain-specific subset of
+the popular Ruby scripting language and is evaluated by a stock Ruby interpreter
+via a \textbf{Bud} Ruby class.  Compared to other logic languages, we feel it
+has a familiar and programmer-friendly flavor, and we believe that its learning
+curve will be relatively flat for programmers familiar with modern scripting
+languages.  Bud uses a Ruby-flavored syntax, but this is not endemic; we have
+experimented with analogous Bloom embeddings in other languages including
+Python, Erlang and Scala, and they look similar in structure.  In the remainder
+of the paper, when we refer to Bloom we mean the language supported by the Bud
+prototype.
 
-%\vspace{9pt}\noindent\textbf{Bloom Basics}\\
 \subsection{Bloom Basics}
 Bloom programs are bundles of declarative statements about collections of
 ``facts'' or tuples, similar to SQL views or Datalog rules.  Bloom statements can
@@ -84,7 +84,6 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 		\texttt{=} & \textbf{scratch} & rhs defines the contents of the lhs for the current timestep.  lhs must not appear in lhs of any other statement.\\
 		\texttt{$<$=} & \textbf{table}, \textbf{scratch} & lhs includes the content of the rhs in the current timestep.\\
 		\texttt{$<$+} & \textbf{table}, \textbf{scratch} & lhs will include the content of the rhs in the next timestep.\\
-		              %& \textbf{channel} &  next timestep; remote \textbf{channel} tuples subject to delay.\\
 		\texttt{$<$-} & \textbf{table} & tuples in the rhs will be absent from the lhs at the start of  the next timestep.\\
 		\texttt{$<\sim$} & \textbf{channel} & tuples in the rhs will appear in the (remote) lhs at some non-deterministic future time.\\
 		\hline
@@ -94,7 +93,6 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 	\label{tab:bloom}
 \end{figure}
 
-%\vspace{9pt}\noindent\textbf{State in Bloom}\\
 \subsection{State in Bloom}
 Bloom programs manage state using five collection types described in the top of
 Figure~\ref{tab:bloom}. A collection is defined with a relational-style schema
@@ -308,7 +306,6 @@ allows programmers to reuse existing modules and interpose additional logic in a
 style reminiscent of superclass invocation in object-oriented languages.  We
 provide an example of interface overriding in Section~\ref{sec:rep-kvs}
 
-%\vspace{9pt}\noindent \textbf{Bud Implementation}\\
 \subsection{Bud Implementation}
 
 Bud was intended to be a lightweight rapid prototype of Bloom: a first effort at embodying the Dedalus logic in a syntax familiar to programmers.  Bud consists of less than 2400 lines of Ruby code, developed as a part-time effort by two of the authors over the course of a semester.
@@ -329,9 +326,10 @@ Because Bud is pure Ruby, some programmers may choose to embed it as a
 Domain-Specific Language within traditional imperative Ruby code.  In fact,
 nothing prevents a subclass of Bud from having both Bloom code in
 \texttt{declare} methods and imperative code in traditional Ruby methods.  This
-is a fairly common usage model for many domain-specific embedded languages. A mixture
-of declarative Bloom methods and imperative Ruby allows the full range of
-existing Ruby code---including the extensive RubyGems repositories---to be
+is a fairly common usage model for many domain-specific embedded languages. A
+mixture of declarative Bloom methods and imperative Ruby allows the full range
+of existing Ruby code---including the extensive RubyGems repositories---to be
 combined with checkable distributed Bloom programs. The analyses we describe in
 the remaining sections still apply in these cases; the imperative Ruby code
-interacts with the Bloom logic in the same way as any external agent sending and receiving network messages.
+interacts with the Bloom logic in the same way as any external agent sending and
+receiving network messages.
