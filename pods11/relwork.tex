@@ -16,6 +16,10 @@ concurrent systems in terms of constraints over valuations of state, and tempora
 \emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering'' is similar to our declarative definition 
 of table persistence.  Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (next and later), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
 
+\paa{mention linearizability~\cite{linearizability} and 
+serializability~\cite{serializability} as lower-level attempts to formalize
+similar notions of consistency for concurrent systems}
+
 \subsection{Distributed Systems}
 
 Significant recent work (\cite{boom-techr,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 

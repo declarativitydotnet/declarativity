@@ -110,7 +110,18 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 \end{definition}
 
 \begin{definition}
-A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates are persisted.
+A predicate is  {\em persistent} if any fact in the predicate is eventually henceforth true.
+\end{definition}
+
+Facts in persistent predicates are the only facts that appear in a program's ultimate models.
+Persistence is a semantic notion, but in certain cases it is detectable from the program's 
+syntax alone.  A rule of the form \dedalus{p(X)@next <- p(X);} clearly establishes \dedalus{p} as a persistent predicate for any EDB and execution in which \dedalus{p} is ever true. 
+We call a predicate referenced by such a rule
+a {\em simply persisted} predicate.  All EDB predicates are both simply persisted and 
+{\em a priori} true.
+
+\begin{definition}
+A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates are simply persisted.
 \end{definition}
 
 \begin{lemma}
@@ -153,27 +164,32 @@ We can generalize Lemma~\ref{lem:guarding} by the notion of a {\em monotonic pro
 If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
 \end{definition}
 
-%An example of a monotonic property would be a persistent fact, or the negation of a fact that is %%never true. 
 Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
 fact that will never be true.  We may define monotonic properties constructively as follows.
 
 \paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
 \wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
 
+
 \begin{definition}
-A fact in a persistent relation is a monotonic property. \wrm{what's a persistent relation?} \wrm{also, we should start from EDB, and say that's a persistent relation}
+A fact in a persistent predicate is a monotonic property. 
+\wrm{also, we should start from EDB, and say that's a persistent relation}
+\paa{need to clearly define EDB in dedalus.  those predicates appearing only in the RHS 
+of rules, which furthermore are persistent?  what do we call those predicates for which the 
+latter is false?}
 \end{definition}
 
-Facts in persistent relations cannot be retracted once they are asserted.  They begin false
+Note that facts in simply persistent relations cannot be retracted once they are asserted.  They begin false
 (insofar as their compliment can be asserted), and if they become true remain so.
 
 \begin{definition}
 A fact defined with even depth of negation over a monotonic property is also a monotonic property. \wrm{think this is better said as ``all paths through the PDG contain an even depth to the monotonic property''}
+\paa{hm, but a PDG is syntactic and we are defining these things in terms of derivations and facts}
 \end{definition}
 
 The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
 same as that the monotonic property.  In the absence of recursion, negation depth is a syntactically-checkable property.  Whenever there is recursion through negation
-(as in temporally stratified \lang programs~\ref{dedalus}), the negation depth is data-dependent.
+(as in temporally stratified \lang programs~\cite{dedalus}), the negation depth is data-dependent.
 
 \begin{definition}
 A fact defined via a rule application all of whose subgoals are monotonic properties is a
@@ -185,6 +201,10 @@ monotonic property.
 %computed by only monotonic properties. \wrm{may need some slight tweaking}
 A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.
 \end{definition}
+
+This list of constructive base cases for monotonic properties is not complete: later we will
+axiomatize the fact that certain coordination techniques can tranform an otherwise 
+nonmonotonic predicate into a monotonic property.
 
 \begin{example}
 %Example of a logically monotonic Dedalus program:\\
