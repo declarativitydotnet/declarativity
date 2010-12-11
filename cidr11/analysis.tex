@@ -1,19 +1,11 @@
-\section{CALM Analysis}
-Bloom programs define unordered collections and statements that describe
-transformations over these collections.  A Bloom program may be viewed as a
-dataflow graph with external inputs and outputs as sources and sinks,
-respectively, collections as internal nodes, and rules as edges.  Given this
-view, we may adapt powerful static analyses from the logic programming
-literature which are expressed as properties of such dataflow graphs.
-
-In this section, we implement a simple key-value store in Bud and analyze the
-resulting dataflow graph.  We begin with an interface for an abstract store, and
-extend it first into a single-site implementation and finally into a replicated implementation.
-Along the way, we use a dataflow visualization to reason about the completeness
-and correctness of the evolving program.
-
-% TODO: tee-up points of order
-% TODO: tee-up divergence into PDGs
+\section{Case Study: Key-Value Store}
+In this section, we present two variants of a key-value store implemented using
+Bloom. We begin with an abstract protocol that any key-value store will satisfy,
+and then provide both single-node and replicated implementations of this
+protocol. We then introduce a graphical visualization of the dataflow in a Bloom
+program, and use this visualization to reason about the \emph{points of order}
+in our programs: places in the program where additional coordination may be
+required to guarantee consistent results (Section~\ref{sec:calm}).
 
 \subsection{Abstract Key-Value Store Protocol}
 
@@ -197,27 +189,18 @@ programs in the following section.
 A Bloom program may be viewed as a dataflow graph with external input interfaces
 as sources, external output interfaces as sinks, collections as internal nodes,
 and rules as edges. This graph represents the dependencies between the
-collections in a program.
+collections in a program, and can be generated automatically by the Bud
+interpreter. A list of the different symbols and annotations in the graphical
+visualization can be found in Figure~\ref{fig:analysis-legend}; we provide a
+brief summary below.
 
- Before discussing the analysis itself, we first introduce the
-graphical dataflow representation used 
-
- To simplify this task, we use a graphical dataflow
-representation, which is d
-
-Now that we have introduced the abstract key-value store protocol and two
-concrete implemen
-
-The Bud interpreter can automatically generate a graph that represents the
-dependencies between collections in a program. Each node in the graph is either
-a collection or a cluster of collections; tables are shown as rectangles,
-ephemeral collections (scratch, periodic and channel) are depicted as ovals, and
-clusters (described below) as octagons.
-
-A directed edge from node $A$ to node $B$ indicates that $B$ appears in the lhs
-of a Bloom rule with $A$ referenced directly, or through a join expression, in
-the rhs.  An edge is annotated based on the operator symbol in the rule. If the
-rule uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked with
+Each node in the graph is either a collection or a cluster of collections;
+tables are shown as rectangles, ephemeral collections (scratch, periodic and
+channel) are depicted as ovals, and clusters (described below) as octagons. A
+directed edge from node $A$ to node $B$ indicates that $B$ appears in the lhs of
+a Bloom rule with $A$ referenced directly, or through a join expression, in the
+rhs.  An edge is annotated based on the operator symbol in the rule. If the rule
+uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked with
 $+$. This indicates that facts traversing the edge ``spend'' a timestep to move
 from the rhs to the lhs. Similarly, if the rule uses the \texttt{$<\sim$}
 operator, the edge is a dashed line---this indicates that facts from the rhs
@@ -228,17 +211,19 @@ readable, any strongly connected component marked with both a circle and a $+$
 edge is collapsed into an octagonal ``temporal cluster,'' which can be viewed
 abstractly as a single, non-monotonic node in the dataflow. \emph{Points of
   order} are indicated in the graph by an edge with a white circle.  Any
-non-monotonic edge in the graph is a point of order, as are all edges incident to
-a temporal cluster, including any self-edges.  Figure~\ref{fig:analysis-legend}
-provides a legend for the analysis visualizations.
+non-monotonic edge in the graph is a point of order, as are all edges incident
+to a temporal cluster, including any self-edges.
 
-\subsection{Analyses}
-Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the KVS protocol.  Data
-flows from the source node (an external caller) to one or both of \texttt{kvput} and 
-\texttt{kvget}, through some unknown dataflow, to \texttt{kvget\_response}.
-The existence of the red diamond labeled ``??'' indicates that the dataflow is underspecified:
-is must be ``completed'' by supplying dataflow that, at minimum, connects the input 
-interfaces to the output interface.
+\subsection{Analysis}
+Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the
+abstract key-value store protocol. The diagram depicts the semantics implied by
+the protocol's interfaces: data is inserted into the input interfaces
+(\texttt{kvput} and \texttt{kvget}), and results eventually appear in the output
+interface (\texttt{kvget\_response}). Naturally, the abstract protocol does not
+specify a connection between the input and output events; this is indicated in
+the diagram by the red diamond, which denotes an underspecified program. A
+concrete realization of the key-value store protocol must, at minimum, supply a
+dataflow that connects an input interface to the output interface.
 
 Figure~\ref{fig:pdg-kvs-analysis} shows the visual analysis of the basic KVS
 implementation, which supplies a concrete dataflow for the unspecified component
