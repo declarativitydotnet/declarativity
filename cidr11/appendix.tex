@@ -1,5 +1,5 @@
 \section{Networking Libraries}
-In Figures~\ref{fig:delivery-impl} and~\ref{fig:multicast-impl} we provide listings of our Bloom code for the best-effort unicast and multicast protocols mentioned above.
+Figures~\ref{fig:delivery-impl} and~\ref{fig:multicast-impl} show the remainder of the Bloom code used in this paper: best-effort protocols for unicast and multicast.
 \label{app:network-code}
 
 \begin{figure}[h]
@@ -57,7 +57,7 @@ module SimpleMulticast
 
   declare
   def done_mcast
-    mcast_done <= pipe_out.map{|p| [p.ident, p.payload]}
+    mcast_done <= pipe_sent.map{|p| [p.ident, p.payload]}
   end
 end
 \end{lstlisting}

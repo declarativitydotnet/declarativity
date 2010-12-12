@@ -1,26 +1,20 @@
 \section{Conclusion and Future Work}
 \label{sec:conclusion}
-In this paper, we make three main contributions.  First, we present the CALM
-principle, which connects the common practice of eventual consistency in
-distributed programming to a strong theoretical foundation in database theory.
+In this paper we make three main contributions.  First, we present the CALM
+principle, which connects the notion of eventual consistency in
+distributed programming to theoretical foundations in database theory.
 Second, we show that we can bring that theory to bear on the practice of
-software development, via ``disorderly'' programming patterns and automatic
-analysis techniques for identifying the points of order in a program. Finally,
-we present our Bloom prototype as an example of a practically-minded declarative
+software development via ``disorderly'' programming patterns, complemented with automatic
+analysis techniques for identifying and managing a program's points of order in a principled way. Finally,
+we present our Bloom prototype as an example of a practically-minded disorderly and declarative
 programming language, with an initial implementation as a domain-specific
 language within Ruby.
 
 We plan to extend the work described in this paper in several directions. First,
-we plan to build more complex distributed systems using Bloom; in the past, we
-have found that building real systems is a useful way to verify the practicality
-of a research language design~\cite{boom-eurosys}.  Second, we hope to expand
-our suite of analysis techniques. For instance, a common design pattern for
-loosely-consistent distributed systems is to ensure that operations are
-idempotent~\cite{beyond,quicksand}. A program analysis that identifies when
-distributed services are sensitive to duplicate operations (i.e.,
-non-idempotent) would help programmers apply this design pattern. In addition to
-program analysis, we are hopeful that Bloom will enable us to develop better
-tools and techniques for debugging and systematic testing of distributed
-systems, perhaps drawing on recent work on this topic~\cite{fate-destini}.
-
-\jmh{Paragraph on What's Next.  One thing is to build big things and refine the language---remind them about Eurosys paper and promise more systems work.  Another is to take more advantage of the language for checking/testing properties---make mention of Haryadi's work and also Alloy-like things for debugging and proving properties. Additionally, we're nailing down the theory behind CALM and dealing with replica consistency directly, rather than just through ``order independence''.  Should we promise to connect better to transactional interleaving?}
+we are building a more mature Bloom language environment, including a library of modules for distributed computing.  We intend to compose 
+those modules to implement a number of variants of distributed systems. The design of Bloom 
+itself was motivated by our experience implementing scalable services and protocols in Overlog~\cite{boom-eurosys,netdb}, and this practice of system/language co-design continues to be part of our approach.  Second, we hope to expand
+our suite of analysis techniques to address additional important properties in distributed systems, including idempotency and invertability of interfaces. Third, we are hopeful that the logic foundation of Bloom will enable us to develop better
+tools and techniques for the debugging and systematic testing of distributed
+systems under failure and security attacks, perhaps drawing on recent work on this topic~\cite{fate-destini,secureblox}.
+Finally, we are working to formally tighten our ideas connecting non-monotonic logic, distributed coordination, and consistency of distributed programs~\cite{podskey-sigrec}.
