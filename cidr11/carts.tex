@@ -195,8 +195,7 @@ module DisorderlyCart
   def do_checkout
     del_items = action_cnt.map{|a| a.item if a.action == "Del"} (*\label{line:dis_checkout_no_item_beg}*)
     status <= join([action_cnt, checkout_msg]).map do |a, c|
-		(*\label{line:dis_checkout_negation}*)
-      if a.action == "Add" and not del_items.include? a.item
+      if a.action == "Add" and not del_items.include? a.item  (*\label{line:dis_checkout_negation}*)
         [c.client, c.server, a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
       end
     end (*\label{line:dis_checkout_no_item_end}*)
@@ -210,9 +209,8 @@ module DisorderlyCart
       end
     end (*\label{line:dis_checkout_item_end}*)
 
-    response_msg <~ status (*\label{line:dis_checkout_response}*)
-    response_msg <~ status.group(
-      [status.client, status.server, status.session],  (*\label{line:dis_checkout_response_beg}*)  
+   response_msg <~ status.group( (*\label{line:dis_checkout_response_beg}*)
+      [status.client, status.server, status.session],
       accum((0..status.cnt).map{status.item})) (*\label{line:dis_checkout_response_end}*)
   end
 end
@@ -252,7 +250,7 @@ of additions and deletions (line~\ref{line:dis_status_diff}), or simply the
 number of additions if there are no deletions (line~\ref{line:dis_status_add}).
 Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \texttt{response\_msg} to the client containing the final quantity
-(lines~\ref{line:dis_checkout_response_beg}--~\ref{line:dis_checkout_response_end}).
+(lines~\ref{line:dis_checkout_response_beg}--\ref{line:dis_checkout_response_end}).
 The set of items in the cart is collapsed into an array via a user-defined aggregate
 function \texttt{accum}, to match the format expected by CartClient (and used in the previous
 example in Figure~\ref{fig:dest-cart}).
@@ -270,7 +268,7 @@ example in Figure~\ref{fig:dest-cart}).
 \centering
 \includegraphics[width=1.1\linewidth]{fig/destructive_kvs.pdf}
 \vspace{-10pt}
-\caption{Visualization of the ``destructive'' cart program.  \jmh{These figs are a bit too small -- when I print them they're illegible.}}
+\caption{Visualization of the ``destructive'' cart program.}
 \label{fig:pdg-destructive-kvs-analysis}
 \vspace{-2pt}
 \end{figure}
@@ -360,7 +358,7 @@ of multicast that awaits acknowledgements from all replicas before reporting com
 Because we only care about the \emph{set} of elements contained in the value array
 and not its order, we might be tempted to argue that 
 the shopping cart application is eventually consistent
-when asynchronously updated, and forego the coordination logic.  Unfortunately,
+when asynchronously updated and forego the coordination logic.  Unfortunately,
 such informal reasoning can hide serious bugs. For example, consider what would happen if a delete action for an item arrived at some replica
 before any addition of that item: the delete would be ignored, leading to
 inconsistencies between replicas.
