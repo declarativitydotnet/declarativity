@@ -73,7 +73,7 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 		\textbf{channel} & A scratch collection with one attribute designated as
         the {\em location specifier}. Tuples ``appear'' at the network address stored in their location specifier.\\
 		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The definition of a periodic collection is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
-    \textbf{interface} & A scratch collection specially designated as an interface point between modules.  An interface is typed as either \texttt{input} or \texttt{output} and may only \jmh{what does compose mean?} compose with an interface of the opposite type.\\
+    \textbf{interface} & A scratch collection specially designated as an interface point between modules.\\
 		\hline
 	\end{tabular}
 
@@ -166,11 +166,11 @@ like Postgres~\cite{postgres-adt}, column values can be manipulated using their
 own (non-destructive) methods. Bloom also provides for nesting and unnesting of
 collections using standard Ruby constructs like \texttt{reduce} and
 \texttt{flat\_map}. Note that collections in Bloom implement set semantics
-(collections are duplicate-free).
+(collections do not contain duplicates).
 
 The persistence of a tuple is determined by the type of the collection that
 contains the tuple. \textbf{scratch} collections are handy for transient data
-like intermediate results, and ``macro'' definitions that enable code reuse. The
+like intermediate results and ``macro'' definitions that enable code reuse. The
 contents of a \textbf{table} persist across consecutive timesteps (until that
 persistence is interrupted via a Bloom statement containing the \texttt{$<$-}
 operator described below). Although there are precise declarative semantics for
@@ -195,9 +195,9 @@ intervals to ``drive'' further derivations. Lines~\ref{line:data_chan_ddl} and
 \ref{line:timer_ddl} in Figure~\ref{fig:bloom-example} contain examples of
 channel and periodic definitions, respectively.
 
-Bloom programs compose with other Bloom programs and with external callers at
-unidirectional scratch collections called \textbf{interfaces}, which are described in more
-detail in Section~\ref{sec:modularity}.
+The final type of collection is an \textbf{interface}, which describes a
+connection point between Bloom modules. Interfaces are described in
+Section~\ref{sec:modularity}.
 
 \subsection{Bloom Statements}
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
@@ -212,11 +212,11 @@ the five operators that can be used to define the contents of the left-hand
 side (lhs) in terms of the right-hand side (rhs).  
 \jmh{We should probably add a table of BudCollection methods, and a mention of it here and in the next paragraph. Could include the commonly-used parts of Enumerable like map, reduce, flat\_map, include? and empty?, and some of the ones we wrote---group, argagg, argmax, argmin.  And then operations on BudCollections, i.e. join and its variants (natjoin, leftjoin).}
 
-As in Datalog or SQL, the lhs of a statement may be referenced recursively in
-its rhs, or recursion can be defined mutually across statements.  The rhs
-typically includes methods of \texttt{BudCollection} objects.  Most common is
-the \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a
-scalar operation to every tuple in a collection; this can be used to implement
+As in Datalog, the lhs of a statement may be referenced recursively in its rhs,
+or recursion can be defined mutually across statements.  The rhs typically
+includes methods of \texttt{BudCollection} objects.  Most common is the
+\texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a scalar
+operation to every tuple in a collection; this can be used to implement
 relational selection and projection. For example, line~\ref{line:data_chan_proj}
 of Figure~\ref{fig:bloom-example} projects the \texttt{data\_chan} collection to
 its \texttt{src}, \texttt{dst}, and \texttt{ident} fields.  Multiway equijoins
@@ -225,22 +225,22 @@ collections and an optional set of columns that specify the equijoin predicate.
 Lines~\ref{line:ack_join_beg}--\ref{line:ack_join_end} of
 Figure~\ref{fig:bloom-example} show a join between \texttt{ack\_chan} and
 \texttt{send\_buf}. Syntax sugar for natural joins and outer joins is also
-provided. \texttt{BudCollection} defines a \texttt{group} method similar to SQL's
-\texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
+provided. \texttt{BudCollection} defines a \texttt{group} method similar to
+SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
 lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
-Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid}
-values for every combination of values for \texttt{session}, \texttt{item} and
+Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid} values for
+every combination of values for \texttt{session}, \texttt{item} and
 \texttt{action}.
 
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
-Programmers declare Bloom statements within methods of a Bud subclass
-definition that are flagged with the \texttt{declare} keyword (e.g.,
-line~\ref{line:send_packet_declare} of Figure~\ref{fig:bloom-example}). The semantics
-of a Bloom program are defined by the union of all the \texttt{declare}
-methods; the order of statements is immaterial. Dividing statements into multiple
-methods improves the readability of the program and allows use of Ruby's method
-overriding and inheritance features, as described below.  
+Programmers declare Bloom statements within method definitions that are flagged
+with the \texttt{declare} keyword (e.g., line~\ref{line:send_packet_declare} of
+Figure~\ref{fig:bloom-example}). The semantics of a Bloom program are defined by
+the union of its \texttt{declare} methods; the order of statements is
+immaterial. Dividing statements into multiple methods improves the readability
+of the program and allows the use of Ruby's method overriding and inheritance
+features, as described below.
 %\jmh{See previous comment -- this may no longer be ``described below''.}
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.

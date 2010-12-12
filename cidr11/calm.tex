@@ -2,7 +2,7 @@
 \label{sec:calm}
 In this section we present the connection between distributed consistency and logical monotonicity.  This discussion informs the language and analysis tools we develop in subsequent sections.
 
-A key problem in distributed programming is to reason about the consistent behavior of a program in the face of {\em
+A key problem in distributed programming is reasoning about the consistent behavior of a program in the face of {\em
 temporal nondeterminism}: the delay and re-ordering of messages and data across
 nodes.  Because delays can be unbounded, analysis typically focuses on ``eventual consistency'' after all messages have been delivered~\cite{vogels}.  A sufficient condition for eventual consistency is {\em order independence}: the independence of program execution from temporal
 nondeterminism.
@@ -15,7 +15,7 @@ The theory of relational databases and logic programming provides a framework to
 %%\nrc{The meaning of ``complete logical subset'' in the preceding sentence is unclear.} \jmh{switched to ``logical set partitions'', which is at least technically well-defined, though perhaps makes for vague english.  The example right after hopefully clears this up, no?}  
 For example, aggregation queries need to receive entire ``groups'' before producing aggregates, which in general requires receiving the entire input set.
 
-The implications for distributed programming and delayed messaging are clear. Monotonic programs are easy to distribute: they can be implemented via streaming set-based algorithms that produce actionable outputs to consumers while tolerating message reordering and delay from producers.  By contrast, even simple non-monotonic tasks like counting are difficult in distributed systems.  As a mnemonic, we say that \emph{counting requires waiting} in a distributed system: in general, a complete count of distributed data must wait for all its inputs, including stragglers, before producing the correct output.
+The implications for distributed programming are clear. Monotonic programs are easy to distribute: they can be implemented via streaming set-based algorithms that produce actionable outputs to consumers while tolerating message reordering and delay from producers.  By contrast, even simple non-monotonic tasks like counting are difficult in distributed systems.  As a mnemonic, we say that \emph{counting requires waiting} in a distributed system: in general, a complete count of distributed data must wait for all its inputs, including stragglers, before producing the correct output.
 % ; the alternative is to risk generating outputs that may be prove to be inconsistent with the full input once it arrives.    For example, an antijoin may output a row incorrectly if it does not wait for all the input records; similarly a SUM may be incorrectly reported as below a threshhold if only a subset of the records are summed.  
 
 ``Waiting'' is specified in a program via \emph{coordination logic}: code that (a) computes and transmits auxiliary information from producers to enable the recipient to determine when a set has completely arrived across the network, and (b) postpones production of results for consumers until after that determination is made.  Typical coordination mechanisms include sequence numbers, counters, and consensus protocols like Paxos or Two-Phase Commit.
@@ -28,7 +28,11 @@ The implications for distributed programming and delayed messaging are clear. Mo
 % on it.  
 %Monotonic operators require no coordination logic.
 
-Interestingly, these coordination mechanisms themselves typically involve counting.  For example, Paxos requires message counting to establish that a majority of the members have agreed to a proposal; Two-Phase Commit requires message counting to establish  that all members have agreed.  Hence we also say that \emph{waiting requires counting}, the converse of our earlier mnemonic.  
+Interestingly, these coordination mechanisms themselves typically involve
+counting.  For example, Paxos requires counting messages to establish that a
+majority of the members have agreed to a proposal; Two-Phase Commit requires
+counting to establish that all members have agreed.  Hence we also say that
+\emph{waiting requires counting}, the converse of our earlier mnemonic.
 
 Our observations about waiting and counting illustrate the crux of what we call the \emph{CALM} principle: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs \emph{guarantee} eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires coordination schemes that ``wait'' until inputs can be guaranteed to be complete.  
 
@@ -69,7 +73,11 @@ its points of order.
 
 The reader may observe that because ``waiting requires counting,'' adding a code module with coordination logic actually increases the number of syntactic points of order in a program.  To avoid this problem, the coordination module itself must be verified for order independence either ``by hand'', or via a refined monotonicity test during analysis.  In cases where the verification is done by hand, annotations can inform the analysis tool to skip the module in its analysis, and hence avoid attempts to coordinate the coordination logic.  
 
-Because analyses based on the CALM principle operate with information about program semantics, they can avoid coordination logic in cases where traditional read/write analysis would require it.  Perhaps more importantly, as we will see in the next sections, logic languages and the analysis of points of order can help programmers redesign code to achieve goals of minimizing coordination.
+Because analyses based on the CALM principle operate with information about
+program semantics, they can avoid coordination logic in cases where traditional
+read/write analysis would require it.  Perhaps more importantly, as we will see
+in the next sections, logic languages and the analysis of points of order can
+help programmers redesign code to reduce coordination requirements.
 
 %%\jmh{Should we say this: in the full paper, we will more directly show how CALM analysis relates to read/write analyses like serializability?}
 
