@@ -12,10 +12,6 @@ module BestEffortDelivery
       ['@dst', 'src', 'ident'], ['payload']
   end
 
-  def initialize(host, port, opts)
-    @addy = "#{host}:#{port}"
- end
-
   declare
   def snd
     pipe_chan <~ pipe_in
@@ -54,7 +50,7 @@ module Multicast
   declare
   def snd_mcast
     pipe_in <= join([send_mcast, members]).map do |s, m|
-      [m.peer, @addy, s.ident, s.payload]
+      [m.peer, @local_addr, s.ident, s.payload]
     end
   end
 
