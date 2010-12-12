@@ -1,9 +1,11 @@
+
+
 \section{\large \bf \lang}
 \label{sec:slang}
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$, represented by the unary relation \dedalus{time}). The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe.
 
-We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model message re-ordering, delay, and channel failure.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
+We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model the inherent non-determinism of asynchronous computation.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -71,7 +73,7 @@ When we talk about the {\em predicate dependency graph} (PDG)~\cite{ullmanbook} 
 
 \vspace{1em}
 \noindent {\bf EDB:}
-By convention, EDB facts are supplied without a time suffix, and are true at all times.  Like Datalog, we require the EDB to be finite.
+By convention, EDB facts are supplied without a time suffix, and are true at time \dedalus{0}.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
 \noindent {\bf Distribution:}
@@ -116,10 +118,10 @@ By convention, EDB facts are supplied without a time suffix, and are true at all
 %\wrm{explain motivation for non-determinism.  why don't we just treat the whole world as synchronous?}
 
 \subsection{Semantics}
-Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model.~\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different non-deterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible delays and interleavings of messages.
+Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model.~\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different non-deterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible executions of a distributed system.
 %A stable model of a \lang program is a trace of one of its possible distributed executions,.
 
-However, there are two issues with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may be infinite.
+However, there are two issues with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may be infinite.  We address both concerns in our definition of an {\em ultimate model}.
 
 \begin{example}
 \label{ex:flipflop}
@@ -134,8 +136,6 @@ flipflop(1,2)@1;
 \end{example}
 
 %by regarding the output of the program as those facts that are eventually always true.  Thus, if two stable models differ only momentarily, but are ``eventually the same,'' we regard these stable models as producing the same output.
-
-We address both concerns in our definition of an {\em ultimate model}.
 
 %\subsubsection{Ultimate Models}
 
@@ -200,35 +200,21 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \subsection{Operational Interpretation}
 %\wrm{talk about operational interpretation of choice}
-A \lang program is intended to capture the execution of an asynchronous distributed system.  An important property of distributed systems is that individual computers cannot control or observe the temporal interleaving of their computations with other computers.  One aspect of this uncertainty is captured in network delays: the arrival ``time'' of messages cannot be directly controlled by either sender or receiver.
+Operationally, we can model a \lang execution as a collection of Turing Machines caled nodes, each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts from atemporal rules are written to the tape, and for inductive rules are written to the queue.  Upon completion of a phase, the Turing Machine optionally sends messages about derived facts from asynchronous rules to the queues of the nodes indicated in the location specifiers.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
 
-For example, a fact, \dedalus{p($C_1 \ldots C_n$, $C_{n+1}$)}, with some constant $C_{n+1}$ in its time
-suffix can be thought of as a fact that is true ``at time $C_{n+1}$''.
+In other words, a fact, \dedalus{p(\(\bar{c}\), t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true ``at time \dedalus{t}''.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true ``for an instant'' given what is known at that instant. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true ``at a different time'' than their antecedents.
 
-Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for 
-predicates agreeing in the time suffix and describe what is true ``for an instant'' given 
-what is known at that instant.
- Inductive and asynchronous 
- rules are {\em temporal}---their consequents are defined to
-be true ``at a different time'' than their antecedents.
+Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable.
 
-Operationally, we can model a \lang execution as a collection of Turing Machines, each enhanced with an input queue; the machine is polynomially time bounded, during which time it can perform normal operations, and additionally write to its queue, or the queue of any other machine; after the machine has executed, the tape is erased, and atomically, the queue is erased and the tape initialized with the contents of the queue. \wrm{how do we decide whether the Turing Machine has accepted???? need coordination?}
+Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  With asynchronous rules we have an additional complication: messages may be delayed arbitrarily.  We run iterations of their algorithm, keeping track of which subsets of messages we've seen.  If in some iteration, we do not see a new subset, we have computed the ultimate model.  Since there are only finitely many possible subsets of messages, we will eventually see them all and eventually terminate.
+
+We now prove that our model-theoretic and operational semantics are equivalent.
 
 \begin{lemma}
-For any \lang program, the family of ultimate models is the same as the elements which are eventually always in the queue of the Turing Machine. \wrm{blah}
+For any \lang program, the family of ultimate models exactly corresponds to the ultimate models achievable by the operational formalism.
 \end{lemma}
 \begin{proof}
+
+
+
 \end{proof}
-
-\wrm{fit in}
-By restricting bodies to a single agent, the only communication
-modeled in \lang is modeled by communication rules.  Second, because
-all communication rules are asynchronous, agents may only learn about
-time values at another agent by receiving messages (with unbounded
-delay) from that agent.  Note that this model says nothing about the
-relationship between the agents' clocks; they could be
-non-monotonically increasing, or they could respect a global order.
-
-%\subsection{Complexity}
-%
-%The language of confluent \lang programs is equal to the language of PSPACE, provided we introduce a \dedalus{bit} relation as described in Immerman.  The main part of the proof is that adding recursion or choice to FO[PFP] does not screw things up.  \wrm{This may not be important for the paper, but I feel we should at least mention something offhand so people don't think ``wow you've got this language but can it really express a wide range of distributed systems?''  Also, the fact that it corresponds so well with existing languages suggests it's a natural characterization.}
