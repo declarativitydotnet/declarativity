@@ -194,7 +194,7 @@ kvs.run_bg  (*\label{line:run}*)
 \end{lstlisting}
 \centering
 \vspace{-10pt}
-\caption{A fully specified key-value store class.}
+\caption{A fully specified key-value store program.}
 \label{fig:kvs-budclass}
 \end{scriptsize}
 \vspace{-2pt}
@@ -258,15 +258,20 @@ component in the previous graph.  \texttt{kvstate} and \texttt{prev} are
 collapsed into a red octagon because they are part of a strongly connected
 component in the graph with both negative and temporal edges.  Any data flowing
 from \texttt{kvput} to the sink must cross at least one non-monotonic point of
-order (at ingress to the octagon) and possibly an arbitrary number of them
-(by traversing the dependency cycle collapsed into the octagon), and any path from \texttt{kvget} to the sink must join
-state potentially affected by non-monotonicity (because \texttt{kvstate} is used
-to derive \texttt{kvget\_response}).
+order (at ingress to the octagon) and possibly an arbitrary number of them (by
+traversing the dependency cycle collapsed into the octagon), and any path from
+\texttt{kvget} to the sink must join state potentially affected by
+non-monotonicity (because \texttt{kvstate} is used to derive
+\texttt{kvget\_response}).
 
-Reviewing the code in Figure~\ref{fig:kvs-impl}, we see the source of the non-monotonicity.  
-The contents of \texttt{kvstate} at a given time may be have been defined via a ``destructive'' deletion (in
-part; line \ref{line:kvs-clean}) based on the previous state, and input from \texttt{kvput}.  Hence the contents of \texttt{kvstate} at
-any point in time may depend on the order of arrival of \texttt{kvput} tuples.
+Reviewing the code in Figure~\ref{fig:kvs-impl}, we see the source of the
+non-monotonicity.  The contents of \texttt{kvstate} may be defined via a
+``destructive'' update that combines the previous state and the current input
+from \texttt{kvput} (lines~\ref{line:kvs-put}--\ref{line:kvs-clean} of
+Figure~\ref{fig:kvs-impl}). Hence the contents of \texttt{kvstate} may depend on
+the order of arrival of \texttt{kvput} tuples.
+
+
 % This non-monotonicity is endemic in the key constraints of the KVSProtocol interface of Figure~\ref{fig:kvs-protocol}, which can only return a single \textt{value} in a \textt{kvget\_response}; this requires the cart to grow via destructive modification to the attribute of a single tuple.
 % I WROTE THE ABOVE SENTENCE BUT DON'T BELIEVE IT, so I commented out the following as well.  -- JMH
 %  We challenge the reader to implement the KVSProtocol interface in a way that
