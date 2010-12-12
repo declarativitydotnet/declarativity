@@ -38,9 +38,9 @@ has a familiar and programmer-friendly flavor, and we believe that its learning
 curve will be relatively flat for programmers familiar with modern scripting
 languages.  Bud uses a Ruby-flavored syntax, but this is not fundamental; we
 have experimented with analogous Bloom embeddings in other languages including
-Python, Erlang and Scala, and they look similar in structure.  In the remainder
-of the paper, when we refer to Bloom we mean the language supported by the Bud
-prototype.
+Python, Erlang and Scala, and they look similar in structure.
+% In the remainder of the paper, when we refer to Bloom we mean the language
+% supported by the Bud prototype.
 
 \subsection{Bloom Basics}
 Bloom programs are bundles of declarative statements about collections of
@@ -165,8 +165,8 @@ columns of the collection's schema.  As in other object-relational ADT schemes
 like Postgres~\cite{postgres-adt}, column values can be manipulated using their
 own (non-destructive) methods. Bloom also provides for nesting and unnesting of
 collections using standard Ruby constructs like \texttt{reduce} and
-\texttt{flat\_map}. Note that collections in Bloom implement set semantics
-(collections do not contain duplicates).
+\texttt{flat\_map}. Note that collections in Bloom provide set
+semantics---collections do not contain duplicates.
 
 The persistence of a tuple is determined by the type of the collection that
 contains the tuple. \textbf{scratch} collections are handy for transient data
@@ -210,19 +210,25 @@ the operator are instances of (a subclass of) a Ruby class called
 \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
 module supporting typical collection methods.  The bottom of Figure~\ref{tab:bloom} describes
 the five operators that can be used to define the contents of the left-hand
-side (lhs) in terms of the right-hand side (rhs).  
-\jmh{We should probably add a table of BudCollection methods, and a mention of it here and in the next paragraph. Could include the commonly-used parts of Enumerable like map, reduce, flat\_map, include? and empty?, and some of the ones we wrote---group, argagg, argmax, argmin.  And then operations on BudCollections, i.e. join and its variants (natjoin, leftjoin).}
+side (lhs) in terms of the right-hand side (rhs).
+\begin{comment}
+\jmh{We should probably add a table of BudCollection methods, and a mention of
+  it here and in the next paragraph. Could include the commonly-used parts of
+  Enumerable like map, reduce, flat\_map, include? and empty?, and some of the
+  ones we wrote---group, argagg, argmax, argmin.  And then operations on
+  BudCollections, i.e. join and its variants (natjoin, leftjoin).}
+\end{comment}
 
 As in Datalog, the lhs of a statement may be referenced recursively in its rhs,
 or recursion can be defined mutually across statements.  The rhs typically
 includes methods of \texttt{BudCollection} objects.  Most common is the
 \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a scalar
-operation to every tuple in a collection; this can be used to implement
+operation to every tuple in a collection---this can be used to implement
 relational selection and projection. For example, line~\ref{line:data_chan_proj}
 of Figure~\ref{fig:bloom-example} projects the \texttt{data\_chan} collection to
 its \texttt{src}, \texttt{dst}, and \texttt{ident} fields.  Multiway equijoins
 are specified using the \texttt{join} method, which takes a list of input
-collections and an optional set of columns that specify the equijoin predicate.
+collections and an optional set of columns that specify the equijoin condition.
 Lines~\ref{line:ack_join_beg}--\ref{line:ack_join_end} of
 Figure~\ref{fig:bloom-example} show a join between \texttt{ack\_chan} and
 \texttt{send\_buf}. Syntax sugar for natural joins and outer joins is also
@@ -240,12 +246,13 @@ with the \texttt{declare} keyword (e.g., line~\ref{line:send_packet_declare} of
 Figure~\ref{fig:bloom-example}). The semantics of a Bloom program are defined by
 the union of its \texttt{declare} methods; the order of statements is
 immaterial. Dividing statements into multiple methods improves the readability
-of the program and allows the use of Ruby's method overriding and inheritance
-features, as described below.
-%\jmh{See previous comment -- this may no longer be ``described below''.}
+of the program. It also allows the use of Ruby's method overriding and
+inheritance features: because a Bloom class is just a stylized Ruby class,
+any of the methods in a Bloom class can be overridden by a sub-class.
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
+\begin{comment}
 The constructs above form the core of the Bloom language.
 % nrc: I think this is tangential anyway; removing for now
 % ; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{Papadimitriou85}.  
@@ -254,6 +261,7 @@ The constructs above form the core of the Bloom language.
 Bud also includes some additional convenience methods that provide macros over
 these methods and allows the use of simple side-effect-free Ruby expressions
 within statements.
+\end{comment}
 
 \subsection{Modules and Interfaces}
 \label{sec:modularity}
@@ -302,14 +310,14 @@ ReliableDelivery module is one possible implementation of the abstract
 DeliveryProtocol interface---it uses a buffer and acknowledgment messages to
 delay emitting a \texttt{pipe\_out} fact until the corresponding message has
 been acknowledged by the remote node. Figure~\ref{fig:delivery-impl} in
-Appendix~\ref{app:network-code} contains a different realization of the abstract
-DeliveryProtocol. A client program that is indifferent to the details of message
-delivery can simply interact with the abstract DeliveryProtocol; the particular
-implementation of this protocol can be chosen at runtime.
+Appendix~\ref{app:network-code} contains a different implementation of the
+abstract DeliveryProtocol. A client program that is indifferent to the details
+of message delivery can simply interact with the abstract DeliveryProtocol; the
+particular implementation of this protocol can be chosen at runtime.
 
 A common requirement is for one module to ``override'' some of the rules in a
 module that it mixes-in. For example, an OrderedDelivery module might want to
-reuse the functionality provided by ReliableDelivery, but prevent a message with
+reuse the functionality provided by ReliableDelivery but prevent a message with
 sequence number $x$ from being delivered until all messages with sequence
 numbers $<x$ have been acknowledged. To support this pattern, Bloom allows an
 interface defined in another module to be overridden simply by redeclaring
