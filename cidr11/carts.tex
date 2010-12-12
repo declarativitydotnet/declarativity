@@ -195,6 +195,7 @@ module DisorderlyCart
   def do_checkout
     del_items = action_cnt.map{|a| a.item if a.action == "Del"} (*\label{line:dis_checkout_no_item_beg}*)
     status <= join([action_cnt, checkout_msg]).map do |a, c|
+		(*\label{line:dis_checkout_negation}*)
       if a.action == "Add" and not del_items.include? a.item
         [c.client, c.server, a.session, a.item, a.cnt] (*\label{line:dis_status_add}*)
       end
