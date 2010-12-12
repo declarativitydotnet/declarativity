@@ -1,7 +1,8 @@
 \section{Networking Libraries}
+In Figures~\ref{fig:delivery-impl} and~\ref{fig:multicast-impl} we provide listings of our Bloom code for the best-effort unicast and multicast protocols mentioned above.
 \label{app:network-code}
 
-\begin{figure}[t]
+\begin{figure}[h]
 \begin{scriptsize}
 \begin{lstlisting}
 module BestEffortDelivery
@@ -19,7 +20,7 @@ module BestEffortDelivery
 
   declare
   def done
-    pipe_out <= pipe_in
+    pipe_sent <= pipe_in
   end
 end
 \end{lstlisting}
@@ -32,7 +33,7 @@ end
 \end{figure}
 
 
-\begin{figure}[t]
+\begin{figure}[h]
 \begin{scriptsize}
 \begin{lstlisting}
 module MulticastProtocol
