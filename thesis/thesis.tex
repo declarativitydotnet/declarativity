@@ -39,6 +39,7 @@
 \usepackage{subfig}
 \usepackage{algorithm}
 \usepackage{algorithmic}
+\usepackage{listings}
 
 
 %\includeonly{mimo}
@@ -105,6 +106,14 @@
 
 
 \begin{document}
+\lstset{
+language=Prolog,
+basicstyle=\footnotesize, % the size of the fonts that are used for the code
+%numbersep=10pt,    % how far the line-numbers are from the code
+%numbers=left,       % where to put the line-numbers
+escapeinside={\%*}{*)}, % if you want to add a comment within your code
+frame=single	   % adds a frame around the code
+}
 
 % ========================
 % Part I: Front Matters

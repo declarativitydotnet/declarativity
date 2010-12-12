@@ -54,29 +54,29 @@ expressed as \OVERLOG queries.  Expressing the optimization algorithms as
 code and a dramatic reduction in the overall development effort.
  
 Following Evita Raced work, we turn our attention to another system that has
-gained in popularity recently~\footnote{Around $2010$, the year this thesis was
-written.} -- Apache Hadoop~\cite{hadoop}.  Hadoop is an open source software
-project that implements the MapReduce programming model~\cite{mapreduce-osdi}.
-In our work, we investigate the Hadoop scheduler component, which is housed
-within the centralized coordinator (master) of the MapReduce engine.  It is
-entirely written in the (relatively) low-level Java language~\cite{java}.  Java
-was developed in $1991$, and quickly became the language for the web
-development~\cite{java-history}.  Today, Java is used to develop many popular
-{\emph cloud} applications~\cite{pig-sigmod, hive-vldb, zookeeper, hbase,
-cassandra}.  These {\emph cloud computing} applications are being used by large
-Internet companies to mine information from massive amount of data, using the
-computational power and storage of a data center (the cloud), at an unforeseen
-scale.  The information compiled by these cloud applications translate to
-bottom line returns, and innovate along new Internet services based on
-extracted trends.  Unfortunately, they take time to get right, and once
-written, are incredibly difficult to extend with new features.  We believe a
-declarative approach is in order.
+gained in popularity recently -- Apache Hadoop~\cite{hadoop}.  Hadoop is an
+open source software project that implements the MapReduce programming
+model~\cite{mapreduce-osdi}.  In our work, we investigate the Hadoop scheduler
+component, which is housed within the centralized coordinator (master) of the
+MapReduce engine.  It is entirely written in the (relatively) low-level Java
+language~\cite{java}.  Java was developed in $1991$, and quickly became the
+language for the web development~\cite{java-history}.  Today, Java is used to
+develop many popular {\emph cloud} applications~\cite{pig-sigmod, hive-vldb,
+zookeeper, hbase, cassandra}.  These {\emph cloud computing} applications are
+being used by large Internet companies to mine information from massive amount
+of data, using the computational power and storage of a data center (the
+cloud), at an unforeseen scale.  The information compiled by these cloud
+applications translate to bottom line returns, and guides the innovation of new
+Internet services based on extracted trends.  Unfortunately, writing
+distributed software takes time to get right, and once written, it is difficult
+to extend with new features.  We believe that a declarative approach is in
+order.
 
 The remaining chapters of this dissertation focus on the contributions made
 during the early stages of the {\em Berkeley Orders Of Magnitude} (\BOOM)
 project, which evaluates the use of a declarative language in building
 distributed system software for today's data center architecture (clusters of
-commodity machines).  As we have already alluded, building and debugging
+commodity machines).  As we have already suggested, building and debugging
 distributed software remains extremely difficult in today's Java environment.
 We conjecture that by adopting a \emph{data-centric} approach to system design
 and by employing \emph{declarative} programming languages, a broad range of

@@ -53,8 +53,7 @@ semina\"{\i}ve evaluation.  In Section~\ref{ch:evita:sec:local}, we describe our
 \OVERLOG rules for expressing the localization rewrite~\cite{p2:sosp}, which
 rewrites distributed (join) rules into a locally executable form.  We conclude
 in Section~\ref{ch:evita:sec:summary} with some final thoughts on the Evita
-Raced architecture.  The next two chapters then describe our primary use of
-Evita Raced for expressing query optimizations.
+Raced architecture.  
 
 \section{Declarative Compilation}
 \label{ch:evita:sec:compile}
@@ -79,7 +78,7 @@ optimizer.
 \ssp
 \begin{center}
 \includegraphics[scale=1.2]{figures/ERDiagram}
-\caption{ER Diagram of a query plan in P2. The primary key columns shown in bold.}
+\caption{ER Diagram of a query plan in P2.}
 \label{ch:evita:fig:p2er}
 \end{center}
 \end{figure*}
@@ -94,21 +93,35 @@ Evita Raced was to capture this information in a relational schema.
 
 Figure~\ref{ch:evita:fig:p2er} shows an Entity-Relationship diagram we
 developed that captures the properties of an \OVERLOG program, and its
-associated P2 dataflow query plans.  We derived the constraints in the diagram
-by reviewing the semantic analysis rules enforced in the original P2 compiler;
-we discuss a few of them here for illustration.  An \OVERLOG~{\em rule} must
-appear in exactly one {\em program}.  A {\em select} term (e.g.,
-\ol{f\_contains(X,P2) == false} in Figure~\ref{ch:p2:fig:overlogSP}) is a
-Boolean expression over attributes in the predicates of the rule, and must
-appear in exactly one {\em rule}.  The diagram indicates that a {\em predicate}
-must also appear in a unique {\em rule}, and that it may possibly reference a
-single {\em table}.  A predicate that references a table is called a {\em table
-predicate} (or a \emph{materialized predicate}), while one that does not
-reference a table is called an {\em event predicate}.  An {\em index} is
-defined over exactly one {\em table}, and a {\em table} defines at least one
-index (namely the primary key index, which P2 always constructs).  Some
-relations may contain {\em facts} (input tuples) at startup, each of which must
-belong to a single program and must reference a single table.
+associated P2 dataflow query plans.  In the figure, entities are \ol{squares} with
+attributes hanging off of them as \ol{ovals}.  An attribute has a name, and if it is
+part of the primary key, then it is shown in bold.  Relationships are shown as
+\ol{diamonds}, which also contains a name.  Lines connect entities to relationships 
+and identify the following constraints.
+\begin{itemize}
+  \item A bold line indicates the existence of at least one tuple in the output
+    of a ``foreign-key join'' with the connecting entities, while a regular line
+    imposes no constraints on the ``join'' output.
+  \item An arrow directed into a relationship indicates {\em many} tuples from
+    the origin entity ``join with'' exactly {\em one} tuple from the entity on
+    the other side of the relationship.
+\end{itemize}
+
+We derived the constraints in the diagram by reviewing the semantic analysis
+rules enforced in the original P2 compiler; we discuss a few of them here for
+illustration.  An \OVERLOG~{\em rule} must appear in exactly one {\em program}.
+A {\em select} term (e.g., \ol{f\_contains(X,P2) == false} in
+Figure~\ref{ch:p2:fig:overlogSP}) is a Boolean expression over attributes in
+the predicates of the rule, and must appear in exactly one {\em rule}.  The
+diagram indicates that a {\em predicate} must also appear in a unique {\em
+rule}, and that it may possibly reference a single {\em table}.  A predicate
+that references a table is called a {\em table predicate} (or a
+\emph{materialized predicate}), while one that does not reference a table is
+called an {\em event predicate}.  An {\em index} is defined over exactly one
+{\em table}, and a {\em table} defines at least one index (namely the primary
+key index, which P2 always constructs).  Some relations may contain {\em facts}
+(input tuples) at startup, each of which must belong to a single program and
+must reference a single table.
 
 \begin{figure*}
 \ssp
@@ -161,10 +174,10 @@ Localization $(Section~\ref{ch:evita:sec:local})$ & \OVERLOG   &
 Rewrites distributed (join) rules into a locally executable form. \\ \hline
 Magic-sets $(Chapter~\ref{ch:magic})$  & \OVERLOG & 
 Rewrites rules to include magic predicates, which act as selection predicates for constants contained in query predicates. \\ \hline
-System~R $(Section~\ref{ch:opt:sec:systemr})$ & \OVERLOG  & 
-Performs the System R dynamic programming optimization on an \OVERLOG program. \\ \hline
+\text{System R} $(Section~\ref{ch:opt:sec:systemr})$ & \OVERLOG  & 
+A {\em top-down} dynamic programming optimization. \\ \hline
 Cascades $(Section~\ref{ch:opt:sec:cascades})$ & \OVERLOG  & 
-Query optimization based on a top-down search strategy. \\  \hline
+A {\em bottom-up} dynamic programming optimization. \\  \hline
 \end{tabular} 
 \caption{Primary Evita Raced compiler stages. }
 \label{tbl:stages}
@@ -244,8 +257,8 @@ explicitly so that predecessor stages directly produce
 stages.  However, it is awkward to modify such an explicit dataflow
 configuration upon registration of new stages or precedence constraints.
 Instead, Evita Raced captures precedence constraints as {\em data} within a
-materialized relation called \ol{StageLattice}, which represents an arbitrary
-partial order (i.e., an acyclic binary relation) among stages; this partial
+materialized relation called \ol{StageLattice}, which represents an
+order (i.e., an acyclic binary relation) among stages; this partial
 order is intended to be a lattice, with the {\em Parser} as the source, and the
 dataflow {\em Installer} as the sink.  
  
@@ -266,23 +279,23 @@ start the given stage; the contents (attributes) of the
 \includegraphics[scale=1.5]{figures/DefaultCompiler}
 \ssp
 \caption{The Evita Raced (cyclic) dataflow architecture, containing only the 
-default compilation stages. We focus here on the portion of the P2 dataflow
-that corresponds to the Evita Raced framework.}
+default compilation stages. The arrows leaving the Demux element
+route tuples, based on the tuple name, to the relevant stages on the right.
+We focus here on the portion of the P2 dataflow that corresponds 
+to the Evita Raced framework.}
 \label{ch:evita:fig:basecompiler}
 \end{center}
 \end{figure*}
 
 The StageScheduler and any compilation stages (whether built-in or
-runtime-installed) are interconnected via the simplified dataflow illustrated in
-Figure~\ref{ch:evita:fig:basecompiler}.  The Evita Raced framework is embedded
-in the same dataflow architecture used throughout the {\em Declarative
+runtime-installed) are interconnected via the simplified dataflow illustrated
+in Figure~\ref{ch:evita:fig:basecompiler}.  The Evita Raced framework is
+embedded in the same dataflow architecture used throughout the {\em Declarative
 Networking} project.  As described in Section~\ref{ch:p2:sec:p2}
 (and~\cite{p2:sosp}), the dataflow consists of a C++ ``demultiplexer'' that
 routes tuples from its input (on the left) to individual event handlers
-listening for particular tuple names (the arrows leaving the Demux element in
-the figure contain the name of the tuple for which the stages to the right
-listen).  The Evita Raced framework simply adds these ``default stages'' to
-the bootstrap routine of the P2 system.
+listening for particular tuple names.  The Evita Raced framework simply adds
+these ``default stages'' to the bootstrap routine of the P2 system.
 
 Consider the simplicity of how the Evita Raced framework coexists with the P2
 dataflow architecture.  To install a new (\OVERLOG) compilation stage into the
@@ -294,11 +307,11 @@ in the \OVERLOG stage program) to include its position in the compilation pipeli
 This completes the installation process, after which the \OVERLOG stage need only 
 follow a simple protocol for when and how it should execute. 
 
-The protocol to stage execution indicates when it should start (after receiving
-a \ol{<stage>::programEvent} tuple) and what it must do on completion.  When a
-stage completes, the only requirement is to update the \ol{program} table with
-the ``stage'' attribute set to the stage name.  The {\em StageScheduler}
-receives all such updates to the \ol{program} table -- see
+The protocol, followed by stages, indicates when a stage should start (after
+receiving a \ol{<stage>::programEvent} tuple) and what it must do on
+completion.  When a stage completes, the only requirement is to update the
+\ol{program} table with the ``stage'' attribute set to the stage name.  The
+{\em StageScheduler} receives all such updates to the \ol{program} table -- see
 Figure~\ref{ch:evita:fig:basecompiler}, the {\em Demux} \ol{program} tuple port
 into the {\em StageScheduler} -- and uses the value of the \ol{program}
 $depends$ attribute along with the \ol{StageLattice} relation to determine the
@@ -306,7 +319,7 @@ next stage.  This completes the full Evita Raced compilation process of an
 \OVERLOG program, from the {\em Parser} stage to the {\em Installer} stage, and
 any other stages along the way.
 
-To sum up, the life cycle of a program compilation starts when a user submits a
+To sum up, the lifecycle of a program compilation starts when a user submits a
 \ol{program} tuple to the system with a \ol{null} stage attribute.  The
 StageScheduler receives that \ol{program} tuple and generates a
 \ol{parse::programEvent} tuple (the Parser being the source stage in the
@@ -326,34 +339,31 @@ stage lattice facts defined in the stage program).
 \subsection{Compiler Bootstrapping}
 \label{ch:evita:sec:bootstrap}
 
-This section drills down on the stages that make up the baseline Evita Raced
-compiler that is now part of P2's bootstrap routine.  As in many
-metaprogramming settings, this is done by writing a small bootstrap component
-in a lower-level language.  Evita Raced is initialized by a small C++ library
-that constructs the cyclic dataflow of Figure~\ref{ch:evita:fig:basecompiler},
-including the four default stages shown, which are themselves written in C++.
-The bootstrap compiler is sufficient to compile simplified \OVERLOG programs
-(local rules only, no optimizations) into operational P2 dataflows.  We
-describe here, the implementation of our Parser, Planner, and Installer
-bootstrap stage elements, which form the core foundation of the Evita Raced
-framework.
+This section describes the baseline Evita Raced compiler as three simple C++
+stages that are loaded by the P2 bootstrap routine.  As in many metaprogramming
+settings, this is done by writing a small bootstrap component in a lower-level
+language.  Evita Raced is initialized by a small C++ library that constructs
+the cyclic dataflow of Figure~\ref{ch:evita:fig:basecompiler}, including the
+four default stages shown, which are themselves written in C++.  The bootstrap
+compiler is sufficient to compile simplified \OVERLOG programs (local rules
+only, no optimizations) into operational P2 dataflows.  We describe here the
+implementation of our Parser, Planner, and Installer bootstrap stage elements,
+which form the core foundation of the Evita Raced framework.
 
 \subsubsection{Parser}
 \label{ch:evita:sec:parser}
 
-The Parser passes the program text it receives in the \ol{programEvent}
-through a traditional lexer/parser library specified using
-flex~\cite{flexUrl} and bison\cite{bisonUrl}; this library code returns
-a standard {\em abstract syntax tree} representation of the text.
-Assuming the Parser does not raise an exception due to a syntax error,
-it walks the abstract syntax tree, generating Metacompiler Catalog
-tuples for each of the semantic elements of the tree. In addition to
-recognizing the different terms of each rule, the parser also annotates
-each term with its position in the given program.  By convention, the
-first term of a rule body is the event predicate of the rule, if one
-exists.  By the same convention, the zeroth term (position~$0$) for a
-rule is the head predicate.
-
+The Parser passes the program text it receives in the \ol{programEvent} through
+a traditional lexer/parser library specified using flex~\cite{flexUrl} and
+bison\cite{bisonUrl}; this library code returns a standard {\em abstract syntax
+tree} representation of the text.  Assuming the Parser does not raise an
+exception due to a syntax error, it walks the abstract syntax tree, generating
+Metacompiler Catalog tuples for each of the semantic elements of the tree.  In
+addition to recognizing the different terms of each rule, the parser also
+annotates each term with a position, relative to its ``parse'' order.  In
+Chapter~\ref{ch:evita:sec:delta}, we will use this position when ``compiling''
+a rule into ECA form, and in Chapter~\ref{ch:opt}, we use it to reorder
+subgoals in the rule body.
 
 
 \subsubsection{Physical Planner}
@@ -372,7 +382,7 @@ stream is always planned first, and registers a listener in the Demux element
 stream are translated, left-to-right, into a C++ dataflow in the same way that
 the original P2 system did using select-project-join operator methods.
 
-We further mention three specific details.  First, whereas the original P2
+We further mention three specific details.  First, where the original P2
 system translated a logical query plan directly to a software dataflow
 structure in C++, we have chosen to create an intermediate, textual
 representation of the dataflow.  This representation is in a language akin to
@@ -381,8 +391,12 @@ the Click router's dataflow language, but we omit its details here.
 Second, unlike the original P2 system, we have introduced a number of new join
 methods for in-memory tables.  Prior to this work, P2 only supported
 index-nested-loop joins, where the appropriate index was built on the join
-column(s) during program compilation.  We have added to the P2 runtime, elements
-for performing simple nested-loop join and sort-merge join methods.  Our
+column(s) during program compilation.  We have added two elements to the P2
+runtime that perform a simple nested-loop join and a sort-merge join on a tuple
+from the outer input, with a relation on the inner.  We note that our
+sort-merge join it not traditional, in that it only requires the inner relation
+to be sorted.  The P2 architecture does not allow us to sort the outer
+relation, so instead we perform a binary search on the inner relation.  The
 \ol{predicate} relation contains the choice of join method as one of its
 attributes, and we have modified the P2 physical planner to create the
 appropriate dataflow element that implements the given join method.
@@ -453,10 +467,10 @@ construct the corresponding C++ elements, and ``wire them up'' accordingly.  We
 have implemented this ``physical plan compiler'' in C++, and housed it within
 the Installer stage.  Once these elements and their connections are
 instantiated, the Plan Installer stage stitches them into the P2 runtime's
-overall dataflow graph, as described in~\cite{p2:sosp}.  As noted
-in~\ref{ch:evita:sec:compile}, this infrastructure made it easy for us to
-extend P2 with the ability to modify its dataflow graph at runtime, a feature
-not available prior to the release of Evita Raced.
+overall dataflow graph.  As noted in~\ref{ch:evita:sec:compile}, this
+infrastructure made it easy for us to extend P2 with the ability to modify its
+dataflow graph at runtime, a feature not available prior to the release of
+Evita Raced.
 
 % Since our focus here
 % is on plan optimization, we omit the engineering
@@ -493,15 +507,15 @@ The metacompilation approach of Evita Raced led us to naturally design the
 system extensibility around issues of data storage and dataflow, rather than
 library loading and control flow modifications.  While rule-based systems are
 usually intended to be easier to extend than a procedural system, the internal
-implementation of Evita Raced is especially elegant, due to our thorough
-embrace of the native dataflow infrastructure, which we use both to execute
-optimization code, and orchestrate stages via precedence tables and the
-StageScheduler cycle.  The result of this design is that even a major addition
-to the Evita Raced compiler entails very minimal modification to the runtime
-state: only the addition of a pair of dataflow edges to connect up the new
-stage, and the insertion of precedence tuples in a single table.  Beyond the
-StageScheduler and the three bootstrap stages, no additional extensibility code
-was added to P2 to support Evita Raced.
+implementation of Evita Raced is clean, due to our thorough embrace of the
+native dataflow infrastructure, which we use both to execute optimization code,
+and orchestrate stages via precedence tables and the StageScheduler cycle.  The
+result of this design is that even a major addition to the Evita Raced compiler
+entails very minimal modification to the runtime state: only the addition of a
+pair of dataflow edges to connect up the new stage, and the insertion of
+precedence tuples in a single table.  Beyond the StageScheduler and the three
+bootstrap stages, no additional extensibility code was added to P2 to support
+Evita Raced.
 
 Despite its simplicity, Evita Raced is flexible enough that other researchers
 have used it to enhance P2 with support for new languages at both its input and
@@ -518,7 +532,7 @@ networking system that runs on wireless sensor nodes~\cite{chu-sensys07}.
 \label{ch:evita:sec:delta}
 
 In this section we describe our declarative implementation of the delta rewrite
-for \OVERLOG rules.  The rewrite itself consists of a mere $12$ rules, which
+for \OVERLOG rules.  The rewrite itself consists of only $12$ rules, which
 includes rules for stage activation, finalization and general housekeeping of
 the Metacompiler Catalog relations.  Before diving into the specific rules for
 the rewrite we describe its actions by example.
@@ -528,32 +542,34 @@ the rewrite we describe its actions by example.
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-{\bf materialize}(link,infinity,infinity,keys(1,2)). \\
-{\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
-{\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
+\begin{lstlisting}
+materialize(link, infinity, infinity, keys(1,2)).
+materialize(path, infinity, infinity, keys(1,2,3)).
+materialize(shortestPath, infinity, infinity, keys(1,2,3)).
   
-R1 {\bf path}(@X, Y, P, C) :- \\
-\datalogspace {\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
-\\
-R2 {\bf path}(@X, Z, P, C) :- \\
-\datalogspace {\bf link}(@X, Y, C1), {\bf path}(@Y, Z, P2, C2),\\
-\datalogspace f\_contains(X, P2) == false, \\
-\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+r1 path(@X, Y, P, C) :- 
+   link(@X, Y, C), P := f_cons(X, Y).
 
-R3 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
-\datalogspace {\bf path}(@X, Y, P, C). \\ 
+r2 path(@X, Z, P, C) :-
+   link(@X, Y, C1), 
+   path(@Y, Z, P2, C2),
+   f_contains(X, P2) == false,
+   P := f_cons(X, P2), C := C1 + C2.
 
-R4 {\bf shortestPath}(@X, Y, P, C) :- \\
-\datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).
+r3 minCostPath(@X, Y, a_min<C>) :-
+   path(@X, Y, P, C).
 
-\end{boxedminipage}
-\caption{\label{ch:evita:fig:basicSP}Relevant rules copied from Figure~\ref{ch:p2:fig:overlogSP}.}
+r4 shortestPath(@X, Y, P, C) :-
+   minCostPath(@X, Y, C), 
+   path(@X, Y, P, C).
+
+\end{lstlisting}
+\caption{\label{ch:evita:fig:basicSP}Shortest path program.}
 \end{figure*}
 
 Consider the shortest path program in Figure~\ref{ch:evita:fig:basicSP} copied
 over from Figure~\ref{ch:p2:fig:overlogSP}.  First thing to notice is the {\bf
-materialize} statements at the top.  They indicate that non-zero lifetime
+materialize} statements at the top.  They indicate that positive lifetime
 tables should exist for \ol{link}, \ol{path}, and \ol{shortestPath} tuples,
 along with the appropriate primary key columns.  Since there is no {\bf
 materialize} statement for the \ol{minCostPath} predicate, P2 considers such
@@ -564,32 +580,34 @@ produce \ol{minCostPath} event tuples?
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-{\bf materialize}(link,infinity,infinity,keys(1,2)). \\
-{\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
-{\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
-  
-R1 {\bf path}(@X, Y, P, C) :- \\
-\datalogspace $\delta${\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
-\\
-R2a {\bf path}(@X, Z, P, C) :- \\
-\datalogspace $\delta${\bf link}(@X, Y, C1), {\bf path}(@Y, Z, P2, C2),\\
-\datalogspace f\_contains(X, P2) == false, \\
-\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+\begin{lstlisting}
+materialize(link, infinity, infinity, keys(1,2)).
+materialize(path, infinity, infinity, keys(1,2,3)).
+materialize(shortestPath, infinity, infinity, keys(1,2,3)).
 
-R2b {\bf path}(@X, Z, P, C) :- \\
-\datalogspace $\delta${\bf path}(@Y, Z, P2, C2), {\bf link}(@X, Y, C1) \\
-\datalogspace f\_contains(X, P2) == false, \\
-\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
+r1 path(@X, Y, P, C) :-
+   %*$\Delta$*)link(@X, Y, C), 
+   P := f_cons(X, Y).
 
+r2a path(@X, Z, P, C) :-
+    %*$\Delta$*)link(@X, Y, C1), 
+    path(@Y, Z, P2, C2),
+    f_contains(X, P2) == false,
+    P := f_cons(X, P2), C := C1 + C2.
 
-R3 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
-\datalogspace $\delta${\bf path}(@X, Y, P, C). \\ 
+r2b path(@X, Z, P, C) :-
+    %*$\Delta$*)path(@Y, Z, P2, C2), 
+    link(@X, Y, C1),
+    f_contains(X, P2) == false,
+    P := f_cons(X, P2), C := C1 + C2.
 
-R4 {\bf shortestPath}(@X, Y, P, C) :- \\
-\datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).
+r3 minCostPath(@X, Y, a_min<C>) :-
+   %*$\Delta$*)path(@X, Y, P, C).
 
-\end{boxedminipage}
+r4 shortestPath(@X, Y, P, C) :-
+   minCostPath(@X, Y, C), 
+   path(@X, Y, P, C).
+\end{lstlisting}
 \caption{\label{ch:evita:fig:basicSPDelta}Delta rewrite rules from Figure~\ref{ch:evita:fig:basicSP}.}
 \end{figure*}
 
@@ -606,36 +624,35 @@ $Planner$ to trigger the rule when a receive/insert/delete event occurs on the
 \ol{link} relation.  The same thing happens in rule~\ol{R3} w.r.t., the
 \ol{plan} relation.
 
-We come to rule~\ol{R2}, which has two subgoals \ol{link} and \ol{path}, both
-of which are materialized tables.  In this case, we must break the rule into
-two disjoint rules (one for each materialized subgoal).  The first of these
-rules will trigger on (say) the \ol{link} tuple, followed by a join with
-\ol{path}, etc.  The second rule triggers on \ol{path} event tuples, and joins
-with the \ol{link} relation, etc.  Both of these rules project onto the
-\ol{path} relation, which in turn triggers further invocations of rule~\ol{R2b}
-on new \ol{path} data.
+Rule~\ol{R2}, which has two subgoals \ol{link} and \ol{path}, both of which are
+materialized tables.  In this case, we must break the rule into two disjoint
+rules (one for each materialized subgoal).  The first of these rules will
+trigger on (say) the \ol{link} tuple, followed by a join with \ol{path}, etc.
+The second rule triggers on \ol{path} event tuples, and joins with the
+\ol{link} relation, etc.  Both of these rules project onto the \ol{path}
+relation, which in turn triggers further invocations of rule~\ol{R2b} on new
+\ol{path} data.
 
 \subsection{Declarative Delta}
 
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-/* Initiate a rewrite at position $1$ of a rule not already containing an event \\
-   predicate in this position. */ \\
-d1 {\bf rewrite}(@A, Pid, Rid, PredID, f\_idgen(), f\_idgen(), Pos) :- \\
-\datalogspace {\bf delta::programEvent}(@A, Pid, \ldots), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, HeadID, \_, \_, \_, Goals), \\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \_, Name, Tid, \_, Schema, Pos), \\
-\datalogspace $Tid != null$, $Pos == 1$. \\
+\begin{lstlisting}
+%* /* Initiate a rewrite at position $1$ of a rule not already containing an event
+   predicate in this position. */ *)
+d1 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen(), Pos) :-
+   delta::programEvent(@A, Pid, ...), 
+   sys::rule(@A, Rid, Pid, _, HeadID, _, _, _, Goals),
+   sys::predicate(@A, PredID, Rid, _, Name, Tid, _, Schema, Pos),
+   Tid != null, $Pos == 1.
 
-/* Initiate a rewrite position for each predicate in the rule body. */ \\
-d2 {\bf rewrite}(@A, Pid, Rid, PredID, f\_idgen(), f\_idgen(), Pos) :- \\
-\datalogspace {\bf rewrite}(@A, Pid, Rid, \ldots), \\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Schema, Pos), \\
-\datalogspace $Pos > 1$. \\
-
-\end{boxedminipage}
+%* /* Initiate a rewrite position for each predicate in the rule body. */ *)
+d2 rewrite(@A, Pid, Rid, PredID, f_idgen(), f_idgen(), Pos) :-
+   rewrite(@A, Pid, Rid, ...),
+   sys::predicate(@A, PredID, Rid, ..., Schema, Pos),
+   Pos > 1.
+\end{lstlisting}
 \caption{\label{ch:evita:fig:delta1}Deduce a rewrite fact for a new delta rule to be
 created for a particular table predicate in the original rule's body.}
 \end{figure*}
@@ -662,19 +679,20 @@ rule~\ol{d1}.
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-/* Put the delta predicate in the first position of the new rule. */ \\
-d3 {\bf sys::predicate}(@A, f\_idgen(), NewRid, Notin, Name, Tid, "DELTA", Schema, 1) :- \\
-\datalogspace {\bf rewrite}(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID, \_), \\
-\datalogspace {\bf sys::predicate}(@A, DeltaPredID, Rid, Notin, Name, Tid, ECA, Schema, Pos). \\
+\begin{lstlisting}
+%* /* Put the delta predicate in the first position of the new rule. */ *)
+d3 sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, "DELTA", 
+                  Schema, 1) :-
+   rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID, _),
+   sys::predicate(@A, DeltaPredID, Rid, Notin, Name, Tid, ECA, Schema, Pos).
 
-/* Make a new head predicate for the new rule by copying the old head predicate. */ \\
-d4 {\bf sys::predicate}(@A, NewHeadID, NewRid, Notin, Name, Tid, ECA, Schema, 0) :- \\
-\datalogspace {\bf rewrite}(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID, \_), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \_, HeadID, \ldots), \\
-\datalogspace {\bf sys::predicate}(@A, HeadID, Rid, Notin, Name, Tid, ECA, Schema, \_).
-
-\end{boxedminipage}
+%* /* Make a new head predicate for the new rule by copying the old head predicate. */ *)
+d4 sys::predicate(@A, NewHeadID, NewRid, Notin, Name, Tid, ECA, 
+                  Schema, 0) :-
+   rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID, _),
+   sys::rule(@A, Rid, Pid, _, HeadID, ...),
+   sys::predicate(@A, HeadID, Rid, Notin, Name, Tid, ECA, Schema, _).
+\end{lstlisting}
 \caption{\label{ch:evita:fig:delta2}Rules that copy the old head predicate from the old rule
 to the new rule, and creates the delta predicate in the new rule from the subgoal referenced
 by the rewrite tuple.}
@@ -702,36 +720,38 @@ table, and the predicate table along with the old head predicate identifier
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-/* Kick off an iterator for the remaining rule subgoals. */ \\
-d5 {\bf remainder}(@A, Pid, Rid, NewRid, 1, 2, Pos) :- \\
-\datalogspace rewrite(@A, Pid, Rid, DeltaPredID, NewRid, \_, Pos). \\
+\begin{lstlisting}
+%* /* Kick off an iterator for the remaining rule subgoals. */ *)
+d5 remainder(@A, Pid, Rid, NewRid, 1, 2, Pos) :-
+   rewrite(@A, Pid, Rid, DeltaPredID, NewRid, _, Pos).
 
-/* Forward the remainder iterator along the subgoals. */ \\
-d6 {\bf remainder}(@A, Pid, Rid, NewRid, $OldPos+1$, NewPos, DeltaPos) :- \\
-\datalogspace {\bf remainder}(@A, Pid, Rid, NewRid, OldPos, NewPos, DeltaPos), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots, Goals), \\
-\datalogspace $OldPos < Goals$, \\
-\datalogspace NewPos := $OldPos == DeltaPos$ ? NewPos : NewPos + 1. \\
+%* /* Forward the remainder iterator along the subgoals. */ *)
+d6 remainder(@A, Pid, Rid, NewRid, OldPos+1, NewPos, DeltaPos) :-
+   remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, DeltaPos),
+   sys::rule(@A, Rid, Pid, ..., Goals),
+   OldPos < Goals,
+   NewPos := OldPos == DeltaPos ? NewPos : NewPos + 1.
 
-/* Copy table predicate to the new delta rule. */ \\
-d7 {\bf sys::predicate}(@A, f\_idgen(), NewRid, Notin, Name, Tid, $null$, Schema, NewPos) :- \\
-\datalogspace {\bf remainder}(@A, Pid, Rid, NewRid, Pos, NewPos, DeltaPos), \\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, Notin, Name, Tid, \_, Schema, Pos), \\
-\datalogspace $Pos != DeltaPos$. \\
+%* /* Copy table predicate to the new delta rule. */ *)
+d7 sys::predicate(@A, f_idgen(), NewRid, Notin, Name, Tid, null, 
+                  Schema, NewPos) :-
+   remainder(@A, Pid, Rid, NewRid, Pos, NewPos, DeltaPos),
+   sys::predicate(@A, PredID, Rid, Notin, Name, Tid, _, Schema, Pos),
+   Pos != DeltaPos.
 
-/* Make a new assignement for the new delta rule. */ \\
-d8 {\bf sys::assign}(@A, f\_idgen(), NewRid, Var, Value, NewPos) :- \\
-\datalogspace {\bf remainder}(@A, Pid, Rid, NewRid, OldPos, NewPos, \_), \\
-\datalogspace {\bf sys::assign}(@A, Aid, Rid, Var, Value, OldPos). \\
+%* /* Make a new assignement for the new delta rule. */ *)
+d8 sys::assign(@A, f_idgen(), NewRid, Var, Value, NewPos) :-
+   remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, _),
+   sys::assign(@A, Aid, Rid, Var, Value, OldPos).
 
-/* Make a new selection for the new delta rule. */ \\
-d9 {\bf sys::select}(@A, f\_idgen(), NewRid, Bool, NewPos) :- \\
-\datalogspace {\bf remainder}(@A, Pid, Rid, NewRid, OldPos, NewPos, \_), \\
-\datalogspace {\bf sys::select}(@A, Sid, Rid, Bool, OldPos, AM).
+%* /* Make a new selection for the new delta rule. */ *)
+d9 sys::select(@A, f_idgen(), NewRid, Bool, NewPos) :-
+   remainder(@A, Pid, Rid, NewRid, OldPos, NewPos, _),
+   sys::select(@A, Sid, Rid, Bool, OldPos, AM).
 
-\end{boxedminipage}
-\caption{\label{ch:evita:fig:delta3}Rules that copy old subgoals to the new delta rule.}
+\end{lstlisting}
+\caption{\label{ch:evita:fig:delta3}Rules that copy old subgoals to the new 
+delta rule.}
 \end{figure*}
 
 Figure~\ref{ch:evita:fig:delta3} contains the next group of rules that copy the
@@ -759,24 +779,24 @@ Notice that rule~\ol{d7} skips predicate $p_i$ as position $DeltaPos$.
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-/* Create the new rule */ \\
-d10 {\bf sys::rule}(@A, NewRid, Pid, Name, NewHeadID, null, Delete, Goals) :- \\
-\datalogspace {\bf rewrite}(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID, Pos), \\
-\datalogspace {\bf sys::predicate}(@A, DeltaPredID, Rid, \_, PredName, \ldots), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, RuleName, \_, \_, Delete, Goals), \\
-\datalogspace Name := RuleName + "delta" + PredName + Pos. \\
+\begin{lstlisting}
+%* /* Create the new rule */ *)
+d10 sys::rule(@A, NewRid, Pid, Name, NewHeadID, null, Delete, Goals) :-
+    rewrite(@A, Pid, Rid, DeltaPredID, NewRid, NewHeadID, Pos),
+    sys::predicate(@A, DeltaPredID, Rid, _, PredName, ...),
+    sys::rule(@A, Rid, Pid, RuleName, _, _, Delete, Goals),
+    Name := RuleName + "delta" + PredName + Pos.
 
-/* Clean up old rule state */ \\
-d11 {\bf delete} {\bf sys::rule}(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Goals) :- \\
-\datalogspace {\bf rewrite}(@A, Pid, Rid, \ldots),  \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Goals). \\
+%* /* Clean up old rule state */ *)
+d11 delete sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Goals) :-
+    rewrite(@A, Pid, Rid, ...),
+    sys::rule(@A, Rid, Pid, Name, HeadID, P2DL, Delete, Goals).
   
-/* Signal the completion of the delta rewrite to the $StageScheduler$. */ \\
-d12 {\bf sys::program}(@A, Pid, Name, Rewrite, "delta", Text, Msg, P2DL, Src) :- \\
-\datalogspace {\bf programEvent}(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
-
-\end{boxedminipage}
+%* /* Signal the completion of the delta rewrite to the $StageScheduler$. */ *)
+d12 sys::program(@A, Pid, Name, Rewrite, "delta", Text, Msg, 
+                 P2DL, Src) :-
+    programEvent(@A, Pid, Name, Rewrite, Status, Text, Msg, P2DL, Src).
+\end{lstlisting}
 \caption{\label{ch:evita:fig:delta4}Creates a new rule tuple that references the delta 
 rewrite rule. Cleans up the old (non-delta) rule. Inserts a program tuple indicating
 that the delta rewrite has finished. }
@@ -788,8 +808,8 @@ rule tuple that references the delta rule $\delta r$ for a given delta
 predicate $\delta p_i$.  The old rule~$r$ is deleted by rule~\ol{d11}, which
 through materialized maintenance cleans out the old head predicate and
 subgoals.  Finally, rule~\ol{d12} inserts a \ol{program} tuple that indicates
-the completion of this delta rewrite stage.~\footnote{Conveniently performed in
-a single P2 {\em dataflow} fixpoint.}
+the completion of this delta rewrite stage.~\footnote{Note that this entire 
+rewrite is performed in a single P2 {\em dataflow} fixpoint.}
 
 \section{The Localization Rewrite}
 \label{ch:evita:sec:local}
@@ -797,17 +817,17 @@ a single P2 {\em dataflow} fixpoint.}
 \begin{figure*}[!t]
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-R2a {\bf link\_copy}(@Y, X, Y, C1) :- \\
-\datalogspace {\bf link}(@X, Y, C1). \\
+\begin{lstlisting}
+r2a link_copy(@Y, X, Y, C1) :-
+    link(@X, Y, C1).
 
-R2b {\bf path}(@X, Z, P, C) :- \\
-\datalogspace {\bf link\_copy}(@Y, X, Y, C1), {\bf path}(@Y, Z, P2, C2),\\
-\datalogspace f\_contains(X, P2) == false, \\
-\datalogspace P := f\_cons(X, P2), C := C1 + C2. \\
-
-\end{boxedminipage}
-\caption{\label{ch:evita:fig:basicSPLocal}The localized version of rule~\ol{R2} in
+r2b path(@X, Z, P, C) :-
+    link_copy(@Y, X, Y, C1), 
+    path(@Y, Z, P2, C2),
+    f_contains(X, P2) == false,
+    P := f_cons(X, P2), C := C1 + C2.
+\end{lstlisting}
+\caption{\label{ch:evita:fig:basicSPLocal}The localized version of rule~\ol{r2} in
 Figure~\ref{ch:evita:fig:basicSP}.}
 \end{figure*}
 
@@ -821,13 +841,13 @@ Evita Raced, the localization rewrite is expressed using $11$ rules, and
 follows directly from the delta rewrite. Therefore, we provide a high level
 description of the rewrite, and its declarative structure.
 
-We start with an example description using rule~\ol{R2} from
+We start with an example description using rule~\ol{r2} from
 Figure~\ref{ch:evita:fig:basicSP}.  This rule is rewritten into the two rules
 shown in Figure~\ref{ch:evita:fig:basicSPLocal}.  The \ol{link\_copy} predicate
 is an {\emph event} predicate that copies the \ol{link} tuples at node $X$ to
 node $Y$.  This will result in a network transfer of \ol{link} tuples $@X$ to
 \ol{link\_copy} tuples $@Y$.  On node $Y$, the \ol{link\_copy} tuples trigger
-rule~\ol{R2b} and complete the condition of rule~\ol{R2}, sending the result
+rule~\ol{r2b} and complete the condition of rule~\ol{r2}, sending the result
 back to node $X$.
 
 Declaratively, the localization stage traverses distributed rules in
@@ -856,13 +876,12 @@ position.
 \section{Summary} 
 \label{ch:evita:sec:summary} 
 
-The delta and localization stages are not an optimizations per se, but rather a
-program rewrites necessary to make distributed rules executable.  These
-rewrites are expressed compactly in \OVERLOG (around 12 rules each), and permit
-a trivial $Planner$ C++ stage implementation.  The original P2 code that
-performed these tasks consisted of approximately $1000$ lines of C++ scattered
-throughout the entire ~$50414$ line code-base ($10794$ lines of \text{.C} files under
-\ol{/p2core} alone).
+The delta and localization stages are program rewrites necessary to make
+distributed rules executable.  These rewrites are expressed compactly in
+\OVERLOG (around 12 rules each), and removes complex C++ code from the
+$Planner$ stage implementation.  The original P2 code that performed these
+tasks was a few hundred lines of code, mixed throughout various places in the
+system codebase.
 
 The Evita Raced metacompilation framework allows \OVERLOG compilation tasks to
 be written in \OVERLOG and executed in the P2 runtime engine.  It provides
@@ -881,9 +900,9 @@ logic; generating pretty-printers for intermediate program forms; language
 wrappers for secure networking functionality in the manner of
 SecLog~\cite{abadi-netdb07}; stratification detectors and other static code
 analysis.  None of these are performance optimizations per se, but all fit well
-within an extensible, declarative program manipulation framework.  More
-generally, we believe that metacompilation is a good design philosophy not only
-for our work, but for the upcoming generation of declarative engines being
+within an extensible, declarative program manipulation framework.  Base on this
+experience, we believe that metacompilation is a good design philosophy not
+only for our work, but for the upcoming generation of declarative engines being
 proposed in many fields.
 
 Finally, the cyclic dataflow used for stage scheduling in Evita Raced
