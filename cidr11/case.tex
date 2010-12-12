@@ -3,22 +3,28 @@
 In this section, we develop two different designs for a distributed
 shopping-cart service in Bloom.\footnote{The complete source code for both
   implementations can be found at
-  \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}  After
-presenting the abstract shopping cart protocol and a simple client program, we
-implement a ``destructive,'' state-modifying shopping cart service that uses the
-key-value store we developed in the Section~\ref{sec:kvs}. Second, we illustrate
-a ``disorderly'' cart that accumulates updates in a set-wise fashion, summing up
-the updates at checkout into a final result.  These two different designs
-illustrate our analysis tools and the way they inform design decisions for
-distributed programming.
+  \smallurl{https://trac.declarativity.net/browser/bud/test/cart}.}  In a
+shopping cart system, clients add and remove items from their shopping cart. To
+provide fault tolerance and persistence, the content of the cart is stored by a
+collection of server replicas. Once a client has finished shopping, they perform
+a ``checkout'' request, which returns the final state of their cart.
+
+After presenting the abstract shopping cart protocol and a simple client
+program, we implement a ``destructive,'' state-modifying shopping cart service
+that uses the key-value store we developed in the Section~\ref{sec:kvs}. Second,
+we illustrate a ``disorderly'' cart that accumulates updates in a set-wise
+fashion, summarizing updates at checkout into a final result.  These two
+different designs illustrate our analysis tools and the way they inform design
+decisions for distributed programming.
 
 \subsection{Shopping Cart Client}
+
 An abstract shopping cart protocol is presented in
 Figure~\ref{fig:cart-protocol}. Figure~\ref{fig:cart-client} contains a simple
-shopping cart client program: it takes input facts from a client
-(\texttt{client\_action} and \texttt{client\_checkout} requests) and sends them
-to the shopping cart service using the CartProtocol. We assume that clients have
-some mechanism for choosing which server replica to send requests to (e.g.,
+shopping cart client program: it takes client operations (represented as
+\texttt{client\_action} and \texttt{client\_checkout} facts) and sends them to
+the shopping cart service using the CartProtocol. We assume that clients have
+some mechanism for choosing which cart server replica to send requests to (e.g.,
 based on load balancing).
 
 \begin{figure}[t]
@@ -130,14 +136,13 @@ end
 \vspace{-2pt}
 \end{figure}
 
-We begin with a shopping cart system built on a key-value storage abstraction.
-Each cart is a \texttt{(key,value)} pair, where \texttt{key} is a unique session
-identifier and \texttt{value} is an object containing the session's state,
-including a Ruby array that holds the items currently in the cart. Adding or deleting
-items from the cart result in ``destructive'' updates: the value associated with
-the key is replaced by a new value that reflects the effect of the
-update. Deletion requests are ignored if the item they refer to does not exist
-in the cart.
+We begin with a shopping cart service built on a key-value store.  Each cart is
+a \texttt{(key,value)} pair, where \texttt{key} is a unique session identifier
+and \texttt{value} is an object containing the session's state, including a Ruby
+array that holds the items currently in the cart. Adding or deleting items from
+the cart result in ``destructive'' updates: the value associated with the key is
+replaced by a new value that reflects the effect of the update. Deletion
+requests are ignored if the item they refer to does not exist in the cart.
 
 Figure~\ref{fig:dest-cart} shows the Bloom code for this design. The
 \texttt{kvput} collection is provided by the abstract KVSProtocol described in
