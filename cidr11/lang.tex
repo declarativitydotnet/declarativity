@@ -308,7 +308,7 @@ numbers $<x$ have been acknowledged. To support this pattern, Bloom allows an
 interface defined in another module to be overridden simply by redeclaring
 it. Internally, these redundantly-named interfaces both exist in the namespace
 of the module that declared them but only need to be referenced by a
-fully-qualified name if their use is otherwise ambiguous.  If an input interface
+fully qualified name if their use is otherwise ambiguous.  If an input interface
 appears in the lhs of a statement in a module that declared the interface, it is
 rewritten to reference the interface with the same name in a mixed-in class,
 because a module cannot insert into its own input interface. The same is the
@@ -347,7 +347,7 @@ the \texttt{action\_msg} channel.  In addition to rule-level overriding via
 module may override interfaces defined by other mixins by simply redeclaring the
 interface.  Internally, these redundantly-named interfaces exist in the
 namespace of the module that declared them, but only need to be referenced by a
-fully-qualified name if their use is otherwise ambiguous.  If an input interface
+fully qualified name if their use is otherwise ambiguous.  If an input interface
 appears in the lhs of a rule in a module that declared the interface, it is
 rewritten to reference the interface with the same name in a mixed-in class, as
 it is meaningless for a module to insert into its own input interface.  The same
