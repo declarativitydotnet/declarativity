@@ -5,7 +5,7 @@ Our journey begins at U.C.~Berkeley in $2003$, where just beyond the protests
 at Sproul Plaza, the Declarative Networking project was just getting underway.
 The project would see the development of a new declarative language called {\em
 \OVERLOG} and its companion runtime {\em P2}.  The aim was to make it easy to
-implement and deploy overlay networks by allowing specifications in a
+implement and deploy {\em overlay} networks by allowing specifications in a
 high-level declarative language to be directly executed on nodes that span the
 Internet.  These overlay specifications, expressed as \OVERLOG rules, contained
 {\em orders of magnitude} fewer lines of code than corresponding overlay
@@ -14,74 +14,72 @@ implemented, and deployed, declarative versions of a Narada-style mesh
 network~\cite{chu00case}, using only 12 ``rules'', and the Chord structured
 overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}, versus thousands of
 lines of C code for the MIT Chord reference implementation.  From the many
-contributions made during its tenure, the Declarative Networking project showed
-that relations, together with a recursive query language, can fairly naturally
-represent the persistent routing state of the overlays it
-considered~\cite{boon-thesis}.
+contributions made during this project, we showed that relations, together with
+a recursive query language, can fairly naturally represent the persistent
+routing state of the overlays it considered~\cite{boon-thesis}.
 
-The \OVERLOG language is a descendent of Datalog, which we introduce in
-Section~\ref{ch:p2:sec:datalog}.  In Section~\ref{ch:p2:sec:overlog} we present
+The \OVERLOG language is a descendent of Datalog, which we review in
+Chapter~\ref{ch:p2:sec:datalog}.  In Chapter~\ref{ch:p2:sec:overlog} we present
 the \OVERLOG language by detailing its extensions to Datalog: it adds a
 notation to specify the location of data, provides some SQL-style extensions
-such as primary keys and aggregation, and it defines a new model for processing
-and generating changes to tables.  Section~\ref{ch:p2:sec:p2} describes the P2
-runtime, which is responsible for compiling and executing \OVERLOG programs on
-a set of distributed nodes.  The design of P2 was inspired by prior work in
-both databases and networking.  It is based in large part upon a side-by-side
-comparison of the PIER peer-to-peer query engine~\cite{pier-cidr05} and the
-Click modular router~\cite{click-tocs}.  Like PIER, P2 can manage structured
-data tuples flowing through a broad range of query processing elements, which
-may accumulate significant state and perform substantial asynchronous
-processing.  Like Click, P2 stresses high-performance transfers of data units,
-as well as dataflow elements with both ``push'' and ``pull'' modalities.  We
-conclude this chapter in Section~\ref{ch:p2:sec:summary} with a summary of the
-``networking'' portion of the Declarative Networking project before presenting
-its final Chapters~\ref{ch:evita}, \ref{ch:magic} and~\ref{ch:opt}.
+such as primary keys and aggregation, and defines a new dataflow model for
+processing and generating changes to tables.  Chapter~\ref{ch:p2:sec:p2}
+describes the P2 runtime, which is responsible for compiling and executing
+\OVERLOG programs on a set of distributed nodes.  The design of P2 was inspired
+by prior work in both databases and networking.  It is based in large part upon
+a side-by-side comparison of the PIER peer-to-peer query
+engine~\cite{pier-cidr05} and the Click modular router~\cite{click-tocs}.  Like
+PIER, P2 can manage structured data tuples flowing through a broad range of
+query processing elements, which may accumulate significant state and perform
+substantial asynchronous processing.  Like Click, P2 stresses high-performance
+transfers of data units, as well as dataflow elements with both ``push'' and
+``pull'' modalities.  
 
 \section{Introduction to Datalog}
 \label{ch:p2:sec:datalog}
 
-This discussion on Datalog follows from the description in Ramakrishnan and
-Ullman's survey~\cite{deductive-database}, and the many superb course
+Our description of Datalog is based on a survey by Ramakrishnan and
+Ullman~\cite{deductive-database}, and the many superb course
 notes~\cite{ullmanNotes} on the subject.  Datalog drew inspiration from the
 Prolog language, which was one of the first logic programming languages.  Both
 Datalog and Prolog consist of a set of declarative {\em rules} and an optional
 {\em query}.  A rule has the form $p\ \text{\ol{:-}}\ q_1,\ q_2,\ \ldots,\
-q_n$, which represents a disjunction of literals.  Informally, a rule reads
+q_n$, which represents a conjunction of literals.  Informally, a rule reads
 ''{\bf if} $q_1$ and $q_2$ and $\ldots$ and $q_n$ is true {\bf then} $p$ is
 true``.  Literals are either {\em predicates} over {\em fields} (variables and
 constants), or function symbols applied to fields.  The predicate appearing to
 the left of the \ol{:-} symbol is the head predicate, and those to the right
 are body predicates or ``subgoals.'' Recursion is expressed by rules that refer
 to each other in a cyclic fashion.  That is, the head predicate also appears as
-a subgoal in the rule, or indirectly through some other.
+a subgoal in the rule, or indirectly through some other subgoal predicates.
 
 A predicate literal is a named reference to a set of data tuples associated
-with a specific schema.  In Datalog, a data tuple is referred to as fact, which
-is stored in a relational table, that may not necessarily fit in memory.  Two
-common notions are used when referring to the predicates that appear in a
-Datalog program.  A predicate whose relation is stored in the database is
-called an {\emph extensional database} (EDB) relation, while those that are
-defined by logical rules are called {\emph intensional database} (IDB)
-relations.  In other words, EDB tuples are those that persist in the database
-as relations, while IDB predicates are more like ``views'' (or stored queries)
-over the database schema.
+with a specific schema.  In Datalog, a data tuple is referred to as {\em fact},
+which is stored in a relational table, that may not necessarily fit in memory.
+A predicate whose relation is stored in the database is called an {\em
+extensional database} (EDB) relation, while those that are defined by logical
+rules are called {\em intensional database} (IDB) relations.  In other words,
+EDB tuples are those that persist in the database as relations, while IDB
+predicates are more like ``views'' (or stored queries) over the database
+schema.
 
 During evaluation, EDB facts represent the input to the Datalog program, and
-IDB derivations are the output.  Datalog, unlike Prolog, evaluates its rules in
-a bottom up fashion, starting with all known EDB facts, and deriving new IDB
+IDB derivations are the output.  Most implementations of Datalog evaluate rules
+in a bottom up fashion, starting with all known EDB facts, and deriving new IDB
 facts through rule deductions.  A key consequence of a bottom-up evaluation
 strategy is that it can efficiently handle ``large data'' sets, whose size well
-exceeds the capacity of a machine's main memory.  Prolog on the other hand uses
-a top-down evaluation approach that precludes the efficient use of relational
-operators (i.e., select, project, join).  As a further result, Prolog's state
-is confined to the main memory boundaries of the running system, since its
-``graph'' based algorithm requires all facts be accounted for at once.
+exceeds the capacity of a machine's main memory.  
+
+%Prolog on the other hand uses
+%a top-down evaluation approach that precludes the efficient use of relational
+%operators (i.e., select, project, join).  As a further result, Prolog's state
+%is confined to the main memory boundaries of the running system, since its
+%``graph'' based algorithm requires all facts be accounted for at once.
 
 \subsection{Safety First}
 
 There are constraints that must be in place for a Datalog program to make sense
-as operations on finite relations.  A {\emph safe} Datalog rule is one that
+as operations on finite relations.  A {\em safe} Datalog rule is one that
 restricts the range of all variables appearing in the head by ensuring that
 each such variable appear as a field in some predicate(s) of the rule body.
 For example, the following rule is not safe since it does not restrict the $P$
@@ -92,67 +90,67 @@ variable in the \ol{path} head predicate.
 {\bf path}(X, Y, P, C) :- {\bf link}(X, Y, C). \\
 \end{minipage}
 The above rule generates an infinite number of \ol{path} tuples since we can
-substitute $P$ with any list of strings (for example).  This ``safety''
-restriction imposed by Datalog semantics ensures that a finite (IDB) solution is
-obtained from applying a finite set of rules to a finite (EDB) input.  Datalog
-further restricts its (IDB) output to set semantics, as opposed to bag
-semantics that allow duplicate tuples.  The reader can assume these safe restrictions
-in all the rules presented in this thesis.
+substitute any conceivable value for $P$.  This ``safety'' restriction imposed
+by Datalog semantics ensures that a finite (IDB) solution is obtained from
+applying a finite set of rules to a finite (EDB) input.  Datalog further
+restricts its (IDB) output to set semantics, as opposed to bag semantics that
+allow duplicate tuples.  The reader can assume these safe restrictions in all
+the rules presented in this thesis.
 
-\subsection{Our first Datalog Program}
+\subsection{Datalog Syntax}
 
 \begin{figure*}
 \ssp
-\begin{boxedminipage}{\linewidth}
-{\bf link}(``node1'', ``node2'', 1). \\
-{\bf link}(``node2'', ``node3'', 1). \\
-\\
-R1 {\bf path}(X, Y, {\em cons}(X, Y), C) :- \\
-\datalogspace {\bf link}(X, Y, C). \\
-\\       
-R2 {\bf path}(X, Z, {\em cons}(X, P2), C1+C2) :- \\
-\datalogspace {\bf link}(X, Y, C1), {\bf path}(Y, Z, P2, C2), \\
-\datalogspace $f\_contains(X,\ P2)\ ==\ false$. \\
+\begin{lstlisting}
+link(``node1'', ``node2'', 1).
+link(``node2'', ``node3'', 1).
 
-Query {\bf path}(``node1'', Y, P, C).
-\end{boxedminipage}
+r1 path(X, Y, cons(X, Y), C) :- 
+   link(X, Y, C). 
+
+r2 path(X, Z, cons(X, P2), C1+C2) :- 
+   link(X, Y, C1), path(Y, Z, P2, C2),
+   contains(X, P2) == false.
+
+query path(``node1'', Y, P, C).
+\end{lstlisting}
 \caption{\label{ch:p2:fig:datalogPath}Path program written in Datalog.}
 \end{figure*}
 
-The previous section alluded to the fact we are dealing with data tables
-containing rows of tuples.  This is indeed the case.
 Figure~\ref{ch:p2:fig:datalogPath} provides our first look at a program
 expressed in Datalog.  The statements at the top of this program specify the
 existence of a \ol{link} table containing two rows of data tuples.  Each row of
 the \ol{link} table contains three attributes; two strings, and an integer.
 The program then derives all reachable paths from this initial set of known
-tuples (links), and present that result as a relational view called 
+tuples (links), and present that result as a relational view called
 \ol{path}~\footnote{Henceforth, referred to simply as a ``relation.''}.
 
 Base derivations proceed from the rule body (those predicates to the right of
 ``\ol{:-}'') and project onto the rule head (to the left of ``\ol{:-}'').  The
-\ol{link} facts are used in the evaluation of rule~\ol{R1} to derive an initial
+\ol{link} facts are used in the evaluation of rule~\ol{r1} to derive an initial
 set of \ol{path} tuples.  The rule reads ``if there exists a \ol{link} from $X$
 to $Y$ at cost $C$, then there exists a \ol{path} from $X$ to $Y$ consisting of
-nodes $X, Y$ at cost $C$.'' Both initial facts meet this criterion.
+nodes $X, Y$ at cost $C$.'' Both initial facts meet this criterion and hence
+are included in the \ol{path} relation.
 
-Rule~\ol{R2} expresses a transitive closure over the \ol{link} {\bf and}
+Rule~\ol{r2} expresses a transitive closure over the \ol{link} {\bf and}
 \ol{path} relations.  The rule reads ``if there is a link from $X$ to $Y$ at
 cost $C$, and there is a \ol{path} from $Y$ to $Z$ crossing $P2$ at cost $C2$,
 then there is a path from $X$ to $Z$ via ($X,\ P2$) at cost of $C1+C3$.'' A
 path from ``node1'' to ``node3'', through ``node2'', satisfies this criterion,
-and such a tuple is presented by the \ol{path} IDB relation.  The query
+and such a tuple is included in the \ol{path} IDB relation.  The query
 predicate, shown at the bottom of Figure~\ref{ch:p2:fig:datalogPath}, asks for
-all paths that start at ``node1.'' The \ol{path} tuples that begin
-with ``node1'' and end at ``node2'' and ``node3'' (via ``node2'') both meet
-this query constraint.
+all paths that start at ``node1.'' The \ol{path} tuples that begin with
+``node1'' and end at ``node2'' and ``node3'' (via ``node2'') both meet this
+query constraint.
 
 \subsection{Evaluation of Datalog Rules}
+\label{ch:p2:sec:eval}
 
 We now turn to the evaluation of a set of Datalog rules, which is performed in
-a bottom-up fashion, starting with the set of known EDB facts.  Two popular
-approaches are used to evaluate a set of Datalog rules.  The first is called
-{\emph na\"{\i}ve evaluation}, which is an iterative algorithm that repeatedly
+a bottom-up fashion, starting with the set of known EDB facts.  There are two
+standard approaches to evaluating a set of Datalog rules.  The first is called
+{\em na\"{\i}ve evaluation}, which is an iterative algorithm that repeatedly
 applies all known facts to the program rules, in some stylized set-oriented
 fashion, until no new knowledge is obtained.  Starting with the tuples
 contained in the EDB, the na\"{\i}ve evaluator iteratively executes a
@@ -162,75 +160,78 @@ contained in the EDB and IDB to the rule set.  The process repeats until no new
 tuples can be inferred, marking the end of the evaluation, which is commonly
 referred to as a ``fixed point.''
 
-\begin{figure*}
-\ssp
-\begin{boxedminipage}{\linewidth}
-    \begin{algorithmic}[1]
-      	\STATE Empty all IDB facts
-	\STATE /* Base case: initialize IDB */
-        \STATE Evaluate rules with subgoals that involve EDB predicates only
-	\STATE Initialize $\delta IDB_0$ with the predicates that received tuple derivations.
-	\STATE /* Repeat while predicates exist in $\delta IDB_i$ */
-	\STATE $i\ = 0$
-	\WHILE{$\delta IDB_{i}\ !=\ \emptyset$}
-	\FORALL{predicate $\delta p$ in $\delta IDB_{i}$}
-        	\FORALL{rules~$r$ that reference predicate $p$ the rule body}
-                	\STATE /* Assume $r$ derives tuples for predicate $q$.  */
-			\STATE Evaluate rule $r$ by ``joining'' only $\delta p$ tuples with the remaining body predicates. 
-			\STATE Add $\delta q$ to $\delta IDB_{i+1}$ if new tuples were derived.
-			\STATE Remove $\delta p$ from $\delta IDB_i$.
-        	\ENDFOR
-        \ENDFOR
-	\STATE $i = i + 1$
-	\ENDWHILE
-    \end{algorithmic}
-\end{boxedminipage}
-\caption{\label{ch:p2:fig:seminaive}Semina\"{\i}ve Evaluation over a set of Datalog rules.}
-\end{figure*}
-
 Each iteration of this na\"{\i}ve algorithm uses all the data in the database
 when deriving new data.  A second approach, which is also the optimal approach,
 adds a condition to the iteration loop that prunes the data that was not
 derived in the previous round.  The remaining facts, if any, are then used in
-the subsequent iteration.  This {\emph semina\"{\i}ve evaluation} algorithm is
+the subsequent iteration.  This {\em semina\"{\i}ve evaluation} algorithm is
 based on the principle that ``if a fact is derived during round~$i$ then it
 must have been inferred from a rule in which one or more subgoals were
 instantiated with facts that were inferred in round~$i-1$.''~\cite{ullmanbook}
 
-Figure~\ref{ch:p2:fig:seminaive} describes the algorithm that performs a
-semina\"{\i}ve evaluation over a set of Datalog rules.  Let $\delta IDB_{i}$ be
-a set containing the IDB predicates that received derivations during iteration
-$i$.  In the first step, it evaluates the rules against the EDB tuples to
-derive an initial set of IDB tuples for iteration~$0$.  We then enter the loop,
-where we carry out further iterations~$i\ >\ 0$.
 
-Each iteration~$i$ derives new tuples in the IDB relations mentioned by $\delta
-IDB$.  We start by considering a single $\delta p$ predicate in $\delta
-IDB_{i}$, and consider those rules~$r$ that refer to predicate $p$ in the rule
-body.  Assume that the head predicate for rule~$r$ is $q$, which maybe equal to
-$p$, indicating a recursive rule.  We derive new $q$ tuples from these rules
-using only the predicates mentioned in $\delta IDB_i$.  The algorithm takes a
-single $\delta p$ from $\delta IDB_i$, and executes the rule body of any rules
-that mention $p$.  The execution proceeds by ``joining'' $p$ tuples with the
-tuples referenced by the remaining rule body predicates.  Following the
-evaluation of each such rule, we add $\delta q$ to the $\delta IDB_{i+1}$ set
-if any of the evaluated rules derived new $q$ tuples.  The algorithm terminates
-when no new derivations were made to any IDB relation, during a complete
-iteration.
+\begin{figure*}
+\ssp
+\begin{boxedminipage}{\linewidth}
+    \begin{algorithmic}[1]
+      \STATE Empty all \ol{path} facts
+      \STATE /* Base case: initialize \ol{path} */
+      \STATE \ol{path} = $\Delta$\ol{path} = $\pi_{X, Y, cons(X, Y), C}$\ol{link}
+      \WHILE{$\Delta$\ol{path}\ !=\ $\emptyset$}
+      	\STATE $\Delta$\ol{path} = $\pi_{X,\ Z,\ cons(X, P2),\ C1+C2}$ 
+      	($\sigma_{contains(X,P2)\ ==\ false}$(\ol{link} $\Join$ $\Delta$\ol{path})) 
+      	\STATE $\Delta$\ol{path} = $\Delta$\ol{path} - \ol{path}
+      	\STATE \ol{path} = \ol{path} $\bigcup$ $\Delta$\ol{path}
+      \ENDWHILE
+    \end{algorithmic}
+\end{boxedminipage}
+\caption{\label{ch:p2:fig:seminaive}Semina\"{\i}ve evaluation of the 
+path program in Figure~\ref{ch:p2:fig:datalogPath}.}
+\end{figure*}
+
+Figure~\ref{ch:p2:fig:seminaive} describes the steps through the algorithm that
+performs a semina\"{\i}ve evaluation on the path program shown in
+Figure~\ref{ch:p2:fig:datalogPath}.  It maintains a $\Delta$\ol{path} reference to
+the set of new tuples added to the \ol{path} relation on the previous
+round.  In the first round, the algorithm uses rule~\ol{r1} to derive the
+initial set of \ol{path} tuples from the EDB \ol{link} relation.  Subsequent
+rounds are carried out in the \ol{while} loop until $\Delta$\ol{path} is empty.
+The body of the loop contains the following three steps.
+\begin{enumerate} \ssp 
+  \item Evaluate rule~\ol{r2} relative to the tuples in
+    $\Delta$\ol{path}.  
+  \item Assign $\Delta$\ol{path} to the new tuples
+    derived in the previous step.  
+  \item Add the new derivation in
+    $\Delta$\ol{path} to the \ol{path} relation.  
+\end{enumerate}
+
+In the first step, we evaluate rule~\ol{r2} using the $\Delta$\ol{path} tuples
+derived in the previous round (e.g., initially, those obtained from the
+\ol{link} relation).  In general, if there existed other rules that referenced
+\ol{path} in the body, then those too would be evaluated against the same
+$\Delta$\ol{path} tuples, and any deductions would contribute to the $\Delta$
+predicate referenced by the rule head.  The last two steps in the loop deal
+with ensuring $\Delta$\ol{path} only references deductions from the previous
+round, and that those new deductions are added to the \ol{path} relation.
+
 
 \subsection{Fixed Point Semantics}
 
-Datalog is monotonic since it does not contain the notion of deletions.  The
-evaluation of a program proceeds as a series of deductions to the IDB.  Since
-Datalog has {\emph set semantics}, only new deductions will be added to the
-IDB, and therefore it is guaranteed to terminate under safety constraints.  A
-Datalog program is said to be at {\emph fixed point} when no further deductions
-can be made relative to the current EDB and IDB tuples.  In the absence of
-negated subgoals, the derivations made during the evaluation represent a {\emph
-unique minimal model}.  Uniqueness comes from always deriving the same set of
-IDB tuples given the same rules and EDB.  The result is a minimal model since
-we cannot add, nor take away, any tuples and still have a model consistent with
-the rule constraints.
+Datalog is a monotonic language: once a fact is derived during evaluation it is
+certain to be in the final answer.  The evaluation of a program proceeds as a
+series of deductions to the IDB.  Since Datalog has {\em set semantics}, only
+new deductions will be added to the IDB, and therefore it is guaranteed to
+terminate under safety constraints.  A Datalog program is said to be at {\em
+fixed point} when no further deductions can be made relative to the current EDB
+and IDB tuples.  The result derived at fixed point is a model for the Datalog
+program.  Given a model~$m$ and a Datalog program~$p$, we say $m$ is a minimal
+model if and only if no proper subset of $m$ is a model for $p$.  In the
+absence of negated subgoals, a Datalog program has one and only one minimal
+model.  A logic program with negation may have more than one minimal model;
+however, if the program is stratified, then once again there is a unique
+minimal model.~\cite{ullmanbook}
+
 
 \subsection{Negation and Stratification}
 
@@ -245,133 +246,137 @@ further, we review some semantic issues raised by negated subgoals in Datalog.
 \begin{figure*}
 \centering
 \ssp
-\begin{boxedminipage}{\linewidth}
-R4 {\bf path}(X,Y,P,C) :- \\
-\datalogspace {\bf link}(X, Y, C), \\
-\datalogspace not {\bf detour}(X, Y). \\
+\begin{lstlisting}
+r4 path(X, Y, P, C) :-
+   link(X, Y, C),
+   not detour(X, Y).
 
-R5 {\bf detour}(X, Y) :- \\
-\datalogspace {\bf link}(X, Y, C), \\
-\datalogspace \ldots 
-\end{boxedminipage}
+r5 detour(X, Y) :-
+   link(X, Y, C),
+   ... 
+\end{lstlisting}
 \caption{\label{ch:p2:fig:negation}Negated Datalog rule.}
 \end{figure*}
 
-Consider rule~\ol{R4} in Figure~\ref{ch:p2:fig:negation}, which formulates a
+Consider rule~\ol{r4} in Figure~\ref{ch:p2:fig:negation}, which formulates a
 \ol{path} from a \ol{link} if $X$ and $Y$ does not cross a detour.
 Unfortunately, the complement of the \ol{detour} relation is not well-defined
-since we do not know the domain of its possible values.  Moreover, we cannot
-specify this complete relation prior to evaluation, since \ol{detour} is an IDB
-predicate.  If we were to simply evaluate the rules in
-Figure~\ref{ch:p2:fig:negation} (using say Figure~\ref{ch:p2:fig:seminaive})
-then we could end up with \ol{path} tuples that cross detours.  To see this,
-lets assume that we start by evaluating rule~\ol{R4} with the initial facts in
-the \ol{link} relation.  The execution plan for the negated \ol{detour} is
-similar to an anti-join operation, where tuples from \ol{link} relation pass if
-they do not already exist in the current \ol{detour} relation.  Since we have
-not yet evaluated rule~\ol{R5}, all \ol{link} tuples pass the anti-join, and
-produce a set of \ol{path} deductions in rule~\ol{R4}.  Subsequently evaluating
-rule~\ol{R5} would give us our \ol{detour} tuples, but this would be too late
-in the sense that we have already made incorrect deductions, and cannot take
-them back.
+since the variables range over an infinite domain the compliment is also
+infinite.  Moreover, we cannot specify this complete relation prior to
+evaluation, since \ol{detour} is an IDB predicate.  If we were to simply
+evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using say
+Figure~\ref{ch:p2:fig:seminaive}) then we could end up with \ol{path} tuples
+that cross detours.  To see this, lets assume that we start by evaluating
+rule~\ol{r4} with the initial facts in the \ol{link} relation.  The execution
+plan for the negated \ol{detour} is similar to an anti-join operation, where
+tuples from \ol{link} relation pass if they do not already exist in the current
+\ol{detour} relation.  Since we have not yet evaluated rule~\ol{r5}, all
+\ol{link} tuples pass the anti-join, and produce a set of \ol{path} deductions
+in rule~\ol{r4}.  Subsequently evaluating rule~\ol{r5} would give us our
+\ol{detour} tuples, but this would be too late in the sense that we have
+already made incorrect deductions, and cannot take them back.
 
 \begin{figure*} 
 \ssp
 \begin{center}
-\includegraphics[scale=1]{figures/dependency-graph}
+\includegraphics[scale=0.75]{figures/dependency-graph}
 \caption{\label{ch:p2:fig:dependency}Dependency graph for predicates 
 appearing in Figure~\ref{ch:p2:fig:negation}.}
 \end{center} 
 \end{figure*}
 
-We can obtain the correct deductions by simply evaluating rule~\ol{R5} first.
+We can obtain the correct deductions by simply evaluating rule~\ol{r5} first.
 Such an ordering of predicate evaluations forms the basic idea behind
-stratified Datalog.  Before we get to that definition, lets first understand
-how the dependencies of a Datalog program are represented graphically.
-Figure~\ref{ch:p2:fig:dependency} contains the dependency graph for the predicates
-appearing in the rules of Figure~\ref{ch:p2:fig:negation}. Constructing this graph
-is a straightforward application of the following two rules.
+stratified Datalog.  Before we get to that definition, we first review how the
+dependencies of a Datalog program are represented graphically.
+Figure~\ref{ch:p2:fig:dependency} contains the dependency graph for the
+predicates appearing in the rules of Figure~\ref{ch:p2:fig:negation}.
+Constructing this graph is a straightforward application of the following two
+rules.
 \begin{enumerate}
   \ssp
   \item Add $p \rightarrow q$ dependency if there is a rule with head predicate $p$ and subgoal $q$.
   \item Add $p \rightarrow q$ dependency labeled $\neg$ if there is a rule with head predicate $p$ and negated subgoal $q$.
 \end{enumerate}
-From Figure~\ref{ch:p2:fig:negation}, rule~\ol{R4} forms the $path \rightarrow
-link$ and $path \rightarrow detour$ dependencies, while rule~\ol{R5} supplies the
-$detour {\neg \atop \rightarrow} link$ negated dependency. 
+From Figure~\ref{ch:p2:fig:negation}, rule~\ol{r4} forms the $path \rightarrow
+link$ and $path \rightarrow detour$ dependencies, while rule~\ol{r5} supplies the
+$detour \rightarrow link$ negated edge dependency. 
 
 The stratum of an IDB predicate $p$ is defined to be the largest number of
 negations ($\neg$) along any path involving predicate $p$.  The dependency graph
 in Figure~\ref{ch:p2:fig:dependency} places predicates \ol{detour} and
 \ol{link} in the lowest stratum~$0$, while the \ol{path} predicate is in
 stratum~$1$.  If all IDB predicates have a finite stratum, then the Datalog
-program is {\emph stratified}.  If any IDB predicate has an $\infty$ stratum,
+program is {\em stratified}.  If any IDB predicate has an $\infty$ stratum,
 then the program is unstratified.  An IDB predicate is assigned an $\infty$
 stratum if it defines a negated subgoal on a path that contains a cycle (due
 to arbitrary recursion).
 
 We evaluate a stratified Datalog program using the semina\"{\i}ve algorithm of
-Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- we topologically
-sort the IDB predicates (in $\delta IDB$) by their assigned stratum, and follow
-this order in the loop.  This order ensures that if the program is stratified
-then any negated subgoal (e.g., \ol{detour}) has already had its relation fully
-evaluated first.  The result of this evaluation is called a {\emph stratified
-model}~\footnote{We note that the notion of stratified Datalog has nothing to
-do with the termination of a Datalog program.  An unstratified Datalog program
-that is ``safe'' is guaranteed to terminate.  The issue here is whether the
-result produced by that evaluation is consistent with the programmer's
-intent.}.
+Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- we sort the IDB
+predicates by their assigned stratum, and follow this order in the loop.  This
+order ensures that if the program is stratified then any negated subgoal (e.g.,
+\ol{detour}) has already had its relation fully evaluated first.  The result of
+this evaluation is called a {\em stratified model}~\footnote{We note that the
+notion of stratified Datalog has nothing to do with the termination of a
+Datalog program.  An unstratified Datalog program that is ``safe'' is
+guaranteed to terminate.  The issue here is whether the result produced by that
+evaluation is consistent with the programmer's intent.}.
 
 We revisit the notion of stratified Datalog throughout this thesis.  It turns
 out that the P2 system does not supported stratified Datalog, which slightly
 complicated the (\OVERLOG) program rules described in Chapters~\ref{ch:evita},
-\ref{ch:magic} and~\ref{ch:opt}.  Fortunately, there is another class of {\emph
+\ref{ch:magic} and~\ref{ch:opt}.  Fortunately, there is another class of {\em
 locally stratified} Datalog programs that ``make sense'' on certain data.
 
 \subsection{Local Stratification}
 
-The definition of stratified Datalog is based on cycles through negations in
-the dependency graph of a collection of rules.  An extension to this definition
-is a class of locally stratified programs.  These programs are not necessary
-stratified according the their rules, but they are stratified when we
-instantiate those rules with a specific collection of data.  Many of the
-programs presented in this thesis fall into the class of locally stratified
-rules.
+Stratified Datalog is defined in terms of a syntactic property, which
+translates to cycles through negations in the dependency graph of a collection
+of rules.  An extension to this definition is a class of locally stratified
+programs, which is defined in terms of a data dependent property.  These
+programs are not necessary stratified according the their rules, but they are
+stratified when we instantiate those rules with a specific collection of data.
+Many of the programs presented in this thesis fall into the class of locally
+stratified rules.
 
 \begin{figure*}
 \ssp
-\begin{boxedminipage}{\linewidth}
-{\bf link}(``node1'', ``node2'', 1). \\
-{\bf link}(``node2'', ``node3'', 1). \\
-\\
-R1 {\bf path}(X, Y, {\em cons}(X, Y), C) :- \\
-\datalogspace {\bf link}(X, Y, C). \\
-\\       
-R2 {\bf path}(X, Z, {\em cons}(P1, P2), $C1+C2$) :- \\
-\datalogspace {\bf link}(X, Y, C1), {\bf shortestPath}(Y, Z, P2, C2), \\
-\datalogspace $f\_contains(X,\ P2)\ ==\ false$. \\ 
+\begin{lstlisting}
+link(``node1'', ``node2'', 1).
+link(``node2'', ``node3'', 1).
 
-R3 {\bf minCostPath}(X, Y, min$<$C$>$) :-  \\
-\datalogspace {\bf path}(X, Y, P, C).
+r1 path(X, Y, cons(X, Y), C) :-
+   link(X, Y, C).
 
-R4 {\bf shortestPath}(X, Y, P, C) :- \\
-\datalogspace {\bf minCostPath}(X, Y, C), {\bf path}(X, Y, P, C).\\
+r2 path(X, Z, cons(P1, P2), C1+C2) :-
+   link(X, Y, C1), shortestPath(Y, Z, P2, C2),
+   contains(X, P2) == false.
 
-\end{boxedminipage}
+r3 minCostPath(X, Y, min<C>) :-
+   path(X, Y, P, C).
+
+r4 shortestPath(X, Y, P, C) :-
+   minCostPath(X, Y, C), path(X, Y, P, C).
+
+\end{lstlisting}
 \caption{\label{ch:p2:fig:datalogSP}Shortest path variant of Figure~\ref{ch:p2:fig:datalogPath}.}
 \end{figure*}
 
+Like negation, an aggregation adds a stratification boundary to a Datalog
+program.  Intuitively, we must derive all facts from the tables mentioned in
+the rule body, before we can evaluate the aggregation in the rule head.
 Consider the variant of the path program in Figure~\ref{ch:p2:fig:datalogSP},
-which modifies rule~\ol{R2} to formulate new paths from the \ol{shortestPath} 
-relation, rather than the \ol{path} relation.  Two extra rules \ol{R3} and \ol{R4} are used to
-derive the shortest path from the \ol{path} relation.  Rule~\ol{R3} selects the
-minimum cost path from $X$ to $Y$, and rule~\ol{R4} selects the actual minimum
-path based on the minimum cost metric.
+which modifies rule~\ol{r2} to formulate new paths from the \ol{shortestPath}
+relation, rather than the \ol{path} relation.  Two extra rules \ol{r3} and
+\ol{r4} are used to derive the shortest path from the \ol{path} relation.
+Rule~\ol{r3} selects the minimum cost path from $X$ to $Y$, and rule~\ol{r4}
+selects the actual minimum path based on the minimum cost metric.
 
 \begin{figure*} 
 \ssp
 \begin{center}
-\includegraphics[scale=1]{figures/dependency-graph2}
+\includegraphics[scale=0.75]{figures/dependency-graph2}
 \caption{\label{ch:p2:fig:dependency2}Dependency graph for predicates 
 appearing in Figure~\ref{ch:p2:fig:datalogSP}. A cycle through an aggreagation
 appears in bold. }
@@ -380,7 +385,7 @@ appears in bold. }
 
 The dependency graph for this program is shown in
 Figure~\ref{ch:p2:fig:datalogSP}.  As shown, this program is not stratified
-since there is a recursive path in the rule dependency graph that traverses an
+since there is a cyclic path in the rule dependency graph that traverses an
 aggregation.  Like negations, aggregations impose stratification boundaries.
 Intuitively, we need to derive all \ol{path} tuples before we can identify the
 one that is the minimum cost.  As a result, the Datalog program in
@@ -388,24 +393,21 @@ Figure~\ref{ch:p2:fig:datalogSP} is not stratified.
 
 It is however locally stratified.  Assume that this program is evaluated using
 the algorithm describe in Figure~\ref{ch:p2:fig:seminaive}.  The bottom-up
-evaluation will start by deriving all paths of length $1$ using rule~\ol{R1},
+evaluation will start by deriving all paths of length $1$ using rule~\ol{r1},
 then using rule~\ol{R2} to derive paths of length $2, 3, \cdots$ (fully, in
-that order) until no such paths exist.  As a result of this {\emph derivation}
-order, our {\bf min} aggregation will never see a fact (i.e., a \ol{path}
-tuple) that disputes and earlier deduction.  That is, the na\"{\i}ve and
-semina\"{\i}ve evaluations derive \ol{path} tuples of length $k$ from {\bf all}
-\ol{path} tuples of length $k-1$, and therefore it will not discover a path of
-length $j > k$ with a lower cost~\footnote{This assumes that the cost of a
-\ol{path} tuple is proportional to it's length i.e., the triangle inequality.}.
+that order) until no such paths exist.  These derivations are monotonic because
+we a performing a {\em min} aggregation of a {\em sum} over non-negative
+integers.  As a result, rule evaluations derive \ol{path} tuples of length $k$
+before path tuples of length $j > k$.
 
 Many of the programs described in this thesis are not stratified, and of those,
 all are locally stratified.  For example, the System R rules presented in
-Chapter~\ref{ch:opt} perform a {\bf min} aggregation on the cost metric of a
+Chapter~\ref{ch:opt} perform a {\em min} aggregation on the cost metric of a
 query plan.  This is used to select the ``best plan'' among the set of
 equivalent plans in a given level (plan size) of the System R dynamic program.
 The ``best plan'' is then recursively used to construct new plans, containing
 an extra predicate, for the next dynamic programming level.  Since adding an
-extra predicate to a query plan can only increase its cost ({\emph principle of
+extra predicate to a query plan can only increase its cost ({\em principle of
 optimality}), and we fully explore a level bottom-up, this optimization is locally
 stratified.
 
@@ -429,33 +431,37 @@ to Datalog, which we describe before presenting the P2 runtime.
 
 \begin{figure*}
 \ssp
-\begin{boxedminipage}{\linewidth}
-{\bf materialize}(link,infinity,infinity,keys(1,2)). \\
-{\bf materialize}(path,infinity,infinity,keys(1,2,3)).  \\
-{\bf materialize}(shortestPath,infinity,infinity,keys(1,2,3)). \\
+\begin{lstlisting}
+materialize(link, infinity, infinity, keys(1,2)).
+materialize(path, infinity, infinity, keys(1,2,3)).
+materialize(shortestPath, infinity, infinity, keys(1,2,3)).
 
-{\bf link}(``localhost:10000'', ``localhost:10001'', 1). \\
-{\bf link}(``localhost:10001'', ``localhost:10002'', 1). \\
+link(``localhost:10000'', ``localhost:10001'', 1).
+link(``localhost:10001'', ``localhost:10002'', 1).
 
-R1{\bf path}(@X, Y, P, C) :- \\
-\datalogspace {\bf link}(@X, Y, C), P := f\_cons(X, Y). \\
+r1 path(@X, Y, P, C) :-
+   link(@X, Y, C), P := f_cons(X, Y).
 
-R2 {\bf path}(@X,Z,P,C) :- \\
-\datalogspace {\bf link}(@X, Y, C1), {\bf path}(@Y, Z, P2, C2), \\
-\datalogspace $f\_contains(X,P2) == false$, \\
-\datalogspace P := f\_cons(X,P2), C := C1 + C2. \\ 
+r2 path(@X, Z, P, C) :-
+   link(@X, Y, C1), path(@Y, Z, P2, C2),
+   f_contains(X,P2) == false,
+   P := f_cons(X,P2), C := C1 + C2.
 
-R4 {\bf minCostPath}(@X, Y, a\_min$<$C$>$) :-  \\
-\datalogspace {\bf path}(@X, Y, P, C). \\
+r3 minCostPath(@X, Y, a_min<C>) :-
+   path(@X, Y, _, C).
 
-R5 {\bf shortestPath}(@X, Y, P, C) :- \\
-\datalogspace {\bf minCostPath}(@X, Y, C), {\bf path}(@X, Y, P, C).\\
+r4 shortestPath(@X, Y, P, C) :-
+   minCostPath(@X, Y, C), 
+   path(@X, Y, P, C).
 
-Query {\bf shortestPath}(``localhost:10000'', Y, P, C).
-\end{boxedminipage}
-\caption{\label{ch:p2:fig:overlogSP}Shortest path program in \OVERLOG. \ol{a\_}
+query shortestPath(``localhost:10000'', Y, P, C).
+\end{lstlisting}
+\caption{\label{ch:p2:fig:overlogSP}Shortest path program in \OVERLOG. We
+follow the notation of Loo et al.~\cite{boon-thesis}: \ol{a\_}
 prefixes introduce aggregate functions and \ol{f\_} prefixes introduce
-built-in functions.}
+built-in functions. Variables that do not contribute to the rule evaluation
+are ignored using an underscore e.g., rule~\ol{r3}, third \ol{path} attribute.
+We will use '$\ldots$' to indicate a series of ignored variables. }
 \end{figure*}
 
 \subsection{Horizontal partitioning}
@@ -480,43 +486,86 @@ specifiers and network topology~\cite{loo-sigmod06}.
 
 \subsection{Soft State and Events}
 
+\begin{figure*} 
+\ssp
+\begin{center}
+\includegraphics[scale=0.75]{figures/event_loop}
+\caption{\label{ch:p2:fig:fixpoint}A single \OVERLOG fixpoint.}
+\end{center} 
+\end{figure*}
+
+The three phases shown in Figure~\ref{ch:p2:fig:fixpoint} describe a single
+evaluation round of an \OVERLOG program.  The input to this evaluation is a set
+of {\em event} tuples that are created when the network receives a packet, the
+system clock advances to some significant value~\footnote{The \OVERLOG language
+allows for the definition of a stream that periodically (based on real-time)
+produces a tuple with a unique identifier.}, or through some arbitrary C++ code
+that updates the database.  These events a queued in the first phase of the
+evaluation.  An evaluator loop dequeues some number of these events and
+atomically executes a Datalog fixed point.  The rule deductions take the form
+of actions, which, in the third phase, cause data to be sent over the network
+or perform updates to the local database.  These three phases represent a
+single time-step in the \OVERLOG language.
+
 Associated with each \OVERLOG table is a ``soft-state'' lifetime that
 determines how long (in seconds) a tuple in that table remains stored before it
 is automatically deleted.  Lifetimes can vary from zero to $\infty$.
 Zero-lifetime tables are referred to as {\em event} tables, and their tuples
-are called \emph{events}; all other tables are referred to as {\em
-materialized} tables.  \OVERLOG contains a \ol{materialize} declaration that
-specifies the lifetime of a materialized table.  At any instant in time, at any
-given node in the network, the contents of the local \OVERLOG ``database'' are
-considered to be: (a) the local tuples in materialized tables whose lifetime
-has not run out, (b) at most one local event fact across {\em all} event
-tables, and (c) any derived local tuples that can be deduced from (a) and (b)
-via the program rules.  Note that while (b) specifies that only one event fact
-is considered to be live at a time per node, (c) could include {\em derived}
-local events, which are considered to be live simultaneously with the event
-fact.  This three-part definition defines the semantics for a single P2 node at
-a snapshot in time.  P2 has no defined semantics across time and space (in the
-network); we describe the relevant operational semantics of the prototype in
-Section~\ref{ch:p2:sec:p2}.
+are called {\em events}; all other tables are referred to as {\em materialized}
+tables.  An event only exists in the time-step that derived it, while
+materialized tuples span multiple time-steps, until explicitly deleted or when
+the lifetime expires (checked at the end of every time-step).
+
+\OVERLOG contains a \ol{materialize} declaration that specifies the lifetime of
+a materialized table.  At any time-step instance, at any given node in the
+network, the contents of the local \OVERLOG ``database'' are considered to be:
+(a) the local tuples in materialized tables whose lifetime has not run out, (b)
+at most one local event fact across {\em all} event tables, and (c) any derived
+local tuples that can be deduced from (a) and (b) via the program rules.  Note
+that while (b) specifies that only one event fact is considered to be live at a
+time per node, (c) could include {\em derived} local events, which are
+considered to be live simultaneously with the event fact.  This three-part
+definition defines the semantics of an \OVERLOG program at a ``snapshot in
+time.'' \OVERLOG has no defined semantics across ``time'' and space (in the network);
+we describe the relevant operational semantics of the prototype in
+Chapter~\ref{ch:p2:sec:p2}.
      
 \subsection{Deletions and Updates}
 
 \OVERLOG, like SQL, supports declarative expressions that identify tuples to be
-deleted, in a deferred manner after a fixed point is achieved. To this end, any
-\OVERLOG rule in a program can be prefaced by the keyword \ol{delete}.  The
-program is run to fixpoint, after which the tuples derived in {\tt delete}
-rules -- as well as other tuples derivable from those -- are removed from
-materialized tables before another fixpoint is executed.  It is also possible
-in \OVERLOG to specify updates, but the syntax for doing so is different.
-\OVERLOG's {\tt materialize} statement supports the specification of a primary
-key for each relation.  Any derived tuple that matches an existing tuple on the
-primary key is intended to {\em replace} that existing tuple, but this
-replacement happens through an insertion and a deletion: the deduction of the
-new tuple to be inserted is visible within the current fixpoint, whereas the
-deletion of the original tuple is deferred until after the fixpoint is computed.
+deleted, in a deferred manner after a fixed point is achieved.  To this end,
+any \OVERLOG rule in a program can be prefaced by the keyword \ol{delete}.  In
+each timestep, the program is run to fixpoint, after which the tuples derived
+in {\tt delete} rules -- as well as other tuples derivable from those -- are
+removed from materialized tables before another fixpoint is executed.  It is
+also possible in \OVERLOG to specify updates, but the syntax for doing so is
+different.  \OVERLOG's {\tt materialize} statement supports the specification
+of a primary key for each relation.  Any derived tuple that matches an existing
+tuple on the primary key is intended to {\em replace} that existing tuple, but
+this replacement happens through an insertion and a deletion: the deduction of
+the new tuple to be inserted is visible within the current fixpoint, whereas
+the deletion of the original tuple is deferred until after the fixpoint is
+computed.
 
 \subsection{A Canonical Example}
 \label{ch:p2:sec:declnet}
+
+\begin{figure*}
+\ssp
+\begin{lstlisting}
+r2a link_copy(@Y, X, Y, C1) :- 
+    link(@X, Y, C1).
+
+r2b path(@X, Z, P, C) :- 
+    link_copy(@Y, X, Y, C1), 
+    path(@Y, Z, P2, C2),
+    f_contains(X, P2) == false,
+    P := cons(X, P2), C := C1 + C2.
+\end{lstlisting}
+\caption{\label{ch:p2:fig:overlogSPLocal}The localized version of rule~\ol{r2} in
+Figure~\ref{ch:p2:fig:overlogSP}.}
+\end{figure*}
+
 
 To illustrate the specifics of \OVERLOG, we describe the shortest paths example
 in Figure~\ref{ch:p2:fig:overlogSP}, which is similar to that
@@ -536,15 +585,26 @@ derive the existence of a path tuple \ol{(X,Y,P,C)} at node \ol{X}, where
 throughout, and involves no communication.  This is not true of the recursive
 rule \ol{r2}, which connects any \ol{link} tuple at a node \ol{X} with any path
 tuple at a neighboring node \ol{Y}, the output of which is to be stored back at
-\ol{X}.  As described in the earlier work on
-P2~\cite{loo-sigcomm05,loo-sigmod06} such rules can be easily rewritten so that
-the body predicates all have the same location specifier; the only
-communication then is shipping the results of the deduction to the head
-relation's location specifier.  We declaratively describe this simple 
-localization ``rewrite'' in Chapter~\ref{ch:evita}.
+\ol{X}.  Figure~\ref{ch:p2:fig:overlogSPLocal} shows a rewritten version of
+rule~\ol{r2}, wherein all rule body predicates have the same location
+specifier; the only communication then is shipping the results of the deduction
+to the head relation's location specifier.  Further details regarding the steps
+that perform this rule ``rewrite'' are presented in
+Chapter~\ref{ch:evita:sec:local}.
 
 \section{The P2 Runtime Engine}
 \label{ch:p2:sec:p2}
+
+While ostensibly a network protocol engine, architecturally P2 resembles a
+fairly traditional shared-nothing parallel query processor, targeted at both
+stored state and data streams.  The P2 runtime at each node consists of a
+compiler---which parses programs, optimizes them, and physically plans them---a
+dataflow executor, and access methods.  Each P2 node runs the same query
+engine, and, by default, participates equally in every ``query.'' In parallel
+programming terms, P2 encourages a Single-Program-Multiple-Data (SPMD) style
+for parallel tasks, but also supports more loosely-coupled (MPMD) styles for
+cooperative distributed tasks, e.g.  for communications among clients and
+servers.
 
 The P2 runtime is a dataflow engine that was based on ideas from relational
 databases and network routers; its scheduling and data hand-off closely
@@ -555,9 +615,10 @@ push-based elements as well.  As in Click, whenever a pull-based element and a
 push-based element need to be connected, an explicit ``glue'' element (either a
 pull-to-push driver, or a queue element) serves to bridge the two.  More
 details of this dataflow coordination are presented in the original P2
-paper~\cite{p2:sosp}.  Here we focus on the dataflow architecture
-(Section~\ref{ch:p2:sec:dataflow}), which affects the language semantics, and
-the individual processing elements (Section~\ref{ch:p2:sec:dataflow_elements}).
+paper~\cite{p2:sosp}.  In Chapter~\ref{ch:p2:sec:dataflow} we describe the
+aspects of the dataflow architecture that affect our language semantics, and in
+Chapter~\ref{ch:p2:sec:dataflow_elements} we describe the individual processing
+elements.
 
 \subsection{Dataflow Architecture}
 \label{ch:p2:sec:dataflow}
@@ -571,12 +632,15 @@ the individual processing elements (Section~\ref{ch:p2:sec:dataflow_elements}).
 \end{figure*}
 
 The P2 architecture consists of a dataflow of processing elements and queues,
-and a single driver loop.  Figure~\ref{ch:p2:fig:dataflow} provides a high
-level view of this architecture, which contains three queuing elements.  The
-\ol{event} queue represents the primary input queue, which contains the
-``working set'' of tuples that the system is currently processing.  The
-\ol{netin} and \ol{localmem} secondary queues feed the main event queue with
-tuples when none currently exist in it.
+and a single driver loop.  Figure~\ref{ch:p2:fig:dataflow} provides a
+high-level view of this architecture, which contains three queuing elements.
+The \ol{event} queue represents the primary input queue, which contains the
+current snapshot of tuples that the system uses to drive the processing.  The
+\ol{localmem} secondary queue feeds the main event queue with tuples when none
+currently exist in it.  Tuples in the \ol{localmem} queue represent
+side-affecting events (i.e., insert and delete) to local memory relations.  P2
+evaluates this queue in a tuple at a time fashion, where a single tuple is
+dequeued and executed in a ``dataflow fixpoint.''
 
 The P2 architecture contains three output queues that hold the tuples derived
 from the rule engine.  The choice of which queue a tuple is added to depends on
@@ -584,56 +648,58 @@ the value of the location attribute.  If the tuple's location is local to the
 current P2 instance, and its lifetime is greater than zero, then it will be
 added to the \ol{localmem} queue.  If the tuple is remote, then it is added to
 the \ol{netout} queue.  The third output queue is the \ol{event} queue.  All
-local tuples that have a zero-lifetime are directly added to the this queue.
-This implementation decision exhibited a kind of ``mini-fixpoint'' (a side-effect 
-unique to P2-\OVERLOG) that we refer to as a dataflow fixpoint, which
-occurs when all tuples in the event queue have been drained.  We describe this
-by example.
+(possibly many) local tuples that have a zero-lifetime are directly added to
+the this queue, which continues to drive rule deductions until no zero-lifetime
+tuples locally exist.  This implementation decision exhibits a kind of
+``mini-fixpoint'' (a side-effect unique to P2-\OVERLOG) that we refer to as a
+{\em dataflow fixpoint}, which occurs when all tuples in the event queue have
+been drained.  We describe this by example.
 
-Assume a single tuple in the \ol{netin} input queue, and all other queues are
-empty.  When the driver executes its ``pull-push'' element on the input of the
-\ol{event} queue, it will dequeue the tuple in the \ol{netin} queue, write it
-to the relevant local memory table, and add the result of that write operation
-to the \ol{event} queue.  In an iterative loop, the driver will dequeue a
-single tuple from the \ol{event} queue and ``route it'' to the processing
-elements, which derives some number of new deductions.  If any of those
-deductions contain local tuples with a zero lifetime, then they are reinserted
-into the \ol{event} queue.  The driver loop continues to process tuples from
-the \ol{event} queue until it is again empty.  At this point, it declares a
-dataflow fixpoint, which triggers a flush of the ``insertion'' writes from the
-\ol{localmem} queue.  If no ``insertion'' tuples exist then a flush of the
-``deletion'' tuples occur, and the corresponding deletion events are added to
+Assume a single tuple in the \ol{localmem} input queue, and all other queues
+are empty.  When the driver executes its ``pull-push'' element on the input of
+the empty \ol{event} queue, it will dequeue a tuple in the \ol{localmem} queue
+and add it to the \ol{event} queue.  In an iterative loop, the driver will
+dequeue a single tuple from the \ol{event} queue and ``route it'' to the
+processing elements, which then produce some number of new tuple deductions.
+If any of those deductions contain local tuples with a zero lifetime, then they
+are reinserted into the \ol{event} queue.  The tuples with non-zero lifetimes
+are (silently) queued while the driver then continues to process tuples solely
+from the \ol{event} queue until it is again empty.  At this point, P2 declares
+a dataflow fixpoint, which triggers a flush of the local~\footnote{Write
+actions from the network input are buffered and applied at the end of a
+``global fixpoint.''} ``insertion'' action writes from the queue, generating
+some number of new event tuples that are added to the \ol{localmem} queue.  If
+no ``insertion'' action tuples exist then a flush of the ``deletion'' action
+tuples occurs, and the corresponding deletion events are added (directly) to
 the \ol{event} queue, before the process repeats, this time treating deductions
 as further deletions.
 
 After all insertion and deletion tuples have been processed by the initial
-\ol{netin} input tuple, the system declares a global fixpoint, which is
-semantically equivalent to a Datalog fixpoint.  On a global fixpoint, the
-driver loop will flush all tuples in the \ol{netout} queue, triggering a
-transfer of those tuples to the corresponding P2 instances spanning the
-network.  The driver loop then returns to the \ol{netin} queue for the next
-tuple to process.
+\ol{localmem} input tuple, the system declares a {\em global fixpoint}.  At
+this point, the driver loop will flush all tuples in the \ol{netout} queue,
+triggering a transfer of those tuples to the corresponding P2 instances
+spanning the network.  The driver loop then returns to the \ol{localmem} queue
+for the next tuple to process.
 
 From this perspective, the P2 runtime looks quite a bit like an
-Event-Condition-Action (ECA) system with a dataflow underneath: events are
-provided by the clock and network, conditions are checked via dataflow
-processing elements, and actions take the form of sending/receiving network
-messages and updates to relational state.  These actions are performed at
-well-defined moments, with provably verifiable language
-semantics~\cite{boon-thesis}.  The ``event'' portion of ECA is implemented by
-the driver loop and routed to the ``conditions'' by the \ol{demux} element in
-Figure~\ref{ch:p2:fig:dataflow}.  The event loop of P2 defines the notion of a
-{\emph floating} EDB, that at a given instance of time, consists of the single
-tuple at the head of the \ol{netin} queue.  This sole tuple is the input to the
-``current'' Datalog fixed point.  Next, we describe the elements that implement
-the {\emph condition} and {\emph action} processing logic.
+Event-Condition-Action (ECA) system with a dataflow underneath: {\em events}
+are generated by the system clock and network component, while {\em conditions}
+are checked via dataflow processing elements, and {\em actions} initiate
+outbound network messages and updates to the database.  All actions are
+performed by the evaluator in the final (i.e., third) phase.  A driver loop
+continuously routes events from the event queue to the ``conditions'' via the
+\ol{demux} element in Figure~\ref{ch:p2:fig:dataflow}.  The initial input to
+the driver loop is the single tuple at the head of the \ol{localmem} queue.
+This sole tuple is the input to the ``current'' Datalog fixed point.  Next, we
+describe the elements that implement the {\em condition} and {\em action}
+processing logic.
 
 \subsection{Dataflow Elements} 
 \label{ch:p2:sec:dataflow_elements}
 
 The set of elements provided in P2 includes a suite of operators familiar from
 relational query engines: selection, projection, and in-memory indexes.  These
-operators are strung together to implement the logical {\emph condition} of the 
+operators are strung together to implement the logical {\em condition} of the 
 processing loop.  P2 supports joins of two relations in a manner similar to the
 symmetric hash join: it takes an arriving tuple from one relation, inserts it
 into an in-memory table for that relation, and probes for matches in an access
@@ -642,14 +708,14 @@ in Chapter~\ref{ch:evita} extended this suite to include sorting and
 merge-joins, which allowed us to explore some traditional query optimization
 opportunities and trade-offs (Chapter~\ref{ch:opt}).
 
-P2 consists of exactly two logical {\emph actions}: a local database write and
-a network send.  We first describe the details of behind a database write.  An
+P2 consists of exactly two logical {\em actions}: a local database write and a
+network send.  We first describe the details of behind a database write.  An
 \ol{event} tuple is modeled as transient database write, and therefore its
-action is the reinsertion into the \ol{event} queue.  P2 does not currently
-have support for persistent storage, beyond the ability to read input streams
-from comma-separated-value files.  Its tables are stored in memory-based
-balanced trees that are instantiated at program startup; additional such trees
-are constructed by the planner as secondary indexes to support predicate join
+action is the reinsertion into the \ol{event} queue.  P2 did not have support
+for persistent storage, beyond the ability to read input streams from
+comma-separated-value files.  Its tables are stored in memory-based balanced
+trees that are instantiated at program startup; additional such trees are
+constructed by the planner as secondary indexes to support predicate join
 attributes.  A write to the database is applied to the memory-based table, and
 a relevant (insert/delete) \ol{event} is enqueued into the \ol{localmem} queue.
 
@@ -712,20 +778,6 @@ network egress with translation of tuples into packets.
 %network messages are sent to their destinations, and the table actions are
 %carried out on the database.  This completes one iteration of the event loop.
 
-
-\section{Summary}
-\label{ch:p2:sec:summary}
-
-While ostensibly a network protocol engine, architecturally P2 resembles a
-fairly traditional shared-nothing parallel query processor, targeted at both
-stored state and data streams.  The P2 runtime at each node consists of a
-compiler---which parses programs, optimizes them, and physically plans them---a
-dataflow executor, and access methods.  Each P2 node runs the same query
-engine, and, by default, participates equally in every ``query.'' In parallel
-programming terms, P2 encourages a Single-Program-Multiple-Data (SPMD) style
-for parallel tasks, but also supports more loosely-coupled (MPMD) styles for
-cooperative distributed tasks, e.g.  for communications among clients and
-servers.
 
 
 % \jmh{This is probably too long.  Also, we need to purge text that was recycled from SOSP.  }
