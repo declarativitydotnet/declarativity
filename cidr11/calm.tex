@@ -34,7 +34,13 @@ majority of the members have agreed to a proposal; Two-Phase Commit requires
 counting to establish that all members have agreed.  Hence we also say that
 \emph{waiting requires counting}, the converse of our earlier mnemonic.
 
-Our observations about waiting and counting illustrate the crux of what we call the \emph{CALM} principle: the tight relationship between Consistency And Logical Monotonicity.  Monotonic programs \emph{guarantee} eventual consistency under any interleaving of delivery and computation.  By contrast, non-monotonicity---the property that adding an element to an input set may revoke a previously-valid element of an output set---requires coordination schemes that ``wait'' until inputs can be guaranteed to be complete.  
+Our observations about waiting and counting illustrate the crux of what we call
+the \emph{CALM} principle: the tight relationship between Consistency And
+Logical Monotonicity.  Monotonic programs \emph{guarantee} eventual consistency
+under any interleaving of delivery and computation.  By contrast,
+non-monotonicity---the property that adding an element to an input set may
+revoke a previously valid element of an output set---requires coordination
+schemes that ``wait'' until inputs can be guaranteed to be complete.
 
 We typically wish to minimize the use of coordination, because of well-known
 concerns about latency and availability in the face of message delays and
