@@ -63,7 +63,7 @@ module BasicKVS
 
   declare
   def do_put
-    kvstate <+ kvput.map{|p| [p.key, p.value]} (*\label{line:kvs-put}*)
+    kvstate <+ kvput.map{|p| [p.key, p.value]} (*\label{line:kvs-put}*) 
     prev = join [kvstate, kvput], [kvstate.key, kvput.key] (*\label{line:kvs-join}*)
     kvstate <- prev.map{|b, p| b} (*\label{line:kvs-clean}*)
   end
@@ -210,7 +210,7 @@ with ``$+/-$''. This indicates that facts traversing the edge ``spend'' a
 timestep to move from the rhs to the lhs. Similarly, if the rule uses the
 \texttt{$<\sim$} operator, the edge is a dashed line---this indicates that facts
 from the rhs appear at the lhs at a non-deterministic future time. If the rule
-involves a non-monotonic operation (aggregation, anti-join, or the \texttt{$<$-}
+involves a non-monotonic operation (aggregation, negation, or deletion via the \texttt{$<$-}
 operator), then the edge is marked with a white circle.  To make the
 visualizations more readable, any strongly connected component marked with both
 a circle and a $+/-$ edge is collapsed into an octagonal ``temporal cluster,''
@@ -233,21 +233,22 @@ component in the previous graph.  \texttt{kvstate} and \texttt{prev} are
 collapsed into a red octagon because they are part of a strongly connected
 component in the graph with both negative and temporal edges.  Any data flowing
 from \texttt{kvput} to the sink must cross at least one non-monotonic point of
-order (at ingress to the octagon) and possible an arbitrary number of them
-(traversing the dependency cycle collapsed into the octagon), and any path from \texttt{kvget} to the sink must join
+order (at ingress to the octagon) and possibly an arbitrary number of them
+(by traversing the dependency cycle collapsed into the octagon), and any path from \texttt{kvget} to the sink must join
 state potentially affected by non-monotonicity (because \texttt{kvstate} is used
 to derive \texttt{kvget\_response}).
 
-Reviewing the code in Figure~\ref{fig:kvs-impl}, we see that this is
-unavoidable.  The contents of \texttt{kvstate} at a given time are defined (in
-part; line~\ref{line:kvs-clean}) in terms of its contents at the immediate
-previous state and the current input.  Hence the state of \texttt{kvstate} at
+Reviewing the code in Figure~\ref{fig:kvs-impl}, we see the source of the non-monotonicity.  
+The contents of \texttt{kvstate} at a given time may be have been defined via a ``destructive'' deletion (in
+part; line \ref{line:kvs-clean}) based on the previous state, and input from \texttt{kvput}.  Hence the contents of \texttt{kvstate} at
 any point in time may depend on the order of arrival of \texttt{kvput} tuples.
-We challenge the reader to implement the KVSProtocol interface in a way that
-has no such point of order.
-\paa{I vote to keep the previous line, but am willing to be overridden.  
-I am conjecturing that it isn't possible to implement a k/v store with the
-desired replacing semantics without points of order (at least on kvget)}
+% This non-monotonicity is endemic in the key constraints of the KVSProtocol interface of Figure~\ref{fig:kvs-protocol}, which can only return a single \textt{value} in a \textt{kvget\_response}; this requires the cart to grow via destructive modification to the attribute of a single tuple.
+% I WROTE THE ABOVE SENTENCE BUT DON'T BELIEVE IT, so I commented out the following as well.  -- JMH
+%  We challenge the reader to implement the KVSProtocol interface in a way that
+% has no such point of order.
+% \paa{I vote to keep the previous line, but am willing to be overridden.  
+% I am conjecturing that it isn't possible to implement a k/v store with the
+% desired replacing semantics without points of order (at least on kvget)}
 
 
 

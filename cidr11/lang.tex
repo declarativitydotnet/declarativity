@@ -102,7 +102,7 @@ module DeliveryProtocol
   def state
     interface input, :pipe_in,
       ['dst', 'src', 'ident'], ['payload']
-    interface output, :pipe_out,
+    interface output, :pipe_sent,
       ['dst', 'src', 'ident'], ['payload']
   end
 end
@@ -137,7 +137,7 @@ module ReliableDelivery
   def recv_ack
     got_ack = join [ack_chan, send_buf], (*\label{line:ack_join_beg}*)
                    [ack_chan.ident, send_buf.ident] (*\label{line:ack_join_end}*)
-    pipe_out <= got_ack.map{|a, sb| sb}
+    pipe_sent <= got_ack.map{|a, sb| sb}
     send_buf <- got_ack.map{|a, sb| sb}
   end
 end
@@ -226,9 +226,9 @@ includes methods of \texttt{BudCollection} objects.  Most common is the
 operation to every tuple in a collection; this can be used to implement
 relational selection and projection. For example, line~\ref{line:data_chan_proj}
 of Figure~\ref{fig:bloom-example} projects the \texttt{data\_chan} collection to
-its \texttt{src}, \texttt{dst}, and \texttt{ident} fields.  Multiway equijoins
+its \texttt{src}, \texttt{dst}, and \texttt{ident} fields.  Multiway joins
 are specified using the \texttt{join} method, which takes a list of input
-collections and an optional set of columns that specify the equijoin condition.
+collections and an optional list of join conditions.
 Lines~\ref{line:ack_join_beg}--\ref{line:ack_join_end} of
 Figure~\ref{fig:bloom-example} show a join between \texttt{ack\_chan} and
 \texttt{send\_buf}. Syntax sugar for natural joins and outer joins is also
@@ -246,7 +246,7 @@ the union of its \texttt{declare} methods; the order of statements is
 immaterial. Dividing statements into multiple methods improves the readability
 of the program and also allows the use of Ruby's method overriding and
 inheritance features: because a Bloom class is just a stylized Ruby class, any
-of the methods in a Bloom class can be overridden by a sub-class.
+of the methods in a Bloom class can be overridden by a sub-class.  We expand upon this idea next.
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
@@ -302,16 +302,16 @@ For example, the DeliveryProtocol module in Figure~\ref{fig:bloom-example}
 defines an abstract interface for sending messages to a remote address. Clients
 use an implementation of this interface by inserting a fact into
 \texttt{pipe\_in}; this represents a new message to be delivered. A
-corresponding fact will eventually appear in the \texttt{pipe\_out} output
+corresponding fact will eventually appear in the \texttt{pipe\_sent} output
 interface; this indicates that the delivery operation has been completed. The
 ReliableDelivery module is one possible implementation of the abstract
 DeliveryProtocol interface---it uses a buffer and acknowledgment messages to
-delay emitting a \texttt{pipe\_out} fact until the corresponding message has
+delay emitting a \texttt{pipe\_sent} fact until the corresponding message has
 been acknowledged by the remote node. Figure~\ref{fig:delivery-impl} in
 Appendix~\ref{app:network-code} contains a different implementation of the
 abstract DeliveryProtocol. A client program that is indifferent to the details
 of message delivery can simply interact with the abstract DeliveryProtocol; the
-particular implementation of this protocol can be chosen at runtime.
+particular implementation of this protocol can be chosen independently.
 
 A common requirement is for one module to ``override'' some of the rules in a
 module that it mixes-in. For example, an OrderedDelivery module might want to
@@ -319,7 +319,7 @@ reuse the functionality provided by ReliableDelivery but prevent a message with
 sequence number $x$ from being delivered until all messages with sequence
 numbers $<x$ have been acknowledged. To support this pattern, Bloom allows an
 interface defined in another module to be overridden simply by redeclaring
-it. Internally, these redundantly-named interfaces exist in the namespace of the
+it. Internally, these redundantly-named interfaces both exist in the namespace of the
 module that declared them but only need to be referenced by a fully-qualified
 name if their use is otherwise ambiguous.  If an input interface appears in the
 lhs of a rule in a module that declared the interface, it is rewritten to
@@ -353,7 +353,7 @@ While subclassing is appropriate in certain contexts, Bud supports more general
 abstraction and reuse via Ruby's mixin functionality.  Modules defining
 collections and rules may be freely combined, subject to the restriction that
 the dataflow be fully specified by connecting all input and output interfaces.
-A common pattern is the specification of abstract interfaces like those in
+A common pattern we employ is the specification of abstract interfaces like those in
 Figure~\ref{fig:declarations}, which may be concretized by mixing in rules that
 connect input to output interfaces with Bud rules.  Figure~\ref{fig:cart_client}
 supplies a simple concrete implementation of the CartClient protocol specified
