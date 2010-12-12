@@ -239,8 +239,6 @@ Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid} values for
 every combination of values for \texttt{session}, \texttt{item} and
 \texttt{action}.
 
- % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
-
 Bloom statements are specified within method definitions that are flagged with
 the \texttt{declare} keyword (e.g., line~\ref{line:send_packet_declare} of
 Figure~\ref{fig:bloom-example}). The semantics of a Bloom program are defined by
@@ -284,8 +282,8 @@ rules become too difficult to understand.  Bloom addresses this concern in two
 different ways. First, unlike many prior rule-based languages, Bloom is purely
 declarative; this avoids forcing the programmer to reason about the interaction
 between declarative rules and imperative constructs. Second, Bloom borrows
-object-oriented features from Ruby to allow programs to be broken into small
-modules, and to allow modules to interact with one another by exposing narrow
+object-oriented features from Ruby to enable programs to be broken into small
+modules and to allow modules to interact with one another by exposing narrow
 interfaces. This aids program comprehension, because it reduces the amount of
 code a programmer needs to read to understand the behavior of a module.
 
