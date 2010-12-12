@@ -182,7 +182,7 @@ module DisorderlyCart
 
   declare
   def do_action
-    cart_action <= action_msg.map do |c|  (*\label{line:dis_action_msg_beg}*)
+    cart_action <= action_msg.map do |c| (*\label{line:dis_action_msg_beg}*)
       [c.session, c.item, c.action, c.reqid] 
     end (*\label{line:dis_action_msg_end}*)
     action_cnt <= cart_action.group(  (*\label{line:dis_count_reqid_beg}*)
