@@ -29,7 +29,7 @@ end
 \end{lstlisting}
 \centering
 \vspace{-10pt}
-\caption{Delivery modules.}
+\caption{Best-effort unicast messaging in Bloom.}
 \label{fig:delivery-impl}
 \end{scriptsize}
 \vspace{-2pt}
@@ -60,7 +60,6 @@ module Multicast
 
   declare
   def done_mcast
-    # override me
     mcast_done <= pipe_out.map{|p| [p.ident, p.payload]}
   end
 end
@@ -68,7 +67,7 @@ end
 \centering
 %%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
-\caption{Multicast modules.}
+\caption{A simple unreliable multicast library in Bloom.}
 \label{fig:multicast-impl}
 \end{scriptsize}
 \vspace{-2pt}

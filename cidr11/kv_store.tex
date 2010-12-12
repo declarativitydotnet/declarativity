@@ -38,7 +38,7 @@ attempts to insert and fetch items from the store) and a single output interface
 this protocol, a Bloom program can store key-value pairs by inserting facts into
 \texttt{kvput}. To retrieve the value associated with a key, the client program
 inserts a fact into \texttt{kvget} and looks for a corresponding response tuple
-in \texttt{kvget\_response}. For both put and get operations, the client program
+in \texttt{kvget\_response}. For both put and get operations, the client
 must supply a unique request identifier (\texttt{reqid}) to differentiate tuples
 in the event of multiple concurrent requests.
 
@@ -147,9 +147,9 @@ Next, we extend the basic key-value store implementation to support replication
 multicast library implemented in Bloom; the complete source code for this
 library can be found in Appendix~\ref{app:network-code}. To send a multicast, a
 program inserts a fact into \texttt{send\_mcast}; a corresponding fact appears
-in \texttt{mcast\_done} when the multicast is complete.\footnote{XXX: error
-  handling.} The multicast library also exports the membership of the multicast
-group in a table called \texttt{members}.
+in \texttt{mcast\_done} when the multicast is complete. The multicast library
+also exports the membership of the multicast group in a table called
+\texttt{members}.
 
 Our replicated key-value store is implemented on top of the single-node
 key-value store described in the previous section. When a new key is inserted by
