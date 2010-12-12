@@ -12,20 +12,20 @@ declaratively expressed as a transitive closure over the rule/goal graph of an
 \OVERLOG program.
 
 In this chapter we turn our attention to cost-based optimizations, which are
-commonly based on dynamic programming techniques.  We begin in
+commonly based on dynamic programming algorithms.  We begin in
 Section~\ref{ch:opt:sec:related} with a short review of literature on
-extensible query optimizers, with further details described in subsequent
-sections.  Section~\ref{ch:opt:sec:systemr} discusses a dynamic programming
-optimizer stage akin to that of System R.  In
+extensible query optimizers, with further details described in the two
+optimizations we discuss.  Section~\ref{ch:opt:sec:systemr} describes a dynamic
+programming optimizer stage akin to that of System R.  In
 Section~\ref{ch:opt:sec:cascades}, we present a declarative version of the
 Cascades branch-and-bound optimizer, which is structured around a dynamic
-programming technique called ``memoization.'' Based on our experience, we
+programming algorithm called ``memoization.'' Based on our experience, we
 believe that declarative metacompilation is a clean, architecturally
 parsimonious way to build the next generation of extensible query optimizers
 for a wide variety of emerging application domains, where the relevant
 optimizations are likely to evolve over time.  We conclude in
-Section~\ref{ch:opt:sec:summary} with some final thoughts and summary of our
-overall experience with Evita Raced.
+Section~\ref{ch:opt:sec:summary} with some final thoughts and a summary of our
+overall experience with the Evita Raced work.
 
 \section{Related Work}
 \label{ch:opt:sec:related}
@@ -46,11 +46,11 @@ approach to specifying legal plans and subplans.
 While all of this work was rule-based and extensible, most of it only exposed
 individual plan transformations to extensibility; the actual search algorithms
 or transformation orderings of EXODUS, Volcano, Cascades, and the Starburst
-cost-based optimizer were confined to procedural code.  By contrast, Evita Raced
-does not embed a search algorithm, instead leaving that open to specification
-as needed.  As we show in Section~\ref{ch:opt:sec:systemr}, both the dynamic programming
-bottom-up strategy and the Cascades top-down strategy naturally fit to a
-Datalog-based rule language.
+cost-based optimizer were confined to procedural code.  By contrast, Evita
+Raced does not embed a search algorithm, instead leaving that open to
+specification as needed.  As we show in Section~\ref{ch:opt:sec:systemr}, both
+the System R bottom-up strategy and the Cascades top-down strategy naturally
+fit to a Datalog-based rule language.
 
 Another interesting extensible query optimizer is Opt++~\cite{kabradewitt},
 which exploits the object-oriented features of C++ to make an optimizer
@@ -64,65 +64,6 @@ Opt++, but provides them in a higher-level declarative programming framework.
 \section{System R Optimization}
 \label{ch:opt:sec:systemr}
 
-\begin{figure*}
-\ssp
-\centering
-\begin{boxedminipage}{\linewidth}
-  {\bf def} optimizer($Q$)
-    \begin{algorithmic}[1]
-      	\STATE /* Base case: access methods to relations in Q */
-  	\FORALL{base relations $R \in Q$}
-		\STATE Find all access methods to $R$ and store in $AM$
-		\STATE Include index scans if there exists sargable predicates 
-  	\ENDFOR
-	\STATE
-  	\FORALL{access method plans $p \in AM$}
-		\IF{$p$ is the cheapest unordered access method \OR 
-		    $p$ is the cheapest access method with an "interesting order"}
-			\STATE $plans[1] = plans[1] \bigcup p$ 
-		\ENDIF
- 	\ENDFOR
-	\STATE
-	\STATE $BP$ = bestplan(number\_of\_predicates($Q$)) // Get best plans for query Q 
-	\IF{$Q$ contains a GROUP BY or ORDER BY}
-	 	\STATE $cp$ = cheapest plan in $BP$ relevant to the interesting order 
-		\IF{$cp == null$}
-			\STATE $cp$ = cheapest overall plan in $BP$ + a sort operator
-		\ENDIF
-		\RETURN $cp$
-	\ELSE
-	 	\RETURN cheapest overall plan in $BP$ // irrespective of interesting orders
-	\ENDIF
-    \end{algorithmic}
-  {\bf end} \\
-  \\
-  {\bf def} bestplan(k)
-    \begin{algorithmic}[1]
-  	\IF{$plans[k] = \emptyset$}
-		\FORALL{access method plans $p_1 \in plans[1]$} 
-			\STATE $BP_{k-1}$ = bestplan($k\ -\ 1$) // Get best plans of size $k\ -\ 1$
-			\FORALL{best plans $bp_{k-1} \in BP_{k-1}$}
-			\IF{$p_1\ \text{\bf notin}\ bp_{k-1}$}
-				\STATE $plans[k] = plans[k] \bigcup$ all (left-outer) join methods 
-				       for $bp_{k-1}$ (outer) and $p_1$ (inner)
-			\ENDIF
-			\ENDFOR
-		\ENDFOR
-		\STATE
-		\FORALL{plans $p_k \in plans[k]$}
-			\IF{$p_k$ is not the cheapest unordered plan among its equivalent plans \OR
-			    $p_k$ is not the cheapest ``interesting ordered'' plan among its equivalent plans}
-				\STATE delete $p_k$ from $plans[k]$
-			\ENDIF
-		\ENDFOR
-	\ENDIF
-	\RETURN $plans[k]$ // Returns the set of best plans of size $k$
-      \end{algorithmic}
-    {\bf end}
-\end{boxedminipage}
-\caption{\label{ch:opt:fig:systemr}System R optimizer algorithm.}
-\end{figure*}
-
 The System R optimizer paper by Selinger, et al.  is the canonical textbook
 framework for database query optimization~\cite{selinger}.  The paper laid out
 for the first time the notion that query optimization can be decomposed into
@@ -131,25 +72,92 @@ algorithm is traditionally implemented inside the heart of a database system
 via a traditional procedural programming language, both of these tasks are
 naturally specified in a declarative query language.  To perform cost
 estimation, System~R requires data statistics like relation cardinalities and
-index selectivities; \OVERLOG is a fitting language to collect these
-statistics, especially in a distributed fashion over all relation partitions.
+index selectivities, which can be packaged into a relational format, and
+thereby accessible in the \OVERLOG language.
+
+\begin{figure*}
+\ssp
+\centering
+\begin{boxedminipage}{\linewidth}
+  {\bf def} \ol{optimize}($PREDS$)
+    \begin{algorithmic}[1]
+	\STATE Let $AM = \emptyset$ be a set of access methods to single relations
+  	\FORALL{relations $r \in PREDS$}
+		\STATE $AM$ = $AM \bigcup$ all access methods on $r$
+  	\ENDFOR
+	\STATE
+	\STATE $GRP_{AM}$ = GroupBy(f\_equivalent, $AM$)
+	\STATE $GRP_{AM}$ = $GRP_{AM} - $ uninteresting ordered groups $\in GP_{AM}$
+	\STATE $bestplan[1]$ = ArgMin(f\_cost, $GRP_{AM}$)
+	\STATE $BP$ = \ol{search}($bestplan$, $PREDS$, f\_sizeof($PREDS$)) 
+	\STATE $bp$ = ArgMin(f\_cost, $BP$) // best overall plan
+	\STATE
+	\IF{query contains a \ol{group by} or \ol{order by} clause}
+		\STATE $bop$ = best ordered plan relative to the clause attributes
+		\RETURN Min(f\_sort?($bp$), f\_sort?($bop$))
+	\ELSE
+	 	\RETURN $bp$
+	\ENDIF
+    \end{algorithmic}
+  {\bf end}
+  \\
+  \\
+  /* Returns a set containing the best size $k$ plans. */ \\
+  {\bf def} \ol{search}($bestplan$, $PREDS$, $k$)
+    \begin{algorithmic}[1]
+  	\IF{$plans[k] = \emptyset$}
+	\STATE $BP_{k-1}$ = \ol{bestplan}($bestplan$, $PREDS$, $k-1$)
+	\STATE Let $P_{k} = \emptyset$ be a set of size $k$ plans
+	\FORALL{plans $bp \in BP_{k-1}$} 
+		\FORALL{predicates $p \in PREDS$}
+		\STATE $M_k$ = all methods (e.g., join) that take 
+			       plan $bp$ (outer) and include $p$ (inner)
+		\STATE $P_{k} = P_{k} \bigcup M_k$ 
+		\ENDFOR
+	\ENDFOR
+	\STATE
+	\STATE $GRP_{k}$ = GroupBy(f\_equivalent, $P_{k}$)
+	\STATE $GRP_{k}$ = $GRP_{k} - $ uninteresting ordered groups $\in GP_{k}$
+	\STATE $plan[k]$ = ArgMin(f\_cost, $GRP_{k}$)
+	\ENDIF
+	\RETURN $plans[k]$ // best plans of size $k$
+      \end{algorithmic}
+    {\bf end}
+\end{boxedminipage}
+\caption{\label{ch:opt:fig:systemr}Sketch of the System R optimizer algorithm.}
+\end{figure*}
 
 Our focus in this section is on the basic dynamic programming algorithm for the
-state-space enumeration at the heart of the System R optimizer.
-Figure~\ref{ch:opt:fig:systemr} gives a (simplified) sketch of this algorithm.
-It enumerates query plans for increasingly-large subgoals of the query
-optimizer.  It fills in a dynamic programming table (i.e., $plans$ in
-Figure~\ref{ch:opt:fig:systemr}) with plans that cover a given number of
-(relational algebra) predicates that appear in the query.  The dynamic
-programming task is to fill in this table with the lowest-estimated-cost query
-plan among all plans producing an {\em equivalent} output relation (i.e., plans
-composed of the same terms), and among the plans that produce an ``interesting
-order.'' If the plan produces tuples in an order that is relevant to a later
-join condition, or an ``group/order by'' clause, then it is considered to be an
-interesting order~\cite{selinger}.  The \ol{bestplan} procedure in
-Figure~\ref{ch:opt:fig:systemr} captures the essence of generating {\emph
-plans} of size $k$, and pruning away those plans that are not optimal, nor
-interesting.
+state-space enumeration at the heart of the System R optimizer.  A sketch of
+the System R search strategy is given in Figure~\ref{ch:opt:fig:systemr}, which
+finds the optimal plan for a query consisting of a set of predicates (called
+$PREDS$).  We focus here on the search strategy, which enumerates query plans for
+increasingly-large subgoals of the query optimizer.  It fills in a dynamic
+programming table (i.e., $bestplan$ array) with the best plans that cover a given
+number of (relational algebra) predicates that appear in the query.  The
+dynamic programming task is to fill in this table with the
+lowest-estimated-cost query plan among all plans producing an {\em equivalent}
+output relation (i.e., plans composed of the same predicates), and among the
+plans that produce an ``interesting order.'' If the plan produces tuples in an
+order that is relevant to a later join condition, or an ``group/order by''
+clause, then it is considered to be an {\em interesting order}~\cite{selinger}.
+
+The \ol{optimize} procedure in Figure~\ref{ch:opt:fig:systemr} takes the set of
+predicates mentioned in the query.  For plans of size $1$, we find the optimal
+access methods to any relations mentioned in the query.  Note that in P2 the
+initial plan (of size one) is the event predicate assigned to the rule by the
+delta rewrite (Chapter~\ref{ch:evita:sec:delta}).  The event predicate is used
+to initialize the optimization, instead of the traditional approach shown here
+as table access methods.  The \ol{bestplan} procedure captures the essence of
+generating {\emph plans} of size $k$, and pruning away those plans that are not
+optimal, nor interesting.  The \ol{optimize} procedure makes the ``top-level''
+call, requesting the best plans containing all predicates in the query.  The
+return value contains the set of overall best plans; among each interesting
+ordered and unordered plans.  If the query contains a \ol{group by} or
+\ol{order by} clause, then we may require sorting depending on the best plan
+order.  Moreover, the ideal interesting ordered plan may reduce the cost of, or
+even eliminate, this final sort.  In the absence of any ordering constraints,
+we simply return the overall optimal plan, regardless of order.
 
 In the System R optimizer, the {\em principle of optimality} is assumed to
 hold: the lowest-cost solution to some plan is constructed from the optimal
@@ -190,16 +198,16 @@ with our termination rules in Section~\ref{ch:opt:sec:termination}.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-sr1 {\bf plan}(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :- \\
-\datalogspace {\bf systemr::programEvent}(@A, Pid, \ldots),\\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Schema, Pos, \ldots),\\
-\datalogspace Pos == $1$,\\
-\datalogspace PlanID := {\em f\_cons}(``delta'', PredID), \\
-\datalogspace Group := {\em f\_cons}(PredID, $null$),\\
-\datalogspace Sort := $null$, \\
-\datalogspace Card := $1$, Cost := $1$,\\
-\end{boxedminipage}
+\begin{lstlisting}
+sr1 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
+    systemr::programEvent}(@A, Pid, ...),
+    sys::predicate}(@A, PredID, Rid, ..., Schema, Pos, ...),
+    Pos == $1$,
+    PlanID := f_cons(``delta'', PredID),
+    Group := f_cons(PredID, null),
+    Sort := null,
+    Card := 1, Cost := 1.
+\end{lstlisting}
 \caption{\label{ch:opt:fig:planseed}Plan seed rule.}
 \end{figure*}
 
@@ -249,24 +257,21 @@ sort-merge join methods.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-\linenumbers
-
-sr2 {\bf plan}(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :- \\
-\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
-\datalogspace {\bf plan}(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost), \\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Tid, PSchema, Pos, \ldots), \\
-\datalogspace $Pos > 1$,\\
-\datalogspace {\bf sys::table}(@A, Tid, \ldots, TCard, Sort),\\
-\datalogspace {\em f\_contains}(PredID, OGroup) == $false$,\\
-\datalogspace PlanID := {\em f\_cons}(``nested-loop'', OPlanId, PredID), \\
-\datalogspace Group := {\em f\_cons}(PredID, OGroup), \\
-\datalogspace Schema := {\em f\_joinSchema}(OSchema, PSchema).\\
-\datalogspace Sort := OSort,
-\datalogspace Card := OCard * TCard / $10$,\\
-\datalogspace Cost := OCost + (OCard * TCard).
-
-\end{boxedminipage}
+\begin{lstlisting}
+sr2 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :- 
+    bestPlan(@A, Pid, Rid, PlanID),
+    plan(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost),
+    sys::predicate(@A, PredID, Rid, ..., Tid, PSchema, Pos, ...),
+    Pos > 1,
+    sys::table(@A, Tid, ..., TCard, Sort),
+    f_contains(PredID, OGroup) == false,
+    PlanID := f_cons(``nested-loop'', OPlanId, PredID),
+    Group  := f_cons(PredID, OGroup),
+    Schema := f_joinSchema(OSchema, PSchema),
+    Sort   := OSort,
+    Card   := OCard * TCard / 10,
+    Cost   := OCost + (OCard * TCard).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:plangen1}nested-loop join method.}
 \end{figure*}
 
@@ -299,24 +304,22 @@ variable.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-
-sr3 {\bf plan}(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :- \\
-\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
-\datalogspace {\bf plan}(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost), \\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Tid, PSchema, Pos, \ldots), \\
-\datalogspace $PredPos > 1$,\\
-\datalogspace {\bf sys::table}(@A, Tid, \ldots, TCard, Sort),\\
-\datalogspace {\bf sys::index}(@A, Iid, Tid, Key, Type, Selectivity),\\
-\datalogspace {\em f\_contains}(PredID, OGroup) == $false$,\\
-\datalogspace {\em f\_indexMatch}(OSchema, PSchema, Key),\\
-\datalogspace PlanID := {\em f\_cons}(``index-loop'', OPlanID, PredID, Iid),\\
-\datalogspace Group := {\em f\_cons}(PredID, OGroup),\\
-\datalogspace Sort := OSort, \\
-\datalogspace Card   := OCard * (Selectivity * TCard),\\
-\datalogspace Cost   := OCost + Card.
-
-\end{boxedminipage}
+\begin{lstlisting}
+sr3 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
+    bestPlan(@A, Pid, Rid, PlanID),
+    plan(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost),
+    sys::predicate(@A, PredID, Rid, ..., Tid, PSchema, Pos, ...),
+    PredPos > 1,
+    sys::table(@A, Tid, ..., TCard, Sort),
+    sys::index(@A, Iid, Tid, Key, Type, Selectivity),
+    f_contains(PredID, OGroup) == false,
+    f_indexMatch(OSchema, PSchema, Key),
+    PlanID := f_cons(``index-loop'', OPlanID, PredID, Iid),
+    Group  := f_cons(PredID, OGroup),
+    Sort   := OSort,
+    Card   := OCard * (Selectivity * TCard),
+    Cost   := OCost + Card.
+\end{lstlisting}
 \caption{\label{ch:opt:fig:plangen2}index-nested-loop join method.}
 \end{figure*}
 
@@ -338,24 +341,23 @@ quite similar to the nested-loop cases above.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-
-sr4 {\bf plan}(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :- \\
-\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
-\datalogspace {\bf plan}(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost), \\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Tid, PSchema, Pos, \ldots), \\
-\datalogspace $PredPos > 1$,\\
-\datalogspace {\bf sys::table}(@A, Tid, \ldots, TCard, TSort),\\
-\datalogspace {\em f\_contains}(PredID, OGroup) == $false$,\\
-\datalogspace JM     := {\em f\_sortPlan}(OSort, OSchema, PSchema, TSort), \\
-\datalogspace PlanID := {\em f\_cons}(``sort-merge'', OPlanID, PredID, JM), \\
-\datalogspace Group  := {\em f\_cons}(PredID, OGroup), \\
-\datalogspace Sort   := {\em f\_sortJoinAttributes}(OuterSort, OuterSchema, PredSchema, TableSort), \\  
-\datalogspace Schema := {\em f\_sortMerge}(Sort, OuterSchema, PredSchema),\\
-\datalogspace Card   := OuterCard * (TCard / 10),\\
-\datalogspace Cost   := {\em f\_sortCost}(JM, OuterCard, TCard).
-
-\end{boxedminipage}
+\begin{lstlisting}
+sr4 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
+    bestPlan(@A, Pid, Rid, PlanID),
+    plan(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost),
+    sys::predicate(@A, PredID, Rid, .. ., Tid, PSchema, Pos, ...),
+    PredPos > 1,
+    sys::table(@A, Tid, ..., TCard, TSort),
+    f_contains(PredID, OGroup) == false,
+    JM     := f_sortPlan(OSort, OSchema, PSchema, TSort),
+    PlanID := f_cons(``sort-merge'', OPlanID, PredID, JM),
+    Group  := f_cons(PredID, OGroup),
+    Sort   := f_sortJoinAttributes(OuterSort, OuterSchema, 
+                                   PredSchema, TableSort),
+    Schema := f_sortMerge(Sort, OuterSchema, PredSchema),
+    Card   := OuterCard * (TCard / 10),
+    Cost   := f_sortCost(JM, OuterCard, TCard).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:plangen3}sort-merge join method.}
 \end{figure*}
 
@@ -365,32 +367,39 @@ some sorting attribute.  The tuples from the outer plan and the inner table
 predicate can be ordered by the sorting attribute, or not.  We note that the
 $TSort$ attribute in the \ol{sys::table} table identifies the sorting attribute
 of the inner relation, while $OSort$ refers to the order of the outer tuples.
-The join method variable $JM$ is given value that indicates the need to presort
-either of the join inputs, or not.  The cost of a merge-join operator depends
-on need to presort either relation.  The {\em f\_sortCost} function considers
-these factors based on the assigned join method and the input cardinalities.
-The output of a merge-join operation includes the join attribute in the $Sort$
-variable.
+The join method variable $JM$ is given a value that indicates the need to
+presort the inner relation, or not.  In our implementation of the sort-merge
+join operator, we decided not to sort the outer relation by first draining all
+of its tuples, sorting them, and then merging with the sorted inner
+relation.~\footnote{This would have added significant complexity to the P2
+dataflow architecture, which is optimized for tuple at a time processing.}
+Instead, each outer tuple is used in a binary search on the sorted inner
+relation, which returns any tuples that join along the relevant attributes.  If
+we know that the tuples from the outer result will be given in order, then we
+can optimize this binary search to be like a merge-join.~\footnote{We maintain
+a cursor state on the inner relation that tells us where the last join match
+occurred.} These costs are considered by the {\em f\_sortCost} function, which
+takes the assigned join method and the input cardinalities and returns a plan
+cost.  The output of a sort-join operation includes the join attribute in the
+$Sort$ variable.
 
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-
-sr5 {\bf plan}(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :- \\
-\datalogspace {\bf bestPlan}(@A, Pid, Rid, PlanID),\\
-\datalogspace {\bf plan}(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost), \\
-\datalogspace {\bf sys::select}(@A, Sid, Rid, BoolExpr, \ldots), \\
-\datalogspace $f\_contains(Sid, OGroup)\ ==\ false$, \\
-\datalogspace $f\_filter(OSchema, BoolExpr)\ ==\ true$, \\
-\datalogspace PlanID := {\em f\_cons}(``filter'', OPlanID, Sid), \\
-\datalogspace Group  := {\em f\_cons}(Sid, OGroup), \\
-\datalogspace Sort   := OSort, \\
-\datalogspace Schema := OSchema, \\
-\datalogspace Cost   := OCost, \\
-\datalogspace Card   := OCard / 3.
-
-\end{boxedminipage}
+\begin{lstlisting}
+sr5 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
+    bestPlan(@A, Pid, Rid, PlanID),
+    plan(@A, Pid, Rid, OPlanId, OGroup, OSort, OSchema, OCard, OCost),
+    sys::select(@A, Sid, Rid, BoolExpr, ...),
+    f_contains(Sid, OGroup) == false,
+    f_filter(OSchema, BoolExpr) == true,
+    PlanID := f_cons(``filter'', OPlanID, Sid),
+    Group  := f_cons(Sid, OGroup),
+    Sort   := OSort,
+    Schema := OSchema,
+    Cost   := OCost,
+    Card   := OCard / 3.
+\end{lstlisting}
 \caption{\label{ch:opt:fig:plangen4}selection predicate filter plan.}
 \end{figure*}
 
@@ -411,35 +420,39 @@ that would allow a more palatable estimator.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-sr6 {\bf bestOverallCost}(@A, Pid, Rid, {\small \bf a\_min}<Cost>) :- \\
-\datalogspace {\bf plan}(@A, Pid, Rid, \ldots, Cost, \ldots, Sort). \\
+\begin{lstlisting}
+sr6 bestOverallCost(@A, Pid, Rid, a_min<Cost>) :-
+    plan(@A, Pid, Rid, ..., Cost, ..., Sort).
 
-sr7 {\bf bestOrderCost}(@A, Pid, Rid, Sort, {\small \bf a\_min}<Cost>) :- \\
-\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID), \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Cost, \ldots, Sort). \\
+sr7 bestOrderCost(@A, Pid, Rid, Sort, a_min<Cost>) :-
+    interestingOrder(@A, Pid, Rid, PlanID),
+    plan(@A, Pid, Rid, PlanID, ..., Cost, ..., Sort).
 
-sr8 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, PlanSchema, \ldots, Sort), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, HeadPredID, \ldots), \\
-\datalogspace // The head predicate \\
-\datalogspace {\bf sys::predicate}(@A, Pid, Rid, HeadPredID, \ldots, HeadPredSchema, \ldots),\\
-\datalogspace // A rule body predicate \\
-\datalogspace {\bf sys::predicate}(@A, Pid, Rid, BodyPredID, \ldots, BodyPredSchema, \ldots),\\
-\datalogspace $HeadPredID != BodyPredID$ \\
-\datalogspace // participates in a later join OR is a prefix of a grouping attribute \\ 
-\datalogspace ({\em f\_contains}(BodyPredID, Plan) ==  $false$ \&\& \\
-\datalogspace f\_contains(f\_joincond(PlanSchema, BodyPredSchema), Sort)) $||$ \\
-\datalogspace f\_isPrefix(Sort, HeadPredSchema) ==  $true$.  \\
+sr8 interestingOrder(@A, Pid, Rid, PlanID) :-
+    plan(@A, Pid, Rid, PlanID, ..., PlanSchema, ..., Sort),
+    sys::rule(@A, Rid, Pid, HeadPredID, ...),
 
-sr9 {\bf bestPlan}(@A, Pid, Rid, PlanID) :- \\
-\datalogspace {\bf bestOverallCost}(@A, Pid, Rid, Cost), \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Cost), \\
+    /* The head predicate */
+    sys::predicate(@A, Pid, Rid, HeadPredID, ..., HeadPredSchema, ...),
 
-sr10 {\bf bestPlan}(@A, Pid, Rid, PlanID) :- \\
-\datalogspace {\bf bestOrderCost}(@A, Pid, Rid, Sort, Cost), \\
-\datalogspace {\bf plan}(@A, Pid, Rid, PlanID, \ldots, Cost, Sort), \\
-\end{boxedminipage}
+    /* A rule body predicate */
+    sys::predicate(@A, Pid, Rid, BodyPredID, ..., BodyPredSchema, ...),
+    HeadPredID != BodyPredID,
+
+    /* participates in a later join OR 
+       is a prefix of a grouping attribute */
+    (f_contains(BodyPredID, Plan) ==  false && 
+     f_contains(f_joincond(PlanSchema, BodyPredSchema), Sort)) ||
+    f_isPrefix(Sort, HeadPredSchema) ==  true.
+
+sr9 bestPlan(@A, Pid, Rid, PlanID) :-
+    bestOverallCost(@A, Pid, Rid, Cost),
+    plan(@A, Pid, Rid, PlanID, ..., Cost),
+
+sr10 bestPlan(@A, Pid, Rid, PlanID) :-
+     bestOrderCost(@A, Pid, Rid, Sort, Cost),
+     plan(@A, Pid, Rid, PlanID, ..., Cost, Sort),
+\end{lstlisting}
 \caption{\label{ch:opt:fig:bestplan}Best plan selection.}
 \end{figure*}
 
@@ -496,25 +509,25 @@ boundaries obtain density estimations for a given selection predicate.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-sr11 {\bf rules}(@A, Pid, a\_count$<$Rid$>$) :-\\
-\datalogspace {\bf systemr::programEvent}(@A, Pid, \ldots), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots). \\
+\begin{lstlisting}
+sr11 rules(@A, Pid, a_count<Rid>) :-
+     systemr::programEvent(@A, Pid, ...),
+     sys::rule(@A, Rid, Pid, ...).
 
-sr12 {\bf completeRule}(@A, Pid, Rid) :- \\
-\datalogspace {\bf bestPlan}(@A, Pid, Rid, \_, \_, Size, Cost), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots, Goals), \\
-\datalogspace $Size\ ==\ Goals - 1$. \\
+sr12 completeRule(@A, Pid, Rid) :-
+     bestPlan(@A, Pid, Rid, _, _, Size, Cost),
+     sys::rule(@A, Rid, Pid, ..., Goals),
+     Size == Goals - 1.
 
-sr13 {\bf completeRuleCount}(@A, Pid, a\_count$<$Rid$>$) :- \\
-\datalogspace {\bf completeRule}(@A, Pid, Rid). \\
+sr13 completeRuleCount(@A, Pid, a_count<Rid>) :-
+     completeRule(@A, Pid, Rid).
 
-sr14 {\bf sys::program}(@A, Pid, Name, Rewrite, ``systemr'', Text, Msg, P2DL, Src) :- \\
-\datalogspace {\bf completeRuleCount}(@A, Pid, Count), \\
-\datalogspace {\bf rules}(@A, Pid, Count), \\
-\datalogspace {\bf sys::program}(@A, Pid, Name, Rewrite, Stage, Text, Msg, P2DL, Src).
-
-\end{boxedminipage}
+sr14 sys::program(@A, Pid, Name, Rewrite, ``systemr'', Text, Msg, 
+                  P2DL, Src) :-
+     completeRuleCount(@A, Pid, Count),
+     rules(@A, Pid, Count),
+     sys::program(@A, Pid, Name, Rewrite, Stage, Text, Msg, P2DL, Src).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:systemrend}System R termination rules.}
 \end{figure*}
 
@@ -596,46 +609,46 @@ our declarative specification of the Cascades branch-and-bound optimization.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-/* Initialize the top-level group */ \\
-bb1 {\bf group}(@A, Rid, a\_list$<PredID>$, a\_list$<Schema>$) :- \\
-\datalogspace {\bf systemr::programEvent}(@A, Pid, \ldots),\\
-\datalogspace {\bf sys::predicate}(@A, PredID, Rid, \ldots, Schema, Pos,\ldots),\\
-\datalogspace $Pos\ >\ 1$. // Exclude the head and event predicates \\
+\begin{lstlisting}
+/* Initialize the top-level group */
+bb1 group(@A, Rid, a_list<PredID>, a_list<Schema>) :-
+    systemr::programEvent(@A, Pid, ...),
+    sys::predicate(@A, PredID, Rid, ..., Schema, Pos, ...),
+    Pos > 1. /* Exclude the head and event predicates */
 
-/* Initialize a new branch and bound on the given group. */ \\
-bb2 {\bf branch}(@A, Rid, Group, Schema, 0, Bound) :- \\
-\datalogspace {\bf group}(@A, Rid, Group, Schema), \\
-\datalogspace Bound := $infinity$. \\
+/* Initialize a new branch and bound on the given group. */
+bb2 branch(@A, Rid, Group, Schema, 0, Bound) :-
+    group(@A, Rid, Group, Schema),
+    Bound := infinity.
 
-/* Extract the subgroup of predicates that don't include position $Pos$ */ \\
-bb3 {\bf group}(@A, Rid, SubGroup, SubSchema) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
-\datalogspace $Pos\ <\ f\_sizeof(Group)$, \\
-\datalogspace SubGroup  := {\em f\_cdr}(Group, Pos), \\
-\datalogspace SubSchema := {\em f\_cdr}(Schema, Pos). \\
+%* /* Extract the subgroup of predicates that don't include position $Pos$ */ *)
+bb3 group(@A, Rid, SubGroup, SubSchema) :-
+    branch(@A, Rid, Group, Schema, Pos, Bound),
+    Pos < f_sizeof(Group),
+    SubGroup  := f_cdr(Group, Pos),
+    SubSchema := f_cdr(Schema, Pos).
 
-/* Extract the subgroup of consisting of the predicate at position $Pos$ */ \\
-bb4 {\bf group}(@A, Rid, SubGroup, SubSchema) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
-\datalogspace $Pos\ <\ f\_sizeof(Group)$, \\
-\datalogspace SubGroup := {\em f\_car}(Group, Pos), \\
-\datalogspace SubSchema := {\em f\_car}(Schema, Pos). \\
+%* /* Extract the subgroup of consisting of the predicate at position $Pos$ */ *)
+bb4 group(@A, Rid, SubGroup, SubSchema) :-
+    branch(@A, Rid, Group, Schema, Pos, Bound),
+    Pos < f_sizeof(Group),
+    SubGroup := f_car(Group, Pos),
+    SubSchema := f_car(Schema, Pos).
 
-/* Move the branch position forward when the branch group is complete. */ \\
-bb5 {\bf branch}(@A, Rid, Group, Schema, Pos+1, Bound) :- \\
-\datalogspace {\bf branchComplete}(@A, Rid, Group, Pos, Cost), \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
-\datalogspace $Pos < f\_sizeof(Group)$, \\
-\datalogspace Bound := $Cost < OldBound$ ? Cost : OldBound. \\
+/* Move the branch position forward when the branch group is complete. */
+bb5 branch(@A, Rid, Group, Schema, Pos+1, Bound) :-
+    branchComplete(@A, Rid, Group, Pos, Cost),
+    branch(@A, Rid, Group, Schema, Pos, OldBound),
+    Pos < f_sizeof(Group),
+    Bound := Cost < OldBound ? Cost : OldBound.
 
-/* A branch for a specific group is complete when we receive an update to the  \\
-   \ol{plan} relation. */ \\
-bp6 {\bf branchComplete}(@A, Rid, Group, Pos, Cost) :- \\
-\datalogspace {\bf plan}(@A, Rid, Group, Method, PlanID, InnerGroup, OuterGroup, Card, Cost), \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, \_). \\
-  
-\end{boxedminipage}
+%* /* A branch for a specific group is complete when we receive an update to the  \\
+   \ol{plan} relation. */ *)
+bp6 branchComplete(@A, Rid, Group, Pos, Cost) :-
+    plan(@A, Rid, Group, Method, PlanID, InnerGroup, OuterGroup, 
+          Card, Cost),
+    branch(@A, Rid, Group, Schema, Pos, _).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:cascades_top_down} Cascades top-down search strategy rules.}
 \end{figure*}
 
@@ -673,35 +686,37 @@ of the \ol{plan} tuple in the previous branch.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-bp7 {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
-\datalogspace $f\_sizeof(Group)\ ==\ 1$, \\
-\datalogspace PlanID := {\em f\_cons}(``delta'', Group), \\
-\datalogspace Sort := $null$, \\
-\datalogspace OuterGroup := Group, \\
-\datalogspace InnerGroup := $null$, \\
-\datalogspace Card := 1, \\
-\datalogspace Cost := 1. \\
+\begin{lstlisting}
+bp7 plan(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, 
+         Card, Cost) :-
+    branch(@A, Rid, Group, Schema, Pos, Bound),
+    f_sizeof(Group) == 1,
+    PlanID := f_cons(``delta'', Group),
+    Sort := null,
+    OuterGroup := Group,
+    InnerGroup := null,
+    Card := 1,
+    Cost := 1.
 
-bp8 {\bf plan}(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup, Card, Cost) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
-\datalogspace {\bf winner}(@A, Rid, OuterGroup, OuterPlanId), \\
-\datalogspace {\bf plan}(@A, Rid, OuterGroup, OuterPlanID, OuterSort, \_, \_, OuterCard, OuterCost), \\
-\datalogspace {\bf group}(@A, Rid, OuterGroup, OuterSchema), \\
+bp8 plan(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup, 
+         Card, Cost) :-
+    branch(@A, Rid, Group, Schema, Pos, Bound),
+    winner(@A, Rid, OuterGroup, OuterPlanId),
+    plan(@A, Rid, OuterGroup, OuterPlanID, OuterSort, ..., 
+          OuterCard, OuterCost),
+    group(@A, Rid, OuterGroup, OuterSchema),
 
-\datalogspace {\bf group}(@A, Rid, InnerGroup, InnerSchema), \\
-\datalogspace {\bf sys::table}(@A, Tid, TableName, \ldots, InnerCard, InnerSort),\\
-\datalogspace $f\_sizeof(InnerGroup)\ ==\ 1$ \&\& $f\_get(InnerGroup, 0)\ ==\ TableName$, \\
-\datalogspace $f\_combine(OuterGroup, InnerGroup)\ ==\ Group$, \\
-\datalogspace Cost := $f\_joinsWith(OuterSchema, InnerSchema)$ ? \\
-\datalogspace \datalogspace OuterCost + (OuterCard * InnerCost) : infinity, \\
-\datalogspace $Cost\ <\ Bound$, \\
-\datalogspace Card := $f\_joinsWith(OuterSchema, InnerSchema)$ ? \\
-\datalogspace \datalogspace (OuterCard * InnerCard) / 3 : (OuterCard * InnerCard), \\
-\datalogspace PlanId := {\em f\_cons}(``nested-loop'', OuterPlanID, Tid). \\
-
-\end{boxedminipage}
+    group(@A, Rid, InnerGroup, InnerSchema),
+    sys::table(@A, Tid, TableName, ..., InnerCard, InnerSort),
+    f_sizeof(InnerGroup) == 1 && f_get(InnerGroup, 0) == TableName,
+    f_combine(OuterGroup, InnerGroup) == Group,
+    Cost := f_joinsWith(OuterSchema, InnerSchema) ?
+              OuterCost + (OuterCard * InnerCost) : infinity,
+    Cost < Bound,
+    Card := f_joinsWith(OuterSchema, InnerSchema) ?
+              (OuterCard * InnerCard) / 3 : (OuterCard * InnerCard),
+    PlanId := f_cons(``nested-loop'', OuterPlanID, Tid).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:cascades_plan1} Cascades plan generation rules for event
 predicates and nested-loop join method.}
 \end{figure*}
@@ -716,63 +731,63 @@ single streaming delta predicate, with appropriate cardinality and cost values.
 This delta plan is assigned the single predicate group as the outer group, and
 $null$ as its inner group.
 
-This brings us to rule~\ol{bp8}, which is the our first rule that generates a
-\ol{plan} tuple involving a join method, specifically nested-loop join.  A
-\ol{branch} tuple with a group, containing at least two predicates, is ``joined
-with'' the \ol{winner} relation.  The \ol{winner} relation is described in the
-following section, but its purpose is to identify the winning plan, for each
-interesting order, in its group.  In rule~\ol{bp8}, we use a ``winning'' {\em
-subplan} as the ``outer plan'', and join it with a table predicate that when
-combined with the outer subgroup, formulates the branch group under
-consideration.  The sorting order produced by this plan is the same as the
-order of the ``outer plan.'' Another difference with these rules is that the
-plan identifier ($PlanID$) holds the actual plan~\footnote{We note that this is the
-same strategy used in the System R \ol{plan} relation.  In both cases, another
-stage is used to annotate the relevant term relations (\ol{sys::predicate},
+Rule~\ol{bp8} is the our first rule that generates a \ol{plan} tuple involving
+a join method, specifically nested-loop join.  A \ol{branch} tuple with a
+group, containing at least two predicates, is ``joined with'' the \ol{winner}
+relation.  The \ol{winner} relation is described in the following section, but
+its purpose is to identify the winning plan, for each interesting order, in its
+group.  In rule~\ol{bp8}, we use a ``winning'' {\em subplan} as the ``outer
+plan'', and join it with a table predicate that when combined with the outer
+subgroup, formulates the branch group under consideration.  The sorting order
+produced by this plan is the same as the order of the ``outer plan.'' Like the
+strategy used in the System R \ol{plan} generation rules, we use the plan
+identifier ($PlanID$) to hold the actual plan.  In both cases, another stage is
+used to annotate the relevant term relations (\ol{sys::predicate},
 \ol{sys::assign} and \ol{sys::select}) with the desired order and join method.
-We forgo the trivial $3$ rule description of this stage since it does not add
-any new insights.}.
 
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-bp9 {\bf plan}(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup, Card, Cost) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, Bound), \\
-\datalogspace {\bf winner}(@A, Rid, OuterGroup, OuterPlanId), \\
-\datalogspace {\bf plan}(@A, Rid, OuterGroup, OuterPlanID, OuterSort, \_, \_, OuterCard, OuterCost), \\
-\datalogspace {\bf group}(@A, Rid, OuterGroup, OuterSchema), \\
+\begin{lstlisting}
+bp9 plan(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup, 
+         Card, Cost) :-
+    branch(@A, Rid, Group, Schema, Pos, Bound),
+    winner(@A, Rid, OuterGroup, OuterPlanId),
+    plan(@A, Rid, OuterGroup, OuterPlanID, OuterSort, ..., 
+         OuterCard, OuterCost),
+    group(@A, Rid, OuterGroup, OuterSchema),
 
-\datalogspace {\bf group}(@A, Rid, InnerGroup, InnerSchema), \\
-\datalogspace {\bf sys::table}(@A, Tid, TableName, \ldots, InnerCard, InnerSort),\\
-\datalogspace {\bf sys::index}(@A, Iid, Tid, Key, Type, Selectivity), \\
-\datalogspace $f\_sizeof(InnerGroup)\ ==\ 1$ \&\& $f\_get(InnerGroup, 0)\ ==\ TableName$, \\
+    group(@A, Rid, InnerGroup, InnerSchema),
+    sys::table(@A, Tid, TableName, ..., InnerCard, InnerSort),
+    sys::index(@A, Iid, Tid, Key, Type, Selectivity),
+    f_sizeof(InnerGroup) == 1 && f_get(InnerGroup, 0) == TableName,
 
-\datalogspace $f\_combine(OuterGroup, InnerGroup)\ ==\ Group$, \\
-\datalogspace $f\_joinCol(OuterSchema, InnerSchema)$ == $f\_get(InnerSchema, Key)$, \\
-\datalogspace Cost := OuterCost + OuterCard, \\
-\datalogspace $Cost\ <\ Bound$, \\
-\datalogspace Card := OuterCard * (InnerCard * Selectivity), \\ 
-\datalogspace PlanId := {\em f\_cons}("index-loop", OuterPlanID, Tid, Iid). \\
+    f_combine(OuterGroup, InnerGroup) == Group,
+    f_joinCol(OuterSchema, InnerSchema) == f_get(InnerSchema, Key),
+    Cost := OuterCost + OuterCard,
+    Cost < Bound,
+    Card := OuterCard * (InnerCard * Selectivity),
+    PlanId := f_cons("index-loop", OuterPlanID, Tid, Iid).
 
-bp10 {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
-\datalogspace {\bf winner}(@A, Rid, OuterGroup, OuterPlanId), \\
-\datalogspace {\bf plan}(@A, Rid, OuterGroup, OuterPlanID, OuterSort, \_, \_, OuterCard, OuterCost), \\
-\datalogspace {\bf group}(@A, Rid, OuterGroup, OuterSchema), \\
-
-\datalogspace {\bf group}(@A, Rid, InnerGroup, InnerSchema), \\
-\datalogspace {\bf sys::table}(@A, Tid, TableName, \ldots, InnerCard, InnerSort),\\
-\datalogspace $f\_sizeof(InnerGroup)\ ==\ 1$ \&\& $f\_get(InnerGroup, 0)\ ==\ TableName$, \\
-
-\datalogspace $f\_combine(OuterGroup, InnerGroup)\ ==\ Group$, \\
-\datalogspace Sort := {\em f\_joinAttribute}(OuterSort, OuterSchema, InnerSort, InnerSchema), \\
-\datalogspace Cost := {\em f\_sortJoinCost}(OuterSort, OuterCard, InnerSort, InnerCard), \\
-\datalogspace $Cost\ <\ Bound$, \\
-\datalogspace Card := (OuterCard * InnerCard) / 3. \\
-\datalogspace PlanId := {\em f\_cons}(``sort-merge'', OuterPlanID, Tid, Sort).
-
-\end{boxedminipage}
+bp10 plan(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, 
+          Card, Cost) :-
+     branch(@A, Rid, Group, Schema, Pos, OldBound),
+     winner(@A, Rid, OuterGroup, OuterPlanId),
+     plan(@A, Rid, OuterGroup, OuterPlanID, OuterSort, ..., 
+          OuterCard, OuterCost),
+     group(@A, Rid, OuterGroup, OuterSchema),
+     group(@A, Rid, InnerGroup, InnerSchema),
+     sys::table(@A, Tid, TableName, ..., InnerCard, InnerSort),
+     f_sizeof(InnerGroup) == 1 && f_get(InnerGroup, 0) == TableName,
+     f_combine(OuterGroup, InnerGroup) == Group,
+     Sort := f_joinAttribute(OuterSort, OuterSchema, 
+                            InnerSort, InnerSchema),
+     Cost := f_sortJoinCost(OuterSort, OuterCard, 
+                            InnerSort, InnerCard),
+     Cost < Bound,
+     Card := (OuterCard * InnerCard) / 3,
+     PlanId := f_cons(``sort-merge'', OuterPlanID, Tid, Sort).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:cascades_plan2} Cascades plan generation rules for index-loop
 and sort-merge join methods.}
 \end{figure*}
@@ -786,8 +801,8 @@ index definition relevant to the joining attributes.  In rule~\ol{bp10}, the
 sort-merge join along the same set of predicates is derived.  The cost of this
 plan depends on the order of the outer and inner tuples.  The output is ordered
 by the join attributes used for these two inputs.  One other rule, that we omit
-here, handles selection predicates in the same manner as rule~\ol{sr5} in the
-System R declarative optimizer.
+here, handles selection predicates in a manner nearly identical to rule~\ol{sr5} 
+in Figure~\ref{ch:opt:fig:plangen4}. 
 
 \subsection{Winner Selection}
 \label{ch:opt:sec:cascades_winner}
@@ -795,45 +810,46 @@ System R declarative optimizer.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-/* Determine the best overall cost for a given plan. */ \\
-bb11 {\bf bestOverallCost}(@A, Rid, Group, {\bf min}$<Cost>$) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
-\datalogspace $f\_sizeof(Group)\ ==\ Pos$, \\
-\datalogspace {\bf plan}(@A, Rid, Group, \_, \_, \_, \_, \_, Cost). \\
+\begin{lstlisting}
+/* Determine the best overall cost for a given plan. */
+bb11 bestOverallCost(@A, Rid, Group, a_min<Cost>) :-
+     branch(@A, Rid, Group, Schema, Pos, OldBound),
+     f_sizeof(Group) == Pos,
+     plan(@A, Rid, Group, ..., Cost).
 
-/* Determine the best cost plan for each ordered result. */ \\
-bb12 {\bf bestOrderCost}(@A, Rid, Group, Sort, {\bf min}$<Cost>$) :- \\
-\datalogspace {\bf branch}(@A, Rid, Group, Schema, Pos, OldBound), \\
-\datalogspace $f\_sizeof(Group)\ ==\ Pos$, \\
-\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, \_, Cost), \\
-\datalogspace {\bf interestingOrder}(@A, Pid, Rid, PlanID). \\
+/* Determine the best cost plan for each ordered result. */
+bb12 bestOrderCost(@A, Rid, Group, Sort, a_min<Cost>) :-
+     branch(@A, Rid, Group, Schema, Pos, OldBound),
+     f_sizeof(Group) == Pos,
+     plan(@A, Rid, Group, PlanID, Sort, ..., Cost),
+     interestingOrder(@A, Pid, Rid, PlanID).
 
-/* Identify interesting ordered plans. */ \\
-bb13 {\bf interestingOrder}(@A, Pid, Rid, PlanID) :- \\
-\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, Card, Cost), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, HeadPredID, \ldots), \\
-\datalogspace // The head predicate \\
-\datalogspace {\bf sys::predicate}(@A, Pid, Rid, HeadPredID, \ldots, HeadPredSchema, \ldots),\\
-\datalogspace // A rule body predicate \\
-\datalogspace {\bf sys::predicate}(@A, Pid, Rid, BodyPredID, \ldots, BodyPredSchema, \ldots),\\
-\datalogspace $HeadPredID != BodyPredID$ \\
-\datalogspace // participates in a later join OR is a prefix of a grouping attribute \\ 
-\datalogspace ({\em f\_contains}(BodyPredID, Plan) ==  $false$ \&\& \\
-\datalogspace f\_contains(f\_joincond(PlanSchema, BodyPredSchema), Sort)) $||$ \\
-\datalogspace f\_isPrefix(Sort, HeadPredSchema) ==  $true$.  \\
+/* Identify interesting ordered plans. */ 
+bb13 interestingOrder(@A, Pid, Rid, PlanID) :-
+     plan(@A, Rid, Group, PlanID, Sort, OuterGroup, InnerGroup, 
+          Card, Cost),
+     sys::rule(@A, Rid, Pid, HeadPredID, ...),
+     /* The head predicate */
+     sys::predicate(@A, Pid, Rid, HeadPredID, ..., HeadPredSchema, ...),
+     /* A rule body predicate */
+     sys::predicate(@A, Pid, Rid, BodyPredID, ..., BodyPredSchema, ...),
+     HeadPredID != BodyPredID, 
+     /* Participates in a later join OR 
+        is a prefix of a grouping attribute. */
+     (f_contains(BodyPredID, Plan) ==  false &&
+      f_contains(f_joincond(PlanSchema, BodyPredSchema), Sort)) ||
+     f_isPrefix(Sort, HeadPredSchema) ==  true.
 
-/* Choose a winner based on the best overall cost. */ \\
-bb14 {\bf winner}(@A, Rid, Group, PlanId) :- \\
-\datalogspace {\bf bestOverallCost}(@A, Rid, Group, Cost), \\
-\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, Card, Cost). \\
+/* Choose a winner based on the best overall cost. */
+bb14 winner(@A, Rid, Group, PlanId) :-
+     bestOverallCost(@A, Rid, Group, Cost),
+     plan(@A, Rid, Group, PlanID, Sort, ..., Card, Cost).
 
-/* Choose a winner from each interesting ordered plans. */ \\
-bb15 {\bf winner}(@A, Rid, Group, PlanId) :- \\
-\datalogspace {\bf bestOrderCost}(@A, Rid, Group, Sort, Cost), \\
-\datalogspace {\bf plan}(@A, Rid, Group, PlanID, Sort, \_, \_, Card, Cost).
-
-\end{boxedminipage}
+/* Choose a winner from each interesting ordered plans. */
+bb15 winner(@A, Rid, Group, PlanId) :-
+     bestOrderCost(@A, Rid, Group, Sort, Cost),
+     plan(@A, Rid, Group, PlanID, Sort, ..., Card, Cost).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:cascades_winner} Cascades winner selection rules.}
 \end{figure*}
 
@@ -862,25 +878,25 @@ each interesting orders.
 \begin{figure*}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-bb16 {\bf rules}(@A, Pid, a\_count$<$Rid$>$) :-\\
-\datalogspace {\bf cascades::programEvent}(@A, Pid, \ldots), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots). \\
+\begin{lstlisting}
+bb16 rules(@A, Pid, a_count<Rid>) :-
+     cascades::programEvent(@A, Pid, ...),
+     sys::rule(@A, Rid, Pid, ...).
 
-bb17 {\bf completeRule}(@A, Pid, Rid) :- \\
-\datalogspace {\bf winner}(@A, Rid, Group, PlanId), \\
-\datalogspace {\bf sys::rule}(@A, Rid, Pid, \ldots, Goals), \\
-\datalogspace $f\_sizeof(Group)\ ==\ Goals - 1$. \\
+bb17 completeRule(@A, Pid, Rid) :-
+     winner(@A, Rid, Group, PlanId),
+     sys::rule(@A, Rid, Pid, ..., Goals),
+     f_sizeof(Group) == Goals - 1.
 
-bb18 {\bf completeRuleCount}(@A, Pid, a\_count$<$Rid$>$) :- \\
-\datalogspace {\bf completeRule}(@A, Pid, Rid). \\
+bb18 completeRuleCount(@A, Pid, a_count<Rid>) :-
+     completeRule(@A, Pid, Rid).
 
-bb19 {\bf sys::program}(@A, Pid, Name, Rewrite, ``cascades'', Text, Msg, P2DL, Src) :- \\
-\datalogspace {\bf completeRuleCount}(@A, Pid, Count), \\
-\datalogspace {\bf rules}(@A, Pid, Count), \\
-\datalogspace {\bf sys::program}(@A, Pid, Name, Rewrite, Stage, Text, Msg, P2DL, Src).
-
-\end{boxedminipage}
+bb19 sys::program(@A, Pid, Name, Rewrite, ``cascades'', Text, Msg, 
+                  P2DL, Src) :-
+     completeRuleCount}(@A, Pid, Count),
+     rules(@A, Pid, Count),
+     sys::program(@A, Pid, Name, Rewrite, Stage, Text, Msg, P2DL, Src).
+\end{lstlisting}
 \caption{\label{ch:opt:fig:cascadesend}Cascades termination rules.}
 \end{figure*}
 
