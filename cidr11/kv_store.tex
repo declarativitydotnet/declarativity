@@ -45,8 +45,8 @@ in the event of multiple concurrent requests.
 A module which uses a key-value store but is indifferent to the specifics of the
 implementation may simply mix in this protocol specification and postpone
 committing to a particular implementation until runtime. As we will see shortly,
-an implementation of the KVSProtocol is a collection of Bud rules that read
-tuples from the protocol's input interfaces and send results to the output
+an implementation of the KVSProtocol is a collection of Bloom statements that
+read tuples from the protocol's input interfaces and send results to the output
 interface.
 
 \subsection{Single-Node Key-Value Store}
