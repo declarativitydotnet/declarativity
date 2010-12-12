@@ -71,7 +71,13 @@ produced by a non-monotonicity analysis are the program's \emph{points of order}
 with non-monotonicity can be made consistent by including coordination logic at
 its points of order.
 
-The reader may observe that because ``waiting requires counting,'' adding a code module with coordination logic actually increases the number of syntactic points of order in a program.  To avoid this problem, the coordination module itself must be verified for order independence either ``by hand'', or via a refined monotonicity test during analysis.  In cases where the verification is done by hand, annotations can inform the analysis tool to skip the module in its analysis, and hence avoid attempts to coordinate the coordination logic.  
+The reader may observe that because ``waiting requires counting,'' adding a code
+module with coordination logic actually increases the number of syntactic points
+of order in a program.  To avoid this problem, the coordination module itself
+must be verified for order independence, either manually or via a refined
+monotonicity test during analysis.  When the verification is done by hand,
+annotations can inform the analysis tool to skip the module in its analysis, and
+hence avoid attempts to coordinate the coordination logic.
 
 Because analyses based on the CALM principle operate with information about
 program semantics, they can avoid coordination logic in cases where traditional
