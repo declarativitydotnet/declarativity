@@ -77,8 +77,8 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 		\hline
 	\end{tabular}
 
-	\vspace{2em}
-	\begin{tabular}{|c|l|p{2in}|}
+	\vspace{1.6em}
+	\begin{tabular}{|c|l|p{2.035in}|}
 		\hline
 		Op & Valid lhs types & Meaning\\
 				\hline 
@@ -144,7 +144,7 @@ end
 \end{lstlisting}
 \centering
 \vspace{-10pt}
-\caption{An example Bloom program.}
+\caption{An example Bloom program that implements reliable unicast messaging.}
 \label{fig:bloom-example}
 \end{scriptsize}
 \vspace{-2pt}
@@ -294,7 +294,7 @@ a fact into an input interface results in a corresponding fact appearing
 
 For example, the DeliveryProtocol module in Figure~\ref{fig:bloom-example}
 defines an abstract interface for sending messages to a remote address. Clients
-use an implementation of this interface by inserting a facts into
+use an implementation of this interface by inserting a fact into
 \texttt{pipe\_in}; this represents a new message to be delivered. A
 corresponding fact will eventually appear in the \texttt{pipe\_out} output
 interface; this indicates that the delivery operation has been completed. The
