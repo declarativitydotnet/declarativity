@@ -6,10 +6,11 @@ and Campbell~\cite{quicksand}. Systems with loose consistency requirements have
 been explored in depth by both the systems and database management communities,
 \jmh{most notably X, Y, and Z.}
 
+The Bloom language is inspired by earlier work that attempts to integrate
+databases and programming languages, such as Gem~\cite{gem}, and more recent
+object-relational mapping systems like Ruby on Rails.  But Bloom is targeted to the development of both distributed infrastructure and distributed applications, so it does not make any assumptions about the presence of a database system ``underneath it''.  Given the Bud prototype implementation in Ruby, it is tempting to integrate Bud with Rails; we have left this for future work.
+
 There is a long history of attempts to design programming languages more
 suitable to parallel and distributed systems; for example, Argus~\cite{argus}
-and Linda~\cite{linda}.
+and Linda~\cite{linda}.  We will not attempt to survey this extensive literature here.  More pragmatically, Erlang is an oft-cited choice for distributed programming in recent years.  Erlang's features and design style encourage the use of asynchronous lightweight ``actors''.  As mentioned previously, we did a simple Bloom prototype DSL in Erlang (which we cannot help but call ``Bloomerlang''), and there is a natural correspondence between Bloom-style distributed rules and Erlang actors.  However most Erlang programs are not written in this style, and it is not obvious that typical Erlang programs are significantly more amenable to a useful points-of-order analysis than Scala or Haskell or any other ``orderly'' functional language.  For example, ordered lists are basic constructs in functional languages, and without program annotation or deeper analysis than we need to do in Bloom, any code modifying lists would need be marked as a point of order, much like our destructive shopping cart.  We believe that Bloom's ``disorderly by default'' style only encourages more disorderly programming, and its roots in database theory have borne fruit in terms of our analysis.  Perhaps the analysis will prove portable to more traditionally imperative languages.
 
-The Bloom language is inspired by earlier work that attempts to integrate
-databases and programming languages, such as Gem~\cite{gem} and
-object-relational mapping systems.
