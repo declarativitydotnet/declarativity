@@ -97,16 +97,17 @@ module DestructiveCart
 
   declare (*\label{line:des_declare}*)
   def do_action
+    kvget <= action_msg.map {|a| [a.reqid, a.key] }
     kvput <= action_msg.map do |a|
       if a.action == "A" (*\label{line:des_kvstate_gen_beg}*)
-        unless kvstate.map{|b| b.key}.include? a.session (*\label{line:des_kvstate_check}*)
+        unless kvget_response.map{|b| b.key}.include? a.session (*\label{line:des_kvstate_check}*)
           [a.server, a.client, a.session, a.reqid, [a.item]]
         end
       end (*\label{line:des_kvstate_gen_end}*)
     end
 
-    old_state = join [kvstate, action_msg],
-                     [kvstate.key, action_msg.session]  (*\label{line:des_join_kvstate_action_msg}*)
+    old_state = join [kvget_response, action_msg],
+                     [kvget_response.key, action_msg.session]  (*\label{line:des_join_kvstate_action_msg}*)
     kvput <= old_state.map do |b, a|
       if a.action == "A" (*\label{line:des_replace_beg}*)
         [a.server, a.client, a.session, 
