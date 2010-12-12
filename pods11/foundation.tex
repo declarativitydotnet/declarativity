@@ -1,11 +1,16 @@
-
-
 \section{\large \bf \lang}
 \label{sec:slang}
 
-\lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$, represented by the unary relation \dedalus{time}). The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe.
+\lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$ 
+%\cup \infty$
+, represented by the unary relation \dedalus{time}).
+%We will see later how $\infty$ is used to model failure.
+The balance of the arguments are generic and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe, and the order constraint \dedalus{<} over the temporal universe.
+%, where every element of $\mathbb{N}$ is less than $\infty$.
 
-We assume an infinite binary relation over the temporal universe called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model the inherent non-determinism of asynchronous computation.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
+We assume an infinite binary relation over the temporal universe
+%(except $\infty$)
+called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model the inherent non-determinism of asynchronous distributed computation.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where certain predicates are {\em horizontally partitioned};  the location of a fact in a partitioned predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All rules that define a partitioned predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -19,7 +24,9 @@ We presently outline restrictions on \lang.
 
 \vspace{1em}
 \noindent {\bf Temporal Attributes:}
-\lang requires that all atoms in each rule body use the same variable symbol in their temporal attribute.  The temporal variable in the head atom may be constrained by exactly one of the following methods:
+\lang requires that all atoms in each rule body use the same variable symbol in their temporal attribute.
+%, and that its value must not be $\infty$.
+The temporal variable in the head atom may be constrained by exactly one of the following methods:
 
 \begin{enumerate}
 \item The rule is called a {\em deductive} rule if its head temporal variable is the same as its body temporal variable;
@@ -37,7 +44,7 @@ p(A, B, T) <- e(A, B, T);
 \end{Dedalus}
 inductive:
 \begin{Dedalus}
-q(A, B, S) <- e(A, B, T), successor(S, T);
+q(A, B, S) <- e(A, B, T), successor(T, S);
 \end{Dedalus}
 asynchronous:
 \begin{Dedalus}
@@ -48,7 +55,9 @@ r(A, B, S) <- e(A, B, T), time(S), S > T,
 
 \dedalus{choice} and \dedalus{successor} are prohibited in rules, except as described above.
 
-Since unification on the temporal attribute is required in every rule body, we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
+Since unification on the temporal attribute is required in every rule body,
+%(as well as the $!= \infty$ constraint)
+we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
 
 \begin{example}
 \label{ex:sugared}
@@ -78,14 +87,9 @@ By convention, EDB facts are supplied without a time suffix, and are true at tim
 \vspace{1em}
 \noindent {\bf Distribution:}
 \lang requires that all atoms with partitioned predicates in each rule body use the same variable symbol in their location attribute---i.e.\ the rule is an implication over data located in exactly one partition of the database, logically collocated (on a single ``machine'').  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}, and must be an asynchronous rule.                                                              
-
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
 \lang restricts negation by requiring any recursion through negation to include a temporal edge~\footnote{The only exception is the rewrite of \dedalus{choice}, which involves recursion through negation without any temporal edges.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.
-
-
-%\wrm{move this somewhere?  or don't wory about node failure}
-%{\bf Modeling failure:}  Later, when we discuss \lang with failure, we will add the element $\infty$ to \dedalus{time} to model transient or permanent channel failure, or transient node failure.  Furthermore, to model permanent node failure, we will assume all rules have the \dedalus{!fail()} predicate in their body, except for a single rule \dedalus{fail()@async <- enabled();}, and all programs have an \dedalus{enabled()} fact, where \dedalus{enabled} is a predicate symbol that does not otherwise appear in the program.  \wrm{Also, we assume durability through transient node failure?}  \wrm{Also note that failure makes confluence impossible}
 
 %\subsection{Design Rationale and Implications}
 
@@ -206,15 +210,21 @@ In other words, a fact, \dedalus{p(\(\bar{c}\), t)}, with some constant \dedalus
 
 Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable.
 
-Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  With asynchronous rules we have an additional complication: messages may be delayed arbitrarily.  We run iterations of their algorithm, keeping track of which subsets of messages we've seen.  If in some iteration, we do not see a new subset, we have computed the ultimate model.  Since there are only finitely many possible subsets of messages, we will eventually see them all and eventually terminate.
+Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  With asynchronous rules we have an additional complication: messages may be delayed arbitrarily.  We run iterations of their algorithm, keeping track of which subsets of messages we've seen.  If in some iteration, we do not see a new subset, we have computed the ultimate model.  Since there are only finitely many possible subsets of messages, we will eventually see them all and eventually terminate.  Even though a stabel model may be infinite, its ultimate model is always finitely computable. \wrm{bounded delay assumption... alternatively need to worry about failure}
 
 We now prove that our model-theoretic and operational semantics are equivalent.
 
 \begin{lemma}
-For any \lang program, the family of ultimate models exactly corresponds to the ultimate models achievable by the operational formalism.
+Every ultimate model is computed by some execution of the operational formalism.
 \end{lemma}
 \begin{proof}
-
-
-
+Assume some ultimate model is not computed.  Consider the family of traces that yield that ultimate model.  
 \end{proof}
+
+\subsection{Modeling Failure}
+
+If we want \lang to model transient or permanent channel failure, we can add an element $\infty$ to \dedalus{time}, such that every element of $\mathbb{N}$ is less than $\infty$.  We also need to introduce the constraint \dedalus{T != \(\infty\)} into every \lang rule.
+
+Modeling failure introduces a whole host of new ultimate models.
+
+If we give up the bounded delay assumption, then messages that exceed the delay bounds are declared lost.
