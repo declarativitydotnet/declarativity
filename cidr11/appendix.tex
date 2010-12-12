@@ -43,7 +43,7 @@ module MulticastProtocol
   end
 end
 
-module Multicast
+module SimpleMulticast
   include MulticastProtocol
   include DeliveryProtocol
 
@@ -61,7 +61,6 @@ module Multicast
 end
 \end{lstlisting}
 \centering
-%%\includegraphics[width=0.55\linewidth]{fig/basickvs.pdf}
 \vspace{-10pt}
 \caption{A simple unreliable multicast library in Bloom.}
 \label{fig:multicast-impl}
