@@ -36,8 +36,8 @@ the popular Ruby scripting language and is evaluated by a stock Ruby interpreter
 via a \textbf{Bud} Ruby class.  Compared to other logic languages, we feel it
 has a familiar and programmer-friendly flavor, and we believe that its learning
 curve will be relatively flat for programmers familiar with modern scripting
-languages.  Bud uses a Ruby-flavored syntax, but this is not endemic; we have
-experimented with analogous Bloom embeddings in other languages including
+languages.  Bud uses a Ruby-flavored syntax, but this is not fundamental; we
+have experimented with analogous Bloom embeddings in other languages including
 Python, Erlang and Scala, and they look similar in structure.  In the remainder
 of the paper, when we refer to Bloom we mean the language supported by the Bud
 prototype.
@@ -70,9 +70,10 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 		\hline
 		\textbf{table} & A collection whose contents persist across timesteps.\\
 		\textbf{scratch} & A collection whose contents persist for only one timestep.\\
-		\textbf{channel} & A scratch collection with one attribute designated as the {\em location specifier}. Tuples ``appear'' at the address stored in their location specifier.\\
-    \textbf{interface} & A scratch collection specially designated as an interface point between modules.  An interface is typed as either \texttt{input} or \texttt{output} and may only \jmh{what does compose mean?} compose with an interface of the opposite type.\\
+		\textbf{channel} & A scratch collection with one attribute designated as
+        the {\em location specifier}. Tuples ``appear'' at the network address stored in their location specifier.\\
 		\textbf{periodic} & A scratch collection of key-value pairs (\texttt{id}, \texttt{timestamp}).  The definition of a periodic collection is parameterized by a \texttt{period} in seconds; the runtime system arranges (in a best-effort manner) for tuples to ``appear'' in this collection approximately every \texttt{period} seconds, with a unique \texttt{id} and the current wall-clock time.\\
+    \textbf{interface} & A scratch collection specially designated as an interface point between modules.  An interface is typed as either \texttt{input} or \texttt{output} and may only \jmh{what does compose mean?} compose with an interface of the opposite type.\\
 		\hline
 	\end{tabular}
 
@@ -93,52 +94,6 @@ Dedalus discusses these points in more detail~\cite{dedalus}.
 	\label{tab:bloom}
 \end{figure}
 
-\subsection{State in Bloom}
-Bloom programs manage state using five collection types described in the top of
-Figure~\ref{tab:bloom}. A collection is defined with a relational-style schema
-of named columns, including an optional subset of those columns that forms a
-primary key.  Lines~\ref{line:dec_chan_beg}--\ref{line:dec_chan_end} of
-Figure~\ref{fig:declarations} show the definition of a channel with 6
-columns \texttt{server}, \texttt{client}, \texttt{session}, \texttt{reqid},
-\texttt{item} and \texttt{action}; the primary key is \texttt{(server, client,
-  session, reqid)}. The \texttt{server} column is annotated with the location
-specifier \texttt{@}, indicating that tuples inserted into the channel will
-appear at the address in the first attribute of the tuple.  In Bud, the type
-system for columns is taken from Ruby, so it is possible to have a column based
-on any Ruby class the programmer cares to define or import, including nested Bud collections.  In Bud's implementation, a tuple in
-a Bloom collection is simply a Ruby array containing as many elements as the
-columns of the collection's schema.  As in other object-relational ADT schemes
-like Postgres~\cite{postgres-adt}, column values can be manipulated using their
-own (non-destructive) methods. Bloom also provides for nesting and unnesting of collections using standard Ruby constructs like \texttt{reduce} and  \texttt{flat\_map}.
-
-The persistence of a tuple is determined by the type of the collection that
-contains the tuple. \textbf{scratch} collections are handy for transient data
-like network messages, intermediate results, and ``macro'' definitions that
-enable code reuse. The contents of a \textbf{table} persist across consecutive
-timesteps (until that persistence is interrupted via a Bloom statement
-containing the \texttt{$<$-} operator described below). Although there are
-precise declarative semantics for this persistence~\cite{dedalus}, it is
-convenient to think operationally as follows: scratch collections are
-``emptied'' before each timestep begins, tables are ``stored'' collections
-(similar to tables in SQL), and the \texttt{$<$-} operator represents batch
-deletion before the beginning of the next timestep.
-
-The facts of the ``real world,'' including network messages and the passage of
-wall-clock time, are captured via \textbf{channel} and \textbf{periodic}
-collections; these are scratch collections whose contents ``appear'' at
-non-deterministic timesteps.  The paper on Dedalus delves deeper into the
-logical semantics of this non-determinism~\cite{dedalus}.  Note that failure of
-nodes or communication is captured here: it can be thought of as the repeated
-``non-appearance'' of a fact at every timestep.  Again, it is convenient to
-think operationally as follows: facts in a channel are delivered to the
-address in their location specifier via a best-effort unordered network protocol
-like UDP, and the definition of a periodic collection instructs the
-runtime to ``inject'' facts at regular wall-clock intervals to ``drive'' further
-derivations.
-
-Bloom programs compose with other Bloom programs and with external callers at
-unidirectional scratch collections called \textbf{interfaces}, which are described in more
-detail in Section~\ref{sec:modularity}.
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -156,14 +111,14 @@ module ReliableDelivery
   include DeliveryProtocol
 
   def state
-    channel :data_chan, ['@dst', 'src', 'ident'], ['payload']
+    channel :data_chan, ['@dst', 'src', 'ident'], ['payload'] (*\label{line:data_chan_ddl}*)
     channel :ack_chan, ['@src', 'dst', 'ident']
-    table :send_buf, ['dst', 'src', 'ident'], ['payload']
-    periodic :timer, 10
+    table :send_buf, ['dst', 'src', 'ident'], ['payload'] (*\label{line:send_buf_ddl}*)
+    periodic :timer, 10 (*\label{line:timer_ddl}*)
   end
 
   declare
-  def send_packet
+  def send_packet (*\label{line:send_packet_declare}*)
     send_buf <= pipe_in
     data_chan <~ pipe_in
   end
@@ -175,7 +130,7 @@ module ReliableDelivery
 
   declare
   def send_ack
-    ack_chan <~ data_chan.map{|p| [p.src, p.dst, p.ident]}
+    ack_chan <~ data_chan.map{|p| [p.src, p.dst, p.ident]} (*\label{line:data_chan_proj}*)
   end
 
   declare
@@ -195,6 +150,54 @@ end
 \vspace{-2pt}
 \end{figure}
 
+\subsection{State in Bloom}
+Bloom programs manage state using five collection types described in the top of
+Figure~\ref{tab:bloom}. A collection is defined with a relational-style schema
+of named columns, including an optional subset of those columns that forms a
+primary key. Line~\ref{line:send_buf_ddl} in Figure~\ref{fig:bloom-example}
+defines a collection named \texttt{send\_buf} with four columns
+\texttt{dst}, \texttt{src}, \texttt{ident}, and \texttt{payload}; the primary
+key is \texttt{(dst,~src,~ident)}. In Bud, the type system for columns is taken
+from Ruby, so it is possible to have a column based on any Ruby class the
+programmer cares to define or import (including nested Bud collections).  In
+Bud, a tuple in a Bloom collection is simply a Ruby array containing as many
+elements as the columns of the collection's schema.  As in other
+object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values
+can be manipulated using their own (non-destructive) methods. Bloom also
+provides for nesting and unnesting of collections using standard Ruby constructs
+like \texttt{reduce} and \texttt{flat\_map}.
+
+The persistence of a tuple is determined by the type of the collection that
+contains the tuple. \textbf{scratch} collections are handy for transient data
+like intermediate results, and ``macro'' definitions that enable code reuse. The
+contents of a \textbf{table} persist across consecutive timesteps (until that
+persistence is interrupted via a Bloom statement containing the \texttt{$<$-}
+operator described below). Although there are precise declarative semantics for
+this persistence~\cite{dedalus}, it is convenient to think operationally as
+follows: scratch collections are ``emptied'' before each timestep begins, tables
+are ``stored'' collections (similar to tables in SQL), and the \texttt{$<$-}
+operator represents batch deletion before the beginning of the next timestep.
+
+The facts of the ``real world,'' including network messages and the passage of
+wall-clock time, are captured via \textbf{channel} and \textbf{periodic}
+collections; these are scratch collections whose contents ``appear'' at
+non-deterministic timesteps.  The paper on Dedalus delves deeper into the
+logical semantics of this non-determinism~\cite{dedalus}. Note that failure of
+nodes or communication is captured here: it can be thought of as the repeated
+``non-appearance'' of a fact at every timestep.  Again, it is convenient to
+think operationally as follows: the facts in a channel are sent to a remote node
+via an unreliable transport protocol like UDP; the address of the remote node is
+indicated by a distinguished column in the channel called the \emph{location
+  specifier} (denoted by the symbol \texttt{@}). The definition of a periodic
+collection instructs the runtime to ``inject'' facts at regular wall-clock
+intervals to ``drive'' further derivations. Lines~\ref{line:data_chan_ddl} and
+\ref{line:timer_ddl} in Figure~\ref{fig:bloom-example} contain examples of
+channel and periodic definitions, respectively.
+
+Bloom programs compose with other Bloom programs and with external callers at
+unidirectional scratch collections called \textbf{interfaces}, which are described in more
+detail in Section~\ref{sec:modularity}.
+
 \subsection{Bloom Statements}
 Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
 of declarative relational expressions that define the contents of derived
@@ -213,10 +216,10 @@ its rhs, or recursion can be defined mutually across statements.  The rhs
 typically includes methods of \texttt{BudCollection} objects.  Most common is
 the \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a
 scalar operation to every tuple in a collection; this can be used to implement
-relational selection and projection. For example, \jmh{change examples here to reference figures on this page if at all possible!}
-lines~\ref{line:dis_action_msg_beg}--\ref{line:dis_action_msg_end} of
-Figure~\ref{fig:dis-cart} project the \texttt{action\_msg} collection to
-its \texttt{session}, \texttt{item}, \texttt{action} and \texttt{reqid} fields.
+relational selection and projection. For example,
+line~\ref{line:data_chan_proj} of
+Figure~\ref{fig:bloom-example} projects the \texttt{data\_chan} collection to
+its \texttt{src}, \texttt{dest}, and \texttt{ident} fields.
 \texttt{BudCollection} defines a \texttt{group} method similar to SQL's
 \texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
 lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
@@ -231,8 +234,8 @@ Figure~\ref{fig:kvs-impl} shows a join between \texttt{kvstate} and
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
 Programmers declare Bloom statements within methods of a Bud subclass
-definition that are flagged with the \texttt{declare} modifier (e.g.,
-line~\ref{line:des_declare} of Figure~\ref{fig:dest-cart}). The semantics
+definition that are flagged with the \texttt{declare} keyword (e.g.,
+line~\ref{line:send_packet_declare} of Figure~\ref{fig:bloom-example}). The semantics
 of a Bloom program are defined by the union of all the \texttt{declare}
 methods; the order of statements is immaterial. Dividing statements into multiple
 methods improves the readability of the program and allows use of Ruby's method
