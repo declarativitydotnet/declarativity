@@ -252,8 +252,7 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \texttt{response\_msg} to the client containing the final quantity
 (lines~\ref{line:dis_checkout_response_beg}--\ref{line:dis_checkout_response_end}).
 The set of items in the cart is collapsed into an array via a user-defined aggregate
-function \texttt{accum}, to match the format expected by CartClient (and used in the previous
-example in Figure~\ref{fig:dest-cart}).
+function \texttt{accum}, to match the format expected by CartClient.
 
 %Because the disorderly implementation does not use a separate storage system,
 %it includes its own logic for state replication
@@ -315,10 +314,16 @@ and between the temporal cluster and itself.
 %%server replication (via the meta-edge in the temporal cycle from 
 %%\texttt{kvput} to itself) may affect the
 %%end results.  
-This figure also tells the (sad!) story of how we could ensure consistency of the destructive cart implementation: introduce coordination
-between client and server---and between the chosen server and all its replicas---for {\em every client action or kvput update}.  
-The programmer can easily achieve this coordination by supplying a ``reliable'' implementation
-of multicast that awaits acknowledgements from all replicas before reporting completion: this fine-grained coordination is akin to ``eager replication''~\cite{dangers}.  Unfortunately, it would incur the latency of a round of messages per server per client update, decrease system throughput, and make the system fragile in the face of replica failures.
+This figure also tells the (sad!) story of how we could ensure consistency of
+the destructive cart implementation: introduce coordination between client and
+server---and between the chosen server and all its replicas---for {\em every
+  client action or kvput update}.  The programmer can easily achieve this
+coordination by supplying a ``reliable'' implementation of multicast that awaits
+acknowledgements from all replicas before reporting completion: this
+fine-grained coordination is akin to ``eager replication''~\cite{dangers}.
+Unfortunately, it would incur the latency of a round of messages per server per
+client update, decrease throughput, and reduce availability in the face of
+replica failures.
 
 %One coordination technique would require the client to wait for all replicas to
 %successfully apply an update before sending a subsequent update.  This would
