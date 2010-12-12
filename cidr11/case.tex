@@ -97,7 +97,8 @@ module DestructiveCart
 
   declare (*\label{line:des_declare}*)
   def do_action
-    kvget <= action_msg.map {|a| [a.reqid, a.key] }
+    kvget <= action_msg.map{|a| [a.reqid, a.key]}
+
     kvput <= action_msg.map do |a|
       if a.action == "A" (*\label{line:des_kvstate_gen_beg}*)
         unless kvget_response.map{|b| b.key}.include? a.session (*\label{line:des_kvstate_check}*)

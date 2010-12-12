@@ -254,11 +254,11 @@ Bud also includes some additional convenience methods that provide macros over
 these methods and allows the use of simple side-effect-free Ruby expressions
 within statements.
 
-% TODO: work on this
-
-\subsection{Modularity and Encapsulation}
+\subsection{Modules and Interfaces}
 \label{sec:modularity}
+\begin{comment}
 \jmh{More is needed here.  First, you need to introduce the use of interfaces: inputs on rhs of rules, outputs on lhs.  Two modules compose if they reference each other's interface collections in this pattern.  Note that this is local and synchronous composition at the interfaces, though a given module may itself have asynchronous or distributed behaviors inside.  Second, you need to talk about how we use Ruby's inheritance and mixin features.  This probably deserves a subsection on Modularity and Inheritance or something.}
+\end{comment}
 
 \begin{comment}
 Conventional wisdom in certain quarters says that rule-based languages are
@@ -268,6 +268,70 @@ artifact of early rule languages that mixed apparently declarative syntax with
 imperative constructs and assumptions, and which had little support for
 modularity and reuse of code.
 \end{comment}
+
+Conventional wisdom in certain quarters says that rule-based languages are
+untenable for large programs that evolve over time, since the interactions among
+rules become too difficult to understand.  Bloom addresses this concern in two
+different ways. First, unlike many prior rule-based languages, Bloom is purely
+declarative; this avoids forcing the programmer to reason about the interaction
+between declarative rules and imperative constructs. Second, Bloom borrows
+object-oriented features from Ruby to allow programs to be broken into small
+modules; modules interact with one another by exposing narrow interfaces. This
+aids program comprehension, because it reduces the amount of code a programmer
+needs to read to understand the behavior of a module.
+
+A Bloom module is a bundle of collections and rules. Like modules in Ruby, a
+Bloom module can ``mix-in'' one or more other modules via the \texttt{include}
+statement; mixing-in a module imports its collections and rules. A common
+pattern is to specify an abstract interface in one module, and then use the
+mixin feature to specify several concrete realizations in separate modules. To
+support this idiom, Bloom provides a special type of collection called an
+\textbf{interface}. An input interface defines a place where a module accepts
+stimuli from the outside world (e.g., other Bloom modules). Typically, inserting
+a fact into an input interface results in a corresponding fact appearing
+(perhaps after a delay) in one of the module's output interfaces.
+
+For example, the DeliveryProtocol module in Figure~\ref{fig:bloom-example}
+defines an abstract interface for sending messages to a remote address. Clients
+use an implementation of this interface by inserting a facts into
+\texttt{pipe\_in}; this represents a new message to be delivered. A
+corresponding fact will eventually appear in the \texttt{pipe\_out} output
+interface; this indicates that the delivery operation has been completed. The
+ReliableDelivery module is one possible implementation of the abstract
+DeliveryProtocol interface---it uses a buffer and acknowledgment messages to
+delay emitting a \texttt{pipe\_out} fact until the corresponding message has
+been acknowledged by the remote node. Figure~\ref{fig:delivery-impl} in
+Appendix~\ref{app:network-code} contains a different realization of the abstract
+DeliveryProtocol. A client program that is indifferent to the details of message
+delivery can simply interact with the abstract DeliveryProtocol; the particular
+implementation of this protocol can be chosen at runtime.
+
+A common requirement is for one module to ``override'' some of the rules in a
+module that it mixes-in. For example, an OrderedDelivery module might want to
+reuse the functionality provided by ReliableDelivery, but prevent a message with
+sequence number $x$ from being delivered until all messages with sequence
+numbers $<x$ have been acknowledged. To support this pattern, Bloom allows an
+interface defined in another module to be overridden simply by redeclaring
+it. Internally, these redundantly-named interfaces exist in the namespace of the
+module that declared them, but only need to be referenced by a fully-qualified
+name if their use is otherwise ambiguous.  If an input interface appears in the
+lhs of a rule in a module that declared the interface, it is rewritten to
+reference the interface with the same name in a mixed-in class, as it is
+meaningless for a module to insert into its own input interface.  The same is
+the case for output interfaces appearing in the rhs of rules.  This feature
+allows programmers to reuse existing modules and interpose additional logic in a
+style reminiscent of superclass invocation in object-oriented languages.  We
+provide an example of interface overriding in Section~\ref{sec:rep-kvs}.
+
+\begin{comment}
+A common requirement 
+
+ in a single module, and then provide
+several concrete realizations of that module as mixins. 
+
+it is purely declarative; this avoids forcing the
+programmer to reason about the interaction between apparently-declarative rules
+and imperative constructs.
 
 Bud takes advantage of the features of Ruby to enrich its declarative constructs
 with familiar programming metaphors that are popular with software developers.
@@ -306,6 +370,7 @@ is the case for output interfaces appearing in the rhs of rules.  This feature
 allows programmers to reuse existing modules and interpose additional logic in a
 style reminiscent of superclass invocation in object-oriented languages.  We
 provide an example of interface overriding in Section~\ref{sec:rep-kvs}.
+\end{comment}
 
 \subsection{Bud Implementation}
 
