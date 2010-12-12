@@ -169,9 +169,9 @@ BasicKVS module when certain conditions are met. To achieve this, we
 (lines~\ref{line:rep-put-beg}--\ref{line:rep-put-end}). In ReplicatedKVS,
 references to \texttt{kvput} appearing in the lhs of rules are resolved to the
 \texttt{kvput} provided by BasicKVS, while references in the rhs of rules
-resolve to the local \texttt{kvput}.  This is unambiguous, because a module
-cannot insert into its own input or read from its own output
-interfaces.
+resolve to the local \texttt{kvput}. As described in
+Section~\ref{sec:modularity}, this is unambiguous because a module cannot insert
+into its own input or read from its own output interfaces.
 
 \subsection{Predicate Dependency Graphs}
 \begin{figure}[t]
