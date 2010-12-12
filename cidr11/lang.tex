@@ -195,14 +195,15 @@ intervals to ``drive'' further derivations. Lines~\ref{line:data_chan_ddl} and
 \ref{line:timer_ddl} in Figure~\ref{fig:bloom-example} contain examples of
 channel and periodic definitions, respectively.
 
-The final type of collection is an \textbf{interface}, which describes a
+The final type of collection is an \textbf{interface}, which specifies a
 connection point between Bloom modules. Interfaces are described in
 Section~\ref{sec:modularity}.
 
 \subsection{Bloom Statements}
-Statements in Bloom are akin to rules in Datalog or views in SQL.  They consist
-of declarative relational expressions that define the contents of derived
-collections.  However, they can be operationally interpreted as unordered bundles of instructions for ``accumulating'' data that are run to fixpoint.   The syntax is:\\ \noindent
+Bloom statements are declarative relational expressions that define the contents
+of derived collections.  They can be viewed operationally as unordered bundles
+of instructions for ``accumulating'' data that are run to fixpoint.  The syntax
+is:\\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
 $<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
 the operator are instances of (a subclass of) a Ruby class called
