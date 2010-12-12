@@ -214,7 +214,7 @@ visualizations more readable, any strongly connected component marked with both
 a circle and a $+/-$ edge is collapsed into an octagonal ``temporal cluster,''
 which can be viewed abstractly as a single, non-monotonic node in the
 dataflow. Any non-monotonic edge in the graph is a \emph{point of order}, as are
-all edges incident to a temporal cluster, including any self-edges.
+all edges incident to a temporal cluster, including their implicit self-edge.
 
 \subsection{Analysis}
 Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the
@@ -231,8 +231,8 @@ component in the previous graph.  \texttt{kvstate} and \texttt{prev} are
 collapsed into a red octagon because they are part of a strongly connected
 component in the graph with both negative and temporal edges.  Any data flowing
 from \texttt{kvput} to the sink must cross at least one non-monotonic point of
-order (at ingress to the octagon) and possible an arbitrary number of them (via
-the octagon's self-edge), and any path from \texttt{kvget} to the sink must join
+order (at ingress to the octagon) and possible an arbitrary number of them
+(traversing the dependency cycle collapsed into the octagon), and any path from \texttt{kvget} to the sink must join
 state potentially affected by non-monotonicity (because \texttt{kvstate} is used
 to derive \texttt{kvget\_response}).
 
