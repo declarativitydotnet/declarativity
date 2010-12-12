@@ -212,9 +212,11 @@ Requiring unification on temporal and location attributes enables the locally sy
 
 Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  \wrm{partitioning}
 
-\wrm{With asynchronous rules, every node begins an exponential number of phases in the size of their input.  When they receive new input, they forget about the current phase, and start a new phase exponential in the new total input size (old input size + new elements they got over the network).  When the exponential phase termintes without a new one killing it and taking over, the node halts.  When all nodes have halted (will happen eventually) we're done.  Takes a finite number of steps, but unbounded real time.  Can insert real time constraints to fix this}
+\wrm{With asynchronous rules, every node begins an exponential number of phases in the size of their input.  When they receive a new set of input that they haven't seen before, they forget about the current phase, and start a new phase exponential in the new total input size (old input size + new elements they got over the network).  When the exponential phase termintes without a new one killing it and taking over, the node halts.  When all nodes have halted, and no messages are in flight (will happen eventually) we're done.  Takes a finite number of steps.}
 
-With asynchronous rules we have an additional complication: messages may be delayed arbitrarily.  We run iterations of their algorithm, keeping track of which subsets of messages we've seen.  If in some iteration, we do not see a new subset, we have computed the ultimate model.  Since there are only finitely many possible subsets of messages, we will eventually see them all and eventually terminate.  Even though a stable model may be infinite, its ultimate model is always finitely computable. \wrm{bounded delay assumption... alternatively need to worry about failure}
+\wrm{It is the case that this process emulates some prefix of some stable model.  The concern as to why this may not produce an ultimate model is that we don't process things long enough.  Chomicki proves this ain't so.  Thus, the prefix computed corresponds to a stable model that repeats all of the periodicities (and any further asyncs happen henceforth deterministically).}
+
+\wrm{Either assume bounded message delay or admit failure in order to enforce real-time constraints.  We show how failure is modeled later...}
 
 We now prove that our model-theoretic and operational semantics are equivalent.
 
