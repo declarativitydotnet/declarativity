@@ -175,6 +175,33 @@ resolve to the local \texttt{kvput}. As described in
 Section~\ref{sec:modularity}, this is unambiguous because a module cannot insert
 into its own input or read from its own output interfaces.
 
+Figure~\ref{fig:kvs-budclass} combines ReplicatedKVS with a concrete implementation
+of MulticastProtocol and DeliveryProtocol.  The resulting class, a subclass of Bud, 
+may be instantiated and run in the background as shown in lines~\ref{line:instantiate} and~\ref{line:run}.
+
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+
+class RealizedReplicatedKVS < Bud
+  include ReplicatedKVS
+  include Multicast
+  include BestEffortDelivery
+end
+
+kvs = RealizedReplicatedKVS.new("localhost", 12345)  (*\label{line:instantiate}*)
+kvs.run_bg  (*\label{line:run}*)
+
+\end{lstlisting}
+\centering
+\vspace{-10pt}
+\caption{A fully specified key-value store class.}
+\label{fig:kvs-budclass}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
 \subsection{Predicate Dependency Graphs}
 \begin{figure}[t]
 \centering
