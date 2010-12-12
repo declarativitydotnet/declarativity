@@ -210,15 +210,20 @@ In other words, a fact, \dedalus{p(\(\bar{c}\), t)}, with some constant \dedalus
 
 Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable.
 
-Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  With asynchronous rules we have an additional complication: messages may be delayed arbitrarily.  We run iterations of their algorithm, keeping track of which subsets of messages we've seen.  If in some iteration, we do not see a new subset, we have computed the ultimate model.  Since there are only finitely many possible subsets of messages, we will eventually see them all and eventually terminate.  Even though a stabel model may be infinite, its ultimate model is always finitely computable. \wrm{bounded delay assumption... alternatively need to worry about failure}
+Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  \wrm{partitioning}
+
+\wrm{With asynchronous rules, every node begins an exponential number of phases in the size of their input.  When they receive new input, they forget about the current phase, and start a new phase exponential in the new total input size (old input size + new elements they got over the network).  When the exponential phase termintes without a new one killing it and taking over, the node halts.  When all nodes have halted (will happen eventually) we're done.  Takes a finite number of steps, but unbounded real time.  Can insert real time constraints to fix this}
+
+With asynchronous rules we have an additional complication: messages may be delayed arbitrarily.  We run iterations of their algorithm, keeping track of which subsets of messages we've seen.  If in some iteration, we do not see a new subset, we have computed the ultimate model.  Since there are only finitely many possible subsets of messages, we will eventually see them all and eventually terminate.  Even though a stable model may be infinite, its ultimate model is always finitely computable. \wrm{bounded delay assumption... alternatively need to worry about failure}
 
 We now prove that our model-theoretic and operational semantics are equivalent.
+
 
 \begin{lemma}
 Every ultimate model is computed by some execution of the operational formalism.
 \end{lemma}
 \begin{proof}
-Assume some ultimate model is not computed.  Consider the family of traces that yield that ultimate model.  
+Assume some ultimate model is not computed.  Consider the family of traces that yield that ultimate model.
 \end{proof}
 
 \subsection{Modeling Failure}
@@ -228,3 +233,5 @@ If we want \lang to model transient or permanent channel failure, we can add an 
 Modeling failure introduces a whole host of new ultimate models.
 
 If we give up the bounded delay assumption, then messages that exceed the delay bounds are declared lost.
+
+Except when explicitly mentioned, in the rest of the paper we will assume bounded delays---and thus no failures.
