@@ -43,10 +43,10 @@ must supply a unique request identifier (\texttt{reqid}) to differentiate tuples
 in the event of multiple concurrent requests.
 
 A module which uses a key-value store but is indifferent to the specifics of the
-implementation may simply mix in this protocol specification and postpone
-committing to a particular implementation until runtime. As we will see shortly,
-an implementation of the KVSProtocol is a collection of Bloom statements that
-read tuples from the protocol's input interfaces and send results to the output
+implementation may simply mixin the abstract protocol and postpone committing to
+a particular implementation until runtime. As we will see shortly, an
+implementation of the KVSProtocol is a collection of Bloom statements that read
+tuples from the protocol's input interfaces and send results to the output
 interface.
 
 \subsection{Single-Node Key-Value Store}
@@ -86,18 +86,18 @@ end
 \vspace{-2pt}
 \end{figure}
 
-Figure~\ref{fig:kvs-impl} contains a simple single-node implementation of the
-abstract key-value store protocol. Key-value pairs are stored in a persistent
-table called \texttt{kvstate} (line~\ref{line:kvs-state}). When a \texttt{kvput}
-tuple appears, its key-value pair is stored in \texttt{kvstate} at the
-immediately following timestep (line~\ref{line:kvs-put}).  If the given key
-already exists in \texttt{kvstate}, we want to replace the key's old value. This
-is done by joining \texttt{kvput} against the current version of
-\texttt{kvstate} (line~\ref{line:kvs-join}). If a matching tuple is found, the
-old key-value pair is removed from \texttt{kvstate} at the beginning of the next
-timestep (line~\ref{line:kvs-clean}). Note that we also insert the new key-value
-pair into \texttt{kvstate} in the next timestep (line~\ref{line:kvs-put});
-hence, an overwriting update is implemented as an atomic deletion and insertion.
+Figure~\ref{fig:kvs-impl} contains a single-node implementation of the abstract
+key-value store protocol. Key-value pairs are stored in a persistent table
+called \texttt{kvstate} (line~\ref{line:kvs-state}). When a \texttt{kvput} tuple
+is received, its key-value pair is stored in \texttt{kvstate} at the immediately
+following timestep (line~\ref{line:kvs-put}).  If the given key already exists
+in \texttt{kvstate}, we want to replace the key's old value. This is done by
+joining \texttt{kvput} against the current version of \texttt{kvstate}
+(line~\ref{line:kvs-join}). If a matching tuple is found, the old key-value pair
+is removed from \texttt{kvstate} at the beginning of the next timestep
+(line~\ref{line:kvs-clean}). Note that we also insert the new key-value pair
+into \texttt{kvstate} in the next timestep (line~\ref{line:kvs-put}); hence, an
+overwriting update is implemented as an atomic deletion and insertion.
 
 \subsection{Replicated Key-Value Store}
 \label{sec:rep-kvs}
@@ -164,13 +164,13 @@ received by a peer replica
 \texttt{@local\_addr} is a Ruby instance variable defined by Bud that contains the
 network address of the current Bud instance.
 
-Note that the implementation of ReplicatedKVS wants to ``intercept''
-\texttt{kvput} events from clients, and only apply them to the underlying
-BasicKVS module when certain conditions are met. To achieve this, we
-``override'' the declaration of the \texttt{kvput} input interface
+Note that ReplicatedKVS wants to ``intercept'' \texttt{kvput} events from
+clients, and only apply them to the underlying BasicKVS module when certain
+conditions are met. To achieve this, we ``override'' the declaration of the
+\texttt{kvput} input interface
 (lines~\ref{line:rep-put-beg}--\ref{line:rep-put-end}). In ReplicatedKVS,
-references to \texttt{kvput} appearing in the lhs of rules are resolved to the
-\texttt{kvput} provided by BasicKVS, while references in the rhs of rules
+references to \texttt{kvput} appearing in the lhs of statements are resolved to the
+\texttt{kvput} provided by BasicKVS, while references in the rhs of statements
 resolve to the local \texttt{kvput}. As described in
 Section~\ref{sec:modularity}, this is unambiguous because a module cannot insert
 into its own input or read from its own output interfaces.
@@ -213,13 +213,13 @@ kvs.run_bg  (*\label{line:run}*)
 Now that we have introduced two concrete implementations of the abstract
 key-value store protocol, we turn to analyzing the properties of these
 programs. We begin by describing the graphical dataflow representation used by
-our analysis. In the next section, we discuss the dataflow graphs generated for
+our analysis. In the following section, we discuss the dataflow graphs generated for
 the two key-value store implementations.
 
 A Bloom program may be viewed as a dataflow graph with external input interfaces
 as sources, external output interfaces as sinks, collections as internal nodes,
 and rules as edges. This graph represents the dependencies between the
-collections in a program, and can be generated automatically by the Bud
+collections in a program and can be generated automatically by the Bud
 interpreter. Figure~\ref{fig:analysis-legend} contains a list of the different
 symbols and annotations in the graphical visualization; we provide a brief
 summary below.
@@ -228,13 +228,13 @@ Each node in the graph is either a collection or a cluster of collections;
 tables are shown as rectangles, ephemeral collections (scratch, periodic and
 channel) are depicted as ovals, and clusters (described below) as octagons. A
 directed edge from node $A$ to node $B$ indicates that $B$ appears in the lhs of
-a Bloom rule that references $A$ in the rhs, either directly or through a join
-expression. An edge is annotated based on the operator symbol in the rule. If
-the rule uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked
+a Bloom statement that references $A$ in the rhs, either directly or through a join
+expression. An edge is annotated based on the operator symbol in the statement. If
+the statement uses the \texttt{$<$+} or \texttt{$<$-} operators, the edge is marked
 with ``$+/-$''. This indicates that facts traversing the edge ``spend'' a
-timestep to move from the rhs to the lhs. Similarly, if the rule uses the
+timestep to move from the rhs to the lhs. Similarly, if the statement uses the
 \texttt{$<\sim$} operator, the edge is a dashed line---this indicates that facts
-from the rhs appear at the lhs at a non-deterministic future time. If the rule
+from the rhs appear at the lhs at a non-deterministic future time. If the statement
 involves a non-monotonic operation (aggregation, negation, or deletion via the \texttt{$<$-}
 operator), then the edge is marked with a white circle.  To make the
 visualizations more readable, any strongly connected component marked with both

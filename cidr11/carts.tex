@@ -11,11 +11,11 @@ a ``checkout'' request, which returns the final state of their cart.
 
 After presenting the abstract shopping cart protocol and a simple client
 program, we implement a ``destructive,'' state-modifying shopping cart service
-that uses the key-value store we developed in the Section~\ref{sec:kvs}. Second,
-we illustrate a ``disorderly'' cart that accumulates updates in a set-wise
-fashion, summarizing updates at checkout into a final result.  These two
-different designs illustrate our analysis tools and the way they inform design
-decisions for distributed programming.
+that uses the key-value store introduced in Section~\ref{sec:kvs}. Second, we
+illustrate a ``disorderly'' cart that accumulates updates in a set-wise fashion,
+summarizing updates at checkout into a final result.  These two different
+designs illustrate our analysis tools and the way they inform design decisions
+for distributed programming.
 
 \subsection{Shopping Cart Client}
 An abstract shopping cart protocol is presented in
@@ -422,20 +422,20 @@ action.  This is analogous to the desired behavior in practice~\cite{quicksand}.
 Strictly monotonic programs are rare in practice, so adding some amount of
 coordination is often required to ensure consistency. In this running example we
 studied two candidate implementations of a simple distributed application with
-the aid of our language and program analysis. Both programs have points of
-order, but the analysis tool helped us reason about their relative coordination
-costs.  Deciding that the disorderly approach is ``better'' required us to apply
-domain knowledge: checkout is a coarser-grained coordination point than cart
-actions and their replication.
+the aid of our program analysis. Both programs have points of order, but the
+analysis tool helped us reason about their relative coordination costs.
+Deciding that the disorderly approach is ``better'' required us to apply domain
+knowledge: checkout is a coarser-grained coordination point than cart actions
+and their replication.
 
 By providing the programmer with a set of abstractions that are predominantly
 order-independent, Bloom encourages a style of programming that minimizes
-coordination requirements. But as we see in the destructive cart program,
-it is nonetheless possible to use Bloom to write code in an imperative,
-order-sensitive style. Our analysis tools provide assistance in this regard.  Given a
-particular implementation with points of order, Bloom's static analysis can help
-a developer iteratively refine their program---either to ``push back'' the
-points to as late as possible in the dataflow, as we did in this example, or to
-``localize'' points of order by moving them to locations in the program's dataflow
-where the coordination can be implemented on individual nodes without
-communication.
+coordination requirements. But as we see in the destructive cart program, it is
+nonetheless possible to use Bloom to write code in an imperative,
+order-sensitive style. Our analysis tools provide assistance in this regard.
+Given a particular implementation with points of order, Bloom's dataflow
+analysis can help a developer iteratively refine their program---either to
+``push back'' the points to as late as possible in the dataflow, as we did in
+this example, or to ``localize'' points of order by moving them to locations in
+the program's dataflow where the coordination can be implemented on individual
+nodes without communication.
