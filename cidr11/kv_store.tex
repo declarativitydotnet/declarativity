@@ -118,7 +118,7 @@ module ReplicatedKVS
   def replicate
     send_mcast <= kvput.map do |k| (*\label{line:send-mcast-beg}*)
       unless members.include? [k.client]  (*\label{line:not-rep}*)
-        [k.reqid, [@addy, k.key, k.reqid, k.value]]   (*\label{line:marshall}*)            
+        [k.reqid, [@local_addr, k.key, k.reqid, k.value]]   (*\label{line:marshall}*)            
       end
     end (*\label{line:send-mcast-end}*)
   end
@@ -128,7 +128,7 @@ module ReplicatedKVS
     kvput <= mcast_done.map{|m| m.payload}  (*\label{line:mcast-done}*)
 
     kvput <= pipe_chan.map do |d| (*\label{line:mcast-peer-beg}*)
-      if d.payload.fetch(1) != @addy
+      if d.payload.fetch(1) != @local_addr
         d.payload
       end
     end (*\label{line:mcast-peer-end}*)
@@ -160,7 +160,9 @@ from another replica (line~\ref{line:not-rep}). We apply an update to our local
 \texttt{kvstate} table in two cases: (1) if a multicast succeeds at the node
 that originated it (line~\ref{line:mcast-done}) (2) whenever a multicast is
 received by a peer replica
-(lines~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).
+(lines~\ref{line:mcast-peer-beg}--\ref{line:mcast-peer-end}).  Note that
+\texttt{@local\_addr} is a Ruby instance variable defined by Bud that contains the
+network address of the current Bud instance.
 
 Note that the implementation of ReplicatedKVS wants to ``intercept''
 \texttt{kvput} events from clients, and only apply them to the underlying
