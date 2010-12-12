@@ -14,10 +14,12 @@ distributed programming.
 
 \subsection{Shopping Cart Client}
 An abstract shopping cart protocol is presented in
-Figure~\ref{fig:declarations}. Figure~\ref{fig:cart-client} contains a simple
+Figure~\ref{fig:cart-protocol}. Figure~\ref{fig:cart-client} contains a simple
 shopping cart client program: it takes input facts from a client
 (\texttt{client\_action} and \texttt{client\_checkout} requests) and sends them
-to the shopping cart service using the CartProtocol.
+to the shopping cart service using the CartProtocol. We assume that clients have
+some mechanism for choosing which server replica to send requests to (e.g.,
+based on load balancing).
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -47,7 +49,7 @@ end
 \end{lstlisting}
 \vspace{-10pt}
 \caption{Abstract shopping cart protocol.}
-\label{fig:declarations}
+\label{fig:cart-protocol}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
@@ -73,12 +75,12 @@ end
 \end{lstlisting}
 \vspace{-10pt}
 \caption{Shopping cart client implementation.}
-\label{fig:cart_client}
+\label{fig:cart-client}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
 
-\subsection{A ``destructive'' shopping cart}
+\subsection{``Destructive'' Shopping Cart Service}
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -143,29 +145,22 @@ Section~\ref{sec:kvs}. Our shopping cart service would work with any concrete
 realization of the KVSProtocol; we will choose to use the replicated key-value
 store (Section~\ref{sec:rep-kvs}) to provide fault-tolerance.
 
-\jmh{Some confusion here where you refer to lines of different figures without
-  clear context switches.  Please check and fix!}  Our discussion begins by
-returning to the CartClient code of Figure~\ref{fig:cart_client}.  In
-line~\ref{line:des_client_action} of that figure, the client transmits
-\texttt{client\_action} tuples that correspond to cart updates over the
-\texttt{action\_msg} channel to an individually chosen server replica.  We
-assume that the client has already chosen a server based on load balancing.  For
-each such arriving tuple, line~\ref{line:des_kvstate_check} checks
-\texttt{kvstate} to see if a record exists for the session associated with the
-\texttt{action\_msg}.  If none is there (i.e., this is the first update for a
-new session), then
+When client actions arrive from the CartClient, the cart service checks to see
+if there is a record in the key-value store associated with the client's
+session. If no record is found (i.e., this is the first operation for a new
+session), then
 lines~\ref{line:des_kvstate_gen_beg}--\ref{line:des_kvstate_gen_end} generate an
 entry for the new session in \texttt{kvstate}.  Otherwise, the join conditions
 in line~\ref{line:des_join_kvstate_action_msg} are satisfied and
 lines~\ref{line:des_replace_beg}--\ref{line:des_replace_end} ``replace'' the
-item array at the next timestep with a new version, via the built-in overwriting
-capability provided by the key-value store.  When a \texttt{checkout\_msg}
-appears at a server replica, the key-value store is queried to retrieve the cart
-state associated with the given session
-(lines~\ref{line:kvget-beg}--\ref{line:kvget-end}).
+value in the key-value store with an updated set of items for this session; this
+uses the built-in overwriting capability provided by the key-value store.  When
+a \texttt{checkout\_msg} appears at a server replica, the key-value store is
+queried to retrieve the cart state associated with the given session
+(lines~\ref{line:kvget-beg}--\ref{line:kvget-end}), and the results are returned
+to the client.
 
-
-\subsection{A ``disorderly'' shopping cart}
+\subsection{``Disorderly'' Shopping Cart Service}
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -361,10 +356,10 @@ A happier story emerges from our analysis of the disorderly implementation.
 Figure~\ref{fig:pdg-disorderly-base} shows a visualization of the basic
 disorderly cart whose implementation is presented in Figure~\ref{fig:dis-cart}.
 Its inputs and outputs are channels rather than interfaces, so the dataflow from
-source to sink is not completed.  Before we can install the program we must mix
-in code that connects input and output interfaces to \texttt{action\_msg},
-\texttt{checkout\_msg}, and \texttt{response\_msg}, as the CartClient (shown in
-Figure~\ref{fig:cart_client}) does.  Note that the disorderly cart has points of
+source to sink is not completed.  Before we can install the program we must
+mixin code that connects input and output interfaces to \texttt{action\_msg},
+\texttt{checkout\_msg}, and \texttt{response\_msg}, as the CartClient does
+(Figure~\ref{fig:cart-client}).  Note that the disorderly cart has points of
 order on all paths, but there are no cycles.
 
 Figure~\ref{fig:pdg-disorderly-analysis} shows the analysis for a complete implementation that mixes in 

@@ -135,8 +135,8 @@ module ReliableDelivery
 
   declare
   def recv_ack
-    got_ack = join [ack_chan, send_buf],
-                   [ack_chan.ident, send_buf.ident]
+    got_ack = join [ack_chan, send_buf], (*\label{line:ack_join_beg}*)
+                   [ack_chan.ident, send_buf.ident] (*\label{line:ack_join_end}*)
     pipe_out <= got_ack.map{|a, sb| sb}
     send_buf <- got_ack.map{|a, sb| sb}
   end
@@ -155,17 +155,18 @@ Bloom programs manage state using five collection types described in the top of
 Figure~\ref{tab:bloom}. A collection is defined with a relational-style schema
 of named columns, including an optional subset of those columns that forms a
 primary key. Line~\ref{line:send_buf_ddl} in Figure~\ref{fig:bloom-example}
-defines a collection named \texttt{send\_buf} with four columns
-\texttt{dst}, \texttt{src}, \texttt{ident}, and \texttt{payload}; the primary
-key is \texttt{(dst,~src,~ident)}. In Bud, the type system for columns is taken
-from Ruby, so it is possible to have a column based on any Ruby class the
-programmer cares to define or import (including nested Bud collections).  In
-Bud, a tuple in a Bloom collection is simply a Ruby array containing as many
-elements as the columns of the collection's schema.  As in other
-object-relational ADT schemes like Postgres~\cite{postgres-adt}, column values
-can be manipulated using their own (non-destructive) methods. Bloom also
-provides for nesting and unnesting of collections using standard Ruby constructs
-like \texttt{reduce} and \texttt{flat\_map}.
+defines a collection named \texttt{send\_buf} with four columns \texttt{dst},
+\texttt{src}, \texttt{ident}, and \texttt{payload}; the primary key is
+\texttt{(dst,~src,~ident)}. In Bud, the type system for columns is taken from
+Ruby, so it is possible to have a column based on any Ruby class the programmer
+cares to define or import (including nested Bud collections).  In Bud, a tuple
+in a collection is simply a Ruby array containing as many elements as the
+columns of the collection's schema.  As in other object-relational ADT schemes
+like Postgres~\cite{postgres-adt}, column values can be manipulated using their
+own (non-destructive) methods. Bloom also provides for nesting and unnesting of
+collections using standard Ruby constructs like \texttt{reduce} and
+\texttt{flat\_map}. Note that collections in Bloom implement set semantics
+(collections are duplicate-free).
 
 The persistence of a tuple is determined by the type of the collection that
 contains the tuple. \textbf{scratch} collections are handy for transient data
@@ -216,20 +217,20 @@ its rhs, or recursion can be defined mutually across statements.  The rhs
 typically includes methods of \texttt{BudCollection} objects.  Most common is
 the \texttt{map} method of Ruby's \texttt{Enumerable} module, which applies a
 scalar operation to every tuple in a collection; this can be used to implement
-relational selection and projection. For example,
-line~\ref{line:data_chan_proj} of
-Figure~\ref{fig:bloom-example} projects the \texttt{data\_chan} collection to
-its \texttt{src}, \texttt{dest}, and \texttt{ident} fields.
-\texttt{BudCollection} defines a \texttt{group} method similar to SQL's
+relational selection and projection. For example, line~\ref{line:data_chan_proj}
+of Figure~\ref{fig:bloom-example} projects the \texttt{data\_chan} collection to
+its \texttt{src}, \texttt{dest}, and \texttt{ident} fields.  Multiway equijoins
+are specified using the \texttt{join} method, which takes a list of input
+collections and an optional set of columns that specify the equijoin predicate.
+Lines~\ref{line:ack_join_beg}--\ref{line:ack_join_end} of
+Figure~\ref{fig:bloom-example} show a join between \texttt{ack\_chan} and
+\texttt{send\_buf}. Syntax sugar for natural joins and outer joins is also
+provided. \texttt{BudCollection} defines a \texttt{group} method similar to SQL's
 \texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
 lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
 Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid}
 values for every combination of values for \texttt{session}, \texttt{item} and
-\texttt{action}.  Multiway joins are specified using the \texttt{join} method,
-which produces an anonymous scratch collection that can be used in the
-rhs of a statement. Line~\ref{line:kvs-join} of
-Figure~\ref{fig:kvs-impl} shows a join between \texttt{kvstate} and
-\texttt{kvput}.
+\texttt{action}.
 
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
@@ -249,7 +250,9 @@ The constructs above form the core of the Bloom language.
 % ; database theory tells us that the combination of these constructs and an unbounded number of timesteps provides Turing-complete expressibility~\cite{Papadimitriou85}.  
 % \jmh{Actually no ... papadimitriou85 ``a note on the expressive power of prolog'' shows that Datalog neg with finite successor is exactly PTIME.  If we can't get the right ref for this assertion, just remove it.}
 % \wrm{Wow you guys are citation aces, I couldn't find this paper online.  Anyway, it's not turing complete if we view time as a stage/iteration variable -- i.e. FOL with "as much time as you need to compute" only gets us PSPACE.  However, if we view time as data (i.e. allow the infinite successor relation into the Herbrand universe), then we get turing completeness.}
-Bud also includes some additional convenience methods that provide macros over these methods, and admits the use of simple side-effect-free Ruby expressions within statements. 
+Bud also includes some additional convenience methods that provide macros over
+these methods and allows the use of simple side-effect-free Ruby expressions
+within statements.
 
 % TODO: work on this
 
