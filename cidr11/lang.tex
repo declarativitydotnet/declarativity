@@ -241,14 +241,14 @@ every combination of values for \texttt{session}, \texttt{item} and
 
  % The constructor of the \texttt{Join} subclass is parameterized by the relevant properties of a join: a list of two or more input relations, and an optional set of predicates to filter the results.  
 
-Programmers declare Bloom statements within method definitions that are flagged
-with the \texttt{declare} keyword (e.g., line~\ref{line:send_packet_declare} of
+Bloom statements are specified within method definitions that are flagged with
+the \texttt{declare} keyword (e.g., line~\ref{line:send_packet_declare} of
 Figure~\ref{fig:bloom-example}). The semantics of a Bloom program are defined by
 the union of its \texttt{declare} methods; the order of statements is
 immaterial. Dividing statements into multiple methods improves the readability
-of the program. It also allows the use of Ruby's method overriding and
-inheritance features: because a Bloom class is just a stylized Ruby class,
-any of the methods in a Bloom class can be overridden by a sub-class.
+of the program and also allows the use of Ruby's method overriding and
+inheritance features: because a Bloom class is just a stylized Ruby class, any
+of the methods in a Bloom class can be overridden by a sub-class.
 
 %; the use of multiple methods is important only inasmuch as it interacts with Ruby's object-oriented features, as we describe next.
 
@@ -292,7 +292,7 @@ code a programmer needs to read to understand the behavior of a module.
 A Bloom module is a bundle of collections and rules. Like modules in Ruby, a
 Bloom module can ``mix-in'' one or more other modules via the \texttt{include}
 statement; mixing-in a module imports its collections and rules. A common
-pattern is to specify an abstract interface in one module, and then use the
+pattern is to specify an abstract interface in one module and then use the
 mixin feature to specify several concrete realizations in separate modules. To
 support this idiom, Bloom provides a special type of collection called an
 \textbf{interface}. An input interface defines a place where a module accepts
