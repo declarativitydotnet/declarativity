@@ -183,8 +183,9 @@ Note that facts in simply persistent relations cannot be retracted once they are
 (insofar as their compliment can be asserted), and if they become true remain so.
 
 \begin{definition}
-A fact defined with even depth of negation over a monotonic property is also a monotonic property. \wrm{think this is better said as ``all paths through the PDG contain an even depth to the monotonic property''}
-\paa{hm, but a PDG is syntactic and we are defining these things in terms of derivations and facts} \wrm{oh right.  i was just trying to get accross ``all paths to EDB need to be even'' rather than ``only one path to EDB needs to be even'' which is incorrect, and it kind of sounds like this now to me.  maybe ``derivation tree'' or something?}
+A fact defined with even depth of negation over a monotonic property in all derivations is also a monotonic property. 
+%\wrm{think this is better said as ``all paths through the PDG contain an even depth to the monotonic property''}
+%\paa{hm, but a PDG is syntactic and we are defining these things in terms of derivations and %facts} \wrm{oh right.  i was just trying to get accross ``all paths to EDB need to be even'' rather %%than ``only one path to EDB needs to be even'' which is incorrect, and it kind of sounds like %this now to me.  maybe ``derivation tree'' or something?}
 \end{definition}
 
 The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
@@ -237,6 +238,24 @@ If a monotonic property is true in any trace of a program, given an EDB, it is t
 \end{lemma}
 \begin{proof}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur).  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic.
+
+\paa{or alternatively:}
+We will prove by structural induction that if a montononic property is true in any stable
+model of a \lang program, it is true in all stable models.  Consider a montonic property
+$p$.  As a base case, $p$ may be an EDB fact, which clearly exists in all stable models.
+Otherwise $p$ has a derivation $d$ leading to EDB facts.  If none of the inference 
+steps in $d$ is an {\em async} rule, there is only one stable model of the program and
+the lemma trivially holds.  If there are {\em async} rules, their target predicates are guarded,
+because otherwise those target predicates are not monotonic
+properties, and hence $p$, which depends on them, is not a monotonic property.  If there 
+is no negation in any inference step of $d$, then by Lemma~\ref{lem:guarding} the program
+is confluent, and hence facts in stable models of the program differ only in their timestamps.
+Finally, if there is negation in $d$, $p$ is defined with even depth of negation over some
+monotonic property or it would not itself be.  \paa{...hm, where do we go from here.  can
+we argue syntactically that all derivations of $p$ in any stable model would be of the same 
+depth of negation nesting??}
+
+\ref{lem:guarding}
 \end{proof}
 \paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
