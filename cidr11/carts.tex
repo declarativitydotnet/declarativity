@@ -377,7 +377,8 @@ CartClient does (Figure~\ref{fig:cart-client}).  Note that the disorderly cart
 has points of order on all paths but there are no cycles.
 
 Figure~\ref{fig:pdg-disorderly-analysis} shows the analysis for a complete
-implementation that mixes in both the client code and logic that replicates the
+implementation (presented in Figure~\ref{fig:complete-dis-cart} in the appendix) 
+that mixes in both the client code and logic that replicates the
 \texttt{cart\_action} table via a best-effort multicast protocol.  Note that
 communication (via \texttt{action\_msg}) between client and server---and among
 server replicas---crosses no points of order, so all the communication related
