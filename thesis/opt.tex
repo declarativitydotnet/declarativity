@@ -13,18 +13,18 @@ declaratively expressed as a transitive closure over the rule/goal graph of an
 
 In this chapter we turn our attention to cost-based optimizations, which are
 commonly based on dynamic programming algorithms.  We begin in
-Section~\ref{ch:opt:sec:related} with a short review of literature on
+Chapter~\ref{ch:opt:sec:related} with a short review of literature on
 extensible query optimizers, with further details described in the two
-optimizations we discuss.  Section~\ref{ch:opt:sec:systemr} describes a dynamic
+optimizations we discuss.  Chapter~\ref{ch:opt:sec:systemr} describes a dynamic
 programming optimizer stage akin to that of System R.  In
-Section~\ref{ch:opt:sec:cascades}, we present a declarative version of the
+Chapter~\ref{ch:opt:sec:cascades}, we present a declarative version of the
 Cascades branch-and-bound optimizer, which is structured around a dynamic
 programming algorithm called ``memoization.'' Based on our experience, we
 believe that declarative metacompilation is a clean, architecturally
 parsimonious way to build the next generation of extensible query optimizers
 for a wide variety of emerging application domains, where the relevant
 optimizations are likely to evolve over time.  We conclude in
-Section~\ref{ch:opt:sec:summary} with some final thoughts and a summary of our
+Chapter~\ref{ch:opt:sec:summary} with some final thoughts and a summary of our
 overall experience with the Evita Raced work.
 
 \section{Related Work}
@@ -48,7 +48,7 @@ individual plan transformations to extensibility; the actual search algorithms
 or transformation orderings of EXODUS, Volcano, Cascades, and the Starburst
 cost-based optimizer were confined to procedural code.  By contrast, Evita
 Raced does not embed a search algorithm, instead leaving that open to
-specification as needed.  As we show in Section~\ref{ch:opt:sec:systemr}, both
+specification as needed.  As we show in Chapter~\ref{ch:opt:sec:systemr}, both
 the System R bottom-up strategy and the Cascades top-down strategy naturally
 fit to a Datalog-based rule language.
 
@@ -81,20 +81,20 @@ thereby accessible in the \OVERLOG language.
 \begin{boxedminipage}{\linewidth}
   {\bf def} \ol{optimize}($PREDS$)
     \begin{algorithmic}[1]
-	\STATE Let $AM = \emptyset$ be a set of access methods to single relations
+	\STATE Let $AM = \emptyset$ be a set of single table access method plans
   	\FORALL{relations $r \in PREDS$}
-		\STATE $AM$ = $AM \bigcup$ all access methods on $r$
+		\STATE $AM$ = $AM \bigcup$ access methods on $r$
   	\ENDFOR
 	\STATE
 	\STATE $GRP_{AM}$ = GroupBy(f\_equivalent, $AM$)
-	\STATE $GRP_{AM}$ = $GRP_{AM} - $ uninteresting ordered groups $\in GP_{AM}$
-	\STATE $bestplan[1]$ = ArgMin(f\_cost, $GRP_{AM}$)
+	\STATE $GRP_{AM}$ = $GRP_{AM}\ -\ $ \{uninteresting ordered, suboptimal groups $\in GRP_{AM}$\}
+	\STATE $bestplan[1]$ = ArgMin(f\_cost, $GRP_{AM}$) /* best plans of size 1, from each group */
 	\STATE $BP$ = \ol{search}($bestplan$, $PREDS$, f\_sizeof($PREDS$)) 
-	\STATE $bp$ = ArgMin(f\_cost, $BP$) // best overall plan
+	\STATE $bp$ = ArgMin(f\_cost, $BP$) /* best overall plan */
 	\STATE
 	\IF{query contains a \ol{group by} or \ol{order by} clause}
 		\STATE $bop$ = best ordered plan relative to the clause attributes
-		\RETURN Min(f\_sort?($bp$), f\_sort?($bop$))
+		\RETURN Min(f\_sort?($bp$), f\_sort?($bop$)) /* Note: ignores hash grouping plans */
 	\ELSE
 	 	\RETURN $bp$
 	\ENDIF
@@ -105,8 +105,9 @@ thereby accessible in the \OVERLOG language.
   /* Returns a set containing the best size $k$ plans. */ \\
   {\bf def} \ol{search}($bestplan$, $PREDS$, $k$)
     \begin{algorithmic}[1]
-  	\IF{$plans[k] = \emptyset$}
-	\STATE $BP_{k-1}$ = \ol{bestplan}($bestplan$, $PREDS$, $k-1$)
+  	\IF{$bestplan[k] = \emptyset$}
+	\STATE /* Get the set of size~$k-1$ best plans. */
+	\STATE $BP_{k-1}$ = \ol{search}($bestplan$, $PREDS$, $k-1$)
 	\STATE Let $P_{k} = \emptyset$ be a set of size $k$ plans
 	\FORALL{plans $bp \in BP_{k-1}$} 
 		\FORALL{predicates $p \in PREDS$}
@@ -116,65 +117,76 @@ thereby accessible in the \OVERLOG language.
 		\ENDFOR
 	\ENDFOR
 	\STATE
+	\STATE /* Group by {\em equivalent} plan, and retain optimal and interesting ordered plans. */
 	\STATE $GRP_{k}$ = GroupBy(f\_equivalent, $P_{k}$)
-	\STATE $GRP_{k}$ = $GRP_{k} - $ uninteresting ordered groups $\in GP_{k}$
-	\STATE $plan[k]$ = ArgMin(f\_cost, $GRP_{k}$)
+	\STATE $GRP_{k}$ = $GRP_{k}\ -\ $ \{uninteresting ordered, suboptimal groups $\in GRP_{k}$\}
+	\STATE
+	\STATE /* The set of size $k$ best plans from each group in $GRP_k$ */
+	\STATE $bestplan[k]$ = ArgMin(f\_cost, $GRP_{k}$) 
 	\ENDIF
-	\RETURN $plans[k]$ // best plans of size $k$
+	\RETURN $bestplan[k]$ /* The set of size $k$ best plans */
       \end{algorithmic}
     {\bf end}
 \end{boxedminipage}
-\caption{\label{ch:opt:fig:systemr}Sketch of the System R optimizer algorithm.}
+\caption{\label{ch:opt:fig:systemr}
+Sketch of the System R optimizer algorithm.  The \ol{optimize} procedure is called
+with all predicates mentioned in the query ($PREDS$), while the \ol{search} procedure 
+enumerates the plan space (bottom-up). Each enumeration step generates plans 
+size $k~\in~[1, \ldots, |PREDS|]$, and stores the set of optimal plans in the
+$bestplan$ array.
+}
 \end{figure*}
 
-Our focus in this section is on the basic dynamic programming algorithm for the
-state-space enumeration at the heart of the System R optimizer.  A sketch of
-the System R search strategy is given in Figure~\ref{ch:opt:fig:systemr}, which
-finds the optimal plan for a query consisting of a set of predicates (called
-$PREDS$).  We focus here on the search strategy, which enumerates query plans for
-increasingly-large subgoals of the query optimizer.  It fills in a dynamic
-programming table (i.e., $bestplan$ array) with the best plans that cover a given
-number of (relational algebra) predicates that appear in the query.  The
-dynamic programming task is to fill in this table with the
-lowest-estimated-cost query plan among all plans producing an {\em equivalent}
-output relation (i.e., plans composed of the same predicates), and among the
-plans that produce an ``interesting order.'' If the plan produces tuples in an
-order that is relevant to a later join condition, or an ``group/order by''
-clause, then it is considered to be an {\em interesting order}~\cite{selinger}.
+We focus on the basic dynamic programming algorithm for the state-space
+enumeration at the heart of the System R optimizer.  A sketch of the System R
+dynamic program is given in Figure~\ref{ch:opt:fig:systemr}, which searches for
+an optimal plan from a set of query predicates ($PREDS$).  We focus here on the
+search strategy, which enumerates query plans for increasingly-large subgoals
+of the query.  It fills in a dynamic programming table (i.e., $bestplan$ array)
+with the best plans that cover a given number of (relational algebra)
+predicates.  Each entry in this table contains the set of lowest-estimated-cost
+query plans among all plans producing an {\em equivalent} output relation
+(i.e., plans composed of the same predicates), and among the plans that produce
+an ``interesting order.'' If the plan produces tuples in an order that is
+relevant to a later join condition, or an ``group/order by'' clause, then it is
+considered to be an {\em interesting order}~\cite{selinger}.
 
 The \ol{optimize} procedure in Figure~\ref{ch:opt:fig:systemr} takes the set of
-predicates mentioned in the query.  For plans of size $1$, we find the optimal
-access methods to any relations mentioned in the query.  Note that in P2 the
-initial plan (of size one) is the event predicate assigned to the rule by the
-delta rewrite (Chapter~\ref{ch:evita:sec:delta}).  The event predicate is used
-to initialize the optimization, instead of the traditional approach shown here
-as table access methods.  The \ol{bestplan} procedure captures the essence of
-generating {\emph plans} of size $k$, and pruning away those plans that are not
-optimal, nor interesting.  The \ol{optimize} procedure makes the ``top-level''
-call, requesting the best plans containing all predicates in the query.  The
-return value contains the set of overall best plans; among each interesting
-ordered and unordered plans.  If the query contains a \ol{group by} or
-\ol{order by} clause, then we may require sorting depending on the best plan
-order.  Moreover, the ideal interesting ordered plan may reduce the cost of, or
-even eliminate, this final sort.  In the absence of any ordering constraints,
-we simply return the overall optimal plan, regardless of order.
+predicates mentioned in the query, and returns an optimal plan to the query.
+The search begins with plans of size $1$, which consists of the access methods
+to any relations mentioned in the query.  Note that in P2 the initial plan (of
+size $1$) is the event predicate, which is assigned to the rule by the delta
+rewrite (Chapter~\ref{ch:evita:sec:delta}).  The event predicate is used to
+initialize our optimization described in Chapter~\ref{ch:opt:sec:plangen},
+instead of the traditional approach; shown here as the optimal table access
+methods.  The \ol{search} procedure captures the essence of generating {\em
+plans} of size $k$, and pruning away those {\em plans} that are not optimal,
+nor interesting.  The \ol{optimize} procedure makes the ``top-level'' call to
+\ol{search}, requesting the best plans that cover all predicates in the query.
+The \ol{search} returns a reference to this set of ``top-level'' optimal plans,
+including those with interesting orders.  If the query contains a \ol{group by}
+or \ol{order by} clause, then we may require a further grouping operation
+(e.g., sort) --- the cost of which depends on the order of the chosen optimal
+plan.  In the absence of any ordering constraints, we simply return the overall
+lowest-estimated-cost plan.
 
 In the System R optimizer, the {\em principle of optimality} is assumed to
 hold: the lowest-cost solution to some plan is constructed from the optimal
-solutions to subplans.  Thus dynamic programming can conveniently proceed in a
-``bottom-up'' fashion.  For a given rule, the optimizer generates plans of size
-$k$ terms by appending a single (unused) term from the rule body to an optimal
-plan of size $k-1$ terms, as shown in the first loop of \ol{bestplan} in
-Figure~\ref{ch:opt:fig:systemr}.  There are a few additional details that we
+solutions to subplans.  Thus dynamic programming can proceed in a ``bottom-up''
+fashion.  For a given set of predicates ($PREDS$), the optimizer generates
+plans of size $k$ terms by appending a single (unused) term from $PREDS$ to an
+optimal plan of size $k-1$ terms, as shown in the loop of \ol{search} procedure
+in Figure~\ref{ch:opt:fig:systemr}.  There are a few additional details that we
 have chosen to gloss over in the pseudocode.  For instance, avoid combining a
 k-way plan with a 1-way plan if there is no join condition between them, unless
 all other predicates with join conditions have been used (i.e., postpone
 Cartesian products).  We handle this case in our \OVERLOG rules by ensuring the
-cost of such an option is greater than any other option that has joining
-variables.  Also, in the context of a P2 program, each rule's event predicate
-is the ``outermost'' streaming relation in a query plan for the rule.  The
-event predicate effectively represents the access method in our declarative
-System R rules.
+cost of a ``cross-product'' plan is greater than any other plan with joining
+attributes.  
+%Also, in the context of a P2 program, each rule's event predicate
+%is the ``outermost'' streaming relation in a query plan for the rule.  The
+%event predicate effectively represents the access method in our declarative
+%System R rules.
 
 We now turn to describe the \OVERLOG rules for plan generation and conclude
 with the rules for best plan selection.  Our declarative optimizer adds two new
@@ -185,12 +197,11 @@ identifier, which the \ol{bestPlan} table uses to reference optimal plans.  For
 a given rule body term, the $Planner$ stage generates a physical dataflow plan
 based on the position and join method assigned in the relevant term relation
 (i.e., \ol{sys::predicate}, \ol{sys::assign} and \ol{sys::select}).
-
-Section~\ref{ch:opt:sec:plangen} presents our System R rules for generating
+Chapter~\ref{ch:opt:sec:plangen} presents our System R rules for generating
 plans (\ol{plan} tuples) from the predicates in the rule body.  Our rules for
-selecting a best plan are discussed in Section~\ref{ch:opt:sec:bestplan}, which
+selecting a best plan are described in Chapter~\ref{ch:opt:sec:bestplan}, which
 also includes a description of how we estimate selectivities.  We then conclude
-with our termination rules in Section~\ref{ch:opt:sec:termination}.
+with our termination rules in Chapter~\ref{ch:opt:sec:termination}.
 
 \subsection{Plan Generation}
 \label{ch:opt:sec:plangen}
@@ -211,17 +222,15 @@ sr1 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
 \caption{\label{ch:opt:fig:planseed}Plan seed rule.}
 \end{figure*}
 
-Figure~\ref{ch:opt:fig:systemr} presents the System R algorithm for plan
-generation in two phases.  The first phase generates all access methods, for all
-relations mentioned in the query (e.g., in the ``from'' clause).  Subsequent to
-that, the second phase enumerates all possible join orders and methods.  Recall
-from Section~\ref{ch:evita:sec:delta} that P2 converts a rule into an
-event-condition-action (ECA) form, where the event predicate represents a
-stream of tuples from the table reference.  As a consequence of this dataflow
-design, our first phase simply generates a plan that listens for such event
-tuples.  The reader can assume the delta rewrite stage executes before the
-System R optimizer stage, and that the delta predicate is in the first rule
-position.  
+Figure~\ref{ch:opt:fig:systemr} describes the System R algorithm in two phases;
+access method plan generation and plan enumeration for increasingly large
+subgoals.  Recall from Chapter~\ref{ch:evita:sec:delta} that P2 converts a rule
+into an event-condition-action (ECA) form, where the event predicate represents
+a stream of tuples representing side-affect actions (i.e., insert and delete)
+to the reference table.  As a consequence of this dataflow design, our first
+phase simply generates a plan that listens for such event tuples.  The reader
+can assume the delta rewrite stage executes before the System R optimizer
+stage, and that the delta predicate is in the first rule position.
 
 Figure~\ref{ch:opt:fig:planseed} contains the single rule that creates an
 initial plan, from each rule in the program, using the delta predicate.  A
@@ -231,16 +240,17 @@ attribute (i.e., the number of leaves in the plan tree).  The optimizer listens
 on the \ol{systemr::programEvent} event stream in rule \ol{sr1}, which
 initiates the optimization process.  The \ol{systemr::programEvent} tuple is
 joined with the \ol{sys::rule} table along the $Pid$ (program identifier)
-attribute to obtain the set of rules defined in the input program.  The result
+attribute to obtain the set of rules defined in the input program.  This result
 set of rule tuples are joined with the \ol{sys::predicate} table along the
 $Rid$ (rule identifier) attribute; producing a tuple for each predicate term
 defined by a given rule.  The predicate term assigned to position~$1$ ($Pos ==
-1$) is by convention the event predicate term.  For each \ol{sys::predicate}
-tuple, that references an event predicate, a \ol{plan} of ``size~$1$'' is
-derived by rule~\ol{sr1}.  We further note, the $Group$ attribute represents
-the initial list of terms (i.e., $PredID$), and the $PlanID$ contains the plan
-definition.  As plan generation proceeds, we append new values to the $Group$
-and $PlanID$ lists.
+1$) is by convention the event predicate term.  The result of this rule is used
+to create a \ol{plan} of ``size~$1$'' for each rule in the input program.  We
+further note, the $Group$ attribute represents the initial list of terms (i.e.,
+$PredID$), and the $PlanID$ contains the plan definition.  As plan enumeration
+proceeds, we append new subgoal terms to the $Group$ attribute and physical
+operators (e.g., join) to the $PlanID$ attribute that consider an existing
+``outer'' plan and the ``inner'' subgoal that was added to $Group$.
 
 The \OVERLOG optimizer defines a set of plan generation rules that together
 perform the induction step of the dynamic program.  These rules extend a best
@@ -269,37 +279,43 @@ sr2 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
     Group  := f_cons(PredID, OGroup),
     Schema := f_joinSchema(OSchema, PSchema),
     Sort   := OSort,
-    Card   := OCard * TCard / 10,
-    Cost   := OCost + (OCard * TCard).
+    Card   := f_nlj_card(OCard, OSchema, TCard, PSchema),
+    Cost   := f_nlj_cost(OCost, OSchema, TCard, PSchema).
 \end{lstlisting}
 \caption{\label{ch:opt:fig:plangen1}nested-loop join method.}
 \end{figure*}
 
-Any table predicate appearing in a rule body is given a nested-loop join plan,
-derived by rule~\ol{sr2} in Figure~\ref{ch:opt:fig:plangen1}.  The rule is
-triggered on an update to the \ol{bestPlan} relation (described in
-Section~\ref{ch:opt:fig:bestplan}), which contains the plan identifier
-($PlanID$) used to select the reference (optimal) subplan in the \ol{plan}
-relation.  Each ``outer'' \ol{plan} tuple contains a list ($OGroup$) of the
-predicate identifiers that already appear in it.  This list is used to prune
-\ol{sys::predicate} tuples that already participate in the subplan.
+All materialized table predicates appearing in the rule body are considered when
+creating a nested-loop join plan, which is derived by rule~\ol{sr2} in
+Figure~\ref{ch:opt:fig:plangen1}.  Rule~\ol{sr2} is evaluated on an update to the
+\ol{bestPlan} relation (described in Chapter~\ref{ch:opt:fig:bestplan}), which
+contains the plan identifier ($PlanID$) used to select the reference (optimal)
+subplan in the \ol{plan} relation.  The result of joining \ol{bestPlan} with 
+the \ol{plan} table gives us the outer plan of the nested-loop join method.
 
-The next step is to extend the \ol{plan} tuple with a ``new'' table predicate,
-which is done by joining with the \ol{sys::predicate} relation along the same
-rule identifier ($Rid$).  The result of this join operation produces all
-predicates mentioned in the rule.  To get cardinality information we join with
-the \ol{sys::table} predicate.  The selection predicate $PredPos > 1$ ensures
-that we do not consider the rule head predicate (the zeroth term by convention)
-or the delta predicate (the first term position).  The function $f\_contains$
-tests for containment of the predicate in the subplan (outer plan).  The tuples
-that meet the constraints imposed thus far, represent new table predicates that
-can be used to extend the optimal plan.  These new \ol{plan} tuple deductions
-contain the desired join method (``nested-loop'') referenced by the $PlanID$
-variable, an associated cost (based on example cardinality estimates), a
-new predicate list (see $Group$ variable), and a new schema (see $Schema$
-variable).  Finally, the order that the results of this plan exhibit is
-identical to the order of the outer plan, which is referenced by the $OSort$
-variable.
+We extend the outer \ol{plan} with an inner table predicate by first joining
+with the \ol{sys::predicate} relation along the same rule identifier ($Rid$).
+The selection predicate $PredPos > 1$ ensures that we do not consider the rule
+head predicate (the zeroth term by convention) or the delta predicate (the
+first term position).  The outer plan tuple contains a list ($OGroup$) of the
+term identifiers that already appear in it.  This list is used to prune results
+that reference inner table predicates already appearing in the outer plan.
+This test happens in the $f\_contains$ function, which checks for inner table
+predicate membership in the outer plan term list.
+
+The tuples that meet the constraints imposed by rule~\ol{sr2} represent plans
+that extend the optimal outer plan with a new inner relation.  We add
+cardinality estimates for the inner relation using the \ol{sys::table}
+predicate, and selecting the row that pertains to the inner relation.  We
+assign each plan a nested-loop join method, which is referenced by the $PlanID$
+variable.  Also included here is the plan cost, an extended predicate list (see
+$Group$ variable), and a new schema (see $Schema$ variable).  The functions
+$f\_nlj\_cost$ and $f\_nlj\_card$ consider existing cost and cardinality
+estimates, as well as the join input schemas.  If the input schemas force a
+cross-product plan, then $f\_nlj\_cost$ assigns an infinite cost, which
+postpones this plan relative to other plans that contain joining attributes.
+Finally, the result order that this plan produces is identical to the order of
+the outer plan, which is referenced by the $OSort$ variable.
 
 \begin{figure*}
 \ssp
@@ -327,16 +343,16 @@ An index-nested-loop join plan is generated by rule \ol{sr3} in
 Figure~\ref{ch:opt:fig:plangen2}.  Like rule~\ol{sr2}, it joins the
 \ol{bestPlan}, \ol{plan}, \ol{sys::predicate}, and \ol{sys::table} predicates
 to get all table predicates and cardinality estimates for predicates that do
-not appear in the $OGroup$.  That result is subsequently joined with the
-(additional) \ol{sys::index} predicate, which adds index information to the
-result tuples.  The function {\em f\_indexMatch} tests if the index can be used
+not appear in the $OGroup$ term list.  That result is subsequently joined with
+the (additional) \ol{sys::index} predicate, which adds index information to the
+this result.  The function {\em f\_indexMatch} tests if the index can be used
 to perform the join using attributes from the outer plan schema ($OSchema$) and
 attributes from the inner predicate table ($PSchema$).  Any resulting tuples
 are assigned example cardinality and cost estimates, which now use the
 additional {\em index} selectivity information given by the $Selectivity$
-\ol{sys::index} predicate variable.  We also support range predicates in our
-index-nested-loop join plans but do not discuss them in detail as they are
-quite similar to the nested-loop cases above.
+variable defined by the \ol{sys::index} predicate.  We also support range
+predicates in our index-nested-loop join plans but do not discuss them in
+detail as they are quite similar to the nested-loop case above.
 
 \begin{figure*}
 \ssp
@@ -363,25 +379,26 @@ sr4 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
 
 Figure~\ref{ch:opt:fig:plangen3} shows the rule for generating a sort-merge
 join plan, which considers a best plan and a new table predicate joined along
-some sorting attribute.  The tuples from the outer plan and the inner table
-predicate can be ordered by the sorting attribute, or not.  We note that the
-$TSort$ attribute in the \ol{sys::table} table identifies the sorting attribute
-of the inner relation, while $OSort$ refers to the order of the outer tuples.
+some ordered attributes.  The tuples from the outer plan and the inner table
+predicate can be ordered by some attributes, or not.  We note that the $TSort$
+attribute in the \ol{sys::table} table identifies the ordered attributes of the
+inner relation, while $OSort$ refers to the order of the outer tuples.  
+
 The join method variable $JM$ is given a value that indicates the need to
 presort the inner relation, or not.  In our implementation of the sort-merge
 join operator, we decided not to sort the outer relation by first draining all
 of its tuples, sorting them, and then merging with the sorted inner
 relation.~\footnote{This would have added significant complexity to the P2
 dataflow architecture, which is optimized for tuple at a time processing.}
-Instead, each outer tuple is used in a binary search on the sorted inner
-relation, which returns any tuples that join along the relevant attributes.  If
-we know that the tuples from the outer result will be given in order, then we
-can optimize this binary search to be like a merge-join.~\footnote{We maintain
-a cursor state on the inner relation that tells us where the last join match
-occurred.} These costs are considered by the {\em f\_sortCost} function, which
-takes the assigned join method and the input cardinalities and returns a plan
-cost.  The output of a sort-join operation includes the join attribute in the
-$Sort$ variable.
+Instead, each outer tuple is used to perform a binary search on the sorted
+inner relation, which returns any tuples that join along the relevant
+attributes.  If we know that the tuples from the outer result will be given in
+order, then we can optimize this binary search to be like a
+merge-join.~\footnote{We maintain a cursor state on the inner relation that
+tells us where the last join match occurred.} These costs are considered by the
+{\em f\_sortCost} function, which takes the assigned join method and the input
+cardinalities and returns a plan cost.  The output of a sort-merge join plan
+includes the join attribute in the $Sort$ variable.
 
 \begin{figure*}
 \ssp
@@ -405,14 +422,14 @@ sr5 plan(@A, Pid, Rid, PlanID, Group, Sort, Schema, Card, Cost) :-
 
 Figure~\ref{ch:opt:fig:plangen4} contains a rule that creates a plan out of any
 selection predicates in the rule body.  A selection predicate plan is created
-when all variables mentioned in its boolean expression ($BoolExpr$) are bounded
+when all variables mentioned in its boolean expression ($BoolExpr$) are bound
 by the current outer plan schema ($OSchema$).  Applying a selection filter does
 not change the sorting attribute of the outer plan, nor does it effect its
-schema.  We assume the cost of a function is negligible, but could easily add a
-function that considers certain operational costs.  Furthermore, we use a
-generic cardinality estimation but could associate meta-data (e.g., attribute
-distributions and min/max values) with the \ol{plan} relation, or some other,
-that would allow a more palatable estimator.
+schema.  We assume the cost of a ``filter'' plan is negligible, but could
+easily add a function that considers certain operational costs.  Furthermore,
+we use a generic cardinality estimation here but could associate meta-data
+(e.g., attribute distributions and min/max values) with the \ol{plan} relation
+that would tune this estimator.
 
 \subsection{Best plan selection}
 \label{ch:opt:sec:bestplan}
@@ -466,14 +483,14 @@ interesting order.  Note the purpose of rule~\ol{sr6} is to ensure that an
 ordered plan, that is not ``interesting'' but is optimal, is considered.
 
 Rule~\ol{sr8} determines if a plan that is sorted on a given attribute is
-interesting.  This occurs in P2 when the plan is sorted along an attribute that
-participates in a later join or is a prefix of the grouping attributes.  The
+interesting.  This occurs in P2 when the plan is sorted along attributes that
+are relevant to a later join or are a prefix of the grouping attributes.  The
 body of this rule joins a \ol{plan} tuple with the \ol{predicate} table, twice,
 to get the head predicate and a body predicate that does not already exist in
 the plan.  The final selection predicate in this rule checks the necessary
-conditions, and if met the rule will deduce an \ol{interestingOrder} tuple for
-the given $PlanID$.  The remaining two rules (\ol{sr9} and \ol{sr10}) populate
-the \ol{bestPlan} table with the actual optimal plan information.
+conditions, and if met the rule will generate an \ol{interestingOrder} tuple
+for the given $PlanID$.  The remaining two rules (\ol{sr9} and \ol{sr10})
+populate the \ol{bestPlan} table with the actual optimal plan information.
 
 \subsubsection{Improving Selectivity Estimation}
 
@@ -546,31 +563,32 @@ stage name.
 \label{ch:opt:sec:cascades}
 
 The bottom-up, dynamic programming search strategy described in
-Section~\ref{ch:opt:sec:systemr} is a natural fit to a Datalog-based rule
+Chapter~\ref{ch:opt:sec:systemr} is a natural fit to a Datalog-based rule
 language.  One might think a top-down Cascades-style optimization
 strategy~\cite{cascades} would be difficult to implement since \OVERLOG, like
 Datalog, is evaluated in a bottom-up fashion.  This is partially true but still
-relatively painless.  Since the System R search strategy conforms to the
-\OVERLOG evaluation strategy, we did not write explicit rules for traversing
-through its plan space.  That is, the System R search strategy was implicitly
-implemented by the \OVERLOG bottom-up evaluation.  A top-down search strategy,
-on the other hand, requires extra logic to guide the search through the plan
-space in a top-down order.  The logic of a top-down search strategy follows a
-dynamic programming technique called memoization, which turns out to be just as
-natural and intuitive in \OVERLOG, and hence easily implemented in Evita Raced.
+relatively straightforward.  Since the System R search strategy conforms to the
+\OVERLOG evaluation strategy, we did not need to write explicit rules for
+traversing through the plan space.  That is, the System R search strategy was
+implicitly implemented by the \OVERLOG bottom-up evaluation.  A top-down search
+strategy, on the other hand, requires extra logic to guide the search through
+the plan space in a top-down order.  The logic of a top-down search strategy
+follows a dynamic programming technique called memoization, which turns out to
+be just as natural and intuitive in \OVERLOG, and hence easily implemented in
+Evita Raced.
 
-In this section, we describe our implementation of the Cascades
-branch-and-bound algorithm expressed in \OVERLOG.  We begin in
-Section~\ref{ch:opt:sec:overview} with a short description of the Cascades
-branch-and-bound algorithm.  This is followed by a detailed description of our
-declarative rules that we install into Evita Raced.  Our rules are divided
-into three modules: search strategy
-(Section~\ref{ch:opt:sec:cascades_search}), plan generation
-(Section~\ref{ch:opt:sec:cascades_plan}) and winner selection
-(Section~\ref{ch:opt:sec:cascades_winner}).  The rules for plan generation and
+We present our implementation of the Cascades branch-and-bound algorithm
+expressed in \OVERLOG.  Chapter~\ref{ch:opt:sec:overview} provides a short
+description of the Cascades branch-and-bound algorithm.  This follows with a
+detailed description of our declarative rules that express the algorithm and
+install into the Evita Raced framework.  Our rules are divided into three
+modules: search strategy (Chapter~\ref{ch:opt:sec:cascades_search}), plan
+generation (Chapter~\ref{ch:opt:sec:cascades_plan}) and winner selection
+(Chapter~\ref{ch:opt:sec:cascades_winner}).  The rules for plan generation and
 winner selection may remind the reader of the plan generation and best plan
-rules in the previous System R discussion.  However, the rules for search strategy
-are unique to this optimizer, and will be the focus our attention.
+rules in the previous System R discussion.  However, the rules for search
+strategy are unique to this optimization stage, and will be the focus our
+attention.
 
 \subsection{Overview}
 \label{ch:opt:sec:overview}
@@ -578,30 +596,34 @@ are unique to this optimizer, and will be the focus our attention.
 Our description of the Cascades optimizer follows the notation of Shapiro, et
 al.~\cite{Shapiro-opt}.  Cascades' plans are classified into {\em groups},
 which is an equivalence class of expressions (i.e., predicates) that produce
-the same result.  During the optimization, each group (e.g., [ABC]) represents
-a container that references physical plans (e.g., \{[AB] sort-merge-join
-[C]\}, \{[B] nested-loop-join [AC]\}, \ldots) over subexpressions in that
-group.  In order to keep the search space small, a group only references
-top-level plans through {\emph multiexpressions}, which are expressions whose
-operator takes other groups as input. For example, the multiexpression \{[AB]
-sort-merge-join [C]\}, takes groups [AB] and [C] as input, instead of the,
-possibly many, individual plans for these groups.  
-
-Associated with each group is a {\emph winner's circle}, which identifies the
+the same result.  During the optimization, each group (e.g., [ABC] consisting
+of table predicates A, B, and C) represents a container to physical plans
+(e.g., \{[AB]~\ol{sort-merge-join}~[C]\}, \{[B]~\ol{nested-loop-join}~[AC]\},
+\ldots) over subexpressions in that group.  In order to keep the search space
+small, a group only references top-level physical plans through {\em
+multiexpressions}, which are plan expressions that restrict the input of
+operators to subgroups.  For example, group [ABC] references the
+multiexpression \{[AB]~\ol{sort-merge-join}~[C]\}, whose \ol{sort-merge-join}
+operator takes groups [AB] and [C] as input, instead of the (possibly many)
+individual plans within these subgroups.
+Associated with each group is a {\em winner's circle}, which identifies the
 optimal plan within a given group, and will be the plan chosen to represent the
-group, referenced by top-level multiexpressions.  In the discussion that follows,
-when we indicate a {\emph plan} we mean a multiexpression within a group.
+group, referenced by top-level multiexpressions.  
 
-At a high level, the branch-and-bound algorithm that drives the Cascades
+At a high-level, the branch-and-bound algorithm that drives the Cascades
 optimizer performs the following actions.  The search strategy generates groups
 in a top-down order, and within each group it performs a bottom-up search for
-the cheapest plan, which is called the {\em winner}.  An upper bound,
-initialized to $infinity$, is also assigned to each group.  This upper bound is
-updated as new (cheaper) plans for the given group are discovered.  A plan (and
-all of its subplans) is pruned if its cost exceeds the group upper bound.  The
-optimization terminates when a root group (containing all expressions in the
-query) has been fully explored, and a winner chosen.  We now ready to describe
-our declarative specification of the Cascades branch-and-bound optimization.
+the cheapest multiexpression, which is called the {\em winner}.  The top-down
+order follows a depth-first search over the space of multiexpressions, where a
+particular {\em branch} (multiexpression) is fully explored before considering
+another.  An upper bound, initialized to $\infty$, is assigned to each group.
+The upper bound is updated as new (cheaper) multiexpressions for the given
+group are discovered.  The group bound is carried down each branch of the
+depth-first search.  A multiexpression is pruned if its cost exceeds the group
+bound.  The optimization terminates when the root group (containing all
+expressions in the query) has been fully explored, and a winner chosen.  In the
+discussion that follows, when we indicate a {\em plan} we mean a
+multiexpression within a group.
 
 \subsection{Search strategy}
 \label{ch:opt:sec:cascades_search}
@@ -642,8 +664,8 @@ bb5 branch(@A, Rid, Group, Schema, Pos+1, Bound) :-
     Pos < f_sizeof(Group),
     Bound := Cost < OldBound ? Cost : OldBound.
 
-%* /* A branch for a specific group is complete when we receive an update to the  \\
-   \ol{plan} relation. */ *)
+%* /* A branch for a specific group is complete when we receive an update 
+      to the \ol{plan} relation. */ *)
 bp6 branchComplete(@A, Rid, Group, Pos, Cost) :-
     plan(@A, Rid, Group, Method, PlanID, InnerGroup, OuterGroup, 
           Card, Cost),
@@ -654,7 +676,7 @@ bp6 branchComplete(@A, Rid, Group, Pos, Cost) :-
 
 The optimization begins when the root group (e.g., [ABC]) is inserted into the
 \ol{group} table, and a \ol{branch} tuple is created to initiate a depth-first
-traversal over the plan space.  This is initiated by rule~\ol{bb1} of
+traversal over the plan space.  This is initiated by rule~\ol{bb1} in
 Figure~\ref{ch:opt:fig:cascades_top_down}, when the \ol{cascades::programEvent}
 tuple is received.  The rule subsequently aggregates lists of the predicate
 identifiers and predicate schemas, along each rule in the program.  The
@@ -662,23 +684,23 @@ predicate identifier list will represent the group identifier, containing all
 the predicates in the rule body.  Rule~\ol{bb2} is triggered when such an
 update occurs in the \ol{group} relation.  The rule creates a \ol{branch} tuple
 containing the group information, an initial branch position, and an initial
-bound ($\infty$) for this branch group.  Rules~\ol{bb3} and \ol{bb4} take
-action by creating new subgroups, the first excluding the predicate at the
-branch position $Pos$, and the second including only it.
+bound ($\infty$) for this group.  Rules~\ol{bb3} and \ol{bb4} create new
+subgroups, the first excluding the predicate at the branch position $Pos$, and
+the second including only it.
 
 The \ol{branch} tuples will trigger the generation of \ol{plan} tuples using
-the rules described in Section~\ref{ch:opt:sec:cascades_plan}.  Here, we must
+the rules described in Chapter~\ref{ch:opt:sec:cascades_plan}.  Here, we must
 ensure that we do not update the branch position until all plans for the
 current branch position are present.  We can detect this by simply waiting for
 an update to the \ol{plan} relation that is related to the current \ol{branch}
 group.  If even one \ol{plan} tuple for a given group exists in the \ol{plan}
-relation then all \ol{plan} tuples for that group are present.  This is
-because, in the next section, we will ``concurrently'' derive all the \ol{plan}
-tuples for a given group.  Until we get to those rules, assume that
-rule~\ol{bp6} creates a \ol{branchComplete} tuple when any \ol{plan} tuple that
-is derived for the given group.  This will prompt rule~\ol{bb5} to move the
-\ol{branch} tuple position forward by one, with a bound that considers the cost
-of the \ol{plan} tuple in the previous branch.
+relation then all \ol{plan} tuples for that group are present.  This is because
+we will ``concurrently'' derive all the \ol{plan} tuples for a given group ---
+described in Chapter~\ref{ch:opt:sec:cascades_plan}.  Until we get to those
+rules, assume that rule~\ol{bp6} creates a \ol{branchComplete} tuple when any
+\ol{plan} tuple that is derived for the given group.  This will prompt
+rule~\ol{bb5} to move the \ol{branch} tuple position forward by one, with a
+bound that considers the cost of the \ol{plan} tuple in the previous branch.
 
 \subsection{Plan Generation}
 \label{ch:opt:sec:cascades_plan}
@@ -721,25 +743,24 @@ bp8 plan(@A, Rid, Group, PlanID, OuterSort, OuterGroup, InnerGroup,
 predicates and nested-loop join method.}
 \end{figure*}
 
-In this section, we present our rules for generating \ol{plan} tuples for the
-group indicated by a \ol{branch} tuple.  In this discussion, a \ol{plan} tuple
-is related a multiexpression, described in Section~\ref{ch:opt:sec:overview}.
-Figure~\ref{ch:opt:fig:cascades_plan1} presents our first group of rules the
-derive \ol{plan} tuples.  Rule~\ol{bp7} handles the case of a single predicate
-identifier in the $Group$ attribute.  The plan in this case consists of the
-single streaming delta predicate, with appropriate cardinality and cost values.
-This delta plan is assigned the single predicate group as the outer group, and
-$null$ as its inner group.
+We now present our rules for generating \ol{plan} tuples related to the group
+referenced by the \ol{branch} tuple.  Figure~\ref{ch:opt:fig:cascades_plan1}
+presents our first set of rules that derive \ol{plan} tuples for a given group.
+Rule~\ol{bp7} handles the case when a single predicate identifier is referenced
+by the $Group$ attribute.  The plan for this case is a streaming delta
+predicate, which is placed in the first position of the rule body.  This delta
+plan is assigned the single predicate group as the outer group, and a $null$
+value for the inner group.
 
 Rule~\ol{bp8} is the our first rule that generates a \ol{plan} tuple involving
 a join method, specifically nested-loop join.  A \ol{branch} tuple with a
 group, containing at least two predicates, is ``joined with'' the \ol{winner}
-relation.  The \ol{winner} relation is described in the following section, but
-its purpose is to identify the winning plan, for each interesting order, in its
-group.  In rule~\ol{bp8}, we use a ``winning'' {\em subplan} as the ``outer
-plan'', and join it with a table predicate that when combined with the outer
+relation.  The \ol{winner} relation (described in
+Chapter~\ref{ch:opt:sec:cascades_winner}) identifies the winning plans in a
+given group.  In rule~\ol{bp8}, we use the ``winning'' subplans as the ``outer
+plan'', and join it with a table predicate that, when combined with the outer
 subgroup, formulates the branch group under consideration.  The sorting order
-produced by this plan is the same as the order of the ``outer plan.'' Like the
+produced by this plan is the same as the order of the outer plan.  Like the
 strategy used in the System R \ol{plan} generation rules, we use the plan
 identifier ($PlanID$) to hold the actual plan.  In both cases, another stage is
 used to annotate the relevant term relations (\ol{sys::predicate},
@@ -793,16 +814,16 @@ and sort-merge join methods.}
 \end{figure*}
 
 Figure~\ref{ch:opt:fig:cascades_plan2} contains the remaining \ol{plan}
-generation rules that cover are remaining index-loop and sort-merge join
-methods.  As in the respective System R rules, we need to consider various
-properties of these joins.  In rule~\ol{bp9} we consider an index-loop join on
-the outer ``winning'' plans with an inner table predicate that includes an
-index definition relevant to the joining attributes.  In rule~\ol{bp10}, the
+generation rules that cover index-loop and sort-merge join methods.  As in the
+respective System R rules, we need to consider various properties of these
+joins.  In rule~\ol{bp9} we consider an index-loop join of the outer
+``winning'' plans with an inner table predicate that includes an index
+definition relevant to the joining attributes.  In rule~\ol{bp10}, the
 sort-merge join along the same set of predicates is derived.  The cost of this
 plan depends on the order of the outer and inner tuples.  The output is ordered
-by the join attributes used for these two inputs.  One other rule, that we omit
-here, handles selection predicates in a manner nearly identical to rule~\ol{sr5} 
-in Figure~\ref{ch:opt:fig:plangen4}. 
+by the attributes used in the join of these two inputs.  One other rule, that
+we omit here, handles selection predicates in a manner nearly identical to
+rule~\ol{sr5} in Figure~\ref{ch:opt:fig:plangen4}.
 
 \subsection{Winner Selection}
 \label{ch:opt:sec:cascades_winner}
@@ -853,23 +874,24 @@ bb15 winner(@A, Rid, Group, PlanId) :-
 \caption{\label{ch:opt:fig:cascades_winner} Cascades winner selection rules.}
 \end{figure*}
 
-The rules in Figure~\ref{ch:opt:fig:cascades_winner} select a {\emph winner}
-plan from the plans deduced for a given group.  We begin at rule~\ol{bb11},
-which determines the cost of the optimal plan regardless of order.  The
+The rules in Figure~\ref{ch:opt:fig:cascades_winner} select {\em winner} plans
+from the plans generated by a given group.  We begin with rule~\ol{bb11}, which
+determines the cost of the optimal plan regardless of its order.  The
 \ol{bestOverallCost} tuple ensures that an ordered plan that is also optimal is
 chosen regardless of its order being interesting.  Rule~\ol{bb12} follows by
 determining the best cost plan for each interesting order.  These two rules
-identify the best cost plans for a given group.  The familiar rule~\ol{bb13},
-also appearing as the \ol{sr8} System R rule, determines the orders that are
-interesting, based on grouping and joining attributes.
+identify the best cost plans for a given group.  Rule~\ol{bb13} is nearly
+identical to rule~\ol{sr8}, both of which determine the orders that are
+interesting based on later grouping and joining attributes.
 
-Due to P2's lack of stratified Datalog support, we must predicated the
-evaluation of rules~\ol{bb11} and~\ol{bb12} on the \ol{branch} tuple's group
-position attribute.  When a group has been fully explored its \ol{branch}
-position ($Pos$) is equal to the number of terms in the $Group$ variable.  If
-we omit this constraint, then we would prematurely derive \ol{winner} tuples in
-the final two rules: rule~\ol{bb14} ensures that the best overall plan is part
-of the \ol{winner} relation, and rule~\ol{bb15} derives a \ol{winner} tuple for
+It is important that we derive our winner plans only after all plans for a
+given group have been fully explored.  We check for this constraint in
+rules~\ol{bb11} and~\ol{bb12} using the \ol{branch} tuple's group position
+attribute.  When a group has been fully explored its \ol{branch} position
+($Pos$) is equal to the number of terms in the $Group$ variable.  If we omit
+this constraint, then we would prematurely derive \ol{winner} tuples in the
+final two rules: rule~\ol{bb14} ensures that the best overall plan is part of
+the \ol{winner} relation, and rule~\ol{bb15} derives a \ol{winner} tuple for
 each interesting orders.
 
 \subsection{Termination}
@@ -904,11 +926,12 @@ Figure~\ref{ch:opt:fig:cascadesend} contains the four rules used to detect the
 termination condition of this optimization stage.  These rules resemble the
 System R termination rules in Figure~\ref{ch:opt:fig:systemrend}.  The first
 rule (\ol{bb16}) counts the total number of rules in the target program.
-Rules~\ol{bb17} and \ol{bb18} count how many rules have been assigned a
-``winning'' plan consisting of all predicates in the rule body.  Some number of
-fixpoints later, when the \ol{completeRuleCount} reaches the total \ol{rules}
-count, rule~\ol{bb19} terminates the optimization stage.  The result being a
-new \ol{program} tuple with the stage attribute set to ``cascades.''
+Rules~\ol{bb17} and \ol{bb18} count how many rules have been assigned
+``winning'' plans that contain all the predicates in the rule body.  Some
+number of fixpoints later, when the \ol{completeRuleCount} reaches the total
+number of rules in the program, rule~\ol{bb19} terminates the optimization
+stage.  The termination result consisting of a new \ol{program} tuple with the
+stage attribute set to ``cascades.''
 
 \section{Discussion}
 \label{ch:opt:sec:discussion}
@@ -916,19 +939,19 @@ new \ol{program} tuple with the stage attribute set to ``cascades.''
 When we started this work, the vision of declaratively specified query
 optimization was appealing thanks to its elegance and its promise of usability
 and maintainability.  Although we remain convinced on this front, our optimism
-has been tempered by the pragmatics of developing software within a
-continuously changing system prototype.  Here we reflect on some of the (hard)
-lessons we learned while conducting this research.
+was tempered by the pragmatics of developing software within a continuously
+changing system prototype.  Here we reflect on some of the (hard) lessons we
+learned while conducting this research.
 
 P2's notion of consecutive Datalog-style fixpoints, especially in networked
-environments, still has many rough edges, both on the design and on the
+environments, still had many rough edges, both on the design and on the
 engineering front.  Because deep down P2's runtime is an event-driven execution
-engine, its basic unit of atomicity is akin to a single iteration through a
+engine, its basic unit of atomicity was akin to a single iteration through a
 recursive query evaluation strategy like semina\"{\i}ve evaluation, generating a
 set of derived actions (tuples to be inserted, deleted, transmitted remotely,
 or evaluated locally for further deduction) from a single incoming event, and
 committing changes to the database atomically upon completion of such a
-step~\cite{LuThesis}.  P2's Datalog-style fixpoints are implemented as
+step~\cite{LuThesis}.  P2's Datalog-style fixpoints were implemented as
 sequences of such single-event iterations.  As a result, the system's design
 shares both event-driven and logic-style flavors, with some remaining
 unresolved conflicts (e.g., stratified Datalog).
@@ -944,9 +967,9 @@ unresolved conflicts (e.g., stratified Datalog).
 %same-fixpoint updates to the same relation.  Compiler stages that do static
 %analysis might catch such dangerous rules and alert the user.
 
-Second, as in most prototypes, the programmer interface is not polished.
-Debugging is difficult, especially since the logic language makes it tough to
-understand which value corresponds to which formal attribute in a long tuple of
+Second, as in most prototypes, the programmer interface was not polished.
+Debugging was difficult, especially since the logic language made it tough to
+understand which value corresponded to which formal attribute in a long tuple of
 a dozen or more attributes.  Though concise, declaratively specified
 optimizations pack a punch in terms of density of concepts, which only becomes
 deadlier due to the (otherwise desirable) arbitrary order of rule execution.
@@ -957,12 +980,12 @@ management systems in the past was not a great deal rosier.  It is hard to
 debug code when the output's correctness (e.g., minimality of cost) is too
 expensive to verify.
 
-Third, the evolution of the \OVERLOG language has a long way to go.  The P2
-version of the language offers no modularity, making it tough to isolate and
-reuse logically distinct components.  It does have a rudimentary concrete type
-system, but has poor support for structured types like matrices and lists.
-\OVERLOG still ``cuts corners'' on the proper set-orientation of Datalog; since
-program stratification is not present in the system, dealing with streaming
+Third, the evolution of the \OVERLOG language had a long way to go.  The P2
+version of the language offered no modularity, making it tough to isolate and
+reuse logically distinct components.  It did have a rudimentary concrete type
+system, but had poor support for structured types like matrices and lists.
+\OVERLOG in P2 ``cut corners'' on the proper set-orientation of Datalog; since
+program stratification was not present in the system, dealing with streaming
 aggregates required us to resort to imperative tricks like matching ``counts'',
 computed in separate ``dataflow fixpoints'', to determine that state was ready
 to be finalized.
@@ -973,7 +996,7 @@ complexity below the extensibility layer.  The tabularization of compiler state
 to enable declarative optimizations also meant that even imperative compiler
 stages such as our bootstrap stages implemented in C++ had to use tables,
 foregoing their familiar interaction with C++ data structures.  Building glue
-libraries that ease this interaction may relieve this pain.
+libraries to ease this interaction might have relieved this pain.
 
 Nevertheless, despite these complaints, we were able to get all of our desired
 optimizations expressed in \OVERLOG in a highly compact way, as promised by the
@@ -994,7 +1017,7 @@ a recursive query language.  The notion of metacompilation also leads to a very
 tight implementation with significant reuse of code needed for runtime
 processing.
 
-Even with the caveats expressed in Section~\ref{ch:opt:sec:discussion}, we are
+Even with the caveats expressed in Chapter~\ref{ch:opt:sec:discussion}, we are
 convinced that a declarative metacompiler is much easier to program and extend
 than the monolithic query optimizers we have worked on previously.  We are now
 at a point where we can add significant features (e.g., histograms, broadcast
