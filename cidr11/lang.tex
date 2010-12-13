@@ -206,17 +206,10 @@ is:\\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
 $<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
 the operator are instances of (a descendant of) a Ruby class called
-\texttt{budcllection}, which inherits Ruby's built-in \texttt{Enumerable}
+\texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
 module supporting typical collection methods.  The bottom of Figure~\ref{tab:bloom} describes
 the five operators that can be used to define the contents of the left-hand
 side (lhs) in terms of the right-hand side (rhs).
-\begin{comment}
-\jmh{We should probably add a table of budcllection methods, and a mention of
-  it here and in the next paragraph. Could include the commonly-used parts of
-  Enumerable like map, reduce, flat\_map, include? and empty?, and some of the
-  ones we wrote---group, argagg, argmax, argmin.  And then operations on
-  budcllections, i.e. join and its variants (natjoin, leftjoin).}
-\end{comment}
 
 \begin{figure}
 	\begin{small}
@@ -224,15 +217,19 @@ side (lhs) in terms of the right-hand side (rhs).
 		\hline
 		Method & Description\\
 		\hline
-		\texttt{bc.map} & Inherited from Enumerable, takes a code block as an argument, and returns the collection formed by applying the code block to each element of \texttt{bc}.\\
-		\texttt{bc.flat\_map} & Inherited from Enumerable, takes a code block and returns the collection formed by the concatenated (flattened) results of running block once for every element in \texttt{bc}.\\
-		\texttt{bc.reduce} & Inherited from Enumerable, takes an initial value, \texttt{memo} variable and code block, and applies the block to \texttt{memo} and each element of \texttt{bc} in turn.\\
-		\texttt{bc.empty?} & Inherited from Enumerable, returns true if \texttt{bc} is empty.  Equivalent to negation in Datalog.\\
-    \texttt{bc.include?} & Inherited from Enumerable, takes an object as an argument and returns true if that object is equal to any element of \texttt{bc}.\\
-		\texttt{bc.group} & Takes a list of grouping columns, a list of aggregate expressions and a block, computes the aggregates for each group, and applies the block to each group/aggregation result.\\
+		\texttt{bc.map} & Takes a code block and returns the collection formed by applying the code block to each element of \texttt{bc}.\\
+		\texttt{bc.flat\_map} & Takes a code block and returns the collection formed by the concatenated (flattened) results of running block once for every element in \texttt{bc}.\\
+		\texttt{bc.reduce} & Takes an initial value, \texttt{memo} variable and code block, and applies the block to \texttt{memo} and each element of \texttt{bc} in turn.\\
+		\texttt{bc.empty?} & Returns true if \texttt{bc} is empty.  Equivalent to negation in Datalog.\\
+    \texttt{bc.include?} & Takes an object and returns true if that object is equal to any element of \texttt{bc}.\\
+		\texttt{bc.group} & Takes a list of grouping columns, a list of
+        aggregate expressions and a code block. For each group, computes the
+        aggregates and then applies the code block to the group/aggregation result.\\
 		% \texttt{bc.argmin, bc.argmax, bc.argagg} & \texttt{argmin} takes a list of grouping columns and another distinguished column \texttt{dist}, and returns the argmin of \texttt{bc.dist} for each group. \texttt{argmax} is analogous for maximum. \texttt{argagg} takes an exemplary aggregation function name as an additional argument and performs this logic using the chosen function.\\
 		\hline \hline
-		\texttt{join, leftjoin, outerjoin, natjoin} & Methods of the Bud class to compute join variants over BudCollections.  \texttt{join}, \texttt{leftjoin} and \texttt{outerjoin} take an array of BudCollection names to join, as well as a variable-length list of arrays of join conditions.  The natural join \texttt{natjoin} takes only the array of BudCollection objects as an argument.\\
+		\texttt{join, leftjoin, outerjoin, natjoin} & Methods of the Bud class
+        to compute join variants over BudCollections.  \texttt{join},
+        \texttt{leftjoin} and \texttt{outerjoin} take an array of collections to join, as well as a variable-length list of arrays of join conditions.  The natural join \texttt{natjoin} takes only the array of BudCollection objects as an argument.\\
 		\hline
 	\end{tabular}
 \end{small}
