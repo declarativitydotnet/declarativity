@@ -307,8 +307,7 @@ Thus, while the details of the implementation are encapsulated by the key-value
 store's abstract interface, its points of order resurface in the full-program analysis.
 Figure~\ref{fig:pdg-destructive-kvs-analysis}
 indicates that there are
-points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster,
-and between the temporal cluster and itself.
+points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster.
 %%This means that the arrival 
 %%timing and ordering of both client updates (via \texttt{iaction}) and
 %%server replication (via the meta-edge in the temporal cycle from 
@@ -317,7 +316,7 @@ and between the temporal cluster and itself.
 This figure also tells the (sad!) story of how we could ensure consistency of
 the destructive cart implementation: introduce coordination between client and
 server---and between the chosen server and all its replicas---for {\em every
-  client action or kvput update}.  The programmer can easily achieve this
+  client action or kvput update}.  The programmer can achieve this
 coordination by supplying a ``reliable'' implementation of multicast that awaits
 acknowledgements from all replicas before reporting completion: this
 fine-grained coordination is akin to ``eager replication''~\cite{dangers}.
