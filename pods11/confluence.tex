@@ -110,7 +110,7 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 \end{definition}
 
 \begin{definition}
-A predicate is  {\em persistent} if any fact in the predicate is eventually henceforth true.
+A predicate is  {\em persistent} if any fact in the predicate is henceforth true.
 \end{definition}
 
 Facts in persistent predicates are the only facts that appear in a program's ultimate models.
@@ -129,23 +129,26 @@ A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates a
 A negation-free \lang program with guarded asynchrony is confluent.
 \end{lemma}
 \begin{proof}
-Sketch: only possible way two ultimate models are different is if two facts (or predicates, e.g. ``!'' on facts) join in one trace, but not the other.  If the program has guarded asynchrony, then it is impossible for a join to succeed in one trace and not another.
+%Sketch: only possible way two ultimate models are different is if two facts (or predicates, e.g. 
+%``!'' on facts) join in one trace, but not the other.  If the program has guarded asynchrony, then 
+%it is impossible for a join to succeed in one trace and not another.
 
+%\wrm{yeah, this is right, need to define terms though-- define ``ground atom'' as ``first time %something in the ultimate model is true before it is eventually always true'', change ``join'' to %``unification'', change ``eventually always succeed'' to ``eventually always satisfied'' or %something, define ``modulo time'' define ``identical tuple''.  i'll let you fix this. you can delete %my sketch above too}
 
-\paa{a great windy attempt at proof}
-\wrm{yeah, this is right, need to define terms though-- define ``ground atom'' as ``first time something in the ultimate model is true before it is eventually always true'', change ``join'' to ``unification'', change ``eventually always succeed'' to ``eventually always satisfied'' or something, define ``modulo time'' define ``identical tuple''.  i'll let you fix this. you can delete my sketch above too}
+\paa{I think I addressed everything but "change join to unify," which I don't agree with}
 Towards a proof by contradiction, consider a negation-free \lang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
-not in another model, and $p$ must be persistent \wrm{eventually always true}, or it would not be
+not in another model, and $p$ must be persistent, or it would not be
 in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
 choice of timestamp via an {\em async} rule, then certainly there is only one stable model of the
 program, so there must be at least one {\em async} rule.  If $p$ is derived directly from 
 an {\em async} rule via a series of derivation steps without any joins, then every stable
-model will have an identical tuple in $p$, modulo time, and hence the same ultimate model.
-Therefore, $a$ must have at least one join in its derivation following an {\em async} rule,
-which suceeded in this stable model but did not succeed in another.  Guarded joins always
+model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
+and hence correspond to the same ultimate model.
+Therefore, $a$ must have at least one join step in its derivation following an {\em async} rule,
+which succeeded in this stable model but did not succeed in another.  Guarded joins always
 eventually succeed, and by assumption, every {\em async}-derived predicate is guarded.
 Hence $a$ must exist in all ultimate models.
 
@@ -167,16 +170,16 @@ If a {\em monotonic property} is true at time \dedalus{T}, then it is true at an
 Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
 fact that will never be true.  We may define monotonic properties constructively as follows.
 
-\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
-\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
+%\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
+%\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
 
 
 \begin{definition}
 A fact in a persistent predicate is a monotonic property. 
-\wrm{also, we should start from EDB, and say that's a persistent relation}
-\paa{need to clearly define EDB in dedalus.  those predicates appearing only in the RHS 
-of rules, which furthermore are persistent?  what do we call those predicates for which the 
-latter is false?} \wrm{There are no predicates for which the latter is false I guess.  Does that seem reasonable?}
+%\wrm{also, we should start from EDB, and say that's a persistent relation}
+%\paa{need to clearly define EDB in dedalus.  those predicates appearing only in the RHS 
+%of rules, which furthermore are persistent?  what do we call those predicates for which the 
+%latter is false?} \wrm{There are no predicates for which the latter is false I guess.  Does that seem reasonable?}
 \end{definition}
 
 Note that facts in simply persistent relations cannot be retracted once they are asserted.  They begin false
