@@ -253,7 +253,7 @@ method, which takes a list of input collections and an optional list of join
 conditions.  Lines~\ref{line:ack_join_beg}--\ref{line:ack_join_end} of
 Figure~\ref{fig:bloom-example} show a join between \texttt{ack\_chan} and
 \texttt{send\_buf}. Syntax sugar for natural joins and outer joins is also
-provided. \texttt{BudCollection} defines a \texttt{group} method similar to
+provided. \texttt{BudCollection} also defines a \texttt{group} method similar to
 SQL's \texttt{GROUP BY}, supporting the standard SQL aggregates; for example,
 lines~\ref{line:dis_count_reqid_beg}--\ref{line:dis_count_reqid_end} of
 Figure~\ref{fig:dis-cart} compute the count of unique \texttt{reqid} values for
