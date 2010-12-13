@@ -86,7 +86,9 @@ By convention, EDB facts are supplied without a time suffix, and are true at tim
 
 \vspace{1em}
 \noindent {\bf Distribution:}
-\lang requires that all atoms with partitioned predicates in each rule body use the same variable symbol in their location attribute---i.e.\ the rule is an implication over data located in exactly one partition of the database, logically collocated (on a single ``machine'').  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}, and must be an asynchronous rule.                                                              
+\lang requires that all atoms with partitioned predicates in each rule body use the same variable symbol in their location attribute---i.e.\ the rule is an implication over data located in exactly one partition of the database, logically collocated (on a single ``machine'').  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}, and must be an asynchronous rule.                                                        
+
+      
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
 \lang restricts negation by requiring any recursion through negation to include a temporal edge~\footnote{The only exception is the rewrite of \dedalus{choice}, which involves recursion through negation without any temporal edges.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.
@@ -136,7 +138,7 @@ flipflop(Y,X)@next \(\leftarrow\) flipflop(X,Y);
 flipflop(1,2)@1;
 \end{Dedalus}
 
-\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  In other words \dedalus{flipflop(1,2), flipflop(2,1)} is a cycle of period 2.
+\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  In other words \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
 
 %by regarding the output of the program as those facts that are eventually always true.  Thus, if two stable models differ only momentarily, but are ``eventually the same,'' we regard these stable models as producing the same output.
@@ -144,7 +146,7 @@ flipflop(1,2)@1;
 %\subsubsection{Ultimate Models}
 
 \begin{definition}
-For each stable model, the cycles of period 1---so-called {\em trivially periodic} cycles---comprise an {\em ultimate model} for the program.  We represent a trivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.  For example, the trivially periodic cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different trivial periodicities.
+For each stable model, the cycles \wrm{cyclic facts...} of period 1---so-called {\em trivially periodic} cycles---comprise an {\em ultimate model} for the program.  We represent a trivially periodic cycle in the ultimate model finitely by picking a representative, and discarding its timestamp.  For example, the trivially periodic cycle \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program may have multiple distinct ultimate models if it has multiple stable models with different trivial periodicities.
 \end{definition}
 
 %The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
@@ -208,18 +210,14 @@ Operationally, we can model a \lang execution as a collection of Turing Machines
 
 In other words, a fact, \dedalus{p(\(\bar{c}\), t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true ``at time \dedalus{t}''.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true ``for an instant'' given what is known at that instant. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true ``at a different time'' than their antecedents.
 
-Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable.
+Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is dequeued.
 
-Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  \wrm{partitioning}
+Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  The algorithm involves 
+running the program for $2^{G+1} + c$ timestamps, where $G$ is the number of ways to instantiate all predicates with all constants from the generic universe, and $c$ is the maximum timestamp of any input.  In this case $c = 1$, because all EDB facts enter the EDB at once at time zero.  Running for this amount of time is sufficient to observe all periodicities.  The period of all facts can easily be recorded in polynomial space, as there are no more than polynomially many possible facts \wrm{facts are modulo time here...}.
 
-\wrm{With asynchronous rules, every node begins an exponential number of phases in the size of their input.  When they receive a new set of input that they haven't seen before, they forget about the current phase, and start a new phase exponential in the new total input size (old input size + new elements they got over the network).  When the exponential phase termintes without a new one killing it and taking over, the node halts.  When all nodes have halted, and no messages are in flight (will happen eventually) we're done.  Takes a finite number of steps.}
+With asynchronous rules, there is a slight twist.  Asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp we commit to when running the program.  Thus, we start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
 
-\wrm{It is the case that this process emulates some prefix of some stable model.  The concern as to why this may not produce an ultimate model is that we don't process things long enough.  Chomicki proves this ain't so.  Thus, the prefix computed corresponds to a stable model that repeats all of the periodicities (and any further asyncs happen henceforth deterministically).}
-
-\wrm{Either assume bounded message delay or admit failure in order to enforce real-time constraints.  We show how failure is modeled later...}
-
-We now prove that our model-theoretic and operational semantics are equivalent.
-
+Notice that this execution procedure emulates a finite prefix of some stable model.  We must argue that the final state generated by this procedure is the ultimate model of some complete stable model.
 
 \begin{lemma}
 Every ultimate model is computed by some execution of the operational formalism.
