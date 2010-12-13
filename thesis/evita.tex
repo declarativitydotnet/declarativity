@@ -880,8 +880,8 @@ The delta and localization stages are program rewrites necessary to make
 distributed rules executable.  These rewrites are expressed compactly in
 \OVERLOG (around 12 rules each), and removes complex C++ code from the
 $Planner$ stage implementation.  The original P2 code that performed these
-tasks was a few hundred lines of code, mixed throughout various places in the
-system codebase.
+tasks consisted of a few hundred lines of code spread throughout the
+system implementation.
 
 The Evita Raced metacompilation framework allows \OVERLOG compilation tasks to
 be written in \OVERLOG and executed in the P2 runtime engine.  It provides
@@ -892,25 +892,5 @@ be well served by a recursive query language.  The notion of metacompilation
 also leads to a very tight implementation with significant reuse of code needed
 for runtime processing.
 
-One surprising lesson of our work was the breadth of utility afforded by the
-metacompilation framework.  Although motivated by performance optimizations, we
-have used Evita Raced for a number of unforeseen tasks.  These include:
-automatically expanding user programs with instrumentation and monitoring
-logic; generating pretty-printers for intermediate program forms; language
-wrappers for secure networking functionality in the manner of
-SecLog~\cite{abadi-netdb07}; stratification detectors and other static code
-analysis.  None of these are performance optimizations per se, but all fit well
-within an extensible, declarative program manipulation framework.  Base on this
-experience, we believe that metacompilation is a good design philosophy not
-only for our work, but for the upcoming generation of declarative engines being
-proposed in many fields.
 
-Finally, the cyclic dataflow used for stage scheduling in Evita Raced
-(Section~\ref{ch:evita:sec:stages}) resembles the continuous query engine of
-TelegraphCQ, with our StageScheduler and Demux elements working together to
-behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This
-connection occurred to us long after we developed our design, but in retrospect
-the analogy is quite natural: Evita Raced stages are akin to TelegraphCQ's
-``installed'' continuous queries, and P2's \OVERLOG queries are akin to data
-streaming into TelegraphCQ.
 
