@@ -391,19 +391,19 @@ Given any \lang program without recursion through negation, we can automatically
 
 \noindent
 \begin{Dedalus}
-p_count_send(#Y,Src,count<*>)@async <- p_local(Y,\(\bar{X}\)),
+p_count_send(#Y,Src,count<*>)@async <- p_local(Y,\dbar{X}),
                                        local(Src);
-p_count_send(#Y,Src,0)@async <- !p_local(Y,\(\bar{_}\)), local(Src),
+p_count_send(#Y,Src,0)@async <- !p_local(Y,\dbar{_}), local(Src),
                                 node(Y);
-p_send(#Y,Src,\(\bar{X}\))@async <- p_local(Y,\(\bar{X}\)), local(Src);
-p_count_recv(Src,count<*>) <- p_send(_,Src,\(\bar{X}\));
-p(Y,\(\bar{X}\)) <- p_send(_,Y,\(\bar{X}\));
-p(Y,\(\bar{X}\))@next <- p(Y,\(\bar{X}\));
+p_send(#Y,Src,\dbar{X})@async <- p_local(Y,\dbar{X}), local(Src);
+p_count_recv(Src,count<*>) <- p_send(_,Src,\dbar{X});
+p(Y,\dbar{X}) <- p_send(_,Y,\dbar{X});
+p(Y,\dbar{X})@next <- p(Y,\dbar{X});
 p_incomplete() <- node(Src), !p_count_recv(Src, _);
 p_incomplete() <- node(Src), !p_count_send(_,Src,_);
 p_incomplete() <- p_count_recv(Src, C1),
                   p_count_send(_, Src, C2), C1 < C2;
-completed_p(Y,\(\bar{X}\)) <- p(Y,\(\bar{X}\)), !p_incomplete();
+completed_p(Y,\dbar{X}) <- p(Y,\dbar{X}), !p_incomplete();
 \end{Dedalus}
 
 5. For any instance of \dedalus{p} in the body of a rule in the original program, replace it with \dedalus{completed\_p}.
@@ -448,7 +448,7 @@ We can instrument any \lang program without recursion through negation with non-
 3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_send} where that is a fresh predicate name.
 4. Insert the following rule
 \begin{Dedalus}
-p(\(\bar{X}\)) <- p_send(\(\bar{X}\)), !p(\(\bar{_}\));
+p(\dbar{X}) <- p_send(\dbar{X}), !p(\dbar{_});
 \end{Dedalus}
 
 We consider example~\ref{ex:sayers} above.  Some ultimate models do not correspond to plausible failure scenarios -- for example, any ultimate model where a \dedalus{statement} is both \dedalus{true} and \dedalus{false}.  The instrumented version of the example would add the following rule:
