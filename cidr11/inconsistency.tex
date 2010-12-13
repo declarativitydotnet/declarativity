@@ -1,17 +1,13 @@
 \section{Tolerating Inconsistency}
 \label{sec:inconsistency}
-The analysis technique described in the preceding sections provides a
-conservative test for when temporal non-determinism may lead to
-non-deterministic results. One solution to this situation is to resolve the
-non-determinism by introducing coordination. However, in many cases adding
-additional coordination is undesirable (e.g., for latency or availability
-reasons). Even here, we think that Bloom can improve distributed programming by
-assisting programmers with the task of \emph{tolerating inconsistency}, rather
+In the previous section we showed how to identify points of order:  code locations that are sensitive to non-deterministic input ordering.  We then demonstrated how to resolve the non-determinism by introducing coordination.
+However, in many cases adding
+additional coordination is undesirable due to concerns like latency and availability. In these cases, Bloom's point-of-order analysis can assist programmers with the task of \emph{tolerating inconsistency}, rather
 than resolving it via coordination.  A notable example of how to manage
 inconsistency is presented by Helland and Campbell, who reflect on their
 experience programming with patterns of ``memories, guesses and
 apologies''~\cite{quicksand}.  We provide a sketch here of ideas for converting
-these patterns into developer tools.
+these patterns into developer tools in Bloom.
 
 %Declarative programs typically assume ``guaranteed'' base facts, and use rules to define ``guaranteed'' derived monotonic.  
 ``Guesses''---facts that may not be true---may arise at the inputs to a program,

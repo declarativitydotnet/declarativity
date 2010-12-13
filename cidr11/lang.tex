@@ -17,7 +17,7 @@ better to architectures with loose control over ordering.
 Bloom is designed in the tradition of programming styles that are ``disorderly''
 by nature.  State is captured in unordered sets.  Computation is expressed
 in logic: an unordered set of declarative rules, each consisting of an unordered
-set of predicates.  As we discuss below, mechanisms for imposing order are
+conjunction of predicates.  As we discuss below, mechanisms for imposing order are
 available when needed, but the programmer is provided with tools to evaluate the
 need for these mechanisms as special-case behaviors, rather than a default
 model.  The result is code that runs naturally on distributed machines with a
@@ -201,12 +201,11 @@ Section~\ref{sec:modularity}.
 
 \subsection{Bloom Statements}
 Bloom statements are declarative relational expressions that define the contents
-of derived collections.  They can be viewed operationally as unordered bundles
-of instructions for ``accumulating'' data that are run to fixpoint.  The syntax
+of derived collections.  They can be viewed operationally as specifying the insertion or accumulation of expression results into collections.  The syntax
 is:\\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
 $<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
-the operator are instances of (a subclass of) a Ruby class called
+the operator are instances of (a descendant of) a Ruby class called
 \texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
 module supporting typical collection methods.  The bottom of Figure~\ref{tab:bloom} describes
 the five operators that can be used to define the contents of the left-hand
@@ -291,7 +290,7 @@ use an implementation of this interface by inserting a fact into
 \texttt{pipe\_in}; this represents a new message to be delivered. A
 corresponding fact will eventually appear in the \texttt{pipe\_sent} output
 interface; this indicates that the delivery operation has been completed. The
-ReliableDelivery module is one possible implementation of the abstract
+ReliableDelivery module of Figure~\ref{fig:bloom-example} is one possible implementation of the abstract
 DeliveryProtocol interface---it uses a buffer and acknowledgment messages to
 delay emitting a \texttt{pipe\_sent} fact until the corresponding message has
 been acknowledged by the remote node. Figure~\ref{fig:delivery-impl} in
@@ -301,13 +300,13 @@ of message delivery can simply interact with the abstract DeliveryProtocol; the
 particular implementation of this protocol can be chosen independently.
 
 A common requirement is for one module to ``override'' some of the statements in
-a module that it mixes-in. For example, an OrderedDelivery module might want to
+a module that it mixes in. For example, an OrderedDelivery module might want to
 reuse the functionality provided by ReliableDelivery but prevent a message with
 sequence number $x$ from being delivered until all messages with sequence
 numbers $<x$ have been acknowledged. To support this pattern, Bloom allows an
 interface defined in another module to be overridden simply by redeclaring
-it. Internally, these redundantly-named interfaces both exist in the namespace
-of the module that declared them but only need to be referenced by a
+it. Internally, both of these redundantly-named interfaces exist in the namespace
+of the module that declared them, but they only need to be referenced by a
 fully qualified name if their use is otherwise ambiguous.  If an input interface
 appears in the lhs of a statement in a module that declared the interface, it is
 rewritten to reference the interface with the same name in a mixed-in class,
