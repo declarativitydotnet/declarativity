@@ -251,8 +251,9 @@ number of additions if there are no deletions (line~\ref{line:dis_status_add}).
 Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \texttt{response\_msg} to the client containing the final quantity
 (lines~\ref{line:dis_checkout_response_beg}--\ref{line:dis_checkout_response_end}).
-The set of items in the cart is collapsed into an array via a user-defined aggregate
-function \texttt{accum}, to match the format expected by CartClient.
+Because the CartClient expects the cart to be returned as an array of items on
+checkout, we use the \texttt{accum} aggregate function to flatten the set of
+items into an array.
 
 %Because the disorderly implementation does not use a separate storage system,
 %it includes its own logic for state replication
@@ -307,7 +308,7 @@ Thus, while the details of the implementation are encapsulated by the key-value
 store's abstract interface, its points of order resurface in the full-program analysis.
 Figure~\ref{fig:pdg-destructive-kvs-analysis}
 indicates that there are
-points of order between \texttt{action\_msg}, \texttt{member} and the temporal cluster.
+points of order between \texttt{action\_msg}, \texttt{member}, and the temporal cluster.
 %%This means that the arrival 
 %%timing and ordering of both client updates (via \texttt{iaction}) and
 %%server replication (via the meta-edge in the temporal cycle from 
@@ -385,13 +386,11 @@ server replicas---crosses no points of order, so all the communication related
 to shopping actions converges to the same final state without coordination.
 However, there are points of order upon the appearance of \texttt{checkout\_msg}
 messages, which must be joined with an \texttt{action\_cnt} aggregate over the
-set of updates.  
-Additionally, using the user-defined aggregate \texttt{accum} adds a
-point of order to the end of the dataflow, between \texttt{status} and 
-\texttt{response\_msg}.
-Although the accumulation of shopping actions is monotonic,
-summarization of the cart state requires us to assume (or rather, prove) that
-there will be no further cart actions.
+set of updates.  Additionally, using the \texttt{accum} aggregate adds a point
+of order to the end of the dataflow, between \texttt{status} and
+\texttt{response\_msg}.  Although the accumulation of shopping actions is
+monotonic, summarization of the cart state requires us to assume (or rather,
+prove) that there will be no further cart actions.
 
 Comparing Figure~\ref{fig:pdg-destructive-kvs-analysis} and
 Figure~\ref{fig:pdg-disorderly-analysis}, we can see that the disorderly cart
