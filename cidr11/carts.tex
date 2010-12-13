@@ -273,7 +273,7 @@ items into an array.
 \centering
 \includegraphics[width=0.8\linewidth]{fig/disorderly_base.pdf}
 \vspace{-10pt}
-\caption{Visualization of the core logic for a disorderly cart.}
+\caption{Visualization of the core logic for the disorderly cart.}
 \label{fig:pdg-disorderly-base}
 \vspace{-2pt}
 \end{figure}
@@ -282,7 +282,7 @@ items into an array.
 \centering
 \includegraphics[width=1\linewidth]{fig/disorderly_complete.pdf}
 \vspace{-10pt}
-\caption{Visualization of a fully specified disorderly cart program.}
+\caption{Visualization of the complete disorderly cart program.}
 \label{fig:pdg-disorderly-analysis}
 \vspace{-2pt}
 \end{figure}
@@ -375,8 +375,8 @@ CartClient does (Figure~\ref{fig:cart-client}).  Note that the disorderly cart
 has points of order on all paths but there are no cycles.
 
 Figure~\ref{fig:pdg-disorderly-analysis} shows the analysis for a complete
-implementation that mixes in both the client code and logic that replicates the
-\texttt{cart\_action} table via a best-effort multicast protocol (see
+implementation that mixes in both the client code and logic to replicate the
+\texttt{cart\_action} table via best-effort multicast (see
 Figure~\ref{fig:complete-dis-cart} in Appendix~\ref{app:network-code} for the
 corresponding source code).  Note that communication (via \texttt{action\_msg})
 between client and server---and among server replicas---crosses no points of
