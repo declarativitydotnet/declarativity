@@ -1,5 +1,5 @@
 \section{\large \bf \lang}
-\label{sec:slang}
+\label{sec:lang}
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').  Each predicate in \lang has single a distinguished {\em temporal attribute}, which takes on only values from the {\em temporal universe} ($\mathbb{N}$)
 %\cup \infty$
@@ -10,7 +10,9 @@ The balance of the arguments are generic and may not take on values from the tem
 
 We assume an infinite binary relation over the temporal universe
 %(except $\infty$)
-called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of non-determinism using stable models of cyclic negation~\cite{stable-model}, which we use to model the inherent non-determinism of asynchronous distributed computation.  To model distribution, we adopt the convention introduced in~\cite{Loo:2005}, where all predicates (except for \dedalus{successor} and \dedalus{time}) are {\em horizontally partitioned};  the location of a fact in a predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  All atoms that reference a predicate must indicate the same column as its location attribute.
+called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$.  We also admit Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of nondeterminism using stable models of cyclic negation~\cite{stable-model}, which we use to model the inherent nondeterminism of asynchronous distributed computation.  The atom \dedalus{choice(\dbar{X}, \dbar{Y})} in a rule---where \dedalus{\dbar{X}}, \dedalus{\dbar{Y}} are subsets of the variables in the rule---implies the functional dependency \dedalus{\dbar{X}} $\rightarrow$ \dedalus{\dbar{Y}}.  Each stable model of a program with \dedalus{choice} represents committing to specific \dedalus{\dbar{Y}} values for every satisfying assignment of \dedalus{\dbar{X}} values for every \dedalus{choice} atom.  We call a representation of such a commitment a {\em nondeterministic choice set}.
+
+Our model of distribution assumes that all participants have the same information about all other participants, in the form of a unary \dedalus{node} relation.  We adopt the convention introduced in~\cite{Loo:2005}, where all predicates (except for \dedalus{successor} and \dedalus{time} and \dedalus{node}) are {\em horizontally partitioned};  the location of a fact in a predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  Every such location variable must be unified with the \dedalus{node} set.  All atoms that reference a predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} {\em aggregate} over the generic universe, which computes the number of elements in a set.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -18,7 +20,7 @@ We also admit the \dedalus{count} {\em aggregate} over the generic universe, whi
 p(\dbar{X}, count<Y>) <- ...;
 \end{Dedalus}
 
-where \dedalus{\dbar{X}} represents a list of arguments.  For each binding of variables in \dedalus{\dbar{X}}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  It is also permissible to use the symbol \dedalus{*} as the argument to a count if \dedalus{\dbar{X}} is ommitted; this counts the number of distinct satisfying assignments to all body variables.
+For each binding of variables in \dedalus{\dbar{X}}, \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  It is also permissible to use the symbol \dedalus{*} as the argument to a count if \dedalus{\dbar{X}} is ommitted; this counts the number of distinct satisfying assignments to all body variables.
 
 We presently outline restrictions on \lang.
 
@@ -43,22 +45,23 @@ Examples of local deductive, inductive, and asynchronous rules, and a communicat
 \\\\
 deductive:\\
 \begin{Dedalus}
-p(#X, A, B, T) <- e(#X, A, B, T);
+p(#X, A, B, T) <- e(#X, A, B, T), node(X);
 \end{Dedalus}
 inductive:\\
 \begin{Dedalus}
-q(#X, A, B, S) <- e(#X, A, B, T), successor(T, S);
+q(#X, A, B, S) <- e(#X, A, B, T), node(X),
+                  successor(T, S);
 \end{Dedalus}
 asynchronous local:\\
 \begin{Dedalus}
-r(#X, A, B, S) <- e(#X, A, B, T), time(S), S > T,
-                  choice((A, B, T), (S));
+r(#X, A, B, S) <- e(#X, A, B, T), node(X), time(S),
+                  S > T, choice((A, B, T), (S));
 \end{Dedalus}
 asynchronous communication:\\
 \begin{Dedalus}
-r(#Y, A, B, S) <- e(#X, A, B, T), time(S), S > T,
-                  choice((A, B, T), (S)),
-                  neighbor(#X, Y);
+r(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
+                  time(S), S > T, neighbor(#X, Y),
+                  choice((A, B, T), (S));
 \end{Dedalus}
 \end{example}
 
@@ -66,7 +69,7 @@ r(#Y, A, B, S) <- e(#X, A, B, T), time(S), S > T,
 
 Since unification on the temporal attribute is required in every rule body,
 %(as well as the $!= \infty$ constraint)
-we introduce syntax sugar that omits the body temporal attributes.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal attribute and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  We also omit the location attribute in local rules.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
+we introduce syntax sugar that omits the body temporal attributes.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal attribute and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  We also omit the location attribute in local rules, and the \dedalus{node} predicate in all rules.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
 
 \begin{example}
 \label{ex:sugared}
@@ -95,7 +98,7 @@ When we talk about the {\em predicate dependency graph} (PDG)~\cite{ullmanbook} 
 
 \vspace{1em}
 \noindent {\bf EDB:}
-By convention, EDB facts must be specified with a location, and without a time.  EDB facts are true at timestamp \dedalus{0}---the first timestamp.  Like Datalog, we require the EDB to be finite.
+By convention, EDB facts must be specified with a location, and without a time: EDB facts are true at timestamp \dedalus{1}.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  $E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
@@ -104,7 +107,7 @@ By convention, EDB facts must be specified with a location, and without a time. 
 %\subsection{Design Rationale and Implications}
 
 %Below we explain the rationale for certain choices.
-%\wrm{We need to remember to mention the dual role of time.  Atomicity and non-determinism.  Say stuff about dense partial orders.}
+%\wrm{We need to remember to mention the dual role of time.  Atomicity and nondeterminism.  Say stuff about dense partial orders.}
 
 %{\bf Time:}
 %We want to model intermediates states of distributed systems that are not necessarily models of the programs and their
@@ -129,10 +132,10 @@ By convention, EDB facts must be specified with a location, and without a time. 
 %\end{example}
 
 %\wrm{synchronous systems are captured by \lang with no @async}
-%\wrm{explain motivation for non-determinism.  why don't we just treat the whole world as synchronous?}
+%\wrm{explain motivation for nondeterminism.  why don't we just treat the whole world as synchronous?}
 
 \subsection{Semantics}
-Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}.  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different non-deterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible executions of a distributed system.
+Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}.  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different nondeterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible executions of a distributed system.
 %A stable model of a \lang program is a trace of one of its possible distributed executions,.
 
 However, there are two issues with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may be infinite.  We address both concerns in our definition of an {\em ultimate model}.
@@ -154,7 +157,8 @@ flipflop(1,2)@1;
 %\subsubsection{Ultimate Models}
 
 \begin{definition}
-For each stable model, the cylic facts of period 1---so-called {\em trivially periodic} facts---comprise an {\em ultimate model} for the program.  We represent a trivially periodic fact in the ultimate model finitely by picking a representative, and discarding its timestamp.  For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented in the ultimate model as \dedalus{p(a)}.  A program has multiple distinct ultimate models if it has multiple stable models with different trivially periodic facts.
+For each stable model, the cylic facts of period 1---so-called {\em trivially periodic} facts---comprise an {\em ultimate model} for the program.  We represent a trivially periodic fact in the ultimate model finitely by picking a representative, and discarding its timestamp.
+For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.   We refer to the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $UM(P, E, ND)$.  Note that it may be the case that $UM(P, E, ND_1) \neq UM(P, E, ND_2)$ if $ND_1 \neq ND_2$.
 \end{definition}
 
 %The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
@@ -173,7 +177,7 @@ Note that ultimate models are always of finite cardinality because the only cons
 %\wrm{re-frame the CRON conjecture as part of proving equivalence to the operational formalism}
 %\wrm{In the CRON conjecture below, we should explain how purely monotonic logic does not allow us to establish a ``happens before'' relation on network traffic.  If we can't express it, then intuitively it doesn't matter whether the execution abides by the property.}
 %\begin{lemma}
-%Any non-deterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible~\footnote{This lemma is similar in spirit to Hellerstein's CRON conjecture~\cite{declarative-imperative}.}.
+%Any nondeterministic choice of timestamps induces a stable model for a \lang program with no recursion through negation; If a \lang program has recursion through negation, only a causal choice of timestamps is permissible~\footnote{This lemma is similar in spirit to Hellerstein's CRON conjecture~\cite{declarative-imperative}.}.
 %\end{lemma}
 %
 %Note that we have not restricted \dedalus{async} to choose a timestamp in the future.  Thus, one may be concerned about a {\em temporal paradox}, such as the grandfather paradox.  A program that we might be worried about would be the following:
@@ -216,8 +220,11 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \vspace{1em}
 {\bf Computing the Ultimate Model:}
-Any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program, whose ultimate model can be computed in polynomial space, in the size of the input~\cite{tdd}. 
-Let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants from the generic universe, and let $c$ be the maximum depth of the timestamp of any input to the program---in this case, $c=1$, because all inputs are EDB, and all EDB facts are considered during the first timestamp.  The algorithm runs each partition of the program for $2^{G+1} + c$ timestamps and tracks the periodicity of each of the facts---there are polynomially many of these in the size of the data.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime, vardi-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$ are considered the EDB of the Datalog program at time $i+1$.
+We will compute each partition of $UM(P, E, ND)$ separately.  It is the case that $UM = $
+
+Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program, whose ultimate model can be computed in polynomial space in the size of the input~\cite{tdd}.  For a given node \dedalus{n}, let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants that appear in the program and $E_{\text{\dedalus{{\scriptsize n}}}}$, and let $c$ be the maximum timestamp of any fact not derived by a rule with body location variable bound to \dedalus{n}.  In this case, $c = 1$ becasue the only such facts are EDB, but this assumption will not hold when we consider asynchronous rules.
+
+The algorithm runs each partition of the program for $2^{G+1} + c$ timestamps and keeps track of the periodicity of each of the facts over the previous $2^G$ timestamps.  Note that $2^G$ is the maximum period of any fact~\cite{tdd}, and there are polynomially many facts.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime, vardi-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$, as well as the tuple \dedalus{successor(i+1, i+2)} are considered the EDB of the Datalog program at time $i+1$.
 
 
 With asynchronous rules, the $c=1$ assumption does not hold.  Asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp committed to by our algorithm.  We start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
@@ -228,7 +235,7 @@ Operationally, we can model a \lang execution as a collection of nodes (Turing M
 
 In other words, a fact, \dedalus{p(\dbar{c}, t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true at a node during some local phase represented by time \dedalus{t}.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true during the current phase given what is known during the current phase. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true during a later phase than their antecedents.
 
-Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by the nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is actually dequeued.
+Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The nondeterminism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by the nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is actually dequeued.
 
 \subsection{Modeling Failure}
 

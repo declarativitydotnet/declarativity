@@ -1,9 +1,9 @@
 \section{Confluence}
 
-For many distributed computations, achieving a determistic result for every input is desirable.  Recall that non-determinism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
-%which only occurs in asynchronous rules to model network non-determinism.  
-which model temporal non-determinism in unreliable networks.
-Model-theoretically, a non-deterministic result is manifest in multiple ultimate models.
+For many distributed computations, achieving a determistic result for every input is desirable.  Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
+%which only occurs in asynchronous rules to model network nondeterminism.  
+which model temporal nondeterminism in unreliable networks.
+Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
 
 \begin{definition}
 A \lang program is {\em confluent} (has a deterministic output) if, for every EDB, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
@@ -42,7 +42,7 @@ q(X)@next <- q(X);
 \end{Dedalus}
 \end{example}
 
-In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the non-deterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are asigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
+In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the nondeterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are asigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
 }
 
 \subsection{Sources of Diffluence}
@@ -428,7 +428,7 @@ Note that this process introduces additional asynchronous edges.  These asynchro
 
 \wrm{For universal constraint stratification, change the algorithm to do subsets and iterate over any constraints..  Probably need to rewrite the algorithm above, and present strat as a special case of UCS}
 
-\subsubsection{Non-Deterministic Coordination}
+\subsubsection{Nondeterministic Coordination}
 
 \begin{definition}
 A {\em consistently sealed ultimate model} ...
@@ -440,7 +440,7 @@ Consider what happens when we admit transient and permanent failures of nodes an
 
 Example~\ref{ex:nonconfluent} models exactly this -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
 
-We can instrument any \lang program without recursion through negation with non-deterministic coordination, using the following algorithm:
+We can instrument any \lang program without recursion through negation with nondeterministic coordination, using the following algorithm:
 
 \wrm{expand sketch}
 1. Build a predicate dependency graph of the program.
