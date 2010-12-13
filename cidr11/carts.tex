@@ -211,7 +211,7 @@ module DisorderlyCart
 
    response_msg <~ status.group( (*\label{line:dis_checkout_response_beg}*)
       [status.client, status.server, status.session],
-      accum((0..status.cnt).map{status.item})) (*\label{line:dis_checkout_response_end}*)
+      accum(status.cnt.times.map{status.item})) (*\label{line:dis_checkout_response_end}*)
   end
 end
 \end{lstlisting}
@@ -386,13 +386,14 @@ server replicas---crosses no points of order, so all the communication related
 to shopping actions converges to the same final state without coordination.
 However, there are points of order upon the appearance of \texttt{checkout\_msg}
 messages, which must be joined with an \texttt{action\_cnt} aggregate over the
-set of updates.  Although the accumulation of shopping actions is monotonic,
+set of updates.  
+Additionally, using the user-defined aggregate \texttt{accum} adds a
+point of order to the end of the dataflow, between \texttt{status} and 
+\texttt{response\_msg}.
+Although the accumulation of shopping actions is monotonic,
 summarization of the cart state requires us to assume (or rather, prove) that
 there will be no further cart actions.
-%\wrm{i don't think we need to explicitly spell out the race in gruesome detail below.  candidate for cutting.}
-%Consider a checkout message and a final update message racing from a client
-%to one of the replicas: the order in which they arrive will surely affect
-%the contents of the response message.
+
 Comparing Figure~\ref{fig:pdg-destructive-kvs-analysis} and
 Figure~\ref{fig:pdg-disorderly-analysis}, we can see that the disorderly cart
 requires less coordination than the destructive cart: to ensure that the
