@@ -1,18 +1,19 @@
-\chapter[MapReduce Beyond Batch]{MapReduce Beyond Batch}
+\chapter[MapReduce Online]{MapReduce Online}
 \label{ch:hop}
 
-MapReduce is typically applied to large batch-oriented computations that do
-not require any real-time completion constraints.  The Google MapReduce
+MapReduce is typically applied to large batch-oriented computations that do not
+require any real-time completion constraints.  The Google MapReduce
 framework~\cite{mapreduce-osdi} and open-source Hadoop system reinforce this
 usage model through a batch-processing implementation strategy: the entire
 output of each map and reduce task is \emph{materialized} to a local file
 before it can be consumed by the next stage.  Materialization allows for a
-simple and elegant checkpoint/restart fault tolerance mechanism that is critical
-in large deployments, which have a high probability of slowdowns or failures at
-worker nodes. However, batch-processing is not a requirement for fault tolerance. 
-Moreover, batch-processing prevents many online data processing
-strategies~\cite{onlineagg, borealis, stream, tcq-cidr} and its aggressive materialization
-strategy can be costly in terms of efficiency e.g., energy~\cite{yanpei}.
+simple and elegant checkpoint/restart fault tolerance mechanism that is
+critical in large deployments, which have a high probability of slowdowns or
+failures at worker nodes.  However, batch-processing is not a requirement for
+fault tolerance.  Moreover, batch-processing prevents many online data
+processing strategies~\cite{onlineagg, borealis, stream, tcq-cidr} and its
+aggressive materialization strategy can be costly in terms of efficiency e.g.,
+energy~\cite{yanpei}.
 
 In this chapter, we propose a modified MapReduce architecture in which
 intermediate data is \emph{pipelined} between operators, while preserving the

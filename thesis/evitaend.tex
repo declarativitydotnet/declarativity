@@ -1,0 +1,115 @@
+\chapter[Evita Raced: Declarative?]{Evita Raced: Declarative?}
+\label{ch:evitaend}
+
+When we started this work, the vision of declaratively specified query
+optimization was appealing thanks to its elegance and its promise of usability
+and maintainability.  Although we remain convinced on this front, our optimism
+was tempered by the pragmatics of developing software within a continuously
+changing system prototype.  Here we reflect on some of the (hard) lessons we
+learned while conducting this research.
+
+\section{A Candid Reflection}
+\label{ch:evitaend:sec:reflect}
+
+P2's notion of consecutive Datalog-style fixpoints, especially in networked
+environments, still had many rough edges, both on the design and on the
+engineering front.  Because deep down P2's runtime is an event-driven execution
+engine, its basic unit of atomicity was akin to a single iteration through a
+recursive query evaluation strategy like semina\"{\i}ve evaluation, generating a
+set of derived actions (tuples to be inserted, deleted, transmitted remotely,
+or evaluated locally for further deduction) from a single incoming event, and
+committing changes to the database atomically upon completion of such a
+step~\cite{LuThesis}.  P2's Datalog-style fixpoints were implemented as
+sequences of such single-event iterations.  As a result, the system's design
+shares both event-driven and logic-style flavors, with some remaining
+unresolved conflicts (e.g., stratified Datalog).
+%, and no explicit language constructs to bridge between the two.
+
+%One example is the notion of \ol{delete} rules, the semantics of which are
+%unclear.  How is one to handle delete rules triggered by the \emph{deletion} of
+%a base tuple?  The system certainly does not support -- semantically or
+%operationally -- the ``undeleting'' of tuples that were originally deleted due
+%to a base fact that is no longer in the database.  Similarly, the semantics for
+%multiple updates to the same tuple within the same fixpoint are undefined and a
+%local tie breaking rule is chosen to decide on a consistent ordering among
+%same-fixpoint updates to the same relation.  Compiler stages that do static
+%analysis might catch such dangerous rules and alert the user.
+
+Second, as in most prototypes, the programmer interface was not polished.
+Debugging was difficult, especially since the logic language made it tough to
+understand which value corresponded to which formal attribute in a long tuple of
+a dozen or more attributes.  Though concise, declaratively specified
+optimizations pack a punch in terms of density of concepts, which only becomes
+deadlier due to the (otherwise desirable) arbitrary order of rule execution.
+Certainly a better thought-out system to debug declarative programs --
+optimizations, no less -- would have made the job easier.  To be fair, however,
+our experience with building monolithic optimizers in production database
+management systems in the past was not a great deal rosier.  It is hard to
+debug code when the output's correctness (e.g., minimality of cost) is too
+expensive to verify.
+
+Third, the evolution of the \OVERLOG language had a long way to go.  The P2
+version of the language offered no modularity, making it tough to isolate and
+reuse logically distinct components.  It did have a rudimentary concrete type
+system, but had poor support for structured types like matrices and lists.
+\OVERLOG in P2 ``cut corners'' on the proper set-orientation of Datalog; since
+program stratification was not present in the system, dealing with streaming
+aggregates required us to resort to imperative tricks like matching ``counts'',
+computed in separate ``dataflow fixpoints'', to determine that state was ready
+to be finalized.
+
+Beyond particular characteristics of P2, one hard lesson we learned was that
+extensibility and ease of use at the top often comes at the expense of
+complexity below the extensibility layer.  The tabularization of compiler state
+to enable declarative optimizations also meant that even imperative compiler
+stages such as our bootstrap stages implemented in C++ had to use tables,
+foregoing their familiar interaction with C++ data structures.  Building glue
+libraries to ease this interaction might have relieved this pain.
+
+Nevertheless, despite these complaints, we were able to get all of our desired
+optimizations expressed in \OVERLOG in a highly compact way, as promised by the
+various earlier papers on P2.  By contrast, the initial version of P2 had no
+query optimizations of interest beyond localization, which was really a
+requirement imposed by the P2 dataflow architecture on rules containing
+distributed predicates.
+
+Finally, the cyclic dataflow used for stage scheduling in Evita Raced
+(Section~\ref{ch:evita:sec:stages}) resembles the continuous query engine of
+TelegraphCQ, with our StageScheduler and Demux elements working together to
+behave somewhat like the TelegraphCQ {\em eddy} operator~\cite{tcq-cidr}.  This
+connection occurred to us long after we developed our design, but in retrospect
+the analogy is quite natural: Evita Raced stages are akin to TelegraphCQ's
+``installed'' continuous queries, and P2's \OVERLOG queries are akin to data
+streaming into TelegraphCQ.
+
+\section{Conclusion} 
+\label{ch:opt:sec:summary} 
+
+The Evita Raced metacompilation framework allows \OVERLOG compilation tasks to
+be written in \OVERLOG and executed in the P2 runtime engine.  It provides
+significant extensibility via a relatively clean declarative language.  Many of
+the tasks of query optimization -- dynamic programming, dependency-graph
+construction and analysis, statistics gathering -- appear to be well served by
+a recursive query language.  The notion of metacompilation also leads to a very
+tight implementation with significant reuse of code needed for runtime
+processing.
+
+Even with the caveats expressed in Chapter~\ref{ch:evitaend:sec:reflect}, we are
+convinced that a declarative metacompiler is much easier to program and extend
+than the monolithic query optimizers we have worked on previously.  We are now
+at a point where we can add significant features (e.g., histograms, broadcast
+rewrites, stratification tests) in an hour or two, where they would otherwise
+have taken days or weeks of work in a traditional implementation.
+
+One surprising lesson of our work was the breadth of utility afforded by the
+metacompilation framework.  Although motivated by performance optimizations, we
+have used Evita Raced for a number of unforeseen tasks.  These include:
+automatically expanding user programs with instrumentation and monitoring
+logic; generating pretty-printers for intermediate program forms; language
+wrappers for secure networking functionality in the manner of
+SecLog~\cite{abadi-netdb07}; stratification detectors and other static code
+analysis.  None of these are performance optimizations per se, but all fit well
+within an extensible, declarative program manipulation framework.  More
+generally, we believe that metacompilation is a good design philosophy not only
+for our work, but for the upcoming generation of declarative engines being
+proposed in many fields.
