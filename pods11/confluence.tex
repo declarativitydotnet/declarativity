@@ -1,6 +1,6 @@
 \section{Confluence}
 
-For many distributed computations, achieving a determistic result for every input is desirable.  Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
+For many distributed computations, it is desirable to know that a deterministic result will be reached for every input, regardless of non-determinism in the environment.  Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
 which model temporal nondeterminism in unreliable networks.
 Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
@@ -16,7 +16,7 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 Confluence of a \lang program is undecidable.
 \end{lemma}
 \begin{proof}
-We reduce the undecidable problem of determining whether a two-counter machine accepts any input to confluence of a \lang program.  See appendix for details.
+We take the undecidable problem of determining whether a two-counter machine accepts any input, and reduce it to testing confluence of a \lang program.  See appendix for details.
 \end{proof}
 
 Given undecidability, we will first identify classes of programs that have a unique ultimate model.  However, in general, a \lang program may encode many ultimate models.  We will show that every \lang program has a ``natural'' ultimate model that is preferable to all other ultimate models, and corresponds to intuition.  We show how to induce this ultimate model by rewriting the program.
@@ -55,7 +55,7 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 %In Example~\ref{ex:nonconfluent}, we saw a \lang program that was difluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
 
 \begin{definition}
-If removing negation from a \lang program results in fewer ultimate models, we say the program has {\em nondeterministic world closing}.
+If removing negation \jmh{Is that notion well-defined?  Just drop the exclamation points?  Be clear since this is a surprising, semantics-changing thing to do.} from a \lang program results in fewer ultimate models, we say the program has {\em nondeterministic world closing}.
 \end{definition}
 
 \begin{example}
@@ -80,6 +80,7 @@ If a negation-free \lang program is diffluent, we say the program has {\em nonde
 \paa{isn't this backwards?  you are really saying, if a neg-free program is diffluent, it must be
 the case that it has nondeterministic coincidence, because we're pretty sure (I think I mostly proved it...) that's the only other thing that can cause diffluence... but for this definition,
 don't we just want to define ``unguarded asynchrony'' here?}
+\jmh{I agree that this seems like a lemma, not a definition.}
 
 \end{definition}
 
@@ -110,7 +111,7 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 \end{definition}
 
 \begin{definition}
-A predicate is  {\em persistent} if any fact in the predicate is henceforth true.
+A predicate is  {\em persistent} if any fact in the predicate is henceforth true \jmh{you haven't defined henceforth.}.
 \end{definition}
 
 Facts in persistent predicates are the only facts that appear in a program's ultimate models.
@@ -118,7 +119,7 @@ Persistence is a semantic notion, but in certain cases it is detectable from the
 syntax alone.  A rule of the form \dedalus{p(X)@next <- p(X);} clearly establishes \dedalus{p} as a persistent predicate for any EDB and execution in which \dedalus{p} is ever true. 
 We call a predicate referenced by such a rule
 a {\em simply persisted} predicate.  All EDB predicates are both simply persisted and 
-{\em a priori} true.
+{\em a priori} true.  \jmh{This last sentence surprised me.  Are you saying that is implicit in the language, or you will require simple persistence rules over the edb?  I though the edb facts were only true at time 1.}
 
 \begin{definition}
 A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates are simply persisted.
@@ -143,7 +144,7 @@ not in another model, and $p$ must be persistent, or it would not be
 in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
 choice of timestamp via an {\em async} rule, then certainly there is only one stable model of the
-program, so there must be at least one {\em async} rule.  If $p$ is derived directly from 
+program \jmh{I don't buy this; we're scoped down to atom $a$ here and the rules that feed into it}, so there must be at least one {\em async} rule.  If $p$ is derived directly from 
 an {\em async} rule via a series of derivation steps without any joins, then every stable
 model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
 and hence correspond to the same ultimate model.
