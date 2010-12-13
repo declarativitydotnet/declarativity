@@ -205,33 +205,27 @@ Note that ultimate models are always of finite cardinality because the only cons
 %nor do we include any predicates or rules added by rewriting \dedalus{choice}.
 
 \subsection{Operational Interpretation}
+
+\vspace{1em}
+{\bf Computing the Ultimate Model:}
+Any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program, whose ultimate model can be computed in polynomial space, in the size of the input~\cite{tdd}. 
+Let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants from the generic universe, and let $c$ be the maximum depth of any temporal fact---in this case, $c=1$, because all temporal facts are EDB, and all EDB facts are considered during the first timestamp.  The algorithm runs the program for $2^{G+1} + c$ timestamps and tracks the periodicity of each of the facts---there are polynomially many of these in the size of the data.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$ are considered the EDB of the Datalog program at time $i+1$.
+
+
+With asynchronous rules, the $c=1$ assumption does not hold.  Asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp committed to by our algorithm.  We start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
+
+
 %\wrm{talk about operational interpretation of choice}
-Operationally, we can model a \lang execution as a collection of Turing Machines caled nodes, each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts from atemporal rules are written to the tape, and for inductive rules are written to the queue.  Upon completion of a phase, the Turing Machine optionally sends messages about derived facts from asynchronous rules to the queues of the nodes indicated in the location specifiers.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
+Operationally, we can model a \lang execution as a collection of nodes (Turing Machines), each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts is written to the tape for atemporal rules, and is written to the queue for inductive rules.  Upon completion of a phase, the Turing Machine writes information about derived facts for asynchronous rules to the queues of the nodes indicated in the location specifiers.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
 
-In other words, a fact, \dedalus{p(\(\bar{c}\), t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true ``at time \dedalus{t}''.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true ``for an instant'' given what is known at that instant. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true ``at a different time'' than their antecedents.
+In other words, a fact, \dedalus{p(\(\bar{c}\), t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true at a node during some local phase represented by time \dedalus{t}.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true during the current phase given what is known during the current phase. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true during a later phase than their antecedents.
 
-Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is dequeued.
-
-Computing the ultimate model of a program with no asynchronous rules is easy---any \lang program with no asynchronous rules is a $\text{Datalog}_{1S}$ program, whose trivial periodicities can be computed in PSPACE~\cite{tdd}.  The algorithm involves 
-running the program for $2^{G+1} + c$ timestamps, where $G$ is the number of ways to instantiate all predicates with all constants from the generic universe, and $c$ is the maximum timestamp of any input.  In this case $c = 1$, because all EDB facts enter the EDB at once at time zero.  Running for this amount of time is sufficient to observe all periodicities.  The period of all facts can easily be recorded in polynomial space, as there are no more than polynomially many possible facts \wrm{facts are modulo time here...}.
-
-With asynchronous rules, there is a slight twist.  Asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp we commit to when running the program.  Thus, we start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
-
-Notice that this execution procedure emulates a finite prefix of some stable model.  We must argue that the final state generated by this procedure is the ultimate model of some complete stable model.
-
-\begin{lemma}
-Every ultimate model is computed by some execution of the operational formalism.
-\end{lemma}
-\begin{proof}
-Assume some ultimate model is not computed.  Consider the family of traces that yield that ultimate model.
-\end{proof}
+Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The non-determinism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by the nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is actually dequeued.
 
 \subsection{Modeling Failure}
 
 If we want \lang to model transient or permanent channel failure, we can add an element $\infty$ to \dedalus{time}, such that every element of $\mathbb{N}$ is less than $\infty$.  We also need to introduce the constraint \dedalus{T != \(\infty\)} into every \lang rule.
 
-Modeling failure introduces a whole host of new ultimate models.
-
-If we give up the bounded delay assumption, then messages that exceed the delay bounds are declared lost.
+Modeling failure introduces a whole host of new ultimate models. \wrm{expand}
 
 Except when explicitly mentioned, in the rest of the paper we will assume bounded delays---and thus no failures.
