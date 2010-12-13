@@ -224,14 +224,14 @@ side (lhs) in terms of the right-hand side (rhs).
 		\hline
 		Method & Description\\
 		\hline
-		\texttt{bc.map} & Inherited from Enumerable, takes a code block as an argument, and returns the collection formed by applying the code block to each element of \texttt{bc}\\
+		\texttt{bc.map} & Inherited from Enumerable, takes a code block as an argument, and returns the collection formed by applying the code block to each element of \texttt{bc}.\\
 		\texttt{bc.flat\_map} & Inherited from Enumerable, takes a code block and returns the collection formed by the concatenated (flattened) results of running block once for every element in \texttt{bc}.\\
-		\texttt{bc.reduce} & Inherited from Enumerable, takes an initial value, \texttt{memo} variable and code block, and applies the block to \texttt{memo} and each element of \texttt{bc} in turn.  Synonym for \texttt{bc.inject}\\
+		\texttt{bc.reduce} & Inherited from Enumerable, takes an initial value, \texttt{memo} variable and code block, and applies the block to \texttt{memo} and each element of \texttt{bc} in turn.\\
 		\texttt{bc.empty?} & Inherited from Enumerable, returns true if \texttt{bc} is empty.  Equivalent to negation in Datalog.\\
-    \texttt{bc.include?} & Inherited from Enumerable, takes an object as an argument and returns true if that object is equal to an element of \texttt{bc}.\\
+    \texttt{bc.include?} & Inherited from Enumerable, takes an object as an argument and returns true if that object is equal to any element of \texttt{bc}.\\
 		\texttt{bc.group} & Takes a list of grouping columns, a list of aggregate expressions and a block, computes the aggregates for each group, and applies the block to each group/aggregation result.\\
-		\texttt{bc.argmin, bc.argmax, bc.argagg} & \texttt{argmin} takes a list of grouping columns and another distinguished column \texttt{dist}, and returns the argmin of \texttt{bc.dist} for each group. \texttt{argmax} is analogous for maximum. \texttt{argagg} takes an exemplary aggregation function name as an additional argument and performs this logic using the chosen function.\\
-		\hline\hline
+		% \texttt{bc.argmin, bc.argmax, bc.argagg} & \texttt{argmin} takes a list of grouping columns and another distinguished column \texttt{dist}, and returns the argmin of \texttt{bc.dist} for each group. \texttt{argmax} is analogous for maximum. \texttt{argagg} takes an exemplary aggregation function name as an additional argument and performs this logic using the chosen function.\\
+		\hline \hline
 		\texttt{join, leftjoin, outerjoin, natjoin} & Methods of the Bud class to compute join variants over BudCollections.  \texttt{join}, \texttt{leftjoin} and \texttt{outerjoin} take an array of BudCollection names to join, as well as a variable-length list of arrays of join conditions.  The natural join \texttt{natjoin} takes only the array of BudCollection objects as an argument.\\
 		\hline
 	\end{tabular}
