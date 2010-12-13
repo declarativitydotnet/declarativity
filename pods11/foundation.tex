@@ -98,7 +98,7 @@ When we talk about the {\em predicate dependency graph} (PDG)~\cite{ullmanbook} 
 
 \vspace{1em}
 \noindent {\bf EDB:}
-By convention, EDB facts must be specified with a location, and without a time: EDB facts are true at timestamp \dedalus{1}.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  $E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  Like Datalog, we require the EDB to be finite.
+By convention, EDB facts must be specified with a location, and without a time: EDB facts are true at timestamp \dedalus{1}.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  Note that:$E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
@@ -158,7 +158,7 @@ flipflop(1,2)@1;
 
 \begin{definition}
 For each stable model, the cylic facts of period 1---so-called {\em trivially periodic} facts---comprise an {\em ultimate model} for the program.  We represent a trivially periodic fact in the ultimate model finitely by picking a representative, and discarding its timestamp.
-For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.   We refer to the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $UM(P, E, ND)$.  Note that it may be the case that $UM(P, E, ND_1) \neq UM(P, E, ND_2)$ if $ND_1 \neq ND_2$.
+For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.  We refer to the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $\mathcal{U}(P, E, ND)$.  Note that it may be the case that $\mathcal{U}(P, E, ND_1) \neq \mathcal{U}(P, E, ND_2)$ if $ND_1 \neq ND_2$.
 \end{definition}
 
 %The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
@@ -220,8 +220,8 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \vspace{1em}
 {\bf Computing the Ultimate Model:}
-We will compute each partition of $UM(P, E, ND)$ separately.  It is the case that $UM = $
-
+We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
+$$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$.
 Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program, whose ultimate model can be computed in polynomial space in the size of the input~\cite{tdd}.  For a given node \dedalus{n}, let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants that appear in the program and $E_{\text{\dedalus{{\scriptsize n}}}}$, and let $c$ be the maximum timestamp of any fact not derived by a rule with body location variable bound to \dedalus{n}.  In this case, $c = 1$ becasue the only such facts are EDB, but this assumption will not hold when we consider asynchronous rules.
 
 The algorithm runs each partition of the program for $2^{G+1} + c$ timestamps and keeps track of the periodicity of each of the facts over the previous $2^G$ timestamps.  Note that $2^G$ is the maximum period of any fact~\cite{tdd}, and there are polynomially many facts.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime, vardi-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$, as well as the tuple \dedalus{successor(i+1, i+2)} are considered the EDB of the Datalog program at time $i+1$.
