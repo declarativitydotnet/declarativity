@@ -66,7 +66,7 @@ r(#Y, A, B, S) <- e(#X, A, B, T), time(S), S > T,
 
 Since unification on the temporal attribute is required in every rule body,
 %(as well as the $!= \infty$ constraint)
-we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  We also omit the location specifier in local rules.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
+we introduce syntax sugar that omits the body temporal attributes.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal attribute and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  We also omit the location attribute in local rules.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
 
 \begin{example}
 \label{ex:sugared}
@@ -95,7 +95,7 @@ When we talk about the {\em predicate dependency graph} (PDG)~\cite{ullmanbook} 
 
 \vspace{1em}
 \noindent {\bf EDB:}
-By convention, EDB facts are supplied without a time suffix, and are true at the first time: timestamp \dedalus{0}.  Like Datalog, we require the EDB to be finite.
+By convention, EDB facts must be specified with a location, and without a time.  EDB facts are true at timestamp \dedalus{0}---the first timestamp.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
@@ -224,7 +224,7 @@ With asynchronous rules, the $c=1$ assumption does not hold.  Asynchronous facts
 
 
 %\wrm{talk about operational interpretation of choice}
-Operationally, we can model a \lang execution as a collection of nodes (Turing Machines), each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts is written to the tape for atemporal rules, and is written to the queue for inductive rules.  Upon completion of a phase, the Turing Machine writes information about derived facts for asynchronous rules to the queues of the nodes indicated in the location specifiers.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
+Operationally, we can model a \lang execution as a collection of nodes (Turing Machines), each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts is written to the tape for atemporal rules, and is written to the queue for inductive rules.  Upon completion of a phase, the Turing Machine writes information about derived facts for asynchronous rules to the queues of the nodes indicated in the location attributes.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
 
 In other words, a fact, \dedalus{p(\dbar{c}, t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true at a node during some local phase represented by time \dedalus{t}.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true during the current phase given what is known during the current phase. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true during a later phase than their antecedents.
 

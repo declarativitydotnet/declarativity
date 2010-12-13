@@ -386,7 +386,7 @@ Given any \lang program without recursion through negation, we can automatically
 
 1. Build a predicate dependency graph of the program. \wrm{explain the PDG earlier}
 2. Let \dedalus{p} be an asynchronous predicate, from which a negated or aggregated predicate is reachable above.
-3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location specifier.
+3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location attribute.
 4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, and \dedalus{completed\_p} are fesh predicate names.
 
 \noindent
