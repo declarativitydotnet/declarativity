@@ -84,7 +84,7 @@ module ReplicatedDisorderlyCart
   declare
   def replicate
     send_mcast <= action_msg.map do |a| 
-      [a.reqid, [a.session, a.reqid, a.item, a.action]] 
+      [a.reqid, [a.session, a.item, a.action, a.reqid]] 
     end
     cart_action <= pipe_chan.map{|c| c.payload }
   end
