@@ -148,7 +148,7 @@ flipflop(Y,X)@next \(\leftarrow\) flipflop(X,Y);
 flipflop(1,2)@1;
 \end{Dedalus}
 
-\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  In other words \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
+\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
 
 %by regarding the output of the program as those facts that are eventually always true.  Thus, if two stable models differ only momentarily, but are ``eventually the same,'' we regard these stable models as producing the same output.
@@ -216,26 +216,37 @@ Note that ultimate models are always of finite cardinality because the only cons
 %nor do we include any predicates or rules added by rewriting \dedalus{choice}.
 
 \subsection{Operational Interpretation}
-Our goal in defining an operational formalism is to map real-world behavior to models of our logic program. 
+Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  Our operational model of a distributed system is a distributed partial fixpoint computation.  As we will see, this naturally corresponds to our model-theoretic semantics.  We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
 
-Our operational model of a distributed system is a distributed partial fixpoint computation.  As we will see, this naturally corresponds to our model-theoretic semantics.  We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
-
-\subsubsection{Computing the Ultimate Model}
+\subsubsection{Distributed Partial Fixpoint}
 
 We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
 $$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$
 
-Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose ultimate model can be computed in polynomial space in the size of the input.  We present a variation of the algorithm given in~\cite{tdd} below, and then enhance it to support asynchronous rules.
+Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose ultimate model can be computed in polynomial space in the size of the input.  We present a variation of the algorithm given in~\cite{tdd} for programs without asynchronous rules, and then enhance it to support asynchronous rules.
 
 \vspace{1em}
-{\bf Without Asynchronous Rules:}
+{\bf Without asynchronous rules:}
 For a given node \dedalus{n}, let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants that appear in the program and $E_{\text{\dedalus{{\scriptsize n}}}}$, and let $c$ be the maximum timestamp of any fact in $E_{\text{\dedalus{{\scriptsize n}}}}$.  The algorithm runs $P$ on $E_{\text{\dedalus{{\scriptsize n}}}}$ for $2^{G+1} + c$ timestamps and keeps track of the periodicity of each of the facts over the previous $2^G$ timestamps.  Note that $2^G$ is the maximum period of any fact~\cite{tdd}, and there are at most polynomially many periodic facts.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime, vardi-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$, as well as the \dedalus{node} relation, and tuple \dedalus{successor(i+1, i+2)}, are considered the EDB of the Datalog program at time $i+1$.  The output of the procedure are all facts that are trivially periodic.
 
 \vspace{1em}
-{\bf Asynchronous Rules:}
+{\bf With asynchronous rules:}
 There are several complications with asynchronous rules.  First, for two nodes \dedalus{n}, \dedalus{m}, $E_{\text{\dedalus{{\scriptsize m}}}}$ may contain different constants than $E_{\text{\dedalus{{\scriptsize m}}}}$.  If \dedalus{n} and \dedalus{m} commit to values of $G$, and then communicate, they may introduce new constants into each others' universes, and their initial choice of $G$ may be too small.  Additionally, asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp our algorithm commits to.  Thus, the algorithm must enlarge $G$ to account for new constants, and extend computation whenever a new asynchronous fact arrives.
 
 We start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
+
+Note that a distributed partial fixpoint computation corresponds to a finite prefix of a stable model.  
+
+\begin{lemma}
+A distributed partial fixpoint of a \lang program is finitely computable.
+\end{lemma}
+
+\begin{lemma}   
+Any distributed partial fixpoint of a \lang program computes an ultimate model, and all ultimate models are computable by a distributed partial fixpoint computation.
+\end{lemma}
+\begin{proof}
+
+\end{proof}
 
 \subsubsection{Turing Machine Model}
 
