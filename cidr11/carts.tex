@@ -286,7 +286,7 @@ items into an array.
 \centering
 \includegraphics[width=1\linewidth]{fig/disorderly_complete.pdf}
 \vspace{-10pt}
-\caption{Visualization of a fully specified, replicated disorderly cart program.}
+\caption{Visualization of a fully specified disorderly cart program.}
 \label{fig:pdg-disorderly-analysis}
 \vspace{-2pt}
 \end{figure}
@@ -368,15 +368,15 @@ such informal reasoning can hide serious bugs. For example, consider what would 
 before any addition of that item: the delete would be ignored, leading to
 inconsistencies between replicas.
 
-A happier story emerges from our analysis of the disorderly implementation.
-Figure~\ref{fig:pdg-disorderly-base} shows a visualization of the basic
-disorderly cart whose implementation is presented in Figure~\ref{fig:dis-cart}.
-Its inputs and outputs are channels rather than interfaces, so the dataflow from
-source to sink is not completed.  Before we can install the program we must
-mixin code that connects input and output interfaces to \texttt{action\_msg},
-\texttt{checkout\_msg}, and \texttt{response\_msg}, as the CartClient does
-(Figure~\ref{fig:cart-client}).  Note that the disorderly cart has points of
-order on all paths but there are no cycles.
+A happier story emerges from our analysis of the disorderly cart service.
+Figure~\ref{fig:pdg-disorderly-base} shows a visualization of the core logic of
+the disorderly cart module presented in Figure~\ref{fig:dis-cart}.  This program
+is not complete: its inputs and outputs are channels rather than interfaces, so
+the dataflow from source to sink is not completed.  To complete this program, we
+must mixin code that connects input and output interfaces to
+\texttt{action\_msg}, \texttt{checkout\_msg}, and \texttt{response\_msg}, as the
+CartClient does (Figure~\ref{fig:cart-client}).  Note that the disorderly cart
+has points of order on all paths but there are no cycles.
 
 Figure~\ref{fig:pdg-disorderly-analysis} shows the analysis for a complete
 implementation that mixes in both the client code and logic that replicates the
