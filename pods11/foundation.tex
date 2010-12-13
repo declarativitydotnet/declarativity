@@ -39,20 +39,25 @@ All deductive and inductive rules must be local.  Asynchronous rules may either 
 
 \begin{example}
 \label{ex:nonsugared}
-Examples of local deductive, inductive, and asynchronous rules, respectively, where \dedalus{S} and \dedalus{T} are variables ranging over the temporal universe.
+Examples of local deductive, inductive, and asynchronous rules, and a communication rule, where \dedalus{S} and \dedalus{T} are variables ranging over the temporal universe.
 \\\\
-deductive:
+deductive:\\
 \begin{Dedalus}
 p(#X, A, B, T) <- e(#X, A, B, T);
 \end{Dedalus}
-inductive:
+inductive:\\
 \begin{Dedalus}
 q(#X, A, B, S) <- e(#X, A, B, T), successor(T, S);
 \end{Dedalus}
-asynchronous:
+asynchronous local:\\
 \begin{Dedalus}
 r(#X, A, B, S) <- e(#X, A, B, T), time(S), S > T,
               choice((A, B, T), (S));
+\end{Dedalus}
+asynchronous communication:\\
+\begin{Dedalus}
+r(#Y, A, B, S) <- e(#X, A, B, T), time(S), S > T,
+              choice((A, B, T), (S)), neighbor(#X, Y);
 \end{Dedalus}
 \end{example}
 
@@ -60,23 +65,27 @@ r(#X, A, B, S) <- e(#X, A, B, T), time(S), S > T,
 
 Since unification on the temporal attribute is required in every rule body,
 %(as well as the $!= \infty$ constraint)
-we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
+we introduce syntax sugar that omits the body temporal variable.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal variable and instead introduce a temporal annotation: \dedalus{@next} or \dedalus{@async}.  We also omit the location specifier in local rules.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
 
 \begin{example}
 \label{ex:sugared}
 The rules from Example~\ref{ex:nonsugared} in sugared form.
 \\\\
-deductive:
+deductive:\\
 \begin{Dedalus}
-p(A, B) \(\leftarrow\) e(A, B);
+p(A, B) <- e(A, B);
 \end{Dedalus}
-inductive:
+inductive:\\
 \begin{Dedalus}
-q(A, B)@next \(\leftarrow\) e(A, B);
+q(A, B)@next <- e(A, B);
 \end{Dedalus}
-asynchronous:
+asynchronous local:\\
 \begin{Dedalus}
-r(A, B)@async \(\leftarrow\) e(A, B);
+r(A, B)@async <- e(A, B);
+\end{Dedalus}
+asynchronous communication:\\
+\begin{Dedalus}
+r(#Y, A, B)@async <- e(#X, A, B), neighbor(#X, Y);
 \end{Dedalus}
 \end{example}
 
