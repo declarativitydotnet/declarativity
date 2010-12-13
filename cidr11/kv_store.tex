@@ -1,12 +1,13 @@
 \section{Case Study: Key-Value Store}
 \label{sec:kvs}
 In this section, we present two variants of a key-value store (KVS) implemented
-using Bloom. We begin with an abstract protocol that any key-value store will
-satisfy, and then provide both single-node and replicated implementations of
-this protocol. We then introduce a graphical visualization of the dataflow in a
-Bloom program and use this visualization to reason about the \emph{points of
-  order} in our programs: places where additional coordination may be required
-to guarantee consistent results.% (Section~\ref{sec:calm}).
+using Bloom.\footnote{The complete source code for both of the case studies
+  presented in this paper can be found at \smallurl{http://boom.cs.berkeley.edu/cidr11/}.}  We begin with an
+abstract protocol that any key-value store will satisfy, and then provide both
+single-node and replicated implementations of this protocol. We then introduce a
+graphical visualization of the dataflow in a Bloom program and use this
+visualization to reason about the \emph{points of order} in our programs: places
+where additional coordination may be required to guarantee consistent results.
 
 \subsection{Abstract Key-Value Store Protocol}
 
