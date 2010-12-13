@@ -308,6 +308,7 @@ element in \dedalus{b\_edb()} according to the order \dedalus{<}.
 Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{mem()} is not supported by only monotonic properties, thus the program is not logically monotonic.
 
 \subsection{Perfect Ultimate Model}
+\jmh{motivate coordination by analogy to practice}
 Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultimate models).
 
 Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
@@ -333,7 +334,7 @@ true(X)@next <- true(X);
 \end{Dedalus}
 \end{example}
 
-Intuitively this program represents a group of nodes (the ``sayers'') making statements to another group of nodes called ``listeners''.  The sayers also occasionally remark that a statement is false (but a sayer may only declare one of his statements to be false -- not the statement of another sayer).  One may expect the contents of \dedalus{true} to contain all statements that are not \dedalus{false}.  However, this is not necessarily the case.  Recall that the un-sugared version of the third rule is:
+Intuitively this program represents a group of nodes (the ``sayers'') making statements to another group of nodes called ``listeners''.  The sayers also occasionally remark that a statement is false (but a sayer may only declare one of his own statements to be false -- not the statement of another sayer).  One may expect the contents of \dedalus{true} to contain all statements that are not \dedalus{false}.  However, this is not necessarily the case.  Recall that the un-sugared version of the third rule is:
 
 \begin{Dedalus}
 true(X,T) <- statement(X,T), !false(X,T);
@@ -348,7 +349,7 @@ The {\em temporal flattening} of a \lang program is the original program with al
 Note that the temporal flattening of a \lang program is a Datalog program.
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program whose temporal flattening is syntactically stratified is the ultimate model induced by ensuring that for every predicate that appears negated in the program, all facts in that predicate are known before the negation is applied.  In other words, one must have ``complete information'' before applying the closed-world assumption for negation.  This intuitively corresponds to the notion of stratified evaluation for Datalog programs, where a fixpoint is computed for each stratum in stratum order.
+The {\em perfect ultimate model} of a \lang program whose temporal flattening is syntactically stratified \jmh{is a citation or definition required for syntactic stratification?} is the ultimate model induced by ensuring that for every predicate that appears negated in the program, all facts in that predicate are known before the negation is applied. \jmh{this is ill-defined.  when is negation ``applied''?  need to tighten up .. one way is to do it is to simply define the PUU as the model induced by coordination.} In other words, one must have ``complete information'' before applying the closed-world assumption for negation.  This intuitively corresponds to the notion of stratified evaluation for Datalog programs, where a fixpoint is computed for each stratum in stratum order.
 %\wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
 %programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
 %corresponding to their ``coordinated'' evaluation(s)}
@@ -358,7 +359,7 @@ The {\em perfect ultimate model} of a \lang program whose temporal flattening is
 The {\em perfect ultimate model} of a \lang program whose temporal flattening is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program subsets are completed in the partial order associated with the stratification.
 \end{definition}
 
-There is always a stable model representing the perfect ultimate model of a \lang program whose flattening is syntactically stratified, because there is no recursion through negation, and Lemma~\ref{cron} tells us that any choice of timestamps is permissible in this case.
+There is always a stable model representing the perfect ultimate model of a \lang program whose flattening is syntactically stratified, because there is no recursion through negation, and Lemma~\ref{cron} tells us that any choice of timestamps is permissible in this case.\jmh{huh?}
 
 In Example~\ref{ex:sayers}, the perfect ultimate model is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.  In particular, we can modify the program to be confluent with the perfect ultimate model by ensuring that negation is not applied until the \dedalus{false} set is complete.  It turns out we can generalize this into an algorithm for all \lang programs whose temporal flattening is syntactically stratified.
 
@@ -393,7 +394,7 @@ Given any \lang program without recursion through negation, we can automatically
 1. Build a predicate dependency graph of the program. \wrm{explain the PDG earlier}
 2. Let \dedalus{p} be an asynchronous predicate, from which a negated or aggregated predicate is reachable above.
 3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location attribute.
-4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, and \dedalus{completed\_p} are fesh predicate names.
+4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, and \dedalus{completed\_p} are fresh predicate names.
 
 \noindent
 \begin{Dedalus}
