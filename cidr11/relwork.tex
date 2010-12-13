@@ -1,36 +1,20 @@
 \section{Related Work}
 \label{sec:relwork}
-The shopping cart case study in Section~\ref{sec:case} was motivated by the
-Amazon Dynamo paper~\cite{dynamo}, as well as the related discussion by Helland
-and Campbell~\cite{quicksand}. Systems with loose consistency requirements have
+Systems with loose consistency requirements have
 been explored in depth by both the systems and database management communities
 (e.g.,~\cite{sagas,leases,dangers,bayou}); we do not attempt to provide
-an exhaustive survey here.
+an exhaustive survey here.  The shopping cart case study in Section~\ref{sec:case} was motivated by the
+Amazon Dynamo paper~\cite{dynamo}, as well as the related discussion by Helland
+and Campbell~\cite{quicksand}. 
 
 The Bloom language is inspired by earlier work that attempts to integrate
 databases and programming languages.  This includes early research such as
 Gem~\cite{gem} and more recent object-relational mapping layers such as Ruby on
 Rails.  Unlike these efforts, Bloom is targeted at the development of both
 distributed infrastructure and distributed applications, so it does not make any
-assumptions about the presence of a database system ``underneath it.''  Given
+assumptions about the presence of a database system ``underneath''.  Given
 our prototype implementation in Ruby, it is tempting to integrate Bud with
 Rails; we have left this for future work.
-
-Our work on Bloom bears a resemblance to the Reactor
-language~\cite{reactors}. Both languages target distributed programming and are
-grounded in Datalog. Moreover, both languages combine declarative rules and
-state into a single program construct. While Bloom uses a syntax inspired by
-object-oriented languages, Reactor takes a more explicitly agent-oriented
-approach. Reactor also includes synchronous coupling between agents as a
-primitive; we have opted to only include asynchronous communication as a
-language primitive and to provide synchronous coordination between nodes as a
-library. Another significant different is that, like many rule-based languages,
-Reactor includes some imperative constructs, whereas statements in Bloom are
-purely declarative.
-
-Another recent language related to our work is Coherence~\cite{coherence}, which
-also embraces ``disorderly'' programming. Unlike Bloom, Coherence is not
-targeted at distributed computing and is not based on logic programming.
 
 There is a long history of attempts to design programming languages more
 suitable to parallel and distributed systems; for example, Argus~\cite{argus}
@@ -53,3 +37,22 @@ database theory helped produce a simple but useful program analysis
 technique. While we would be happy to see the analysis ``ported'' to other
 distributed programming environments, it may be that design patterns using
 Bloom-esque disorderly programming are the natural way to achieve this.
+
+Our work on Bloom bears a resemblance to the Reactor
+language~\cite{reactors}. Both languages target distributed programming and are
+grounded in Datalog. 
+% No idea what the next sentence means -- JMH
+%Moreover, both languages combine declarative rules and state into a single program construct. 
+Like many other rule languages including our earlier work on Overlog, Reactor updates mutable state in an operational step ``outside Datalog'' after each fixpoint computation.  By contrast, Bloom is purely declarative: following Dedalus, it models updates as the logical derivation of immutable ``versions'' of collections over time.   While Bloom uses a syntax inspired by
+object-oriented languages, Reactor takes a more explicitly agent-oriented
+approach. Reactor also includes synchronous coupling between agents as a
+primitive; we have opted to only include asynchronous communication as a
+language primitive and to provide synchronous coordination between nodes as a
+library. 
+% Another significant different is that, like many rule-based languages,
+% Reactor includes some imperative constructs, whereas statements in Bloom are
+% purely declarative.
+
+Another recent language related to our work is Coherence~\cite{coherence}, which
+also embraces ``disorderly'' programming. Unlike Bloom, Coherence is not
+targeted at distributed computing and is not based on logic programming.

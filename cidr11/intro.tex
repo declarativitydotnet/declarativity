@@ -8,7 +8,7 @@ There are two main bodies of work to guide programmers through these issues.  Th
 %  The interaction of these mechanisms with message delays and node failures often results in data being unavailable. This not only stalls jobs that depend on that data, it also produces transitive delays for other jobs via queueing effects that can be hard to contain.  
 As a result, there is a great deal of interest in building distributed software that avoids using these mechanisms.
 
-The second point of reference is a long tradition of research and system development that uses application-specific reasoning to tolerate ``loose'' consistency arising from flexible ordering of reads, writes and messages (e.g., \cite{sagas,beyond,quicksand,base}). This approach enables machines to more easily tolerate temporary delays, message reordering, and component failures.  
+The second point of reference is a long tradition of research and system development that uses application-specific reasoning to tolerate ``loose'' consistency arising from flexible ordering of reads, writes and messages (e.g., \cite{sagas,bayou,beyond,quicksand,base}). This approach enables machines to continue operating in the face of temporary delays, message reordering, and component failures.  
 % Results include simplified code, improved responsiveness, and a restriction on the effects of delays and failures to those tasks that are directly accessing the unavailable resources.  
 The challenge with this design style is to ensure that the resulting software tolerates the inconsistencies in a meaningful way, producing acceptable results in all cases.  Although there is a body of wisdom and best practices that informs this approach, there are few concrete software development tools that codify these ideas.  Hence it is typically unclear what guarantees are provided by systems built in this style, and the resulting code is hard to test and hard to trust.  
 %\jmh{The following is useful somewhere, but I chopped it from here as  unnecessary.  It is generally bad software engineering practice to rely on programmer wisdom, which is hard to maintain as code evolves and teams shift over time.}
@@ -19,8 +19,8 @@ program properties in the face of loosely coordinated consistency.  In this
 paper we demonstrate significant progress in this direction.  Our approach is
 based on the use of a declarative language and program analysis techniques that
 enable both static analyses and runtime annotations of consistency.  We begin by
-introducing the \emph{CALM} principle, which makes a formal connection between
-the theory of monotonic logic and the need for distributed coordination to
+introducing the \emph{CALM} principle, which connects
+the theory of non-monotonic logic to the need for distributed coordination to
 achieve consistency.  We present an initial version of our {\em Bloom}
 declarative language, and translate concepts of monotonicity into a practical
 program analysis technique that detects potential consistency anomalies in

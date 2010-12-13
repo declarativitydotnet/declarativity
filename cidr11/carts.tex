@@ -22,9 +22,7 @@ An abstract shopping cart protocol is presented in
 Figure~\ref{fig:cart-protocol}. Figure~\ref{fig:cart-client} contains a simple
 shopping cart client program: it takes client operations (represented as
 \texttt{client\_action} and \texttt{client\_checkout} facts) and sends them to
-the shopping cart service using the CartProtocol. We assume that clients have
-some mechanism for choosing which cart server replica to send requests to (e.g.,
-based on load balancing).
+the shopping cart service using the CartProtocol. We omit logic for clients to choose a cart server replica; this can be based on simple policies like round-robin or random selection, or via more explicit load balancing.
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -252,7 +250,7 @@ Upon the appearance of a \texttt{checkout\_msg}, the replica returns a
 \texttt{response\_msg} to the client containing the final quantity
 (lines~\ref{line:dis_checkout_response_beg}--\ref{line:dis_checkout_response_end}).
 Because the CartClient expects the cart to be returned as an array of items on
-checkout, we use the \texttt{accum} aggregate function to flatten the set of
+checkout, we use the \texttt{accum} aggregate function to nest the set of
 items into an array.
 
 %Because the disorderly implementation does not use a separate storage system,
@@ -389,8 +387,7 @@ messages, which must be joined with an \texttt{action\_cnt} aggregate over the
 set of updates.  Additionally, using the \texttt{accum} aggregate adds a point
 of order to the end of the dataflow, between \texttt{status} and
 \texttt{response\_msg}.  Although the accumulation of shopping actions is
-monotonic, summarization of the cart state requires us to assume (or rather,
-prove) that there will be no further cart actions.
+monotonic, summarization of the cart state requires us to ensure that there will be no further cart actions.
 
 Comparing Figure~\ref{fig:pdg-destructive-kvs-analysis} and
 Figure~\ref{fig:pdg-disorderly-analysis}, we can see that the disorderly cart

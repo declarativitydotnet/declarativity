@@ -6,7 +6,7 @@ satisfy, and then provide both single-node and replicated implementations of
 this protocol. We then introduce a graphical visualization of the dataflow in a
 Bloom program and use this visualization to reason about the \emph{points of
   order} in our programs: places where additional coordination may be required
-to guarantee consistent results (Section~\ref{sec:calm}).
+to guarantee consistent results.% (Section~\ref{sec:calm}).
 
 \subsection{Abstract Key-Value Store Protocol}
 
@@ -89,8 +89,8 @@ end
 Figure~\ref{fig:kvs-impl} contains a single-node implementation of the abstract
 key-value store protocol. Key-value pairs are stored in a persistent table
 called \texttt{kvstate} (line~\ref{line:kvs-state}). When a \texttt{kvput} tuple
-is received, its key-value pair is stored in \texttt{kvstate} at the immediately
-following timestep (line~\ref{line:kvs-put}).  If the given key already exists
+is received, its key-value pair is stored in \texttt{kvstate} at the next
+timestep (line~\ref{line:kvs-put}).  If the given key already exists
 in \texttt{kvstate}, we want to replace the key's old value. This is done by
 joining \texttt{kvput} against the current version of \texttt{kvstate}
 (line~\ref{line:kvs-join}). If a matching tuple is found, the old key-value pair
@@ -144,7 +144,7 @@ end
 
 Next, we extend the basic key-value store implementation to support replication
 (Figure~\ref{fig:kvs-repl}). To communicate between replicas, we use a simple
-multicast library implemented in Bloom; the complete source code for this
+multicast library implemented in Bloom; the source code for this
 library can be found in Appendix~\ref{app:network-code}. To send a multicast, a
 program inserts a fact into \texttt{send\_mcast}; a corresponding fact appears
 in \texttt{mcast\_done} when the multicast is complete. The multicast library
@@ -164,10 +164,10 @@ received by a peer replica
 \texttt{@local\_addr} is a Ruby instance variable defined by Bud that contains the
 network address of the current Bud instance.
 
-Note that ReplicatedKVS wants to ``intercept'' \texttt{kvput} events from
+In Figure~\ref{fig:kvs-repl} ReplicatedKVS wants to ``intercept'' \texttt{kvput} events from
 clients, and only apply them to the underlying BasicKVS module when certain
 conditions are met. To achieve this, we ``override'' the declaration of the
-\texttt{kvput} input interface
+\texttt{kvput} input interface as discussed in Section~\ref{sec:modularity}
 (lines~\ref{line:rep-put-beg}--\ref{line:rep-put-end}). In ReplicatedKVS,
 references to \texttt{kvput} appearing in the lhs of statements are resolved to the
 \texttt{kvput} provided by BasicKVS, while references in the rhs of statements
@@ -190,7 +190,7 @@ class RealizedReplicatedKVS < Bud
 end
 
 kvs = RealizedReplicatedKVS.new("localhost", 12345)  (*\label{line:instantiate}*)
-kvs.run_bg  (*\label{line:run}*)
+kvs.run  (*\label{line:run}*)
 \end{lstlisting}
 \centering
 \vspace{-10pt}
@@ -219,7 +219,7 @@ the two key-value store implementations.
 A Bloom program may be viewed as a dataflow graph with external input interfaces
 as sources, external output interfaces as sinks, collections as internal nodes,
 and rules as edges. This graph represents the dependencies between the
-collections in a program and can be generated automatically by the Bud
+collections in a program and is generated automatically by the Bud
 interpreter. Figure~\ref{fig:analysis-legend} contains a list of the different
 symbols and annotations in the graphical visualization; we provide a brief
 summary below.
@@ -245,8 +245,9 @@ all edges incident to a temporal cluster, including their implicit self-edge.
 
 \subsection{Analysis}
 Figure~\ref{fig:pdg-kvs-proto-analysis} presents a visual representation of the
-abstract key-value store protocol. The diagram depicts the semantics implied by
-the protocol's interfaces. Naturally, the abstract protocol does not specify a
+abstract key-value store protocol. 
+% The diagram depicts the semantics implied by the protocol's interfaces. 
+Naturally, the abstract protocol does not specify a
 connection between the input and output events; this is indicated in the diagram
 by the red diamond labeled with ``??'', denoting an underspecified dataflow. A
 concrete realization of the key-value store protocol must, at minimum, supply a
