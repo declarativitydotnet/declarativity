@@ -111,12 +111,15 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 \end{definition}
 
 \begin{definition}
-A predicate is  {\em persistent} if any fact in the predicate is henceforth true \jmh{you haven't defined henceforth.}.
+
+A fact is  {\em persistent} if it is henceforth true.
+ \jmh{you haven't defined henceforth.}.
 \end{definition}
 
-Facts in persistent predicates are the only facts that appear in a program's ultimate models.
+Persistent facts are the only facts that appear in a program's ultimate models.
 Persistence is a semantic notion, but in certain cases it is detectable from the program's 
-syntax alone.  A rule of the form \dedalus{p(X)@next <- p(X);} clearly establishes \dedalus{p} as a persistent predicate for any EDB and execution in which \dedalus{p} is ever true. 
+syntax alone.  A rule of the form \dedalus{p(X)@next <- p(X);} clearly establishes any fact
+in \dedalus{p} as a persistent fact for any EDB and execution in which \dedalus{p} is ever true. 
 We call a predicate referenced by such a rule
 a {\em simply persisted} predicate.  All EDB predicates are both simply persisted and 
 {\em a priori} true.  \jmh{This last sentence surprised me.  Are you saying that is implicit in the language, or you will require simple persistence rules over the edb?  I though the edb facts were only true at time 1.}
@@ -140,7 +143,7 @@ A negation-free \lang program with guarded asynchrony is confluent.
 Towards a proof by contradiction, consider a negation-free \lang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
-not in another model, and $p$ must be persistent, or it would not be
+not in another model, and $a$ must be persistent, or it would not be
 in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
 choice of timestamp via an {\em async} rule, then certainly there is only one stable model of the
@@ -176,14 +179,14 @@ fact that will never be true.  We may define monotonic properties constructively
 
 
 \begin{definition}
-A fact in a persistent predicate is a monotonic property. 
+A persistent fact is a monotonic property. 
 %\wrm{also, we should start from EDB, and say that's a persistent relation}
 %\paa{need to clearly define EDB in dedalus.  those predicates appearing only in the RHS 
 %of rules, which furthermore are persistent?  what do we call those predicates for which the 
 %latter is false?} \wrm{There are no predicates for which the latter is false I guess.  Does that seem reasonable?}
 \end{definition}
 
-Note that facts in simply persistent relations cannot be retracted once they are asserted.  They begin false
+Note that facts in simply persisted relations cannot be retracted once they are asserted.  They begin false
 (insofar as their compliment can be asserted), and if they become true remain so.
 
 \begin{definition}
