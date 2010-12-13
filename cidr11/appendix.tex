@@ -76,7 +76,6 @@ end
 \begin{figure}[h]
 \begin{scriptsize}
 \begin{lstlisting}
-
 module ReplicatedDisorderlyCart
   include DisorderlyCart
   include MulticastProtocol
@@ -86,16 +85,14 @@ module ReplicatedDisorderlyCart
     send_mcast <= action_msg.map do |a| 
       [a.reqid, [a.session, a.item, a.action, a.reqid]] 
     end
-    cart_action <= pipe_chan.map{|c| c.payload }
+    cart_action <= pipe_chan.map{|c| c.payload}
   end
 end
-
-
 \end{lstlisting}
 \centering
 \vspace{-10pt}
 \caption{Replication logic for the disorderly cart .}
-\label{fig:multicast-impl}
+\label{fig:disorderly-repl}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
@@ -104,18 +101,16 @@ end
 \begin{figure}[h]
 \begin{scriptsize}
 \begin{lstlisting}
-
 class CompleteDisorderlyCart < Bud
   include ReplicatedDisorderlyCart
   include SimpleMulticast
   include BestEffortDelivery
 end
-
 \end{lstlisting}
 \centering
 \vspace{-10pt}
 \caption{An executable disorderly cart program.}
-\label{fig:multicast-impl}
+\label{fig:disorderly-complete}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
