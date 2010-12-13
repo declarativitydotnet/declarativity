@@ -309,7 +309,7 @@ Thus it is confluent.  However, the program is not logically monotonic because n
 
 \subsection{Perfect Ultimate Model}
 \jmh{motivate coordination by analogy to practice}
-Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model} (which is one of the original program's ultimate models).
+Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model}.
 
 Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
 
@@ -343,13 +343,9 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-The {\em temporal flattening} of a \lang program is the original program with all inductive and asynchronous rules made deductive.
-\end{definition}
-
-Note that the temporal flattening of a \lang program is a Datalog program.
-
-\begin{definition}
-The {\em perfect ultimate model} of a \lang program whose temporal flattening is syntactically stratified \jmh{is a citation or definition required for syntactic stratification?} is the ultimate model induced by ensuring that for every predicate that appears negated in the program, all facts in that predicate are known before the negation is applied. \jmh{this is ill-defined.  when is negation ``applied''?  need to tighten up .. one way is to do it is to simply define the PUU as the model induced by coordination.} In other words, one must have ``complete information'' before applying the closed-world assumption for negation.  This intuitively corresponds to the notion of stratified evaluation for Datalog programs, where a fixpoint is computed for each stratum in stratum order.
+The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG is the ultimate model induced by ensuring a rule containing an atom \dedalus{!p(\dbar{X})} or \dedalus{p(\dbar{X}, count<Y>)} is not evaluated until the complete set of facts in \dedalus{p} is known.
+%In other words, one must have ``complete information'' before applying the closed-world assumption for negation.
+This intuitively corresponds to the definition of a perfect model from the Datalog literature.
 %\wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
 %programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
 %corresponding to their ``coordinated'' evaluation(s)}
