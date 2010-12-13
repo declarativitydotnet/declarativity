@@ -377,18 +377,19 @@ CartClient does (Figure~\ref{fig:cart-client}).  Note that the disorderly cart
 has points of order on all paths but there are no cycles.
 
 Figure~\ref{fig:pdg-disorderly-analysis} shows the analysis for a complete
-implementation (presented in Figure~\ref{fig:complete-dis-cart} in the appendix) 
-that mixes in both the client code and logic that replicates the
-\texttt{cart\_action} table via a best-effort multicast protocol.  Note that
-communication (via \texttt{action\_msg}) between client and server---and among
-server replicas---crosses no points of order, so all the communication related
-to shopping actions converges to the same final state without coordination.
-However, there are points of order upon the appearance of \texttt{checkout\_msg}
-messages, which must be joined with an \texttt{action\_cnt} aggregate over the
-set of updates.  Additionally, using the \texttt{accum} aggregate adds a point
-of order to the end of the dataflow, between \texttt{status} and
-\texttt{response\_msg}.  Although the accumulation of shopping actions is
-monotonic, summarization of the cart state requires us to ensure that there will be no further cart actions.
+implementation that mixes in both the client code and logic that replicates the
+\texttt{cart\_action} table via a best-effort multicast protocol (see
+Figure~\ref{fig:complete-dis-cart} in Appendix~\ref{app:network-code} for the
+corresponding source code).  Note that communication (via \texttt{action\_msg})
+between client and server---and among server replicas---crosses no points of
+order, so all the communication related to shopping actions converges to the
+same final state without coordination.  However, there are points of order upon
+the appearance of \texttt{checkout\_msg} messages, which must be joined with an
+\texttt{action\_cnt} aggregate over the set of updates.  Additionally, using the
+\texttt{accum} aggregate adds a point of order to the end of the dataflow,
+between \texttt{status} and \texttt{response\_msg}.  Although the accumulation
+of shopping actions is monotonic, summarization of the cart state requires us to
+ensure that there will be no further cart actions.
 
 Comparing Figure~\ref{fig:pdg-destructive-kvs-analysis} and
 Figure~\ref{fig:pdg-disorderly-analysis}, we can see that the disorderly cart
