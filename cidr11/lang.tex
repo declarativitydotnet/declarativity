@@ -204,12 +204,14 @@ Bloom statements are declarative relational expressions that define the contents
 of derived collections.  They can be viewed operationally as specifying the insertion or accumulation of expression results into collections.  The syntax
 is:\\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
-$<$collection-expression$>$}}\\ \noindent In the Bud prototype, both sides of
-the operator are instances of (a descendant of) a Ruby class called
-\texttt{BudCollection}, which inherits Ruby's built-in \texttt{Enumerable}
-module supporting typical collection methods.  The bottom of Figure~\ref{tab:bloom} describes
-the five operators that can be used to define the contents of the left-hand
-side (lhs) in terms of the right-hand side (rhs).
+$<$collection-expression$>$}}\\ \noindent
+The bottom of Figure~\ref{tab:bloom} describes the five operators that can be
+used to define the contents of the left-hand side (lhs) in terms of the
+right-hand side (rhs). In the Bud prototype, both sides of the operator are
+instances of (a descendant of) a Ruby class called \texttt{BudCollection}, which
+supports several useful methods for manipulating collections. Note that many of
+these methods are provided by the standard Ruby \texttt{Enumerable} module,
+which \texttt{BudCollection} imports.
 
 \begin{figure}
 	\begin{small}
