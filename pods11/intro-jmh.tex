@@ -1,0 +1,13 @@
+\section{Introduction}
+Motivation stolen from CIDR: Prevalence of distributed programming.  Need to enforce correctness of state update across space and time. Current choices are ``ACID'' ideas grounded in serializability and consensus theory, or ``loose consistency'' based in best practices.  The latter increasingly of interest at scale, as transactions often considered undesirable for latency and availability reasons.
+
+There has been recent interest in using LP for distributed programming, and this has led to optimism about using database theory to formalize the properties and requirements for key design patterns in distributed systems.
+
+Here we report progress on this front.  Utilizing a model-theoretic representation of distributed programs based in our Dedalus language, we demonstrate the undecidability of program tests for two key distributed systems properties: confluence in the face of message delays and reordering, and eventual consistency of replicas.  However, we are able to use the same framework to develop a number of constructive results:
+\begin{itemize}
+	\item We demonstrate that distributed programs satisfying a broad definition of  monotonicity are guaranteed to be confluent in the face of message delays and reordering.
+	\item We provide a natural interpretation for non-monotonic program semantics in the face of non-deterministic delays and reorderings, and provide a generic construction for rewriting non-monotonic distributed programs that ensures these semantics.
+	\item We show how the eventual consistency of distributed replicas can be formally guaranteed via a natural construction for data replication.
+\end{itemize}
+
+These results have been used to develop practical software analysis tools for distributed logic programming~\cite{cidr11}.  Additionally, in this paper we provide a mapping from our logical framework to a state-machine model of distributed computing that more naturally captures traditional imperative programs.
