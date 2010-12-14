@@ -12,9 +12,9 @@ The balance of the arguments are generic and may not take on values from the tem
 
 We assume an infinite binary relation over the temporal universe
 %(except $\infty$)
-called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$, which has no distinguished temporal attribute.  We will also make use Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of nondeterminism, which we use to model the inherent nondeterminism of asynchronous distributed computation.  The atom \dedalus{choice((\dbar{X}), (\dbar{Y}))} in a rule---where \dedalus{\dbar{X}}, \dedalus{\dbar{Y}} are subsets of the variables in the rule---implies the functional dependency \dedalus{\dbar{X}} $\rightarrow$ \dedalus{\dbar{Y}}.  The \dedalus{choice} atom is syntactic sugar for a cycle through negation.  Under the stable model semantics~\cite{stable-model}, each stable model of a program with \dedalus{choice} represents committing to specific \dedalus{\dbar{Y}} values for every satisfying assignment of \dedalus{\dbar{X}} values for every \dedalus{choice} atom.  We call a representation of such a commitment a {\em nondeterministic choice set}.
+called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$, which has no distinguished temporal attribute.  We also make use Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of nondeterminism, which we use to model the inherent nondeterminism of asynchronous distributed computation.  The atom \dedalus{choice((\dbar{X}), (\dbar{Y}))} in a rule---where \dedalus{\dbar{X}}, \dedalus{\dbar{Y}} are subsets of the variables in the rule---implies the functional dependency \dedalus{\dbar{X}} $\rightarrow$ \dedalus{\dbar{Y}}.  The \dedalus{choice} atom is syntactic sugar for a cycle through negation.  Under the stable model semantics~\cite{stable-model}, each stable model of a program with \dedalus{choice} represents committing to specific \dedalus{\dbar{Y}} values for every satisfying assignment of \dedalus{\dbar{X}} values for every \dedalus{choice} atom.  We call a representation of such a commitment a {\em nondeterministic choice set}.
 
-Our model of distribution assumes that all participants have the same information about all other participants, in the form of a unary \dedalus{node} relation, which has no temporal attribute. Note that \dedalus{node} is simply a finite domain of legal node names, and does not represent any other assumptions about the membership or connectivity of nodes in the computation system. We adopt the convention introduced in~\cite{Loo:2005}, where all predicates (except for \dedalus{successor}, \dedalus{time}, and \dedalus{node}) are {\em horizontally partitioned};  the location of a fact in a predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  In each \lang rule, every such location variable must be unified with the \dedalus{node} set.  All atoms that reference a predicate must indicate the same column as its location attribute.
+Our model of distribution assumes that all participants have the same information about all other participants, in the form of a unary \dedalus{node} relation, which has no temporal attribute. Note that \dedalus{node} is simply a finite domain of legal node names, and does not represent any other assumptions about the membership or connectivity of nodes in the system. We adopt the convention introduced in~\cite{Loo:2005}, where all predicates (except for \dedalus{successor}, \dedalus{time}, and \dedalus{node}) are {\em horizontally partitioned};  the location of a fact in a predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with a \dedalus{\#}.  In each \lang rule, every such location variable must be unified with the \dedalus{node} set.  All atoms that reference a predicate must indicate the same column as its location attribute.
 
 We also admit the \dedalus{count} aggregate over the generic universe.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
@@ -24,22 +24,21 @@ p(\dbar{X}, count<Y>) <- ...;
 
 For each binding of variables in \dedalus{\dbar{X}}, the last argument of \dedalus{p} contains the count of distinct satisfying assignments to the variable \dedalus{Y}.  It is also permissible to use the symbol \dedalus{*} as the argument to a count if \dedalus{\dbar{X}} is ommitted; this counts the number of distinct satisfying assignments to all body variables.
 
-We now outline a set of restrictions on \lang that limit the use of special constructs for time and space.
 
 \vspace{1em}
 \noindent {\bf Locality in Space and Time:}
-\lang requires that all atoms in each rule body use the same variable symbol in their temporal attribute.  \lang also requires that all atoms in each rule body use the same variable symbol in their location attribute.  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}.
+We would like the temporal and location attributes of \lang predicates to capture the practical semantics of communication in distributed systems.  To that end we introduce a set of restrictions on the use of these attributes, as well as the \dedalus{successor} and \dedalus{choice} constructs .
+
+To model the notion of local computation at a given timestep, \lang requires that all atoms in each rule body unify on their temporal and location attributes: that is, they all use the same variable symbol $\Tau$ in their temporal attribute, and the same variable symbol $\SDedalus$ in their location attribute.  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}.
 
 %, and that its value must not be $\infty$.
 The temporal variable in the head atom is constrained by exactly one of the following methods:
-
 \begin{enumerate}
 \item The rule is called a {\em deductive} rule if its head temporal variable is the same as its body temporal variable;
 \item The rule is called an {\em inductive} rule if its head temporal variable is the \dedalus{successor} of its body temporal variable;
 \item The rule is called an {\em asynchronous} rule if its head temporal variable is constrained using the \dedalus{choice} construct over all body variables (including the body temporal variable).
 \end{enumerate}
-
-The use of \dedalus{successor} and \dedalus{choice} is prohibited in \lang, except in these special usages.
+The use of \dedalus{successor} and \dedalus{choice} is prohibited in \lang outside of these special usages.
 
 Communication rules are required to be asynchronous, to model practical non-determinism in message delay and clock drift.  Local rules can be in defined in any of the three temporal classes above.
 
@@ -71,9 +70,10 @@ s(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
 
 \noindent
 \textbf{Syntactic sugar for space-time in \lang}:
-Since unification on the temporal attribute is required in every rule body,
-%(as well as the $!= \infty$ constraint)
-we introduce syntax sugar that omits the body temporal attributes.  Since the relationship between the head and body temporal variables is tightly constrained, we omit the head temporal attribute, and the body predicates involving \dedalus{successor}, \dedalus{choice} and \dedalus{time}, and instead introduce a temporal annotation to the head predicate: \dedalus{@next} or \dedalus{@async}.  We also omit the location attribute in local rules, and the \dedalus{node} predicate in all rules.  In Example~\ref{ex:sugared}, we rewrite the above rules using this syntax sugar.
+The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  \jmh{Gents: there is no need to require that we show location attributes in body predicates. But now this discussion has to be made consistent with all the communication rules in the text.}
+The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
+Communication rules must include the location attribute of their head predicate; by definition this is different a different variable than that of the body predicates.
+ Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
 
 \begin{example}
 \label{ex:sugared}
@@ -103,7 +103,7 @@ If predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its b
 \textbf{Predicate Dependence Graphs in \lang}:
 \jmh{motivate by hinting at the need for PDGs later.  this is a lot of notation to remember, shall we postpone it?}
 A \lang program's {\em predicate dependency graph}~\cite{ullmanbook} PDG is
-a directed graph that has one node per predicate, and an edge from \dedalus{q} to \dedalus{p} if predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body,  If \dedalus{q} is negated, or a \dedalus{count} appears in the head of the rule, we mark the edge as negated.  If the rule is inductive or asynchronous, we annotate the edge with the rule type.  The PDG does not include the \dedalus{time} or \dedalus{successor} predicates, or the expansion of \dedalus{choice}.  We write $\dedalus{q} \to \dedalus{p}$ if there exists a path following forward edges from \dedalus{q} to \dedalus{p}.  We write $\dedalus{q} \nrightarrow \dedalus{p}$ if there exists a forward path from \dedalus{q} to \dedalus{p} that crosses a negated edge.  We write $\dedalus{q} \circleright \dedalus{p}$ if all forward paths from \dedalus{q} to \dedalus{p} traverse an asynchronous or inductive edge.  We write $\dedalus{q} \Diamondright \dedalus{p}$ if at least one forward path from \dedalus{q} to \dedalus{p} traverses an async edge.
+a directed graph that has one node per predicate, and an edge from \dedalus{q} to \dedalus{p} if predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body,  If \dedalus{q} is negated, or a \dedalus{count} appears in the head of the rule, we mark the edge as negated.  If the rule is inductive or asynchronous, we annotate the edge with the rule type.  The PDG omits the \dedalus{time} and \dedalus{successor} predicates, and the nodes and edges for \dedalus{choice}.  We write $\dedalus{q} \to \dedalus{p}$ if there exists a path following forward edges from \dedalus{q} to \dedalus{p}.  We write $\dedalus{q} \nrightarrow \dedalus{p}$ if there exists a forward path from \dedalus{q} to \dedalus{p} that crosses a negated edge.  We write $\dedalus{q} \circleright \dedalus{p}$ if all forward paths from \dedalus{q} to \dedalus{p} traverse an asynchronous or inductive edge.  We write $\dedalus{q} \Diamondright \dedalus{p}$ if at least one forward path from \dedalus{q} to \dedalus{p} traverses an async edge.
 
 \vspace{1em}
 \noindent {\bf EDB:}
