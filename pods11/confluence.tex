@@ -1,7 +1,8 @@
 \section{Confluence}
 \label{sec:confluence}
+Although there is much discussion among developers about distributed ``consistency'', the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.
 
-For many distributed computations, it is desirable to know that a deterministic result will be reached for every input, regardless of non-determinism in the environment.  Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
+Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
 which model temporal nondeterminism in unreliable networks.
 Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
@@ -62,7 +63,7 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 %\end{definition}
 
 \jmh{Added this.}
-In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be applied to incomplete sets over time.
+In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be ``temporarily'' applied to sets whose contents are still evolving over time. The evolution of such sets and their consequences can lead to non-deterministic ultimate models.
 
 Consider a \lang program $p'$ derived from another \lang program $p$ by 
 %\paa{not dropping?}
@@ -100,7 +101,7 @@ Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{
 %\end{definition}
 
 
-Nondeterministic world closing is not necessary for program diffluence. 
+Nondeterministic world closing is not a necessary condition for diffluence. 
 A \lang program may have multiple ultimate models if it is possible for a join 
 to succeed in one execution (stable model) and fail in another.  We say that such 
 programs have {\em nondeterministic coincidence}.
