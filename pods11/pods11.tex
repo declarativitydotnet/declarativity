@@ -91,26 +91,28 @@ University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upsha
 \maketitle
 
 \begin{abstract} 
+	Building on recent interest in distributed logic programming, we take a model-theoretic approach to analyzing and enforcing correctness of distributed programs.
+We address two key properties of distributed software: determinism in the face of message reordering and delay, and eventual consistency of replicas under those conditions.  We demonstrate the undecidability of checking programs for these properties in general.  We then prove a conjectured result that monotonicity, broadly defined, guarantees determinism.  For non-monotonic programs, we define a natural semantics in the face of non-deterministic messaging, and provide a generic construction for distributed coordination that achieves this semantics using intuition from stratified negation.  We also provide a similarly generic construction for achieving eventual consistency of replicated data.
 %
 %We present a formal definition of the \lang language and prove conjectures.
 
-An increasing amount of interest surrounds the use of logic languages such as
-Datalog to ease the design and verification of asynchronous distributed
-systems.  An oft-cited reason is the model-theoretic semantics of logic
-programming, which underpin a robust literature on analysis techniques to
-ensure, among other things, termination and the existince and uniqueness of a
-program result.  While prior work on logic programming for distributed systems
-has demonstrated compactness of representation and efficiency of execution, the
-tantalizing possibility of leveraging model theory to realize analysis
-techniques for distributed systems correctness criteria has gone largely
-unrealized.  In this paper, we define model-theoretic notions for two such
-criteria popular in the distributed systems domain: {\em determinism} and {\em
-eventual consistency}.  Unfortunately, we show that these are undecidable
-properties in the general case.  However, we prove the conjectured result that
-{\em monotonicity} of logic can be a powerful conservative test for these
-criteria, and we leverage existing static {\em stratification} checks from
-logic programming to enforce monotonicity in a large class of programs by
-instrumenting them with {\em coordination logic}.
+% An increasing amount of interest surrounds the use of logic languages such as
+% Datalog to ease the design and verification of asynchronous distributed
+% systems.  An oft-cited reason is the model-theoretic semantics of logic
+% programming, which underpin a robust literature on analysis techniques to
+% ensure, among other things, termination and the existince and uniqueness of a
+% program result.  While prior work on logic programming for distributed systems
+% has demonstrated compactness of representation and efficiency of execution, the
+% tantalizing possibility of leveraging model theory to realize analysis
+% techniques for distributed systems correctness criteria has gone largely
+% unrealized.  In this paper, we define model-theoretic notions for two such
+% criteria popular in the distributed systems domain: {\em determinism} and {\em
+% eventual consistency}.  Unfortunately, we show that these are undecidable
+% properties in the general case.  However, we prove the conjectured result that
+% {\em monotonicity} of logic can be a powerful conservative test for these
+% criteria, and we leverage existing static {\em stratification} checks from
+% logic programming to enforce monotonicity in a large class of programs by
+% instrumenting them with {\em coordination logic}.
 
 %However, using analyses from logic programming, including {\em stratification} analyses, 
 
@@ -140,7 +142,7 @@ instrumenting them with {\em coordination logic}.
 %
 \end{abstract}
 
-\input{intro}
+\input{intro-jmh}
 \input{foundation}
 \input{confluence}
 \input{consistency}
