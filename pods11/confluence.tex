@@ -135,8 +135,13 @@ Persistence is a semantic notion, but in certain cases it is detectable from the
 syntax alone.  A rule of the form \dedalus{p(X)@next <- p(X);} clearly establishes any fact
 in \dedalus{p} as a persistent fact for any EDB and execution in which \dedalus{p} is ever true. 
 We call a predicate referenced by such a rule
-a {\em simply persisted} predicate.  All EDB predicates are both simply persisted and 
-{\em a priori} true.  \jmh{This last sentence surprised me.  Are you saying that is implicit in the language, or you will require simple persistence rules over the edb?  I though the edb facts were only true at time 1.}
+a {\em simply persisted} predicate.  
+%All EDB predicates are both simply persisted and {\em a priori} true.  
+We call a predicate that is both simply persisted and  {\em a priori} true (i.e., asserted
+at time 0) a {\em ground truth}.  Ground truths are analogous to the EDB in Datalog programs,
+in which time is not explicitly modeled.
+
+%\jmh{This last sentence surprised me.  Are you saying that is implicit in the language, or you will require simple persistence rules over the edb?  I though the edb facts were only true at time 1.}
 
 \begin{definition}
 A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates are simply persisted.
