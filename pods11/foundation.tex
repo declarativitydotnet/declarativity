@@ -90,20 +90,18 @@ q(A, B)@next <- e(A, B);
 \begin{Dedalus}
 r(A, B)@async <- e(A, B);
 \end{Dedalus}
+\textit{asynchronous communication:}\\
+\begin{Dedalus}
+s(#Y, A, B)@async <- e(A, B), neighbor(Y);
+\end{Dedalus}
 \textit{asynchronous communication (with spatial entanglement):}\\
 \begin{Dedalus}
-s(#Y, A, B)@async <- e(#X, A, B), neighbor(#X, Y);
-\end{Dedalus}
-\textit{asynchronous communication (without spatial entanglement):}\\
-\begin{Dedalus}
-t(#Y, A)@async <- e(A, B);
+t(#Y, X, A, B)@async <- e(#X, A, B), f(#X, X, Y);
 \end{Dedalus}
 \end{example}
 
-The last two example merit a bit of discussion.  In the last unsugared rule of Example~\ref{ex:nonsugared}, location attributes were unified with non-location attributes.  This \textit{entanglement} of locations and data attributes requires us to include location attributes even in body predicates, resulting in the fourth rule of Example~\ref{ex:sugared}.  By contrast, the final example here has no such entanglement: the body predicates can omit location attributes, and the location attribute of the head is assumed to range over the finite domain of \dedalus{node}.  Note that we forbid entanglement of temporal attributes in our discussion here, as this would introduce an infinite domain into the generic universe.
-
- is indeed range-restricted---by an implicit predicate \dedalus{node(Y)} in the body.  In some cases it is desirable to maintain the spatial ``lineage'' of body facts by including their 
-
+The last two examples merit a bit of discussion.  In the fourth rule above (corresponding to the last unsugared rule of Example~\ref{ex:nonsugared}), the location variable in the head appears not to be range-restricted; in fact, it ranges over the finite domain \dedalus{node(Y)}.  The additional fifth rule here illustrates the case where the body location attribute is unified with other attributes (in this case, in both head and body predicates).  In order to specify this \textit{entanglement} of locations and data attributes, we include location attributes even in body predicates. 
+Note that we forbid entanglement of temporal attributes in our discussion here, as this would introduce an infinite domain into the generic universe.
 
 If predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body \jmh{Dangling foo}
 
