@@ -231,7 +231,10 @@ If we assume that
 %the contents of \texttt{node}
 %are fixed (e.g., it is EDB and given \emph{a priori}), 
 \texttt{node} is a ground truth,
-there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which \jmh{not sure what ``which'' refers to} is monotonic because it is {\em positive} (i.e. the negation depth is even). 
+there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}.
+This fact is implied by the predicate \dedalus{!not\_responded(\_)}, which 
+%\jmh{not sure what ``which'' refers to} 
+is monotonic because it is {\em positive} (i.e. the negation depth is even). 
 Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
 
 If the set \texttt{node} is not fixed, however, the program is not monotonic, because 
@@ -261,6 +264,12 @@ A monotonic property is a formula which, if it is true at time \dedalus{T},  is 
 
 Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
 fact that will never be true.  We may define monotonic properties constructively as follows. \jmh{You're not defining, you're giving examples, right?}
+\paa{actually, it was my intention to give structural base cases and then
+use them in a proof by structural induction on Lemma~\ref{lem:property}.
+they aren't complete wrt the semantic definition of monotonic properties,
+but should be sufficient for a proof of the lemma.  but
+it looks like we're going to try a different strategy now (induction on
+derivation depth) ?}
 
 %\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
 %\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
@@ -282,11 +291,14 @@ same as that the monotonic property.  In the absence of recursion, negation dept
 monotonic property.
 
 
-
-\item A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  \jmh{This doesn't belong in this list.  This is a standalone defn.}
 \end{enumerate}
 
-This list of constructive base cases for monotonic properties is not complete: later \jmh{use a fw ref in latex} we will
+\begin{definition}
+A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  
+\end{definition}
+
+This list of constructive base cases for monotonic properties is not complete:  
+in Section~\ref{sec:coord} we will
 axiomatize the way that certain coordination techniques can transform an otherwise 
 nonmonotonic predicate into a monotonic property.
 
@@ -294,6 +306,7 @@ nonmonotonic predicate into a monotonic property.
 We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
 
 \begin{lemma}
+\label{lem:property}
 If a monotonic property is true in any stable model of a program over a particular EDB, it is true in all stable models. 
 \end{lemma}
 \begin{proof}
@@ -331,7 +344,8 @@ depth of negation nesting??} \jmh{I like the idea of induction for this.}
 %\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
 \begin{theorem}
-Confluence is assured by logical monotonicity. \jmh{Can we get away with the phrase ``logical monotonicity?''  I think we may need to be more specific.}
+%Confluence is assured by logical monotonicity. \jmh{Can we get away with the phrase ``logical monotonicity?''  I think we may need to be more specific.}
+A monotonic \lang program is confluent.
 \end{theorem}
 \begin{proof}
 \begin{comment}
@@ -339,7 +353,7 @@ Proof sketch: If a particular ultimate model is populated by atoms that depend o
 are populated in such a way, they are indeed all the same, unique ultimate model.  
 \jmh{
 \end{comment}
-The proof ollows directly.  By definition 13, a monotonic Dedalus program has an ultimate model consisting of only monotonic properties, and by Lemma 3 all such properties are true in all ultimate models.  Hence all ultimate models of a monotonic Dedalus program are the same.
+The proof follows directly.  By definition 13, a monotonic Dedalus program has an ultimate model consisting of only monotonic properties, and by Lemma 3 all such properties are true in all ultimate models.  Hence all ultimate models of a monotonic Dedalus program are the same.
 
 %which are true in all traces, then there is a unique ultimate model.
 
@@ -350,6 +364,7 @@ We now show that logical monotonicity is not necessary for confluence:
 \begin{example}
 A confluent Dedalus program that is not logically monotonic.
 \jmh{I guess the first rule is legal because it has an omitted \dedalus{node} predicate, but it looks badly un-range-restriced.}
+
 \begin{Dedalus}
 //client
 b(#s, I)@async :- b_edb(I);
@@ -361,7 +376,9 @@ dequeued(I)@next <- b(_, I), !b_lt(_, I);
 mem(I) <- dequeued(I), !bt_lt(_, _);
 
 \end{Dedalus}
-\wrm{or, just consider the 2 counter machine...?}
+
+\paa{don't we just want to add a subgoal node(s) ?}
+%\wrm{or, just consider the 2 counter machine...?}
 \end{example}
 
 %odd()@next <- odd(), !dequeued(_);
@@ -450,6 +467,7 @@ true(X) <- statement(_, S, X), !s_false(_, S, X),
 Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false.
 
 \subsubsection{Coordination}
+\label{sec:coord}
 Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $\textsc{Coord}(P)$, such that \linebreak $\mathcal{U}(\textsc{Coord}(P), E) = \mathcal{P}(P, E)$.
 
 
