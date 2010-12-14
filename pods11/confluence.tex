@@ -264,33 +264,36 @@ the notion of a {\em monotonic property}.
 
 
 \begin{definition}
+\label{def:mp}
 A monotonic property is a formula which, if it is true at time \dedalus{T},  is true at any time \dedalus{U > T}.
 \end{definition}
 
 Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
-fact that will never be true.  We may define monotonic properties constructively as follows. \jmh{You're not defining, you're giving examples, right?}
-\paa{actually, it was my intention to give structural base cases and then
-use them in a proof by structural induction on Lemma~\ref{lem:property}.
-they aren't complete wrt the semantic definition of monotonic properties,
-but should be sufficient for a proof of the lemma.  but
-it looks like we're going to try a different strategy now (induction on
-derivation depth) ?}  \jmh{No, sorry, that was just me trying unsuccessfully to make sense of your proof. Please follow through on this if it works, just telegraph your plans more clearly.}
+fact that will never be true.  
+While we have defined monotonic properties semantically, we may provide a conservative, 
+constructive definition based on the following cases:
+
+%We may define monotonic properties constructively as follows. \jmh{You're not defining, you're %giving examples, right?}
+%\paa{actually, it was my intention to give structural base cases and then
+%use them in a proof by structural induction on Lemma~\ref{lem:property}.
+%they aren't complete wrt the semantic definition of monotonic properties,
+%but should be sufficient for a proof of the lemma.  but
+%it looks like we're going to try a different strategy now (induction on
+%derivation depth) ?}  \jmh{No, sorry, that was just me trying unsuccessfully to make sense of 
+%your proof. Please follow through on this if it works, just telegraph your plans more clearly.}
 
 %\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
 %\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
 
 \begin{enumerate}
 \item A persistent fact is a monotonic property.   
-Note that facts in simply persisted relations cannot be retracted once they are asserted.  They begin false
+Note that persistent facts cannot be retracted once they are asserted.  They begin false
 (insofar as their complement can be asserted), and if they become true remain so.
 
-
-\item A fact defined with even depth of negation over a monotonic property in all derivations is also a monotonic property.
-
-The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
+\item A fact defined with even depth of negation over a monotonic property in all derivations is also a monotonic property.  
+Even negation depth ensures that the polarity of the fact in question is the
 same as that the monotonic property.  In the absence of recursion, negation depth is a syntactically-checkable property.  Whenever there is recursion through negation
 (as in temporally stratified \lang programs~\cite{dedalus}), the negation depth is data-dependent.
-
 
 \item A fact defined via an application of a non-async rule all of whose subgoals are monotonic properties is a
 monotonic property.
@@ -298,9 +301,7 @@ monotonic property.
 
 \end{enumerate}
 
-\begin{definition}
-A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  
-\end{definition}
+
 
 This list of constructive base cases for monotonic properties is not complete:  
 in Section~\ref{sec:coord} we will
@@ -308,11 +309,11 @@ axiomatize the way that certain coordination techniques can transform an otherwi
 nonmonotonic predicate into a monotonic property.
 
 
-We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
+
 
 \begin{lemma}
 \label{lem:property}
-If a monotonic property is true in any stable model of a program over a particular EDB, it is true in all stable models. 
+If a monotonic property (according to the constructive definiton) is true in any stable model of a program over a particular EDB, it is true in all stable models. 
 \end{lemma}
 \begin{proof}
 \begin{comment}
@@ -320,33 +321,49 @@ Proof sketch: assume a monotonic property is true in one trace and false in anot
 
 \paa{or alternatively:}
 \end{comment}
-We proceed by induction on derivation depth.
+%We proceed by induction on derivation depth.
+%The proof proceeds by structural induction on rule applications
+
 % We will prove by structural induction that if a montononic property is true in any stable
 % model of a \lang program, it is true in all stable models.  Consider a montonic property
 % $p$.  
-As a base case, $p$ may be an EDB fact, which clearly exists in all stable models.
-\jmh{The remainder of this argument is not inductive.  Fix.}
+%\paa{ok, trying again to do a real proof by structural induction.
+The proof proceeds by cases from the constructive definition of monotonic properties.
+If $p$ is an EDB fact, it clearly exists in all stable models.
 Otherwise $p$ has a derivation $d$ grounded in EDB facts.  As we showed in the
 proof of Lemma~\ref{lem:guarding}, if none of the inference 
 steps in $d$ is an {\em async} rule, then $p$ exists in all stable models
 of the program.
-%\jmh{no, we're scoped to $p$ here} 
 and
 the lemma trivially holds.  If there are {\em async} rules, their head predicates are guarded,
-because otherwise those head predicates are not monotonic
-properties 
+because otherwise those head predicates are not provably monotonic
+properties (they satisfy none of the cases given above)
 %\jmh{No, you only proved the inverse of that assertion: guarded$=>$monotonic.}
 , and hence $p$, which depends on them, is not a monotonic property.  If there 
 is no negation in any inference step of $d$, then by Lemma~\ref{lem:guarding} the program
 is confluent, and hence facts in stable models of the program differ only in their timestamps.
-Finally, if there is negation in $d$, $p$ is defined with even depth of negation over some
-monotonic property or it would not itself be.  \paa{...hm, where do we go from here.  can
-we argue syntactically that all derivations of $p$ in any stable model would be of the same 
-depth of negation nesting??} \jmh{I like the idea of induction for this.} 
+Finally, if there is negation in $d$, $p$ is defined with even syntactic depth of negation over some
+monotonic property or it would not itself be.  The syntactic negation depth is fixed by the
+program, and hence is the same in any stable model.  Therefore $p$ is a montonic 
+property in any stable model of the program.
 
 \ref{lem:guarding}
 \end{proof}
+
 %\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
+
+Note that facts may satisfy the semantic definition (Definition~\ref{def:mp}) of monotonic 
+properties without satisfying any of the constructive cases.  For example, a predicate may
+be monotonic because it is appropriately coordinated, or because its data-dependent
+negation depth is even.
+Hence the lemma holds only for the conservate definition of monotonic properties.  We will 
+see that the conservative definition is sufficient for many practical cases.
+
+\begin{definition}
+A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  
+\end{definition}
+
+We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
 
 \begin{theorem}
 %Confluence is assured by logical monotonicity. \jmh{Can we get away with the phrase ``logical monotonicity?''  I think we may need to be more specific.}
