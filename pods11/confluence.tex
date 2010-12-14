@@ -332,7 +332,7 @@ Thus it is confluent.  However, the program is not logically monotonic because n
 \subsection{Perfect Ultimate Model}
 
 \jmh{motivate coordination by analogy to practice}
-Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes this model.
+Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique to convert a \lang program into a confluent program that computes this model.
 
 Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
 
@@ -405,35 +405,44 @@ true(X) <- statement(_, S, X), !s_false(_, S, X),
 Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false.
 
 \subsubsection{Coordination}
-Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $P' = Coord(P)$ where $\mathcal{U}(P', E) = \mathcal{P}(P, E)$.
+Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $P' = \textsc{Coord}(P)$ where $\mathcal{U}(P', E) = \mathcal{P}(P, E)$.
 
-Do for all async predicates \dedalus{p}
-If \dedalus{p} has an incoming asynchronous edge, and some path following forward edges from \dedalus{p} reaches a negated or aggregated edge, then:
+\begin{algorithmic}[0]
+  \Procedure{Coord}{$P$}%\Comment{}
+  \ForAll{\dedalus{p} such that $\dedalus{q} \Diamondright \dedalus{p} \nrightarrow \dedalus{r}$}
+  \ForAll{async rules with \dedalus{p} in the head}
+  \State{change head predicate name to \dedalus{p\_local}}
+  \State{remove location attribute of every atom in rule}
+  \EndFor
+  \State{add rules in Figure 1} %XXX
+  \ForAll{rules with \dedalus{!p} in the body}
+  \State{add \dedalus{!p\_incomplete()} to body}
+  \EndFor
+  \EndFor%\label{euclidendwhile}
+  \State \textbf{return} $P$
+  \EndProcedure
+\end{algorithmic}
 
-Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and remove the location attribute of every atom in the rule.
-
-Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, and \dedalus{p\_incomplete} are fresh predicate names.
-
-\noindent
+\begin{figure}[h!]
+\label{fig:coordcode}
 \begin{Dedalus}
-p_count_send(#Y,Src,count<*>)@async <- p_local(Y,\dbar{X}),
-                                       local(Src);
-p_count_send(#Y,Src,0)@async <- !p_local(Y,\dbar{_}), local(Src),
-                                node(Y);
-p_send(#Y,Src,\dbar{X})@async <- p_local(Y,\dbar{X}), local(Src);
-p_count_recv(Src,count<*>) <- p_send(_,Src,\dbar{X});
-p(Y,\dbar{X}) <- p_send(_,Y,\dbar{X});
+p_count_send(#Y,S,count<*>)@async <- p_local(#S,Y,\dbar{X});
+p_count_send(#Y,S,0)@async <- !p_local(#S,Y,\dbar{_});
+p_send(#Y,S,\dbar{X})@async <- p_local(#S,Y,\dbar{X});
+p_count_recv(Src,count<*>) <- p_send(Src,\dbar{X});
+p(Y,\dbar{X}) <- p_send(Y,\dbar{X});
 p(Y,\dbar{X})@next <- p(Y,\dbar{X});
 p_incomplete() <- node(Src), !p_count_recv(Src, _);
-p_incomplete() <- node(Src), !p_count_send(_,Src,_);
+p_incomplete() <- node(Src), !p_count_send(Src,_);
 p_incomplete() <- p_count_recv(Src, C1),
-                  p_count_send(_, Src, C2), C1 < C2;
+                  p_count_send(Src, C2), C1 < C2;
 \end{Dedalus}
+\caption{Coordination code}
+\end{figure}
 
-5. For any instance of \dedalus{p} in the body of a rule in the original program, add the atom \dedalus{!p\_incomplete()} to the rule body.
 
 \begin{theorem}
-The coordinated program is confluent.
+For any program $P$, $\textsc{Coord}(P)$ is confluent.
 \end{theorem}
 
 We prove the theorem by way of the following two Lemmas.

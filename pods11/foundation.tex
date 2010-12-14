@@ -59,7 +59,7 @@ r(#X, A, B, S) <- e(#X, A, B, T), node(X), time(S),
 \end{Dedalus}
 asynchronous communication:\\
 \begin{Dedalus}
-r(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
+s(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
                   time(S), S > T, neighbor(#X, Y),
                   choice((A, B, T), (S));
 \end{Dedalus}
@@ -89,11 +89,14 @@ r(A, B)@async <- e(A, B);
 \end{Dedalus}
 asynchronous communication:\\
 \begin{Dedalus}
-r(#Y, A, B)@async <- e(#X, A, B), neighbor(#X, Y);
+s(#Y, A, B)@async <- e(#X, A, B), neighbor(#X, Y);
 \end{Dedalus}
 \end{example}
 
-When we talk about the {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program, we assume that it does not include the \dedalus{time} or \dedalus{successor} predicates\footnote{We also assume that the graph does not include any predicates or rules added by rewriting \dedalus{choice}.}.  In addition to marking edges in the graph as negated, we will keep track of which edges are \dedalus{@async} or \dedalus{@next}---we will refer to such edges as {\em temporal edges}.
+If predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body
+
+A \lang program's {\em predicate dependency graph}~\cite{ullmanbook} PDG is
+a directed graph that has one node per predicate, and an edge from \dedalus{q} to \dedalus{p} if predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body,  If \dedalus{q} is negated, or a \dedalus{count} appears in the head of the rule, we mark the edge as negated.  If the rule is inductive or asynchronous, we annotate the edge with the rule type.  The PDG does not include the \dedalus{time} or \dedalus{successor} predicates, or the expansion of \dedalus{choice}.  We write $\dedalus{q} \to \dedalus{p}$ if there exists a path following forward edges from \dedalus{q} to \dedalus{p}.  We write $\dedalus{q} \nrightarrow \dedalus{p}$ if there exists a forward path from \dedalus{q} to \dedalus{p} that crosses a negated edge.  We write $\dedalus{q} \circleright \dedalus{p}$ if all forward paths from \dedalus{q} to \dedalus{p} traverse an asynchronous or inductive edge.  We write $\dedalus{q} \Diamondright \dedalus{p}$ if at least one forward path from \dedalus{q} to \dedalus{p} traverses an async edge.
 
 \vspace{1em}
 \noindent {\bf EDB:}
@@ -157,7 +160,8 @@ flipflop(1,2)@1;
 
 \begin{definition}
 For each stable model, the cylic facts of period 1---so-called {\em trivially periodic} facts---comprise an {\em ultimate model} for the program.  We represent a trivially periodic fact in the ultimate model finitely by picking a representative, and discarding its timestamp.
-For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.  We refer to the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $\mathcal{U}(P, E, ND)$.  Note that it may be the case that $\mathcal{U}(P, E, ND_1) \neq \mathcal{U}(P, E, ND_2)$ if $ND_1 \neq ND_2$.
+For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.  We denote the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $\mathcal{U}(P, E, ND)$.  Where $\forall ND_1, ND_2, \mathcal{U}(P, E, ND_1) = \mathcal{U}(P, E, ND_2)$, we denote the unique ultimate model for program $P$ with EDB $E$ as $\mathcal{U}(P, E)$.  
+%Note that it may be the case that $\mathcal{U}(P, E, ND_1) \neq \mathcal{U}(P, E, ND_2)$ if $ND_1 \neq ND_2$.
 \end{definition}
 
 %The program in Example~\ref{ex:flipflop} has a single ultimate model, which is empty.
