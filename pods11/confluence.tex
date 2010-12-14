@@ -125,15 +125,15 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 
 \begin{definition}
 
-A fact is  {\em persistent} if it is henceforth true.
- \jmh{you haven't defined henceforth.}.
-\paa{just as in temporal logic.  $p \Rightarrow \Box p$}
+A fact $a$ is  {\em persistent} if it is henceforth true 
+(i.e., if $a \Rightarrow \Box a$)
 \end{definition}
 
 Persistent facts are the only facts that appear in a program's ultimate models.
 Persistence is a semantic notion, but in certain cases it is detectable from the program's 
 syntax alone.  A rule of the form \dedalus{p(X)@next <- p(X);} clearly establishes any fact
-in \dedalus{p} as a persistent fact for any EDB and execution in which \dedalus{p} is ever true. 
+in \dedalus{p} as a persistent fact for any EDB and execution in which the fact
+is ever true. 
 We call a predicate referenced by such a rule
 a {\em simply persisted} predicate.  
 %All EDB predicates are both simply persisted and {\em a priori} true.  
@@ -158,7 +158,7 @@ A negation-free \lang program with guarded asynchrony is confluent.
 
 %\wrm{yeah, this is right, need to define terms though-- define ``ground atom'' as ``first time %something in the ultimate model is true before it is eventually always true'', change ``join'' to %``unification'', change ``eventually always succeed'' to ``eventually always satisfied'' or %something, define ``modulo time'' define ``identical tuple''.  i'll let you fix this. you can delete %my sketch above too}
 
-\paa{I think I addressed everything but "change join to unify," which I don't agree with}
+%\paa{I think I addressed everything but "change join to unify," which I don't agree with}
 Towards a proof by contradiction, consider a negation-free \lang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
@@ -187,55 +187,7 @@ If either qualification is false, problems can result, as we have previously ill
 
 \subsection{Monotonic Properties}
 
-
-We can generalize Lemma~\ref{lem:guarding} by the notion of a {\em monotonic property}.
-
-\begin{definition}
-If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
-\end{definition}
-
-Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
-fact that will never be true.  We may define monotonic properties constructively as follows.
-
-%\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
-%\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
-
-
-\begin{definition}
-A persistent fact is a monotonic property.   \jmh{this is not a definition, it's an observation}
-%\wrm{also, we should start from EDB, and say that's a persistent relation}
-%\paa{need to clearly define EDB in dedalus.  those predicates appearing only in the RHS 
-%of rules, which furthermore are persistent?  what do we call those predicates for which the 
-%latter is false?} \wrm{There are no predicates for which the latter is false I guess.  Does that seem reasonable?}
-\end{definition}
-
-Note that facts in simply persisted relations cannot be retracted once they are asserted.  They begin false
-(insofar as their complement can be asserted), and if they become true remain so.
-
-\begin{definition}
-A fact defined with even depth of negation over a monotonic property in all derivations is also a monotonic property. \jmh{this is not a definition, it's an observation}
-%\wrm{think this is better said as ``all paths through the PDG contain an even depth to the monotonic property''}
-%\paa{hm, but a PDG is syntactic and we are defining these things in terms of derivations and %facts} \wrm{oh right.  i was just trying to get accross ``all paths to EDB need to be even'' rather %%than ``only one path to EDB needs to be even'' which is incorrect, and it kind of sounds like %this now to me.  maybe ``derivation tree'' or something?}
-\end{definition}
-
-The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
-same as that the monotonic property.  In the absence of recursion, negation depth is a syntactically-checkable property.  Whenever there is recursion through negation
-(as in temporally stratified \lang programs~\cite{dedalus}), the negation depth is data-dependent.
-
-\begin{definition}
-A fact defined via a rule application all of whose subgoals are monotonic properties is a
-monotonic property.  \jmh{this is not a definition, it's an observation}
-\end{definition}
-
-\begin{definition}
-%A \lang program is {\em monotonic} if for all facts in any ultimate model, the element of the %trace corresponding to the first time the fact was true before being henceforth true was 
-%computed by only monotonic properties. \wrm{may need some slight tweaking}
-A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.
-\end{definition}
-
-This list of constructive base cases for monotonic properties is not complete: later we will
-axiomatize the way that certain coordination techniques can transform an otherwise 
-nonmonotonic predicate into a monotonic property.
+\paa{add some nice text here transitioning the discussion into distributed systems etc}
 
 \begin{example}
 %Example of a logically monotonic Dedalus program:\\
@@ -249,9 +201,14 @@ all_responded()@next <- all_responded();
 \end{Dedalus}
 \end{example}
 
-\jmh{suddenly we're getting to the nub of our application domain.  needs more prose to set this up; possibly even a section break}
-The above program is very nearly monotonic \jmh{whatever that means}. If we assume that the contents of \texttt{node}
-are fixed (e.g., it is EDB and given \emph{a priori}), there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even). 
+%\jmh{suddenly we're getting to the nub of our application domain.  needs more prose to set this up; possibly even a section break}
+%The above program is very nearly monotonic \jmh{whatever that means}. 
+
+If we assume that 
+%the contents of \texttt{node}
+%are fixed (e.g., it is EDB and given \emph{a priori}), 
+\texttt{node} is a ground truth,
+there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even). 
 Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
 
 If the set \texttt{node} is not fixed, however, the program is not monotonic, because 
@@ -262,10 +219,55 @@ the problem of dynamic membership in quorum systems: quantifying over all (or a 
 of) participants requires some static ``view'' of membership, and changing these views requires
 explicit coordination among participants.
 
+
+
+We can generalize Lemma~\ref{lem:guarding} to account for monotonic programs that 
+contain syntactic negation and aggregation with
+the notion of a {\em monotonic property}.
+
+
+
+
+\begin{definition}
+If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
+\end{definition}
+
+Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
+fact that will never be true.  We may define monotonic properties constructively as follows.
+
+%\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
+%\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
+
+\begin{enumerate}
+\item A persistent fact is a monotonic property.   
+Note that facts in simply persisted relations cannot be retracted once they are asserted.  They begin false
+(insofar as their complement can be asserted), and if they become true remain so.
+
+
+\item A fact defined with even depth of negation over a monotonic property in all derivations is also a monotonic property.
+
+The proof is trivial: even negation depth ensures that the polarity of the fact in question is the
+same as that the monotonic property.  In the absence of recursion, negation depth is a syntactically-checkable property.  Whenever there is recursion through negation
+(as in temporally stratified \lang programs~\cite{dedalus}), the negation depth is data-dependent.
+
+
+\item A fact defined via a rule application all of whose subgoals are monotonic properties is a
+monotonic property.  \jmh{this is not a definition, it's an observation}
+
+
+
+\item A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.
+\end{enumerate}
+
+This list of constructive base cases for monotonic properties is not complete: later we will
+axiomatize the way that certain coordination techniques can transform an otherwise 
+nonmonotonic predicate into a monotonic property.
+
+
 We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
 
 \begin{lemma}
-If a monotonic property is true in any trace of a program, given an EDB, it is true in all traces. \jmh{did we define traces yet?  I don't remember that!}
+If a monotonic property is true in any stable model of a program, given an EDB, it is true in all stable models. 
 \end{lemma}
 \begin{proof}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted \jmh{when did we start requiring this?  I think you need to state it as an assumption in the lemma}, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur). \jmh{I don't know what the preceding sentence means; I don't know what it means for a property to observe a condition.}  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic. \jmh{That only sorta made sense to me.}
@@ -408,6 +410,7 @@ Now, independent of the assignment of timestamps, no statement from a sayer \ded
 \subsubsection{Coordination}
 Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $\textsc{Coord}(P)$, such that \linebreak $\mathcal{U}(\textsc{Coord}(P), E) = \mathcal{P}(P, E)$.
 
+
 \begin{algorithmic}[0]
   \Procedure{Coord}{$P$}%\Comment{}
   \ForAll{\dedalus{p} such that $\dedalus{q} \Diamondright \dedalus{p} \nrightarrow \dedalus{r}$}
@@ -423,6 +426,7 @@ Given a \lang program $P$ with no negative cycles in its PDG, we can generate a 
   \State \textbf{return} $P$
   \EndProcedure
 \end{algorithmic}
+
 
 \begin{figure}[h!]
 \label{fig:coordcode}
