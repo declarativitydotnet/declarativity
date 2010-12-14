@@ -61,9 +61,12 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 %rom a \lang program results in fewer ultimate models, we say the program has {\em %nondeterministic world closing}.
 %\end{definition}
 
-Consider a \lang program $p'$ derived from another \lang program $p$ by \paa{not dropping?}
-converting all negated subgoals to positive subgoals (i.e., removing the $!$ symbol from 
-$p$) and removing any occurrences of the {\em count} aggregate function (i.e., replacing 
+Consider a \lang program $p'$ derived from another \lang program $p$ by 
+%\paa{not dropping?}
+dropping all negated subgoals 
+%to positive subgoals (i.e., removing the $!$ symbol from 
+%$p$) 
+and removing any occurrences of the {\em count} aggregate function (i.e., replacing 
 a clause like \dedalus{count<A>} with \dedalus{A}).  If $p'$ has fewer ultimate models than $p$, we say that $p$ has {\em nondeterministic
 world closing}.  Nondeterministic world closing occurs when programs apply the closed world assumption to potentially incomplete sets.
 
@@ -215,7 +218,11 @@ Note that the program is also confluent, because for any EDB, there is a unique 
 If the set \texttt{node} is not fixed, however, the program is not monotonic, because 
 \texttt{all\_responded} is defined with odd negation depth over \texttt{node}: adding a tuple
 to \texttt{node} may cause a fact in \texttt{all\_responded} to become false.  If such inserts
-are possible, maintenance of \texttt{node} will require coordination \jmh{we haven't defined coordination yet!}.  This is analogous to
+are possible, careful maintenance of \texttt{node} is required to ensure confluence: we will
+return to this subject in the following section when we introduce {\em coordination}.
+%will require coordination 
+%\jmh{we haven't defined coordination yet!}.  
+This is analogous to
 the problem of dynamic membership in quorum systems: quantifying over all (or a majority
 of) participants requires some static ``view'' of membership, and changing these views requires
 explicit coordination among participants.
@@ -252,8 +259,8 @@ same as that the monotonic property.  In the absence of recursion, negation dept
 (as in temporally stratified \lang programs~\cite{dedalus}), the negation depth is data-dependent.
 
 
-\item A fact defined via a rule application all of whose subgoals are monotonic properties is a
-monotonic property.  \jmh{this is not a definition, it's an observation}
+\item A fact defined via an application of a non-async rule all of whose subgoals are monotonic properties is a
+monotonic property.
 
 
 
@@ -271,9 +278,11 @@ We will see that all logically monotonic programs are confluent.  However, some 
 If a monotonic property is true in any stable model of a program, given an EDB, it is true in all stable models. 
 \end{lemma}
 \begin{proof}
+\begin{comment}
 Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted \jmh{when did we start requiring this?  I think you need to state it as an assumption in the lemma}, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur). \jmh{I don't know what the preceding sentence means; I don't know what it means for a property to observe a condition.}  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic. \jmh{That only sorta made sense to me.}
 
 \paa{or alternatively:}
+\end{comment}
 We will prove by structural induction that if a montononic property is true in any stable
 model of a \lang program, it is true in all stable models.  Consider a montonic property
 $p$.  As a base case, $p$ may be an EDB fact, which clearly exists in all stable models.
@@ -281,7 +290,9 @@ Otherwise $p$ has a derivation $d$ grounded in EDB facts.  If none of the infere
 steps in $d$ is an {\em async} rule, there is only one stable model of the program \jmh{no, we're scoped to $p$ here} and
 the lemma trivially holds.  If there are {\em async} rules, their target predicates are guarded,
 because otherwise those target predicates are not monotonic
-properties \jmh{No, you only proved the inverse of that assertion: guarded$=>$monotonic.}, and hence $p$, which depends on them, is not a monotonic property.  If there 
+properties 
+%\jmh{No, you only proved the inverse of that assertion: guarded$=>$monotonic.}
+, and hence $p$, which depends on them, is not a monotonic property.  If there 
 is no negation in any inference step of $d$, then by Lemma~\ref{lem:guarding} the program
 is confluent, and hence facts in stable models of the program differ only in their timestamps.
 Finally, if there is negation in $d$, $p$ is defined with even depth of negation over some
@@ -297,8 +308,13 @@ depth of negation nesting??} \jmh{I like the idea of induction for this.}
 Logical monotonicity is a sufficient condition for confluence.
 \end{theorem}
 \begin{proof}
+\begin{comment}
 Proof sketch: If a particular ultimate model is populated by atoms that depend only on monotonic properties, then those atoms occur in any ultimate model of the program.  If all ultimate models
-are populated in such a way, they are indeed all the same, unique ultimate model.  \jmh{Follows directly.  By definition 13, a monotonic Dedalus program has an ultimate model consisting of only monotonic properties, and by Lemma 3 all such properties are true in all ultimate models.  Hence all ultimate models of a monotonic Dedalus program are the same.}
+are populated in such a way, they are indeed all the same, unique ultimate model.  
+\jmh{
+\end{comment}
+The proof ollows directly.  By definition 13, a monotonic Dedalus program has an ultimate model consisting of only monotonic properties, and by Lemma 3 all such properties are true in all ultimate models.  Hence all ultimate models of a monotonic Dedalus program are the same.
+
 %which are true in all traces, then there is a unique ultimate model.
 
 \end{proof}
