@@ -534,7 +534,12 @@ For any \lang program $P$ with no negated cycles in its PDG, we can generate $\t
 
 \begin{Dedalus}
 p(\dbar{X}) <- p_send(\dbar{X}), !p(\dbar{_});
+p(\dbar{X})@next <- p(\dbar{X});
 \end{Dedalus}
+
+\begin{theorem}
+For any program $P$, every ultimate model of $\textsc{NDCoord}(P)$ is a consistently sealed ultimate model.
+\end{theorem}
 
 %Applying In example~\ref{ex:sayers} above,   The instrumented version of the example would add the following rule:
 %
