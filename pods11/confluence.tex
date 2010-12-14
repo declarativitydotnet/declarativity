@@ -489,7 +489,7 @@ Note that the perfect ultimate model is a consistently sealed ultimate model; it
 
 %Example~\ref{ex:nonconfluent} performs non-deterministic sealing -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
 
-For any \lang program $P$ with no negated cycles in its PDG, we can generate $\textsc{NDCoord}(P)$, the instrumentation of $P$ so it computes only consistently sealed ultimate models.  The procedure is the same as $\textsc{Coord}$, except we skip the loop on line~\ref{alg:lastfor} instead of line~\ref{alg:addrules}, we add the following rule:
+For any \lang program $P$ with no negated cycles in its PDG, we can generate $\textsc{NDCoord}(P)$, the instrumentation of $P$ so it computes only consistently sealed ultimate models.  The procedure is the same as $\textsc{Coord}$, except we skip the loop on line~\ref{alg:lastfor}, and instead of line~\ref{alg:addrules}, we add the following rule:
 
 \begin{Dedalus}
 p(\dbar{X}) <- p_send(\dbar{X}), !p(\dbar{_});
