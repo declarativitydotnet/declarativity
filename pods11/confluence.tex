@@ -54,9 +54,17 @@ In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \ded
 First, we provide some intuition for the sources of diffluence in \lang programs.  
 %In Example~\ref{ex:nonconfluent}, we saw a \lang program that was difluent because the ultimate model consisted of the first batch of messages in the \dedalus{p} predicate.
 
-\begin{definition}
-If removing negation \jmh{Is that notion well-defined?  Just drop the exclamation points?  Be clear since this is a surprising, semantics-changing thing to do.} from a \lang program results in fewer ultimate models, we say the program has {\em nondeterministic world closing}.
-\end{definition}
+%\begin{definition}
+%If removing negation 
+%\jmh{Is that notion well-defined?  Just drop the exclamation points?  Be clear since this is a %surprising, semantics-changing thing to do.} 
+%rom a \lang program results in fewer ultimate models, we say the program has {\em %nondeterministic world closing}.
+%\end{definition}
+
+Consider a \lang program $p'$ derived from another \lang program $p$ by \paa{not dropping?}
+converting all negated subgoals to positive subgoals (i.e., removing the $!$ symbol from 
+$p$) and removing any occurrences of the {\em count} aggregate function (i.e., replacing 
+a clause like \dedalus{count<A>} with \dedalus{A}).  If $p'$ has fewer ultimate models than $p$, we say that $p$ has {\em nondeterministic
+world closing}.  Nondeterministic world closing occurs when programs apply the closed world assumption to potentially incomplete sets.
 
 \begin{example}
 \label{ex:nonconfluent2}
@@ -74,16 +82,21 @@ r()@next <- r();
 Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.   We will see later how, using intuition from stratification to deterministically close worlds, we can induce confluence with an ultimate model that corresponds to intuition.
 \end{example}
 
-\begin{definition}
-If a negation-free \lang program is diffluent, we say the program has {\em nondeterministic coincidence}.
 
-\paa{isn't this backwards?  you are really saying, if a neg-free program is diffluent, it must be
-the case that it has nondeterministic coincidence, because we're pretty sure (I think I mostly proved it...) that's the only other thing that can cause diffluence... but for this definition,
-don't we just want to define ``unguarded asynchrony'' here?}
-\jmh{I agree that this seems like a lemma, not a definition.}
+%\begin{definition}
+%If a negation-free \lang program is diffluent, we say the program has {\em nondeterministic %coincidence}.
 
-\end{definition}
+%\paa{isn't this backwards?  you are really saying, if a neg-free program is diffluent, it must be
+%the case that it has nondeterministic coincidence, because we're pretty sure (I think I mostly %proved it...) that's the only other thing that can cause diffluence... but for this definition,
+%don't we just want to define ``unguarded asynchrony'' here?}
+%\jmh{I agree that this seems like a lemma, not a definition.}
+%\end{definition}
 
+
+Nondeterministic world closing is not necessary for program diffluence. 
+A \lang program may have multiple ultimate models if it is possible for a join 
+to succeed in one execution (stable model) and fail in another.  We say that such 
+programs have {\em nondeterministic coincidence}.
 
 \begin{example}
 \label{ex:diffluent-noneg}
@@ -97,7 +110,7 @@ p()@next <- p();
 q()@next <- q();
 \end{Dedalus}
 
-This example demonstrates that negation is not required for diffluence.  Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule.  As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
+Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule.  As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
 \end{example}
 
 %The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
