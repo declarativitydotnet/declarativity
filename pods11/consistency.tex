@@ -3,8 +3,8 @@
 
 In the previous section, we provided tests and constructions to ensure a very strong notion of consistency: confluence.  This addresses many of the concerns that arise from the non-deterministic scheduling inherent in distributed computing, and encompasses traditional mechanisms like coordination protocols in a model-theoretic framework where we can prove desirable properties.
 
-As a separate matter, many distributed systems are of such a large scale that replication of functionality is required to ensure good response times and availability.  
-To reason about whether replication is implemented correctly, we may formalize many
+As a separate matter, many distributed systems replicate some or all of their functionality to provide lower variance in response time, and higher availability.  
+To reason about whether such replication is implemented correctly, we may formalize many
 natural correctness criteria as distributed {\em replica consistency} properties.
 In particular, in the distributed systems domain {\em eventual consistency} of replicated data is defined by asserting that all distributed copies of a fact will eventually have the same value after the last update is made. \jmh{I tweaked the previous sentence, make sure you're OK with.  Question in my mind is what is the object that you want to say is being replicated: a fact or a collection?  I settled on fact.}
 
