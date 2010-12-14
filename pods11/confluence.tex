@@ -308,22 +308,23 @@ element in \dedalus{b\_edb()} according to the order \dedalus{<}.
 Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{mem()} is not supported by only monotonic properties, thus the program is not logically monotonic.
 
 \subsection{Perfect Ultimate Model}
+
 \jmh{motivate coordination by analogy to practice}
-Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes the {\em perfect ultimate model}.
+Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique that adds {\em coordination} to a \lang program to convert it into a confluent \lang program that computes this model.
 
 Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
 
 \begin{example}
 \label{ex:sayers}
-A non-confluent \lang program.
+The non-confluent ``sayers'' program.
 
 \begin{Dedalus}
 //sayer
 statement(#L, S, X)@async <- statement_edb(#S, X),
-                             listener(L);
+                             node(L);
 s_false(#L, S, X)@async <- statement_edb(#S, X),
                            false_edb(#S, X),
-                           listener(L);
+                           node(L);
 
 //listener
 true(X) <- statement(_, S, X), !s_false(_, S, X);
@@ -334,7 +335,7 @@ true(X)@next <- true(X);
 \end{Dedalus}
 \end{example}
 
-Intuitively this program represents a group of nodes (the ``sayers'') making statements to another group of nodes called ``listeners''.  The sayers also occasionally remark that a statement is false (but a sayer may only declare one of his own statements to be false -- not the statement of another sayer).  One may expect the contents of \dedalus{true} to contain all statements that are not \dedalus{false}.  However, this is not necessarily the case.  Recall that the un-sugared version of the third rule is:
+Intuitively this program represents a group of nodes (the ``sayers'') making statements to all nodes (the ``listeners'').  The sayers also occasionally remark that a statement is false (but a sayer may only declare one of his own statements to be false -- not the statement of another sayer).  One may expect the contents of \dedalus{true} to contain all statements that are not \dedalus{false}.  However, this is not necessarily the case.  Recall that the un-sugared version of the third rule is:
 
 \begin{Dedalus}
 true(X,T) <- statement(X,T), !false(X,T);
@@ -343,33 +344,35 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG is the ultimate model induced by ensuring a rule containing an atom \dedalus{!p(\dbar{X})} or \dedalus{p(\dbar{X}, count<Y>)} is not evaluated until the complete set of facts in \dedalus{p} is known.
+The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG, denoted $\mathcal{P}(P, E)$, is the ultimate model induced by ensuring a rule containing a \dedalus{!} or a \dedalus{count} is not evaluated until the complete set of facts in the negated or aggregated predicates is known.
 %In other words, one must have ``complete information'' before applying the closed-world assumption for negation.
 This intuitively corresponds to the definition of a perfect model from the Datalog literature.
 %\wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
 %programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
 %corresponding to their ``coordinated'' evaluation(s)}
+\wrm{Insert UCS Here}
+%The perfect ultimate model of a universally constraint stratified~\cite{ross-ucs} program that is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program subsets are completed in the partial order associated with the stratification.
 \end{definition}
 
-\begin{definition}
-The {\em perfect ultimate model} of a \lang program whose temporal flattening is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program subsets are completed in the partial order associated with the stratification.
-\end{definition}
+%There is always a stable model representing the perfect ultimate model of a \lang program whose flattening is syntactically stratified, because there is no recursion through negation, and Lemma~\ref{cron} tells us that any choice of timestamps is permissible in this case.\jmh{huh?}
 
-There is always a stable model representing the perfect ultimate model of a \lang program whose flattening is syntactically stratified, because there is no recursion through negation, and Lemma~\ref{cron} tells us that any choice of timestamps is permissible in this case.\jmh{huh?}
+The ``sayers'' example has no negative cycles in its PDG, thus the rule with \dedalus{!s\_false} in the body should not be evaluated until the \dedalus{s\_false} set is complete.  We can check completeness by having each sayer send a digest of \dedalus{s\_false} messages to all listeners; the listeners recompute the digest over the \dedalus{s\_false} messages they have received; when the computed digest matches the received digest, a data dependency is satisfied, which enables the rule with \dedalus{!s\_false}.
 
-In Example~\ref{ex:sayers}, the perfect ultimate model is represented by any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value.  In particular, we can modify the program to be confluent with the perfect ultimate model by ensuring that negation is not applied until the \dedalus{false} set is complete.  It turns out we can generalize this into an algorithm for all \lang programs whose temporal flattening is syntactically stratified.
+%In Example~\ref{ex:sayers}, any stable model where no \dedalus{false} message arrives after a \dedalus{statement} message with the same value results in the perfect ultimate model.
+%In particular, we can modify the program to be confluent with the perfect ultimate model by ensuring that negation is not applied until the \dedalus{false} set is complete.  It turns out we can generalize this into an algorithm for all \lang programs whose temporal flattening is syntactically stratified.
 
-\wrm{for unstratifiable flattenings, we can introduce another notion of the ``synchronous flattening'', and fully order individual messages passing through an unstratifiable recursion through negation, and call this the perfect ultimate model...}
+%\wrm{for unstratifiable flattenings, we can introduce another notion of the ``synchronous flattening'', and fully order individual messages passing through an unstratifiable recursion through negation, and call this the perfect ultimate model...}
 
-We add the following two rules to compute counts of false messages at each sayer, and each listener:
+One possible digest is a \dedalus{count} of \dedalus{s\_false} messages\footnote{A digest that does not use \dedalus{count} has each sayer sort their messages, and send the sorted order, as well as the maximum message.}.  We add the following two rules to compute counts of false messages at each sayer, and each listener:
 
 \begin{Dedalus}
-count_false_sent(#L, S, count<X>) <- false_edb(S, X),
-                                     listener(L);
+count_false_sent(#N, S, 0) <- !false_edb(#S, _), node(N);
+count_false_sent(#N, S, count<X>) <- false_edb(#S, X),
+                                     node(N);
 count_false_recv(S, count<X>) <- s_false(_, S, X);
 \end{Dedalus}
 
-Furthermore, we replace the rule above that defines \dedalus{true} with the one below:
+Furthermore, we add a dependency on the equality of the counts into the body of the \dedalus{!s\_false} rule:
 
 \begin{Dedalus}
 true(X) <- statement(_, S, X), !s_false(_, S, X),
@@ -377,20 +380,17 @@ true(X) <- statement(_, S, X), !s_false(_, S, X),
            count_false_sent(_, S, X);
 \end{Dedalus}
 
-Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false (i.e., the counts match). 
-
-\wrm{Note, however, that it's fine for the receiver count to have intermediate values, as these are not persisted.}
-\wrm{Example that shows coordination across all nodes?}
-
-\wrm{Talk about generalizing this test for universal constraint stratification}
+Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false.
 
 \subsubsection{Coordination}
-Given any \lang program without recursion through negation, we can automatically instrument it with coordination to achieve the perfect ultimate model, using the following algorithm:
+Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $P' = Coord(P)$ where $\mathcal{U}(P', E) = \mathcal{P}(P, E)$.
 
-1. Build a predicate dependency graph of the program. \wrm{explain the PDG earlier}
-2. Let \dedalus{p} be an asynchronous predicate, from which a negated or aggregated predicate is reachable above.
-3. Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and drop the \dedalus{\#} sign from the location attribute.
-4. Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, \dedalus{p\_incomplete}, and \dedalus{completed\_p} are fresh predicate names.
+Do for all async predicates \dedalus{p}
+If \dedalus{p} has an incoming asynchronous edge, and some path following forward edges from \dedalus{p} reaches a negated or aggregated edge, then:
+
+Consider all asynchronous rules with \dedalus{p} in the head.  Change the head predicate name to \dedalus{p\_local} where that is a fresh predicate name, and remove the location attribute of every atom in the rule.
+
+Add the following rules to the program, where \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, and \dedalus{p\_incomplete} are fresh predicate names.
 
 \noindent
 \begin{Dedalus}
@@ -406,10 +406,9 @@ p_incomplete() <- node(Src), !p_count_recv(Src, _);
 p_incomplete() <- node(Src), !p_count_send(_,Src,_);
 p_incomplete() <- p_count_recv(Src, C1),
                   p_count_send(_, Src, C2), C1 < C2;
-completed_p(Y,\dbar{X}) <- p(Y,\dbar{X}), !p_incomplete();
 \end{Dedalus}
 
-5. For any instance of \dedalus{p} in the body of a rule in the original program, replace it with \dedalus{completed\_p}.
+5. For any instance of \dedalus{p} in the body of a rule in the original program, add the atom \dedalus{!p\_incomplete()} to the rule body.
 
 \begin{theorem}
 The coordinated program is confluent.
