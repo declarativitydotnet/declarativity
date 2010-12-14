@@ -108,15 +108,31 @@ rep_p(#R,\dbar{X})@async <- replica(#R), p(\dbar{X});
 \end{Dedalus}
 \end{definition}
 
-\begin{definition}
-A program is {\em downstream confluent} with respect to a predicate \dedalus{p} if \wrm{removing all rules and predicates yields a confluent program, and any EDB in the new program that's above an async edge in the original program should be delivered by async} yields a confluent program.
-\end{definition} 
-\jmh{The above makes no sense to me.}
+%\begin{definition}
+%A program is {\em downstream confluent} with respect to a predicate \dedalus{p} if %\wrm{removing all rules and predicates yields a confluent program, and any EDB in the new %program that's above an async edge in the original program should be delivered by async} yields %a confluent program.
+%\end{definition} 
+%\jmh{The above makes no sense to me.}
 
-We can instrument an arbitrary \lang program to enable eventual consistency by inserting a replication rule for all predicates \dedalus{p}.
+Consider a \lang program $d$ with a replicated predicate \dedalus{p}, and a subprogram
+$d'$ obtained by removing from $d$ all rules upon which \dedalus{p} transitively 
+depends, and adding a single async rule with \dedalus{p} in the head, in the form:
 
+\begin{Dedalus}
+p(\dbar{X})@async <- p_edb(\dbar{X});
+\end{Dedalus}
 
-We must then rewrite the program above \dedalus{p} to use \dedalus{rep\_p} wherever \dedalus{p} was required. \jmh{something about rhs's} It must also be the case that the program above \dedalus{p} is confluent (of course this does not imply the program as a whole is confluent).  \jmh{above?  huh?}  We require confluence in order to ensure determinism at each replica.  We disallow recursion through replication.  If these conditions are met, the program is eventually consistent.  Note that this definition is flexible enough to admit any scheme where clients are updating and querying replicas.  \jmh{I assume the preceding para will be rewritten.}
+If $d'$ is confluent, we say that $d$ is {\em downstream confluent} with respect to 
+\dedalus{p}.
+
+We can instrument an arbitrary \lang program to enable eventual consistency by inserting a replication rule for all predicates \dedalus{p}, provided that the program is downstream
+confluent for all such \dedalus{p}.
+
+We must then rewrite the program above \dedalus{p} to 
+%wherever \dedalus{p} was required. \jmh{something about rhs's} 
+replace any references to \dedalus{p} in rule subogals to \dedalus{rep\_p}.
+%It must also be the case that the program above \dedalus{p} is confluent (of course this does 
+%not imply the program as a whole is confluent).  \jmh{above?  huh?}  
+We require confluence in order to ensure determinism at each replica.  We disallow recursion through replication.  If these conditions are met, the program is eventually consistent.  Note that this definition is flexible enough to admit any scheme where clients are updating and querying replicas.  \jmh{I assume the preceding para will be rewritten.}
 
 \wrm{examples?}
 \wrm{define downstream confluence}
