@@ -541,18 +541,23 @@ Note that the perfect ultimate model is a consistently sealed ultimate model; it
 
 %Example~\ref{ex:nonconfluent} performs non-deterministic sealing -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
 
-For any \lang program $P$ with no negated cycles in its PDG, we can generate $\textsc{NDCoord}(P)$, the instrumentation of $P$ so it computes only consistently sealed ultimate models.  The procedure is the same as $\textsc{Coord}$, except we skip the loop on line~\ref{alg:lastfor}, and instead of line~\ref{alg:addrules}, we add the following rule:
+For any \lang program $P$ with no negated cycles in its PDG, we can generate $\textsc{NDCoord}(P)$, the instrumentation of $P$ so it computes only consistently sealed ultimate models.  The procedure is the same as $\textsc{Coord}$, except we skip the loop on line~\ref{alg:lastfor}, and instead of line~\ref{alg:addrules}, we add the following rules, where \dedalus{boomerang\_p()} is a fresh predicate name:
 
 \begin{Dedalus}
-p(\dbar{X}) <- p_send(\dbar{X}), !p(\dbar{_});
+boomerang_p()@async;
+boomerang_p()@next <- boomerang_p();
+p(\dbar{X}) <- p_send(\dbar{X}), boomerang_p();
 p(\dbar{X})@next <- p(\dbar{X});
+p_send(\dbar{X})@next <- p_send(\dbar{X}), !boomerang_p();
 \end{Dedalus}
 
-\jmh{Was that timeout via boomerang?  If so, take a minute and give the intuition here.}
+The first rule---a local asynchronous rule---causes \dedalus{boomerang\_p()} to be true at some nondeterministic future time.  When \dedalus{boomerang\_p()} becomes true, we forever seal the \dedalus{p} set.  \dedalus{p\_send} facts accumulate until \dedalus{boomerang\_p()} is true, at which point \dedalus{p\_send} is copied to \dedalus{p}, where it is forever persisted, and deleted from \dedalus{p\_send}, atomically.  Since \dedalus{p} has no \dedalus{p\_send} facts until \dedalus{boomerang\_p()} is true, and no \dedalus{p\_send} facts are copied into \dedalus{p} after at any time after \dedalus{boomerang\_p()} first becomes true, predicate \dedalus{p} is sealed.  Thus we have:
 
 \begin{theorem}
-For any program $P$, every ultimate model of $\textsc{NDCoord}(P)$ is a consistently sealed ultimate model.
+For any program $P$, every ultimate model of \linebreak $\textsc{NDCoord}(P)$ is a consistently sealed ultimate model.
 \end{theorem}
+
+Typically, a distributed system would implement a fixed timeout rather than waiting a nondeterministic amount of time for a \dedalus{boomerang}.  We discuss adding a wall clock to \lang in Section~\ref{sec:failure}.
 
 %Applying In example~\ref{ex:sayers} above,   The instrumented version of the example would add the following rule:
 %
