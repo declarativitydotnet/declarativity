@@ -386,21 +386,20 @@ We now show by example that the other direction does not hold: logical monotonic
 
 \begin{example}
 A confluent Dedalus program that is not logically monotonic.
-\jmh{Is the idea that \dedalus{\#s} is a constant?  Or that it's \dedalus{\#S} and ranges over the domain of \dedalus{node}?  I don't like hash-marks in front of constants much, but maybe it's unavoidable?  Meanwhile, why do the bodies of the server rules not constrain the first attribute? Looks as if the server is peeking at data that's partitioning across many nodes.  I think this program needs debugging.}
 
 \begin{Dedalus}
 //client
-b(#s, I)@async :- b_edb(I);
+b(#S, I)@async :- b_edb(I), server(S);
 
 //server
-b(N, I)@next <- b(N, I), !dequeued(I);
-b_lt(I, J) <- b(_, I), b(_, J), I < J;
-dequeued(I)@next <- b(_, I), !b_lt(_, I);
+b(I)@next <- b(I), !dequeued(I);
+b_lt(I, J) <- b(I), b(J), I < J;
+dequeued(I)@next <- b(I), !b_lt(_, I);
 mem(I) <- dequeued(I), !bt_lt(_, _);
 
 \end{Dedalus}
 
-\paa{don't we just want to add a subgoal node(s) ?}
+%\paa{don't we just want to add a subgoal node(s) ?}
 %\wrm{or, just consider the 2 counter machine...?}
 \end{example}
 
