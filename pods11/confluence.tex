@@ -330,7 +330,8 @@ element in \dedalus{b\_edb()} according to the order \dedalus{<}.
 Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{mem()} is not supported by only monotonic properties, thus the program is not logically monotonic.
 
 \subsection{Perfect Ultimate Model}
-
+\wrm{we are assuming guarded asynchrony}
+\wrm{rework definition to make clear we aren't coordinating @nexts}
 \jmh{motivate coordination by analogy to practice}
 Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique to convert a \lang program into a confluent program that computes this model.
 
@@ -405,7 +406,7 @@ true(X) <- statement(_, S, X), !s_false(_, S, X),
 Now, independent of the assignment of timestamps, no statement from a sayer \dedalus{S} is considered to be true by any listener unless the listener has complete information about which statements are false.
 
 \subsubsection{Coordination}
-Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $P' = \textsc{Coord}(P)$ where $\mathcal{U}(P', E) = \mathcal{P}(P, E)$.
+Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $\textsc{Coord}(P)$, such that \linebreak $\mathcal{U}(\textsc{Coord}(P), E) = \mathcal{P}(P, E)$.
 
 \begin{algorithmic}[0]
   \Procedure{Coord}{$P$}%\Comment{}
@@ -429,37 +430,25 @@ Given a \lang program $P$ with no negative cycles in its PDG, we can generate a 
 p_count_send(#Y,S,count<*>)@async <- p_local(#S,Y,\dbar{X});
 p_count_send(#Y,S,0)@async <- !p_local(#S,Y,\dbar{_});
 p_send(#Y,S,\dbar{X})@async <- p_local(#S,Y,\dbar{X});
-p_count_recv(Src,count<*>) <- p_send(Src,\dbar{X});
-p(Y,\dbar{X}) <- p_send(Y,\dbar{X});
-p(Y,\dbar{X})@next <- p(Y,\dbar{X});
-p_incomplete() <- node(Src), !p_count_recv(Src, _);
-p_incomplete() <- node(Src), !p_count_send(Src,_);
-p_incomplete() <- p_count_recv(Src, C1),
-                  p_count_send(Src, C2), C1 < C2;
+p_count_recv(S,count<*>) <- p(S,\dbar{X});
+p_count_send(#Y,S,C)@next <- p_count_send(#Y,S,C);
+p(\dbar{X}) <- p_send(\dbar{X});
+p(\dbar{X})@next <- p(\dbar{X});
+p_incomplete() <- node(S), !p_count_recv(S,_);
+p_incomplete() <- node(S), !p_count_send(S,_);
+p_incomplete() <- p_count_recv(S, C1),
+                  p_count_send(S, C2), C1 < C2;
 \end{Dedalus}
 \caption{Coordination code}
 \end{figure}
 
-
 \begin{theorem}
-For any program $P$, $\textsc{Coord}(P)$ is confluent.
+For any program $P$, $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)} = \mathcal{P}(P, E)$, where $\text{Pred}(P)$ is the set of predicates in program $P$\footnote{We consider $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)}$ instead of $\mathcal{U}(\textsc{Coord}(P), E)$ because the latter contains facts in the predicates \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, and \dedalus{p\_incomplete()}.}.
 \end{theorem}
 
-We prove the theorem by way of the following two Lemmas.
-The following lemma says that this coordination actually computes the completion of the set:
+A straightforward argument shows that if \dedalus{p\_incomplete()} is false at time \dedalus{t}, then it is false at time \dedalus{t+1}.  It is easy to see if \dedalus{p\_incomplete} is false at time \dedalus{t}, then there cannot exist a \dedalus{p} fact derived by an asynchronous rule at timestamp $\dedalus{t+1}$.  Thus, any rule with \dedalus{!p\_incomplete()} will not be satisfiable until all elements in the \dedalus{p} set are known.
 
-\begin{lemma}
-If there exists a fact $f$ in \dedalus{completed\_p} with timestamp \dedalus{t}, and a fact $g$ in \dedalus{completed\_p} with timestamp \dedalus{s} $>$ \dedalus{t}, then $g$ also exists with timestamp \dedalus{t}.
-\end{lemma}
-\begin{proof}
-Too hungry to prove at the moment.
-\end{proof}
-
-Corollary: the coordinated program is confluent.
-
-Note that this process introduces additional asynchronous edges.  These asynchronous edges need not be coordinated. \wrm{Argue that the transformation is idempotent -- if I write my program with this protocol in it already, applying the transformation again does not break the coordination.}
-
-\wrm{For universal constraint stratification, change the algorithm to do subsets and iterate over any constraints..  Probably need to rewrite the algorithm above, and present strat as a special case of UCS}
+\wrm{UCS Here}
 
 \subsubsection{Nondeterministic Coordination}
 

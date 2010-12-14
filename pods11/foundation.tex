@@ -160,7 +160,7 @@ flipflop(1,2)@1;
 
 \begin{definition}
 For each stable model, the cylic facts of period 1---so-called {\em trivially periodic} facts---comprise an {\em ultimate model} for the program.  We represent a trivially periodic fact in the ultimate model finitely by picking a representative, and discarding its timestamp.
-For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.  We denote the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $\mathcal{U}(P, E, ND)$.  Where $\forall ND_1, ND_2, \mathcal{U}(P, E, ND_1) = \mathcal{U}(P, E, ND_2)$, we denote the unique ultimate model for program $P$ with EDB $E$ as $\mathcal{U}(P, E)$.  
+For example, the trivially periodic fact \{\dedalus{p(a,7); p(a,8); p(a,9);} \ldots\} is represented as \dedalus{p(a)}.  We denote the ultimate model of a program $P$, EDB $E$, and nondeterministic choice set $ND$ as $\mathcal{U}(P, E, ND)$.  Where $\forall ND_1, ND_2, \mathcal{U}(P, E, ND_1) = \mathcal{U}(P, E, ND_2)$, we denote the unique ultimate model for program $P$ with EDB $E$ as $\mathcal{U}(P, E)$.  From time to time, we may consider the {\em restriction} of an ultimate model to a set $R$ of predicates---the subset of the ultimate model consisting of all facts with predicates in $R$---denoted: $\mathcal{U}(P, E, ND)|_{R}$.
 %Note that it may be the case that $\mathcal{U}(P, E, ND_1) \neq \mathcal{U}(P, E, ND_2)$ if $ND_1 \neq ND_2$.
 \end{definition}
 
