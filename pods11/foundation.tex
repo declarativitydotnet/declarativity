@@ -46,21 +46,21 @@ Communication rules are required to be asynchronous, to model practical non-dete
 \label{ex:nonsugared}
 Examples of deductive, inductive, and asynchronous local rules, and an asynchronous communication rule, where \dedalus{S} and \dedalus{T} are variables ranging over the temporal universe.
 \\\\
-deductive:\\
+\textit{deductive:}\\
 \begin{Dedalus}
-p(#X, A, B, T) <- e(#X, A, B, T), node(X);
+p(#X, A, B, T) <- e(A, B, T), node(X);
 \end{Dedalus}
-inductive:\\
+\textit{inductive:}\\
 \begin{Dedalus}
 q(#X, A, B, S) <- e(#X, A, B, T), node(X),
                   successor(T, S);
 \end{Dedalus}
-asynchronous local:\\
+\textit{asynchronous local:}\\
 \begin{Dedalus}
 r(#X, A, B, S) <- e(#X, A, B, T), node(X), time(S),
                   S > T, choice((A, B, T), (S));
 \end{Dedalus}
-asynchronous communication:\\
+\textit{asynchronous communication:}\\
 \begin{Dedalus}
 s(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
                   time(S), S > T, neighbor(#X, Y),
@@ -74,28 +74,36 @@ The restrictions on temporal and location attributes suggest a natural syntactic
 The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
 Communication rules must include the location attribute of their head predicate; by definition this is different a different variable than that of the body predicates.
  Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
-
 \begin{example}
 \label{ex:sugared}
-The rules from Example~\ref{ex:nonsugared} in sugared form.
+The rules from Example~\ref{ex:nonsugared} in sugared form, with one addition at the end.
 \\\\
-deductive:\\
+\textit{deductive:}\\
 \begin{Dedalus}
 p(A, B) <- e(A, B);
 \end{Dedalus}
-inductive:\\
+\textit{inductive:}\\
 \begin{Dedalus}
 q(A, B)@next <- e(A, B);
 \end{Dedalus}
-asynchronous local:\\
+\textit{asynchronous local:}\\
 \begin{Dedalus}
 r(A, B)@async <- e(A, B);
 \end{Dedalus}
-asynchronous communication:\\
+\textit{asynchronous communication (with spatial entanglement):}\\
 \begin{Dedalus}
 s(#Y, A, B)@async <- e(#X, A, B), neighbor(#X, Y);
 \end{Dedalus}
+\textit{asynchronous communication (without spatial entanglement):}\\
+\begin{Dedalus}
+t(#Y, A)@async <- e(A, B);
+\end{Dedalus}
 \end{example}
+
+The last two example merit a bit of discussion.  In the last unsugared rule of Example~\ref{ex:nonsugared}, location attributes were unified with non-location attributes.  This \textit{entanglement} of locations and data attributes requires us to include location attributes even in body predicates, resulting in the fourth rule of Example~\ref{ex:sugared}.  By contrast, the final example here has no such entanglement: the body predicates can omit location attributes, and the location attribute of the head is assumed to range over the finite domain of \dedalus{node}.  Note that we forbid entanglement of temporal attributes in our discussion here, as this would introduce an infinite domain into the generic universe.
+
+ is indeed range-restricted---by an implicit predicate \dedalus{node(Y)} in the body.  In some cases it is desirable to maintain the spatial ``lineage'' of body facts by including their 
+
 
 If predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body \jmh{Dangling foo}
 

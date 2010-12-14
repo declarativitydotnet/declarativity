@@ -363,7 +363,7 @@ We now show that logical monotonicity is not necessary for confluence:
 
 \begin{example}
 A confluent Dedalus program that is not logically monotonic.
-\jmh{I guess the first rule is legal because it has an omitted \dedalus{node} predicate, but it looks badly un-range-restriced.}
+\jmh{Is the idea that \dedalus{#s} is a constant?  Or that it's \dedalus{#S} and ranges over the domain of \dedalus{node}?  I don't like hash-marks in front of constants much, but maybe it's unavoidable?}
 
 \begin{Dedalus}
 //client
@@ -402,6 +402,7 @@ Consider the following example, which is analogous to example~\ref{ex:nonconflue
 \label{ex:sayers}
 The non-confluent ``sayers'' program.
 
+\jmh{You're doing spatial entanglement here, which resurfaces the location specifiers in the body.  We can intro the notion of entanglement in the syntactic sugar section.}
 \begin{Dedalus}
 //sayer
 statement(#L, S, X)@async <- statement_edb(#S, X),
