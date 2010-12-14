@@ -122,10 +122,7 @@ Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconflue
 
 %The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
 
-\jmh{We will see that...}
-Ruling out both nondeterministic world closing and nondeterministic coincidence yields confluence.
-
-\wrm{end bill makeover}
+We will see that ruling out both nondeterministic world closing and nondeterministic coincidence yields confluence.
 
 \begin{definition}
 A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear in the program.
@@ -134,7 +131,8 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 \begin{definition}
 
 A fact $a$ is  {\em persistent} if it is henceforth true 
-(i.e., if $a \Rightarrow \Box a$) \jmh{cheating to borrow symbols from elsewhere.  use \lang notation or terminology.}
+%(i.e., if $a \Rightarrow \Box a$) \jmh{cheating to borrow symbols from elsewhere.  use \lang notation or terminology.}
+(i.e., if it is true at time $T$, then it is true at all $U > T$.)
 \end{definition}
 
 Persistent facts are the only facts that appear in a program's ultimate models.
@@ -152,8 +150,13 @@ in which time is not explicitly modeled.  \jmh{Sorta.  Though this makes non-tim
 %\jmh{This last sentence surprised me.  Are you saying that is implicit in the language, or you will require simple persistence rules over the edb?  I though the edb facts were only true at time 1.}
 
 \begin{definition}
-A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates \jmh{we have async rules, not async preds} are simply persisted.
+A \lang program has {\em guarded asynchrony} if all predicates 
+%\jmh{we have async rules, not async preds} 
+appearing in the heads of \dedalus{async} rules
+are simply persisted.
 \end{definition}
+
+
 
 \begin{lemma}
 \label{lem:guarding}
@@ -177,14 +180,26 @@ choice of timestamp via an {\em async} rule, then certainly
 $a$ occurs in all stable models of the program,
 %there is only one stable model of the program
 %\jmh{I don't buy this; we're scoped down to atom $a$ here and the rules that feed into it}, 
-so there must be at least one {\em async} rule.  
+so there must be at least one {\em async} rule in $a$'s derivation, contributing an atom
+$r$.  
 If $p$ is derived directly from 
-an {\em async} rule via a series of derivation steps without any joins, then every stable
+$r$ via a series of derivation steps without any joins, then every stable
 model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
 and hence correspond to the same ultimate model.
-Therefore, $a$ must have at least one join step in its derivation following an {\em async} rule,
-which succeeded in this stable model but did not succeed in another.  Guarded joins always
-eventually succeed, \jmh{don't you need to define ``join success'' and prove that guarded asynchrony does what you say?} what it and by assumption, every {\em async}-derived predicate is guarded.
+Therefore, $a$ must have at least one join step (i.e., a rule with at least two subgoals)
+in its derivation following $r$,
+which succeeded in this stable model (producing $a$), but did not succeed in another.  
+%Guarded joins always
+%eventually succeed, \jmh{don't you need to define ``join success'' and prove that guarded asynchrony does what you say?} what it and 
+
+Consider such  a join rule.  One of its subgoals $s$ corresponds to a derivation that depends
+on the async-derived atom $r$.  If any predicate between $s$ and $r$ is simply persisted and 
+the program is negation-free,
+then $s$ is persistent.  Regardless of the nondeterministic choice of timestamp for $r$, there
+is some timestamp $V_m$ in every stable model $m$ of the program such that $s$ is true
+for all $W > V$.  Hence in all stable models, $s$ is ``eventually'' true.  The same argument holds
+for all subgoals of the rule under consideration, and hence guarded asynchrony implies that
+all joins will eventually succeed.
 Hence $a$ must exist in all ultimate models.
 
 \end{proof}
@@ -241,8 +256,7 @@ the notion of a {\em monotonic property}.
 
 
 \begin{definition}
-	\jmh{A monotonic property is a formula that...}
-If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
+A monotonic property is a formula which, if it is true at time \dedalus{T},  is true at any time \dedalus{U > T}.
 \end{definition}
 
 Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
