@@ -52,7 +52,10 @@ Note that an eventually consistent program is not necessarily confluent, and tha
 a confluent program is not necessarily eventually consistent.  For example, a program
 that symmetrically replicates the consequences of nondeterministic operations satisfies
 the consistency constraints but certainly has multiple ultimate models.  Further, a confluent
-program may incorrectly specify replication logic.
+program may incorrectly specify replication logic.  \jmh{If the logic is incorrectly specified, is it really replication?  I think you want to say that a confluent program may violate replica constraints.}
+
+\jmh{more importantly, I think we *should* discuss the connection between replica consistency and confluence: downstream confluence.  Can we say that replication requires a restricted confluence guarantee, which can be guaranteed by a restricted monotonicity test?  This properly sets up general confluence as a stronger guarantee in certain ways than replica consistency -- it requires confluence to cover all predicates, not just a chosen subset.  Note that the EC folks probably don't care about downstream confluence beyond the guarded persistence of the replication channel.  So we're exposing a spectrum of ``how much program logic do you care about here''.  This does more to keep CALM.}
+
 
 Like confluence, eventual consistency is undecidable.
 
