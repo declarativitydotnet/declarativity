@@ -103,10 +103,8 @@ How can conservative checks and coordination help us enforce eventual consistenc
 
 \begin{definition}
 The {\em replication rule} for a predicate \dedalus{p}, where \dedalus{rep\_p} is a fresh predicate symbol not otherwise used in the program, is:
-
-\jmh{I don't think you mean for \dedalus{R} to be the partitioning attribute of \dedalus{replica}.  In fact you probably want to require \dedalus{replica} to either be replicated consistently in advance, or to be partitioned in the same way as \dedalus{p}.}
 \begin{Dedalus}
-rep_p(#R,\dbar{X})@async <- replica(#R), p(\dbar{X});
+rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
 \end{Dedalus}
 \end{definition}
 
