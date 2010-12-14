@@ -70,7 +70,8 @@ s(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
 
 \noindent
 \textbf{Syntactic sugar for space-time in \lang}:
-The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  \jmh{Gents: there is no need to require that we show location attributes in body predicates. But now this discussion has to be made consistent with all the communication rules in the text.}
+The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  
+%\jmh{Gents: there is no need to require that we show location attributes in body predicates. But now this discussion has to be made consistent with all the communication rules in the text.}
 The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
 Communication rules must include the location attribute of their head predicate; by definition this is different a different variable than that of the body predicates.
  Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
