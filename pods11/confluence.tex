@@ -61,6 +61,9 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 %rom a \lang program results in fewer ultimate models, we say the program has {\em %nondeterministic world closing}.
 %\end{definition}
 
+\jmh{Added this.}
+In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be applied to incomplete sets over time.
+
 Consider a \lang program $p'$ derived from another \lang program $p$ by 
 %\paa{not dropping?}
 dropping all negated subgoals 
@@ -114,11 +117,12 @@ p()@next <- p();
 q()@next <- q();
 \end{Dedalus}
 
-Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule.  As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
+Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule. \jmh{Why do we care?}  As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
 \end{example}
 
 %The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
 
+\jmh{We will see that...}
 Ruling out both nondeterministic world closing and nondeterministic coincidence yields confluence.
 
 \wrm{end bill makeover}
@@ -130,7 +134,7 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 \begin{definition}
 
 A fact $a$ is  {\em persistent} if it is henceforth true 
-(i.e., if $a \Rightarrow \Box a$)
+(i.e., if $a \Rightarrow \Box a$) \jmh{cheating to borrow symbols from elsewhere.  use \lang notation or terminology.}
 \end{definition}
 
 Persistent facts are the only facts that appear in a program's ultimate models.
@@ -143,12 +147,12 @@ a {\em simply persisted} predicate.
 %All EDB predicates are both simply persisted and {\em a priori} true.  
 We call a predicate that is both simply persisted and  {\em a priori} true (i.e., asserted
 at time 0) a {\em ground truth}.  Ground truths are analogous to the EDB in Datalog programs,
-in which time is not explicitly modeled.
+in which time is not explicitly modeled.  \jmh{Sorta.  Though this makes non-time-0 EDB facts different, and I'm not sure why they're different from EDB in datalog.}
 
 %\jmh{This last sentence surprised me.  Are you saying that is implicit in the language, or you will require simple persistence rules over the edb?  I though the edb facts were only true at time 1.}
 
 \begin{definition}
-A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates are simply persisted.
+A \lang program has {\em guarded asynchrony} if all \dedalus{async} predicates \jmh{we have async rules, not async preds} are simply persisted.
 \end{definition}
 
 \begin{lemma}
@@ -180,7 +184,7 @@ model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its times
 and hence correspond to the same ultimate model.
 Therefore, $a$ must have at least one join step in its derivation following an {\em async} rule,
 which succeeded in this stable model but did not succeed in another.  Guarded joins always
-eventually succeed, and by assumption, every {\em async}-derived predicate is guarded.
+eventually succeed, \jmh{don't you need to define ``join success'' and prove that guarded asynchrony does what you say?} what it and by assumption, every {\em async}-derived predicate is guarded.
 Hence $a$ must exist in all ultimate models.
 
 \end{proof}
@@ -212,7 +216,7 @@ If we assume that
 %the contents of \texttt{node}
 %are fixed (e.g., it is EDB and given \emph{a priori}), 
 \texttt{node} is a ground truth,
-there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which is monotonic because it is {\em positive} (i.e. the negation depth is even). 
+there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}, and this fact is implied by a predicate \dedalus{!not\_responded(\_)}, which \jmh{not sure what ``which'' refers to} is monotonic because it is {\em positive} (i.e. the negation depth is even). 
 Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
 
 If the set \texttt{node} is not fixed, however, the program is not monotonic, because 
@@ -237,11 +241,12 @@ the notion of a {\em monotonic property}.
 
 
 \begin{definition}
+	\jmh{A monotonic property is a formula that...}
 If a {\em monotonic property} is true at time \dedalus{T}, then it is true at any time \dedalus{S > T}.
 \end{definition}
 
 Intuitively, a monotonic property represents some knowledge that never becomes untrue as we acquire  more knowledge.  A persistent fact is a monotonic property, as is the negation of a
-fact that will never be true.  We may define monotonic properties constructively as follows.
+fact that will never be true.  We may define monotonic properties constructively as follows. \jmh{You're not defining, you're giving examples, right?}
 
 %\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
 %\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
@@ -264,10 +269,10 @@ monotonic property.
 
 
 
-\item A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.
+\item A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  \jmh{This doesn't belong in this list.  This is a standalone defn.}
 \end{enumerate}
 
-This list of constructive base cases for monotonic properties is not complete: later we will
+This list of constructive base cases for monotonic properties is not complete: later \jmh{use a fw ref in latex} we will
 axiomatize the way that certain coordination techniques can transform an otherwise 
 nonmonotonic predicate into a monotonic property.
 
@@ -275,7 +280,7 @@ nonmonotonic predicate into a monotonic property.
 We will see that all logically monotonic programs are confluent.  However, some programs that are not logically monotonic are confluent.
 
 \begin{lemma}
-If a monotonic property is true in any stable model of a program, given an EDB, it is true in all stable models. 
+If a monotonic property is true in any stable model of a program over a particular EDB, it is true in all stable models. 
 \end{lemma}
 \begin{proof}
 \begin{comment}
@@ -283,17 +288,20 @@ Proof sketch: assume a monotonic property is true in one trace and false in anot
 
 \paa{or alternatively:}
 \end{comment}
-We will prove by structural induction that if a montononic property is true in any stable
-model of a \lang program, it is true in all stable models.  Consider a montonic property
-$p$.  As a base case, $p$ may be an EDB fact, which clearly exists in all stable models.
+We proceed by induction on derivation depth.
+% We will prove by structural induction that if a montononic property is true in any stable
+% model of a \lang program, it is true in all stable models.  Consider a montonic property
+% $p$.  
+As a base case, $p$ may be an EDB fact, which clearly exists in all stable models.
+\jmh{The remainder of this argument is not inductive.  Fix.}
 Otherwise $p$ has a derivation $d$ grounded in EDB facts.  As we showed in the
 proof of Lemma~\ref{lem:guarding}, if none of the inference 
 steps in $d$ is an {\em async} rule, then $p$ exists in all stable models
 of the program.
 %\jmh{no, we're scoped to $p$ here} 
 and
-the lemma trivially holds.  If there are {\em async} rules, their target predicates are guarded,
-because otherwise those target predicates are not monotonic
+the lemma trivially holds.  If there are {\em async} rules, their head predicates are guarded,
+because otherwise those head predicates are not monotonic
 properties 
 %\jmh{No, you only proved the inverse of that assertion: guarded$=>$monotonic.}
 , and hence $p$, which depends on them, is not a monotonic property.  If there 
@@ -309,7 +317,7 @@ depth of negation nesting??} \jmh{I like the idea of induction for this.}
 %\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
 \begin{theorem}
-Logical monotonicity is a sufficient condition for confluence.
+Confluence is assured by logical monotonicity. \jmh{Can we get away with the phrase ``logical monotonicity?''  I think we may need to be more specific.}
 \end{theorem}
 \begin{proof}
 \begin{comment}
@@ -327,7 +335,7 @@ We now show that logical monotonicity is not necessary for confluence:
 
 \begin{example}
 A confluent Dedalus program that is not logically monotonic.
-
+\jmh{I guess the first rule is legal because it has an omitted \dedalus{node} predicate, but it looks badly un-range-restriced.}
 \begin{Dedalus}
 //client
 b(#s, I)@async :- b_edb(I);
