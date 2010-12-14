@@ -237,7 +237,10 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \subsection{Operational Interpretation}
 \label{sec:operational}
-Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  Our operational model of a distributed system is a distributed partial fixpoint computation.  As we will see, this naturally corresponds to our model-theoretic semantics.  
+Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  As one might expect, given our definition of the ultimate model, we will compute our ultimate model by performing a distributed analog to computing a partial fixpoint.  \wrm{waiting for guidance from Joe and/or Peter on what which direction we need to prove here...}
+We first present an operational model of a distributed system, and explain how it can be modeled in our language.  We then present an algorithm for computing ultimate models, explain how it can be run on our operational formalism, and show that it can compute precisely the set of ultimate models given by the model-theoretic semantics.
+
+First, we will devise an operational model that is sufficient to compute the fixpoint
 %We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
 %We ground our model-theoretic formalism in a natural and equivalent operational semantics.
 
@@ -249,21 +252,17 @@ Intuitively, the operational model is based on $n = |\dedalus{node}|$ Turing Mac
 
 Any \lang program without  async rules is a $\text{Datalog}_{1S}$ program, and the above intuition is captured by the algorithm given in~\cite{tdd}, computing an ultimate model in polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through \dedalus{successor} at each node.  The PSPACE guarantees of~\cite{tdd} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all \lang programs under this model:
 
-Lemma:  (Something like the current Lemma 2, with ``distributed partial fixpoint'' defined in such a way that it matches the discussion in (2) above. It would be fine if you simply
-assert that the appendix formalizes the intuition of (2) by representing its finite traces of execution in terms of ``distributed partial fixpoints''.  You do have to define that
-term though, and connect it to the discussion.)
-
-
 \begin{lemma}
-A distributed partial fixpoint of a \lang program is finitely computable.
-\end{lemma}
 
-\begin{lemma}
-Any distributed partial fixpoint of a \lang program computes an ultimate model, and all ultimate models are computable by a distributed partial fixpoint computation.
 \end{lemma}
 \begin{proof}
 
 \end{proof}
+
+Lemma:  (Something like the current Lemma 2, with ``distributed partial fixpoint'' defined in such a way that it matches the discussion in (2) above. It would be fine if you simply
+assert that the appendix formalizes the intuition of (2) by representing its finite traces of execution in terms of ``distributed partial fixpoints''.  You do have to define that
+term though, and connect it to the discussion.)
+
 
 
 %\subsubsection{Distributed Partial Fixpoint}
@@ -286,17 +285,6 @@ Any distributed partial fixpoint of a \lang program computes an ultimate model, 
 %\jmh{you never defined a partial fixpoint, much less a distributed one.}
 %Note that a distributed partial fixpoint computation corresponds to a finite prefix of a stable model.  
 
-\begin{lemma}
-A distributed partial fixpoint of a \lang program is finitely computable.
-\end{lemma}
-
-\begin{lemma}   
-Any distributed partial fixpoint of a \lang program computes an ultimate model, and all ultimate models are computable by a distributed partial fixpoint computation.
-\end{lemma}
-\begin{proof}
-
-\end{proof}
-
 %\subsubsection{Turing Machine Model}
 
 %\wrm{clean this up, use immerman citation for turing machine}
@@ -315,3 +303,6 @@ If we want \lang to model transient or permanent channel failure, we can add an 
 Modeling failure introduces a whole host of new ultimate models. \wrm{expand}
 
 Except when explicitly mentioned, in the rest of the paper we will assume bounded delays---and thus no failures.
+
+
+\wrm{we do not know relationship between wall clock and logical time, so we don't want the addition of a clock to constrain the possible models}
