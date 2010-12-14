@@ -286,8 +286,12 @@ Proof sketch: assume a monotonic property is true in one trace and false in anot
 We will prove by structural induction that if a montononic property is true in any stable
 model of a \lang program, it is true in all stable models.  Consider a montonic property
 $p$.  As a base case, $p$ may be an EDB fact, which clearly exists in all stable models.
-Otherwise $p$ has a derivation $d$ grounded in EDB facts.  If none of the inference 
-steps in $d$ is an {\em async} rule, there is only one stable model of the program \jmh{no, we're scoped to $p$ here} and
+Otherwise $p$ has a derivation $d$ grounded in EDB facts.  As we showed in the
+proof of Lemma~\ref{lem:guarding}, if none of the inference 
+steps in $d$ is an {\em async} rule, then $p$ exists in all stable models
+of the program.
+%\jmh{no, we're scoped to $p$ here} 
+and
 the lemma trivially holds.  If there are {\em async} rules, their target predicates are guarded,
 because otherwise those target predicates are not monotonic
 properties 
