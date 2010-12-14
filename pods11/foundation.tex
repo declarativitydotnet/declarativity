@@ -234,27 +234,54 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \subsection{Operational Interpretation}
 \label{sec:operational}
-Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  Our operational model of a distributed system is a distributed partial fixpoint computation.  As we will see, this naturally corresponds to our model-theoretic semantics.  We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
-
-\subsubsection{Distributed Partial Fixpoint}
+Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  Our operational model of a distributed system is a distributed partial fixpoint computation.  As we will see, this naturally corresponds to our model-theoretic semantics.  
+%We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
+%We ground our model-theoretic formalism in a natural and equivalent operational semantics.
 
 We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
 $$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$
 
-Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose ultimate model can be computed in polynomial space in the size of the input.  We present a variation of the algorithm given in~\cite{tdd} for programs without asynchronous rules, and then enhance it to support asynchronous rules.
 
-\vspace{1em}
-{\bf Without asynchronous rules:}
-For a given node \dedalus{n}, let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants that appear in the program and $E_{\text{\dedalus{{\scriptsize n}}}}$, and let $c$ be the maximum timestamp of any fact in $E_{\text{\dedalus{{\scriptsize n}}}}$.  The algorithm runs $P$ on $E_{\text{\dedalus{{\scriptsize n}}}}$ for $2^{G+1} + c$ timestamps and keeps track of the periodicity of each of the facts over the previous $2^G$ timestamps.  Note that $2^G$ is the maximum period of any fact~\cite{tdd}, and there are at most polynomially many periodic facts.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime, vardi-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$, as well as the \dedalus{node} relation, and tuple \dedalus{successor(i+1, i+2)}, are considered the EDB of the Datalog program at time $i+1$.  The output of the procedure are all facts that are trivially periodic.
+Intuitively, the operational model is based on $n = |\dedalus{node}|$ Turing Machines, which independently step sequentially through time and communicate via channels with non-deterministic delay.  At each timestep \dedalus{t} they run a datalog fixpoint computation that evaluates $P$ on $projection(E_n, t)$; this takes polynomial time~\cite{immerman-ptime, vardi-ptime}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep \dedalus{t+1} and become part of $projection(E_n, t+1)$, local asynchronous facts whose timestep is chosen non-deterministically to be greater than t and become part of later timesteps, and remote asynchronous facts.  The timestamps in this third class of facts are chosen non-deterministically ``at the receiver'' to model delay, in a way that observes traditional causality restrictions~\cite{lamportclocks}.
 
-\vspace{1em}
-{\bf With asynchronous rules:}
-There are several complications with asynchronous rules.  First, for two nodes \dedalus{n}, \dedalus{m}, $E_{\text{\dedalus{{\scriptsize m}}}}$ may contain different constants than $E_{\text{\dedalus{{\scriptsize m}}}}$.  If \dedalus{n} and \dedalus{m} commit to values of $G$, and then communicate, they may introduce new constants into each others' universes, and their initial choice of $G$ may be too small.  Additionally, asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp our algorithm commits to.  Thus, the algorithm must enlarge $G$ to account for new constants, and extend computation whenever a new asynchronous fact arrives.
+Any \lang program without  async rules is a $\text{Datalog}_{1S}$ program, and the above intuition is captured by the algorithm given in~\cite{tdd}, computing an ultimate model in polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through \dedalus{successor} at each node.  The PSPACE guarantees of~\cite{tdd} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all \lang programs under this model:
 
-We start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
+Lemma:  (Something like the current Lemma 2, with ``distributed partial fixpoint'' defined in such a way that it matches the discussion in (2) above. It would be fine if you simply
+assert that the appendix formalizes the intuition of (2) by representing its finite traces of execution in terms of ``distributed partial fixpoints''.  You do have to define that
+term though, and connect it to the discussion.)
 
-\jmh{you never defined a partial fixpoint, much less a distributed one.}
-Note that a distributed partial fixpoint computation corresponds to a finite prefix of a stable model.  
+
+\begin{lemma}
+A distributed partial fixpoint of a \lang program is finitely computable.
+\end{lemma}
+
+\begin{lemma}
+Any distributed partial fixpoint of a \lang program computes an ultimate model, and all ultimate models are computable by a distributed partial fixpoint computation.
+\end{lemma}
+\begin{proof}
+
+\end{proof}
+
+
+%\subsubsection{Distributed Partial Fixpoint}
+
+%We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
+%$$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$
+
+%Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program~\cite{tdd}, whose ultimate model can be computed in polynomial space in the size of the input.  We present a variation of the algorithm given in~\cite{tdd} for programs without asynchronous rules, and then enhance it to support asynchronous rules.
+
+%\vspace{1em}
+%{\bf Without asynchronous rules:}
+%For a given node \dedalus{n}, let $G$ be the number of ways to instantiate all predicates' generic arguments with all constants that appear in the program and $E_{\text{\dedalus{{\scriptsize n}}}}$, and let $c$ be the maximum timestamp of any fact in $E_{\text{\dedalus{{\scriptsize n}}}}$.  The algorithm runs $P$ on $E_{\text{\dedalus{{\scriptsize n}}}}$ for $2^{G+1} + c$ timestamps and keeps track of the periodicity of each of the facts over the previous $2^G$ timestamps.  Note that $2^G$ is the maximum period of any fact~\cite{tdd}, and there are at most polynomially many periodic facts.  Evaluation of a single timestamp is akin to evaluation of a Datalog program, which may take polynomial time~\cite{immerman-ptime, vardi-ptime}.  After evaluating the Datalog program at time $i$, the IDB facts whose timestamp is $i+1$, as well as the \dedalus{node} relation, and tuple \dedalus{successor(i+1, i+2)}, are considered the EDB of the Datalog program at time $i+1$.  The output of the procedure are all facts that are trivially periodic.
+
+%\vspace{1em}
+%{\bf With asynchronous rules:}
+%There are several complications with asynchronous rules.  First, for two nodes \dedalus{n}, \dedalus{m}, $E_{\text{\dedalus{{\scriptsize m}}}}$ may contain different constants than $E_{\text{\dedalus{{\scriptsize m}}}}$.  If \dedalus{n} and \dedalus{m} commit to values of $G$, and then communicate, they may introduce new constants into each others' universes, and their initial choice of $G$ may be too small.  Additionally, asynchronous facts may appear at arbitrary timestamps, including after any maximum timestamp our algorithm commits to.  Thus, the algorithm must enlarge $G$ to account for new constants, and extend computation whenever a new asynchronous fact arrives.
+
+%We start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
+
+%\jmh{you never defined a partial fixpoint, much less a distributed one.}
+%Note that a distributed partial fixpoint computation corresponds to a finite prefix of a stable model.  
 
 \begin{lemma}
 A distributed partial fixpoint of a \lang program is finitely computable.
@@ -267,15 +294,15 @@ Any distributed partial fixpoint of a \lang program computes an ultimate model, 
 
 \end{proof}
 
-\subsubsection{Turing Machine Model}
+%\subsubsection{Turing Machine Model}
 
-\wrm{clean this up, use immerman citation for turing machine}
+%\wrm{clean this up, use immerman citation for turing machine}
 %\wrm{talk about operational interpretation of choice}
-Operationally, we can model a \lang execution as a collection of nodes (Turing Machines), each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts is written to the tape for atemporal rules, and is written to the queue for inductive rules.  Upon completion of a phase, the Turing Machine writes information about derived facts for asynchronous rules to the queues of the nodes indicated in the location attributes.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
+%Operationally, we can model a \lang execution as a collection of nodes (Turing Machines), each enhanced with an input queue, and fully connected by channels that may arbitrarily delay or re-order messages.  Each node continuously executes phases, where each phase comprises a polynomial number of steps.  Steps consist of normal Turing Machine operations, as well as a node writing to its own queue.  Information about the derived facts is written to the tape for atemporal rules, and is written to the queue for inductive rules.  Upon completion of a phase, the Turing Machine writes information about derived facts for asynchronous rules to the queues of the nodes indicated in the location attributes.  Then, the tape is erased, and atomically, the contents of the queue are moved to the tape.
 
-In other words, a fact, \dedalus{p(\dbar{c}, t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true at a node during some local phase represented by time \dedalus{t}.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true during the current phase given what is known during the current phase. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true during a later phase than their antecedents.
+%In other words, a fact, \dedalus{p(\dbar{c}, t)}, with some constant \dedalus{t} in its time suffix can be thought of as a fact that is true at a node during some local phase represented by time \dedalus{t}.  Deductive rules can be seen as {\em instantaneous} statements: their deductions hold for predicates agreeing in the time suffix and describe what is true during the current phase given what is known during the current phase. Inductive and asynchronous rules are {\em temporal}---their consequents are defined to be true during a later phase than their antecedents.
 
-Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The nondeterminism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by the nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is actually dequeued.
+%Requiring unification on temporal and location attributes enables the locally synchronous evaluation process of atomically erasing and rewriting the tape at the boundary between phases.  It also ensures that the only communication between nodes occurs due to derived facts in asynchronous rules.  The nondeterminism of \dedalus{choice} models the asynchrony between the machines, which may be caused by different nodes running at different speeds, or by the nondeterminism of the channels. Thus, \dedalus{choice} models the fact that the data that will be dequeued for a given phase on a node is unknowable, until it is actually dequeued.
 
 \subsection{Modeling Failure}
 \label{sec:failure}
