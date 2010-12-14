@@ -118,7 +118,8 @@ p()@next <- p();
 q()@next <- q();
 \end{Dedalus}
 
-Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule. \jmh{Why do we care?}  As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
+%Example~\ref{ex:diffluent-noneg} may be obtained from Example~\ref{ex:nonconfluent2} by dropping negation in the third rule, and dropping the sixth rule. \jmh{Why do we care?}  
+As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
 \end{example}
 
 %The above example illustrates that even without negation, a \lang program may induce multiple ultimate models.
