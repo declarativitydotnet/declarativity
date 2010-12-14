@@ -1,6 +1,7 @@
 \section{Confluence}
 \label{sec:confluence}
-Although there is much discussion among developers about distributed ``consistency'', the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.
+Although there is much discussion among developers about distributed ``consistency'', the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. 
+This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  Hellerstein's CALM conjecture links this notion of consistency to monotonicity properties~\cite{podskey-sigrec}; we formalize that connection here. 
 
 Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
@@ -212,8 +213,11 @@ If either qualification is false, problems can result, as we have previously ill
 
 \subsection{Monotonic Properties}
 
-\paa{add some nice text here transitioning the discussion into distributed systems etc}
+% \paa{add some nice text here transitioning the discussion into distributed systems etc}
+% 
+In practice, many natural distributed programs are not negation-free~\cite{cidr11}, and the conditions of Lemma~\ref{lem:guarding} do not hold.  Still, there are cases where these programs contain monotonicities that can be used to guarantee confluence.  In this section we broaden our notion of monotonicity substantially, enabling us to verify the confluence of a broader class of programs.
 
+We begin by considering the following example of a Dedalus program with negation, which we can argue is both monotonic and confluent:
 \begin{example}
 %Example of a logically monotonic Dedalus program:\\
 \begin{Dedalus}
@@ -239,22 +243,21 @@ This fact is implied by the predicate \dedalus{!not\_responded(\_)}, which
 is monotonic because it is {\em positive} (i.e. the negation depth is even). 
 Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
 
-If the set \texttt{node} is not fixed, however, the program is not monotonic, because 
+Note however that if the set \texttt{node} is not fixed, the program is not monotonic, because 
 \texttt{all\_responded} is defined with odd negation depth over \texttt{node}: adding a tuple
 to \texttt{node} may cause a fact in \texttt{all\_responded} to become false.  If such inserts
 are possible, careful maintenance of \texttt{node} is required to ensure confluence: we will
 return to this subject in the following section when we introduce {\em coordination}.
 %will require coordination 
 %\jmh{we haven't defined coordination yet!}.  
-This is analogous to
-the problem of dynamic membership in quorum systems: quantifying over all (or a majority
-of) participants requires some static ``view'' of membership, and changing these views requires
+This is analogous to the classical problem of dynamic membership in quorum systems: quantifying over all (or a majority
+of) participants requires a static ``view'' of membership, and changing this view requires
 explicit coordination among participants.
 
 
 
 We can generalize Lemma~\ref{lem:guarding} to account for monotonic programs that 
-contain syntactic negation and aggregation with
+contain syntactic negation \jmh{should we be mentioning aggregation?} and aggregation with
 the notion of a {\em monotonic property}.
 
 
@@ -271,7 +274,7 @@ use them in a proof by structural induction on Lemma~\ref{lem:property}.
 they aren't complete wrt the semantic definition of monotonic properties,
 but should be sufficient for a proof of the lemma.  but
 it looks like we're going to try a different strategy now (induction on
-derivation depth) ?}
+derivation depth) ?}  \jmh{No, sorry, that was just me trying unsuccessfully to make sense of your proof. Please follow through on this if it works, just telegraph your plans more clearly.}
 
 %\paa{this constructive definition of monotonic properties may not pan out: feel free to revert.}
 %\wrm{your definition is conservative.  first off, let's assume we can specify properties about sealed sets, so we know that coordination is monotonic.  now i want to know that adding coordination to a set makes its negation a monotonic property.  in other words, i have some \dedalus{foo} set that's async, and i want to coordinate something that depends on the negation of \dedalus{foo}.  so i change everything that defines \dedalus{foo} to some new predicate symbol \dedalus{bar}, and define \dedalus{foo} <- \dedalus{bar}, \dedalus{coordination\_foo}.  Now, we know that coordination\_foo is monotonic, and let's say \dedalus{bar} is monotonic.  When I negate \dedalus{foo}, I have the negation of two monotonic properties, but the negation of \dedalus{foo} is monotonic because the coordination is implemented properly, and only goes to true when \dedalus{foo} is complete.}
@@ -361,11 +364,12 @@ The proof follows directly.  By definition 13, a monotonic Dedalus program has a
 
 \end{proof}
 
-We now show that logical monotonicity is not necessary for confluence:
+This discussion formalizes Hellerstein's CALM Conjecture with respect to confluence, and proves it in one direction for a broad definition of monotonicity.  
+We now show by example that the other direction does not hold: logical monotonicity is not necessary for confluence:
 
 \begin{example}
 A confluent Dedalus program that is not logically monotonic.
-\jmh{Is the idea that \dedalus{\#s} is a constant?  Or that it's \dedalus{\#S} and ranges over the domain of \dedalus{node}?  I don't like hash-marks in front of constants much, but maybe it's unavoidable?}
+\jmh{Is the idea that \dedalus{\#s} is a constant?  Or that it's \dedalus{\#S} and ranges over the domain of \dedalus{node}?  I don't like hash-marks in front of constants much, but maybe it's unavoidable?  Meanwhile, why do the bodies of the server rules not constrain the first attribute? Looks as if the server is peeking at data that's partitioning across many nodes.  I think this program needs debugging.}
 
 \begin{Dedalus}
 //client
@@ -396,15 +400,19 @@ Thus it is confluent.  However, the program is not logically monotonic because n
 \wrm{we are assuming guarded asynchrony}
 \wrm{rework definition to make clear we aren't coordinating @nexts}
 \jmh{motivate coordination by analogy to practice}
-Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  For various uses of negation, we will define a {\em perfect ultimate model}, and present a rewrite technique to convert a \lang program into a confluent program that computes this model.
 
-Consider the following example, which is analogous to example~\ref{ex:nonconfluent2} above:
+While our definition of a monotonic property is quite permissive, there are still many cases in practice where programs will not satisfy that property.  These programs are not in themselves confluent, but they often have a single ``natural'' ultimate model that corresponds to evaluating non-monotonic properties only when they can no longer change.  \jmh{It sure would be nice to say here that the inuitive evaluation strategy is something synchronous.  But even in single-node Dedalus we'd need coordination, right??}
+% 
+% 
+% Programs that are not confluent often have a single ``natural'' ultimate model that corresponds to intuition, much as Datalog programs with negation have a {\em perfect model} corresponding to the model obtained by evaluating the program in a ``natural'' order.  
+For various uses of negation, we define a {\em perfect ultimate model}, and present a rewrite technique to convert a \lang program into a confluent program that computes this model.
+
+Consider the following example, which is analogous to Example~\ref{ex:nonconfluent2} above:
 
 \begin{example}
 \label{ex:sayers}
 The non-confluent ``sayers'' program.
 
-\jmh{You're doing spatial entanglement here, which resurfaces the location specifiers in the body.  We can intro the notion of entanglement in the syntactic sugar section.}
 \begin{Dedalus}
 //sayer
 statement(#L, S, X)@async <- statement_edb(#S, X),
@@ -428,7 +436,8 @@ Intuitively this program represents a group of nodes (the ``sayers'') making sta
 true(X,T) <- statement(X,T), !false(X,T);
 \end{Dedalus}
 
-Thus, the contents of \dedalus{true} at time \dedalus{T} is those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model is ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
+\noindent
+Thus, the contents of \dedalus{true} at time \dedalus{T} are those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model consist of ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
 The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG, denoted $\mathcal{P}(P, E)$, is the ultimate model induced by ensuring a rule containing a \dedalus{!} or a \dedalus{count} is not evaluated until the complete set of facts in the negated or aggregated predicates is known.
@@ -450,7 +459,7 @@ Example~\ref{ex:sayers} has no negative cycles in its PDG, thus the rule with \d
 
 %\wrm{for unstratifiable flattenings, we can introduce another notion of the ``synchronous flattening'', and fully order individual messages passing through an unstratifiable recursion through negation, and call this the perfect ultimate model...}
 
-One possible digest is a \dedalus{count} of \dedalus{s\_false} messages\footnote{A digest that does not use \dedalus{count} has each sayer sort their messages, and send the sorted order, as well as the maximum message.}.  We add the following two rules to compute counts of false messages at each sayer, and each listener:
+One possible digest is a \dedalus{count} of \dedalus{s\_false} messages\footnote{A different digest strategy that does not use \dedalus{count} has each sayer sort their messages, and send the sorted order, as well as the maximum message.}.  We add the following two rules to compute counts of false messages at each sayer, and each listener:
 
 \begin{Dedalus}
 count_false_sent(#N, S, 0) <- !false_edb(#S, _), node(N);
@@ -518,10 +527,10 @@ A straightforward argument shows that if \dedalus{p\_incomplete()} is false at t
 \wrm{UCS Here}
 
 \subsubsection{Nondeterministic Coordination}
-As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost---for example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} may never be equal.  Thus, the perfect model is unachievable.  However, we do not want to give up and accept any arbitrary ultimate model.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} which we argue is preferable to an arbitrary ultimate model.
+As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} which captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
 
 \begin{definition}
-A {\em consistently sealed ultimate model} is an ultimate model generated by non-deterministically committing to the the current contents of a predicate.
+A {\em consistently sealed ultimate model} is an ultimate model generated by non-deterministically committing to the current contents of a predicate.  \jmh{what do you mean ``committing to the current contents''?  say this in dedalus terminology?}
 \end{definition}
 
 In Example~\ref{ex:sayers}, all consistently sealed ultimate models have the property that there is no \dedalus{statement} that is both \dedalus{true} and \dedalus{false}, however the \dedalus{true} set may be a superset of the \dedalus{true} set in the perfect ultimate model.  
@@ -538,6 +547,8 @@ For any \lang program $P$ with no negated cycles in its PDG, we can generate $\t
 p(\dbar{X}) <- p_send(\dbar{X}), !p(\dbar{_});
 p(\dbar{X})@next <- p(\dbar{X});
 \end{Dedalus}
+
+\jmh{Was that timeout via boomerang?  If so, take a minute and give the intuition here.}
 
 \begin{theorem}
 For any program $P$, every ultimate model of $\textsc{NDCoord}(P)$ is a consistently sealed ultimate model.

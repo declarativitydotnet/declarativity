@@ -1,18 +1,16 @@
-\section{Eventual Consistency}
+\section{Replica Consistency}
 \label{sec:consistency}
 
-In the previous section, we relaxed confluence to allow greater availability.
+In the previous section, we provided tests and constructions to ensure a very strong notion of consistency: confluence.  This addresses many of the concerns that arise from the non-deterministic scheduling inherent in distributed computing, and encompasses traditional mechanisms like coordination protocols in a model-theoretic framework where we can prove desirable properties.
 
-However, many distributed systems are of such a large scale that replication of functionality 
-and state is required to ensure good performance, fault tolerance, and availability.  
-%This symmetry property implies a spectrum of natural correctness criteria called {\em %consistency} properties.  
+As a separate matter, many distributed systems are of such a large scale that replication of functionality is required to ensure good response times and availability.  
 To reason about whether replication is implemented correctly, we may formalize many
-natural correctness criteria as distributed {\em consistency} properties.
-In particular, in the distributed systems domain {\em eventual consistency} is defined by asserting that all replicas of a fact will eventually have the same value after the last update is made. \jmh{I tweaked the previous sentence, make sure you're OK with.  Question in my mind is what is the object that you want to say is being replicated: a fact or a collection?}
+natural correctness criteria as distributed {\em replica consistency} properties.
+In particular, in the distributed systems domain {\em eventual consistency} of replicated data is defined by asserting that all distributed copies of a fact will eventually have the same value after the last update is made. \jmh{I tweaked the previous sentence, make sure you're OK with.  Question in my mind is what is the object that you want to say is being replicated: a fact or a collection?  I settled on fact.}
 
 \wrm{Note that we're ignoring failure in this section}
 
-We formalize the notion of consistency using Dedalus {\em constraints}.
+We formalize the notion of replica consistency using Dedalus {\em constraints}.  In the remainder of this section, when we use the term consistency we refer to replica consistency.
 
 \begin{definition}
 A Dedalus {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  Since constraints are not meant to be executed, we do not require them to unify on location attributes \wrm{explain why this is not a problem}.  \paa{presumably because we are interested
