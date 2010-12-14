@@ -20,6 +20,7 @@ We construct a \lang program that nondeterministically decides to either run the
 
 Initially, we nondeterministically decide whether to run the machine or not, by sending two messages (0 and 1) to a remote node (\dedalus{decider}).  If both message arrive simultaneously, then the decider responds to run the machine.  Otherwise, the decider responds to declare failure:
 
+\jmh{should we use a hashmark for constants?  I would say no.}
 \begin{Dedalus}
 //send two messages to the decider
 message(#decider, 0)@async.
