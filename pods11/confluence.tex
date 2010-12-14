@@ -342,7 +342,6 @@ mem(I) <- dequeued(I), !bt_lt(_, _);
 %odd()@next <- dequeued(), even();
 %even() <- !odd();
 
-\paa{does this work?}
 %The ultimate model contains \dedalus{odd()} if there are an odd number of \dedalus{b\_edb(I)} %facts, and \dedalus{even()} otherwise.  
 This program has a single ultimate model in which \dedalus{mem()} contains the highest
 element in \dedalus{b\_edb()} according to the order \dedalus{<}.
