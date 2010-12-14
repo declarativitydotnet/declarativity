@@ -165,8 +165,12 @@ that is true in one but
 not in another model, and $a$ must be persistent, or it would not be
 in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
-choice of timestamp via an {\em async} rule, then certainly there is only one stable model of the
-program \jmh{I don't buy this; we're scoped down to atom $a$ here and the rules that feed into it}, so there must be at least one {\em async} rule.  If $p$ is derived directly from 
+choice of timestamp via an {\em async} rule, then certainly 
+$a$ occurs in all stable models of the program,
+%there is only one stable model of the program
+%\jmh{I don't buy this; we're scoped down to atom $a$ here and the rules that feed into it}, 
+so there must be at least one {\em async} rule.  
+If $p$ is derived directly from 
 an {\em async} rule via a series of derivation steps without any joins, then every stable
 model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
 and hence correspond to the same ultimate model.
@@ -284,7 +288,7 @@ depth of negation nesting??} \jmh{I like the idea of induction for this.}
 
 \ref{lem:guarding}
 \end{proof}
-\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
+%\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
 \begin{theorem}
 Logical monotonicity is a sufficient condition for confluence.
