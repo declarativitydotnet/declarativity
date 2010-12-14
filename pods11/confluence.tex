@@ -1,7 +1,7 @@
 \section{Confluence}
 \label{sec:confluence}
 Although there is much discussion among developers about distributed ``consistency'', the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. 
-This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  Hellerstein's CALM conjecture links this notion of consistency to monotonicity properties~\cite{podskey-sigrec}; we formalize that connection here. 
+This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  The CALM conjecture links this notion of consistency to monotonicity properties~\cite{podskey-sigrec}; we formalize that connection here. 
 
 Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
@@ -364,7 +364,7 @@ The proof follows directly.  By definition 13, a monotonic Dedalus program has a
 
 \end{proof}
 
-This discussion formalizes Hellerstein's CALM Conjecture with respect to confluence, and proves it in one direction for a broad definition of monotonicity.  
+This discussion formalizes the CALM Conjecture with respect to confluence, and proves it in one direction for a broad definition of monotonicity.  
 We now show by example that the other direction does not hold: logical monotonicity is not necessary for confluence:
 
 \begin{example}
