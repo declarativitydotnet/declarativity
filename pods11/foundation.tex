@@ -116,7 +116,7 @@ EDB facts must be specified with a location and time.  For a given EDB $E$ and l
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
-\lang restricts negation by requiring any cycle through a negated edge in the PDG to include a temporal edge\footnote{The only exception is the cyclic negation of \dedalus{choice.}, which involves recursion through negation without any temporal edges.}.  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.  \jmh{You say "generic universe" a few times.  Is that an agreed-upon term?  I don't know it.}
+\lang restricts negation by requiring any cycle through a negated edge in the PDG to include a temporal edge\footnote{The only exception is the cyclic negation of \dedalus{choice}, which involves recursion through negation without any temporal edges.}.  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.  \jmh{You say "generic universe" a few times.  Is that an agreed-upon term?  I don't know it.}
 
 %\subsection{Design Rationale and Implications}
 
@@ -149,7 +149,7 @@ EDB facts must be specified with a location and time.  For a given EDB $E$ and l
 %\wrm{explain motivation for nondeterminism.  why don't we just treat the whole world as synchronous?}
 
 \subsection{Semantics}
-Since \lang uses \dedalus{choice}, we characterize the semantics of \lang programs in terms of the {\em stable model semantics}~\cite{stable-model}.  A \lang program without asynchronous rules has a single stable model\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semanics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}.  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different nondeterministic choice of timestamps.  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible executions of a distributed system.
+\lang incorporates \dedalus{choice} to capture the non-determinism of message delays in distributed systems.  Thus we characterize the semantics of \lang  in terms of the {\em stable model semantics}~\cite{stable-model}, which captures this non-determinism.  A \lang program without asynchronous rules has a single stable model\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}.  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different nondeterministic choice of timestamps for the heads of communication rules.  \jmh{Watch this next sentence:}  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible executions of a distributed system.
 %A stable model of a \lang program is a trace of one of its possible distributed executions,.
 
 There are two potential problems with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
@@ -251,6 +251,7 @@ There are several complications with asynchronous rules.  First, for two nodes \
 
 We start running on the EDB for $2^{G+1}$ timestamps.  Then at some later time, we may receive a batch of new messages.  If we have already seen this same batch of messages at an earlier time, we do not need to do anything.  If we have not seen this batch before, the batch may enlarge $G$ to $G'$ by introducing new constants (from another node).  Regardless of any enlargement, we will then need to run for $2^{G'+1}$ more steps if we haven't seen the batch before.  A naive solution to keep track of the batches requires exponential space.  If we complete our designated number of steps without receiving another message, the node goes into a waiting state.  Once all nodes are in a waiting state and there are no outstanding messages being delivered, the ultimate model is computed.  This takes a finite number of computation steps, but can of course take unbounded time, unless we assume bounded message delay, or admit timeouts to enforce real-time constraints.  We will show how failure is modeled later.
 
+\jmh{you never defined a partial fixpoint, much less a distributed one.}
 Note that a distributed partial fixpoint computation corresponds to a finite prefix of a stable model.  
 
 \begin{lemma}
