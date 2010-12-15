@@ -27,7 +27,7 @@ For simplicity of notation, and without loss of generality, we define replicas o
 We note that partitioning of predicates, which can lead to finer-grained replication, 
 entails an orthogonal set of correctness criteria that can likewise be formulated as
 distributed constraints.
-If a \lang program $P$ is eventually consistent with respect to a set of replicated predicates $E$, a set of predicates $D$ computed from replicated data, and replicas $R$, then we write that $(P, E, D, R)$ is eventually consistent.  For the momment, we assume a unary predicate \dedalus{replica}, whose contents is exactly $R$, and is available to all nodes.
+If a \lang program $P$ is eventually consistent with respect to a set of replicated predicates $E$, a set of predicates $D$ computed from replicated data, and replicas $R$, then we write that $(P, E, D, R)$ is eventually consistent.  We assume a unary predicate \dedalus{replica}, whose contents is exactly $R$, and is available to all nodes.
 
 %We augment the definition of a \lang program to 
 %include a set of {\em replicated predicates}, and a set of {\em replicas} represented by a unary \dedalus{replica} predicate.  We represent such a program as the triple
