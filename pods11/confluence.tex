@@ -462,7 +462,7 @@ This intuitively corresponds to the definition of a perfect model from the Datal
 %\wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
 %programs which when temporally flattened are not syntactically stratifiable, yet have a single ultimate model 
 %corresponding to their ``coordinated'' evaluation(s)}
-\wrm{Insert UCS Here}
+%\wrm{Insert UCS Here}
 %The perfect ultimate model of a universally constraint stratified~\cite{ross-ucs} program that is universally constraint stratified~\cite{ross-ucs} is the ultimate model induced by ensuring that for every predicate that appears negated in the program subsets are completed in the partial order associated with the stratification.
 \end{definition}
 
@@ -496,8 +496,7 @@ Now, independent of the assignment of timestamps, no statement from a sayer \ded
 
 \subsubsection{Coordination}
 \label{sec:coord}
-Given a \lang program $P$ with no negative cycles in its PDG, we can generate a confluent program $\textsc{Coord}(P)$, such that \linebreak $\mathcal{U}(\textsc{Coord}(P), E) = \mathcal{P}(P, E)$.
-
+Given a \lang program $P$ with no negative cycles in its PDG\footnote{A similar algorithm is possible for other statically checkable stratification conditions, such as Universal Constraint Stratification~\ref{ucs}.}, we can generate a confluent program $\textsc{Coord}(P)$, such that \linebreak $\mathcal{U}(\textsc{Coord}(P), E) = \mathcal{P}(P, E)$.
 
 \begin{algorithmic}[1]
   \Procedure{Coord}{$P$}%\Comment{}
@@ -535,12 +534,13 @@ p_incomplete() <- p_count_recv(S, C1),
 \end{figure}
 
 \begin{theorem}
-For any program $P$, $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)} = \mathcal{P}(P, E)$, where $\text{Pred}(P)$ is the set of predicates in program $P$\footnote{We consider $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)}$ instead of $\mathcal{U}(\textsc{Coord}(P), E)$ because the latter contains facts in the predicates \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, and \dedalus{p\_incomplete()}.}.
+For any program $P$, $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)} = \mathcal{P}(P, E)$, where $\text{Pred}(P)$ is the set of predicates in program $P$\footnote{We consider $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)}$ instead of $\mathcal{U}(\textsc{Coord}(P), E)$ because the latter contains facts in the predicates \dedalus{p\_count\_send}, \dedalus{p\_count\_recv}, and \dedalus{p\_incomplete}.}.
 \end{theorem}
 
 A straightforward argument shows that if \dedalus{p\_incomplete()} is false at time \dedalus{t}, then it is false at time \dedalus{t+1}.  It is easy to see if \dedalus{p\_incomplete} is false at time \dedalus{t}, then there cannot exist a \dedalus{p} fact derived by an asynchronous rule at timestamp $\dedalus{t+1}$.  Thus, any rule with \dedalus{!p\_incomplete()} will not be satisfiable until all elements in the \dedalus{p} set are known.
+%\wrm{UCS Here}
 
-\wrm{UCS Here}
+We can similarly define a coordination protocol for more general statically checkable conditions, such as Universal Constraint Stratification~\ref{ucs}.
 
 \subsubsection{Nondeterministic Coordination}
 As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} that captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
