@@ -14,16 +14,17 @@ We can play a somewhat similar trick for \dedalus{queue} by having local message
 \section{Proof of Lemma 2}
 \begin{proof}
 %First, we prove an isomorphism between stable models, and finite prefixes of stable models.  Scan a stable model of a program timestamp by timestamp.  
-We first present an algorithm for computing ultimate models, and then argue this algorithm can be run on our operational formalism.  Furthermore, we show a correspondence between a trace and an execution of the algorithm.
+We first present an algorithm for computing ultimate models, and argue that the algorithm computes exactly the stable models of the \lang program.  We then argue this algorithm can be run on our operational formalism, show how operational traces correspond with prefixes of stable models.
 
-Any \lang program without asynchronous rules is a $\text{Datalog}_1S$ program, and the algorithm given in~\cite{tdd} computes an ultimate model in polynomial space in the size of the input.  The algorithm evalutes the program for $2^G + e$ consecutive timesteps, where $G$ is the number of instantiations of the generic attributes of the program rules, using all combinations of constants in the EDB and program, and $e$ is the maximum timestamp of any EDB fact.  At each step, the algorithm updates information on observed periodicities of facts.  When the algorithm terminates, any fact with a periodicity of 1 is regarded as part of the ultimate model.
+Any \lang program without asynchronous rules is a $\text{Datalog}_1S$ program, and the algorithm given in~\cite{tdd} computes an ultimate model in polynomial space\footnote{The class of multi-seperable~\cite{tdd-poly} \lang rules, which comprises all \lang programs $P$ with guarded asynchrony and persisted EDB, and their coordinations $\textsc{Coord}(P)$, can be executed in polynomial time.} in the size of the input.  The algorithm evalutes the program for $2^G + e$ consecutive timesteps, where $G$ is the number of instantiations of the generic attributes of the program rules, using all combinations of constants in the EDB and program, and $e$ is the maximum timestamp of any EDB fact.  At each step, the algorithm updates information on observed periodicities of facts.  When the algorithm terminates, any fact with a periodicity of 1 is regarded as part of the ultimate model.
 
-For asynchronous rules, the natural distributed analog of the algorithm above simultaneously executes one instance for each node \dedalus{n}, using values of $G$ and $e$ computed from $E_{\text{\dedalus{{\scriptsize n}}}}$.  As facts are derived at other nodes, the number of constants available to a given node may increase, and thus a node's $G$ may increase to $G'$.  Furthermore, the node may need to execute over this new fact for $2^{G'}$ additional timesteps.  Note that timestamps are assigned
+For asynchronous rules, the natural distributed analog of the algorithm above simultaneously executes one instance for each node \dedalus{n}, using values of $G$ and $e$ computed from $E_{\text{\dedalus{{\scriptsize n}}}}$.  Each instance has its own local clock, which intuitively corresponds to the timestamp attribute in the model-theoretic semantics.  Nodes communicates over channels with arbitrary delay and message re-ordering.  When another node \dedalus{m} derives a fact at \dedalus{n}, it encloses its local clock value, \dedalus{t}; \dedalus{n} must consider this fact until time \dedalus{t}, in the style of Lamport Clocks.  Note that this behavior is implied by the model-theoretic semantics---remote asynchronous rules state that their deductions are visible at the destination at a time later than the body temporal attribute at the source.  Further, note that Lamport Clocks only introduce the constraint that if message $a$ ``happens before'' $b$, in other words $a$ directly or transitively causes $b$ to be sent, then $T(a) < T(b)$.  If $a$ and $b$ are concurrent, there is some execution where $T(a) \geq T(b)$.
 
-If only finitely many messages are sent, this algorithm requires polynomial space.  In the case that infinitely many messages are sent, we only need to process each message $2^{G'}$ times (we will address this point later).  Thus, we need to keep track of the number of times we have seen each fact, which also requires polynomial space.  When the algorithm is done running for $2^{G'}$ steps, it pauses, waiting for new network input that it has not seen enough times.  If all nodes are paused and no outstanding messages exist, then the collection of all period 1 facts at all instances of the algorithm comprises an ultimate model.
+When \dedalus{n} processes a received message, the number of constants available to \dedalus{n} may increase, and thus a node's $G$ may increase to $G'$.  Furthermore, the node may need to execute over this new fact for $2^{G'}$ additional timesteps.  If only finitely many messages are sent, this algorithm requires polynomial space.  In the case that infinitely many messages are sent, we only need to process each message $2^{G'}$ times: the maximum period of any fact is $2^{G'}$, as every incoming fact needs to have a chance (in some execution) to join with any deduction, at any time during its period, with which it is ``concurrent''.  Keeping track of the number of times we have seen each fact also requires polynomial space.  When the algorithm is done running for $2^{G'}$ steps, it pauses, waiting for new network input that it has not seen enough times.  If all nodes are paused and no outstanding messages exist, then the collection of all period 1 facts at all instances of the algorithm comprises an ultimate model.
 
-To see why it is an ultimate model of the original program, 
+We claim that the algorithm can generate every ultimate model---every message has the opportunity to join with another concurrent message or its transitive consequents at any point during their period, and has the opportunity to join with a causally related message during the range of times allowed by the model-theoretic asynchronous constraint (identical to the Lamport Clock condition used in the algorithm).
 
+Note that we can execute this algorithm on our operational formalism.  Evaluating a single timestamp of a \lang program corresponds to the evaluation of a Datalog program, which is a polynomial time computation, and the Turing Machines can also maintain the necessary state about periods and message counts.
 %2) Intuitively, the operational model is based on n Turing Machines, one per value of node(), which independently step sequentially through time and communicate via channels with
 %non-deterministic delay.  At each timestep t they run a datalog fixpoint computation that evaluates P on ``projection(E_n, t)'' (notation needed); this takes polynomial
 %time~\cite{immerman}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep t+1 and become part of ``projection(E_n,
@@ -38,12 +39,11 @@ To see why it is an ultimate model of the original program,
 
 \section{Proof of Lemma 4}
 \begin{proof}
-Our proof proceeds via construction of a two counter machine in \lang, inspired by the construction in~\cite{undecidable-datalog}. We briefly review two counter machines.  A two counter machine's state is captured in the state of its two counters (natural numbers), and in its control state.  A two counter machine has a transition function, which can be characterized as follows:
-$$\delta: \Sigma \times \{=, >\} \times \{=, >\} \rightarrow \Sigma \times \{inc, dec\} \times \{inc, dec\}$$
+Our proof proceeds via construction of a two counter machine in \lang, inspired by the construction in~\cite{undecidable-datalog}. We briefly review two counter machines.  A two counter machine's state is captured in the state of its two counters (natural numbers), and in its control state.  A two counter machine has a transition function: $\delta: \Sigma \times \{=, >\} \times \{=, >\} \rightarrow \Sigma \times \{inc, dec\} \times \{inc, dec\}$
 
 $\Sigma$ is a finite set of states (for simplicity we assume a finite subset of the natural numbers), $=$ indicates a counter is equal to zero, and $>$ indicates a counter is greater than zero.  $inc$ and $dec$ indicate that a counter should be incremented, or decremented respectively.
 
-We represent the state of a two counter machine using the \dedalus{cnfg(T,S,C1,C2)} relation, where \dedalus{T} represents ``time'' (note this is not the same as the timestamp attribute), \dedalus{S} is the state (in $\Sigma$), and \dedalus{C1} and \dedalus{C2} are the values of the two counters.  In order to support $inc$ and $dec$, we would like to make use of the \dedalus{succ} relation.  However, \lang conventions forbid the use of this infinite relation outside of the timestamp attribute.  Thus, we posit the \dedalus{fin\_succ(X,Y)} EDB relation, which represents a finite prefix of the successor relation.  Since it is EDB, its contents may be arbitrary.  If \dedalus{fin\_succ} is malformed, then the machine's execution may be incorrect.  In particular, our model of the machine may accept an input, whereas the actual machine would not have accepted that input.  We illustrate how to constrain the contents of \dedalus{fin\_succ} below:
+We represent the state of a two counter machine using the \linebreak \dedalus{cnfg(T,S,C1,C2)} relation, where \dedalus{T} represents ``time'' (note this is not the same as the timestamp attribute), \dedalus{S} is the state (in $\Sigma$), and \dedalus{C1} and \dedalus{C2} are the values of the two counters.  In order to support $inc$ and $dec$, we would like to make use of the \dedalus{succ} relation.  However, \lang conventions forbid the use of this infinite relation outside of the timestamp attribute.  Thus, we posit the \dedalus{fin\_succ(X,Y)} EDB relation, which represents a finite prefix of the successor relation.  Since it is EDB, its contents may be arbitrary.  If \dedalus{fin\_succ} is malformed, then the machine's execution may be incorrect.  In particular, our model of the machine may accept an input, whereas the actual machine would not have accepted that input.  We illustrate how to constrain the contents of \dedalus{fin\_succ} below:
 
 \begin{Dedalus}
 malformed() <- fin_succ(_,0);
@@ -58,31 +58,37 @@ We construct a \lang program that nondeterministically decides to either run the
 
 Initially, we nondeterministically decide whether to run the machine or not, by sending two messages (0 and 1) to a remote node (\dedalus{decider}).  If both message arrive simultaneously, then the decider responds to run the machine.  Otherwise, the decider responds to declare failure:
 
-\jmh{should we use a hashmark for constants?  I would say no.}
+%\jmh{should we use a hashmark for constants?  I would say no.}
 \begin{Dedalus}
 //send two messages to the decider
-message(#decider, 0)@async.
-message(#decider, 1)@async.
+message(#D, 0)@async <- decider(D);
+message(#D, 1)@async <- decider(D);
 
 //decider responds to computer
-run_machine(#computer)@async <- message(_, 0), message(_, 1);
-declare_failure(#computer)@async <- message(_, 0), !message(_, 1);
-declare_failure(#computer)@async <- !message(_, 0), message(_, 1);
+run_machine(#computer)@async <- message(0),
+                                message(1);
+declare_failure(#computer)@async <- message(0),
+                                    !message(1);
+declare_failure(#computer)@async <- !message(0),
+                                    message(1);
 \end{Dedalus}
 
 Each mapping in the transition function is expressed by a \lang rule with \dedalus{!malformed()} and \dedalus{!declare\_failure()} in its body.  For example, the rule $\delta(3, > =) = (7, inc, dec)$ would be represented as:
 
 \begin{Dedalus}
-cnfg(S,7,D1,D2) <- cnfg(T,3,C1,C2), C1 > 0, C2 == 0, fin_suc(T, S), fin_succ(C1, D1), fin_succ(D2, C2), !malformed(), !declare_failure();
+cnfg(S,7,D1,D2) <- cnfg(T,3,C1,C2), C1 > 0, C2 == 0,
+                   fin_suc(T, S), fin_succ(C1, D1),
+                   fin_succ(D2, C2), !malformed(),
+                   !declare_failure();
 \end{Dedalus}
 
 We declare success or failure as follows:
 
 \begin{Dedalus}
 reject() <- !accept();
-accept() <- cnfg(20,_,_); //assuming 20 is the accepting state
+accept() <- cnfg(20,_,_); //20 is the accepting state
 accept()@next <- accept();
 \end{Dedalus}
 
-If we choose to declare failure, or the machine halts in a non-accepting state, whether it is due to incompleteness or malformedness \dedalus{fin\_succ}, or actual halting, then the ultimate model will contain \dedalus{reject}.  If the machine halts in an accepting state, then the ultimate model will contain \dedalus{accept}.  Thus, if we can decide confluence of this program, then we can decide whether a two-counter machine halts on any input \wrm{undecidable for TMs, dunno about 2CMs, but I highly suspect so.  If need be, we can change this 2CM to a TM}.
+If we choose to declare failure, or the machine halts in a non-accepting state, whether it is due to incompleteness or malformedness \dedalus{fin\_succ}, or actual halting, then the ultimate model will contain \dedalus{reject}.  If the machine halts in an accepting state, then the ultimate model will contain \dedalus{accept}.  Thus, if we can decide confluence of this program, then we can decide whether a two-counter machine halts on any input.
 \end{proof}
