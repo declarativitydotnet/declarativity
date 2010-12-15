@@ -477,9 +477,10 @@ Example~\ref{ex:sayers} has no negative cycles in its PDG, thus the rule with \d
 One possible digest is a \dedalus{count} of \dedalus{s\_false} messages\footnote{A different digest strategy that does not use \dedalus{count} has each sayer sort their messages, and send the sorted order, as well as the maximum message.}.  We add the following two rules to compute counts of false messages at each sayer, and each listener:
 
 \begin{Dedalus}
-count_false_sent(#N, S, 0) <- !false_edb(#S, _), node(N);
-count_false_sent(#N, S, count<X>) <- false_edb(#S, X),
-                                     node(N);
+count_false_sent(#N, S, 0) <- 
+  !false_edb(#S, _), node(N);
+count_false_sent(#N, S, count<X>) <- 
+  false_edb(#S, X), node(N);
 count_false_recv(S, count<X>) <- s_false(_, S, X);
 \end{Dedalus}
 
