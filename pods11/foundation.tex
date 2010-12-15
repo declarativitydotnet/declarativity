@@ -321,9 +321,4 @@ See appendix for details.
 
 If we want \lang to model transient or permanent channel failure, we can add an element $\infty$ to \dedalus{time}, such that every element of $\mathbb{N}$ is less than $\infty$.  We also need to introduce the conjunct \dedalus{T != \(\infty\)} into every \lang rule.
 
-Modeling failure introduces a whole host of new ultimate models. \wrm{expand}
-
-Except when explicitly mentioned, in the rest of the paper we will assume bounded delays---and thus no failures.
-
-
-\wrm{we do not know relationship between wall clock and logical time, so we don't want the addition of a clock to constrain the possible models}
+Assuming failure may admit additional ultimate models.  We identify an interesting class of these ultimate models in Section~\ref{sec:ndcoord}.  Except when explicitly mentioned, in the rest of the paper we will assume that there are no failures, and all messages are eventually delivered.
