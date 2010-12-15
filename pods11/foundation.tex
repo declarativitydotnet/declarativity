@@ -275,7 +275,7 @@ See appendix for details.
 $D_n@1$ is $E_n$.  
 
 Our model consists of $n = |\dedalus{node}|$ Turing Machines, which independently step sequentially through time and communicate via channels with non-deterministic delay.  At each timestep \dedalus{t} they run a Datalog fixpoint computation that evaluates $P$ on $D_n@\dedalus{t}$; this takes polynomial time~\cite{immerman-ptime, vardi-ptime}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep \dedalus{t+1} and become part of $D_n@\dedalus{t+1}$, local asynchronous facts whose timestep is chosen non-deterministically to be greater than \dedalus{t} and become part of later timesteps, and remote asynchronous facts.  The timestamps in this third class of facts are chosen non-deterministically ``at the receiver''.
-% to model delay, in a way that observes traditional causality restrictions~\cite{lamportclocks}.
+% to model delay, in a way that observes traditional causality restrictions~\cite{timeclocks}.
 
 Any \lang program without  async rules is a $\text{Datalog}_{1S}$ program, and the above intuition is captured by the algorithm given in~\cite{tdd}, computing an ultimate model in polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through \dedalus{successor} at each node.  The PSPACE guarantees of~\cite{tdd} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all \lang programs under this model:
 
