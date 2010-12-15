@@ -52,8 +52,7 @@ the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao
 %%%Further background: \cite{constructivism,prz,tdccp,tccp}
 \end{comment}
 
-There is a long history of deductive database systems with which \lang
-shares features.
+\lang shares features with a long history of deductive database systems.
 The purely declarative semantics of \lang, based on the reification of logical time into
 facts, are closer in spirit and interpretation to  Statelog~\cite{statelog} and
 the languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} than
@@ -64,8 +63,8 @@ Previous work in temporal deductive databases attempted to compute finite repres
 Significant recent work (\cite{boom-techr,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Lemma~\ref{lem:guarding} resembles the  correctness proof of ``pipelined
 semi-naive evaluation'' for distributed Datalog presented by Loo et al.~\cite{loo-sigmod06}.
-Inspired by those results, we here extended them to programs that are not syntactically 
-monotone and channels that may drop or arbitrarily reorder messages.
+Inspired by those results, we extend them here to programs that are not syntactically 
+monotonic and channels that may drop or arbitrarily reorder messages.
 In general, however, the language extensions 
 proposed in much of this prior work added
 expressivity and domain applicability but compromised the declarative

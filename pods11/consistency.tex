@@ -10,13 +10,13 @@ In particular, in the distributed systems domain {\em eventual consistency} of r
 %\jmh{I tweaked the previous sentence, make sure you're OK with.  Question in my mind is what is the object that you want to say is being replicated: a fact or a collection?  I settled on fact.}
 %i'm okay with it -wrm
 
-We formalize the notion of replica consistency using Dedalus {\em constraints}.  In the remainder of this section, when we use the term consistency we refer to replica consistency. \wrm{someone please check this is true}
+We formalize the notion of replica consistency using Dedalus {\em constraints}.  In the remainder of this section, when we use the term consistency we refer to replica consistency. %\wrm{someone please check this is true}
 
 \begin{definition}
 A Dedalus {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  We do not require constraints to unify on location attributes, as they are not ``executed'' by our operational formalism in Section~\ref{sec:operational}.  Instead, by ensuring the absence of \dedalus{fail()} from the ultimate model, we ensure that the operational formalism can never compute an ultimate model that violates the constraint.
 \end{definition}
 
-In order to talk about consistency, we need to differentiate between replicated
+In order to talk about replica consistency, we need to differentiate between replicated
 %data from partitioned \jmh{non-replicated?} 
 and local
 data, and define a set of replicas.  
@@ -55,7 +55,7 @@ Like confluence, eventual consistency is undecidable.
 It is undecidable for general \lang programs whether the constraint shown in Definition~\ref{def:ec} is not violated for all EDBs.
 \end{lemma}
 \begin{proof}
-There is a straightforward reduction from the problem of deciding whether a pair of two counter machines accepts the same input.  Assume two different two counter machines are modeled at two different replicas.  We replicate the same input to both machines, and the output of the two counter machine is persisted.  Deciding eventual consistency for all EDBs (inputs to the two counter machines) implies we can decide whether the outputs of the two counter machines are always identical.
+There is a straightforward reduction from the problem of deciding whether a pair of two-counter machines accepts the same input.  Assume two different two-counter machines are modeled at two different replicas.  We replicate the same input to both machines, and the output of the two counter machine is persisted.  Deciding eventual consistency for all EDBs (inputs to the two counter machines) implies we can decide whether the outputs of the two counter machines are always identical.
 \end{proof}
 
 
