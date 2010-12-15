@@ -63,7 +63,6 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 %rom a \lang program results in fewer ultimate models, we say the program has {\em %nondeterministic world closing}.
 %\end{definition}
 
-\jmh{Added this.}
 In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be ``temporarily'' applied to sets whose contents are still evolving over time. The evolution of such sets and their consequences can lead to non-deterministic ultimate models.
 
 Consider a \lang program $p'$ derived from another \lang program $p$ by 
