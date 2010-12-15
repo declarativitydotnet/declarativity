@@ -567,13 +567,13 @@ p(\dbar{X})@next <- p(\dbar{X});
 p_send(\dbar{X})@next <- p_send(\dbar{X}), !boomerang_p();
 \end{Dedalus}
 
-The first rule---a local asynchronous rule---causes \dedalus{boomerang\_p()} to be true at some nondeterministic future time.  When \dedalus{boomerang\_p()} becomes true, we forever seal the \dedalus{p} set.  \dedalus{p\_send} facts accumulate until \dedalus{boomerang\_p()} is true, at which point \dedalus{p\_send} is copied to \dedalus{p}, where it is forever persisted, and deleted from \dedalus{p\_send}, atomically.  Since \dedalus{p} has no \dedalus{p\_send} facts until \dedalus{boomerang\_p()} is true, and no \dedalus{p\_send} facts are copied into \dedalus{p} after at any time after \dedalus{boomerang\_p()} first becomes true, predicate \dedalus{p} is sealed.  Thus we have:
+The first rule---a local asynchronous rule\footnote{Note that this is actually a rule.  Its unsugared form is: \linebreak \dedalus{boomerang\_p(\#N) <- choice((N),(S)),time(S),node(N);}}---derives \dedalus{boomerang\_p()} at some unspecified time.  When \dedalus{boomerang\_p()} becomes true, we forever seal the \dedalus{p} set.  \dedalus{p\_send} facts accumulate until \dedalus{boomerang\_p()} is true, at which point \dedalus{p\_send} is copied to \dedalus{p}, where it is forever persisted, and deleted from \dedalus{p\_send}, atomically.  Since \dedalus{p} has no \dedalus{p\_send} facts until \dedalus{boomerang\_p()} is true, and no \dedalus{p\_send} facts are copied into \dedalus{p} after at any time after \dedalus{boomerang\_p()} first becomes true, predicate \dedalus{p} is sealed.  Thus we have:
 
 \begin{theorem}
 For any program $P$, every ultimate model of \linebreak $\textsc{NDCoord}(P)$ is a consistently sealed ultimate model.
 \end{theorem}
 
-Typically, a distributed system would implement a fixed timeout rather than waiting a nondeterministic amount of time for a \dedalus{boomerang}.  We discuss adding a wall clock to \lang in Section~\ref{sec:failure}.
+Typically, a distributed system would implement a fixed timeout rather than waiting a nondeterministic amount of time for a \dedalus{boomerang}.  Timeouts are conceptually simple to implement; details are provided for an earlier distributed Datalog variant in~\cite{boom}.
 
 %Applying In example~\ref{ex:sayers} above,   The instrumented version of the example would add the following rule:
 %
