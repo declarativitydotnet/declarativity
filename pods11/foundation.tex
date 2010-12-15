@@ -32,18 +32,18 @@ For each binding of variables in \dedalus{\dbar{X}}, the last argument of \dedal
 \noindent {\bf Locality in Space and Time:}
 We would like the temporal and location attributes of \lang predicates to capture the practical semantics of communication in distributed systems.  To that end we introduce a set of restrictions on the use of these attributes, as well as the \dedalus{successor} and \dedalus{choice} constructs.
 
-To model the notion of local computation at a given timestep, \lang requires that all atoms in each rule body unify on their temporal and location attributes: that is, they all use the same variable symbol $\Tau$ in their temporal attribute, and the same variable symbol $\SDedalus$ in their location attribute.  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}.
+To model the notion of local computation at a given timestep, \lang requires that all atoms in each rule body unify on their temporal and location attributes: that is, they all use the same variable symbol in their temporal attribute, and the same variable symbol in their location attribute.  If the rule head's location attribute uses the same variable symbol as the body, we call the rule {\em local}.  Otherwise the rule is a {\em communication rule}.
 
 %, and that its value must not be $\infty$.
 The temporal variable in the head atom is constrained by exactly one of the following methods:
 \begin{enumerate}
 \item The rule is called a {\em deductive} rule if its head temporal variable is the same as its body temporal variable;
 \item The rule is called an {\em inductive} rule if its head temporal variable is the \dedalus{successor} of its body temporal variable;
-\item The rule is called an {\em asynchronous} rule if its head temporal variable is constrained using the \dedalus{choice} construct over all body variables (including the body temporal variable).
+\item The rule is called an {\em asynchronous} rule if its head temporal variable is constrained using the \dedalus{choice} construct over all body variables (including the body temporal and location variables).
 \end{enumerate}
 The use of \dedalus{successor} and \dedalus{choice} is prohibited in \lang outside of these special usages.
 
-Communication rules are required to be asynchronous, to model practical nondeterminism in message delay and clock drift.  Local rules can be in defined in any of the three temporal classes above.
+Communication rules are required to be asynchronous to model practical nondeterminism in message delay and clock drift.  Local rules can be in defined in any of the three temporal classes above.
 
 \begin{example}
 \label{ex:nonsugared}
