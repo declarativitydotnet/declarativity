@@ -3,11 +3,49 @@
 %First, we prove an isomorphism between stable models, and finite prefixes of stable models.  Scan a stable model of a program timestamp by timestamp.  
 We first present an algorithm for computing ultimate models, and argue that the algorithm computes exactly the ultimate models of the \lang program.  We then argue this algorithm can be run on our operational formalism, and show how operational traces correspond with prefixes of stable models.
 
-Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$ program, and the algorithm given in~\cite{tdd} computes its ultimate model in polynomial space\footnote{The class of {\em multi-seperable}~\cite{tdd-poly} \lang programs, which comprises all \lang programs $P$ with guarded asynchrony and persisted EDB, and their coordinations $\textsc{Coord}(P)$, can be executed in polynomial time in the size of the input.} in the size of the input.  The algorithm evalutes the program for $2^G + e$ consecutive timesteps, where $G$ is the number of instantiations of the non-temporal attributes of the program rules using all combinations of constants in the Herbrand Universe, and $e$ is the maximum timestamp of any EDB fact.  At each step, the algorithm updates information on observed periodicities of facts.  When the algorithm terminates, any fact with a periodicity of 1 is regarded as part of the ultimate model.
+Any \lang program without asynchronous rules is a $\text{Datalog}_{1S}$
+program, and the algorithm given in~\cite{tdd} computes its ultimate model in
+polynomial space\footnote{The class of {\em multi-separable}~\cite{tdd-poly}
+\lang programs, which comprises all \lang programs $P$ with guarded asynchrony
+and persisted EDB, and their coordinations $\textsc{Coord}(P)$, can be executed
+in polynomial time in the size of the input.} in the size of the input.  The
+algorithm evaluates the program for $2^G + e$ consecutive timesteps, where $G$
+is the number of instantiations of the non-temporal attributes of the program
+rules using all combinations of constants in the Herbrand Universe, and $e$ is
+the maximum timestamp of any EDB fact.  At each step, the algorithm updates
+information on observed periodicities of facts.  When the algorithm terminates,
+any fact with a periodicity of 1 is regarded as part of the ultimate model.
 
-For asynchronous rules, the natural distributed analog of the above algorithm simultaneously executes one instance for each node \dedalus{n}, using values of $G$ and $e$ computed from $E_{\text{\dedalus{{\scriptsize n}}}}$.  Each instance has its own local clock, which corresponds to the timestamp attribute in the model-theoretic semantics.  Nodes communicate over channels with arbitrary delay and message re-ordering.  When a remote node \dedalus{m} derives a fact at \dedalus{n}, it encloses its local clock value, \dedalus{t}; \dedalus{n} must consider this fact at his local time \dedalus{t} or later, in the style of Lamport Clocks.  Note that this behavior is equivalent to the model-theoretic semantics of remote asynchronous rules: remote deductions are visible at the destination at a time later than the body temporal attribute at the source.  Further, note that Lamport Clocks only introduce the constraint that if message $a$ ``happens before'' $b$, in other words $a$ directly or transitively causes $b$ to be sent, then $T(a) < T(b)$.  If $a$ and $b$ are concurrent, there is some execution where $T(a) \geq T(b)$.
+For asynchronous rules, the natural distributed analog of the above algorithm
+simultaneously executes one instance for each node \dedalus{n}, using values of
+$G$ and $e$ computed from $E_{\text{\dedalus{{\scriptsize n}}}}$.  Each
+instance has its own local clock, which corresponds to the timestamp attribute
+in the model-theoretic semantics.  Nodes communicate over channels with
+arbitrary delay and message re-ordering.  When a remote node \dedalus{m}
+derives a fact at \dedalus{n}, it encloses its local clock value, \dedalus{t};
+\dedalus{n} must consider this fact at his local time \dedalus{t} or later, in
+the style of Lamport Clocks.  Note that this behavior is equivalent to the
+model-theoretic semantics of remote asynchronous rules: remote deductions are
+visible at the destination at a time later than the body temporal attribute at
+the source.  Further, note that Lamport Clocks only introduce the constraint
+that if message $a$ ``happens before'' $b$, in other words $a$ directly or
+transitively causes $b$ to be sent, then $T(a) < T(b)$.  If $a$ and $b$ are
+concurrent, there is some execution where $T(a) \geq T(b)$.
 
-When \dedalus{n} processes a received message, the number of constants available to \dedalus{n} may increase, and thus the node's $G$ may increase to $G'$.  Furthermore, the node may need to execute over this new fact for $2^{G'}$ additional timesteps.  If only finitely many messages are sent, this algorithm terminates, and requires polynomial space.  In the case that infinitely many messages are sent, we only need to process each message $2^{G'}$ times: the maximum period of any fact is $2^{G'}$, as every incoming fact needs to have a chance (in some execution) to join with any deduction (with which it is ``concurrent'') at any time during its period.  Keeping track of the number of times we have seen each fact also requires polynomial space.  When the algorithm is done running for $2^{G'}$ steps, it pauses, waiting for new network input that it has not seen enough times.  If all nodes are paused and no outstanding messages exist, then the collection of all period 1 facts at all instances of the algorithm comprises an ultimate model.
+When \dedalus{n} processes a received message, the number of constants
+available to \dedalus{n} may increase, and thus the node's $G$ may increase to
+$G'$.  Furthermore, the node may need to execute over this new fact for
+$2^{G'}$ additional timesteps.  If only finitely many messages are sent, this
+algorithm terminates, and requires polynomial space.  In the case that
+infinitely many messages are sent, we only need to process each message
+$2^{G'}$ times: the maximum period of any fact is $2^{G'}$, as every incoming
+fact needs to have a chance (in some execution) to join with any deduction
+(with which it is ``concurrent'') at any time during its period.  Keeping track
+of the number of times we have seen each fact also requires polynomial space.
+When the algorithm is done running for $2^{G'}$ steps, it pauses, waiting for
+new network input that it has not seen enough times.  If all nodes are paused
+and no outstanding messages exist, then the collection of all period 1 facts at
+all instances of the algorithm comprises an ultimate model.
 
 We claim that the algorithm can generate every ultimate model---every message has the opportunity to join with another concurrent message or its transitive consequents at any point during their period, and has the opportunity to join with a causally related message during the range of times allowed by the model-theoretic constraint (identical to the Lamport Clock condition used in the algorithm).  Furthermore, the set of all facts, and their local timestamps, comprises a prefix of a stable model.
 
