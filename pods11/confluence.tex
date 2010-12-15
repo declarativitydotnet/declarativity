@@ -545,6 +545,7 @@ A straightforward argument shows that if \dedalus{p\_incomplete()} is false at t
 %We can similarly define a coordination protocol for more general statically checkable conditions, such as Universal Constraint Stratification~\cite{ucs}.
 
 \subsubsection{Nondeterministic Coordination}
+\label{sec:ndcoord}
 As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} that captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
 
 \begin{definition}
