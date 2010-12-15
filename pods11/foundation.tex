@@ -243,11 +243,11 @@ Note that ultimate models are always of finite cardinality because of the finite
 \subsection{Operational Interpretation}
 \label{sec:operational}
 
-Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.  Specifically, we want to demonstrate an equivalence relation between the models of a \lang program and possible executions of a typical distributed system implementing that program.
+Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.  Specifically, we want to demonstrate an equivalence between the models of a \lang program and possible executions of a typical distributed system implementing that program.
 
 We first present an operational model of a distributed system, then
 %, and explain how it can be modeled in \lang.
-develop an algorithm for computing ultimate models of a \lang program on our operational model.  We show that running the algorithm on a program $P$ only outputs ultimate models of $P$, and can output any ultimate model of $P$; we also show a correspondence between stable models and traces of the algorithm's execution.  For completeness, we also show how to express the operational formalism in our language.
+develop an algorithm for computing ultimate models of a \linebreak \lang program on our operational model.  We show that running the algorithm on a program $P$ only outputs ultimate models of $P$, and can output any ultimate model of $P$; we also show a correspondence between stable models and traces of the algorithm's execution.  For completeness, we then show how to express the operational formalism in our language.
 
 %First, we will devise an operational model that is sufficient to compute the fixpoint
 %We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
@@ -326,6 +326,6 @@ See appendix for details.
 \subsection{Modeling Failure}
 \label{sec:failure}
 
-If we want \lang to model transient or permanent channel failure, we can add an element $\infty$ to \dedalus{time}, such that every element of $\mathbb{N}$ is less than $\infty$.  We also need to introduce the conjunct \dedalus{T != \(\infty\)} into every \lang rule.
+To model transient or permanent channel failure in \lang, we can add an element $\infty$ to \dedalus{time}, such that every element of $\mathbb{N}$ is less than $\infty$.  We also need to introduce the conjunct \dedalus{T != \(\infty\)} into the body of every \lang rule.
 
 Assuming failure may admit additional ultimate models.  We identify an interesting class of these ultimate models in Section~\ref{sec:ndcoord}.  Except when explicitly mentioned, in the rest of the paper we will assume that there are no failures, and all messages are eventually delivered.
