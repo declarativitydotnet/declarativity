@@ -117,6 +117,14 @@ EDB facts must be specified with a location and time.  For a given EDB $E$ and l
 ground truths), and no EDB may be provided afterwards.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
+\noindent 
+\textbf{Predicate Dependence Graphs in \lang}: 
+\jmh{motivate by hinting at the need for PDGs later.  this is a lot of notation to remember, shall we postpone it?} 
+A \lang program's {\em predicate dependency graph}~\cite{ullmanbook} PDG is 
+a directed graph that has one node per predicate, and an edge from \dedalus{q} to \dedalus{p} if predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, or a \dedalus{count} appears in the head of the rule, we mark the edge as negated.  If the rule is inductive or asynchronous, we annotate the edge with the rule type.  The PDG omits the \dedalus{time} and \dedalus{successor} predicates, and the nodes and edges for \dedalus{choice}.  We write $\dedalus{q} \to \dedalus{p}$ if there exists a path following forward edges from \dedalus{q} to \dedalus{p}.  We write $\dedalus{q} \nrightarrow \dedalus{p}$ if there exists a forward path from \dedalus{q} to \dedalus{p} that crosses a negated edge.  We write $\dedalus{q} \circleright \dedalus{p}$ if all forward paths from \dedalus{q} to \dedalus{p} traverse an asynchronous or inductive edge.  We write $\dedalus{q} \Diamondright \dedalus{p}$ if at least one forward path from \dedalus{q} to \dedalus{p} traverses an async edge. 
+
+
+\vspace{1em}
 \noindent {\bf Negation and Aggregation:}
 \lang restricts negation by requiring any cycle through a negated edge in the PDG to include a temporal edge.\footnote{The only exception is the cyclic negation of \dedalus{choice}, which involves recursion through negation without any temporal edges.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the Herbrand Universe.  %\jmh{You say "generic universe" a few times.  Is that an agreed-upon term?  I don't know it.}
 
