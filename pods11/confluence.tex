@@ -19,7 +19,7 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 Confluence of a \lang program is undecidable.
 \end{lemma}
 \begin{proof}
-We take the undecidable problem of determining whether a two-counter machine accepts any input, and reduce it to testing confluence of a \lang program.  See appendix for details.
+We reduce the undecidable problem of determining whether a two-counter machine accepts any input to testing confluence of a \lang program.  See appendix for the full proof.
 \end{proof}
 
 Given undecidability, we will first identify classes of programs that have a unique ultimate model.  However, in general, a \lang program may encode many ultimate models.  We will show that many \lang programs have a ``natural'' ultimate model that is preferable to all other ultimate models, and corresponds to intuition.  We show how to induce this ultimate model by rewriting the program.
@@ -65,13 +65,13 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 
 In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be ``temporarily'' applied to sets whose contents are still evolving over time. The evolution of such sets and their consequences can lead to non-deterministic ultimate models.
 
-Consider a \lang program $p'$ derived from another \lang program $p$ by 
+Consider a \lang program $P'$ derived from another \lang program $P$ by 
 %\paa{not dropping?}
 dropping all negated subgoals 
 %to positive subgoals (i.e., removing the $!$ symbol from 
 %$p$) 
 and removing any occurrences of the {\em count} aggregate function (i.e., replacing 
-a clause like \dedalus{count<A>} with \dedalus{A}).  If $p'$ has fewer ultimate models than $p$, we say that $p$ has {\em nondeterministic
+a clause like \dedalus{count<A>} with \dedalus{A}).  If $P'$ has fewer ultimate models than $P$, we say that $P$ has {\em nondeterministic
 world closing}.  Nondeterministic world closing occurs when programs apply the closed world assumption to potentially incomplete sets.
 
 \begin{example}
@@ -132,9 +132,9 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 
 \begin{definition}
 
-A fact $a$ is  {\em persistent} if it is henceforth true 
+A fact is {\em persistent} if it is henceforth true 
 %(i.e., if $a \Rightarrow \Box a$) \jmh{cheating to borrow symbols from elsewhere.  use \lang notation or terminology.}
-(i.e., if it is true at time $T$, then it is true at all $U > T$.)
+(i.e., if it is true at time \dedalus{t}, then it is true at all $\dedalus{s} > \dedalus{t}$.)
 \end{definition}
 
 Persistent facts are the only facts that appear in a program's ultimate models.
