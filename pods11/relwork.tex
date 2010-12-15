@@ -26,7 +26,7 @@ similar notions of consistency for concurrent systems}
 Significant recent work (\cite{boom-techr,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
 a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
-Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
+\nrc{The ``existing'' should be qualified with ``most'', or ``notable.''} Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
 straightforward Datalog, and evaluation proceeds in three phases:
 
 \begin{enumerate}
@@ -35,7 +35,9 @@ straightforward Datalog, and evaluation proceeds in three phases:
 \item The deductions which cause side effects, including messages, writes and deletions of values in the local store, and host language callbacks are dealt with.  
 \end{enumerate}
 
-%%\jmh{You're sidestepping Delete an key update.}\rcs{think I fixed it in item 3}
+%%\jmh{You're sidestepping Delete an key update.}\rcs{think I fixed it in item
+%%3}
+\nrc{Which language descriptions? Should be more specific.}
 Unfortunately, the language descriptions give no careful specification of how and when deletions and updates
 should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
 monotonicity properties (i.e., programs without negation or fact deletion)

@@ -1,6 +1,6 @@
 \section{Confluence}
 \label{sec:confluence}
-Although there is much discussion among developers about distributed ``consistency'', the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. 
+Although there is much discussion among software developers about distributed ``consistency,'' the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. 
 This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency \paa{agreement?  equivalence?} of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  The CALM conjecture links this notion of consistency to monotonicity properties~\cite{podskey-sigrec}; we formalize that connection here. 
 
 Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
@@ -45,7 +45,7 @@ q(X)@next <- q(X);
 \end{Dedalus}
 \end{example}
 
-In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the nondeterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are asigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
+In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the nondeterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are assigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
 }
 
 \subsection{Sources of Diffluence}
@@ -313,11 +313,11 @@ nonmonotonic predicate into a monotonic property.
 
 \begin{lemma}
 \label{lem:property}
-If a monotonic property (according to the constructive definiton) is true in any stable model of a program over a particular EDB, it is true in all stable models. 
+If a monotonic property (according to the constructive definition) is true in any stable model of a program over a particular EDB, it is true in all stable models. 
 \end{lemma}
 \begin{proof}
 \begin{comment}
-Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted \jmh{when did we start requiring this?  I think you need to state it as an assumption in the lemma}, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occured (but will eventually occur). \jmh{I don't know what the preceding sentence means; I don't know what it means for a property to observe a condition.}  Monotonic properties cannot observe this though, becuase the property will be eventually untrue (when the thing that has not yet occured eventually occurs), thus it is not monotonic. \jmh{That only sorta made sense to me.}
+Proof sketch: assume a monotonic property is true in one trace and false in another trace.  This means the monotonic property can differentiate between the two traces.  But since all async facts are persisted \jmh{when did we start requiring this?  I think you need to state it as an assumption in the lemma}, all messages eventually rendezvous.  Thus, the monotonic property must be able to observe the condition that some event has not yet occurred (but will eventually occur). \jmh{I don't know what the preceding sentence means; I don't know what it means for a property to observe a condition.}  Monotonic properties cannot observe this though, because the property will be eventually untrue (when the thing that has not yet occurred eventually occurs), thus it is not monotonic. \jmh{That only sorta made sense to me.}
 
 \paa{or alternatively:}
 \end{comment}
@@ -337,14 +337,14 @@ of the program.
 and
 the lemma trivially holds.  If there are {\em async} rules, their head predicates are guarded,
 because otherwise those head predicates are not provably monotonic
-properties (they satisfy none of the cases given above)
+properties (they satisfy none of the cases given above),
 %\jmh{No, you only proved the inverse of that assertion: guarded$=>$monotonic.}
-, and hence $p$, which depends on them, is not a monotonic property.  If there 
+and hence $p$, which depends on them, is not a monotonic property.  If there 
 is no negation in any inference step of $d$, then by Lemma~\ref{lem:guarding} the program
 is confluent, and hence facts in stable models of the program differ only in their timestamps.
 Finally, if there is negation in $d$, $p$ is defined with even syntactic depth of negation over some
 monotonic property or it would not itself be.  The syntactic negation depth is fixed by the
-program, and hence is the same in any stable model.  Therefore $p$ is a montonic 
+program, and hence is the same in any stable model.  Therefore $p$ is a monotonic 
 property in any stable model of the program.
 
 \ref{lem:guarding}
