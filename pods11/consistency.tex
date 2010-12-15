@@ -14,7 +14,7 @@ We formalize the notion of replica consistency using Dedalus {\em constraints}.
 %In the remainder of this section, when we use the term consistency we refer to replica consistency. %\wrm{someone please check this is true} 
 
 \begin{definition}
-A Dedalus {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  We do not require constraints to unify on location attributes, as they are not ``executed'' by our operational formalism in Section~\ref{sec:operational}.  Instead, by ensuring the absence of \dedalus{fail()} from the ultimate model, we ensure that the operational formalism can never compute an ultimate model that violates the constraint.
+A Dedalus {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model, and the constraint {\em holds} if it is not satisfiable in any ultimate model.  We do not require constraints to unify on location attributes, as they are not ``executed'' by our operational formalism in Section~\ref{sec:operational}.  Instead, by ensuring the absence of \dedalus{fail()} from the ultimate model, we ensure that the operational formalism can never compute an ultimate model that violates the constraint.
 \end{definition}
 
 In order to talk about replica consistency, we need to differentiate between replicated
@@ -108,7 +108,8 @@ rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
   \State{\textbf{return} failure}
   \EndIf
   \EndIf
-  \State{add rule shown above to $P$}
+  \State{add rule shown above to $P$} \label{alg:insertrep}
+  \State{replace \dedalus{p} with \dedalus{rep\_p} in $E$}
   \EndFor
   \ForAll{$\dedalus{p} \in \text{Pred}(P) \setminus E $} \label{alg:onlyrep1}
   \If{$\exists \dedalus{q} \in \text{Pred}(P)\ .\ \dedalus{q} \to \dedalus{p}\ \land\ \not\exists \dedalus{s} \in E\ .\ \dedalus{q} \to \dedalus{s} \to \dedalus{p}$}
@@ -123,7 +124,7 @@ rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
 If $\textsc{EC}(P, E, D, R)$ does not return failure, it returns an eventually consistent program $(P, E, D, R)$.
 \end{theorem}
 \begin{proof}
-That the 
+That the eventual consistency constraints (definition~\ref{def:ec}) for all predicates in $E$ hold is clear; for each predicate $\dedalus{p} \in E$, every node has a common subset of facts derived by the replication rule inserted in line~\ref{alg:insertrep}, and any additional facts in $\dedalus{p}$ must exist at all nodes, as they must be confluently derived from facts transitively dependent on only replicated data, which exists at all nodes.  A similar argument holds for all predicates in $D$.
 \end{proof}
 
 %\jmh{more importantly, I think we *should* discuss the connection between replica consistency and confluence: downstream confluence.  Can we say that replication requires a restricted confluence guarantee, which can be guaranteed by a restricted monotonicity test?  This properly sets up general confluence as a stronger guarantee in certain ways than replica consistency -- it requires confluence to cover all predicates, not just a chosen subset.  Note that the EC folks probably don't care about downstream confluence beyond the guarded persistence of the replication channel.  So we're exposing a spectrum of ``how much program logic do you care about here''.  This does more to keep CALM.}
