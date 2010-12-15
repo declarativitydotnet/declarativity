@@ -1,2 +1,9 @@
-\section{Conclusion}
+\section{Conclusion and Future Work}
 \label{sec:conclusion}
+\jmh{This might be a good place to resurrect the original intro's discussion of the distributed systems literature producing protocols.  Whereas we start by looking at program analysis.  In the case of monotonicity we have confluence. In the absence of monotonicity, we also introduce protocols, but we also provide analysis for precisely how those protocols need to be connected in a program.  Similarly for replica consistency, we should both how to plug in a replication protocol, and provide an analysis of downstream logic to ensure that the replication will have the desired effect.}
+
+\jmh{Suggest that our ``whole program'' approach seems more general than the read/write tradition.  Certainly our analysis of monotonicity will admit programs whose traces would seem not be reorderable based on an opaque read/write analysis.  (Give exmaple?)  Similarly in the case of data replication, we  model not only the specific facts being replicated, but the behavior of ``downstream logic'' after replication.  Our model should enable us to introduce constraints on the effects of downstream logic that are richer than consistency of data replication.}
+
+\jmh{Also, do we want to talk about model-theoretic attacks on properties other than confluence and replica consistency?  E.g. liveness and fairness?}
+
+\jmh{What about CRON and barrier complexity -- shall we run them up the flagpole again?}

@@ -73,6 +73,7 @@ In designing \lang, we tried to recover and extend the model-theoretic analyses 
 to pure Datalog, while preserving the features appropriate to modeling loosely-coupled
 distributed systems.
 
+\jmh{This whole paragraph makes me very nervous.  I'm not sure how what we're doing exactly relates to serializability, much less linearizability about which I know much less.  Do we really need to bring this up?}
 Our attempts to model and verify properties specific to distributed systems like 
 confluence and consistency of replicated state are similar in spirit to the database literature
 describing serializable transactions~\cite{serializability}.  Similarly, the programming languages
@@ -82,3 +83,9 @@ former is a global property while the latter is local to individual stuctures an
 our model-theoretic analyses encompass both global (e.g., confluence) and local (e.g., downstream 
 confluence) properties, but differ from both traditions in that they are applied at a higher
 level, based upon the scope and boundaries of logical monotonicity rather than the intersection of read and write sets for shared objects \paa{ugh, rewrite me please}.
+
+
+\jmh{How about a short paragraph on Vogel's alternative definitions of EC, and how they represent different constraints in the spirit of Section 4?  Leave it to future work to provably ensure these constraints.}
+
+\jmh{How about an admission that while our formalism is cool and enabled us to do new stuff, it would be nice to explore its relationship to traditional distributed systems formalisms like IOA and TLA+.}
+
