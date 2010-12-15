@@ -234,9 +234,11 @@ Note that ultimate models are always of finite cardinality because the only cons
 \subsection{Operational Interpretation}
 \label{sec:operational}
 
-Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.  Specifically, we want to demonstrate an equivalence relation between the models of a \lang program and possible executions of a typical distributed system implementing that program.  
+Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.  Specifically, we want to demonstrate an equivalence relation between the models of a \lang program and possible executions of a typical distributed system implementing that program.
 
-We first present an operational model of a distributed system, and explain how it can be modeled in \lang.  We then present an algorithm for computing ultimate models, explain how it can be run on our operational formalism, and show that it can compute precisely the set of ultimate models given by the model-theoretic semantics.  \jmh{I'm unhappy here.  I can't quite parse the above. I would have expected you to define an operational model, followed by two directions of a proof: in one you show that all stable models have corresponding traces in the OM, and in the other that all traces of the OM have corresponding stable models.  I don't think that's what you're saying, but I'm not sure.}
+We first present an operational model of a distributed system, then
+%, and explain how it can be modeled in \lang.
+develop an algorithm for computing ultimate models of a \lang program on our operational model.  We show that running the algorithm on a program $P$ only outputs ultimate models of $P$, and can output any ultimate model of $P$; we also show a correspondence between stable models and traces of the algorithm's execution.  For completeness, we also show how to express the operational formalism in our language.
 
 %First, we will devise an operational model that is sufficient to compute the fixpoint
 %We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
@@ -245,7 +247,7 @@ We first present an operational model of a distributed system, and explain how i
 %We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
 %$$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$
 
-Our model consists of $n$ Turing Machines (called nodes), each with an input queue \jmh{multiple queues per node?}, which independently sequentially execute programs, and may communicate via channels with non-deterministic \jmh{(positive)} delay.  Each machine may run for a polynomially-bounded number of steps, which include unicasting \jmh{why not just say sending} messages over channels \jmh{into the queues of other nodes} with non-deterministic delay and re-ordering, and placing messages in its own queue.  After running, the tape is erased, and the contents of the queue are copied to the tape.  The computation halts when no messages are in flight, and each node has halted.  In this case, the output is the final contents of each machine's tape.
+Our model consists of $n$ Turing Machines (called nodes), each with a single input queue, which independently sequentially execute programs, and may communicate via channels with non-deterministic delay and re-ordering.  Each machine may run for a polynomially-bounded number of steps, which include sending messages over channels---into the queues of other nodes---with non-deterministic delay and re-ordering, and placing messages in its own queue.  After running, the tape is erased, and the contents of the queue are copied to the tape.  The computation halts when no messages are in flight, and each node has halted.  In this case, the output is the final contents of each machine's tape.
 
 \begin{lemma}
 \label{lem:dedalus2turing}
