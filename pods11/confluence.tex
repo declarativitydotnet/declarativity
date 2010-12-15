@@ -1,7 +1,7 @@
 \section{Confluence}
 \label{sec:confluence}
 Although there is much discussion among software developers about distributed ``consistency,'' the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. 
-This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: the consistency \paa{agreement?  equivalence?} of distributed and sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  The CALM conjecture links this notion of consistency to monotonicity properties~\cite{declarative-imperative}; we formalize that connection here. 
+This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: that distributed evaluation is equivalent to sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  In the last PODS conference, the ``CALM'' conjecture was presented to link this notion of consistency to monotonicity properties~\cite{declarative-imperative}; we formalize that connection here. 
 
 Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
@@ -346,18 +346,17 @@ Finally, if there is negation in $d$, $p$ is defined with even syntactic depth o
 monotonic property or it would not itself be.  The syntactic negation depth is fixed by the
 program, and hence is the same in any stable model.  Therefore $p$ is a monotonic 
 property in any stable model of the program.
-
-\ref{lem:guarding}
+%\ref{lem:guarding}
 \end{proof}
 
 %\paa{I don't really get the proof.  what does it mean for a property to observe a condition?} 
 
-Note that facts may satisfy the semantic definition (Definition~\ref{def:mp}) of monotonic 
-properties without satisfying any of the constructive cases.  For example, a predicate may
+Note that facts may satisfy the semantic definition of monotonic 
+properties  (Definition~\ref{def:mp})  without satisfying any of the constructive cases.  For example, a predicate may
 be monotonic because it is appropriately coordinated, or because its data-dependent
 negation depth is even.
-Hence the lemma holds only for the conservate definition of monotonic properties.  We will 
-see that the conservative definition is sufficient for many practical cases.
+Hence the lemma holds only for the conservative definition of monotonic properties.  We will 
+see that the conservative definition is sufficient for many practical cases.  \jmh{We will?  Where?  Provide fw refs!}
 
 \begin{definition}
 A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  
@@ -376,13 +375,11 @@ are populated in such a way, they are indeed all the same, unique ultimate model
 \jmh{
 \end{comment}
 The proof follows directly.  By definition 13, a monotonic Dedalus program has an ultimate model consisting of only monotonic properties, and by Lemma 3 all such properties are true in all ultimate models.  Hence all ultimate models of a monotonic Dedalus program are the same.
-
 %which are true in all traces, then there is a unique ultimate model.
-
 \end{proof}
 
-This discussion formalizes the CALM Conjecture with respect to confluence, and proves it in one direction for a broad definition of monotonicity.  
-We now show by example that the other direction does not hold: logical monotonicity is not necessary for confluence:
+This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction for a broad definition of monotonicity.  
+We now show by example that the other direction does not hold: logical monotonicity is not necessary for confluence.
 
 \begin{example}
 A confluent Dedalus program that is not logically monotonic.
@@ -412,10 +409,12 @@ This program has a single ultimate model in which \dedalus{mem()} contains the h
 element in \dedalus{b\_edb()} according to the order \dedalus{<}.
 Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{mem()} is not supported by only monotonic properties. Thus the program is not logically monotonic.
 
+\jmh{I'm kinda bummed out that we don't let UCS help us broaden monotonic properties here further.}
+
 \subsection{Perfect Ultimate Model}
 \wrm{we are assuming guarded asynchrony}
 \wrm{rework definition to make clear we aren't coordinating @nexts}
-\jmh{motivate coordination by analogy to practice}
+% \jmh{motivate coordination by analogy to practice}
 
 While our definition of a monotonic property is quite permissive, there are still many cases in practice where programs will not satisfy that property.  These programs are not in themselves confluent, but they often have a single ``natural'' ultimate model that corresponds to evaluating non-monotonic properties only when they can no longer change.  Evaluation of a Datalog program with negation has the same concern: the program has multiple minimal models, so one defines a {\em perfect model} as the minimal model generated by a local synchronous evaluation procedure called {\em stratified evaluation}~\cite{ullmanbook}.
 % 
@@ -457,6 +456,7 @@ Thus, the contents of \dedalus{true} at time \dedalus{T} are those items in \ded
 
 \begin{definition}
 The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG, denoted $\mathcal{P}(P, E)$, is the ultimate model induced by ensuring a rule containing a \dedalus{!} or a \dedalus{count} is not evaluated until the complete set of facts in the negated or aggregated predicates is known.
+\jmh{This doesn't seem formal enuf to me.  What does it mean. model-theoreticlly, to evaluate a rule?  What do you mean "until"?}
 %In other words, one must have ``complete information'' before applying the closed-world assumption for negation.
 This intuitively corresponds to the definition of a perfect model from the Datalog literature.
 %\wrm{make more formal}  \paa{this is an incomplete definition, right?  we are also interested in
@@ -543,7 +543,7 @@ A straightforward argument shows that if \dedalus{p\_incomplete()} is false at t
 \wrm{UCS Here}
 
 \subsubsection{Nondeterministic Coordination}
-As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} which captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
+As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} that captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
 
 \begin{definition}
 A {\em consistently sealed ultimate model} is an ultimate model generated by non-deterministically {\em sealing} the contents of a predicate: a predicate \dedalus{p} is {\em sealed} at time \dedalus{t} if any fact in \dedalus{p} at time $\dedalus{s} > \dedalus{t}$ is also in \dedalus{p} at time \dedalus{t}.
