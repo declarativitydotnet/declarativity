@@ -76,7 +76,7 @@ s(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
 The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  
 %\jmh{Gents: there is no need to require that we show location attributes in body predicates. But now this discussion has to be made consistent with all the communication rules in the text.}
 The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
-Communication rules must include the location attribute of their head predicate; by definition this is different a different variable than that of the body predicates.
+Communication rules must include the location attribute of their head predicate; by definition this is a different variable than that of the body predicates.
  Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
 \begin{example}
 \label{ex:sugared}
@@ -104,7 +104,9 @@ t(#Y, X, A, B)@async <- e(#X, A, B), f(#X, X, Y);
 \end{Dedalus}
 \end{example}
 
-The last two examples merit some discussion.  In the fourth rule above (corresponding to the last unsugared rule of Example~\ref{ex:nonsugared}), the location variable in the head appears not to be range-restricted; in fact, it ranges over the finite domain \dedalus{node(Y)}.  The additional fifth rule here illustrates the case where the body location attribute is unified with other attributes (in this case, in both head and body predicates).  In order to specify this \textit{entanglement} of locations and data attributes, we include location attributes even in body predicates. 
+The last example
+% s merits some discussion.  In the fourth rule above (corresponding to the last unsugared rule of Example~\ref{ex:nonsugared}), the location variable in the head appears not to be range-restricted; in fact, it ranges over the finite domain \dedalus{node(Y)}.  The additional fifth rule 
+here illustrates the case where the body location attribute is unified with other attributes (in this case, in both head and body predicates).  In order to specify this \textit{entanglement} of locations and data attributes, we include location attributes even in body predicates. 
 Note that we forbid entanglement of temporal attributes in our discussion here, as this would introduce an infinite domain into the Herbrand Universe.
 
 
