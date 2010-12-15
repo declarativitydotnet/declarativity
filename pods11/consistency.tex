@@ -10,6 +10,9 @@ In particular, in the distributed systems domain {\em eventual consistency} of r
 %\jmh{I tweaked the previous sentence, make sure you're OK with.  Question in my mind is what is the object that you want to say is being replicated: a fact or a collection?  I settled on fact.}
 %i'm okay with it -wrm
 
+We formalize the notion of replica consistency using Dedalus {\em constraints}.  
+%In the remainder of this section, when we use the term consistency we refer to replica consistency. %\wrm{someone please check this is true} 
+
 \begin{definition}
 A Dedalus {\em constraint} is a rule whose head consists of a special predicate called \dedalus{fail()}.  We say a constraint is {\em violated} if it is satisfiable in any ultimate model.  We do not require constraints to unify on location attributes, as they are not ``executed'' by our operational formalism in Section~\ref{sec:operational}.  Instead, by ensuring the absence of \dedalus{fail()} from the ultimate model, we ensure that the operational formalism can never compute an ultimate model that violates the constraint.
 \end{definition}
@@ -17,14 +20,14 @@ A Dedalus {\em constraint} is a rule whose head consists of a special predicate 
 In order to talk about replica consistency, we need to differentiate between replicated
 %data from partitioned \jmh{non-replicated?} 
 and local
-data, and define a set of replicas.  
+data, as well as data {\em computed} from replicated data, and define a set of replicas.  
 %\jmh{For simplicity of notation, and without loss of generality, we define replicas on the predicate level?}  
 %It seems sensible to do this on the predicate level, rather than generalizing to replicated subsets of predicates.  
 For simplicity of notation, and without loss of generality, we define replicas on the predicate level rather than generalizing to replicated subsets of predicates.  
 We note that partitioning of predicates, which can lead to finer-grained replication, 
 entails an orthogonal set of correctness criteria that can likewise be formulated as
 distributed constraints.
-If a \lang program $P$ is eventually consistent with respect to a set of replicated predicates $E$, and replicas $R$, then we write that $(P, E, R)$ is eventually consistent.  We assume a unary predicate \dedalus{replica}, whose contents is exactly $R$.
+If a \lang program $P$ is eventually consistent with respect to a set of replicated predicates $E$, a set of predicates $D$ computed from replicated data, and replicas $R$, then we write that $(P, E, D, R)$ is eventually consistent.  For the momment, we assume a unary predicate \dedalus{replica}, whose contents is exactly $R$, and is available to all nodes.
 
 %We augment the definition of a \lang program to 
 %include a set of {\em replicated predicates}, and a set of {\em replicas} represented by a unary \dedalus{replica} predicate.  We represent such a program as the triple
@@ -32,15 +35,16 @@ If a \lang program $P$ is eventually consistent with respect to a set of replica
 
 \begin{definition}
 \label{def:ec}
-A \lang program $(P, E, R)$ is {\em eventually consistent} if it is consistent under the following constraint, for all $\dedalus{p} \in E$:
+A \lang program $(P, E, D, R)$ is {\em eventually consistent} if it is consistent under the following constraint, for all $\dedalus{p} \in E \cup D$:
 
 \begin{Dedalus}
 fail() <- p(#Y,\dbar{X}), !p(#Z,\dbar{X}), replica(Y), replica(Z);
 \end{Dedalus}
 
-In other words, the constraint is violated whenever, in the ultimate model, a fact in a replicated predicate exists at some replica, but does not exist at some other replica.
+In other words, the constraint is violated whenever, in the ultimate model, a fact in a replicated or computed predicate exists at some replica, but does not exist at some other replica.
 \end{definition}
 
+%This definition corresponds t
 \wrm{this definition corresponds to peter's citation}
 %\jmh{This is instantaneous consistency, not eventual consistency.  No?}
 %\paa{true.  perhaps what we really are interested in isn't the unsatisfiability of fail(), but the
@@ -53,7 +57,7 @@ Like confluence, eventual consistency is undecidable.
 It is undecidable for general \lang programs whether the constraint shown in Definition~\ref{def:ec} is not violated for all EDBs.
 \end{lemma}
 \begin{proof}
-There is a straightforward reduction from the problem of deciding whether a pair of two-counter machines accepts the same input.  Assume two different two-counter machines are modeled at two different replicas.  We replicate the same input to both machines, and the output of the two counter machine is persisted.  Deciding eventual consistency for all EDBs (inputs to the two counter machines) implies we can decide whether the outputs of the two counter machines are always identical.
+There is a straightforward reduction from the problem of deciding whether a pair of two counter machines accepts the same input.  Assume two different two counter machines are modeled at two different replicas.  We replicate the same input to both machines, and the output of the two counter machine is persisted.  Deciding eventual consistency for all EDBs (inputs to the two counter machines) implies we can decide whether the outputs of the two counter machines are always identical.
 \end{proof}
 
 
@@ -66,7 +70,7 @@ that symmetrically replicates the consequences of nondeterministic operations sa
 the consistency constraints but certainly has multiple ultimate models.  Further, a confluent
 program may violate replica constraints.
 
-However, there is a connection between eventual consistency and confluence.  Intuitively, eventual consistency requires a restricted confluence guarantee: all replicas must react to replicated data the same way, regardless of network nondeterminism.  In other words, replicas must behave confluently with respect to replicated data.
+However, there is a connection between eventual consistency and confluence.  Intuitively, eventual consistency requires a restricted confluence guarantee: replicas' deductions must not be affected by any network nondeterminism.  In other words, replicas must behave confluently with respect to replicated data.  Furthermore, non-replicated data that may exist at the replicas should not affect the eventual consistency of the replicas.
 
 \begin{definition}
 Consider a \lang program $P$ with a replicated predicate \dedalus{p}, and a subprogram
@@ -77,19 +81,19 @@ depends---except for any rules in a cycle that contains \dedalus{p}---and adding
 p(\dbar{X})@async <- p_edb(\dbar{X});
 \end{Dedalus}
 If $P'$ is confluent, we say that $P$ is {\em downstream confluent} with respect to \dedalus{p}.  
-If $\mathcal{U}(P', E) = \mathcal{U}(P', E')$, for all $E'$ where the symmetric difference $E' \Delta E$ contains only non-replicated predicates, we say $P$ is {\em symmetric} w.r.t. unreplicated data.
+If $\mathcal{U}(P', E) = \mathcal{U}(P', E')$, for all EDB $E, E'$ where the symmetric difference $E' \Delta E$ contains only non-replicated predicates, we say $P$ is {\em symmetric} w.r.t. unreplicated data.
 \end{definition}
 
 %Assuming \dedalus{p} is correctly replicated---all data in \dedalus{p} eventually reachces all replicas---and the program is downstream confluent w.r.t. \dedalus{p}, the program is eventually consistent if replicas behave symmetrically under nonreplicated data.
 
-We define a procedure $\textsc{EC}(P, E, R)$ to instrument a program for eventual consistency.  The procedure first ensures the downstream program for every replicated predicate is confluent, and then adds a replication rule for every replicated predicate \dedalus{p}.  To enforce symmetry of unreplicated data, we ensure no replica can deduce any fact, unless the ground for the deduction consists purely of facts transitively deduced only from replicated predicates (lines~\ref{alg:onlyrep1}-\ref{alg:onlyrep2}).
+We define a procedure $\textsc{EC}(P, E, D, R)$ to instrument a program for eventual consistency.  The procedure first ensures the downstream program for every replicated predicate is confluent, and then adds a replication rule for every replicated predicate \dedalus{p}.  To enforce symmetry of unreplicated data, we ensure no replica can deduce any fact, unless the ground for the deduction consists purely of facts transitively deduced only from replicated predicates (lines~\ref{alg:onlyrep1}-\ref{alg:onlyrep2}).
 
 \begin{Dedalus}
 rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
 \end{Dedalus}
 
 \begin{algorithmic}[1]
-  \Procedure{EC}{$P, E, R$}%\Comment{}
+  \Procedure{EC}{$P, E, D, R$}%\Comment{}
   \ForAll{$\dedalus{p} \in E$}
   \State{$P' \gets$ downstream program w.r.t. \dedalus{p}}
   \ForAll{rules with \dedalus{p} in some atom}
@@ -109,12 +113,12 @@ rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
   \State{add \dedalus{!replica(N)} to body; \dedalus{N} is location attribute}
   \EndIf
   \EndFor \label{alg:onlyrep2}
-  \State \textbf{return} $(P, E, R)$
+  \State \textbf{return} $(P, E, D, R)$
   \EndProcedure
 \end{algorithmic}
 
 \begin{theorem}
-If $\textsc{EC}(P, E, R)$ does not return failure, it returns an eventually consistent program $(P, E, R)$.
+If $\textsc{EC}(P, E, D R)$ does not return failure, it returns an eventually consistent program $(P, E, D, R)$.
 \end{theorem}
 \begin{proof}
 \wrm{todo}
