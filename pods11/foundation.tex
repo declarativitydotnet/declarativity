@@ -113,7 +113,9 @@ Note that we forbid entanglement of temporal attributes in our discussion here, 
 
 \vspace{1em}
 \noindent {\bf EDB:}
-EDB facts must be specified with a location and time.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  Note that $E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  We assume that the entire EDB is provided in a single batch, and no EDB may be provided afterwards.  Like Datalog, we require the EDB to be finite.
+EDB facts must be specified with a location and time.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  Note that $E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  We assume that the entire EDB is provided in a single batch
+(we will formalize this notion in Section~\ref{sec:confluence} with the concept of
+ground truths), and no EDB may be provided afterwards.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
@@ -235,9 +237,8 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \subsection{Operational Interpretation}
 \label{sec:operational}
-Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.   As one might expect, given our definition of the ultimate model, we will compute our ultimate model by performing a distributed analog to computing a partial fixpoint.
 
-\jmh{Proposed rewrite of the above paragraph: Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.  Specifically, we want to demonstrate an equivalence relation between the models of a \lang program and possible executions of a typical distributed system implementing that program}.  
+Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.  Specifically, we want to demonstrate an equivalence relation between the models of a \lang program and possible executions of a typical distributed system implementing that program.  
 
 We first present an operational model of a distributed system, and explain how it can be modeled in \lang.  We then present an algorithm for computing ultimate models, explain how it can be run on our operational formalism, and show that it can compute precisely the set of ultimate models given by the model-theoretic semantics.  \jmh{I'm unhappy here.  I can't quite parse the above. I would have expected you to define an operational model, followed by two directions of a proof: in one you show that all stable models have corresponding traces in the OM, and in the other that all traces of the OM have corresponding stable models.  I don't think that's what you're saying, but I'm not sure.}
 
