@@ -10,8 +10,24 @@ r'(\dbar{X})@next <- r(\dbar{X});
 We can play a somewhat similar trick for \dedalus{queue} by having local messages alternate between going into \dedalus{queue} and \dedalus{queue'}.  Thus, no local queue message will be part of the ultimate model.  Remote messages will still go into \dedalus{queue}: this still leaves the case that the exact same message repeatedly arrives at a node at every timestamp forever, by chance.  We can dispense of this case by assuming the channels interconnecting the Turing Machines forbid it.
 \end{proof}
 
-\begin{proof}[of Lemma~\ref{lem:dedalus2turing}
-\wrm{Todo until I'm done sec 4}
+\begin{proof}[of Lemma~\ref{lem:dedalus2turing}]
+%First, we prove an isomorphism between stable models, and finite prefixes of stable models.  Scan a stable model of a program timestamp by timestamp.  
+We first present an algorithm for computing ultimate models, and then argue this algorithm can be run on our operational formalism.  Furthermore, we show a correspondence between a trace and an execution of the algorithm.
+
+Any \lang program without asynchronous rules is a $\text{Datalog}_1S$ program, and the algorithm given in~\cite{tdd} computes an ultimate model in polynomial space in the size of the input.  The algorithm runs the program for $2^G + e$ steps, where $G$ is the number of instantiations of the generic attributes of the program rules, using all combinations of constants in the EDB and program, and $e$ is the maximum timestamp of any EDB fact.  At each step, the algorithm updates information on observed periodicities of facts.  When the algorithm terminates, any fact with a periodicity of 1 is regarded as part of the ultimate model.
+
+For asynchronous rules, the natural distributed analog of the algorithm above computes $G$ and $e$ using $E_{\text{\dedalus{{\scriptsize n}}}}$ for each node \dedalus{n}.  As facts are derived at other nodes, the number of constants available to a given node may increase, and thus $G$ may increase to $G'$.  Furthermore, the node may need to execute over this new fact for $2^{G'}$ steps.  If only finitely many messages are sent, this algorithm requires polynomial space.  In the case that infinitely many messages are sent, we only need to process each message $2^{G'}$ times.  \wrm{Since $G$ eventually stops increasing...}
+
+%2) Intuitively, the operational model is based on n Turing Machines, one per value of node(), which independently step sequentially through time and communicate via channels with
+%non-deterministic delay.  At each timestep t they run a datalog fixpoint computation that evaluates P on ``projection(E_n, t)'' (notation needed); this takes polynomial
+%time~\cite{immerman}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep t+1 and become part of ``projection(E_n,
+%t)'', local asynchronous facts whose timestep is chosen non-deterministically to be greater than t and become part of later timesteps, and remote asynchronous facts.  The
+%timestamps in this third class of facts are chosen non-deterministically ``at the receiver'' to model delay, in a way that observes traditional causality
+%restrictions~\cite{lamportclocks}.
+%3) Any \lang program without  async rules is a Datalog_{1S} program, and the above intuition is captured by the algorithm given in~\cite{}, computing an ultimate model in
+%polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through
+%\dedalus{successor} at each node.  The PSPACE guarantees of~\cite{} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all
+%\lang programs under this model
 \end{proof}
 
 \begin{proof}[of Lemma~\ref{lem:confluence-undecidable}]

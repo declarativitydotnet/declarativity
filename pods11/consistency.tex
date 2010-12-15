@@ -73,45 +73,51 @@ However, there is a connection between eventual consistency and confluence.  Int
 \begin{definition}
 Consider a \lang program $P$ with a replicated predicate \dedalus{p}, and a subprogram
 $P'$ obtained by removing from $P$ all rules upon which \dedalus{p} transitively
-depends, and adding a single async rule with \dedalus{p} in the head, in the form:
+depends---except for any rules in a cycle that contains \dedalus{p}---and adding a single async rule with \dedalus{p} in the head, in the form:
 
 \begin{Dedalus}
 p(\dbar{X})@async <- p_edb(\dbar{X});
 \end{Dedalus}
-
-If $P'$ is confluent, we say that $P$ is {\em downstream confluent} with respect to \dedalus{p}.  If $\mathcal{U}(P', E) = \mathcal{U}(P', E')$, for all $E'$ where the symmetric difference $E' \Delta E$ contains only non-replicated predicates, we say $P$ is {\em symmetric} w.r.t. unreplicated data.
+If $P'$ is confluent, we say that $P$ is {\em downstream confluent} with respect to \dedalus{p}.  
+%If $\mathcal{U}(P', E) = \mathcal{U}(P', E')$, for all $E'$ where the symmetric difference $E' \Delta E$ contains only non-replicated predicates, we say $P$ is {\em symmetric} w.r.t. unreplicated data.
 \end{definition}
 
 %Assuming \dedalus{p} is correctly replicated---all data in \dedalus{p} eventually reachces all replicas---and the program is downstream confluent w.r.t. \dedalus{p}, the program is eventually consistent if replicas behave symmetrically under nonreplicated data.
 
-\begin{theorem}
-If a program $P$, which has replicated predicates $E$ is downstream confluent with respect to all $\dedalus{p} \in E$, and furthermore $P$ is symmetric w.r.t. unreplicated data, then $P$ is eventually consistent.
-\end{theorem}
-\begin{proof}
-\wrm{Easy. To fill in later.}
-\end{proof}
+\wrm{this is henceforth slightly wrong...}
 
-Note that the converse does not hold.
-
-An example of a replication protocol is shown:
-
-\begin{definition}
-The {\em replication rule} for a predicate \dedalus{p}, where \dedalus{rep\_p} is a fresh predicate symbol not otherwise used in the program, is:
+We define a procedure $\textsc{EC}(P, E, R)$ to instrument a program for eventual consistency.  The procedure first ensures the downstream program for every replicated predicate is confluent, and then adds the following replication rule.
 
 \begin{Dedalus}
 rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
 \end{Dedalus}
-\end{definition}
+
+\begin{algorithmic}[1]
+  \Procedure{EC}{$P, E, R$}%\Comment{}
+  \ForAll{$\dedalus{p} \in E$}
+  \State{$P' \gets$ downstream program w.r.t. \dedalus{p}}
+  \ForAll{rules with \dedalus{p} in some atom}
+  \State{change \dedalus{p} to \dedalus{rep\_p}}
+  \EndFor
+  \If{$P'$ is not confluent}
+  \If{\textsc{Coord} is applicable to $P'$}
+  \State{$P \gets$ $\textsc{Coord}(P') \cup$\ rules removed from $P$ to make $P'$}
+  \Else{\textbf{return} failure}
+  \EndIf
+  \EndIf
+  \State{add rule shown above to $P$}
+  \State{replace \dedalus{p} with \dedalus{rep\_p} in $E$}
+  \EndFor
+  \State \textbf{return} $(P, E, R)$
+  \EndProcedure
+\end{algorithmic}
+
+\begin{theorem}
+If $\textsc{EC}(P, E, R)$ does not return failure, it returns an eventually consistent program $(P, E, R)$.
+\end{theorem}
+\begin{proof}
+Every replicated fact is eventually true at every replica $r \in R$, due to the replication rule above.
+\end{proof}
 
 %\jmh{more importantly, I think we *should* discuss the connection between replica consistency and confluence: downstream confluence.  Can we say that replication requires a restricted confluence guarantee, which can be guaranteed by a restricted monotonicity test?  This properly sets up general confluence as a stronger guarantee in certain ways than replica consistency -- it requires confluence to cover all predicates, not just a chosen subset.  Note that the EC folks probably don't care about downstream confluence beyond the guarded persistence of the replication channel.  So we're exposing a spectrum of ``how much program logic do you care about here''.  This does more to keep CALM.}
-
-We can instrument an arbitrary \lang program to enable eventual consistency by inserting a replication rule for all async predicates \dedalus{p}, provided that the program is downstream confluent for all such \dedalus{p}.  \wrm{Inserting this replication rule ensures symmery.}
-
-Procedure $\textsc{EC}(P)$ makes an arbitrary \lang program eventually consistent by doing the following for each async predicate \dedalus{p}:
-
-1. Inserting a replication rule.
-2. Replace any references to \dedalus{p} in rule subgoals to \dedalus{rep\_p}.
-
-\wrm{Argue this makes it EC}
-
 %We require confluence in order to ensure determinism at each replica.  We disallow recursion through replication.  If these conditions are met, the program is eventually consistent.  Note that this definition is flexible enough to admit any scheme where clients are updating and querying replicas.  \jmh{I assume the preceding para will be rewritten.}
