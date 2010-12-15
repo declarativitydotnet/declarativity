@@ -93,6 +93,8 @@ rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
 \end{Dedalus}
 
 \begin{algorithmic}[1]
+  \algrenewcommand{\algorithmiccomment}[1]{\hskip1em // #1}
+
   \Procedure{EC}{$P, E, D, R$}%\Comment{}
   \ForAll{$\dedalus{p} \in E$}
   \State{$P' \gets$ downstream program w.r.t. \dedalus{p}}
@@ -101,7 +103,7 @@ rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
   \EndFor
   \If{$P'$ is not confluent}
   \If{$\not\exists \dedalus{q} \in \text{Pred}(P')\ .\ \dedalus{q} \nrightarrow \dedalus{q}$} \Comment{no $\lnot$ PDG cycles}
-  \State{$P \gets$ $\textsc{Coord}(P') \cup$\ $P \setminus P'$}
+  \State{$P \gets$ $\textsc{Coord}(P')\ \cup$\ ($P \setminus P')$}
   \Else
   \State{\textbf{return} failure}
   \EndIf
@@ -121,7 +123,7 @@ rep_p(#R,\dbar{X})@async <- replica(R), p(\dbar{X});
 If $\textsc{EC}(P, E, D, R)$ does not return failure, it returns an eventually consistent program $(P, E, D, R)$.
 \end{theorem}
 \begin{proof}
-\wrm{todo}
+That the 
 \end{proof}
 
 %\jmh{more importantly, I think we *should* discuss the connection between replica consistency and confluence: downstream confluence.  Can we say that replication requires a restricted confluence guarantee, which can be guaranteed by a restricted monotonicity test?  This properly sets up general confluence as a stronger guarantee in certain ways than replica consistency -- it requires confluence to cover all predicates, not just a chosen subset.  Note that the EC folks probably don't care about downstream confluence beyond the guarded persistence of the replication channel.  So we're exposing a spectrum of ``how much program logic do you care about here''.  This does more to keep CALM.}
