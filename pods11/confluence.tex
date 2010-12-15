@@ -1,6 +1,6 @@
 \section{Confluence}
 \label{sec:confluence}
-Although there is much discussion among software developers about distributed ``consistency,'' the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of non-determinism arising from distribution. 
+Although there is much discussion among software developers about distributed ``consistency,'' the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of nondeterminism arising from distribution. 
 This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: that distributed evaluation is equivalent to sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  In the last PODS conference, the ``CALM'' conjecture was presented to link this notion of consistency to monotonicity properties~\cite{declarative-imperative}; we formalize that connection here. 
 
 Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
@@ -36,7 +36,7 @@ Given undecidability, we will first identify classes of programs that have a uni
 \eat{
 \begin{example}
 \label{ex:nonconfluent}
-A non-confluent \lang program.
+A diffluent \lang program.
 
 \begin{Dedalus}
 p(x)@async <- p_edb(X);
@@ -45,7 +45,7 @@ q(X)@next <- q(X);
 \end{Dedalus}
 \end{example}
 
-In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the nondeterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are assigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is non-confluent.
+In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the nondeterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are assigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is diffluent.
 }
 
 \subsection{Sources of Diffluence}
@@ -63,7 +63,7 @@ First, we provide some intuition for the sources of diffluence in \lang programs
 %rom a \lang program results in fewer ultimate models, we say the program has {\em %nondeterministic world closing}.
 %\end{definition}
 
-In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be ``temporarily'' applied to sets whose contents are still evolving over time. The evolution of such sets and their consequences can lead to non-deterministic ultimate models.
+In Datalog programs with negation, the standard stratified interpretation assumes that predicates in a lower stratum are evaluated to fixpoint and ``closed'' before their contents are considered in higher strata.  In \lang, even with a stratified interpretation, the contents of a negated predicate at a given timestep $t$ may be a subset of its contents at $t+1$.  In essence, in \lang the closed-world assumption may be ``temporarily'' applied to sets whose contents are still evolving over time. The evolution of such sets and their consequences can lead to nondeterministic ultimate models.
 
 Consider a \lang program $P'$ derived from another \lang program $P$ by 
 %\paa{not dropping?}
@@ -308,7 +308,7 @@ monotonic property.
 This list of constructive base cases for monotonic properties is not complete:  
 in Section~\ref{sec:coord} we will
 axiomatize the way that certain coordination techniques can transform an otherwise 
-nonmonotonic predicate into a monotonic property.
+non-monotonic predicate into a monotonic property.
 
 
 
@@ -413,8 +413,8 @@ Thus it is confluent.  However, the program is not logically monotonic because n
 \jmh{I'm kinda bummed out that we don't let UCS help us broaden monotonic properties here further.}
 
 \subsection{Perfect Ultimate Model}
-\wrm{we are assuming guarded asynchrony}
-\wrm{rework definition to make clear we aren't coordinating @nexts}
+%\wrm{rework definition to make clear we aren't coordinating @nexts}
+% this will have to wait -wrm
 % \jmh{motivate coordination by analogy to practice}
 
 While our definition of a monotonic property is quite permissive, there are still many cases in practice where programs will not satisfy that property.  These programs are not in themselves confluent, but they often have a single ``natural'' ultimate model that corresponds to evaluating non-monotonic properties only when they can no longer change.  Evaluation of a Datalog program with negation has the same concern: the program has multiple minimal models, so one defines a {\em perfect model} as the minimal model generated by a local synchronous evaluation procedure called {\em stratified evaluation}~\cite{ullmanbook}.
@@ -427,7 +427,7 @@ Consider the following example, which is analogous to Example~\ref{ex:nonconflue
 
 \begin{example}
 \label{ex:sayers}
-The non-confluent ``sayers'' program.
+The diffluent ``sayers'' program.
 
 \begin{Dedalus}
 //sayer
@@ -456,7 +456,7 @@ true(X,T) <- statement(X,T), !false(X,T);
 Thus, the contents of \dedalus{true} at time \dedalus{T} are those items in \dedalus{statement} at time \dedalus{T} that are not in \dedalus{false} at time \dedalus{T}.  So in fact, the contents of \dedalus{true} in the ultimate model consist of ``everything stated that was ever not false''.  Such counter-intuitive results are enabled because the closed-world assumption is being applied to incomplete sets.
 
 \begin{definition}
-The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG, denoted $\mathcal{P}(P, E)$, is the ultimate model induced by ensuring a rule containing a \dedalus{!} or a \dedalus{count} is not satisfiable before the timestamp when the complete set of facts in the negated or aggregated predicates is sealed: a predicate \dedalus{p} is {\em sealed} at time \dedalus{t} if any fact in \dedalus{p} at time $\dedalus{s} > \dedalus{t}$ is also in \dedalus{p} at time \dedalus{t}.  
+The {\em perfect ultimate model} of a \lang program with no negative cycles in its PDG, denoted $\mathcal{P}(P, E)$, is the ultimate model induced by ensuring all asynchrony is guarded, and no rule containing a \dedalus{!} or a \dedalus{count} is satisfiable before the timestamp when the complete set of facts in the negated or aggregated predicates is sealed: a predicate \dedalus{p} is {\em sealed} at time \dedalus{t} if any fact in \dedalus{p} at time $\dedalus{s} > \dedalus{t}$ is also in \dedalus{p} at time \dedalus{t}.  
 %\jmh{This doesn't seem formal enuf to me.  What does it mean. model-theoreticlly, to evaluate a rule?  What do you mean "until"?}
 %In other words, one must have ``complete information'' before applying the closed-world assumption for negation.
 This intuitively corresponds to the definition of a perfect model from the Datalog literature.
@@ -548,7 +548,7 @@ A straightforward argument shows that if \dedalus{p\_incomplete()} is false at t
 As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} that captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
 
 \begin{definition}
-A {\em consistently sealed ultimate model} is an ultimate model generated by non-deterministically sealing the contents of a predicate.
+A {\em consistently sealed ultimate model} is an ultimate model generated by nondeterministically sealing the contents of a predicate.
 \end{definition}
 
 In Example~\ref{ex:sayers}, all consistently sealed ultimate models have the property that there is no \dedalus{statement} that is both \dedalus{true} and \dedalus{false}, however the \dedalus{true} set may be a superset of the \dedalus{true} set in the perfect ultimate model.  
@@ -557,7 +557,7 @@ Note that the perfect ultimate model is a consistently sealed ultimate model; it
 
 %Consider what happens when we admit transient and permanent failures of nodes and channels to the model.  It is now the case that nodes may forever wait for a message that will never arrive.  Thus, achieving the perfect ultimate model comes at the expense of liveness.  It may be desirable to accept that the message will never arrive, and proceed with the computation.
 
-%Example~\ref{ex:nonconfluent} performs non-deterministic sealing -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
+%Example~\ref{ex:nonconfluent} performs nondeterministic sealing -- the first batch of \dedalus{p} facts are sealed in \dedalus{q}, and any further \dedalus{p} facts are ignored.  Any ingored \dedalus{p} facts correspond to ``lost'' \dedalus{p} facts, due to either transient or permanent channel or node failure.  It is easy to see that each possible ultimate model represents a possible failure scenario, and each combination of node and channel failures is represented, including the scenario with no failures~\footnote{In practical systems, we may want to model specific real-time constraints -- for example, we declare the set closed after a certain number of seconds have elapsed.  We can easily express this by adding the notion of a ``timer'' (a fact inserted into the queue at intervals measured on a wall clock) to our operational semantics.}.
 
 For any \lang program $P$ with no negated cycles in its PDG, we can generate $\textsc{NDCoord}(P)$, the instrumentation of $P$ so it computes only consistently sealed ultimate models.  The procedure is the same as $\textsc{Coord}$, except we skip the loop on line~\ref{alg:lastfor}, and instead of line~\ref{alg:addrules}, we add the following rules, where \dedalus{boomerang\_p()} is a fresh predicate name:
 
