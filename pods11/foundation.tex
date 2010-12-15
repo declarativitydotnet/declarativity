@@ -255,10 +255,22 @@ We first present an operational model of a distributed system, and explain how i
 
 Our model consists of $n$ Turing Machines (called nodes), each with an input queue \jmh{multiple queues per node?}, which independently sequentially execute programs, and may communicate via channels with non-deterministic \jmh{(positive)} delay.  Each machine may run for a polynomially-bounded number of steps, which include unicasting \jmh{why not just say sending} messages over channels \jmh{into the queues of other nodes} with non-deterministic delay and re-ordering, and placing messages in its own queue.  After running, the tape is erased, and the contents of the queue are copied to the tape.  The computation halts when no messages are in flight, and each node has halted.  In this case, the output is the final contents of each machine's tape.
 
-\jmh{I'm being thick I'm sure, but I don't know why you want to emulate the OM in Dedalus.  Is the goal to show that the emulation has a stable model for each trace?}
-Since the atemporal fragment of \lang is FO[LFP], we can represent a polynomial-time bounded Turing Machine using only atemporal rules in \lang~\cite{immerman-ptime}.  In addition to normal operations, the Turing Machine can place items into a queue---\cite{dedalus} shows how to model queues in \lang---or send messages to other nodes---modeled by an asynchronous communication rule with \dedalus{queue} in the head.  A node persists the contents of the tape across time if the queue is empty, using a rule like \dedalus{tape(\dbar{X})@next <- tape(\dbar{X}), !queue(\dbar{\_});}.  The ultimate model of this program is exactly the final contents of the tape.
+\begin{lemma}
+\label{lem:turing2dedalus}
+Any system that can be represented in this operational formalism can be represented by a \lang program $P$.  Furthermore, the set of ultimate models of $P$ exactly correspond to the union of the set of possible final tape states of the Turing Machines.
+\end{lemma}
+\begin{proof}
+See appendix for details.
+\end{proof}
 
-\wrm{incomplete stuff below. above should be relatively complete}
+
+\begin{lemma}
+\label{lem:dedalus2turing}
+Any \lang program can be executed by the operational formalism.  Furthermore, the set of ultimate models of $P$ exactly corresponds to the result computed by the Turing Machines.
+\end{lemma}
+\begin{proof}
+See appendix for details.
+\end{proof}
 
 $D_n@1$ is $E_n$.  
 

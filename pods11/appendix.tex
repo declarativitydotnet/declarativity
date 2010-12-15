@@ -1,4 +1,19 @@
 \section{Proofs}
+\begin{proof}[of Lemma~\ref{lem:turing2dedalus}]
+We begin by assuming that \dedalus{node} contains the identifiers of each of the $n$ nodes.  Since the atemporal fragment of \lang is FO[LFP], we can represent a polynomial-time bounded Turing Machine using only atemporal rules in \lang~\cite{immerman-ptime}.  In addition to normal operations, the Turing Machine can place items into a queue---\cite{dedalus} shows how to model queues in \lang---or send messages to other nodes---modeled by an asynchronous communication rule with \dedalus{queue} in the head.  A node persists the contents of the tape across time if the queue is empty, using a rule like \dedalus{tape(\dbar{X})@next <- tape(\dbar{X}), !queue(\dbar{\_});}.  If the queue is non-empty, the computation skips a timestamp (leaving \dedalus{tape} empty), and then atomically copies the contents of \dedalus{queue} to \dedalus{tape}.  The ultimate model of this program is exactly the final contents of the tape on every node if the computation halts.  Otherwise, the program's ultimate model is empty: \dedalus{tape} facts only exist every other timestamp, and for any Turing Machine predicate \dedalus{r} we can create \dedalus{r'}, and create a mutual recursive cycle to ensure neither \dedalus{r} nor \dedalus{r'} contains facts at every timestamp:
+
+\begin{Dedalus}
+r(\dbar{X})@next <- r'(\dbar{X});
+r'(\dbar{X})@next <- r(\dbar{X});
+\end{Dedalus}
+
+We can play a somewhat similar trick for \dedalus{queue} by having local messages alternate between going into \dedalus{queue} and \dedalus{queue'}.  Thus, no local queue message will be part of the ultimate model.  Remote messages will still go into \dedalus{queue}: this still leaves the case that the exact same message repeatedly arrives at a node at every timestamp forever, by chance.  We can dispense of this case by assuming the channels interconnecting the Turing Machines forbid it.
+\end{proof}
+
+\begin{proof}[of Lemma~\ref{lem:dedalus2turing}
+\wrm{Todo until I'm done sec 4}
+\end{proof}
+
 \begin{proof}[of Lemma~\ref{lem:confluence-undecidable}]
 Our proof proceeds via construction of a two counter machine in \lang, inspired by the construction in~\cite{undecidable-datalog}. We briefly review two counter machines.  A two counter machine's state is captured in the state of its two counters (natural numbers), and in its control state.  A two counter machine has a transition function, which can be characterized as follows:
 $$\delta: \Sigma \times \{=, >\} \times \{=, >\} \rightarrow \Sigma \times \{inc, dec\} \times \{inc, dec\}$$
