@@ -256,7 +256,7 @@ explicit coordination among participants.
 
 
 We can generalize Lemma~\ref{lem:guarding} to account for monotonic programs that 
-contain syntactic negation \jmh{should we be mentioning aggregation?} and aggregation with
+contain syntactic negation or counting with
 the notion of a {\em monotonic property}.
 
 
@@ -354,8 +354,7 @@ Note that facts may satisfy the semantic definition of monotonic
 properties  (Definition~\ref{def:mp})  without satisfying any of the constructive cases.  For example, a predicate may
 be monotonic because it is appropriately coordinated, or because its data-dependent
 negation depth is even.
-Hence the lemma holds only for the conservative definition of monotonic properties.  We will 
-see that the conservative definition is sufficient for many practical cases.  \jmh{We will?  Where?  Provide fw refs!}
+Hence the lemma holds only for the conservative definition of monotonic properties.  
 
 \begin{definition}
 A \lang program is {\em monotonic} if all facts in any ultimate model are monotonic properties.  
