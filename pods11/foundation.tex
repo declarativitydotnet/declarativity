@@ -118,7 +118,7 @@ a directed graph that has one node per predicate, and an edge from \dedalus{q} t
 
 \vspace{1em}
 \noindent {\bf EDB:}
-EDB facts must be specified with a location and time.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  Note that:$E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  Like Datalog, we require the EDB to be finite.
+EDB facts must be specified with a location and time.  For a given EDB $E$ and location \dedalus{n}, we refer to all EDB facts with location \dedalus{n} as $E_{\text{ \dedalus{{\scriptsize n}}}}$.  Note that $E = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} E_{\text{\dedalus{{\scriptsize n}}}}$.  We assume that the entire EDB is provided in a single batch, and no EDB may be provided afterwards.  Like Datalog, we require the EDB to be finite.
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
@@ -240,18 +240,27 @@ Note that ultimate models are always of finite cardinality because the only cons
 
 \subsection{Operational Interpretation}
 \label{sec:operational}
-Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  As one might expect, given our definition of the ultimate model, we will compute our ultimate model by performing a distributed analog to computing a partial fixpoint.  \wrm{waiting for guidance from Joe and/or Peter on what which direction we need to prove here...}
+Our goal in defining an operational formalism is to map real-world behavior to models of our logic program.  As one might expect, given our definition of the ultimate model, we will compute our ultimate model by performing a distributed analog to computing a partial fixpoint.
+
 We first present an operational model of a distributed system, and explain how it can be modeled in our language.  We then present an algorithm for computing ultimate models, explain how it can be run on our operational formalism, and show that it can compute precisely the set of ultimate models given by the model-theoretic semantics.
 
-First, we will devise an operational model that is sufficient to compute the fixpoint
+%First, we will devise an operational model that is sufficient to compute the fixpoint
 %We first describe an algorithm that implements such a computation, and then explain how it can be modeled by a collection of Turing Machines enhanced with queues.
 %We ground our model-theoretic formalism in a natural and equivalent operational semantics.
 
-We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
-$$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$
+%We will compute each partition of $\mathcal{U}(P, E, ND)$ separately.  Note that:
+%$$\mathcal{U}(P, E, ND) = \bigcup_{\text{\dedalus{{\scriptsize n}}} \in \text{\dedalus{{\scriptsize node}}}} \mathcal{U}(P, E_{\text{\dedalus{{\scriptsize n}}}}, ND)$$
 
+Our model consists of $n$ Turing Machines (called nodes), each with queues, which independently sequentially execute programs, and may communicate via channels with non-deterministic delay.  Each machine may run for a polynomially-bounded number of steps, which include unicasting messages over channels with non-deterministic delay and re-ordering, and placing messages in its own queue.  After running, the tape is erased, and the contents of the queue are copied to the tape.  The computation halts when no messages are in flight, and each node has halted.  In this case, the output is the final contents of each machine's tape.
 
-Intuitively, the operational model is based on $n = |\dedalus{node}|$ Turing Machines, which independently step sequentially through time and communicate via channels with non-deterministic delay.  At each timestep \dedalus{t} they run a datalog fixpoint computation that evaluates $P$ on $projection(E_n, t)$; this takes polynomial time~\cite{immerman-ptime, vardi-ptime}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep \dedalus{t+1} and become part of $projection(E_n, t+1)$, local asynchronous facts whose timestep is chosen non-deterministically to be greater than t and become part of later timesteps, and remote asynchronous facts.  The timestamps in this third class of facts are chosen non-deterministically ``at the receiver'' to model delay, in a way that observes traditional causality restrictions~\cite{lamportclocks}.
+Since the atemporal fragment of \lang is FO[LFP], we can represent a polynomial-time bounded Turing Machine using only atemporal rules in \lang~\cite{immerman-ptime}.  In addition to normal operations, the Turing Machine can place items into a queue---\cite{dedalus} shows how to model queues in \lang---or send messages to other nodes---modeled by an asynchronous communication rule with \dedalus{queue} in the head.  Items in the queue are marked either local or remote, depending on the rule they are added by (for example by adding a constant ``local'' or ``remote'').  A node persists the contents of the tape across time if the queue is empty, using a rule like \dedalus{tape(\dbar{X})@next <- tape(\dbar{X}), !queue(\dbar{\_});}.  The ultimate model of this program is exactly the final contents of the tape.
+
+\wrm{incomplete stuff below. above should be relatively complete}
+
+$D_n@1$ is $E_n$.  
+
+Our model consists of $n = |\dedalus{node}|$ Turing Machines, which independently step sequentially through time and communicate via channels with non-deterministic delay.  At each timestep \dedalus{t} they run a Datalog fixpoint computation that evaluates $P$ on $D_n@\dedalus{t}$; this takes polynomial time~\cite{immerman-ptime, vardi-ptime}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep \dedalus{t+1} and become part of $D_n@\dedalus{t+1}$, local asynchronous facts whose timestep is chosen non-deterministically to be greater than \dedalus{t} and become part of later timesteps, and remote asynchronous facts.  The timestamps in this third class of facts are chosen non-deterministically ``at the receiver''.
+% to model delay, in a way that observes traditional causality restrictions~\cite{lamportclocks}.
 
 Any \lang program without  async rules is a $\text{Datalog}_{1S}$ program, and the above intuition is captured by the algorithm given in~\cite{tdd}, computing an ultimate model in polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through \dedalus{successor} at each node.  The PSPACE guarantees of~\cite{tdd} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all \lang programs under this model:
 
