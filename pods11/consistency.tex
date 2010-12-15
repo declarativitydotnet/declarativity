@@ -22,7 +22,7 @@ data, and define a set of replicas.
 %It seems sensible to do this on the predicate level, rather than generalizing to replicated subsets of predicates.  
 For simplicity of notation, and without loss of generality, we define replicas on the predicate level rather than generalizing to replicated subsets of predicates.  
 We note that partitioning of predicates, which can lead to finer-grained replication, 
-entails an orthogonal set of correctness criteria which can likewise be formulated as
+entails an orthogonal set of correctness criteria that can likewise be formulated as
 distributed constraints.
 If a \lang program $P$ is eventually consistent with respect to a set of replicated predicates $E$, and replicas $R$, then we write that $(P, E, R)$ is eventually consistent.  We assume a unary predicate \dedalus{replica}, whose contents is exactly $R$.
 
