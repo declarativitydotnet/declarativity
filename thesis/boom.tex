@@ -206,22 +206,20 @@ algorithms.
 \label{fig:joborder}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-\ol{s1} {\bf minPriority}(min$<$Priority$>$) :- \\
-\datalogspace {\bf job}(JobId, Priority, Status, SubmitTime, ...), \\
-\datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, StartTime, ...), \\
-\datalogspace $StartTime < 0$; \\
+\begin{lstlisting}
+s1 minWaitingJobPriority(a_min<Priority>) :-
+   job(JobId, Priority, Status, ...),
+   Status < JobStatus.FINISHED;
 	
-\ol{s2} {\bf minPriorityStartTime}(Priority, min$<$SubmitTime$>$) :- \\
-\datalogspace {\bf job}(JobId, Priority, Status, SubmitTime, ...), \\
-\datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, StartTime, ...), \\
-\datalogspace $StartTime < 0$; \\
+s2 minWaitingJobPrioritySubmitTime(Priority, a_min<SubmitTime>) :-
+   job(JobId, Priority, Status, SubmitTime, ...),
+   Status < JobStatus.FINISHED;
 
-\ol{s3} {\bf highestPriorityJob}(JobId) :- \\
-\datalogspace {\bf minPriority}(Priority), \\
-\datalogspace {\bf minPriorityStartTime}(Priority, StartTime), \\
-\datalogspace {\bf job}(JobId, Priority, Status, SubmitTime, ...); \\
-\end{boxedminipage}
+s3 highestPriorityJob(JobId) :-
+   minWaitingJobPriority(Priority),
+   minWaitingJobPrioritySubmitTime(Priority, SubmitTime),
+   job(JobId, Priority, Status, SubmitTime, ...);
+\end{lstlisting}
 \caption{\label{ch:boom:fig:joborder}The highest priority job that still has unscheduled tasks ($StartTime < 0$).}
 \end{figure}
 
@@ -231,14 +229,16 @@ highest priority.  A job's scheduling order is defined by its $Priority$
 followed by its $SubmitTime$ attributes.  The tasks from the job that is first
 in the scheduling order are scheduled before any other tasks from other jobs.
 
-Figure~\ref{ch:boom:fig:joborder} captures this constraint in three rules, which
-identify the job whose tasks are considered first when \TT slots are available.
-Rule \ol{s1} identifies the job with the minimum priority, while rule~\ol{s2}
-determines, for each priority, the job with the earliest submit time.  Both
-\ol{s1} and \ol{s2} only consider jobs that have unscheduled tasks, which are
-identified by a negative $StartTime$ value in the \ol{task} relation.  Rule
-\ol{s3} joins the result of rules \ol{s1} and \ol{s2} to identify the overall
-highest priority job with unscheduled tasks.
+Figure~\ref{ch:boom:fig:joborder} captures this constraint in three rules,
+which identify the job whose tasks are considered first when \TT slots are
+available.  Rule \ol{s1} identifies the job with the overall minimum priority,
+while rule~\ol{s2} determines, for each job priority, what is the earliest
+submit time.  Both \ol{s1} and \ol{s2} only consider jobs that have unscheduled
+tasks, shown here by considering the \ol{Status < JobStatus.FINISHED}
+predicate.  Rule \ol{s3} joins the result of rules \ol{s1} and \ol{s2} to
+identify the overall highest priority job with unscheduled tasks.  This job
+data will predicate task scheduling rules on scheduling tasks from this job
+only.
 
 Scheduling individual tasks from the highest priority job occurs when a \TT
 performs a heartbeat exchange with the \JT and has some number of available map
@@ -256,46 +256,52 @@ queued jobs.
 \begin{figure}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-s4 {\bf mapTaskLocality}(TaskId, Tracker, Locality) :- \\
-\datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, ReduceSlots), \\
-\datalogspace {\bf hightestPriorityJob}(JobId), \\
-\datalogspace {\bf task}(JobId, TaskId, Type, \_, InputSplits, StartTime, \_), \\
-\datalogspace $StartTime < 0$, $Type == "map"$, \\
-\datalogspace \{ \\
-\datalogspace \datalogspace {\bf if} (InputSplits.contains(TrackerStatus.getHost())) \{ \\
-\datalogspace \datalogspace \datalogspace Locality := 1; // same machine \\
-\datalogspace \datalogspace \} {\bf else if} (InputSplits.contains(TrackerStatus.getRack()) \{ \\
-\datalogspace \datalogspace \datalogspace Locality := 2; // same rack \\
-\datalogspace \datalogspace \} {\bf else} \{ \\
-\datalogspace \datalogspace \datalogspace Locality := 3;  \\
-\datalogspace \datalogspace \} \\
-\datalogspace \}; \\
+\begin{lstlisting}
+/* Assign each task a locality score on the given tracker. */
+s4 mapTaskLocality(TaskId, Tracker, Locality) :-
+   heartbeat(Tracker, TrackerStatus, MapSlots, ReduceSlots),
+   hightestPriorityJob}(JobId),
+   task(JobId, TaskId, Type, _, InputSplits, StartTime, _),
+   StartTime < 0, Type == "map",
+   {
+     if (InputSplits.contains(TrackerStatus.getHost())) { 
+       Locality := 1; // same machine
+     } else if (InputSplits.contains(TrackerStatus.getRack()) { 
+       Locality := 2; // same rack
+     } else {
+       Locality := 3;
+     }
+   };
 	
-s5 {\bf schedule}(Tracker, bottomK$<$MapID, MapSlots$>$) :- \\
-\datalogspace {\bf mapTaskLocality}(TaskId, Tracker, Locality), \\
-\datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, ReduceSlots), \\
-\datalogspace $MapSlots > 0$, \\
-\datalogspace MapID := new OrderedMapID(TaskId, Locality); \\
+/* For each task tracker, list the k best map tasks to 
+   schedule, where k == MapSlots.  The result of this 
+   will be added to the schedule relation, the information 
+   in which is returned to the TaskTracker. */
+s5 schedule(Tracker, bottomK<MapID, MapSlots>) :-
+   mapTaskLocality(TaskId, Tracker, Locality),
+   heartbeat(Tracker, TrackerStatus, MapSlots, ReduceSlots),
+   TrackerStatus == TaskTrackerStatus.RUNNING,
+   MapSlots > 0,
+   MapID := new OrderedMapID(TaskId, Locality);
 
-\end{boxedminipage}
+\end{lstlisting}
 \caption{\label{ch:boom:fig:schedule} Map task locality priority scheduler.}
 \end{figure}
 
 Figure~\ref{ch:boom:fig:schedule} shows two rules that together implement this
-default Hadoop policy, which schedules map tasks near the data.  When a \TT
+default Hadoop policy, which is to schedule map tasks near the data.  When a \TT
 heartbeat is received, rule \ol{s4} assigns a locality metric to unscheduled
 tasks that belong to the highest priority job.  \JOL supports the ability to
 add Java code at the end of a rule body, delineated within brackets \{ ...  \}.
 This Java code executes last in the rule body, and will only see those tuples
 that represent actual deductions.  In rule \ol{s4}, the bracketed Java code
-assigns a Locality metric according to the proximity of the heartbeat \TT to
+assigns a {\em locality} metric according to the proximity of the heartbeat \TT to
 the map input data.
 
 The result of rule \ol{s4} is evaluated in rule \ol{s5}, which schedules the
 map tasks whose inputs reside closest to the heartbeat \TT.  The {\bf bottomK}
 aggregate orders the $MapID$s from lowest to highest $Locality$ and chooses the
-lowest map tasks in this order, not exceeding the number of available map slots
+lowest $K$ map tasks in this order, not exceeding the number of available map slots
 ($MapSlots$).  Each result tuple from rule \ol{s5} is converted, through a few
 imperative steps in the Java language, into a schedule action message that is
 returned to the \TT in its RPC call to the \JT.  The reduce task scheduling
@@ -307,37 +313,39 @@ reduce slot capacity of the heartbeat \TT, as per stock Hadoop.
 
 \begin{figure}[p]
 \ssp
-\begin{boxedminipage}{\linewidth}
+\begin{lstlisting}
+/* Compute progress rate per task */
+l1 taskPR(JobId, TaskId, Type, ProgressRate) :-
+   task(JobId, TaskId, Type, _, _, _, Status),
+   Status.state() == RUNNING,
+   Time := Status.finish() > 0 ? Status.finish() : 
+             java.lang.System.currentTimeMillis(),
+   ProgressRate := Status.progress() / (Time - Status.start());
 
-// Compute progress rate per task \\
-\ol{l1} {\bf taskPR}(JobId, TaskId, Type, ProgressRate) :- \\
-\datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, \_, Status), \\
-\datalogspace $Status.state() != FAILED$,  \\
-\datalogspace Time := $Status.finish() > 0$ ? Status.finish() : currentTimeMillis(), \\
-\datalogspace ProgressRate := Status.progress() / (Time - Status.start()); \\
+/* For each job, compute 25th pctile rate across tasks */
+l2 slowTaskThreshold(JobId, Type, a_percentile<0.25, PRate>) :-
+   taskPR(JobId, TaskId, Type, PRate);
 
-// For each job, compute 25th pctile rate across tasks \\
-\ol{l2} {\bf slowTaskThreshold}(JobId, Type, percentile$<$0.25, PRate$>$) :- \\
-\datalogspace {\bf taskPR}(JobId, TaskId, Type, PRate); \\
+/* Compute progress rate per tracker */
+l3 trackerPR(Tracker, JobId, Type, a_avg<PRate>) :- 
+   task(JobId, TaskId, Type, _),
+   taskAttempt(JobId, TaskId, _, Progress, State, Phase, 
+               Tracker, Start, Finish),
+   State != FAILED,
+   Time := Finish > 0 ? Finish : java.lang.System.currentTimeMillis(),
+   PRate := Progress / (Time - Start);
 
-// Compute progress rate per tracker \\
-\ol{l3} {\bf trackerPR}(Tracker, JobId, Type, avg$<$PRate$>$) :- \\ 
-\datalogspace {\bf task}(JobId, TaskId, Type, \_), \\
-\datalogspace {\bf taskAttempt}(JobId, TaskId, \_, Progress, State, Phase, Tracker, Start, Finish), \\
-\datalogspace $State != FAILED$, \\
-\datalogspace Time := $Finish > 0$ ? Finish : currentTimeMillis(), \\ 
-\datalogspace PRate := Progress / (Time - Start);  \\
+/* For each job, compute 25th pctile rate across all trackers */
+l4 slowNodeThreshold(JobId, Type, a_percentile<0.25, AvgPRate>) :-
+   trackerPR(_, JobId, Type, AvgPRate);
 
-// For each job, compute 25th pctile rate across trackers \\
-\ol{l4} {\bf slowNodeThreshold}(JobId, Type, percentile<0.25, AvgPRate>) :- \\
-\datalogspace {\bf trackerPR}(\_, JobId, Type, AvgPRate); \\
-
-// Compute available map/reduce slots \\
-\ol{l5} {\bf speculativeCap}(sum<MapSlots>, sum<ReduceSlots>) :- \\
-\datalogspace {\bf taskTracker}( ... MapCount, ReduceCount, MaxMap, MaxReduce), \\
-\datalogspace MapSlots := 0.1 * (MaxMap - MapCount), \\
-\datalogspace ReduceSlots := 0.1 * (MaxReduce - ReduceCount); \\
-\end{boxedminipage}
+/* Compute available map/reduce slots that can be used for 
+   speculation. */
+l5 speculativeCap(a_sum<MapSlots>, a_sum<ReduceSlots>) :-
+   taskTracker( ... MapCount, ReduceCount, MaxMap, MaxReduce),
+   MapSlots    := java.lang.Math.ceil(0.1 * (MaxMap - MapCount)),
+   ReduceSlots := java.lang.Math.ceil(0.1 * (MaxReduce - ReduceCount));
+\end{lstlisting}
 \caption{\OVERLOG to compute statistics for LATE.}
 \label{fig:latePolicy}
 \end{figure}

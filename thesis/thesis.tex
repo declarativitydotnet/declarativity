@@ -6,11 +6,8 @@
 %      - Part III: Back Matters
 % ======================================
 
-\documentclass[12pt,oneside,final]{ucthesis}
-%\documentclass[12pt,twocolumn,final]{ucthesis}
-
-\def\dsp{\def\baselinestretch{2.0}\large\normalsize}
-\dsp
+% \documentclass[12pt,oneside,final]{ucthesis}
+\documentclass[12pt,oneside,svgnames]{ucthesis}
 
 
 % packages from Johan
@@ -21,37 +18,56 @@
 % end packages from johan
 
 \usepackage[final]{graphicx}
-\usepackage{amstext,amssymb}
 \usepackage{url}
-\usepackage{lineno}
-\usepackage{times}
 \usepackage{boxedminipage}
-\usepackage{fancyhdr}
-\usepackage{tabularx}
 \usepackage{hhline}
-\usepackage{color}
 \usepackage{alltt}
 \usepackage{xspace}
 \usepackage{textcomp}
 \usepackage{wrapfig}
 \usepackage{balance}
-\usepackage[protrusion=true,expansion=true]{microtype}
 \usepackage{subfig}
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{listings}
 
+\usepackage{multirow}
+\usepackage{pstricks,pst-plot,pst-3dplot,pst-infixplot,pst-node,pst-math}
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage{psfrag}
+\usepackage{fancybox}
+\usepackage{suffix}
+\usepackage{tabularx}
 
-%\includeonly{mimo}
+%%%%% URL package fix %%%%%
+\begingroup
+\makeatletter
+\g@addto@macro{\UrlSpecials}{%
+  \endlinechar=13 \catcode\endlinechar=12
+  \do\%{\Url@percent}\do\^^M{\break}}
+ \catcode13=12 %
+ \gdef\Url@percent{\@ifnextchar^^M{\@gobble}{\mathbin{\mathchar`\%}}}%
+\endgroup %
+
+\usepackage[style=altlist,toc]{glossaries}
+\makeglossaries
+
+\newglossarystyle{symbolic}{%
+  \glossarystyle{long}%
+  \renewcommand*{\glossaryentryfield}[5]{%
+    \glstarget{##1}{##2} & ##3\glspostdescription\space ##5\\}%
+  \renewcommand*{\glossarysubentryfield}[6]{%
+    ---\ \glstarget{##2}{##3} & ##4\glspostdescription\space ##6\\}%
+}
+
+\pdfpagewidth=8.5 true in
+\pdfpageheight=11 true in
+
+% Changes caption names to be bold
+%\usepackage[bf]{caption}
+
 \newcommand{\comment}[1]{}
-\newtheorem{theorem}{Theorem}
-\newtheorem{definition}{Definition}
-\newtheorem{lemma}{Lemma}
-\newtheorem{remark}{Remark}
-\newtheorem{corollary}{Corollary}
-\newcommand{\asn}{\ensuremath{:\,=}}
-\newcommand{\defn}{\ensuremath{:\,=}}
-\newcommand{\var}{\ensuremath{\operatorname{var}}}
 
 \newcommand{\OVERLOG} {Overlog\xspace}
 \newcommand{\BOOM} {BOOM\xspace}
@@ -78,34 +94,15 @@
     \begin{enumerate}}
    {\end{enumerate}\let\usecounter=\latexusecounter}
 
-\renewcommand{\ttdefault}{cmtt}
-\newcommand{\dataloglabel}[1]{\mbox{\bf #1:}\hfil}
-\newenvironment{datalog}
-  {\begin{list}{}%
-      {\it \small \renewcommand{\makelabel}{\dataloglabel}%
-    \setlength{\parsep}{-2pt}%
-    }%
-  }%
-{\end{list}}
-\newcommand{\datalogspace}{\textcolor[gray]{1}{.}\hspace{0.5in}}
-\def\link{\texttt{\#link}\xspace}
-\newcommand{\term}[1]{\textbf{#1}}
-\newcommand{\stitle}[1]{\textbf{#1}---}
+
+% Some commands from Rusty
+\newcommand{\tab}{\hspace{5mm}}
+\newcommand{\blankpage}[1][]{\clearpage #1 ~ \newpage}
 
 \newcommand{\ol}[1]{\texttt{\small #1}\xspace}
 
-% this defines fancy header
-% -------------------------
-%\usepackage{fancyhdr}
-%\pagestyle{fancy} \fancyhead{} \fancyfoot{} \if@twoside
-%\fancyhead[LO]{\slshape\leftmark}
-%\fancyhead[LE,RO]{\rmfamily\thepage}
-%\fancyhead[RE]{\slshape\rightmark} \else
-%\fancyhead[LO]{\slshape\leftmark}
-%\fancyhead[RO]{\rmfamily\thepage} \fi
-
-
 \begin{document}
+
 \lstset{
 language=Prolog,
 basicstyle=\footnotesize, % the size of the fonts that are used for the code
@@ -127,10 +124,6 @@ frame=single	   % adds a frame around the code
 
 \include{title}
 
-
-
-
-
 % ========================================
 % Part II: Dissertation Chapters
 %          - introduction (intro)
@@ -142,6 +135,10 @@ frame=single	   % adds a frame around the code
 %          - experimental (test)
 %          - conclusion (conclusion)
 % ========================================
+
+\begin{dissertationText}
+
+\pagenumbering{arabic}
 
 \setcounter{page}{1}
 \renewcommand{\thepage}{\arabic{page}}\include{overview}
@@ -162,10 +159,25 @@ frame=single	   % adds a frame around the code
 %           - appendix
 %           - index
 % ===============================
+\printglossary[style=symbolic,type=symbol]
 
-%\ssp
-\nocite{*}
+\clearpage
+\printglossary[style=index,type=main]
+
+%%%%%%%%%%%%%%%%%%%%
+%%%	BIBLIOGRAPHY %%%%\input{subfiles/7-Conclusion}
+%%%%%%%%%%%%%%%%%%%%
+
+% Start Bibliography on its own page
+\clearpage
+
 \bibliographystyle{plain}
+% I use the AGU style references in agu.bst
+% You can substitute the name of another bibliography style file here.
+\ssp	% SINGLE SPACE REFERENCES (optional)
 \bibliography{thesis}
+\addcontentsline{toc}{chapter}{Bibliography}
+
+\end{dissertationText}
 
 \end{document}

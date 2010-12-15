@@ -3,124 +3,134 @@
 % ==========
 
 \title{Declarative Systems}
-\author{Tyson Condie}
-\degreeyear{2010} 
-\degreesemester{} 
-\degree{Doctor of Philosophy}
-\chair{Professor Joseph M. Hellerstein}
-\othermembers{Professor Michael J. Franklin \\
-Professor Tapan S. Parikh \\
-Professor Raghu Ramakrishnan \\
-Professor Ion Stoica} \numberofmembers{5} 
 
-\prevdegrees{B.A.
-(University of California, Berkeley)  \\ M.S. (Stanford University) }
-\field{Engineering-Electrical Engineering and Computer Sciences}
+% Note that this must be exactly as it appears in University records.
+\author{Tyson Condie}
+
+% PREVIOUS DEGREES
+\prevdegrees{ B.A.  (University of California, Berkeley)  \\ 
+M.S. (Stanford University) }
+
+% DATE OF GRADUATION
+% This text will appear on the title page
+% Note that degrees are only granted in Fall and Spring at Berkeley.
+\degreemonth{Spring} \degreeyear{2011} \degree{Doctor of Philosophy}
+% This text will appear on the abstract page.
+% For Berkeley, it should be identical to the graduation month.
+\defensemonth{Spring} \defenseyear{2011}
+
+% COMMITTEE MEMBERS
+% You can have up to 5 members listed separately. 
+%After that, you throw them all into the "other members" category.
+\numberofmembers{5} 
+\chair{Professor Joseph M. Hellerstein}
+\othermemberA{Professor Michael J. Franklin}
+\othermemberB{Professor Tapan S. Parikh}
+\othermemberC{Professor Raghu Ramakrishnan}
+\othermemberD{Professor Ion Stoica}
+	
+% DEPARTMENT/DEGREE PROGRAM
+%Your Department. Make sure this is the department and/or program
+% name that you are enrolled in...
+\field{Computer Science} 
+
+% CAMPUS NAME
+% Your UC Campus, e.g., "Berkeley"
+% Note that if you are not at Berkeley, you may have to modify the
+% ucthesis.cls to change the wording on the Title page.
 \campus{Berkeley}
 
-\maketitle 
-\approvalpage 
-\copyrightpage
-
-%\renewcommand{\thepage}{\arabic{page}}
-
-% ===============
-% Thesis Abstract
-% ===============
-%\renewcommand{\thepage}{}
-\begin{abstract}
-
-There is a strong analogy between the Internet today, and database systems in the
-1960's. Network protocol implementations involve complex procedural code, and
-there is an increasing need to separate their specification from physical and logical
-changes to components underneath them: network fabrics and architectures are being
-redesigned for the next generation of Internet applications~\cite{geni05}. Hence the lessons of 
-{\em data independence} and declarative approaches are very timely in this domain~\cite{networkind}, and are
-reflected by recent interest in automatic network optimization and adaptation~\cite{grace-eurosys08}.
-Moreover, we have observed that many networking tasks are naturally described in recursive
-query languages like Datalog, because (a) they typically involve recursive graph traversals
-(e.g., shortest-path computations)~\cite{loo-sigcomm05}, and (b) they are structured around
-asynchronous messaging streams that \emph{join} with the current system state 
-(e.g., "rendezvous" or "session" tables~\cite{p2:sosp, loo-sigmod06}).
-
-Another area that has seen significant change in the early part of the
-$21^{st}$ century is the data center.  During the late 1980's and into the
-1990's, the client-server computing model prompted organizations to aggregate
-microcomputers in large computer rooms.  These early data centers were
-primarily used to control and operate all "in-house" information technology
-(IT) operations.  In 2007, companies like Google and IBM, as well as a number
-of universities, embarked on a large scale {\em cloud computing} research
-project~\cite{lohr}.  A primary focus for this new research direction was to
-commoditize the data center by enabling third-party developers to simply and
-economically build and host applications on managed clusters.  Although, these
-cloud interfaces are convenient for launching multiple independent instances of
-traditional single-node services, writing truly distributed software remains a
-significant challenge.  Distributed applications still require a developer to
-orchestrate concurrent computation and communication across machines, in a
-manner that is robust to delays and failures.  Writing and debugging such code
-is difficult even for experienced infrastructure programmers, and drives away
-many creative software designers who might otherwise have innovative uses for
-cloud computing platforms.
-
-This fast paced evolution in the Internet architecture and data center usage has enabled a new era
-of applications in the form of Internet services such as Facebook, Google, MSN, Twitter, and Yahoo!. However,
-many of these new applications are still being developed in programming languages that were specifically tailored to 
-\emph{single instruction} computing models of the past~\cite{flynn}. In this dissertation, we demonstrate the 
-utility of the declarative approach to developing the next generation of applications. We evaluate this conjecture 
-with Datalog-based implementations of a host of functionalities at various levels of the system hierarchy 
-(e.g., network protocols, query optimizers, and scheduling policies). Our declarative specifications of these
-system applications are complied to dataflow runtime implementations reminiscent of traditional database query 
-plans. We have found that using a declarative language often results in drastic reductions in code size 
-($100x$ and more~\cite{chu-sensys07, p2:sosp, boom}) relative to procedural languages like C++. Perhaps more 
-surprising, our declarative implementations are often quite intuitive: in many cases they are almost line-for-line 
-translations of published pseudocode, suggesting that a declarative language is indeed a good match for the 
-application domain.
-
-\abstractsignature
-\end{abstract}
-
-\setcounter{page}{1}
-\renewcommand{\thepage}{\roman{page}}
 
 \begin{frontmatter}
 
+  % ===============================================
+% MAKE THE TITLE PAGE
+% ===============================================
+\maketitle
 
-% ==========
-% Dedication
-% ==========
 
-\begin{dedication}
-\null\vfil {\large
-\begin{center}
-% To my wife and my advisor for giving me a chance.\\
-%dedication.
-\end{center}}
-\vfil\null
-\end{dedication}
+% ===============================================
+% APPROVAL SIGNATURE PAGE
+% ===============================================
 
-%\tableofcontents \listoffigures \listoftables
+% This needs to be commented out for the final electronic submission.
+% It's left in here so you can print it on plain paper, and get the
+% signatures.  -- RCS 1-7-2010
+%
+%\approvalpage
 
-% ===============
-% Acknowledgments
-% ===============
+% ===============================================
+% Copyright Page
+%
+% The copyright page is optional. However, the University
+% thesis guide says that a blank page should be inserted
+% if no copyright information is included.
+% ===============================================
+\copyrightpage
+
+% ===============================================
+% ABSTRACT
+%
+% 	The Abstract should be stored in a file called abstract.tex
+%	"It is preferred that the abstract text be less than 350 words"
+%	Also generates a signature line at the end of the abstract
+% ===============================================
+\abstract
+  \input{abstract}
+\endabstract
+
+  % ===============================================
+% OPTIONAL MATERIAL
+% Everything after this is optional and can appear in any order
+% you desire.
+\begin{optionalFrontMatter}
+
+% ===============================================
+% Dedication Page
+% The dedication is optional. 
+% ===============================================
+%\begin{dedication}
+%% Prints the text of the file dedication.tex centered vertically on the page.
+%	\vspace*{\fill} 
+% To my wife and my advisor for giving me a chance.
+%	\vspace*{\fill}
+%\end{dedication}
+
+% ===============================================
+% TABLE OF CONTENTS
+\blankpage[\thispagestyle{empty}]
+
+\setcounter{page}{1}
+\addcontentsline{toc}{chapter}{Contents}  % Put the table of contents in the table of contents
+\tableofcontents
+
+% COMMENT OUT THIS LINE IF YOU WANT TITLE HEADERS
+% THROUGHOUT YOUR DOCUMENT
+\pagestyle{plain} 
+
+% Insert the List of Figures and List of Tables after the TOC
+% Like everything in this section, these are both optional.
+%\newpage
+%\addcontentsline{toc}{chapter}{List of Figures}
+%\listoffigures
+%\newpage
+%\addcontentsline{toc}{chapter}{List of Tables}
+%\listoftables
 
 \begin{acknowledgements}
-
-
-
+\addcontentsline{toc}{chapter}{Acknowledgments}
+%% %% The Acknowledgements section should be stored in a file called acknowledgments.tex
 
 \end{acknowledgements}
 
-\pagebreak\pagebreak \tableofcontents \listoffigures \listoftables
+%\begin{vitae}
+%%% The Vitae section should be stored in a file called vitae.tex
+%	\input{vitae}
+%\end{vitae}
+% BLANK PAGE AFTER VITAE
+%\blankpage
+
+\end{optionalFrontMatter} %%%% END FRONT MATTER...
+
 \end{frontmatter}
 
-%\renewcommand{\thepage}{\arabic{page}}
-
-% ================
-% End of file:
-% XEmacs variables
-% ================
-
-% Local Variables:
-% TeX-master: "main.tex"
-% End:

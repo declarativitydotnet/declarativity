@@ -1,113 +1,113 @@
-%% ucthesis.cls
-%% Copyright (C) 1988-2004 Daniel Gildea, BBF, Ethan Munson.
-%
-% This work may be distributed and/or modified under the
-% conditions of the LaTeX Project Public License, either version 1.3
-% of this license or (at your option) any later version.
-% The latest version of this license is in
-%   http://www.latex-project.org/lppl.txt
-% and version 1.3 or later is part of all distributions of LaTeX
-% version 2003/12/01 or later.
-%
-% This work has the LPPL maintenance status "unmaintained".
-% 
-% This work consists of the files ucthesis.cls, uct10.clo, uct11.clo,
-% uct12.clo, uctest.bib, and uctest.tex.
-
+% UCTHESIS DOCUMENT CLASS -- Release info is below
+%    for LaTeX version 2e - 11/3/94
+%% Modified to work with UC Berkeley's 2003 thesis requirements by
+%% Matthew d'Alessio.
+%% Modified by John T. Whelan, June 1996, for UCSB use, following
+%% Chris Martin's changes to ucthesis.sty
 %%% ====================================================================
 %%%  @LaTeX-class-file{
 %%%     filename        = "ucthesis.cls",
-%%%     version         = "3.2",
-%%%     date            = "19 December 2004",
-%%%     license         = "LPPL",
+%%%     version         = "4.0",
+%%%     date            = "1 September 2004",
+%%% originally 
+%%% portedby    = "Blaise B. Frederick",
+%%% address     = "Center for Functional Imaging
+%%%            Lawrence Berkeley Laboratory
+%%%            MS 55-121
+%%%            1 Cyclotron Rd.
+%%%            Berkeley, CA 94720
+%%%            USA",
+%%% telephone   = "(510) 486-4423",
+%%% email       = "frederic@imasun.lbl.gov",
 %%%     codetable       = "ISO/ASCII",
 %%%     keywords        = "LaTeX, ucthesis",
+%%%     supported       = "until November 30, 1994",
 %%%     docstring       = "This file is the main file for the ucthesis
 %%%                        class, which is intended to meet the requirements
 %%%                        for University of California Ph.D. dissertations.
-%%%			   It is a direct port to LaTeX2e from UCTHESIS
-%%%			   v2.7 by Ethan V. Munson, with no changes other 
-%%%			   than those for compatibility.  The major modifictions
-%%%			   are in the font selection commands in the option
-%%%			   files uct1x.clo.
-%%%			   
-%%%			   UCTHESIS.STY v2.7 is based on the standard
-%%%			   report.sty as modified by Mittelbach and Schopf in
-%%%			   Jan 1992.  The primary differences are (1) the use
-%%%			   of pseudo-double-spacing, except in certain special
+%%%            It is a direct port to LaTeX2e from UCTHESIS
+%%%            v2.7 by Ethan V. Munson, with no changes other 
+%%%            than those for compatibility.  The major modifictions
+%%%            are in the font selection commands in the option
+%%%            files uct1x.clo.
+%%%            
+%%%            UCTHESIS.STY v2.7 is based on the standard
+%%%            report.sty as modified by Mittelbach and Schopf in
+%%%            Jan 1992.  The primary differences are (1) the use
+%%%            of pseudo-double-spacing, except in certain special
 %%%                        environments; and (2) the use of a 6 inch line
 %%%                        with 4em paragraph indentation.  It is only
-%%%			   intended for single-sided printing.  Double-sided
-%%%			   printing may be possible, but you're on
-%%%			   your own.
+%%%            intended for single-sided printing.  Double-sided
+%%%            printing may be possible, but you're on
+%%%            your own.
 %%%
 %%%                        I know of no bugs in this implementation,
 %%%                        but would be happy to hear of any problems
 %%%                        that arise with it.
 %%%
-%%%			   Version 2.x fixes a bug in the previous
-%%%			   version of 20 Jun 1988.  The bug was that 
-%%%			   "draft" optional mode didn't work because of
-%%%			   problems in handling optional arguments.
+%%%            Version 2.x fixes a bug in the previous
+%%%            version of 20 Jun 1988.  The bug was that 
+%%%            "draft" optional mode didn't work because of
+%%%            problems in handling optional arguments.
 %%%                        This file does not seem to work with earlier 
 %%%                        versions of LaTeX (pre-Jan 1992).
 %%%
-%%%			   Version 2.3 includes a single-spaced 
-%%%			   tabular* environment.
-%%%			
-%%%			   Version 2.4 sets \evensidemargin correctly
-%%%			   for two-sided style.  It also adds new
-%%%			   environments (\smalltabular and
-%%%			   \scriptsizetabular) which produce tables
-%%%			   with smaller fonts.  The obvious methods
-%%%			   of producing small-font tables don't work
-%%%			   in ucthesis style.
+%%%            Version 2.3 includes a single-spaced 
+%%%            tabular* environment.
+%%%         
+%%%            Version 2.4 sets \evensidemargin correctly
+%%%            for two-sided style.  It also adds new
+%%%            environments (\smalltabular and
+%%%            \scriptsizetabular) which produce tables
+%%%            with smaller fonts.  The obvious methods
+%%%            of producing small-font tables don't work
+%%%            in ucthesis style.
 %%%
-%%%			   Version 2.5 adds support for the \maketitle
-%%%			   macro.
+%%%            Version 2.5 adds support for the \maketitle
+%%%            macro.
 %%%
-%%%			   Version 2.6 adds support for complete and
-%%%			   correct front matter.  Some dead code was
-%%%			   removed, too.
+%%%            Version 2.6 adds support for complete and
+%%%            correct front matter.  Some dead code was
+%%%            removed, too.
 %%%
 %%%                        Version 2.7 adds front matter support for
 %%%                        thesis committees of more than 3 people
 %%%                        and for a labeled signature line on the
 %%%                        abstract page.
 %%%
-%%%			   Version 3.0 is a direct port of version 2.7
-%%%			   to LaTeX2e.  The major revisions in ucthesis.cls
-%%%			   are converting option processing to LaTeX2e 
-%%%			   conventions.  The uct1x files have been revised
-%%%			   to use the new font selection commands.
+%%%            Version 3.0 is a direct port of version 2.7
+%%%            to LaTeX2e.  The major revisions in ucthesis.cls
+%%%            are converting option processing to LaTeX2e 
+%%%            conventions.  The uct1x files have been revised
+%%%            to use the new font selection commands.
 %%%
-%%%			   Version 3.1 makes the following changes:   
-%%%				``U of C at CAMPUS'' is now ``U of C, CAMPUS''
-%%%				new degreesemester variable
-%%%				roman numeral frontmatter begins with page i,
-%%%					not iii
-%%%				``acknowledgments'' not ``acknowledgements''
+%%%            Some users have had problems with the 
+%%%            margins ending up too small on one side.
+%%%            This appears to be a DVI-to-PostScript
+%%%            driver or printer-adjustment problem.
+%%%            If you have such trouble, make small adjustments
+%%%            to the \textwidth and \oddsidemargin
+%%%            settings in your document preamble.
+%%%            
+%%%            Another problem some people have had is
+%%%            that you can't use \pagestyle{headings}
+%%%            and \markboth if you use \part.  The solution
+%%%            is to get the headerfooter style, which is
+%%%            nice and simple to use."
 %%%
-%%%			   Version 3.2 explicitly states the license as LPPL.
-%%%
-%%%			   Some users have had problems with the 
-%%%			   margins ending up too small on one side.
-%%%			   This appears to be a DVI-to-PostScript
-%%%			   driver or printer-adjustment problem.
-%%%			   If you have such trouble, make small adjustments
-%%%			   to the \textwidth and \oddsidemargin
-%%%			   settings in your document preamble.
-%%%			   
-%%%			   Another problem some people have had is
-%%%			   that you can't use \pagestyle{headings}
-%%%			   and \markboth if you use \part.  The solution
-%%%			   is to get the headerfooter style, which is
-%%%			   nice and simple to use."
+%%%	    Changes to version 4.0
+%%%           Modified significantly to conform with 2003 UCB requirements
+%%%           Changes include title page modifications, 
+%%%           a new approval page,
+%%%           the use of the "optionalfrontmatter" environment for clarity,
+%%%           and the proper handling of page numbers throughout.
+%%%           Added support for AGU's "sidebyside" latex command.
+%%%           Added COMMENT mode -- single space with extra wide margin
 %%%  }
 %%% ====================================================================
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{ucthesis}[2004/12/19 v3.2 University of California Thesis Class]
+\ProvidesClass{ucthesis}[2004/09/01 Md'A's modification of 1996/06/26 JTW's modification of 1994/10/31 v3.0 University of California Thesis Class]
 
 %    ****************************************
 %    *               OPTIONS                *
@@ -117,14 +117,20 @@
 % 11 point, onesided, final (ie not draft) mode (BBF 10/31/94)
 \newcommand\@ptsize{}
 \newcommand\@draftmark{}
+\newcommand\@nofigures{}
 \DeclareOption{10pt}{\renewcommand\@ptsize{0}}
 \DeclareOption{11pt}{\renewcommand\@ptsize{1}}
 \DeclareOption{12pt}{\renewcommand\@ptsize{2}}
 \DeclareOption{oneside}{\@twosidefalse \@mparswitchfalse}
 \DeclareOption{twoside}{\@twosidetrue  \@mparswitchtrue}
+% There are three different modes: final, draft, and comment 
+% They are all defined near the end of this document
 \DeclareOption{draft}{\renewcommand\@draftmark{1}}
 \DeclareOption{final}{\renewcommand\@draftmark{0}}
+\DeclareOption{comment}{\renewcommand\@draftmark{2}}
 \ExecuteOptions{11pt,oneside,final}
+\newcommand{\doublespace} {\setlength{\baselineskip}{\doubleskip}}
+\newcommand{\singlespace} {\setlength{\baselineskip}{\singleskip}}
 
 
 % CHOOSING THE TYPE SIZE:
@@ -178,15 +184,9 @@
 
 \def\smallssp{\def\baselinestretch{1.0}\large\small}
 \def\scriptsizessp{\def\baselinestretch{1.0}\large\scriptsize}
+\def\tinyssp{\def\baselinestretch{0.9}\large\tiny}
 
-%  draft option (this is where the draft option is actually implemented)
-%
-% \overfullrule = 0pt             % Default is don't mark overfull hboxes.
-\ifnum \@draftmark = 1
-\ssp				  % Single-spaces and
-\overfullrule 5pt		  % causes overfull hboxes to be marked.
-\fi
-
+\newcommand{\noindentmode}{\setlength{\parindent}{0.0in}}
 
 % PREPARING A FOREIGN LANGUAGE VERSION:
 %
@@ -242,8 +242,11 @@
 %                 ~~~~~~~~
 %
 % acknowledge environment:
-\def\acknowledgename{Acknowledgments}
+\def\acknowledgename{Acknowledgements}
 %                    ~~~~~~~~~~~~~~~~
+% vitae environment:
+\def\vitaename{Curriculum Vit\ae}
+%              ~~~~~~~~~~~~~~~~
 
 %    ****************************************
 %    *             FRONT MATTER             *
@@ -255,11 +258,17 @@
 % These macros are used to declare arguments needed for the
 % construction of the front matter.  
 
+% The month the degree will be officially conferred
+\def\degreemonth#1{\gdef\@degreemonth{#1}}
+
 % The year the degree will be officially conferred
 \def\degreeyear#1{\gdef\@degreeyear{#1}}
 
-% The semester (Fall or Spring) the degree will be officially conferred
-\def\degreesemester#1{\gdef\@degreesemester{#1}}
+% The month in which thesis defense took place
+\def\defensemonth#1{\gdef\@defensemonth{#1}}
+
+% The year the defense took place
+\def\defenseyear#1{\gdef\@defenseyear{#1}}
 
 % The full (unabbreviated) name of the degree
 \def\degree#1{\gdef\@degree{#1}}
@@ -269,6 +278,13 @@
 
 % The name of your committee's chair
 \def\chair#1{\gdef\@chair{#1}}
+
+% The names of your other committe members, one per line
+\def\othermemberA#1{\gdef\@othermemberA{#1}}
+
+\def\othermemberB#1{\gdef\@othermemberB{#1}}
+\def\othermemberC#1{\gdef\@othermemberC{#1}}
+\def\othermemberD#1{\gdef\@othermemberD{#1}}
 
 % The names of your other committe members, one per line
 \def\othermembers#1{\gdef\@othermembers{#1}}
@@ -316,48 +332,89 @@
     \let\footnotesize\small
     \let\footnoterule\relax
     \thispagestyle{empty}
-    \setcounter{page}{1}
+        \vfil\null
+    \begin{center}
 
-    \null\vfil
-  \begin{center}
-    \fmfont
-    {\bfseries {\@title} \par}
-    \bigskip \medskip
-    by \par
-    \bigskip \medskip
-    {\@author} \par
-\vspace{6ex}
-    {\@prevdegrees} \par
-\vspace{6ex}
-    A dissertation submitted in partial satisfaction of the \par
-\smallskip
-    requirements for the degree of \par
-\smallskip
-    {\@degree} \par
-    \bigskip \medskip
-    in \par
-    \bigskip \medskip
-    {\@field}\par
-    \bigskip \medskip
-    in the \par
-    \bigskip \medskip
-    GRADUATE DIVISION \par
-\smallskip
-    of the \par
-\smallskip
-    UNIVERSITY OF CALIFORNIA, {\expandafter\uppercase\expandafter{\@campus}}
-  \end{center}
-{
-\vspace{6ex}
-\begin{center}
-\fmsmallfont
-  Committee in charge: \\
-{\@chair}, Chair \\
-{\@othermembers} \\
-\vspace{4ex}
-  {\@degreesemester \ \@degreeyear}
+%\hfill
+
+\vspace{40pt}
+%{\bfseries {\@title} \par}
+{\@title} \par
+
+\vspace{12pt}
+
+by
+
+\vspace{12pt}
+
+ {\@author} 
+ 
+%\vspace{6pt}
+%
+%{\@prevdegrees} 
+
+\vspace{24pt}
+
+A dissertation submitted in partial satisfaction
+
+\vspace{12pt}
+
+of the requirements for the degree of
+
+\vspace{12pt}
+
+{\@degree} 
+
+in
+
+\vspace{12pt}
+
+{\@field}\
+
+\vspace{12pt}
+
+in the
+
+\vspace{12pt}
+
+Graduate Division
+
+\vspace{12pt}
+
+of the
+
+\vspace{12pt}
+
+University of California, Berkeley
+
+\vspace{24pt}
+
+Committee in charge:
+
+\vspace{12pt}
+
+{\@chair}, Chair\\
+
+{\@othermemberA}\\
+
+{\@othermemberB}\\
+
+\ifnum \@numberofmembers > 3
+{\@othermemberC}\\
+\fi
+\ifnum \@numberofmembers > 4
+{\@othermemberD}\\
+
+\fi
+\ifnum \@numberofmembers > 5
+{\@othermembers}
+\fi
+
+\vspace{24pt}
+
+ {\@degreemonth~\@degreeyear}
+
 \end{center}
-}
     \vfil\null
 \end{alwayssingle}
 
@@ -373,38 +430,55 @@
 % \campus macros have been defined.  It uses lots of tricky spacing
 % that is probably better handled with tabular environment code, but
 % I'm too lazy to fix it. (EVM, 9/19/94)
-
+%
+% Added title, changed to new, electronic wording and format, removed date. {RCS, 12/14/2009}
 \def\approvalpage{
 \begin{alwayssingle}
 \thispagestyle{empty}
+\setcounter{page}{2}
 \null\vfill
-\begin{center}
-\fmfont The dissertation of {\@author} is approved: \\
+%\begin{center}
+\noindent{}The dissertation of {\@author}, titled {\@title}, is approved: \\
+%\end{center}
 \vspace{.25in}
-\vspace{\@approvalspace}
-$\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small Chair%
-\hspace{3.15in} Date }}\:$ \\
-\vspace{\@approvalspace}
-$\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small ~\hspace{3.5in} Date }}\:$ \\
-\vspace{\@approvalspace}
-$\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small ~\hspace{3.5in} Date }}\:$ \\
-\vspace{\@approvalspace}
-\ifnum \@numberofmembers > 3
-$\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small ~\hspace{3.5in} Date }}\:$ \\
-\vspace{\@approvalspace}
+%\begin{center}
+\noindent{}\begin{tabular}{@{}rcp{1em}rc} 
+   \vspace{\@approvalspace}\\
+%   \hline
+%    \hspace*{.1in}Chair & Date \hspace*{.35in}\\
+   Chair & \underline{\hspace{.45\textwidth}} & & Date & \underline{\hspace{.2\textwidth}} \\
+   \vspace{\@approvalspace}\\
+%\hline
+%     & Date \hspace*{.35in}\\
+   & \underline{\hspace{.45\textwidth}} & & Date & \underline{\hspace{.2\textwidth}} \\
+   \vspace{\@approvalspace}\\
+%\hline
+%     & Date \hspace*{.35in}\\
+   & \underline{\hspace{.45\textwidth}} & & Date & \underline{\hspace{.2\textwidth}} \\
+\ifnum \@numberofmembers > 3   
+   \vspace{\@approvalspace}\\
+%\hline
+%     & Date \hspace*{.35in}\\
+   & \underline{\hspace{.45\textwidth}} & & Date & \underline{\hspace{.2\textwidth}} \\
 \fi
-\ifnum \@numberofmembers > 4
-$\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small ~\hspace{3.5in} Date }}\:$ \\
-\vspace{\@approvalspace}
+\ifnum \@numberofmembers > 4  
+   \vspace{\@approvalspace}\\
+%\hline
+%     & Date \hspace*{.35in}\\
+   & \underline{\hspace{.45\textwidth}} & & Date & \underline{\hspace{.2\textwidth}} \\
 \fi
-\ifnum \@numberofmembers > 5
-$\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small ~\hspace{3.5in} Date }}\:$ \\
-\vspace{\@approvalspace}
+\ifnum \@numberofmembers > 5   
+   \vspace{\@approvalspace}\\
+%\hline
+%     & Date \hspace*{.35in}\\
+   & \underline{\hspace{.45\textwidth}} & & Date & \underline{\hspace{.2\textwidth}} \\
 \fi
-{\fmfont University of California, {\@campus}} \\
-\vspace{-.25in}
-\vspace{\@approvalspace}
-{\fmfont \@degreesemester \ \@degreeyear}
+\end{tabular}
+%\end{center}
+   \vspace{\@approvalspace}
+\begin{center}
+University of California, {\@campus} %\\
+% {\fmfont \@defensemonth~\@defenseyear}
 \end{center}
 \vfill\null
 \end{alwayssingle}
@@ -420,12 +494,17 @@ $\:\overline{~~~~ \mbox{\rule{0in}{0.16in}\small ~\hspace{3.5in} Date }}\:$ \\
 \begin{alwayssingle}
 \thispagestyle{empty}
 \begin{center}
+\vspace*{\fill} 
 {\fmfont
-{\bfseries\@title}\par
+{\@title}\par
 \vspace{1in}
-Copyright \@degreeyear\par
+Copyright \copyright ~\@degreeyear\par
+\vspace{.1in}
 by\par
-\@author}
+\vspace{.1in}
+\@author
+}
+\vspace*{\fill} 
 \end{center}
 \end{alwayssingle}}
 
@@ -439,9 +518,10 @@ by\par
 
 \def\abstract{
 \begin{alwayssingle}
-\pagestyle{plain}
-\thispagestyle{plain}
+%\pagestyle{plain}
+%\thispagestyle{plain}
 \setcounter{page}{1}
+\pagenumbering{arabic}
 \begin{center}
 {\fmfont
 {\bfseries \abstractname}\par
@@ -454,9 +534,9 @@ by\par
 {\@degree} in \@field\par
 \vspace{.1in}
 University of California, {\@campus}\par
-\vspace{.1in}
-{\@chair}, Chair}
-\vspace{.1in}
+%\vspace{.1in}
+{\@chair}, Chair
+}\vspace{.1in}
 \end{center}}
 
 \def\endabstract{\par\vfil\null\end{alwayssingle}
@@ -472,13 +552,29 @@ University of California, {\@campus}\par
 Dissertation Committee Chair
 \end{minipage}}
 
+
+\newenvironment{optionalFrontMatter}
+{
+	\setcounter{page}{1}
+	\pagenumbering{roman}
+}
+
+
+\newenvironment{dissertationText}
+{
+	\setcounter{page}{1}
+	\pagenumbering{arabic}
+}
+
 % DEDICATION
 %
 % The dedication environment just makes sure the dedication gets its
 % own page.
 
 \newenvironment{dedication}
-{\begin{alwayssingle}}
+{
+	\begin{alwayssingle}
+}
 {\end{alwayssingle}}
 
 % ACKNOWLEDGEMENTS
@@ -486,24 +582,57 @@ Dissertation Committee Chair
 % The acknowledgements environment puts a large, bold, centered 
 % "Acknowledgements" label at the top of the page.
 
-\newenvironment{acknowledgements}
-{\begin{alwayssingle}
+\newenvironment{acknowledgements}{\begin{alwayssingle}
 \begin{center}
 {\large \bfseries \acknowledgename}
 \end{center}
-}
-{\end{alwayssingle}}
+}{\end{alwayssingle}}
+
+% VITAE
+%
+% The vitae environment puts a large, bold, centered 
+% "Curriculum Vitae" label at the top of the page.
+
+\newenvironment{vitae}{\begin{alwayssingle}
+\begin{center}
+{\large \bfseries \vitaename} \par
+{\large \@author}
+\end{center}
+\begin{list}{}{\leftmargin 0in \itemsep .2in}
+}{\end{list}
+\end{alwayssingle}}
+
+\newcommand{\vitaelabels}[1]{#1 \hfil}
+
+\newenvironment{vitaesection}[1]{
+\item {\bf #1}
+\begin{list}{}{\leftmargin 1.5in \labelwidth 1.3in \labelsep .2in
+\parsep 0in
+\let\makelabel\vitaelabels}}{\end{list}}
 
 % FRONTMATTER environment
 %
 % The FRONTMATTER environment makes sure that page numbering is set
-% correctly (roman, lower-case, starting at 3) for the front matter
-% that follows the abstract.  It also resets page-numbering for
+% correctly (roman, lower-case, starting at 2) for the front matter.
+% It also resets page-numbering for
 % the remainder of the dissertation (arabic, starting at 1).
 
-\newenvironment{frontmatter}
-{\setcounter{page}{1}\renewcommand{\thepage}{\roman{page}}}
-{\newpage\renewcommand{\thepage}{\arabic{page}}\setcounter{page}{1}}
+\newif\if@resttwoside
+
+\newenvironment{frontmatter}{%
+\@resttwosidefalse
+\if@twoside
+    \@resttwosidetrue
+    \@twosidefalse
+    \fi
+\setcounter{page}{2}
+\renewcommand{\thepage}{\roman{page}}
+\pagestyle{plain}}{\newpage
+\if@resttwoside
+    \@twosidetrue
+    \fi
+\renewcommand{\thepage}{\arabic{page}}\pagenumbering{arabic}\setcounter{page}{1}\pagestyle{headings}}
+%\pagenumbering{arabic} 
 
 
 %    ****************************************
@@ -653,6 +782,14 @@ Dissertation Committee Chair
 {\par\scriptsizessp\def\@halignto{to#1}\@tabular}
 \expandafter \let \csname endscriptsizetabular*\endcsname = \endtabular
 
+
+% \tinytabular and \tinytabular* are analogs of \smalltabular
+\def\tinytabular{\par\tinyssp\let\@halignto\@empty\@tabular}
+\def\endtinytabular{\endtabular}
+\expandafter \def\csname tinytabular*\endcsname #1%
+{\par\tinyssp\def\@halignto{to#1}\@tabular}
+\expandafter \let \csname endtinytabular*\endcsname = \endtabular
+
 % MINIPAGE
 %  \@minipagerestore is called upon entry to a minipage environment to
 %  set up things that are to be handled differently inside a minipage
@@ -682,13 +819,47 @@ Dissertation Committee Chair
 %                               Counter OLDCTR must already be defined.
 
 % Must redefine @startsection so that we always get indentation.
-\def\@startsection#1#2#3#4#5#6{\if@noskipsec \leavevmode \fi
-   \par \@tempskipa #4\relax
-   \@afterindenttrue
-   \ifdim \@tempskipa <\z@ \@tempskipa -\@tempskipa \relax\fi
-   \if@nobreak \everypar{}\else
-     \addpenalty{\@secpenalty}\addvspace{\@tempskipa}\fi \@ifstar
-     {\@ssect{#3}{#4}{#5}{#6}}{\@dblarg{\@sect{#1}{#2}{#3}{#4}{#5}{#6}}}}
+% disabled this. rcs 2009
+%\def\@startsection#1#2#3#4#5#6{\if@noskipsec \leavevmode \fi
+%   \par \@tempskipa #4\relax
+%   \@afterindenttrue
+%   \ifdim \@tempskipa <\z@ \@tempskipa -\@tempskipa \relax\fi
+%   \if@nobreak \everypar{}\else
+%     \addpenalty{\@secpenalty}\addvspace{\@tempskipa}\fi \@ifstar
+%     {\@ssect{#3}{#4}{#5}{#6}}{\@dblarg{\@sect{#1}{#2}{#3}{#4}{#5}{#6}}}}
+%
+%% Redefine @sect so that the abbreviated name is used only for %%
+%% the page heading, and the full name goes into the table of   %%
+%% contents -- JTW                                              %%
+
+\def\@sect#1#2#3#4#5#6[#7]#8{\ifnum #2>\c@secnumdepth
+     \let\@svsec\@empty\else
+     \refstepcounter{#1}%
+     \let\@@protect\protect
+     \def\protect{\noexpand\protect\noexpand}%
+     \edef\@svsec{\@seccntformat{#1}}%
+     \let\protect\@@protect\fi
+     \@tempskipa #5\relax
+      \ifdim \@tempskipa>\z@
+        \begingroup #6\relax
+          \@hangfrom{\hskip #3\relax\@svsec}%
+                    {\interlinepenalty \@M #8\par}%
+        \endgroup
+       \csname #1mark\endcsname{#7}\addcontentsline
+         {toc}{#1}{\ifnum #2>\c@secnumdepth \else
+                      \protect\numberline{\csname the#1\endcsname}\fi
+%%                     #7}\else
+                    #8}\else
+        \def\@svsechd{#6\hskip #3\relax  %% \relax added 2 May 90
+                   \@svsec #8\csname #1mark\endcsname
+                      {#7}\addcontentsline
+                           {toc}{#1}{\ifnum #2>\c@secnumdepth \else
+                           \protect\numberline{\csname the#1\endcsname}%
+                                     \fi
+%%                        #7}}\fi
+                       #8}}\fi
+     \@xsect{#5}}
+
 
 \newcounter {part}
 \newcounter {chapter}
@@ -712,6 +883,8 @@ Dissertation Committee Chair
 %
 
 \def\thepart          {\Roman{part}}
+%% A matter of personal taste--JTW %%
+%% \def\thechapter       {\arabic{chapter}}
 \def\thechapter       {\arabic{chapter}}
 \def\thesection       {\thechapter.\arabic{section}}
 \def\thesubsection    {\thesection.\arabic{subsection}}
@@ -724,11 +897,35 @@ Dissertation Committee Chair
 %
 \def\@chapapp{\chaptername}
 
+%% Kludge to get multiple appendices lettered rather than numbered %%
+%% Added by John T. Whelan 1996 June 21                            %%
+\newcommand{\appendixon}{
+    \def\thesection{\thechapter.\Alph{section}}
+    \setcounter{section}{0}
+}
+\newcommand{\appendixoff}{
+    \def\thesection{\thechapter.\arabic{section}}
+}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                        PART                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\def\part{\cleardoublepage   % Starts new page.
+% Function Added by Blaine based on the \clearchapterdoublepage
+\def\clearpartdoublepage{\clearpage
+    %\if@twoside % Commented out by Blaine
+        \ifodd\c@page
+        \else
+            \markboth{}{}
+                \hbox{}\newpage
+            \if@twocolumn\hbox{}\newpage
+            \fi
+        \fi
+    %\fi
+	}
+
+%Blaine: changed \cleardoublepage to \clearpartdoublepage
+\def\part{\clearpartdoublepage   % Starts new page.
    \thispagestyle{plain}%    % Page style of part page is 'plain'
   \if@twocolumn              % IF two-column style
      \onecolumn              %  THEN \onecolumn
@@ -763,7 +960,14 @@ Dissertation Committee Chair
 \def\@endpart{\vfil\newpage   % End page with 1fil glue.
    \if@twoside                % IF twoside printing
        \hbox{}%               %   THEN Produce totally blank page
-       \thispagestyle{empty}%
+       %\thispagestyle{empty}% BLAINE:  commented this out, this seems
+%to violate thesis instructions
+       \newpage
+   \else                      % Blaine: Also, IF oneside printing
+       \hbox{}%               %   THEN Produce totally blank page
+       %\thispagestyle{empty}  % Based on Doug's recommendation
+       % BLAINE:  commented this out, this seems
+%to violate thesis instructions
        \newpage
    \fi                        % FI
    \if@tempswa                % IF @tempswa = true
@@ -824,28 +1028,28 @@ Dissertation Committee Chair
 \def\@pnumwidth{1.55em}
 \def\@tocrmarg {2.55em}
 \def\@dotsep{4.5}
-\setcounter{tocdepth}{2}
+\setcounter{tocdepth}{1}
 
 
 % TABLEOFCONTENTS
 %  In ucthesis style, \tableofcontents, \listoffigures, etc. are always
 %  set in single-column style.  @restonecol
 
-\def\tableofcontents{\@restonecolfalse
+\def\tableofcontents{
+\@restonecolfalse
   \if@twocolumn\@restonecoltrue\onecolumn\fi
   \chapter*{\contentsname
         \@mkboth{\uppercase{\contentsname}}{\uppercase{\contentsname}}}%
   {\ssp\@starttoc{toc}}\if@restonecol\twocolumn\fi}
-
 \def\l@part#1#2{\addpenalty{-\@highpenalty}%
    \addvspace{2.25em plus\p@}% space above part line
    \begingroup
-   \@tempdima 3em         % width of box holding part number, used by
+   \@tempdima 1.5em         % width of box holding part number, used by
      \parindent \z@ \rightskip \@pnumwidth             %% \numberline
      \parfillskip -\@pnumwidth
      {\large \bfseries          % set line in \large boldface
      \leavevmode          % TeX command to enter horizontal mode.
-     #1\hfil \hbox to\@pnumwidth{\hss #2}}\par
+     Part #1\hfil \hbox to\@pnumwidth{\hss #2}}\par
      \nobreak             % Never break after part entry
     \global\@nobreaktrue                        %% Added 24 May 89 as
     \everypar{\global\@nobreakfalse\everypar{}}%% suggested by
@@ -903,10 +1107,8 @@ Dissertation Committee Chair
    {\ssp\@starttoc{lot}}\if@restonecol
   \twocolumn\fi}
 
-
 \let\l@table\l@figure
-
-
+%\let\l@figure\l@table
 
 %    ****************************************
 %    *             BIBLIOGRAPHY             *
@@ -929,16 +1131,17 @@ Dissertation Committee Chair
 %%               as it says in the comment in latex.tex
 %% RmS 92/01/14: Set \p@enumiv to {} and \theenumiv to \arabic{enumiv}
 %%               to get correct references
-\def\thebibliography#1{\chapter*{\bibname\@mkboth
-  {\uppercase{\bibname}}{\uppercase{\bibname}}}
-  \addcontentsline{toc}{chapter}{\bibname}
+\def\newblock{\hskip .11em plus.33em minus.07em}
+
+\def\thebibliography#1{\chapter*{\bibname\@mkboth{%
+\uppercase{\bibname}}{\uppercase{\bibname}}}
+  %\addcontentsline{toc}{chapter}{\bibname}
   \list{\@biblabel{\arabic{enumiv}}}{\settowidth\labelwidth{\@biblabel{#1}}%
     \leftmargin\labelwidth
     \advance\leftmargin\labelsep
     \usecounter{enumiv}%
     \let\p@enumiv\@empty
     \def\theenumiv{\arabic{enumiv}}}%
-    \def\newblock{\hskip .11em plus.33em minus.07em}%
     \sloppy\clubpenalty4000\widowpenalty4000
     \sfcode`\.=\@m}
 
@@ -949,11 +1152,11 @@ Dissertation Committee Chair
   \def\@noitemerr{\@warning{Empty `thebibliography' environment}}%
   \endlist}
 
-
 % \def\@biblabel#1{[#1]\hfill}  % Produces the label for a \bibitem[...]
                                 % command.
 % \def\@cite#1{[#1]}            % Produces the output of the \cite
                                 % command.
+
 
 
 
@@ -1062,6 +1265,7 @@ Dissertation Committee Chair
 \def\dbltopfraction{.7}
 \def\dblfloatpagefraction{.5}
 
+%%%%% FORMATTING OF FIGURE CAPTIONS
 % \@makecaption{NUMBER}{TEXT} : Macro to make a figure or table caption.
 %      NUMBER : Figure or table number--e.g., 'Figure 3.2'
 %      TEXT   : The caption text.
@@ -1073,19 +1277,38 @@ Dissertation Committee Chair
 % 15 Nov 93: further changes to support captions BEFORE the figure
 % or table.  Changes suggested by Donald Arseneau, installed by Ethan
 % Munson.  Detailed reasons are:
-%	The \unhbox allows \vadjust material (\vspace) to get out;
-%	the \vbox to\topskip{} is for captions at the top of top-floats;
-%	the \ifdim is for captions above the figure or table;
-%	the strut is for tables below the caption.
+%   The \unhbox allows \vadjust material (\vspace) to get out;
+%   the \vbox to\topskip{} is for captions at the top of top-floats;
+%   the \ifdim is for captions above the figure or table;
+%   the strut is for tables below the caption.
 
-\long\def\@makecaption#1#2{% Add space only if something is ...
-   \par\ifdim\prevdepth>-\p@ \vskip 10\p@\relax \fi % above the caption
-   \setbox\@tempboxa\hbox{\vbox to\topskip{}#1: #2\unskip\strut}% 
-   \ifdim \wd\@tempboxa >\hsize      % IF longer than one line:
-       {\ssp#1: #2\unskip\strut\par} %   THEN set as ordinary paragraph.
-     \else                           %   ELSE  center.
-       \hbox to\hsize{\hfil\unhbox\@tempboxa\hfil}%
-   \fi}
+%% The following makecaption macro created by Ashish Singhal, 10/06/2000
+%% Needs to use package tabularx
+\newlength\abovecaptionskip
+\newlength\belowcaptionskip
+\setlength\abovecaptionskip{10\p@}
+\setlength\belowcaptionskip{0\p@}
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{{#1}.\hspace{6pt}#2}%
+  \ifdim \wd\@tempboxa >\hsize
+	\ifnum \@draftmark = 1
+	%  Draft mode
+      % Single Space Captions and Indent them slightly on the page
+      \hspace{\figurecaptionindent}\parbox{\figurecaptionwidth}{\ssp {#1}. {#2}}
+      \else
+      % Single Space Captions with full width of the main text.
+      		\ssp {#1}. {#2}
+      \fi
+      % OR Comment out the above if statement lines to get:
+      % Double Space Captions at fill width
+      %      {#1}. {#2}		%Double Space Captions
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+%% ------------------------------------------
 
 % To define a float of type TYPE (e.g., TYPE = figure), the document
 % style must define the following.
@@ -1131,6 +1354,27 @@ Dissertation Committee Chair
 \@namedef{figure*}{\@dblfloat{figure}}
 \@namedef{endfigure*}{\end@dblfloat}
 
+%
+% SIDEBYSIDE
+% sidebyside plots two source files next to one-another but puts a single caption below them spanning the whole caption width.
+
+\long\def\sidebyside#1#2{%
+\hbox to\hsize{\let\caption\savecaption
+%\ifcaptypefig\def\@captype{figure}\else\def\@captype{table}
+%\footnotesize
+%\fi%
+\vtop{\hsize=.5\hsize%
+\advance\hsize by -.5\columnsep
+\parindent=0pt
+\centering
+ 
+#1}\hskip\columnsep\vtop{\hsize=.5\hsize%
+\advance\hsize by -.5\columnsep
+\parindent=0pt\centering
+#2
+
+}}}
+
 % TABLE
 %
 \newcounter{table}[chapter]
@@ -1144,6 +1388,17 @@ Dissertation Committee Chair
 \let\endtable\end@float
 \@namedef{table*}{\@dblfloat{table}}
 \@namedef{endtable*}{\end@dblfloat}
+
+% TABLELINE - an AGU command that we want to use in our thesis.
+% Md'A, 30 Jun 2004
+\newcommand\tableline{\hline}
+
+%% Table Footnotes
+\gdef\tablenotefont{\ifjdraft\large\else\footnotesize\fi\rm}
+
+\def\tablenotemark#1{\rlap{$^{\rm #1}$}}
+
+\def\tablenotetext#1#2{\footnotetext{#2}}
 
 
 %    ****************************************
@@ -1204,22 +1459,24 @@ Dissertation Committee Chair
 % unnecessary |\hbox{}| commands.
 %
 % 94/11/3 BBF: Eliminated two letter font selection commands \rm and \sl
-% in favor of \rmfamily and \slshape.
+% in favor of \rmfamily and \s77lshape.
 %
 
 \if@twoside         % If two-sided printing.
 \def\ps@headings{\let\@mkboth\markboth
- \def\@oddfoot{}\def\@evenfoot{}%       No feet.
- \def\@evenhead{\rmfamily \thepage\hfil \slshape \leftmark}%    Left heading.
- \def\@oddhead{{\slshape \rightmark}\hfil \rmfamily\thepage}% Right heading.
+ \def\@oddfoot{\rm\hfil\thepage\hfil}
+ \def\@evenfoot{\rm\hfil\thepage\hfil}
+ \def\@evenhead{}%    Left heading.
+ \def\@oddhead{}% Right heading.
  \def\chaptermark##1{\markboth {\uppercase{\ifnum \c@secnumdepth >\m@ne
       \@chapapp\ \thechapter. \ \fi ##1}}{}}%
  \def\sectionmark##1{\markright {\uppercase{\ifnum \c@secnumdepth >\z@
    \thesection. \ \fi ##1}}}}
 \else               % If one-sided printing.
 \def\ps@headings{\let\@mkboth\markboth
-\def\@oddfoot{}\def\@evenfoot{}%     No feet.
-\def\@oddhead{{\slshape \rightmark}\hfil \rmfamily\thepage}% Heading.
+\def\@oddfoot{\rm\hfil\thepage\hfil}
+\def\@evenfoot{\rm\hfil\thepage\hfil}
+\def\@oddhead{}% Heading.
 \def\chaptermark##1{\markright {\uppercase{\ifnum \c@secnumdepth >\m@ne
   \@chapapp\ \thechapter. \ \fi ##1}}}}
 \fi
@@ -1235,9 +1492,11 @@ Dissertation Committee Chair
 % Definition of 'plain' page style.
 %
 \def\ps@plain{\let\@mkboth\markboth
-\def\@oddfoot{}\def\@evenfoot{}				% no feet
-\def\@oddhead{\hbox{}\hfil\rmfamily\thepage}		% heading (right)
-\def\@evenhead{\rmfamily\thepage\hfil\hbox{}}}		% heading (left)
+\def\@oddfoot{\rm\hfil\thepage\hfil}
+\def\@evenfoot{\rm\hfil\thepage\hfil}           % page numbers
+                            % in feet
+\def\@oddhead{}                     % heading (right)
+\def\@evenhead{}}                   % heading (left)
 
 
 
@@ -1262,6 +1521,14 @@ Dissertation Committee Chair
 
 \def\theequation{\thechapter.\arabic{equation}}
 
+
+%% ------------------------
+%% I like section-based equation numbers -- JTW 1996  %% Changed to Chapter.EquationNumber format by Ashish 10/06/2000
+
+%% \def\theequation{\thechapter.\arabic{equation}}
+%% \@addtoreset{equation}{section}
+%% ------------------------
+
 % \jot = 3pt      % Extra space added between lines of an eqnarray
                   % environment
 
@@ -1278,7 +1545,7 @@ Dissertation Committee Chair
 %
 % Default initializations
 
-\ps@plain                   % 'plain' page style
+\ps@headings                   % 'headings' page style
 \pagenumbering{arabic}      % Arabic page numbers
 \if@twoside\else\raggedbottom\fi % Ragged bottom unless twoside
                                  % option.
@@ -1286,6 +1553,118 @@ Dissertation Committee Chair
  \@@input twocolum.sty\relax
 \else
  \onecolumn                 % Single-column.
+\fi
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Matt's Declarations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% \newif\ifpdf
+% \ifx\pdfoutput\undefined
+%     \pdffalse % we are not running PDFLaTeX
+% \else
+% \pdfoutput=1 % we are running PDFLaTeX
+% \pdftrue \fi
+% \usepackage{url}
+% \ifpdf
+
+%% BLAINE'S CHANGE: KEEPS PDFLaTeX making DVI %%
+%% FUCK THIS IFPDF SHIT
+%\newif\ifpdf
+%\ifx\pdfoutput\undefined
+%    \pdffalse % we are not running PDFLaTeX
+%\else
+%\pdfoutput=0 % we are running PDFLaTeX
+%\pdffalse \fi
+\usepackage{url}
+
+% BLAINE: I DON'T GIVE a SHIT ABOUT THIS CASE
+%%\ifpdf
+
+%%% To easily plot in draft mode WITH figures on, add "final" to the list of arguments of graphicx
+%%%  In other words, change
+%%%           \usepackage[pdftex]{graphicx} to    
+%%%           \usepackage[pdftex, final]{graphicx}
+%%\usepackage[pdftex, final]{graphicx}
+
+
+% PDFTeX will create a PDF file with Bookmarks to make easier browsing
+% of your thesis. It will also place links so that you can click on
+% your references and Acrobat will take you to the appropriate page
+% in your document.
+% Note: You can change the color of the links here, if you want them to show up
+% better in the PDF file.  If you set colorlinks=false, the PDF file will have
+% colored boxes around all the links to make them easier to identify, but
+% these boxes will not print. However, I found this distracting and decided
+% to make the link color black. Only people who know about the links or
+% discover them by clicking accidentally will discover what is linked, but it's a nice
+% feature for those who know...
+
+%RCS 11-17-2009; 'draft' mode matches the new electronic thesis format.
+% added draft=false here so that setting the template to draft mode does
+% not disable hyperref.
+%%\usepackage[pdftex,plainpages=false,breaklinks=true,colorlinks=true,urlcolor=black,citecolor=black,%
+%%                                      linkcolor=black,bookmarks=true,bookmarksopen=true,%
+%%                                      bookmarksopenlevel=3,pdfstartview=FitV,draft=false]{hyperref}
+%%    %Options with pdfstartview are FitV, FitB and FitH
+%%    \pdfcompresslevel=1
+%%\else
+\usepackage[final]{graphicx}
+\usepackage[plainpages=false,breaklinks=true,colorlinks=true,%
+            urlcolor=black,citecolor=black,%
+            linkcolor=black,bookmarks=true,bookmarksopen=true,%
+            bookmarksopenlevel=3,pdfstartview=FitV,draft=false]{hyperref}
+%%\fi
+
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage[letterpaper]{geometry}
+\usepackage{rotating}
+\usepackage{natbib}
+
+\setlength{\parindent}{0.25in} \setlength{\parskip}{6pt}
+
+%%%%%
+% Better than \sloppy
+% This will reduce hyphenation but still maintain justified text.
+% http://www.educat.hu-berlin.de/~voss/lyx/language/hyphen.phtml#sloppy
+ \tolerance 1414
+  \hbadness 1414
+  \emergencystretch 1.5em
+  \hfuzz 0.3pt
+  \widowpenalty=10000
+  \vfuzz \hfuzz
+  \raggedbottom
+
+
+% Single space
+% DRAFT MODE or
+% COMMENT MODE
+\ifnum \@draftmark > 0
+\ssp                  % Single-spaces and
+\overfullrule 5pt         % causes overfull hboxes to be marked.
+\fi
+
+%\ssp
+
+%% SET MARGINS
+\ifnum \@draftmark = 0
+%  Final model
+\geometry{verbose,nohead,tmargin=1in,bmargin=1in,lmargin=1.5in,rmargin=1in}
+\fi
+\ifnum \@draftmark = 1
+%  Draft model
+\geometry{verbose,nohead,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+      \newlength\figurecaptionwidth
+      \newlength\figurecaptionindent
+      \setlength\figurecaptionindent{0.25in}
+      \setlength\figurecaptionwidth{\textwidth}
+      \addtolength{\figurecaptionwidth}{-2\figurecaptionindent}
+\fi
+\ifnum \@draftmark = 2
+% Extra wide right margin in comment mode
+\geometry{verbose,nohead,tmargin=0.5in,bmargin=0.5in,lmargin=0.5in,rmargin=3.25in}
 \fi
 
 \endinput

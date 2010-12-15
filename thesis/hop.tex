@@ -1089,25 +1089,23 @@ pipelines or even DAGs of such jobs that we plan to investigate in future.
 \begin{figure}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-H1 {\bf scheduledReduceTasks}(JobId, count$<$TaskId$>$) :- \\
-\datalogspace {\bf task}(JobId, TaskId, Type, \_, \_, StartTime, ...), \\
-\datalogspace $Type\ ==\ "reduce"$, \\
-\datalogspace $StartTime\ >\ 0$; \\
+\begin{lstlisting}
+h1 unscheduledReduceTasks(JobId, a_count<TaskId>) :-
+   job(JobId, JType, ...),
+   task(JobId, TaskId, TType, Status, ...),
+   JType == JobType.ONLINE, TType == TaskType.REDUCE,
+   Status.state() != TaskState.RUNNING;
 
-H2 {\bf canScheduleMaps}(JobId) :- \\
-\datalogspace {\bf job}(JobId, ..., JobType, ReduceTaskCount), \\
-\datalogspace {\bf scheduledReduceTasks}(JobId, Count), \\
-\datalogspace $JobType == "online"\ ||\ JobType == "continuous"$, \\
-\datalogspace $ReduceTaskCount == Count$; \\
+h2 canScheduleMaps(JobId) :-
+   unscheduledReduceTasks(JobId, Count),
+   Count == 0;
 
-H3 {\bf canScheduleMaps}(JobId) :- \\
-\datalogspace {\bf job}(JobId, ..., JobType, ReduceTaskCount), \\
-\datalogspace $JobType != "online"$, $JobType != "continuous"$; \\
-
-\end{boxedminipage}
-\caption{\label{ch:hop:fig:schedmaps} Counts the number of reduce tasks scheduled ($StartTime > 0$) and 
-indicates when a job is able to schedule map tasks.}
+h3 canScheduleMaps(JobId) :-
+   job(JobId, Type, ...),
+   Type != JobType.ONLINE;
+\end{lstlisting}
+\caption{\label{ch:hop:fig:schedmaps} Counts the number of reduce tasks that are not running and 
+only schedules map tasks from an online job when this count is zero.}
 \end{figure}
 
 
@@ -1126,15 +1124,13 @@ Figure~\ref{ch:hop:fig:schedmaps} shows three rules that together determine
 when a job is allowed to schedule map tasks.  A separate admission controller
 rule ensures that the number of reduce tasks for an online aggregation or
 continuous job fits within the current cluster-wide slot capacity.  For each
-job, rule H1 counts the number of reduce tasks currently scheduled.  The job
-relation includes the number of reduce tasks and, as part of the HOP port, the
-job type.  If the job type is either "online" or "continuous" then rule H2 will
-indicate that map tasks can be scheduled when the scheduled reduce task count
-is equal to the number of reduce tasks in the job.  Rule H3 applies to all
-other job types, and it simply asserts that map tasks can be scheduled for the
-corresponding job.  The \ol{canScheduleMaps} predicate is added to rules that
-determine the scheduling of map tasks (e.g., rule S4 in
-Figure~\ref{ch:boom:fig:schedule}).
+job, rule \ol{h1} counts the number of reduce tasks not currently running.  If
+the job type is ``online'' then rule \ol{h2} will add the fact that map tasks
+can be scheduled when the number of non-running map tasks is equal to zero.
+Rule \ol{h3} applies to the map tasks in all other job types, and it simply
+removes any scheduling constraints on these map tasks.  The
+\ol{canScheduleMaps} predicate is added to rules that determine the scheduling
+of map tasks (e.g., rule \ol{s4} in Figure~\ref{ch:boom:fig:schedule}).
 
 \section{Real-time monitoring with \JOL}
 \label{ch:hop:sec:jolmonitor}
@@ -1205,68 +1201,75 @@ alert                   & Outlier task alerts   & \underline{TaskId}, \underline
 \label{ch:hop:tbl:monitorCatalog}
 \end{table}
 
-The output of the monitoring job is sent directly to the \JOL instance running on the \JT. There, it is translated into \JOL
-tuples and inserted into monitoring relations defined in \JOL. Table~\ref{ch:hop:tbl:monitorCatalog} defines these monitoring 
-relations. The \ol{machineStat} and \ol{processStat} tables directly hold the output of the monitoring jobs. The \ol{jobStat} 
-and \ol{taskStat} tables maintain statistics for jobs and tasks respectively, the values for which are derived by rules within the scheduler.  
-The \ol{alert} table contains outlier task measurements, which depending on the severity can result in corrective action e.g., execute
-a speculative task (Section~\ref{ch:hop:sec:speculation}). 
+The output of the monitoring job is sent directly to the \JOL instance running
+on the \JT.  There, it is translated into \JOL tuples and inserted into
+monitoring relations defined in \JOL.  Table~\ref{ch:hop:tbl:monitorCatalog}
+defines these monitoring relations.  The \ol{machineStat} and \ol{processStat}
+tables directly hold the output of the monitoring jobs.  The \ol{jobStat} and
+\ol{taskStat} tables maintain statistics for jobs and tasks respectively, the
+values for which are derived by rules within the scheduler.  The \ol{alert}
+table contains outlier task measurements, which depending on the severity can
+result in corrective action e.g., execute a speculative task
+(Section~\ref{ch:hop:sec:speculation}).
 
 \begin{figure}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-// Correlate process measurements to the actual map/reduce task \\
-TS1 {\bf taskStat}(TaskId.getJobID(), TaskId, Measure, TaskType, TimeStamp, Value) :- \\
-\datalogspace {\bf taskAttempt}(TaskId, ... , TaskState.RUNNING, Pid), \\
-\datalogspace {\bf processStat}(Host, Pid, Measure, TimeStamp, Value), \\
-\datalogspace TaskType := TaskId.isMap() ? "map" : "reduce"; \\
+\begin{lstlisting}
+/* Correlate process measurements to the actual map/reduce task */
+ts1 taskStat(TaskId.getJobID(), TaskId, Measure, Type, TimeStamp, Value) :-
+    taskAttempt(TaskId, ... , TaskState.RUNNING, Pid),
+    processStat(Host, Pid, Measure, TimeStamp, Value),
+    Type := TaskId.isMap() ? TaskType.MAP : TaskType.REDUCE;
         
-// Compute the estimated completion time based on the task rate of progress \\
-TS2 {\bf taskStat}(JobId, TaskId, COMP\_EST, TaskType, TimeStamp, CompEst) :- \\
-\datalogspace {\bf taskAttempt}(TaskId, ... , Progress, ProgressRate, TaskState.RUNNING, Pid), \\
-\datalogspace JobId := TaskId.getJobID(), \\
-\datalogspace Type := TaskId.isMap() ? "map" : "reduce", \\
-\datalogspace CompEst := ProgressRate == 0 ? infinity : (1f - Progress) / ProgressRate, \\
-\datalogspace TimeStamp := java.lang.System.currentTimeMillis(); \\
-\end{boxedminipage}
+/* Compute the estimated completion time based on the task rate of progress */
+ts2 taskStat(JobId, TaskId, COMP_EST, TaskType, TimeStamp, CompEst) :-
+    taskAttempt(TaskId, ... , Progress, ProgressRate, TaskState.RUNNING, Pid),
+    JobId := TaskId.getJobID(),
+    Type := TaskId.isMap() ? TaskType.MAP : TaskType.REDUCE,
+    CompEst := ProgressRate == 0 ? infinity : (1f - Progress) / ProgressRate,
+    TimeStamp := java.lang.System.currentTimeMillis();
+\end{lstlisting}
 \caption{\label{ch:hop:fig:taskstat} Rules for maintaining the taskStat table.}
 \end{figure}
 
-Figure~\ref{ch:hop:fig:taskstat} contains two rules that together maintain the \ol{taskStat} table. 
-The \ol{taskAttempt} table was extended to include the task process identifier ($Pid$), which is supplied
-by the \TT executing the task attempt. The process identifier allows us to correlate a task in the \ol{taskAttempt} 
-table with process level measurements in the \ol{processStat} table, as shown by rule TS1. 
-A task's estimated completion time is based on its current progress and progress rate. The progress rate
-is based on the change in progress between task status updates performed during \TT heartbeats. 
-Using the current progress and progress rate, rule TS2 computes a rough estimate on the remaining time
-it will take for the task to complete, which we have denoted as the COMP\_EST measurement in the 
-\ol{taskStat} table. 
+Figure~\ref{ch:hop:fig:taskstat} contains two rules that together maintain the
+\ol{taskStat} table.  The \ol{taskAttempt} table was extended to include the
+task process identifier ($Pid$), which is supplied by the \TT executing the
+task attempt.  The process identifier allows us to correlate a task in the
+\ol{taskAttempt} table with process level measurements in the \ol{processStat}
+table, as shown by rule TS1.  A task's estimated completion time is based on
+its current progress and progress rate.  The progress rate is based on the
+change in progress between task status updates performed during \TT heartbeats.
+Using the current progress and progress rate, rule TS2 computes a rough
+estimate on the remaining time it will take for the task to complete, which we
+have denoted as the COMP\_EST measurement in the \ol{taskStat} table.
 
 \begin{figure}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-JS1 {\bf taskStats}(JobId, TaskType, Measure, list$<$Value$>$) :- \\
-\datalogspace {\bf taskStat}(JobId, TaskId, Measure, TaskType, TimeStamp, Value); \\
+\begin{lstlisting}
+js1 taskStatList(JobId, TaskType, Measure, a_list<Value>) :-
+    taskStat(JobId, TaskId, Measure, TaskType, TimeStamp, Value);
 
         
-JS2 {\bf jobStat}(JobId, TaskType, Measure, SC) :- \\
-\datalogspace {\bf taskStats}(JobId, TaskType, Measure, Values), \\
-\datalogspace SC := new StatContainer(Values); \\ 
-        
-\end{boxedminipage}
-\caption{\label{ch:hop:fig:jobstat} Rules for maintaining the jobStat relation.}
+js2 jobStat(JobId, TaskType, Measure, Statistics) :-
+    taskStatList(JobId, TaskType, Measure, TaskStatList),
+    Statistics := new StatContainer(TaskStatList);
+\end{lstlisting}
+\caption{\label{ch:hop:fig:jobstat} Rules for maintaining the \ol{jobStat} relation.}
 \end{figure}
 
-Figure~\ref{ch:hop:fig:jobstat} contains the rules for maintaining the \ol{jobStat} table. 
-The \ol{taskStats} table, maintained by rule JS1, provides a list of measurement values 
-for each job identifier, task type, and measurement name. The \ol{jobStat} table groups
-measurement values belonging to the same job, task type, and measurement name. 
-A special Java object called {\em StatContainer} is used to store each group of measurements. 
-The {\em StatContainer} class defines methods for computing various metrics (e.g., mean, median, stddev, etc.)
-from its list of measurement values. Rule JS2 maintains the jobStat table by initializing a {\em StatContainer} object 
-for each group of aggregated measurement values.
+Figure~\ref{ch:hop:fig:jobstat} contains the rules for maintaining the
+\ol{jobStat} table.  The \ol{taskStatList} table, maintained by rule \ol{js1},
+provides a list of measurement values for each job identifier, task type, and
+measurement name.  The \ol{jobStat} table groups measurement values belonging
+to the same job, task type, and measurement name.  A special Java object called
+{\em StatContainer} is used to store each group of measurements.  The {\em
+StatContainer} class defines methods for computing various metrics (e.g., mean,
+median, stddev, etc.) from its list of measurement values.  Rule \ol{js2} maintains
+the \ol{jobStat} table by initializing a {\em StatContainer} object for each group
+of aggregated measurement values.
 
 
 \subsection{Task alerts} 
@@ -1274,25 +1277,26 @@ for each group of aggregated measurement values.
 \begin{figure}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-{\bf alert} (TaskId, TimeStamp, Measure, Desc, Severity) :- \\
-\datalogspace {\bf taskStat}(JobId, TaskId, Measure, TaskType, TimeStamp, TaskStat), \\
-\datalogspace {\bf jobStat}(JobId, TaskType, Measure, JobStat),  \\
-\datalogspace JobStat.outlier(Measure, TaskStat) == true, \\
-\datalogspace Desc := JobStat.description(Measure, TaskStat), \\
-\datalogspace Severity := JobStat.severity(Measure, TaskStat), \\
-\datalogspace TimeStamp := java.lang.System.currentTimeMillis(); \\
-\end{boxedminipage}
+\begin{lstlisting}
+a1 alert (TaskId, TimeStamp, Measure, Desc, Severity) :-
+   taskStat(JobId, TaskId, Measure, TaskType, TimeStamp, TaskStat),
+   jobStat(JobId, TaskType, Measure, JobStat),
+   JobStat.outlier(Measure, TaskStat) == true,
+   Desc := JobStat.description(Measure, TaskStat),
+   Severity := JobStat.severity(Measure, TaskStat),
+   TimeStamp := java.lang.System.currentTimeMillis();
+\end{lstlisting}
 \caption{\label{ch:hop:fig:outlier} Rule for detecting outlier tasks. }
 \end{figure}
 
-Figure~\ref{ch:hop:fig:outlier} contains a single rule that detects outlier task by correlating the
-task measurement with information in the jobStat table. We compare the measurements from
-tasks that belong to the same category -- job and task type (map or reduce). 
-The $JobStat$ variable references a {\em StatContainer} object for a given category, and it
-is used to determine if a task belonging to that category is an outlier based on some 
-metric e.g., k deviations from the mean. The $JobStat$ variable is also used to provide a 
-description and severity of outlier measurement. 
+Figure~\ref{ch:hop:fig:outlier} contains a single rule that detects outlier
+task by correlating the task measurement with information in the jobStat table.
+We compare the measurements from tasks that belong to the same category -- job
+and task type (map or reduce).  The $JobStat$ variable references a {\em
+StatContainer} object for a given category, and it is used to determine if a
+task belonging to that category is an outlier based on some metric e.g., k
+deviations from the mean.  The $JobStat$ variable is also used to provide a
+description and severity of outlier measurement.
 
 \subsection{Alert based speculation policy} 
 \label{ch:hop:sec:speculation}
@@ -1300,45 +1304,50 @@ description and severity of outlier measurement.
 \begin{figure}
 \ssp
 \centering
-\begin{boxedminipage}{\linewidth}
-\begin{enumerate} \itemsep0pt
+\begin{lstlisting}
 
-\item {\bf schedule}(Tracker, list$<$TaskId, MapSlots$>$) :-
-\item \label{tsp:heartbeat} \datalogspace {\bf heartbeat}(Tracker, TrackerStatus, MapSlots, \_),  \\
-					\datalogspace $MapSlots > 0$, \\
+s1 schedule(Tracker, list<TaskId, MapSlots>) :-
+   heartbeat(Tracker, TrackerStatus, MapSlots, _),
+   MapSlots > 0,
 
-\item \label{tsp:alert} \datalogspace {\bf alert}(TaskId, AlertTime, Measure, Desc, Severity), \\
-				 \datalogspace $Severity == "Critical"$,  /* The alert is critical */  \\
+   alert(TaskId, AlertTime, Measure, Desc, Severity),
+   Severity.contains("critical"),  /* The alert is critical */
 
-\item  \label{tsp:recent} \datalogspace /* Ensure the alert is not too old (alert time $<$ 10 seconds ago). */  \\
-					\datalogspace $(java.lang.System.currentTimeMillis() - AlertTime) < 10000$,  \\
+   /* Ensure the alert is not too old (alert time < 10 seconds ago). */
+   (java.lang.System.currentTimeMillis() - AlertTime) < 10000,
 
-\item \label{tsp:up2date} \datalogspace /* Ensure we're looking at the most recent alert for this measure.*/ \\
-				       \datalogspace {\bf alert}(TaskId, AT2, Measure, ...), $AT2 <= AlertTime$, \\
+   /* Ensure we're looking at the most recent alert for this measure.*/
+   alert(TaskId, AT2, Measure, ...), AT2 <= AlertTime,
 
-\item \label{tsp:compest}  \datalogspace  /* The task's estimated time to completion is very high */ \\
-				         \datalogspace {\bf taskStat}(JobId, TaskId, COMP\_EST, TaskType, TimeStamp, TaskStat), \\
-					\datalogspace {\bf jobStat}(JobId, TaskType, COMP\_EST, JobStat),  \\
-					\datalogspace $TaskStat < JobStat.percentile(0.25)$,  \\
+   /* The task's estimated time to completion is very high */
+   taskStat(JobId, TaskId, COMP_EST, TaskType, TimeStamp, TaskStat),
+   jobStat}(JobId, TaskType, COMP_EST, JobStat),
+   TaskStat < JobStat.percentile(0.25),
 
-\item \label{tsp:backup} \datalogspace /* Schedule backup if host has split or task has not splits (e.g., reduce) \\
-          \datalogspace  \xspace and no backup task is yet scheduled */ \\
-	\datalogspace {\bf task}(JobId, TaskId, ..., Splits, ...), TaskId.isMap(), \\
-	\datalogspace {\bf taskAttemptCount}(TaskId, Count), $Count == 1$, \\
-	\datalogspace $InputSplits.contains(TrackerStatus.getHost())$; \\
-\end{enumerate}
-\end{boxedminipage}
-\caption{\label{ch:hop:fig:speculation} Rule for map task speculation based on alert system data. Reduce task 
+   /* Schedule backup if host has split or task has not splits (e.g., reduce) 
+      and no backup task is yet scheduled */
+   task(JobId, TaskId, ..., Splits, ...), TaskId.isMap(),
+   taskAttemptCount(TaskId, Count), Count == 1,
+   InputSplits.contains(TrackerStatus.getHost());
+\end{lstlisting}
+\caption{\label{ch:hop:fig:speculation} 
+Rule for map task speculation based on alert system data. Reduce task 
 speculation rule is similar and therefore omitted. }
 \end{figure}    
    
-Figure~\ref{ch:hop:fig:speculation} contains a rule that schedules map tasks with any "Critical" alerts
-that occurred recently. The rule is evaluated whenever a {\emph heartbeat} exchange occurs between the \JT
-and some \TT. The \ol{heartbeat} predicate includes the name of the \TT, its status, and its spare map slot capacity, which
-the rule ensures is greater than zero (line~\ref{tsp:heartbeat}). The rule joins the \ol{heartbeat} with all "Critical" alerts (line~\ref{tsp:alert}) 
-that occurred within the last ten seconds (line~\ref{tsp:recent}), ensuring that alert is the most recent of its kind (line~\ref{tsp:up2date}). 
-As an extra precaution, we check that the alerted task's estimated completion time is high relative to other tasks in its category (line~\ref{tsp:compest}). 
-Finally, we ensure that the task has not already been speculated and that the \TT contains the maps input data (line~\ref{tsp:backup}). 
+Figure~\ref{ch:hop:fig:speculation} contains a rule that schedules map tasks
+with any "Critical" alerts that occurred recently.  The rule is evaluated
+whenever a {\emph heartbeat} exchange occurs between the \JT and some \TT.  The
+\ol{heartbeat} predicate includes the name of the \TT, its status, and its
+spare map slot capacity, which the rule ensures is greater than zero
+(line~\ref{tsp:heartbeat}).  The rule joins the \ol{heartbeat} with all
+"Critical" alerts (line~\ref{tsp:alert}) that occurred within the last ten
+seconds (line~\ref{tsp:recent}), ensuring that alert is the most recent of its
+kind (line~\ref{tsp:up2date}).  As an extra precaution, we check that the
+alerted task's estimated completion time is high relative to other tasks in its
+category (line~\ref{tsp:compest}).  Finally, we ensure that the task has not
+already been speculated and that the \TT contains the maps input data
+(line~\ref{tsp:backup}).
 
 
 \subsection{Evaluation}
