@@ -61,13 +61,13 @@ q(#X, A, B, S) <- e(#X, A, B, T), node(X),
 \textit{asynchronous local:}\\
 \begin{Dedalus}
 r(#X, A, B, S) <- e(#X, A, B, T), node(X), time(S),
-                  S > T, choice((A, B, T), (S));
+                  S > T, choice((X, A, B, T), (S));
 \end{Dedalus}
 \textit{asynchronous communication:}\\
 \begin{Dedalus}
 s(#Y, A, B, S) <- e(#X, A, B, T), node(X), node(Y),
                   time(S), S > T, neighbor(#X, Y),
-                  choice((A, B, T), (S));
+                  choice((X, Y, A, B, T), (S));
 \end{Dedalus}
 \end{example}
 
@@ -149,7 +149,7 @@ ground truths), and no EDB may be provided afterwards.  Like Datalog, we require
 %\wrm{explain motivation for nondeterminism.  why don't we just treat the whole world as synchronous?}
 
 \subsection{Semantics}
-\lang incorporates \dedalus{choice} to capture the non-determinism of message delays in distributed systems.  Thus we characterize the semantics of \lang  in terms of the {\em stable model semantics}~\cite{stable-model}, which captures this non-determinism.  A \lang program without asynchronous rules has a single stable model.\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different nondeterministic choice of timestamps for the heads of communication rules.  \jmh{Watch this next sentence:}  Later when we define our operational model of a distributed system, we will argue that the multiplicity of stable models captures all possible executions of a distributed system.
+\lang incorporates \dedalus{choice} to capture the non-determinism of message delays in distributed systems.  Thus we characterize the semantics of \lang  in terms of the {\em stable model semantics}~\cite{stable-model}, which captures this non-determinism.  A \lang program without asynchronous rules has a single stable model.\footnote{This corresponds to its perfect model evaluated with local stratification on temporal attributes.  It is known that the stable model semantics coincides with the perfect model semantics for locally stratified programs~\cite{stable-model}.}  Use of the \dedalus{choice} construct in asynchronous rules induces multiple stable models; each corresponds to a different nondeterministic choice of timestamps for the heads of communication rules.
 %A stable model of a \lang program is a trace of one of its possible distributed executions,.
 
 There are two potential problems with considering a stable model as the {\em output} of a \lang program.  First, every program with an asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
@@ -249,15 +249,6 @@ We first present an operational model of a distributed system, and explain how i
 Our model consists of $n$ Turing Machines (called nodes), each with an input queue \jmh{multiple queues per node?}, which independently sequentially execute programs, and may communicate via channels with non-deterministic \jmh{(positive)} delay.  Each machine may run for a polynomially-bounded number of steps, which include unicasting \jmh{why not just say sending} messages over channels \jmh{into the queues of other nodes} with non-deterministic delay and re-ordering, and placing messages in its own queue.  After running, the tape is erased, and the contents of the queue are copied to the tape.  The computation halts when no messages are in flight, and each node has halted.  In this case, the output is the final contents of each machine's tape.
 
 \begin{lemma}
-\label{lem:turing2dedalus}
-Any system that can be represented in this operational formalism can be represented by a \lang program $P$.  Furthermore, the set of ultimate models of $P$ exactly correspond to the union of the set of possible final tape states of the Turing Machines.
-\end{lemma}
-\begin{proof}
-See appendix for details.
-\end{proof}
-
-
-\begin{lemma}
 \label{lem:dedalus2turing}
 Any \lang program can be executed by the operational formalism.  Furthermore, the set of ultimate models of $P$ exactly corresponds to the result computed by the Turing Machines.
 \end{lemma}
@@ -265,23 +256,30 @@ Any \lang program can be executed by the operational formalism.  Furthermore, th
 See appendix for details.
 \end{proof}
 
-$D_n@1$ is $E_n$.  
-
-Our model consists of $n = |\dedalus{node}|$ Turing Machines, which independently step sequentially through time and communicate via channels with non-deterministic delay.  At each timestep \dedalus{t} they run a Datalog fixpoint computation that evaluates $P$ on $D_n@\dedalus{t}$; this takes polynomial time~\cite{immerman-ptime, vardi-ptime}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep \dedalus{t+1} and become part of $D_n@\dedalus{t+1}$, local asynchronous facts whose timestep is chosen non-deterministically to be greater than \dedalus{t} and become part of later timesteps, and remote asynchronous facts.  The timestamps in this third class of facts are chosen non-deterministically ``at the receiver''.
-% to model delay, in a way that observes traditional causality restrictions~\cite{timeclocks}.
-
-Any \lang program without  async rules is a $\text{Datalog}_{1S}$ program, and the above intuition is captured by the algorithm given in~\cite{tdd}, computing an ultimate model in polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through \dedalus{successor} at each node.  The PSPACE guarantees of~\cite{tdd} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all \lang programs under this model:
-
 \begin{lemma}
-
+\label{lem:turing2dedalus}
+Any system that can be represented in this operational formalism can be represented by a \lang program $P$.  Furthermore, the set of ultimate models of $P$ exactly correspond to the union of the set of possible final tape states of the Turing Machines.
 \end{lemma}
 \begin{proof}
-
+See appendix for details.
 \end{proof}
 
-Lemma:  (Something like the current Lemma 2, with ``distributed partial fixpoint'' defined in such a way that it matches the discussion in (2) above. It would be fine if you simply
-assert that the appendix formalizes the intuition of (2) by representing its finite traces of execution in terms of ``distributed partial fixpoints''.  You do have to define that
-term though, and connect it to the discussion.)
+%$D_n@1$ is $E_n$.  
+%Our model consists of $n = |\dedalus{node}|$ Turing Machines, which independently step sequentially through time and communicate via channels with non-deterministic delay.  At each timestep \dedalus{t} they run a Datalog fixpoint computation that evaluates $P$ on $D_n@\dedalus{t}$; this takes polynomial time~\cite{immerman-ptime, vardi-ptime}.  At the end of this fixpoint there are three sets of relevant facts: local, synchronous facts that have timestep \dedalus{t+1} and become part of $D_n@\dedalus{t+1}$, local asynchronous facts whose timestep is chosen non-deterministically to be greater than \dedalus{t} and become part of later timesteps, and remote asynchronous facts.  The timestamps in this third class of facts are chosen non-deterministically ``at the receiver''.
+% to model delay, in a way that observes traditional causality restrictions~\cite{timeclocks}.
+
+%Any \lang program without  async rules is a $\text{Datalog}_{1S}$ program, and the above intuition is captured by the algorithm given in~\cite{tdd}, computing an ultimate model in polynomial space in the size of the input.  In the presence of asynchronous rules, this formalize needs to be expanded to account for the asynchronous advancement of time through \dedalus{successor} at each node.  The PSPACE guarantees of~\cite{tdd} are not shown to hold for such programs, but in Appendix Foo we show that the following Lemma holds for all \lang programs under this model:
+
+%\begin{lemma}
+
+%\end{lemma}
+%\begin{proof}
+
+%\end{proof}
+
+%Lemma:  (Something like the current Lemma 2, with ``distributed partial fixpoint'' defined in such a way that it matches the discussion in (2) above. It would be fine if you simply
+%assert that the appendix formalizes the intuition of (2) by representing its finite traces of execution in terms of ``distributed partial fixpoints''.  You do have to define that
+%term though, and connect it to the discussion.)
 
 
 
