@@ -1,6 +1,7 @@
 \section{Related Work}
 \label{sec:relwork}
 
+\begin{comment}
 \subsection{Updateable State}
 
 Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
@@ -49,5 +50,36 @@ the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao
 
 
 %%%Further background: \cite{constructivism,prz,tdccp,tccp}
+\end{comment}
 
-Previous work in temporal deductive databases attempted to compute finite representations for such periodicities~\cite{tdd-infinite}.  Additionally, the noninflationary generalization of the least fixpoint---the {\em partial fixpoint}---is equal to all cycles with period 1---so-called {\em trivially periodic} cycles; nontrivial periodicity is ignored.  We adopt the latter approach when defining the output of a \lang program.
+There is a long history of deductive database systems with which \lang
+shares features.
+The purely declarative semantics of \lang, based on the reification of logical time into
+facts, are closer in spirit and interpretation to
+the languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} and
+the Statelog language~\cite{statelog} than
+to languages that admit procedural semantics~\cite{ldl, glue-nail} to deal with update 
+and deletion over time.
+Previous work in temporal deductive databases attempted to compute finite representations for periodic phenomena~\cite{tdd-infinite}: we reuse many of these results in \lang.
+
+Significant recent work (\cite{boom-techr,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
+primitives to the problem of specifying and implementing network protocols and distributed systems.  Lemma~\ref{lem:guarding} resembles the proof of correctness of ``pipelined
+semi-naive evaluation'' of distributed Datalog presented by Loo et al.~\cite{loo-sigmod06},
+which inspired much of this work.  In general, however, the language extensions 
+proposed in much of this prior work,
+which added
+expressivity and domain applicability, compromised the declarative
+semantics of Datalog, making formal analysis difficult~\cite{navarro, Mao2009}.
+In designing \lang, we tried to recover and extend the model-theoretic analyses applicable
+to pure Datalog while preserving the features appropriate to modeling loosely-coupled
+distributed systems.
+
+Our attempts to model and verify properties specific to distributed systems like 
+confluence and consistency of replicated state are similar in spirit to the database literature
+describing serializable transactions~\cite{serializability}.  Similarly, the programming languages
+community has formalized the notion of linearizable~\cite{linearizability} operations on
+concurrent data structures.  Abstractly, serializability differs from linearizability in that the
+former is a global property while the latter is local to individual stuctures and operations;
+our model-theoretic analyses encompass both global (e.g., confluence) and local (e.g., downstream 
+confluence) properties, but differ from both traditions in that they are applied at a higher
+level, based upon the scope and boundaries of logical monotonicity rather than the intersection of read and write sets for shared objects \paa{ugh, rewrite me please}.
