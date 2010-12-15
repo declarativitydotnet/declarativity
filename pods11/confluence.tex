@@ -540,7 +540,7 @@ For any program $P$, $\mathcal{U}(\textsc{Coord}(P), E)|_{\text{Pred}(P)} = \mat
 A straightforward argument shows that if \dedalus{p\_incomplete()} is false at time \dedalus{t}, then it is false at time \dedalus{t+1}.  It is easy to see if \dedalus{p\_incomplete} is false at time \dedalus{t}, then there cannot exist a \dedalus{p} fact derived by an asynchronous rule at timestamp $\dedalus{t+1}$.  Thus, any rule with \dedalus{!p\_incomplete()} will not be satisfiable until all elements in the \dedalus{p} set are known.
 %\wrm{UCS Here}
 
-We can similarly define a coordination protocol for more general statically checkable conditions, such as Universal Constraint Stratification~\cite{ucs}.
+%We can similarly define a coordination protocol for more general statically checkable conditions, such as Universal Constraint Stratification~\cite{ucs}.
 
 \subsubsection{Nondeterministic Coordination}
 As noted in Section~\ref{sec:failure}, practical distributed systems may experience failure.  A coordinated program may forever wait if a channel fails, and messages are lost.  For example, \dedalus{p\_count\_recv} and \dedalus{p\_count\_send} in Figure~\ref{fig:coordcode} may never be equal.  In these cases, the perfect model is unachievable.  In practice, exception handling techniques using timeouts are employed to write programs that handle such cases intelligently.  We define a generalization of the perfect ultimate model called a {\em consistently sealed ultimate model} that captures this notion in a way that we argue is preferable to an arbitrary ultimate model.
