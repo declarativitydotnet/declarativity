@@ -9,20 +9,17 @@ which only takes on values from the {\em temporal universe} (a domain isomorphic
 %\cup \infty$
 represented by the unary relation \dedalus{time}).
 %We will see later how $\infty$ is used to model failure.
-The balance of the arguments are generic 
-\paa{by which I believe we mean 'drawn from the Herbrand Universe of the program
-and EDB'}
-and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the generic universe, and the order constraint \dedalus{<} over the temporal universe.
+The balance of the arguments are drawn from the Herbrand Universe of the program and EDB, and may not take on values from the temporal universe.  We admit the order constraints \dedalus{<}, \dedalus{=}, \dedalus{!=}, and \dedalus{<=}, over all elements in the Herbrand Universe, and the order constraint \dedalus{<} over the temporal universe.
 %, where every element of $\mathbb{N}$ is less than $\infty$.
 
 We assume an infinite binary relation over the temporal universe
 %(except $\infty$)
 called \dedalus{successor} $:= \{(a,b) \ | \ a + 1 = b\}$, which has no
-distinguished temporal attribute.  We also make use of Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of nondeterminism, which we use to model the inherent nondeterminism of asynchronous distributed computation.  The atom \dedalus{choice((\dbar{X}), (\dbar{Y}))} in a rule---where \dedalus{\dbar{X}}, \dedalus{\dbar{Y}} are subsets of the variables in the rule---implies the functional dependency \dedalus{\dbar{X}} $\rightarrow$ \dedalus{\dbar{Y}} \paa{careful though: later you redefine $\rightarrow$}.  The \dedalus{choice} atom is syntactic sugar for a cycle through negation.  Under the stable model semantics~\cite{stable-model}, each stable model of a program with \dedalus{choice} represents committing to specific \dedalus{\dbar{Y}} values for every satisfying assignment of \dedalus{\dbar{X}} values for every \dedalus{choice} atom.  We call a representation of such a commitment a {\em nondeterministic choice set}.
+distinguished temporal attribute.  We also make use of Sacc\`{a} and Zaniolo's \dedalus{choice} construct~\cite{sacca-zaniolo}---a model-theoretic characterization of nondeterminism, which we use to model the inherent nondeterminism of asynchronous distributed computation.  The atom \dedalus{choice((\dbar{X}), (\dbar{Y}))} in a rule---where \dedalus{\dbar{X}}, \dedalus{\dbar{Y}} are subsets of the variables in the rule---implies that \dedalus{\dbar{X}} functionally determines \dedalus{\dbar{Y}}.  The \dedalus{choice} atom is syntactic sugar for a cycle through negation.  Under the stable model semantics~\cite{stable-model}, each stable model of a program with \dedalus{choice} represents committing to specific \dedalus{\dbar{Y}} values for every satisfying assignment of \dedalus{\dbar{X}} values for every \dedalus{choice} atom.  We call a representation of such a commitment a {\em nondeterministic choice set}.
 
 Our model of distribution assumes that all participants have the same information about all other participants, in the form of a unary \dedalus{node} relation, which has no temporal attribute. Note that \dedalus{node} is simply a finite domain of legal node names, and does not represent any other assumptions about the membership or connectivity of nodes in the system. We adopt the convention introduced in~\cite{Loo:2005}, where all predicates (except for \dedalus{successor}, \dedalus{time}, and \dedalus{node}) are {\em horizontally partitioned};  the location of a fact in a predicate is indicated by the value of its {\em location attribute}, a single column whose variable symbol is prefixed with \dedalus{\#}.  In each \lang rule, every such location variable must be unified with the \dedalus{node} set.  All atoms that reference a predicate must indicate the same column as its location attribute.
 
-We also admit the \dedalus{count} aggregate over the generic universe.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
+We also admit the \dedalus{count} aggregate over the Herbrand Universe.  Our syntax for \dedalus{count}, similar to~\cite{datalog-agg}, allows its use in the head of a rule, such as:
 
 \begin{Dedalus}
 p(\dbar{X}, count<Y>) <- ...;
@@ -108,7 +105,7 @@ t(#Y, X, A, B)@async <- e(#X, A, B), f(#X, X, Y);
 \end{example}
 
 The last two examples merit some discussion.  In the fourth rule above (corresponding to the last unsugared rule of Example~\ref{ex:nonsugared}), the location variable in the head appears not to be range-restricted; in fact, it ranges over the finite domain \dedalus{node(Y)}.  The additional fifth rule here illustrates the case where the body location attribute is unified with other attributes (in this case, in both head and body predicates).  In order to specify this \textit{entanglement} of locations and data attributes, we include location attributes even in body predicates. 
-Note that we forbid entanglement of temporal attributes in our discussion here, as this would introduce an infinite domain into the generic universe.
+Note that we forbid entanglement of temporal attributes in our discussion here, as this would introduce an infinite domain into the Herbrand Universe.
 
 
 \vspace{1em}
@@ -119,7 +116,7 @@ ground truths), and no EDB may be provided afterwards.  Like Datalog, we require
 
 \vspace{1em}
 \noindent {\bf Negation and Aggregation:}
-\lang restricts negation by requiring any cycle through a negated edge in the PDG to include a temporal edge.\footnote{The only exception is the cyclic negation of \dedalus{choice}, which involves recursion through negation without any temporal edges.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the generic universe.  \jmh{You say "generic universe" a few times.  Is that an agreed-upon term?  I don't know it.}
+\lang restricts negation by requiring any cycle through a negated edge in the PDG to include a temporal edge.\footnote{The only exception is the cyclic negation of \dedalus{choice}, which involves recursion through negation without any temporal edges.}  Any recursion through \dedalus{count} is disallowed, in order to ensure finiteness of the Herbrand Universe.  %\jmh{You say "generic universe" a few times.  Is that an agreed-upon term?  I don't know it.}
 
 %\subsection{Design Rationale and Implications}
 
