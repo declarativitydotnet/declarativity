@@ -22,16 +22,16 @@ implementation of \BOOM-MR, but provide some experimental evaluations of
 \BOOM-FS.
 
 The remainder of this chapter is organized as follows.
-Section~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library that
+Chapter~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library that
 we used execute \OVERLOG programs within the (Java-based) Hadoop
-infrastructure.  Section~\ref{ch:boom:sec:port} presents BOOM-MR as a
+infrastructure.  Chapter~\ref{ch:boom:sec:port} presents BOOM-MR as a
 declarative MapReduce scheduler, and describes how we embedded it into the
 Hadoop system by replacing the existing scheduling code written in Java with
-\OVERLOG.  Section~\ref{ch:boom:sec:eval} evaluates the resulting declarative
+\OVERLOG.  Chapter~\ref{ch:boom:sec:eval} evaluates the resulting declarative
 scheduler against the original unmodified Hadoop scheduler by comparing the
 response times of jobs scheduled by both.  Finally,
-Section~\ref{ch:boom:sec:relwork} examines some of the related work and
-Section~\ref{ch:boom:sec:conclusion} provides a chapter summary.
+Chapter~\ref{ch:boom:sec:relwork} examines some of the related work and
+Chapter~\ref{ch:boom:sec:conclusion} provides a chapter summary.
 
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
@@ -81,7 +81,7 @@ relations.  We made significant use of each of these features in \BOOMA.
 %dataflow ``routes'' tuples to appropriate branches corresponding to different
 %rules, using a scheduler specified in \OVERLOG.  Space prevents a thorough
 %discussion of this design, but we mention it here because of our experience
-%modifying the runtime rules as described in Section~\ref{sec:perf}.
+%modifying the runtime rules as described in Chapter~\ref{sec:perf}.
 
 \section{\BOOM-MR: A Declarative MapReduce Scheduler}
 \label{ch:boom:sec:port}
@@ -97,13 +97,13 @@ mapping its core state into a relational representation, and then writing
 \OVERLOG rules to manage that state in the face of new messages delivered by
 the existing Java APIs.  
 
-Section~\ref{ch:boom:sec:hadoop} provides quick review of the Hadoop MapReduce
-scheduler component.  In Section~\ref{ch:boom:sec:tables} we capture the
+Chapter~\ref{ch:boom:sec:hadoop} provides quick review of the Hadoop MapReduce
+scheduler component.  In Chapter~\ref{ch:boom:sec:tables} we capture the
 entities and relationships of the Hadoop scheduler in four table catalog.
 Using these tables, we develop a scheduling policy in
-Section~\ref{ch:boom:sec:scheduler} that models the FIFO policy in stock
+Chapter~\ref{ch:boom:sec:scheduler} that models the FIFO policy in stock
 Hadoop, but using fewer lines of code.  We then add to it, in
-Section~\ref{ch:boom:sec:late}, the LATE policy scheduling ``speculative''
+Chapter~\ref{ch:boom:sec:late}, the LATE policy scheduling ``speculative''
 tasks.  Our declarative LATE port took {\em orders of magnitude} less time and
 code, compared to the Java port~\cite{jira-2141}, once the basic relational
 infrastructure was in place.
@@ -534,7 +534,7 @@ data structures that represent the components listed in
 Table~\ref{ch:boom:tbl:hcatalog}.  The \OVERLOG patch that replaces the
 original Hadoop scheduler contains an order of magnitude fewer lines of code.
 The performance of \BOOM-MR is very similar to that of Hadoop MapReduce, as we
-discuss in Section~\ref{ch:boom:sec:eval}.
+discuss in Chapter~\ref{ch:boom:sec:eval}.
 
 For this ``porting'' exercise, it was handy to leverage \JOL's Java interfaces
 and draw the Java/\OVERLOG boundaries flexibly.  This allowed us to focus on

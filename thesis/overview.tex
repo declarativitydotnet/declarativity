@@ -27,10 +27,10 @@ project~\cite{boon-thesis}, which ignited the research direction of using a
 declarative language to develop distributed software, specifically network
 layer protocols and overlays for the next generation of Internet architectures.
 In Chapter~\ref{ch:p2}, we review this influential work because it sets the
-stage for this thesis.  Specifically, the declarative language \OVERLOG (used
-throughout this document) was developed during this era.  The \OVERLOG language
-was accompanied by a runtime called P2, which automatically compiled \OVERLOG
-programs into a dataflow-oriented runtime system.
+stage for this thesis.  Specifically, the declarative language \OVERLOG, which
+I helped develop during this era, and continued to use throughout my work.  The
+\OVERLOG language was accompanied by a runtime called P2, which automatically
+compiled \OVERLOG programs into a dataflow-oriented runtime system.
 
 The primary contributions presented in this dissertation begin in
 Chapter~\ref{ch:evita}, where we describe our first declarative system
@@ -47,15 +47,16 @@ traditional database optimizations, like the magic-sets rewrite
 (Chapter~\ref{ch:opt:sec:systemr}), and the Cascades branch-and-bound algorithm
 (Chapter~\ref{ch:opt:sec:cascades}), can be fully expressed as \OVERLOG
 queries.  Specifying these optimizations as \OVERLOG queries resulted in a more
-concise representation of the algorithm as {\em code} and a dramatic reduction
-in the overall development effort.  However, the pragmatics of operating in a
-distributed environment led to a number of hacks that sacrificed declarativity.
-We summarize our experience with Evita Raced in Chapter~\ref{ch:evitaend}.
+concise representation of the {\em algorithm} as {\em code} and a dramatic
+reduction in the overall development effort.  However, the pragmatics of
+operating in a distributed environment led to a number of hacks that sacrificed
+declarativity.  We summarize this and our general experience with Evita Raced in
+Chapter~\ref{ch:evitaend}.
  
 In Chapter~\ref{ch:cloud}, we turn our attention to another system that has
 gained in popularity recently --- Apache Hadoop~\cite{hadoop}.  Hadoop is an
 open source software project that implements the MapReduce programming
-model~\cite{mapreduce-osdi}.  In our work here, we investigate the Hadoop task
+model~\cite{mapreduce-osdi}.  In our work here, we investigated the Hadoop task
 scheduling component, which is housed within the centralized coordinator
 (master) of the MapReduce engine.  It is written in the (relatively) low-level
 Java language~\cite{java}.  As we have already suggested, building and
