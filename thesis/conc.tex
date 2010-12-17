@@ -11,17 +11,19 @@ execute on either wired or wireless physical networks. It was the responsibility
 compiler to take these simple high-level specifications and map them to an underlining
 technology. 
 
-The Evita Raced meta-compilation framework takes declarative programming a step further
-by allowing \OVERLOG program transformations to be written in \OVERLOG and executed 
-in the P2 query processing engine. The use of metacompilation allowed us to achieve significant 
-code reuse from the core of P2, so that the mechanisms supporting query optimization are a small 
-addition to the core query processing already in the system.  A particularly elegant aspect of this is the 
-scheduling of independent optimization stages by expressing scheduling constraints as data, and having 
-that data processed by a special dataflow element for scheduling.  Our hypothesis that a 
-Datalog-style language was a good fit for typical query optimizations was largely borne out, 
-despite some immaturity in the \OVERLOG language and P2 infrastructure. We were able to 
-express two of the most important optimizer frameworks -- System R and Magic Sets -- in only 
-a few dozen rules each. 
+The Evita Raced meta-compilation framework takes declarative programming a step
+further by allowing \OVERLOG program transformations to be written in \OVERLOG
+and executed them in the P2 query processing engine.  The use of
+metacompilation allowed us to achieve significant code reuse from the core of
+P2, so that the mechanisms supporting query optimization are a small addition
+to the query processing functionality already in the system.  A particularly
+elegant aspect of this is the scheduling of independent optimization stages by
+expressing scheduling constraints as data, and having that data processed by a
+special dataflow element for scheduling.  Our hypothesis that a Datalog-style
+language was a good fit for typical query optimizations was largely borne out,
+despite some immaturity in the \OVERLOG language and P2 infrastructure.  We
+were able to express three of the most important optimizer frameworks -- System
+R, Cascades, and Magic-sets -- in only a few dozen rules each.
 
 %Going forward, we hope to exploit the use of a declarative language for benefits beyond code 
 %compactness.  The tabularization of the optimizer state is particularly suggestive.  It can be used 
@@ -32,23 +34,23 @@ a few dozen rules each.
 %plan to write many additional rewrites in \OVERLOG, including proper program stratification, integrity 
 %constraint implementations, and multi-query optimizations.
 
-Our experience developing \BOOMA in \OVERLOG resulted in a number of observations
-that are useful on both long and short timescales.  Some of these may be
-specific to our BOOM agenda of rethinking programming frameworks for distributed
-systems; a number of them are more portable lessons about distributed system
-design that apply across programming frameworks.
+Our experience developing \BOOMA in \OVERLOG resulted in a number of
+observations that are useful on both long and short timescales.  Some of these
+may be specific to our BOOM agenda of rethinking programming frameworks for
+distributed systems; a number of them are more portable lessons about
+distributed system design that apply across programming frameworks.
 
 At a high level, the effort convinced us that a declarative language like
 \OVERLOG is practical and beneficial for implementing substantial systems
 infrastructure, not just the isolated protocols tackled in prior work.  Though
 our metrics were necessarily rough (code size, programmer-hours), we were
-convinced by the order-of-magnitude improvements in programmer productivity, and 
-more importantly by our ability to quickly extend our implementation with
+convinced by the order-of-magnitude improvements in programmer productivity,
+and more importantly by our ability to quickly extend our implementation with
 substantial new distributed features.  Performance remains one of our concerns,
 but not an overriding one.  One simple lesson of our experience is that modern
 hardware enables ``real systems'' to be implemented in very high-level
 languages.  We should use that luxury to implement systems in a manner that is
-simpler to design, debug, secure and extend --- especially for tricky and 
+simpler to design, debug, secure and extend --- especially for tricky and
 mission-critical software like distributed services.
 
 We have tried to separate the benefits of data-centric system design from our 
@@ -63,7 +65,7 @@ future work.
 Moving forward, our experience highlighted problems with \OVERLOG that emphasize some
 new research challenges; we mention two here briefly.  First and most urgent is
 the need to codify the semantics of asynchronous computations and updateable
-state in a declarative language.  We have recently made some progress on
+state in a declarative language.  Recent follow on work has made some progress on
 defining a semantic foundation for this~\cite{dedalus-tr}, but it remains an
 open problem to surface these semantics to programmers in an intuitive fashion.
 A second key challenge is to clarify the implementation of invariants, both
@@ -95,15 +97,17 @@ communication between reduces and maps (bypassing the distributed file system) o
 opportunities and challenges in carefully co-locating tasks from different jobs, to avoid 
 communication when possible.  
 
-Olston and colleagues have noted that MapReduce systems---unlike traditional databases---employ ``model-light'' 
-optimization approaches that gather and react to performance information during 
-runtime~\cite{olston-usenix08}.  The continuous query facilities of HOP enable powerful 
-introspective programming interfaces for this: a full-featured MapReduce interface can 
-be used to script performance monitoring tasks that gather system-wide information in 
-near-real-time, enabling tight feedback loops for scheduling and dataflow optimization. This 
-is a topic we plan to explore further, including opportunistic methods to do monitoring work 
-with minimal interference to outstanding jobs, as well as dynamic approaches to continuous 
-optimization in the spirit of earlier work like Eddies~\cite{eddies} and FLuX~\cite{flux-lb}.
+Olston and colleagues have noted that MapReduce systems---unlike traditional
+databases---employ ``model-light'' optimization approaches that gather and
+react to performance information during runtime~\cite{olston-usenix08}.  The
+continuous query facilities of HOP enable powerful introspective programming
+interfaces for this: a full-featured MapReduce interface can be used to script
+performance monitoring tasks that gather system-wide information in
+near-real-time, enabling tight feedback loops for scheduling and dataflow
+optimization.  This is a topic we plan to explore further, including
+opportunistic methods to do monitoring work with minimal interference to
+outstanding jobs, as well as dynamic approaches to continuous optimization in
+the spirit of earlier work like Eddies~\cite{eddies} and FLuX~\cite{flux-lb}.
 
 Online aggregation changes some of the scheduling criteria in cases where there are not enough 
 slots systemwide for all of a job's tasks.  Map and reduce tasks affect an online aggregation 
@@ -111,26 +115,34 @@ job differently: leaving map tasks unscheduled is akin to sampling the input fil
 reduce tasks unscheduled is akin to missing certain output keys -- some of which could be from 
 groups with many inputs.  This favors reducers over mappers, at least during early stages of processing.  
 
-In order to improve early results of pipelined flows (e.g., for online aggregation), it is often desirable 
-to prioritize ``interesting'' data in the pipeline, both at the mapper and reducer.  Online reordering of 
-data streams has been studied in the centralized setting~\cite{juggle}, but it is unclear how to expose it 
-in the MapReduce programming framework, with multiple nodes running in parallel -- especially if the data 
-in the input file is not well randomized.  
+In order to improve early results of pipelined flows (e.g., for online
+aggregation), it is often desirable to prioritize ``interesting'' data in the
+pipeline, both at the mapper and reducer.  Online reordering of data streams
+has been studied in the centralized setting~\cite{juggle}, but it is unclear
+how to expose it in the MapReduce programming framework, with multiple nodes
+running in parallel -- especially if the data in the input file is not well
+randomized.
 
-Continuous queries over streams raise many specific opportunities for optimizations, including sharing of 
-work across queries on the same streams, and minimizing the work done per query depending on windowing 
-and aggregate function semantics. Many of these issues were previously considered for tightly controlled 
-declarative languages on single machines~\cite{stream,tcq-cidr}, or for wide-area pipelined 
-dataflows~\cite{borealis,sbon}, and would need to be rethought in the context of a programmable MapReduce 
-framework for clusters.
+Continuous queries over streams raise many specific opportunities for
+optimizations, including sharing of work across queries on the same streams,
+and minimizing the work done per query depending on windowing and aggregate
+function semantics.  Many of these issues were previously considered for
+tightly controlled declarative languages on single
+machines~\cite{stream,tcq-cidr}, or for wide-area pipelined
+dataflows~\cite{borealis,sbon}, and would need to be rethought in the context
+of a programmable MapReduce framework for clusters.
 
-As a more long-term agenda, we want to explore using MapReduce-style programming for even more interactive 
-applications.  As a first step, we hope to revisit interactive data processing in the spirit of the 
-CONTROL work~\cite{ieeecontrol}, with an eye toward improved scalability via parallelism.  More aggressively, 
-we are considering the idea of bridging the gap between MapReduce dataflow programming and lightweight event-flow 
-programming models like SEDA~\cite{seda}.  Our HOP implementation's roots in Hadoop make it unlikely to compete 
-with something like SEDA in terms of raw performance. However, it would be interesting to translate ideas across 
-these two traditionally separate programming models, perhaps with an eye toward building a new and more 
-general-purpose framework for programming in architectures like cloud computing and many-core.
+As a more long-term agenda, we want to explore using MapReduce-style
+programming for even more interactive applications.  As a first step, we hope
+to revisit interactive data processing in the spirit of the CONTROL
+work~\cite{ieeecontrol}, with an eye toward improved scalability via
+parallelism.  More aggressively, we are considering the idea of bridging the
+gap between MapReduce dataflow programming and lightweight event-flow
+programming models like SEDA~\cite{seda}.  Our HOP implementation's roots in
+Hadoop make it unlikely to compete with something like SEDA in terms of raw
+performance.  However, it would be interesting to translate ideas across these
+two traditionally separate programming models, perhaps with an eye toward
+building a new and more general-purpose declarative framework for
+programming in architectures like cloud computing and many-core.
 
 

@@ -1,22 +1,21 @@
 \chapter[P2: A Logical Beginning]{P2: A Logical Beginning}
 \label{ch:p2}
 
-Our journey begins at U.C.~Berkeley in $2003$, where just beyond the protests
-at Sproul Plaza, the Declarative Networking project was just getting underway.
-The project would see the development of a new declarative language called {\em
-\OVERLOG} and its companion runtime {\em P2}.  The aim was to make it easy to
-implement and deploy {\em overlay} networks by allowing specifications in a
-high-level declarative language to be directly executed on nodes that span the
-Internet.  These overlay specifications, expressed as \OVERLOG rules, contained
-{\em orders of magnitude} fewer lines of code than corresponding overlay
-implementations written in an imperative language (e.g., C/C++).  The project
-implemented, and deployed, declarative versions of a Narada-style mesh
-network~\cite{chu00case}, using only 12 ``rules'', and the Chord structured
-overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}, versus thousands of
-lines of C code for the MIT Chord reference implementation.  From the many
-contributions made during this project, we showed that relations, together with
-a recursive query language, can fairly naturally represent the persistent
-routing state of the overlays it considered~\cite{boon-thesis}.
+I joined the Declarative Networking project when it was just getting underway
+in $2004$.  The project would see the development of a new declarative language
+called {\em \OVERLOG} and its companion runtime {\em P2}.  The aim was to make
+it easy to implement and deploy {\em overlay} networks by allowing
+specifications in a high-level declarative language to be directly executed on
+nodes that span the Internet.  These overlay specifications, expressed as
+\OVERLOG rules, contained {\em orders of magnitude} fewer lines of code than
+corresponding overlay implementations written in an imperative language (e.g.,
+C/C++).  The project implemented, and deployed, declarative versions of a
+Narada-style mesh network~\cite{chu00case}, using only 12 ``rules'', and the
+Chord structured overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp},
+versus thousands of lines of C code for the MIT Chord reference implementation.
+From the many contributions made during this project, we showed that relations,
+together with a recursive query language, can fairly naturally represent the
+persistent routing state of the overlays it considered~\cite{boon-thesis}.
 
 The \OVERLOG language is a descendent of Datalog, which we review in
 Chapter~\ref{ch:p2:sec:datalog}.  In Chapter~\ref{ch:p2:sec:overlog} we present
@@ -174,8 +173,6 @@ instantiated with facts that were inferred in round~$i-1$.''~\cite{ullmanbook}
 \ssp
 \begin{boxedminipage}{\linewidth}
     \begin{algorithmic}[1]
-      \STATE Empty all \ol{path} facts
-      \STATE /* Base case: initialize \ol{path} */
       \STATE \ol{path} = $\Delta$\ol{path} = $\pi_{X, Y, cons(X, Y), C}$\ol{link}
       \WHILE{$\Delta$\ol{path}\ !=\ $\emptyset$}
       	\STATE $\Delta$\ol{path} = $\pi_{X,\ Z,\ cons(X, P2),\ C1+C2}$ 
@@ -191,19 +188,18 @@ path program in Figure~\ref{ch:p2:fig:datalogPath}.}
 
 Figure~\ref{ch:p2:fig:seminaive} describes the steps through the algorithm that
 performs a semina\"{\i}ve evaluation on the path program shown in
-Figure~\ref{ch:p2:fig:datalogPath}.  It maintains a $\Delta$\ol{path} reference to
-the set of new tuples added to the \ol{path} relation on the previous
-round.  In the first round, the algorithm uses rule~\ol{r1} to derive the
-initial set of \ol{path} tuples from the EDB \ol{link} relation.  Subsequent
-rounds are carried out in the \ol{while} loop until $\Delta$\ol{path} is empty.
-The body of the loop contains the following three steps.
+Figure~\ref{ch:p2:fig:datalogPath}.  It maintains a $\Delta$\ol{path} reference
+to the set of new tuples added to the \ol{path} relation in the previous round.
+In round one, line~$1$ of the algorithm uses rule~\ol{r1} to derive the initial
+set of \ol{path} tuples from the EDB \ol{link} relation.  Subsequent rounds are
+carried out in the \ol{while} loop (lines $2 \cdots 6$) until $\Delta$\ol{path}
+is empty.  The body of the loop contains the following three steps.
 \begin{enumerate} \ssp 
   \item Evaluate rule~\ol{r2} relative to the tuples in
     $\Delta$\ol{path}.  
   \item Assign $\Delta$\ol{path} to the new tuples
-    derived in the previous step.  
-  \item Add the new derivation in
-    $\Delta$\ol{path} to the \ol{path} relation.  
+    derived in this round only.  
+  \item Accumulate the new $\Delta$\ol{path} in the \ol{path} relation.  
 \end{enumerate}
 
 In the first step, we evaluate rule~\ol{r2} using the $\Delta$\ol{path} tuples
@@ -264,17 +260,17 @@ Unfortunately, the complement of the \ol{detour} relation is not well-defined
 since the variables range over an infinite domain the compliment is also
 infinite.  Moreover, we cannot specify this complete relation prior to
 evaluation, since \ol{detour} is an IDB predicate.  If we were to simply
-evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using say
-Figure~\ref{ch:p2:fig:seminaive}) then we could end up with \ol{path} tuples
-that cross detours.  To see this, lets assume that we start by evaluating
-rule~\ol{r4} with the initial facts in the \ol{link} relation.  The execution
-plan for the negated \ol{detour} is similar to an anti-join operation, where
-tuples from \ol{link} relation pass if they do not already exist in the current
-\ol{detour} relation.  Since we have not yet evaluated rule~\ol{r5}, all
-\ol{link} tuples pass the anti-join, and produce a set of \ol{path} deductions
-in rule~\ol{r4}.  Subsequently evaluating rule~\ol{r5} would give us our
-\ol{detour} tuples, but this would be too late in the sense that we have
-already made incorrect deductions, and cannot take them back.
+evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using for example
+semina\"{\i}ve) then we could end up with \ol{path} tuples that cross detours.
+To see this, lets assume that we start by evaluating rule~\ol{r4} with the
+initial facts in the \ol{link} relation.  The execution plan for the negated
+\ol{detour} is similar to an anti-join operation, where tuples from \ol{link}
+relation pass if they do not already exist in the current \ol{detour} relation.
+Since we have not yet evaluated rule~\ol{r5}, all \ol{link} tuples pass the
+anti-join, and produce a set of \ol{path} deductions in rule~\ol{r4}.
+Subsequently evaluating rule~\ol{r5} would give us our \ol{detour} tuples, but
+this would be too late in the sense that we have already made incorrect
+deductions, and cannot take them back.
 
 \begin{figure*} 
 \ssp
@@ -285,9 +281,9 @@ appearing in Figure~\ref{ch:p2:fig:negation}.}
 \end{center} 
 \end{figure*}
 
-We can obtain the correct deductions by simply evaluating rule~\ol{r5} first.
-Such an ordering of predicate evaluations forms the basic idea behind
-stratified Datalog.  Before we get to that definition, we first review how the
+We could obtain the correct IDB by simply evaluating rule~\ol{r5} first.  Such
+an ordering of predicate evaluations forms the basic idea behind stratified
+Datalog.  Before we get to that definition, we first review how the
 dependencies of a Datalog program are represented graphically.
 Figure~\ref{ch:p2:fig:dependency} contains the dependency graph for the
 predicates appearing in the rules of Figure~\ref{ch:p2:fig:negation}.
@@ -312,9 +308,10 @@ then the program is unstratified.  An IDB predicate is assigned an $\infty$
 stratum if it defines a negated subgoal on a path that contains a cycle (due
 to arbitrary recursion).
 
-We evaluate a stratified Datalog program using the semina\"{\i}ve algorithm of
-Figure~\ref{ch:p2:fig:seminaive} but with a slight twist -- we sort the IDB
-predicates by their assigned stratum, and follow this order in the loop.  This
+We evaluate a stratified Datalog program using the semina\"{\i}ve algorithm
+(e.g., Figure~\ref{ch:p2:fig:seminaive}) but with a slight twist -- we sort the
+IDB predicates by their assigned stratum, and follow this order when choosing
+$\Delta$ predicates (e.g., $\Delta$ \ol{path}) to evaluate in the loop.  This
 order ensures that if the program is stratified then any negated subgoal (e.g.,
 \ol{detour}) has already had its relation fully evaluated first.  The result of
 this evaluation is called a {\em stratified model}~\footnote{We note that the
@@ -365,13 +362,13 @@ r4 shortestPath(X, Y, P, C) :-
 
 Like negation, an aggregation adds a stratification boundary to a Datalog
 program.  Intuitively, we must derive all facts from the tables mentioned in
-the rule body, before we can evaluate the aggregation in the rule head.
+the rule body, before we can evaluate the aggregate in the rule head.
 Consider the variant of the path program in Figure~\ref{ch:p2:fig:datalogSP},
 which modifies rule~\ol{r2} to formulate new paths from the \ol{shortestPath}
 relation, rather than the \ol{path} relation.  Two extra rules \ol{r3} and
 \ol{r4} are used to derive the shortest path from the \ol{path} relation.
 Rule~\ol{r3} selects the minimum cost path from $X$ to $Y$, and rule~\ol{r4}
-selects the actual minimum path based on the minimum cost metric.
+selects the actual minimum path based on the minimum cost value in $C$.
 
 \begin{figure*} 
 \ssp
@@ -386,30 +383,31 @@ appears in bold. }
 The dependency graph for this program is shown in
 Figure~\ref{ch:p2:fig:datalogSP}.  As shown, this program is not stratified
 since there is a cyclic path in the rule dependency graph that traverses an
-aggregation.  Like negations, aggregations impose stratification boundaries.
-Intuitively, we need to derive all \ol{path} tuples before we can identify the
-one that is the minimum cost.  As a result, the Datalog program in
-Figure~\ref{ch:p2:fig:datalogSP} is not stratified.
+aggregation.  Intuitively, we need to derive all \ol{path} tuples before we can
+identify the one that is the minimum cost.  Yet, \ol{path} derivations are
+based on what ``currently'' exists in the \ol{shortestPath} relation.  As a
+result, the Datalog program in Figure~\ref{ch:p2:fig:datalogSP} is not
+stratified.
 
 It is however locally stratified.  Assume that this program is evaluated using
-the algorithm describe in Figure~\ref{ch:p2:fig:seminaive}.  The bottom-up
-evaluation will start by deriving all paths of length $1$ using rule~\ol{r1},
-then using rule~\ol{R2} to derive paths of length $2, 3, \cdots$ (fully, in
-that order) until no such paths exist.  These derivations are monotonic because
-we a performing a {\em min} aggregation of a {\em sum} over non-negative
-integers.  As a result, rule evaluations derive \ol{path} tuples of length $k$
-before path tuples of length $j > k$.
+the semina\"{\i}ve algorithm (e.g., Figure~\ref{ch:p2:fig:seminaive}).  The
+bottom-up evaluation will start by deriving all paths of length $1$ using
+rule~\ol{r1}, then recursively using rule~\ol{r2} to derive paths of length $2,
+3, \ldots$ (fully, in that order) until no further paths exist.  These
+derivations are monotonic because we are performing a {\em min} aggregation of a
+{\em sum} over non-negative integers.  As a result, rule evaluations derive
+\ol{path} tuples of length $k$ before path tuples of length $j > k$.
 
 Many of the programs described in this thesis are not stratified, and of those,
 all are locally stratified.  For example, the System R rules presented in
-Chapter~\ref{ch:opt} perform a {\em min} aggregation on the cost metric of a
-query plan.  This is used to select the ``best plan'' among the set of
-equivalent plans in a given level (plan size) of the System R dynamic program.
-The ``best plan'' is then recursively used to construct new plans, containing
-an extra predicate, for the next dynamic programming level.  Since adding an
-extra predicate to a query plan can only increase its cost ({\em principle of
-optimality}), and we fully explore a level bottom-up, this optimization is locally
-stratified.
+Chapter~\ref{ch:opt} perform a {\em min} aggregation on the cost
+metric~\footnote{ A non-negative integer value.} of a query plan.  This is used
+to select the ``best plan'' among the set of equivalent plans in a given level
+(plan size) of the System R dynamic program.  The ``best plan'' is then
+recursively used to construct new plans, containing an extra predicate, for the
+next dynamic programming level.  Since adding an extra predicate to a query
+plan can only increase its cost ({\em principle of optimality}), and we fully
+explore a level bottom-up, this optimization is locally stratified.
 
 
 \section{\OVERLOG: Our first look}
@@ -500,7 +498,7 @@ of {\em event} tuples that are created when the network receives a packet, the
 system clock advances to some significant value~\footnote{The \OVERLOG language
 allows for the definition of a stream that periodically (based on real-time)
 produces a tuple with a unique identifier.}, or through some arbitrary C++ code
-that updates the database.  These events a queued in the first phase of the
+that updates the database.  These events are queued in the first phase of the
 evaluation.  An evaluator loop dequeues some number of these events and
 atomically executes a Datalog fixed point.  The rule deductions take the form
 of actions, which, in the third phase, cause data to be sent over the network
@@ -586,7 +584,8 @@ throughout, and involves no communication.  This is not true of the recursive
 rule \ol{r2}, which connects any \ol{link} tuple at a node \ol{X} with any path
 tuple at a neighboring node \ol{Y}, the output of which is to be stored back at
 \ol{X}.  Figure~\ref{ch:p2:fig:overlogSPLocal} shows a rewritten version of
-rule~\ol{r2}, wherein all rule body predicates have the same location
+rule~\ol{r2}~\footnote{The new ``localized'' rules would replace the original
+rule~\ol{r2}.}, wherein all rule body predicates have the same location
 specifier; the only communication then is shipping the results of the deduction
 to the head relation's location specifier.  Further details regarding the steps
 that perform this rule ``rewrite'' are presented in
@@ -633,14 +632,14 @@ elements.
 
 The P2 architecture consists of a dataflow of processing elements and queues,
 and a single driver loop.  Figure~\ref{ch:p2:fig:dataflow} provides a
-high-level view of this architecture, which contains three queuing elements.
-The \ol{event} queue represents the primary input queue, which contains the
-current snapshot of tuples that the system uses to drive the processing.  The
-\ol{localmem} secondary queue feeds the main event queue with tuples when none
-currently exist in it.  Tuples in the \ol{localmem} queue represent
-side-affecting events (i.e., insert and delete) to local memory relations.  P2
-evaluates this queue in a tuple at a time fashion, where a single tuple is
-dequeued and executed in a ``dataflow fixpoint.''
+high-level view (driver omitted) of this architecture, which contains three
+queuing elements.  The \ol{event} queue represents the primary input queue,
+which contains the current snapshot of tuples that the system uses to drive the
+processing.  The \ol{localmem} secondary queue feeds the main event queue with
+tuples when none currently exist in it.  Tuples in the \ol{localmem} queue
+represent side-affecting events (i.e., insert and delete) to local memory
+relations.  P2 evaluates this queue in a tuple at a time fashion, where a
+single tuple is dequeued and executed in a ``dataflow fixpoint.''
 
 The P2 architecture contains three output queues that hold the tuples derived
 from the rule engine.  The choice of which queue a tuple is added to depends on
@@ -649,7 +648,7 @@ current P2 instance, and its lifetime is greater than zero, then it will be
 added to the \ol{localmem} queue.  If the tuple is remote, then it is added to
 the \ol{netout} queue.  The third output queue is the \ol{event} queue.  All
 (possibly many) local tuples that have a zero-lifetime are directly added to
-the this queue, which continues to drive rule deductions until no zero-lifetime
+the event queue, which continues to drive rule deductions until no zero-lifetime
 tuples locally exist.  This implementation decision exhibits a kind of
 ``mini-fixpoint'' (a side-effect unique to P2-\OVERLOG) that we refer to as a
 {\em dataflow fixpoint}, which occurs when all tuples in the event queue have
@@ -663,16 +662,17 @@ dequeue a single tuple from the \ol{event} queue and ``route it'' to the
 processing elements, which then produce some number of new tuple deductions.
 If any of those deductions contain local tuples with a zero lifetime, then they
 are reinserted into the \ol{event} queue.  The tuples with non-zero lifetimes
-are (silently) queued while the driver then continues to process tuples solely
-from the \ol{event} queue until it is again empty.  At this point, P2 declares
-a dataflow fixpoint, which triggers a flush of the local~\footnote{Write
-actions from the network input are buffered and applied at the end of a
-``global fixpoint.''} ``insertion'' action writes from the queue, generating
-some number of new event tuples that are added to the \ol{localmem} queue.  If
-no ``insertion'' action tuples exist then a flush of the ``deletion'' action
-tuples occurs, and the corresponding deletion events are added (directly) to
-the \ol{event} queue, before the process repeats, this time treating deductions
-as further deletions.
+represent ``write'' (insert or delete) actions against the local database (in
+\ol{localmem}), and they are (silently) queued while the driver then continues
+to process tuples solely from the \ol{event} queue until it is again empty.  At
+this point, P2 declares a dataflow fixpoint, which triggers a flush of the
+local~\footnote{Write actions from the network input are buffered and applied
+at the end of a ``global fixpoint.''} ``insertion'' action writes from the
+(silent) queue, generating some number of new event tuples that are added to the
+\ol{localmem} queue.  If no ``insertion'' action tuples exist then a flush of
+the ``deletion'' action tuples occurs, and the corresponding deletion events
+are added (directly) to the \ol{event} queue, before the process repeats, this
+time treating deductions as further deletions.
 
 After all insertion and deletion tuples have been processed by the initial
 \ol{localmem} input tuple, the system declares a {\em global fixpoint}.  At
@@ -683,14 +683,13 @@ for the next tuple to process.
 
 From this perspective, the P2 runtime looks quite a bit like an
 Event-Condition-Action (ECA) system with a dataflow underneath: {\em events}
-are generated by the system clock and network component, while {\em conditions}
-are checked via dataflow processing elements, and {\em actions} initiate
-outbound network messages and updates to the database.  All actions are
-performed by the evaluator in the final (i.e., third) phase.  A driver loop
+are generated by the system clock and network components, while {\em
+conditions} are checked via dataflow processing elements, and {\em actions}
+initiate outbound network messages and updates to the database.  A driver loop
 continuously routes events from the event queue to the ``conditions'' via the
 \ol{demux} element in Figure~\ref{ch:p2:fig:dataflow}.  The initial input to
 the driver loop is the single tuple at the head of the \ol{localmem} queue.
-This sole tuple is the input to the ``current'' Datalog fixed point.  Next, we
+This sole tuple is the input to the ``current'' fixpoint.  Next, we
 describe the elements that implement the {\em condition} and {\em action}
 processing logic.
 
