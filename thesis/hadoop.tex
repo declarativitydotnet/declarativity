@@ -1,29 +1,30 @@
 \chapter[MapReduce: An Elephant's Perspective]{MapReduce: An Elephant's Perspective}
 \label{ch:hadoop}
 
-In this chapter, we review the MapReduce programming model and describe the
-salient features of Hadoop, a popular open-source implementation of MapReduce.
-We focus on the Hadoop systems aspects relevant to the remaining chapters of
-this thesis.  We begin in Section~\ref{ch:hadoop:sec:progmodel} with the
-MapReduce programming model, which is based on two operations; map and reduce.
-In Section~\ref{ch:hadoop:sec:hadoop}, we present an overview of Hadoop;
-considered today as the most popular open source implementation of MapReduce.
-We conclude this chapter with a summary of this new programming model and
-application, and the direction that we will taking in the remaining chapters of
-this thesis.  
+In this chapter, we review the MapReduce programming
+model~\cite{mapreduce-osdi} and the Hadoop system~\cite{hadoop} --- an
+open-source software framework that supports data-intensive distributed
+applications.  We focus on those aspects of the Hadoop system kernel that
+concern the remaining chapters of this thesis.  We begin in
+Chapter~\ref{ch:hadoop:sec:progmodel} with the MapReduce programming model,
+which is based on two operations; {\em map} and {\em reduce}.  In
+Chapter~\ref{ch:hadoop:sec:hadoop}, we present an overview of Hadoop; a system
+inspired by Google's MapReduce~\cite{mapreduce-osdi} and the Google File System
+(GFS)~\cite{gfs-sosp}.  We conclude in Chapter~\ref{ch:hadoop:sec:conclude} by
+introducing our own work in this area, which is further described in the
+remaining chapters of this thesis.
 
 \section{MapReduce Programming Model}
 \label{ch:hadoop:sec:progmodel}
 
-To use MapReduce, the programmer expresses their desired computation as a
-series of \emph{jobs}.  The input to a job is an input specification that will
-yield key-value pairs.  Each job consists of two stages: first, a user-defined
-\emph{map} function is applied to each input record to produce a list of
-intermediate key-value pairs.  Second, a user-defined \emph{reduce} function is
-called once for each distinct key in the map output and passed the list of
-intermediate values associated with that key.  The MapReduce framework
-automatically parallelizes the execution of these functions and ensures fault
-tolerance.
+In MapReduce, the programmer expresses their desired computation as a series of
+\emph{jobs} that will yield data in the form of key-value pairs.  Each job
+consists of two stages: first, a user-defined \emph{map} function is applied to
+each input record to produce a list of intermediate key-value pairs.  Second, a
+user-defined \emph{reduce} function is called once for each distinct key in the
+map output and passed the list of intermediate values associated with that key.
+The MapReduce framework automatically parallelizes the execution of these
+functions and ensures fault tolerance.
 
 Optionally, the user can supply a \emph{combiner}
 function~\cite{mapreduce-osdi}, which will be applied to the intermediate results
@@ -202,7 +203,7 @@ further recovery steps are needed.
 
 
 
-\section{A Brave New MapReduce World}
+\section{Summary}
 \label{ch:hadoop:sec:conclude}
 
 The MapReduce interface is a good example of capturing the minimum essentials
