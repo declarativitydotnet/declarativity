@@ -1,4 +1,4 @@
-\chapter[BOOM: Declarative Scheduling]{BOOM: Declarative Scheduling}
+\chapter[Declarative Scheduling]{Declarative Scheduling}
 \label{ch:boom}
 
 The Berkeley Orders Of Magnitude (BOOM) project began with an experiment in
@@ -83,7 +83,7 @@ relations.  We made significant use of each of these features in \BOOMA.
 %discussion of this design, but we mention it here because of our experience
 %modifying the runtime rules as described in Chapter~\ref{sec:perf}.
 
-\section{\BOOM-MR: A Declarative MapReduce Scheduler}
+\section{\BOOM-MR: MapReduce Scheduler}
 \label{ch:boom:sec:port}
 
 In this section, we describe our declarative version of the Hadoop MapReduce
@@ -402,21 +402,27 @@ al.~\cite{zaharia-late}. Our goals were both to evaluate the difficulty of
 building a new policy, and to confirm the faithfulness of our \OVERLOG-based
 {\JT} to the Hadoop {\JT} using two different scheduling algorithms.
 
-Implementing the default FCFS policy required 9 rules (96 lines of
-code). Implementing the LATE policy required 5 additional \OVERLOG rules (30
-lines of code). In comparison, LATE is specified in Zaharia et al.'s paper via
-just three lines of pseudocode, but their implementation of the policy for
-vanilla Hadoop required adding or modifying over $800$ lines of Java spread 
-across $18$ Java class files --- an order of magnitude more than our \OVERLOG implementation. 
+Implementing the default FCFS policy required 9 rules (96 lines of code).
+Implementing the LATE policy required 5 additional \OVERLOG rules (30 lines of
+code).  In comparison, LATE is specified in Zaharia et al.'s paper via just
+three lines of pseudocode, but their implementation of the policy for stock
+Hadoop required adding or modifying over $800$ lines of Java spread across $18$
+Java class files --- an order of magnitude more than our \OVERLOG
+implementation.  To be fair, the Java-based implementation represents
+production quality code, which increases code complexity and adds to the
+overall development time.  Nevertheless, much of this complexity comes from
+mapping LATE to a language that focuses on imperative steps rather than
+high-level specifications.
 
-We used a 101-node cluster on Amazon EC2. One node executed the Hadoop \JT\ 
-and the HDFS \NN, while the remaining 100 nodes served as slaves for running the 
-Hadoop {\TT}s and HDFS {\DN}s. Each {\TT} was configured to support executing up 
-to two map tasks and two reduce tasks simultaneously. The master node ran on a 
-``high-CPU extra large'' EC2 instance with 7.2 GB of memory and 8 virtual cores. 
-Our slave nodes executed on ``high-CPU medium'' EC2 instances with 1.7 GB of 
-memory and 2 virtual cores. Each virtual core is the equivalent of a 2007-era 2.5Ghz Intel Xeon
-processor.
+We evaluated our FCFS and LATE \OVERLOG policies using a 101-node virtual
+cluster on Amazon EC2.  One node executed the Hadoop \JT and the HDFS \NN,
+while the remaining 100 nodes served as slaves for running the Hadoop {\TT}s
+and HDFS {\DN}s.  Each {\TT} was configured to support executing up to two map
+tasks and two reduce tasks simultaneously.  The master node ran on a ``high-CPU
+extra large'' EC2 instance with 7.2 GB of memory and 8 virtual cores.  Our
+slave nodes executed on ``high-CPU medium'' EC2 instances with 1.7 GB of memory
+and 2 virtual cores.  Each virtual core is the equivalent of a 2007-era 2.5Ghz
+Intel Xeon processor.
 
 
 \subsection{First-Come-First-Serve policy}
@@ -544,26 +550,32 @@ representation of the \emph{jobConf} as a Java object rather than flatten it
 into a relation because it had no effect on the scheduling logic.
 
 We found that scheduling policies were a good fit for a declarative language
-like \OVERLOG. In retrospect, this is because scheduling can be decomposed into
-two tasks: \emph{monitoring} the state of a system and applying \emph{policies}
-for how to react to changes to that state. Monitoring is well-handled by \OVERLOG: 
-we found that the statistics about {\TT} state required by the LATE policy are naturally 
-realized as aggregate functions, and \JOL took care of automatically updating those statistics 
-as new messages from {\TT}s arrived. In the next chapter, we will look at importing statistics
-taken from the output of a MapReduce job that is continuously monitoring machine and process level statistics.
-Once these near real-time monitoring statistics have been imported into \JOL, we can build some 
-very interesting scheduling policies around them.
+like \OVERLOG.  In retrospect, this is because scheduling can be decomposed
+into two tasks: \emph{monitoring} the state of a system and applying
+\emph{policies} for how to react to changes to that state.  Monitoring is
+well-handled by \OVERLOG: we found that the statistics about {\TT} state
+required by the LATE policy are naturally realized as aggregate functions, and
+\JOL took care of automatically updating those statistics as new messages from
+{\TT}s arrived.  In the next chapter, we will look at importing statistics
+taken from the output of a MapReduce job that is continuously monitoring
+machine and process level statistics.  Once these near real-time monitoring
+statistics have been imported into \JOL, we can build some very interesting
+scheduling policies around them.
 
-It is also unsurprisingly that a logic language should be well-suited to specifying policy. Indeed, 
-the rules in Chapters~\ref{ch:p2} and~\ref{ch:evita} can be viewed as search policies for shortest 
-paths in a network and an optimal plan for a query. Moreover, the rules that govern bottom-up
-and top-down plan enumeration can be viewed as {\em search strategy} policies. In the current context, we found 
-the \BOOM-MR scheduler much simpler to extend and modify than the original Hadoop Java code, as demonstrated 
-by our experience with LATE\@.  Informally, the \OVERLOG code in \BOOM-MR seems about as complex as it should be: 
-Hadoop's MapReduce task coordination logic is a simple and clean design, and the compactness of \BOOM-MR reflects 
-that simplicity appropriately. In Chapter~\ref{ch:hop}, we extended the MapReduce batch-oriented model to a pipelining 
-model. Pipelining MapReduce requires operators be coscheduled; a policy that is easily handled by a few extra \OVERLOG 
-rules beyond those discussed here.
+It is also unsurprisingly that a logic language should be well-suited to
+specifying policy.  Indeed, the rules in Chapters~\ref{ch:p2}
+and~\ref{ch:evita} can be viewed as search policies for shortest paths in a
+network and an optimal plan for a query.  Moreover, the rules that govern
+bottom-up and top-down plan enumeration can be viewed as {\em search strategy}
+policies.  In the current context, we found the \BOOM-MR scheduler much simpler
+to extend and modify than the original Hadoop Java code, as demonstrated by our
+experience with LATE\@.  Informally, the \OVERLOG code in \BOOM-MR seems about
+as complex as it should be: Hadoop's MapReduce task coordination logic is a
+simple and clean design, and the compactness of \BOOM-MR reflects that
+simplicity appropriately.  In Chapter~\ref{ch:hop}, we extended the MapReduce
+batch-oriented model to a pipelining model.  Pipelining MapReduce requires
+operators be coscheduled; a policy that is easily handled by a few extra
+\OVERLOG rules beyond those discussed here.
 
 
 

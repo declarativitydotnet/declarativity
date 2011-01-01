@@ -2,20 +2,25 @@
 \label{ch:p2}
 
 I joined the Declarative Networking project when it was just getting underway
-in $2004$.  The project would see the development of a new declarative language
-called {\em \OVERLOG} and its companion runtime {\em P2}.  The aim was to make
-it easy to implement and deploy {\em overlay} networks by allowing
-specifications in a high-level declarative language to be directly executed on
-nodes that span the Internet.  These overlay specifications, expressed as
-\OVERLOG rules, contained {\em orders of magnitude} fewer lines of code than
-corresponding overlay implementations written in an imperative language (e.g.,
-C/C++).  The project implemented, and deployed, declarative versions of a
-Narada-style mesh network~\cite{chu00case}, using only 12 ``rules'', and the
-Chord structured overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp},
-versus thousands of lines of C code for the MIT Chord reference implementation.
-From the many contributions made during this project, we showed that relations,
-together with a recursive query language, can fairly naturally represent the
-persistent routing state of the overlays it considered~\cite{boon-thesis}.
+in $2004$.  The original project members included Boon Thau Loo, Tyson Condie,
+Joseph M.  Hellerstein, and Ion Stoica at the {\em University of California,
+Berkeley}, Petros Maniatis and Timothy Roscoe at {\em Intel Research Berkeley},
+and Raghu Ramakrishnan at {\em Yahoo!  Research}.  We would see the development
+of a new declarative language called {\em \OVERLOG} and its companion runtime
+{\em P2}.  Our initial goal was to make it easy to implement and deploy {\em
+overlay} networks~\footnote{A computer network built on top of an existing
+network e.g., IP (layer 3).} by allowing specifications in a high-level
+declarative language to be directly executed on nodes that span the Internet.
+These overlay specifications, expressed as \OVERLOG rules, contained {\em
+orders of magnitude} fewer lines of code than corresponding overlay
+implementations written in an imperative language (e.g., C/C++).  The project
+implemented, and deployed, declarative versions of a Narada-style mesh
+network~\cite{chu00case}, using only 12 ``rules'', and the Chord structured
+overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}, versus thousands of
+lines of C code for the MIT Chord reference implementation.  From the many
+contributions made during this project, we showed that relations, together with
+a recursive query language, can fairly naturally represent the persistent
+routing state of the overlays it considered~\cite{boon-thesis}.
 
 The \OVERLOG language is a descendent of Datalog, which we review in
 Chapter~\ref{ch:p2:sec:datalog}.  In Chapter~\ref{ch:p2:sec:overlog} we present
@@ -32,7 +37,7 @@ PIER, P2 can manage structured data tuples flowing through a broad range of
 query processing elements, which may accumulate significant state and perform
 substantial asynchronous processing.  Like Click, P2 stresses high-performance
 transfers of data units, as well as dataflow elements with both ``push'' and
-``pull'' modalities.  
+``pull'' modalities.
 
 \section{Introduction to Datalog}
 \label{ch:p2:sec:datalog}
@@ -76,6 +81,7 @@ exceeds the capacity of a machine's main memory.
 %``graph'' based algorithm requires all facts be accounted for at once.
 
 \subsection{Safety First}
+\label{ch:p2:sec:safety}
 
 There are constraints that must be in place for a Datalog program to make sense
 as operations on finite relations.  A {\em safe} Datalog rule is one that
@@ -84,10 +90,10 @@ each such variable appear as a field in some predicate(s) of the rule body.
 For example, the following rule is not safe since it does not restrict the $P$
 variable in the \ol{path} head predicate.
 
-\begin{minipage}{\linewidth}
-\ssp
-{\bf path}(X, Y, P, C) :- {\bf link}(X, Y, C). \\
-\end{minipage}
+%\begin{minipage}{\linewidth}
+\begin{lstlisting}[frame=none]
+path(X, Y, P, C) :- link(X, Y, C).
+\end{lstlisting}
 The above rule generates an infinite number of \ol{path} tuples since we can
 substitute any conceivable value for $P$.  This ``safety'' restriction imposed
 by Datalog semantics ensures that a finite (IDB) solution is obtained from
@@ -117,12 +123,13 @@ query path(``node1'', Y, P, C).
 \end{figure*}
 
 Figure~\ref{ch:p2:fig:datalogPath} provides our first look at a program
-expressed in Datalog.  The statements at the top of this program specify the
-existence of a \ol{link} table containing two rows of data tuples.  Each row of
-the \ol{link} table contains three attributes; two strings, and an integer.
-The program then derives all reachable paths from this initial set of known
-tuples (links), and present that result as a relational view called
-\ol{path}~\footnote{Henceforth, referred to simply as a ``relation.''}.
+expressed in Datalog.  The {\em fact} statements at the top specify the
+existence of two data tuples in the \ol{link} table with the given attribute
+constants.  Each row of the \ol{link} table contains three attributes; two
+strings, and an integer.  The program rules derive all reachable paths from
+this initial set of known \ol{link} tuples, and present that result in a
+relational view called \ol{path}~\footnote{Henceforth, referred to simply as a
+``relation.''}.
 
 Base derivations proceed from the rule body (those predicates to the right of
 ``\ol{:-}'') and project onto the rule head (to the left of ``\ol{:-}'').  The
@@ -134,14 +141,13 @@ are included in the \ol{path} relation.
 
 Rule~\ol{r2} expresses a transitive closure over the \ol{link} {\bf and}
 \ol{path} relations.  The rule reads ``if there is a link from $X$ to $Y$ at
-cost $C$, and there is a \ol{path} from $Y$ to $Z$ crossing $P2$ at cost $C2$,
-then there is a path from $X$ to $Z$ via ($X,\ P2$) at cost of $C1+C3$.'' A
-path from ``node1'' to ``node3'', through ``node2'', satisfies this criterion,
-and such a tuple is included in the \ol{path} IDB relation.  The query
-predicate, shown at the bottom of Figure~\ref{ch:p2:fig:datalogPath}, asks for
-all paths that start at ``node1.'' The \ol{path} tuples that begin with
-``node1'' and end at ``node2'' and ``node3'' (via ``node2'') both meet this
-query constraint.
+cost $C$, and there is a \ol{path} $P2$ from $Y$ to $Z$ at cost $C2$, then
+there is a path from $X$ to $Z$ via $P2$ at cost of $C1+C3$.'' A path from
+``node1'' to ``node3'', through ``node2'', satisfies this criterion, and such a
+tuple is included in the \ol{path} IDB relation.  The query predicate, shown at
+the bottom of Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start
+at ``node1.'' The \ol{path} tuples that begin with ``node1'' and end at
+``node2'' and ``node3'' (via ``node2'') both meet this query constraint.
 
 \subsection{Evaluation of Datalog Rules}
 \label{ch:p2:sec:eval}
@@ -153,13 +159,13 @@ standard approaches to evaluating a set of Datalog rules.  The first is called
 applies all known facts to the program rules, in some stylized set-oriented
 fashion, until no new knowledge is obtained.  Starting with the tuples
 contained in the EDB, the na\"{\i}ve evaluator iteratively executes a
-select-project-join SPJ query against the predicates in the rule body, to
+select-project-join (SPJ) query against the predicates in the rule body, to
 continually derive new IDB tuples.  Each iteration applies all the tuples
 contained in the EDB and IDB to the rule set.  The process repeats until no new
 tuples can be inferred, marking the end of the evaluation, which is commonly
 referred to as a ``fixed point.''
 
-Each iteration of this na\"{\i}ve algorithm uses all the data in the database
+Each iteration of this na\"{\i}ve algorithm uses all known data in the database
 when deriving new data.  A second approach, which is also the optimal approach,
 adds a condition to the iteration loop that prunes the data that was not
 derived in the previous round.  The remaining facts, if any, are then used in
@@ -209,7 +215,7 @@ derived in the previous round (e.g., initially, those obtained from the
 $\Delta$\ol{path} tuples, and any deductions would contribute to the $\Delta$
 predicate referenced by the rule head.  The last two steps in the loop deal
 with ensuring $\Delta$\ol{path} only references deductions from the previous
-round, and that those new deductions are added to the \ol{path} relation.
+round, and that the new deductions are accumulated in the \ol{path} relation.
 
 
 \subsection{Fixed Point Semantics}
@@ -218,15 +224,15 @@ Datalog is a monotonic language: once a fact is derived during evaluation it is
 certain to be in the final answer.  The evaluation of a program proceeds as a
 series of deductions to the IDB.  Since Datalog has {\em set semantics}, only
 new deductions will be added to the IDB, and therefore it is guaranteed to
-terminate under safety constraints.  A Datalog program is said to be at {\em
-fixed point} when no further deductions can be made relative to the current EDB
-and IDB tuples.  The result derived at fixed point is a model for the Datalog
-program.  Given a model~$m$ and a Datalog program~$p$, we say $m$ is a minimal
-model if and only if no proper subset of $m$ is a model for $p$.  In the
-absence of negated subgoals, a Datalog program has one and only one minimal
-model.  A logic program with negation may have more than one minimal model;
-however, if the program is stratified, then once again there is a unique
-minimal model.~\cite{ullmanbook}
+terminate under safe conditions (Chapter~\ref{ch:p2:sec:safety}).  A Datalog
+program is said to be at {\em fixed point} when no further deductions can be
+made relative to the current EDB and IDB tuples.  The result derived at fixed
+point is a model for the Datalog program.  Given a model~$m$ and a Datalog
+program~$p$, $m$ is a minimal model if and only if no proper subset of
+$m$ is a model for $p$.  In the absence of negated subgoals, a Datalog program
+has one and only one minimal model.  A logic program with negation may have
+more than one minimal model; however, if the program is ``stratified'', then once
+again there is a unique minimal model.~\cite{ullmanbook}
 
 
 \subsection{Negation and Stratification}
@@ -260,14 +266,14 @@ Unfortunately, the complement of the \ol{detour} relation is not well-defined
 since the variables range over an infinite domain the compliment is also
 infinite.  Moreover, we cannot specify this complete relation prior to
 evaluation, since \ol{detour} is an IDB predicate.  If we were to simply
-evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using for example
-semina\"{\i}ve) then we could end up with \ol{path} tuples that cross detours.
-To see this, lets assume that we start by evaluating rule~\ol{r4} with the
-initial facts in the \ol{link} relation.  The execution plan for the negated
-\ol{detour} is similar to an anti-join operation, where tuples from \ol{link}
-relation pass if they do not already exist in the current \ol{detour} relation.
-Since we have not yet evaluated rule~\ol{r5}, all \ol{link} tuples pass the
-anti-join, and produce a set of \ol{path} deductions in rule~\ol{r4}.
+evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using for example the
+semina\"{\i}ve algorithm) then we could end up with \ol{path} tuples that cross
+detours.  To see this, lets assume that we start by evaluating rule~\ol{r4}
+with the initial facts in the \ol{link} relation.  The execution plan for the
+negated \ol{detour} is similar to an anti-join operation, where tuples from
+\ol{link} relation pass if they do not already exist in the current \ol{detour}
+relation.  Since we have not yet evaluated rule~\ol{r5}, all \ol{link} tuples
+pass the anti-join, and produce a set of \ol{path} deductions in rule~\ol{r4}.
 Subsequently evaluating rule~\ol{r5} would give us our \ol{detour} tuples, but
 this would be too late in the sense that we have already made incorrect
 deductions, and cannot take them back.
@@ -346,7 +352,7 @@ link(``node2'', ``node3'', 1).
 r1 path(X, Y, cons(X, Y), C) :-
    link(X, Y, C).
 
-r2 path(X, Z, cons(P1, P2), C1+C2) :-
+r2 path(X, Z, cons(X, P2), C1+C2) :-
    link(X, Y, C1), shortestPath(Y, Z, P2, C2),
    contains(X, P2) == false.
 
@@ -391,23 +397,27 @@ stratified.
 
 It is however locally stratified.  Assume that this program is evaluated using
 the semina\"{\i}ve algorithm (e.g., Figure~\ref{ch:p2:fig:seminaive}).  The
-bottom-up evaluation will start by deriving all paths of length $1$ using
-rule~\ol{r1}, then recursively using rule~\ol{r2} to derive paths of length $2,
-3, \ldots$ (fully, in that order) until no further paths exist.  These
-derivations are monotonic because we are performing a {\em min} aggregation of a
-{\em sum} over non-negative integers.  As a result, rule evaluations derive
-\ol{path} tuples of length $k$ before path tuples of length $j > k$.
+only option in the first step of the bottom-up evaluation is to derive all
+paths of length $1$ using rule~\ol{r1}.  Subsequent steps recursively use
+rule~\ol{r2} to derive paths of length $2, 3, \ldots$ (fully, in that order)
+until no further paths exist.  These derivations are monotonic because we are
+performing a {\em min} aggregation of a {\em sum} over non-negative integers.
+As a result, rule evaluations derive \ol{path} tuples of length $k$ before path
+tuples of length $j > k$, which ensures that new \ol{path} tuples are derived
+from a (seemingly) complete set of \ol{shortestPath} tuples.
 
 Many of the programs described in this thesis are not stratified, and of those,
 all are locally stratified.  For example, the System R rules presented in
-Chapter~\ref{ch:opt} perform a {\em min} aggregation on the cost
-metric~\footnote{ A non-negative integer value.} of a query plan.  This is used
-to select the ``best plan'' among the set of equivalent plans in a given level
-(plan size) of the System R dynamic program.  The ``best plan'' is then
-recursively used to construct new plans, containing an extra predicate, for the
-next dynamic programming level.  Since adding an extra predicate to a query
-plan can only increase its cost ({\em principle of optimality}), and we fully
-explore a level bottom-up, this optimization is locally stratified.
+Chapter~\ref{ch:opt} performs a {\em min} aggregation on the cost~\footnote{ A
+non-negative integer value.} of a query plan.  This is used to select the
+``best plan'' among the set of equivalent plans in a given level (plan size) of
+the System R dynamic program.  The ``best plan'' is then recursively used to
+construct new plans, containing an extra predicate, for the next dynamic
+programming level~\footnote{Each level of the System R dynamic program adds an
+extra predicate to the query plan.}.  Since adding an extra predicate to a
+query plan can only increase its cost ({\em principle of optimality}), and we
+fully explore all plans in a given level before moving to the next, this
+optimization is locally stratified.
 
 
 \section{\OVERLOG: Our first look}

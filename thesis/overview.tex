@@ -50,19 +50,19 @@ queries.  Specifying these optimizations as \OVERLOG queries resulted in a more
 concise representation of the {\em algorithm} as {\em code} and a dramatic
 reduction in the overall development effort.  However, the pragmatics of
 operating in a distributed environment led to a number of hacks that sacrificed
-declarativity.  We summarize this and our general experience with Evita Raced in
-Chapter~\ref{ch:evitaend}.
+declarativity.  We reflect on the practicalities of system development and our
+overall experience with Evita Raced in Chapter~\ref{ch:evitaend}.
  
 In Chapter~\ref{ch:cloud}, we turn our attention to another system that has
 gained in popularity recently --- Apache Hadoop~\cite{hadoop}.  Hadoop is an
 open source software project that implements the MapReduce programming
 model~\cite{mapreduce-osdi}.  In our work here, we investigated the Hadoop task
-scheduling component, which is housed within the centralized coordinator
-(master) of the MapReduce engine.  It is written in the (relatively) low-level
-Java language~\cite{java}.  As we have already suggested, building and
-debugging distributed software is extremely difficult in a procedural language.
-We conjecture that by adopting a {\em data-centric} approach to system design
-and by employing {\em declarative} programming languages, a broad range of
+scheduling component, which is housed within the centralized coordinator of the
+Hadoop MapReduce engine.  It is written in the (relatively) low-level Java
+language~\cite{java}.  As we have already suggested, building and debugging
+distributed software can be extremely difficult in such a procedural language.  We
+conjecture that by adopting a {\em data-centric} approach to system design and
+by employing {\em declarative} programming languages, a broad range of
 distributed software functionality can be recast naturally in a data-parallel
 programming model.  Our hope is that this model can significantly raise the
 level of abstraction for programmers, improving code simplicity, speed of
@@ -82,7 +82,7 @@ properties can be achieved in orders-of-magnitude less code.  In
 Chapter~\ref{ch:hop}, we move beyond the batch-oriented execution model in
 MapReduce to a more online execution model by pipelining data between system
 operators.  This extension brings with it a number of scheduling challenges,
-which we solve in our declarative scheduling framework.  Finally, we conclude
+which we resolve in our declarative scheduling framework.  Finally, we conclude
 in Chapter~\ref{ch:conclusion} with a discussion of future directions.
 
 
