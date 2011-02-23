@@ -205,9 +205,11 @@ public final class TypeChecker extends Visitor {
 
 	private boolean checkInterface(Class type, Class check) {
 		type = lookupType(type.getCanonicalName()) == null ? type : lookupType(type.getCanonicalName());
-		for (Class i : type.getInterfaces()) {
-			if (check == i) return true;
-		}
+		do {
+			for (Class i : type.getInterfaces()) {
+				if (check == i) return true;
+			}
+		} while(null != (type = type.getSuperclass()));
 		return false;
 	}
 
