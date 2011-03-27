@@ -1,59 +1,57 @@
 \chapter[P2: A Logical Beginning]{P2: A Logical Beginning}
 \label{ch:p2}
 
-I joined the Declarative Networking project when it was just getting underway
-in $2004$.  The original project members included Boon Thau Loo, Tyson Condie,
-Joseph M.  Hellerstein, and Ion Stoica at the {\em University of California,
-Berkeley}, Petros Maniatis and Timothy Roscoe at {\em Intel Research Berkeley},
-and Raghu Ramakrishnan at {\em Yahoo!  Research}.  We would see the development
-of a new declarative language called {\em \OVERLOG} and its companion runtime
-{\em P2}.  Our initial goal was to make it easy to implement and deploy {\em
-overlay} networks~\footnote{A computer network built on top of an existing
-network e.g., IP (layer 3).} by allowing specifications in a high-level
-declarative language to be directly executed on nodes that span the Internet.
-These overlay specifications, expressed as \OVERLOG rules, contained {\em
-orders of magnitude} fewer lines of code than corresponding overlay
-implementations written in an imperative language (e.g., C/C++).  The project
-implemented, and deployed, declarative versions of a Narada-style mesh
+This Chapter summarizes the contributions made during the {\em Declarative
+Networking} project~\cite{boon-thesis}, which influenced much of the work
+described in this thesis.  The original project members included Boon Thau Loo,
+Tyson Condie, Joseph M.  Hellerstein, and Ion Stoica at the {\em University of
+California, Berkeley}, Petros Maniatis and Timothy Roscoe at {\em Intel
+Research Berkeley}, and Raghu Ramakrishnan at {\em Yahoo!  Research}.
+Together, we developed a new declarative language called {\em \OVERLOG} and a
+runtime system called {\em P2}.  Our initial goal was to make it easy to
+implement and deploy {\em overlay} networks~\footnote{A computer network built
+on top of an existing network e.g., IP (layer 3).} by allowing specifications
+in a high-level declarative language to be directly executed on nodes that span
+the Internet.  These overlay specifications, expressed as \OVERLOG rules,
+contained {\em orders of magnitude} fewer lines of code than corresponding
+overlay implementations written in an imperative language (e.g., C/C++).  The
+project implemented, and deployed, declarative versions of a Narada-style mesh
 network~\cite{chu00case}, using only 12 ``rules'', and the Chord structured
-overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}, versus thousands of
-lines of C code for the MIT Chord reference implementation.  From the many
-contributions made during this project, we showed that relations, together with
-a recursive query language, can fairly naturally represent the persistent
-routing state of the overlays it considered~\cite{boon-thesis}.
+overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}.  The P2 project
+clearly showed that relations, together with a recursive query language, can
+fairly naturally represent the persistent routing state of the overlays it
+considered~\cite{boon-thesis}.
 
 The \OVERLOG language is a descendent of Datalog, which we review in
 Chapter~\ref{ch:p2:sec:datalog}.  In Chapter~\ref{ch:p2:sec:overlog} we present
 the \OVERLOG language by detailing its extensions to Datalog: it adds a
 notation to specify the location of data, provides some SQL-style extensions
-such as primary keys and aggregation, and defines a new dataflow model for
-processing and generating changes to tables.  Chapter~\ref{ch:p2:sec:p2}
-describes the P2 runtime, which is responsible for compiling and executing
-\OVERLOG programs on a set of distributed nodes.  The design of P2 was inspired
-by prior work in both databases and networking.  It is based in large part upon
-a side-by-side comparison of the PIER peer-to-peer query
-engine~\cite{pier-cidr05} and the Click modular router~\cite{click-tocs}.  Like
-PIER, P2 can manage structured data tuples flowing through a broad range of
-query processing elements, which may accumulate significant state and perform
-substantial asynchronous processing.  Like Click, P2 stresses high-performance
-transfers of data units, as well as dataflow elements with both ``push'' and
-``pull'' modalities.
+such as primary keys and aggregation, and adds a flexible notion of state
+lifetime.  Chapter~\ref{ch:p2:sec:p2} describes the P2 runtime, which is
+responsible for compiling and executing \OVERLOG programs on a set of
+distributed nodes.  The design of P2 was inspired by prior work in both
+databases and networking.  It is based in large part upon a side-by-side
+comparison of the PIER peer-to-peer query engine~\cite{pier-cidr05} and the
+Click modular router~\cite{click-tocs}.  Like PIER, P2 can manage structured
+data tuples flowing through a broad range of query processing elements, which
+may accumulate significant state and perform substantial asynchronous
+processing.  Like Click, P2 stresses high-performance transfers of data units,
+as well as dataflow elements with both ``push'' and ``pull'' modalities.
 
 \section{Introduction to Datalog}
 \label{ch:p2:sec:datalog}
 
 Our description of Datalog is based on a survey by Ramakrishnan and
-Ullman~\cite{deductive-database}, and the many superb course
-notes~\cite{ullmanNotes} on the subject.  Datalog drew inspiration from the
-Prolog language, which was one of the first logic programming languages.  Both
-Datalog and Prolog consist of a set of declarative {\em rules} and an optional
-{\em query}.  A rule has the form $p\ \text{\ol{:-}}\ q_1,\ q_2,\ \ldots,\
-q_n$, which represents a conjunction of literals.  Informally, a rule reads
-''{\bf if} $q_1$ and $q_2$ and $\ldots$ and $q_n$ is true {\bf then} $p$ is
-true``.  Literals are either {\em predicates} over {\em fields} (variables and
-constants), or function symbols applied to fields.  The predicate appearing to
-the left of the \ol{:-} symbol is the head predicate, and those to the right
-are body predicates or ``subgoals.'' Recursion is expressed by rules that refer
+Ullman~\cite{deductive-database}, and course notes~\cite{ullmanNotes} on the
+subject.  Datalog drew inspiration from the Prolog language, which was one of
+the first logic programming languages.  Both Datalog and Prolog consist of a
+set of declarative {\em rules} and an optional {\em query}.  A rule has the
+form $p\ \text{\ol{:-}}\ q_1,\ q_2,\ \ldots,\ q_n$, which informally reads
+``{\bf if} $q_1$ and $q_2$ and $\ldots$ and $q_n$ is true {\bf then} $p$ is
+true.'' The predicate appearing to the left of the \ol{:-} symbol is the head
+predicate, and those to the right are body literals or ``subgoals.'' Literals
+are either {\em predicates} over {\em fields} (variables and constants), or
+function symbols applied to fields.  Recursion is expressed by rules that refer
 to each other in a cyclic fashion.  That is, the head predicate also appears as
 a subgoal in the rule, or indirectly through some other subgoal predicates.
 
@@ -71,8 +69,8 @@ During evaluation, EDB facts represent the input to the Datalog program, and
 IDB derivations are the output.  Most implementations of Datalog evaluate rules
 in a bottom up fashion, starting with all known EDB facts, and deriving new IDB
 facts through rule deductions.  A key consequence of a bottom-up evaluation
-strategy is that it can efficiently handle ``large data'' sets, whose size well
-exceeds the capacity of a machine's main memory.  
+strategy is that it can efficiently handle relations whose size exceed the
+capacity of a machine's main memory.
 
 %Prolog on the other hand uses
 %a top-down evaluation approach that precludes the efficient use of relational
@@ -127,8 +125,8 @@ expressed in Datalog.  The {\em fact} statements at the top specify the
 existence of two data tuples in the \ol{link} table with the given attribute
 constants.  Each row of the \ol{link} table contains three attributes; two
 strings, and an integer.  The program rules derive all reachable paths from
-this initial set of known \ol{link} tuples, and present that result in a
-relational view called \ol{path}~\footnote{Henceforth, referred to simply as a
+this initial set of known \ol{link} tuples, and presents that result in a
+relational view called \ol{path}~\footnote{Henceforth, we refer to simply as a
 ``relation.''}.
 
 Base derivations proceed from the rule body (those predicates to the right of
@@ -139,12 +137,12 @@ to $Y$ at cost $C$, then there exists a \ol{path} from $X$ to $Y$ consisting of
 nodes $X, Y$ at cost $C$.'' Both initial facts meet this criterion and hence
 are included in the \ol{path} relation.
 
-Rule~\ol{r2} expresses a transitive closure over the \ol{link} {\bf and}
+Rule~\ol{r2} expresses a transitive closure over the \ol{link} and
 \ol{path} relations.  The rule reads ``if there is a link from $X$ to $Y$ at
 cost $C$, and there is a \ol{path} $P2$ from $Y$ to $Z$ at cost $C2$, then
 there is a path from $X$ to $Z$ via $P2$ at cost of $C1+C3$.'' A path from
 ``node1'' to ``node3'', through ``node2'', satisfies this criterion, and such a
-tuple is included in the \ol{path} IDB relation.  The query predicate, shown at
+tuple is included in the \ol{path} IDB relation.  The predicate, shown at
 the bottom of Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start
 at ``node1.'' The \ol{path} tuples that begin with ``node1'' and end at
 ``node2'' and ``node3'' (via ``node2'') both meet this query constraint.
