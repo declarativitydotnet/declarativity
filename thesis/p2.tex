@@ -1,21 +1,21 @@
 \chapter[P2: A Logical Beginning]{P2: A Logical Beginning}
 \label{ch:p2}
 
-This Chapter summarizes the contributions made during the {\em Declarative
-Networking} project~\cite{boon-thesis}, which influenced much of the work
-described in this thesis.  The original project members included Boon Thau Loo,
-Tyson Condie, Joseph M.  Hellerstein, and Ion Stoica at the {\em University of
-California, Berkeley}, Petros Maniatis and Timothy Roscoe at {\em Intel
-Research Berkeley}, and Raghu Ramakrishnan at {\em Yahoo!  Research}.
-Together, we developed a new declarative language called {\em \OVERLOG} and a
-runtime system called {\em P2}.  Our initial goal was to make it easy to
-implement and deploy {\em overlay} networks~\footnote{A computer network built
-on top of an existing network e.g., IP (layer 3).} by allowing specifications
-in a high-level declarative language to be directly executed on nodes that span
-the Internet.  These overlay specifications, expressed as \OVERLOG rules,
-contained {\em orders of magnitude} fewer lines of code than corresponding
-overlay implementations written in an imperative language (e.g., C/C++).  The
-project implemented, and deployed, declarative versions of a Narada-style mesh
+This chapter contains background material related to the {\em Declarative
+Networking} project~\cite{boon-thesis}, which is a lead-in to this thesis.  The
+original project members included Boon Thau Loo, Tyson Condie, Joseph M.
+Hellerstein, and Ion Stoica at the {\em University of California, Berkeley},
+Petros Maniatis and Timothy Roscoe at {\em Intel Research Berkeley}, and Raghu
+Ramakrishnan at {\em Yahoo!  Research}.  Together, we developed a new
+declarative language called {\em \OVERLOG} and a runtime system called {\em
+P2}.  Our initial goal was to make it easy to implement and deploy {\em
+overlay} networks~\footnote{A computer network built on top of an existing
+network e.g., IP (layer 3).} by allowing specifications in a high-level
+declarative language to be directly executed on nodes that span the Internet.
+These overlay specifications, expressed as \OVERLOG rules, contained {\em
+orders of magnitude} fewer lines of code than the corresponding overlay
+implementations written in an imperative language (e.g., C/C++).  The project
+implemented, and deployed, declarative versions of a Narada-style mesh
 network~\cite{chu00case}, using only 12 ``rules'', and the Chord structured
 overlay~\cite{chord} in only 35 ``rules''~\cite{p2:sosp}.  The P2 project
 clearly showed that relations, together with a recursive query language, can
@@ -23,8 +23,8 @@ fairly naturally represent the persistent routing state of the overlays it
 considered~\cite{boon-thesis}.
 
 The \OVERLOG language is a descendent of Datalog, which we review in
-Chapter~\ref{ch:p2:sec:datalog}.  In Chapter~\ref{ch:p2:sec:overlog} we present
-the \OVERLOG language by detailing its extensions to Datalog: it adds a
+Chapter~\ref{ch:p2:sec:datalog}.  In Chapter~\ref{ch:p2:sec:overlog}, we
+present the \OVERLOG language by detailing its extensions to Datalog: it adds a
 notation to specify the location of data, provides some SQL-style extensions
 such as primary keys and aggregation, and adds a flexible notion of state
 lifetime.  Chapter~\ref{ch:p2:sec:p2} describes the P2 runtime, which is
@@ -82,13 +82,16 @@ capacity of a machine's main memory.
 \label{ch:p2:sec:safety}
 
 There are constraints that must be in place for a Datalog program to make sense
-as operations on finite relations.  A {\em safe} Datalog rule is one that
-restricts the range of all variables appearing in the head by ensuring that
-each such variable appear as a field in some predicate(s) of the rule body.
-For example, the following rule is not safe since it does not restrict the $P$
-variable in the \ol{path} head predicate.
-
-%\begin{minipage}{\linewidth}
+as operations on finite relations.  
+\begin{mydef}
+\ssp
+A {\em safe} Datalog rule ensures that all variables mentioned in the rule
+appear in some nonnegated subgoal table predicate of the rule body.
+\end{mydef}
+This definition ensures that all variables in negated subgoals and the head
+predicate are restricted by some nonnegated subgoal table predicate.  For example,
+the following rule is not safe since it does not restrict the $P$ variable in
+the \ol{path} head predicate.
 \begin{lstlisting}[frame=none]
 path(X, Y, P, C) :- link(X, Y, C).
 \end{lstlisting}
