@@ -6,60 +6,59 @@ languages to a variety of applications outside the traditional boundaries of
 data management.  Examples include work on compilers~\cite{lam05context},
 computer games~\cite{white-sigmod07}, security protocols~\cite{li-padl03}, and
 modular robotics~\cite{ashley-iros07}.  Our work in this area began with the
-{\em Declarative Networking} project, as instantiated in the {\em P2} system
-for Internet overlays~\cite{p2:sosp, loo-sigmod06}.  The early phase of the P2
-project demonstrated the viability of declarative languages as a natural fit
-for programming network overlay protocols.  In Chapter~\ref{ch:p2}, we describe
-this influential work because it sets the stage for this thesis.  Specifically,
-we describe the declarative language \OVERLOG -- a dialect of Datalog -- and
-the P2 system, which automatically compiles \OVERLOG programs into a
+{\em Declarative Networking} project, as instantiated by the {\em P2} system
+for Internet overlays~\cite{p2:sosp, loo-sigmod06}.  The P2 project
+demonstrated the viability of declarative languages as being a natural fit for
+programming network overlay protocols.  In Chapter~\ref{ch:p2}, we review this
+influential work because it sets the stage for this thesis.  Specifically, we
+describe the declarative language \OVERLOG -- a dialect of Datalog -- and the
+P2 system, which automatically compiles \OVERLOG programs into a
 dataflow-oriented runtime system.
 
-The primary contributions presented in this dissertation begin in
-Chapter~\ref{ch:evita}, where we describe our first declarative system
-component -- Evita Raced, which is a declarative metacompiler implemented in
-the final version of P2.  Evita Raced formulates the task of query compilation
-as a query; written in the same declarative language (\OVERLOG) used by
-``client'' queries, such as the various networking protocols from Loo, et
-al.~\cite{loo-sigmod06, p2:sosp}.  P2 was first engineered to implement Evita
-Raced (Chapter~\ref{ch:evita:sec:compile}), thereby providing compilation tasks
-(written in \OVERLOG) access to the logical query plan, and allowing the
-ability to query and update that logical query plan.  Many traditional database
-optimizations, like the magic-sets rewrite (Chapter~\ref{ch:magic}), the System
-R dynamic program (Chapter~\ref{ch:opt:sec:systemr}), and the Cascades
-branch-and-bound algorithm (Chapter~\ref{ch:opt:sec:cascades}), can be fully
-expressed as \OVERLOG queries.  Specifying these optimizations as \OVERLOG
-queries results in a more concise representation of the {\em algorithm} as {\em
-code} and a dramatic reduction in the overall development effort.  We reflect
-on the practicalities of system development in \OVERLOG and our overall
-experience with Evita Raced in Chapter~\ref{ch:evitaend}.
+Following the background material, Chapter~\ref{ch:evita} describes a
+declarative system component called Evita Raced, which is a declarative
+metacompiler implemented in P2.  Evita Raced formulates the task of query
+compilation as a query; written in the same declarative language (\OVERLOG)
+used by ``client'' queries, such as the various networking protocols from Loo,
+et al.~\cite{loo-sigmod06, p2:sosp}.  Evita Raced exposes the P2 compiler state
+to the \OVERLOG language (Chapter~\ref{ch:evita:sec:compile}), thereby
+permitting the specification of query transformations (i.e., optimizations) in
+\OVERLOG.  Many traditional database optimizations, like the magic-sets rewrite
+(Chapter~\ref{ch:magic}), the System R dynamic program
+(Chapter~\ref{ch:opt:sec:systemr}), and the Cascades branch-and-bound algorithm
+(Chapter~\ref{ch:opt:sec:cascades}), can be fully expressed as \OVERLOG
+queries.  Specifying these optimizations as \OVERLOG queries results in a more
+concise representation of the {\em algorithm as code} and a dramatic reduction
+in the overall development effort.  We reflect on the practicalities of a
+declarative approach to query compilation and our overall experience with Evita
+Raced in Chapter~\ref{ch:evitaend}.
  
 In Chapter~\ref{ch:cloud}, we turn our attention to {\em cloud
 computing}~\cite{abovetheclouds} and develop a declarative version of Apache
-Hadoop master~\cite{hadoop}.  Hadoop is an open source software project that
+Hadoop~\cite{hadoop}.  Hadoop is an open source software project that
 implements the MapReduce programming model~\cite{mapreduce-osdi}.  In our work
-here, we investigated the Hadoop task scheduling component, which is housed
+here, we investigate the Hadoop task scheduling component, which is contained
 within the centralized coordinator of the Hadoop MapReduce engine.  It is
-written in the (relatively) low-level Java language~\cite{java}.  As we have
-already suggested, building and debugging distributed software can be extremely
-difficult in such a procedural language.  We conjecture that by adopting a {\em
-data-centric} approach to system design and by employing {\em declarative}
-programming languages, a broad range of distributed software functionality can
-be recast naturally in a data-parallel programming model.  Our hope is that
-this model can significantly raise the level of abstraction for programmers,
-improving code simplicity, speed of development, ease of software evolution,
-and program correctness.
+written in the (relatively) low-level Java language~\cite{java}.  We conjecture
+that building and debugging distributed software can be extremely difficult in
+such a procedural language.  We evaluate our conjecture by adopting a {\em
+data-centric} approach to system design that recasts the logic of a distributed
+system in a declarative programming language.  Our goal here is to raise the
+programming abstraction to a level that improves code simplicity, speed of
+development, ease of software evolution, and overall program correctness.
 
-To evaluate this conjecture, we used the \OVERLOG language to implement the
-specification of the Hadoop MapReduce scheduler.  We begin in
-Chapter~\ref{ch:hadoop} with some background material on MapReduce, which has
-emerged as a popular programming model for writing data processing tasks in the
-cloud.  In Chapter~\ref{ch:boom}, we describe our rewrite of the Hadoop
-MapReduce scheduling engine in a declarative language and show that equivalent
-performance, fault-tolerance, and scalability properties can be achieved in
-orders-of-magnitude less code.  In Chapter~\ref{ch:hop}, we evolve the
-batch-oriented specification of MapReduce to a more online execution model that
-pipelines data between operators.  Finally, we conclude in
+Hadoop is a network-based system that schedules data-parallel computations on a
+cluster of nodes.  In our work here, we describe a declarative implementation
+of the Hadoop scheduler, which partitions the computation into tasks and
+schedules them on cluster nodes.  In Chapter~\ref{ch:hadoop}, we review the
+salient aspects of Hadoop and the MapReduce programming model that it
+implements.  Chapter~\ref{ch:boom} describes our rewrite of the Hadoop
+scheduler in a declarative language and shows that equivalent performance,
+fault-tolerance, and scalability properties can be achieved in a declarative
+language.  In Chapter~\ref{ch:hop}, we evolve the batch-oriented data flow
+implemented by Hadoop to a more online execution model that pipelines data
+between operators.  This chapter also describes extensions to the declarative
+scheduler that accommodate pipelined plans.  Finally, we conclude in
 Chapter~\ref{ch:conclusion} with a discussion of future directions.
 
 
