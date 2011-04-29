@@ -7,49 +7,50 @@ open-source software framework that supports data-intensive distributed
 applications.  We focus on those aspects of the Hadoop system kernel that
 concern the remaining chapters of this thesis.  We begin in
 Chapter~\ref{ch:hadoop:sec:progmodel} with the MapReduce programming model,
-which is based on two operations; {\em map} and {\em reduce}.  In
-Chapter~\ref{ch:hadoop:sec:hadoop}, we present an overview of Hadoop; a system
-inspired by Google's MapReduce~\cite{mapreduce-osdi} and the Google File System
-(GFS)~\cite{gfs-sosp}.  We conclude in Chapter~\ref{ch:hadoop:sec:conclude} by
-introducing our own work in this area, which is further described in the
-remaining chapters of this thesis.
+which is based on two operations: {\em map} and {\em reduce}.
+Chapter~\ref{ch:hadoop:sec:hadoop} discusses the Hadoop implementation, which
+is comprised of a MapReduce dataflow engine, inspired by Google's
+MapReduce~\cite{mapreduce-osdi}, and a distributed file system that models the
+Google File System (GFS)~\cite{gfs-sosp}.  Chapter~\ref{ch:hadoop:sec:conclude}
+contains a high-level description our work in this area; postponing the details
+to remaining chapters of this thesis.
 
 \section{MapReduce Programming Model}
 \label{ch:hadoop:sec:progmodel}
 
-In MapReduce, the programmer expresses their desired computation as a series of
-\emph{jobs} that will yield data in the form of key-value pairs.  Each job
-consists of two stages: first, a user-defined \emph{map} function is applied to
+MapReduce programmers expresses their computations as a series of {\em jobs}
+that process collections of data in the form of key-value pairs . Each job
+consists of two stages: first, a user-defined \ol{map} function is applied to
 each input record to produce a list of intermediate key-value pairs.  Second, a
-user-defined \emph{reduce} function is called once for each distinct key in the
-map output and passed the list of intermediate values associated with that key.
-The MapReduce framework automatically parallelizes the execution of these
-functions and ensures fault tolerance.
+user-defined \ol{reduce} function is called on each distinct key and
+list of associated values from the map output, and returns a list of output
+values.  The MapReduce framework automatically parallelizes the execution of
+these functions and ensures fault tolerance.
 
-Optionally, the user can supply a \emph{combiner}
-function~\cite{mapreduce-osdi}, which will be applied to the intermediate results
-between the map and reduce steps.  Combiners are similar to reduce functions,
-except that they are not passed \emph{all} the values for a given key: instead,
-a combiner emits an output value that summarizes the input values it was
-passed.  Combiners are typically used to perform map-side ``pre-aggregation,''
-which reduces the amount of network traffic required between the map and reduce
-steps.
+Optionally, the user can supply a \ol{combiner}
+function~\cite{mapreduce-osdi}, which will be applied to the intermediate
+results between the map and reduce steps.  Combiners are similar to reduce
+functions, except that they are not passed {\em all} the values for a given
+key: instead, a combiner emits an output value that summarizes the input values
+it was passed.  Combiners are typically used to perform map-side
+``pre-aggregation,'' which reduces the amount of network traffic required
+between the map and reduce steps.
 
 \section{Hadoop MapReduce}
 \label{ch:hadoop:sec:hadoop}
 
-Hadoop is composed of \emph{Hadoop MapReduce}, an implementation of MapReduce
-designed for large clusters, and the \emph{Hadoop Distributed File System}
+Hadoop is composed of {\em Hadoop MapReduce}, an implementation of MapReduce
+designed for large clusters, and the {\em Hadoop Distributed File System}
 (HDFS), a file system optimized for batch-oriented workloads such as MapReduce.
 In most Hadoop jobs, HDFS is used to store both the input to the map step and
-the output of the reduce step.  Note that HDFS is \emph{not} used to store
+the output of the reduce step.  Note that HDFS is {\em not} used to store
 intermediate results (e.g., the output of the map step): these are kept on each
 node's local file system.
 
 A Hadoop installation consists of a single master node and many worker nodes.
-The master, called the \emph{JobTracker}, is responsible for accepting jobs
-from clients, dividing those jobs into \emph{tasks}, and assigning those tasks
-to be executed by worker nodes.  Each worker runs a \emph{TaskTracker} process
+The master, called the {\em JobTracker}, is responsible for accepting jobs
+from clients, dividing those jobs into {\em tasks}, and assigning those tasks
+to be executed by worker nodes.  Each worker runs a {\em TaskTracker} process
 that manages the execution of the tasks currently assigned to that node.  Each
 {\TT} has a fixed number of slots for executing tasks (two maps and two reduces
 by default).  A heartbeat protocol between each {\TT} and the {\JT} is used to
@@ -77,33 +78,35 @@ public interface Mapper<K1, V1, K2, V2> {
 \label{fig:mapfunction}
 \end{figure*}
 
-Each map task is assigned a portion of the input file called a \emph{split}.
+Each map task is assigned a portion of the input file called a {\em split}.
 By default, a split contains a single HDFS block (64MB by default), so the
 total number of file blocks determines the number of map tasks.
 
 The execution of a map task is divided into two phases.
 \begin{enumerate}
+    \ssp
 \item
-  The \emph{map} phase reads the task's split from HDFS, parses it into
+  The {\em map} phase reads the task's split from HDFS, parses it into
   records (key/value pairs), and applies the map function to each
   record.
 \item
-  After the map function has been applied to each input record, the
-  \emph{commit} phase registers the final output with the {\TT}, which
+  After the map function has been applied to each input record, a
+  {\em commit} phase registers the final output with the {\TT}, which
   then informs the {\JT} that the task has finished executing.
 \end{enumerate}
 
 Figure~\ref{fig:mapfunction} contains the interface that must be implemented by
-user-defined map functions.  After the \emph{map} function has been applied to
-each record in the split, the \emph{close} method is invoked.  The third
-argument to the \emph{map} method specifies an \emph{OutputCollector} instance,
-which accumulates the output records produced by the map function.  The output
-of the map step is consumed by the reduce step, so the OutputCollector stores
-map output in a format that is easy for reduce tasks to consume.  Intermediate
-keys are assigned to reducers by applying a partitioning function, so the
-OutputCollector applies that function to each key produced by the map function,
-and stores each record and partition number in an in-memory buffer.  The
-OutputCollector spills this buffer to disk when it reaches capacity.
+user-defined map functions.  After the \ol{map}
+function has been applied to each record in the split, the \ol{close} method is
+invoked.  The third argument to the \ol{map} method specifies an {\em
+OutputCollector} instance, which accumulates the output records produced by the
+map function.  The output of the map step is consumed by the reduce step, so
+the {\em OutputCollector} stores map output in a format that is easy for reduce
+tasks to consume.  Intermediate keys are assigned to reducers by applying a
+partitioning function, so the {\em OutputCollector} applies that function to each key
+produced by the map function, and stores each record and partition number in an
+in-memory buffer.  The {\em OutputCollector} spills this buffer to disk when it
+reaches capacity.
 
 A spill of the in-memory buffer involves first sorting the records in the
 buffer by partition number and then by key.  The buffer content is written to
@@ -112,7 +115,7 @@ the local file system as an index file and a data file
 each partition in the data file.  The data file contains only the records,
 which are sorted by the key within each partition segment.
 
-During the \emph{commit} phase, the final output of the map task is generated
+During the {\em commit} phase, the final output of the map task is generated
 by merging all the spill files produced by this task into a single pair of data
 and index files.  These files are registered with the {\TT} before the task
 completes.  The \TT will read these files when servicing requests from reduce
@@ -130,21 +133,22 @@ tasks.
 \label{ch:hadoop:sec:reducetask}
 The execution of a reduce task is divided into three phases.
 \begin{enumerate}
-\item The \emph{shuffle} phase fetches the reduce task's input
+    \ssp
+\item The {\em shuffle} phase fetches the reduce task's input
   data. Each reduce task is assigned a partition of the key range
   produced by the map step, so the reduce task must fetch the content
   of this partition from every map task's output.
-\item The \emph{sort} phase groups records with the same key together.
-\item The \emph{reduce} phase applies the user-defined reduce function
+\item The {\em sort} phase groups records with the same key together.
+\item The {\em reduce} phase applies the user-defined reduce function
   to each key and corresponding list of values.
 \end{enumerate}
 
-In the \emph{shuffle} phase, a reduce task fetches data from each map task by
+In the {\em shuffle} phase, a reduce task fetches data from each map task by
 issuing HTTP requests to a configurable number of {\TT}s at once (5 by
-default). The {\JT} relays the location of every {\TT} that hosts map output to
-every {\TT} that is executing a reduce task. Note that a reduce task cannot
-fetch the output of a map task until the map has finished executing and
-committed its final output to disk.
+default).  The {\JT} relays the location of every {\TT} that hosts map output
+to every {\TT} that is executing a reduce task.  Note that a reduce task cannot
+fetch the output of a map task until the map has committed its final output to
+disk.
 
 \begin{figure*}[t]
 \ssp
@@ -164,14 +168,16 @@ public interface Reducer<K2, V2, K3, V3> {
 \end{figure*}
 
 After receiving its partition from all map outputs, the reduce task enters the
-\emph{sort} phase. The map output for each partition is already sorted by the
-reduce key. The reduce task merges these runs together to produce a single run
-that is sorted by key. The task then enters the \emph{reduce} phase, in which it
-invokes the user-defined reduce function for each distinct key in sorted order,
-passing it the associated list of values. The output of the reduce function is
-written to a temporary location on HDFS\@. After the reduce function has been
-applied to each key in the reduce task's partition, the task's HDFS output file
-is atomically renamed from its temporary location to its final location.
+{\em sort} phase~\footnote{Some pre-sorting work is done during the shuffle
+phase.}.  The map output for each partition is already sorted by the reduce
+key.  Therefore, the reduce task will merge these runs together to produce a
+single run that is sorted by key.  The task then enters the {\em reduce} phase,
+during which it invokes the user-defined reduce function for each distinct key
+(in sorted order) and associated list of values.  The output of the reduce
+function is written to a temporary location on HDFS.  After the reduce function
+has been applied to each key in the reduce task's partition, the task's HDFS
+output file is atomically renamed from its temporary location to its final
+location.
 
 In this design, the output of both map and reduce tasks is written to disk
 before it can be consumed. This is particularly expensive for reduce tasks,

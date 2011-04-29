@@ -1370,13 +1370,12 @@ with any "critical" alerts that occurred recently; rule~\ol{s1} defines the
 \ol{mostRecentCriticalAlert} relation.  Rule~\ol{s2} is evaluated at the \JT
 whenever a {\em heartbeat} exchange occurs with some \TT.  The \ol{heartbeat}
 predicate includes the name of the \TT, its status, and its spare map slot
-capacity, which the rule ensures is greater than zero
-(line~\ref{tsp:heartbeat}).  The rule joins the \ol{heartbeat} with all
-critical alerts in the \ol{mostRecentCriticalAlert} relation.  As an added
-precaution, we subsequently check that the alerted task's estimated completion
-(\ol{COMP\_EST}) time is high relative to other tasks in its category.
-Finally, we ensure that the task has not already been rescheduled and that the
-\TT contains the maps input data.
+capacity, which the rule ensures is greater than zero.  The rule joins the
+\ol{heartbeat} with all critical alerts in the \ol{mostRecentCriticalAlert}
+relation.  As an added precaution, we subsequently check that the alerted
+task's estimated completion (\ol{COMP\_EST}) time is high relative to other
+tasks in its category.  Finally, we ensure that the task has not already been
+rescheduled and that the \TT contains the maps input data.
 
 
 \subsection{Evaluation}
