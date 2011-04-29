@@ -21,10 +21,10 @@ or evaluated locally for further deduction) from a single incoming event, and
 committing changes to the database atomically upon completion of such a
 step~\cite{LuThesis}.  P2's Datalog-style fixpoints were implemented as
 sequences of such single-event iterations.  As a result, the system's design
-shares both event-driven and logic-style flavors, with some remaining
+shares both event-driven and logic-style flavors, with some
 unresolved conflicts (e.g., stratified Datalog).
-%, and no explicit language constructs to bridge between the two.
 
+%, and no explicit language constructs to bridge between the two.
 %One example is the notion of \ol{delete} rules, the semantics of which are
 %unclear.  How is one to handle delete rules triggered by the \emph{deletion} of
 %a base tuple?  The system certainly does not support -- semantically or
@@ -94,13 +94,12 @@ a recursive query language.  The notion of metacompilation also leads to a very
 tight implementation with significant reuse of code needed for runtime
 processing.
 
-Even with the caveats expressed in Chapter~\ref{ch:evitaend:sec:reflect}, we are
-convinced that a declarative metacompiler is much easier to program and extend
-than the monolithic query optimizers we have worked on previously.  We are now
-at a point where we can add significant features (e.g., histograms, broadcast
-rewrites, stratification tests) in an hour or two, where they would otherwise
-have taken days or weeks of work in a traditional implementation.
-
+Even with the caveats expressed in Chapter~\ref{ch:evitaend:sec:reflect}, we
+are convinced that a declarative metacompiler is much easier to program and
+extend than the monolithic query optimizers we have worked on previously.  We
+achieved a point where we could add significant features (e.g., histograms,
+broadcast rewrites, stratification tests) in an hour or two, where they would
+otherwise have taken days or weeks of work in a traditional implementation.
 One surprising lesson of our work was the breadth of utility afforded by the
 metacompilation framework.  Although motivated by performance optimizations, we
 have used Evita Raced for a number of unforeseen tasks.  These include:

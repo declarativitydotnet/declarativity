@@ -12,26 +12,26 @@ involve intricate, uninterrupted sequences of computational steps.  Hence, we
 suspected that data center infrastructure might be a good initial litmus test
 for our hypotheses about building distributed software.
 
-\emph{\BOOMA} is an API-compliant reimplementation of the HDFS distributed file
-system and the Hadoop MapReduce engine~\cite{boom}.  These two components were
-named \emph{\BOOM-FS} and \emph{\BOOM-MR}, respectively.  In writing \BOOMA, we
-preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
-internal state with a set of relations, and replaced key system logic with code
-written in a declarative language.  In this chapter, we focus on our
-implementation of \BOOM-MR, but provide some experimental evaluations of
-\BOOM-FS.
+Our first foray into data center systems was captured in \emph{\BOOMA}, which
+is an API-compliant reimplementation of the HDFS distributed file system and
+the Hadoop MapReduce engine~\cite{boom}.  Our declarative version of these two
+components were named \emph{\BOOM-FS} and \emph{\BOOM-MR}, respectively.  In
+writing \BOOMA, we preserved the Java API ``skin'' of HDFS and Hadoop, but
+replaced complex internal state with a set of relations, and replaced key
+system logic with code written in a declarative language.  In this chapter, we
+focus on our implementation of \BOOM-MR, but provide some experimental
+evaluations of \BOOM-FS.
 
 The remainder of this chapter is organized as follows.
 Chapter~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library that
 we used execute \OVERLOG programs within the (Java-based) Hadoop
-infrastructure.  Chapter~\ref{ch:boom:sec:port} presents BOOM-MR as a
-declarative MapReduce scheduler, and describes how we embedded it into the
-Hadoop system by replacing the existing scheduling code written in Java with
-\OVERLOG.  Chapter~\ref{ch:boom:sec:eval} evaluates the resulting declarative
-scheduler against the original unmodified Hadoop scheduler by comparing the
-response times of jobs scheduled by both.  Finally,
-Chapter~\ref{ch:boom:sec:relwork} examines some of the related work and
-Chapter~\ref{ch:boom:sec:conclusion} provides a chapter summary.
+infrastructure.  Chapter~\ref{ch:boom:sec:port} presents BOOM-MR, a declarative
+MapReduce scheduler, and describes how we embedded it into the Hadoop system.
+Chapter~\ref{ch:boom:sec:eval} evaluates the performance of jobs scheduled in
+our declarative scheduler against those scheduled by the original (unmodified)
+Hadoop scheduler.  Finally, Chapter~\ref{ch:boom:sec:relwork} examines some of
+the related work and Chapter~\ref{ch:boom:sec:conclusion} concludes with a
+summary of our experience in developing \BOOMA.
 
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
@@ -44,8 +44,9 @@ imposing a natural stratum boundary (e.g., count aggregate).  Our workaround
 involved adding a number of conditions that detected the stratum boundary, and
 ensuring that these ``conditions'' were computed in separate P2 dataflow
 fixpoints.  This was a hard lesson, which led us to develop an entirely new
-\OVERLOG implementation that supports stratified Datalog.  We present this new
-system, called \JOL, here.
+\OVERLOG implementation that supports stratified Datalog.  We briefly describe
+this new Java \OVERLOG Library (JOL), which we used to implement the remaining
+\OVERLOG programs described in this thesis.
 
 Like P2, \JOL compiles \OVERLOG programs into pipelined dataflow graphs of
 operators (similar to ``elements'' in the Click modular router~\cite{click}).
@@ -54,15 +55,6 @@ extension (Chapter~\ref{ch:evita}): each \OVERLOG program is compiled into a
 representation that is captured in rows of tables.  Program testing,
 optimization and rewriting can be written concisely as metaprograms in \OVERLOG
 that manipulate those tables.
-
-The original \OVERLOG implementation ({\em P2}) is aging, and lacked support
-for Java, so we developed a new Java-based \OVERLOG runtime we call {\em \JOL.}
-We originally developed \JOL as a Datalog (only) library for the Pig
-system~\cite{pig-sigmod}.  The idea was for \JOL, along with the Evita Raced
-extensions, to be the rule-based optimizer for the PigLatin language.  This
-initial version of \JOL was used to perform a number of heuristic~\footnote{Pig
-had no support for statistics at the time.} rewrites for PigLatin queries, and
-it can be applied to Pig through a patch~\cite{jira-360}.
 
 The \JOL system matured when we targeted the Hadoop stack, which required tight
 integration between \OVERLOG and Java code.  The latest version of \JOL
@@ -111,8 +103,8 @@ infrastructure was in place.
 \subsection{Hadoop MapReduce Scheduler}
 \label{ch:boom:sec:hadoop}
 
-Recall in Hadoop MapReduce, there is a single master node called the \emph{\JT}
-which manages a number of worker nodes called \emph{{\TT}s}.  A job is divided
+The Hadoop architecture consists of a single master node called the \emph{\JT}
+that manages a number of worker nodes called \emph{{\TT}s}.  A job is divided
 into a set of map and reduce \emph{tasks}.  The {\JT} assigns tasks to worker
 nodes.  Each map task reads an input chunk from the distributed file system,
 runs a user-defined map function, and partitions output key/value pairs into
@@ -132,11 +124,11 @@ schedule further tasks on the {\TT}.  Also, Hadoop will attempt to schedule
 \subsection{Table-izing MapReduce}
 \label{ch:boom:sec:tables}
 
-Our initial goal was to port the Hadoop \JT code to \OVERLOG.  We began by
-identifying the key state maintained by the {\JT}.  This state includes both
-data structures to track the ongoing status of the system and transient state
-in the form of messages sent and received by the {\JT}.  We captured this
-information the four \OVERLOG tables shown in Table~\ref{ch:boom:tbl:hcatalog}.
+\BOOM-MR is a port of the Hadoop \JT code to \OVERLOG.  In this chapter, we
+identify the key state maintained by the {\JT}.  This state includes both data
+structures to track the ongoing status of the system and transient state in the
+form of messages sent and received by the {\JT}.  We captured this information
+the four \OVERLOG tables shown in Table~\ref{ch:boom:tbl:hcatalog}.
 
 \begin{table}
 \ssp
@@ -155,37 +147,39 @@ taskTracker  & {\TT} State  & \underline{Name}, Hostname, State, \\
 \end{table}
 
 The \ol{job} relation contains a single row for each job submitted to the
-{\JT}. In addition to some basic metadata, each job tuple contains an attribute
-called $JobConf$ that holds a Java object constructed by legacy Hadoop
-code, which captures the configuration of the job. The \ol{task} relation
-identifies each task within a job. The attributes of this relation identify the
-task type (map or reduce), the input ``partition'' (a chunk for map tasks, a
-bucket for reduce tasks), and the current running status.
+{\JT}.  In addition to some basic metadata, each job tuple contains an
+attribute called the $JobConf$, which holds a Java object constructed by legacy
+Hadoop code.  This object captures the configuration parameters that pertain to
+a single MapReduce job.  The \ol{task} relation identifies each task within a
+job through attributes that specify the task type (map or reduce), the input
+``partition'' (a chunk for map tasks, a bucket for reduce tasks), and the
+current running status.
 
 A task may be attempted more than once, due to speculation or if the initial
-execution attempt failed.  The \ol{taskAttempt} relation maintains the state
-of each such attempt.  In addition to a progress percentage and a state
-(running/completed), reduce tasks can be in any of three phases: copy, sort, or
-reduce. The $Tracker$ attribute identifies the {\TT} that is assigned to
-execute the task attempt. Map tasks also need to record the location of their
-input data, which is given by $InputLoc$. 
+execution attempt failed.  The \ol{taskAttempt} relation maintains the state of
+each such attempt.  In addition to a progress percentage and a state
+(running/completed), reduce tasks can be in any one of three phases: copy,
+sort, or reduce.  The $Tracker$ attribute identifies the {\TT} assigned to
+execute the task attempt.  Map tasks also need a record containing the location
+of their input data, which is given by $InputLoc$.
 
 The \ol{taskTracker} relation identifies each {\TT} in the cluster with a
-unique name.  The hostname, current running state, and task workload of the \TT
-are also part of this relation.  The $MapCount$ and $ReduceCount$ attributes
-indicate how many map and reduce tasks are currently running on the \TT.  The
-maximum number of map and reduce tasks that the \TT is able to support are
-given by the $MaxMap$ and $MaxReduce$ attributes; this is in keeping with
-Hadoop which specifies these values in each message from a \TT to the \JT.
+unique name.  This relation includes attributes that provide the hostname,
+current running state, and the \TT workload.  Specifically, the $MapCount$ and
+$ReduceCount$ attributes specify the current number of map and reduce tasks
+that are executing on the \TT.  The maximum number of map and reduce tasks that
+the \TT is able to support is given by the $MaxMap$ and $MaxReduce$ attributes;
+this is in keeping with the Hadoop implementation, which specifies a fixed
+number of slots that can execute tasks.
 
-\OVERLOG rules are used to update the {\JT}'s tables by converting inbound messages
-into \ol{job}, \ol{taskAttempt} and \ol{taskTracker} tuples. These rules
-are mostly straightforward. Scheduling decisions are encoded in the
-\ol{taskAttempt} table, which assigns tasks to {\TT}s. A scheduling policy is
-simply a set of rules that join against the \ol{taskTracker} relation to find
-\TT{}s with unassigned slots, and schedules tasks by inserting tuples into
-\ol{taskAttempt}. This architecture makes it easy for new scheduling policies
-to be defined.
+%Our \OVERLOG rules update these {\JT} tables by converting status updates from
+%heartbeat messages to \ol{job}, \ol{taskAttempt} and \ol{taskTracker} tuples.
+%These rules are mostly straightforward.  Scheduling decisions are encoded in
+%the \ol{taskAttempt} table, which assigns tasks to {\TT}s.  A scheduling policy
+%is simply a set of rules that join against the \ol{taskTracker} relation to
+%find \TT{}s with unassigned slots, and schedules tasks by inserting tuples into
+%\ol{taskAttempt}.  This architecture makes it easy for new scheduling policies
+%to be defined.
 
 \subsection{MapReduce Scheduling in \OVERLOG}
 \label{ch:boom:sec:scheduler}
@@ -194,10 +188,10 @@ MapReduce scheduling has been the subject of recent research, and one of our
 early motivations for building \BOOMA was to make this research extremely easy
 to carry out.  In our initial \BOOM-MR prototype, we implemented Hadoop's
 default First-Come-First-Served (or FIFO) policy for task scheduling, which was
-captured in 9 rules (96 lines) of scheduler policy.  Next, we implemented the
+captured in $9$ rules ($96$ lines) of scheduler policy.  Next, we implemented the
 recently-proposed LATE policy~\cite{zaharia-late} to evaluate both (a) the
 difficulty of prototyping a new policy, and (b) the faithfulness of our
-\OVERLOG-based execution to that of Hadoop using two separate scheduling
+\OVERLOG-based execution to that of Hadoop using two separate speculation
 algorithms.
 
 \subsubsection{First-Come-First-Served Scheduling}
@@ -223,11 +217,10 @@ s3 highestPriorityJob(JobId) :-
 \caption{\label{ch:boom:fig:joborder}The highest priority job that still has unscheduled tasks ($StartTime < 0$).}
 \end{figure}
 
-In this section, we outline the declarative specification for Hadoop's default
-task scheduling policy.  The policy schedules tasks from the job with the
-highest priority.  A job's scheduling order is defined by its $Priority$
-followed by its $SubmitTime$ attributes.  The tasks from the job that is first
-in the scheduling order are scheduled before any other tasks from other jobs.
+The FIFO policy schedules tasks from the job with the highest priority.  A
+job's scheduling order is defined by its $Priority$ followed by its
+$SubmitTime$ attributes.  The tasks from the job that is first in the
+scheduling order are scheduled before the tasks in any other jobs.
 
 Figure~\ref{ch:boom:fig:joborder} captures this constraint in three rules,
 which identify the job whose tasks are considered first when \TT slots are
