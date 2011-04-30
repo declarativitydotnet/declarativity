@@ -19,7 +19,7 @@ In this chapter, we propose a alternative MapReduce architecture in which
 intermediate data is {\em pipelined} between operators, while preserving the
 programming interfaces and fault tolerance models of previous MapReduce
 frameworks.  To validate this design, we developed the Hadoop Online Prototype
-(HOP), a pipelined version of Hadoop.\footnote{The source code for HOP can be
+(HOP): a pipelined version of Hadoop.\footnote{The source code for HOP can be
 downloaded from \url{http://code.google.com/p/hop/}}
 
 Pipelining provides several important advantages to a MapReduce
@@ -66,27 +66,26 @@ Chapter~\ref{ch:hop:sec:intra-pipe}.  Finally, pipelining requires that
 producers and consumers are co-scheduled intelligently; we discuss our initial
 work on this issue in Chapter~\ref{ch:hop:sec:jolport}.
 
-In Chapter~\ref{ch:hop:sec:online} we show how HOP can support online
+In Chapter~\ref{ch:hop:sec:online}, we show how HOP can support online
 aggregation for long-running jobs and illustrate the potential benefits of that
-interface for MapReduce tasks.  In Chapter~\ref{ch:hop:sec:continuous} we
-describe our support for continuous MapReduce jobs over data streams and
-demonstrate an example of near-real-time cluster monitoring.  HOP presents new
-challenges and opportunities in terms of task scheduling.  In
-Chapter~\ref{ch:hop:sec:boom} we discuss our port of the \BOOM-MR declarative
-scheduler (Chapter~\ref{ch:boom:sec:port}) to HOP.  We then present some new
-\OVERLOG scheduling policies that deal with online aggregation and continuous
-jobs along with a new speculation policy that is based on statistics collected
-by a continuous MapReduce job that monitors the cluster.  We conclude this
-chapter with some related work in Chapter~\ref{ch:hop:sec:relwork} and postpone
-future work for Chapter~\ref{ch:conclusion}.
+interface for MapReduce tasks.  Chapter~\ref{ch:hop:sec:continuous} describes
+our support for continuous MapReduce jobs over data streams and demonstrate an
+example of near-real-time cluster monitoring.  HOP presents new challenges and
+opportunities in terms of task scheduling.  In Chapter~\ref{ch:hop:sec:boom},
+we discuss our port of the \BOOM-MR declarative scheduler
+(Chapter~\ref{ch:boom:sec:port}) to HOP and include some new \OVERLOG
+scheduling policies that deal with online aggregation and continuous jobs, and
+a new speculation policy based on statistics collected by a (continuous)
+MapReduce monitoring job.  Chapter~\ref{ch:hop:sec:relwork} concludes with some
+related work.
 
 \section{Pipelined MapReduce}
 \label{ch:hop:sec:pipelining}
 
-In this chapter we discuss our extensions to Hadoop to support pipelining
-between tasks (Chapter~\ref{ch:hop:sec:intra-pipe}) and between jobs
+We begin with a description of our Hadoop extensions that support pipelining
+between tasks (Chapter~\ref{ch:hop:sec:intra-pipe}) and jobs
 (Chapter~\ref{ch:hop:sec:inter-pipe}).  We describe how our design supports
-fault tolerance (Chapter~\ref{ch:hop:sec:ft}) and compare the performance HOP
+fault tolerance (Chapter~\ref{ch:hop:sec:ft}) and compare the performance of HOP
 under both pipelining and blocking execution modes
 (Chapter~\ref{ch:hop:sec:perf}).
 
@@ -114,10 +113,11 @@ that hosted a map task belonging to the same job.  A \TT is responsible for
 serving these HTTP requests, which could occur long after the map task's
 execution.  This means that map task execution is completely decoupled from
 reduce task execution.  To support pipelining, we modified the \TT serving
-component to {\em push} data to reducers as it is produced by the map tasks.
-To give an intuition for how this works, we begin by describing a
-straightforward pipelining design, and then discuss the changes we had to make
-to achieve good performance.
+component to {\em push} data to reducers as it is produced by the map tasks,
+while still maintaining the decoupling of these two steps.  To give an
+intuition for how this works, we begin by describing a straightforward
+pipelining design, and then discuss the changes we had to make to achieve good
+performance.
 
 \subsubsection{Na\"{\i}ve Pipelining}
 \label{ch:hop:sec:naive}
@@ -131,13 +131,13 @@ ramifications that we discuss here before presenting the HOP design.
 
 Recall, that when a client submits a new job to Hadoop, the {\JT} assigns the
 map and reduce tasks associated with the job to the available {\TT} slots.  For
-purposes of this discussion, we must assume that there are enough free slots to
-assign all reduce tasks in a job.  We modified Hadoop so that each reduce task
-contacts every map task upon initiation of the job, and opens a TCP socket
-which will be used to pipeline the output of the map function.  As each map
-output record is produced, the mapper determines which partition (reduce task)
-the record should be sent to, and immediately sends it via the appropriate
-socket.
+purposes of {\em this} discussion, we must assume that there are enough free
+slots to assign all reduce tasks in a job.  We modified Hadoop so that each
+reduce task contacts every map task upon initiation of the job, and opens a TCP
+socket which will be used to pipeline the output of the map function.  As each
+map output record is produced, the mapper determines which partition (reduce
+task) the record should be sent to, and immediately sends it via the
+appropriate socket.
 
 A reduce task accepts the pipelined data it receives from each map task and
 stores it in an in-memory buffer, spilling sorted runs of the buffer to disk as
@@ -154,7 +154,7 @@ available to schedule every task in a new job.  Opening a socket between every
 map and reduce task also requires a large number of TCP connections.  A simple
 tweak to the na\"{\i}ve design solves both problems: if a reduce task has not
 yet been scheduled, any map tasks that produce records for that partition
-simply write them to disk.  When the map task completes it registers the output
+simply write them to disk.  When the map task completes, it registers the output
 it was not able to send with the host \TT serving component.  Once the reduce
 task is assigned a slot, it can then pull the records from the map task's host
 \TT, as in regular Hadoop.  To reduce the number of concurrent TCP connections,
@@ -190,7 +190,7 @@ combiners.
 
 Another related problem is that eager pipelining moves some of the sorting work
 from the mapper to the reducer.  Recall from
-Chapter~\ref{ch:hadoop:sec:maptask} that in the blocking architecture, map
+Chapter~\ref{ch:hadoop:sec:maptask}, that in the blocking architecture, map
 tasks generate sorted spill files: all the reduce task must do is merge
 together the pre-sorted map output for each partition.  In the na\"{\i}ve
 pipelining design, map tasks send output records as they are generated, so a
@@ -199,23 +199,21 @@ number of map tasks typically far exceeds the number of
 reduces~\cite{mapreduce-osdi}, moving more work to the reducer increased
 response time, as shown in our experiments (Chapter~\ref{ch:hop:sec:perf}).
 
-We addressed these issues by modifying the in-memory buffer design described in
-Chapter~\ref{ch:hop:sec:pipe-refine}.  Instead of sending the buffer contents
-to reducers directly, we wait for the buffer to grow to a threshold size.  The
-mapper then applies the combiner function, sorts the output by partition and
-reduce key, and writes the buffer to disk using the Hadoop spill file format
-described in Figure~\ref{ch:hadoop:fig:mapoutput}.
-
-Next, we arranged for the {\TT} serving component at each node to handle
-pipelining data to reduce tasks.  Map tasks register spill files with the {\TT}
-via RPCs~\footnote{We extended the existing RPC Hadoop interface to include
-information on individual spill files.  Having the spill files be in the same
-format allowed us to reuse much of the stock Hadoop serving code i.e., I/O file
-formats/streams.}.  If the reducers are able to keep up with the production of
-map outputs and the network is not a bottleneck, a spill file will be sent to a
-reducer soon after it has been produced (in which case, the spill file is
-likely still resident in the map machine's kernel buffer cache).  However, if a
-reducer begins to fall behind, the number of unsent spill files will grow.
+To avoid a heavy reduce task sort, instead of sending the buffer contents to
+reducers directly, we wait for the buffer to grow to a threshold size.  The
+mapper then sorts the output by partition and reduce key, applies the combiner
+function, and writes the buffer to disk using the Hadoop spill file format
+described in Figure~\ref{ch:hadoop:fig:mapoutput}.  Next, we arranged for the
+{\TT} serving component at each node to handle pipelining data to reduce tasks.
+Map tasks register spill files with the {\TT} via RPCs~\footnote{We extended
+the existing RPC Hadoop interface to include information on individual spill
+files.  Having the spill files be in the same format allowed us to reuse much
+of the stock Hadoop serving code i.e., I/O file formats/streams.}.  If the
+reducers are able to keep up with the production of map outputs and the network
+is not a bottleneck, a spill file will be sent to a reducer soon after it has
+been produced (in which case, the spill file is likely still resident in the
+map machine's kernel buffer cache).  However, if a reducer begins to fall
+behind, the number of unsent spill files will grow.
 
 When a map task generates a new spill file, it first queries the {\TT} for the
 number of unsent spill files.  If this number grows beyond a certain threshold
@@ -462,10 +460,10 @@ completion time by 17.7\% with 5 reducers and by 19.7\% with 20 reducers.
 Figure~\ref{ch:hop:fig:wc3} describes an experiment in which we ran a 10GB
 wordcount job using a single reduce task.  This caused job completion times to
 increase dramatically for both pipelining and blocking, because of the extreme
-load placed on the reduce node.  Pipelining delayed job completion by
-\texttildelow{}17\%, which suggests that our simple adaptive flow control
-scheme (Chapter~\ref{ch:hop:sec:mapout}) was unable to move load back to the
-map tasks aggressively enough.
+load placed on the reduce node.  Pipelining delayed job completion by about
+17\%, which suggests that our simple adaptive flow control scheme
+(Chapter~\ref{ch:hop:sec:mapout}) was unable to move load back to the map tasks
+aggressively enough in this (heavily) unbalanced job configuration.
 
 \subsubsection{Large Job Results}
 
@@ -513,12 +511,12 @@ enough.
 
 Figure~\ref{ch:hop:fig:wc4} reports the performance of a 100GB wordcount job
 with 512MB blocks, which resulted in 240 map tasks, scheduled in three waves of
-80 tasks each.  The 60 reduce tasks were coscheduled with the first wave of map
+80 tasks each.  The 60 reduce tasks were co-scheduled with the first wave of map
 tasks.  In the blocking case, the reduce tasks began working as soon as they
 received the output of the first wave, which is why the reduce progress begins
 to climb around four minutes (well before the completion of all maps).
 Pipelining was able to achieve significantly better cluster utilization, and
-hence reduced job completion time by \texttildelow{}25\%.
+hence reduced job completion time by about 25\%.
 
 Comparing the reduce progress in blocking to pipelining, we see that reduce
 tasks make more progress during the {\em shuffle} phase when pipelining is
@@ -1014,10 +1012,9 @@ management.
 \section{\BOOM-MR port}
 \label{ch:hop:sec:boom}
 
-In this section we describe our port of the declarative scheduling framework
-described in Chapter~\ref{ch:boom} to our Hadoop Online Prototype (HOP).  The
-purpose of this port was to enable the development of alternative scheduling
-policies written in \OVERLOG and to declaratively manage the monitoring system
+This chapter describes our port of the \BOOM-MR (Chapter~\ref{ch:boom}) to HOP.
+Using \BOOM-MR, we development alternative scheduling policies, written in
+\OVERLOG, that made use of statistics provided by the monitoring system
 described in Chapter~\ref{ch:hop:sec:monitor}.  In
 Chapter~\ref{ch:hop:sec:jolport}, we describe the port of \JOL to the
 scheduling component of the HOP \JT.  Chapter~\ref{ch:hop:sec:jolmonitor}
@@ -1030,19 +1027,15 @@ when alerted to a potential issue.
 \subsection{Scheduling HOP with \JOL}
 \label{ch:hop:sec:jolport}
 
-Hadoop 19.2 provides an interface to the \JT scheduler component that allows
-for alternative implementations.  This made the port of \JOL to the HOP \JT
-trivial; adding hooks that translated scheduler API calls to \OVERLOG events.
-The entire port consisted of $55$ lines of Java glue code that implements the
-\JOL harness, and \OVERLOG code that performs the basic scheduling policy
-described in Chapter~\ref{ch:boom}.  We did alter the job relation (described
-in Table~\ref{ch:boom:tbl:hcatalog}) to include an attribute that reflects the
-MapReduce job type -- pipelining/blocking job, online aggregation job, or a
-continuous job.  We also added three scheduling policy rules that are specific
-to online aggregation and continuous jobs.  In the remainder of this section,
-we describe the Java port of \JOL to HOP and the changes we made to the basic
-scheduling rules, which add additional policies for online aggregation and
-continuous jobs.
+HOP is based on Hadoop 19.2, which defines an extensible interface to the \JT
+scheduler component, allowing alternative scheduler implementations.  This made
+the port of \JOL to HOP trivial: the entire port consisted of $55$ lines of
+Java glue code that implemented the \JOL harness, and \OVERLOG code that
+performed the basic scheduling policy described in Chapter~\ref{ch:boom}.  We
+also altered the job relation (described in Table~\ref{ch:boom:tbl:hcatalog})
+to include an attribute for the job type -- pipelining/blocking, online
+aggregation, or continuous.  We then added three scheduling policy rules that
+were specific to online aggregation and continuous jobs.
 
 \subsubsection{\JOL port}
 \begin{figure*}
@@ -1073,24 +1066,23 @@ is called by the \JT during a {\em heartbeat} exchange with a \TT.
 Our implementation of the {\em assignTasks} method transforms the \TT status
 object into a tuple that updates the \ol{taskTracker} relation in
 Table~\ref{ch:boom:tbl:hcatalog}.  In response to this update, the scheduling
-rules enter a fixpoint computation that may assign task attempts on the given
-\TT.  Any updates to the {\em schedule} relation (see rule \ol{s5} in
+rules enter a fixpoint computation, during which it may assign task attempts to
+the given \TT.  Any updates to the {\em schedule} relation (see rule \ol{s5} in
 Figure~\ref{ch:boom:fig:schedule}) will trigger a (pre-registered) Java
 listener that translates the update into a {\em Task} object, which the {\em
-assignTasks} method accumulates in a {\em List} object that is returned by
-the {\em assignTasks} method at the end of an \OVERLOG fixpoint.
+assignTasks} method accumulates in a {\em List} object that is returned by the
+{\em assignTasks} method at the end of the fixpoint.
 
 \subsubsection{Job submission interface}
 
 The Hadoop {\JT} interface for submitting jobs had to be retrofitted to support
 pipelining between jobs.  In regular Hadoop, jobs are submitted one at a time;
 a job that consumes the output of one or more other jobs cannot be submitted
-until the producer jobs have completed.  To address this, we modified the
+until the producer jobs have completed.  To support this, we modified the
 Hadoop job submission interface to accept a list of jobs, where each job in the
 list depends on the job before it.  The client interface traverses this list,
-annotating each job with the identifier of the job that it depends on.
-
-We added a new table to the declarative scheduler that captures inter-job
+annotating each job with the identifier of the job that it depends on.  We then
+added a new table to the declarative scheduler that captured inter-job
 dependencies.  The job scheduling rules use this table to co-schedule jobs with
 their dependencies, giving slot preference to ``upstream'' jobs over the
 ``downstream'' jobs they feed.  As we note in Chapter~\ref{ch:conclusion},
@@ -1122,42 +1114,38 @@ h3 canScheduleMaps(JobId) :-
 only schedules map tasks from an online job when this count is zero.}
 \end{figure}
 
-
 Online aggregation and continuous jobs rely on a scheduling policy that ensures
 the execution of the entire pipeline.  In the case of online aggregation, a
 more complete pipeline provides more accurate estimates since unscheduled
 partitions (i.e., groups) may contain important data.  For continuous jobs,
 scheduling the entire pipeline is a requirement in order to avoid the memory
 pressure in storing the (continuously arriving) data for an unscheduled
-operator.  For a single job, we created a policy that schedules the reduce
-tasks before any map tasks in the same job.  Not scheduling a reduce task in
-advance of the map tasks can result in significant biased results in the online
-aggregation case and significant memory pressure in the continuous job case.
+operator.  We enforced this constraint with by a policy that scheduled reduce
+tasks before any map tasks in the same job (assuming sufficient slot capacity).
 
 Figure~\ref{ch:hop:fig:schedmaps} shows three rules that together determine
 when a job is allowed to schedule map tasks.  A separate admission controller
-rule ensures that the number of reduce tasks for an online aggregation or
-continuous job fits within the current cluster-wide slot capacity.  For each
+rule ensured that the number of reduce tasks for an online aggregation or
+continuous job fit within the current cluster-wide slot capacity.  For each
 job, rule \ol{h1} counts the number of reduce tasks not currently running.  If
 the job type is ``online'' then rule \ol{h2} will add the fact that map tasks
 can be scheduled when the number of non-running map tasks is equal to zero.
-Rule \ol{h3} applies to the map tasks in all other job types, and it simply
-removes any scheduling constraints on these map tasks.  The
-\ol{canScheduleMaps} predicate is added to rules that determine the scheduling
-of map tasks (e.g., rule \ol{s4} in Figure~\ref{ch:boom:fig:schedule}).
+Rule \ol{h3} applies to the map tasks in all other job types; it simply removes
+this scheduling constraints on those map tasks.  The \ol{canScheduleMaps}
+predicate is included in the rule that determines the scheduling of map tasks
+(e.g., rule \ol{s4} in Figure~\ref{ch:boom:fig:schedule}).
 
 \section{Real-time monitoring with \JOL}
 \label{ch:hop:sec:jolmonitor}
 
-With the port \BOOM-MR to HOP in place, we started on writing scheduler
-policies around the real-time monitoring information supplied by our monitoring
-job.  In order to do this, we needed to import the results of our MapReduce
-monitoring job into \JOL as relations.  In the remainder of this section, we
-further describe the MapReduce job that continuously monitors HOP and the
-interface between it and \JOL.  We then describe an alert system that detects
-outlier measurements in map and reduce task execution attempts.  We conclude
-our discussion with a new task speculation policy that is based on the alert
-system.
+After porting \BOOM-MR to HOP, we started writing scheduler policies based on
+the real-time monitoring information supplied by our monitoring job.  In order
+to do this, we needed to import the results of our MapReduce monitoring job
+into \JOL as relations.  Here, we further describe the MapReduce job that
+continuously monitors HOP and its interface to \JOL.  We then present an alert
+system that detects outlier measurements in map and reduce task execution
+attempts.  We conclude our discussion with a new task speculation policy that
+is based on our alert system.
 
 \subsection{MapReduce monitoring job}
 
@@ -1190,24 +1178,25 @@ number (based on the size of the cluster) of reduce tasks that group machine
 and rack level statistics.  For example, we could schedule a single reduce task
 per rack that aggregates the statistics gathered on that rack.
 
-Table~\ref{ch:hop:tbl:measure} lists the common measurements that we have
-considered.  The measurement name is given in the first column, followed by a
-description of the measurement.  The last column identifies the location under
-\ol{/proc} where the measurement is taken.  Process level measurements reside
-under \ol{/proc/[pid]/}, where \ol{[pid]} represents the process identifier.  All
+Table~\ref{ch:hop:tbl:measure} lists the measurements that we collected.  The
+measurement name is given in the first column, followed by a measurement
+description.  The last column identifies the location under \ol{/proc} where
+the measurement was taken.  Process level measurements reside under
+\ol{/proc/[pid]/}, where \ol{[pid]} represents the process identifier.  All
 other measurements outside of \ol{/proc/[pid]/} refer to machine level
 measurements with the exception of the estimated completion time, which is
 derived from task level statistics in the \JT.
 
 A map task gathers measurements by periodically reading the source location
 (last column in Table~\ref{ch:hop:tbl:measure}) from the local file system.
-For each measurement, the map task outputs a record \ol{<host name, time
-stamp, pid, measurement name, measurement value>}.  For machine statistics,
-the map task will set the $PID$ field to {\underline 0} e.g., \ol{<boom.cs.berkeley.edu,
-12348234, {\underline 0}, NET\_OUT, 101>}.  The record key for all map outputs is the
-identifier of the rack to which the machine belongs.  If the cluster does not
-contain racks then the host name is used instead.  This ensures that a single
-reduce task will see all measurements from a given rack or machine boundary.
+For each measurement, the map task outputs a record \ol{<host name, time stamp,
+pid, measurement name, measurement value>}.  For machine statistics, the map
+task will set the $PID$ field to {\underline 0} e.g.,
+\ol{<boom.cs.berkeley.edu, 12348234, {\underline 0}, NET\_OUT, 101>}.  The
+record key for all map outputs is the identifier of the rack to which the
+machine belongs.  If the cluster does not contain rack-level information then
+the host name is used instead.  This ensures that a single reduce task will see
+all measurements from a given rack or machine boundary.
 
 \subsection{Monitoring with \OVERLOG}
 
@@ -1227,16 +1216,17 @@ alert                   & Outlier task alerts   & \underline{TaskId}, \underline
 \label{ch:hop:tbl:monitorCatalog}
 \end{table}
 
-The output of the monitoring job is sent directly (reduce tasks open a back TCP
-channel) to the \JOL instance running in the \JT.  The receiver code translates
-this input into \JOL tuples, and inserts them into monitoring relations defined
-in \JOL.  Table~\ref{ch:hop:tbl:monitorCatalog} defines these monitoring
-relations.  The \ol{machineStat} and \ol{processStat} tables directly hold the
-output of the monitoring jobs.  The \ol{jobStat} and \ol{taskStat} tables
-maintain statistics for jobs and tasks respectively, the values for which are
-derived by rules within the scheduler.  The \ol{alert} table contains outlier
-task measurements, which depending on the severity can result in corrective
-action e.g., execute a speculative task (Chapter~\ref{ch:hop:sec:speculation}).
+The output of the monitoring job is sent directly---reduce tasks open a
+back-channel TCP-socket---to the \JOL instance running on the \JT.  The
+receiver code translates the data packets into \JOL tuples, and inserts them
+into monitoring relations defined in Table~\ref{ch:hop:tbl:monitorCatalog}.
+The \ol{machineStat} and \ol{processStat} tables are populated by the data
+packets received from the monitoring jobs.  The \ol{jobStat} and \ol{taskStat}
+tables maintain statistics for jobs and tasks, respectively, and are derived by
+\OVERLOG rules (Figures~\ref{ch:hop:fig:taskstat}
+and~\ref{ch:hop:fig:jobstat}).  The \ol{alert} table contains outlier task
+measurements, which depending on the severity can result in corrective action
+e.g., execute a speculative task (Chapter~\ref{ch:hop:sec:speculation}).
 
 \begin{figure}
 \ssp
@@ -1269,11 +1259,11 @@ task process identifier ($Pid$), which is supplied by the \TT executing the
 task attempt.  The process identifier allows us to correlate a task in the
 \ol{taskAttempt} table with process level measurements in the \ol{processStat}
 table, as shown by rule \ol{ts1}.  A task's estimated completion time is based
-on its current progress and progress rate.  The progress rate is based on the
-change in progress of the task; updated during \TT heartbeats.  Using the
-current progress and progress rate, rule \ol{ts2} computes a rough estimate on
-the remaining time it will take for the task to complete, which we have denoted
-as a COMP\_EST measurement --- stored in the \ol{taskStat} table.
+on its current progress and progress rate: change in progress computed over \TT
+heartbeat intervals.  Using the current progress and progress rate, rule
+\ol{ts2} computes a rough estimate on the remaining time it will take for the
+task to complete, which we have denoted as a COMP\_EST measurement --- stored
+in the \ol{taskStat} table.
 
 \begin{figure}
 \ssp
@@ -1297,9 +1287,9 @@ measurement name.  The \ol{jobStat} table groups measurement values belonging
 to the same job, task type, and measurement name.  A special Java object called
 {\em StatContainer} is used to store each group of measurements.  The {\em
 StatContainer} class defines methods for computing various metrics (e.g., mean,
-median, stddev, etc.) from its list of measurement values.  Rule \ol{js2} maintains
-the \ol{jobStat} table by initializing a {\em StatContainer} object for each group
-of aggregated measurement values.
+median, stddev, etc.) from its list of measurement values.  Rule \ol{js2}
+maintains the \ol{jobStat} table by initializing a {\em StatContainer} object
+for each group of aggregated measurement values.
 
 
 \subsection{Task alerts} 
