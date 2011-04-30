@@ -12,45 +12,55 @@ involve intricate, uninterrupted sequences of computational steps.  Hence, we
 suspected that data center infrastructure might be a good initial litmus test
 for our hypotheses about building distributed software.
 
-Our first foray into data center systems was captured in \emph{\BOOMA}, which
-is an API-compliant reimplementation of the HDFS distributed file system and
-the Hadoop MapReduce engine~\cite{boom}.  Our declarative version of these two
-components were named \emph{\BOOM-FS} and \emph{\BOOM-MR}, respectively.  In
-writing \BOOMA, we preserved the Java API ``skin'' of HDFS and Hadoop, but
-replaced complex internal state with a set of relations, and replaced key
-system logic with code written in a declarative language.  In this chapter, we
-focus on our implementation of \BOOM-MR, but provide some experimental
-evaluations of \BOOM-FS.
+We evaluated this hypotheses in {\em \BOOMA}: an API-compliant reimplementation
+of the HDFS distributed file system and the Hadoop MapReduce
+engine~\cite{boom}.  Our declarative version of these two components were named
+{\em \BOOM-FS} and {\em \BOOM-MR}, respectively.  In writing \BOOMA, we
+preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
+internal state with a set of relations, and implemented key system logic with
+code written in a declarative language.  In this thesis, we focus on
+declarative scheduling (\BOOM-MR), but include some experimental results that
+show \BOOM-FS performance is on par with HDFS.
 
 The remainder of this chapter is organized as follows.
-Chapter~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library that
-we used execute \OVERLOG programs within the (Java-based) Hadoop
-infrastructure.  Chapter~\ref{ch:boom:sec:port} presents BOOM-MR, a declarative
-MapReduce scheduler, and describes how we embedded it into the Hadoop system.
-Chapter~\ref{ch:boom:sec:eval} evaluates the performance of jobs scheduled in
-our declarative scheduler against those scheduled by the original (unmodified)
-Hadoop scheduler.  Finally, Chapter~\ref{ch:boom:sec:relwork} examines some of
-the related work and Chapter~\ref{ch:boom:sec:conclusion} concludes with a
-summary of our experience in developing \BOOMA.
+Chapter~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library,
+which we used execute \OVERLOG programs within the (Java-based) Hadoop
+infrastructure.  In Chapter~\ref{ch:boom:sec:port}, we discuss the \BOOM-MR
+scheduling harness; embedded in the \JT component of Hadoop.
+Chapter~\ref{ch:boom:sec:hadoop} reviews the scheduling state and
+protocol---implemented in Hadoop version 18.2---that we modeled in our
+declarative code.  Chapter~\ref{ch:boom:sec:tables} captures the entities
+and relationships of the Hadoop scheduler in four (catalog) tables.  Using these
+tables, we develop a scheduling policy in Chapter~\ref{ch:boom:sec:scheduler}
+that models the Hadoop FIFO policy.  We then extend these rules in
+Chapter~\ref{ch:boom:sec:late} with the LATE policy for scheduling ``speculative''
+tasks.  Our declarative LATE port took {\em orders of magnitude} less time and
+code than the (logically) equivalent Java port~\cite{jira-2141}; once the basic
+relational infrastructure was in place.  Chapter~\ref{ch:boom:sec:eval}
+evaluates the performance of jobs scheduled by our declarative FIFO policy
+against those scheduled by the original (unmodified) Hadoop scheduler.
+Finally, Chapter~\ref{ch:boom:sec:relwork} examines some of the related work
+and Chapter~\ref{ch:boom:sec:conclusion} concludes with a summary of our
+experience with \BOOMA.
 
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
 
-P2's lack of support for stratified Datalog forced us to implement a number of
-imperative hacks that often involved (event) manipulations of the underlying
-dataflow fixpoints.  Most of these hacks were required for detecting the
-termination of a group of rules, which would have been implicitly handled by
-imposing a natural stratum boundary (e.g., count aggregate).  Our workaround
-involved adding a number of conditions that detected the stratum boundary, and
-ensuring that these ``conditions'' were computed in separate P2 dataflow
-fixpoints.  This was a hard lesson, which led us to develop an entirely new
-\OVERLOG implementation that supports stratified Datalog.  We briefly describe
-this new Java \OVERLOG Library (JOL), which we used to implement the remaining
-\OVERLOG programs described in this thesis.
+In previous chapters we saw that P2's lack of support for stratified Datalog
+forced us to implement a number of imperative hacks, which often involved
+(event) manipulations of the underlying dataflow fixpoints.  Most of these
+hacks were required for detecting the termination of a group of rules, which
+would have been implicitly handled by imposing a natural stratum boundary
+(e.g., count aggregate).  Our workaround involved adding a number of conditions
+that detected stratum boundaries, and ensured that these ``conditions'' were
+evaluated in separate P2 dataflow fixpoints.  This was a hard lesson, which led
+us to develop an entirely new \OVERLOG implementation that supports stratified
+Datalog.  We briefly describe this new Java \OVERLOG Library (JOL), which we
+used to implement the remaining \OVERLOG programs described in this thesis.
 
 Like P2, \JOL compiles \OVERLOG programs into pipelined dataflow graphs of
 operators (similar to ``elements'' in the Click modular router~\cite{click}).
-\JOL provides \emph{metaprogramming} support akin to P2's Evita Raced
+\JOL provides {\em metaprogramming} support akin to P2's Evita Raced
 extension (Chapter~\ref{ch:evita}): each \OVERLOG program is compiled into a
 representation that is captured in rows of tables.  Program testing,
 optimization and rewriting can be written concisely as metaprograms in \OVERLOG
@@ -62,7 +72,7 @@ includes Java-based extensibility in the model of Postgres~\cite{postgres}.  It
 supports Java classes as abstract data types, allowing Java objects to be
 stored in fields of tuples, and Java methods to be invoked on those fields from
 \OVERLOG.  \JOL also allows Java-based aggregation functions to run on sets of
-column values, and supports Java \emph{table functions}: Java iterators
+column values, and supports Java {\em table functions}: Java iterators
 producing tuples, which can be referenced in \OVERLOG rules as ordinary
 relations.  We made significant use of each of these features in \BOOMA.
 
@@ -79,7 +89,7 @@ relations.  We made significant use of each of these features in \BOOMA.
 \label{ch:boom:sec:port}
 
 In this section, we describe our declarative version of the Hadoop MapReduce
-scheduled, which we call \BOOM-MR.  We used \BOOM-MR to explore embedding a
+scheduled, which we call \BOOM-MR.  Using \BOOM-MR, we explored embedding a
 data-centric rewrite of a non-trivial component into an existing procedural
 system.  MapReduce scheduling policies are one issue that has been treated in
 recent literature (e.g.,~\cite{zaharia-late,delay-sched}).  To enable credible
@@ -87,28 +97,18 @@ work on MapReduce scheduling, we wanted to remain true to the basic structure
 of the Hadoop MapReduce codebase, so we proceeded by understanding that code,
 mapping its core state into a relational representation, and then writing
 \OVERLOG rules to manage that state in the face of new messages delivered by
-the existing Java APIs.  
-
-Chapter~\ref{ch:boom:sec:hadoop} provides quick review of the Hadoop MapReduce
-scheduler component.  In Chapter~\ref{ch:boom:sec:tables} we capture the
-entities and relationships of the Hadoop scheduler in four table catalog.
-Using these tables, we develop a scheduling policy in
-Chapter~\ref{ch:boom:sec:scheduler} that models the FIFO policy in stock
-Hadoop, but using fewer lines of code.  We then add to it, in
-Chapter~\ref{ch:boom:sec:late}, the LATE policy scheduling ``speculative''
-tasks.  Our declarative LATE port took {\em orders of magnitude} less time and
-code, compared to the Java port~\cite{jira-2141}, once the basic relational
-infrastructure was in place.
+the existing Java APIs. 
 
 \subsection{Hadoop MapReduce Scheduler}
 \label{ch:boom:sec:hadoop}
 
-The Hadoop architecture consists of a single master node called the \emph{\JT}
-that manages a number of worker nodes called \emph{{\TT}s}.  A job is divided
-into a set of map and reduce \emph{tasks}.  The {\JT} assigns tasks to worker
-nodes.  Each map task reads an input chunk from the distributed file system,
-runs a user-defined map function, and partitions output key/value pairs into
-hash buckets on the local disk.  Reduce tasks are created for each hash bucket.
+We briefly review the Hadoop scheduling logic that we modeled in \OVERLOG.  The
+Hadoop architecture consists of a single master node called the {\em \JT} that
+manages a number of worker nodes called {\em {\TT}s}.  A job is divided into a
+set of map and reduce {\em tasks}.  The {\JT} assigns tasks to worker nodes.
+Each map task reads an input chunk from the distributed file system, runs a
+user-defined map function, and partitions output key/value pairs into hash
+buckets on the local disk.  Reduce tasks are created for each hash bucket.
 Each reduce task fetches the corresponding hash buckets from all mappers, sorts
 locally by key, runs a user-defined reduce function and writes the results to
 the distributed file system.
@@ -118,7 +118,7 @@ reduces by default).  A heartbeat protocol between each {\TT} and the {\JT} is
 used to update the {\JT}'s bookkeeping of the state of running tasks, and drive
 the scheduling of new tasks: if the {\JT} identifies free {\TT} slots, it will
 schedule further tasks on the {\TT}.  Also, Hadoop will attempt to schedule
-\emph{speculative} tasks to reduce a job's response time if it detects
+{\em speculative} tasks to reduce a job's response time if it detects
 ``straggler'' nodes~\cite{mapreduce-osdi}.
 
 \subsection{Table-izing MapReduce}
@@ -151,7 +151,7 @@ The \ol{job} relation contains a single row for each job submitted to the
 attribute called the $JobConf$, which holds a Java object constructed by legacy
 Hadoop code.  This object captures the configuration parameters that pertain to
 a single MapReduce job.  The \ol{task} relation identifies each task within a
-job through attributes that specify the task type (map or reduce), the input
+job using attributes that specify the task type (map or reduce), the input
 ``partition'' (a chunk for map tasks, a bucket for reduce tasks), and the
 current running status.
 
@@ -187,8 +187,8 @@ number of slots that can execute tasks.
 MapReduce scheduling has been the subject of recent research, and one of our
 early motivations for building \BOOMA was to make this research extremely easy
 to carry out.  In our initial \BOOM-MR prototype, we implemented Hadoop's
-default First-Come-First-Served (or FIFO) policy for task scheduling, which was
-captured in $9$ rules ($96$ lines) of scheduler policy.  Next, we implemented the
+default First-Come-First-Served (or FIFO) policy for task scheduling, which we
+captured in $9$ rules ($96$ lines).  We then extended these rules with the
 recently-proposed LATE policy~\cite{zaharia-late} to evaluate both (a) the
 difficulty of prototyping a new policy, and (b) the faithfulness of our
 \OVERLOG-based execution to that of Hadoop using two separate speculation
@@ -219,8 +219,9 @@ s3 highestPriorityJob(JobId) :-
 
 The FIFO policy schedules tasks from the job with the highest priority.  A
 job's scheduling order is defined by its $Priority$ followed by its
-$SubmitTime$ attributes.  The tasks from the job that is first in the
-scheduling order are scheduled before the tasks in any other jobs.
+$SubmitTime$ (see \ol{job} schema in Table~\ref{ch:boom:tbl:hcatalog}).  The
+tasks from the job that is first in the scheduling order are scheduled before
+the tasks in any other jobs.
 
 Figure~\ref{ch:boom:fig:joborder} captures this constraint in three rules,
 which identify the job whose tasks are considered first when \TT slots are
@@ -229,22 +230,19 @@ while rule~\ol{s2} determines, for each job priority, what is the earliest
 submit time.  Both \ol{s1} and \ol{s2} only consider jobs that have unscheduled
 tasks, shown here by considering the \ol{Status < JobStatus.FINISHED}
 predicate.  Rule \ol{s3} joins the result of rules \ol{s1} and \ol{s2} to
-identify the overall highest priority job with unscheduled tasks.  This job
-data will predicate task scheduling rules on scheduling tasks from this job
-only.
+identify the overall highest priority job with unscheduled tasks.  The
+\ol{highestPriorityJob} predicate is used to constrain task scheduling rules
+to only consider (unscheduled) tasks from the specified job.
 
 Scheduling individual tasks from the highest priority job occurs when a \TT
 performs a heartbeat exchange with the \JT and has some number of available map
-or reduce task slots.  A all tasks are scheduled based solely on slot
-availability; if a task slot is available then schedule a task from the job
-with the highest priority.  To avoid data movement costs, the default policy
-will consider the location of the input to the map task and try to schedule the
-map task close to a machine that hosts its input data.  During a heartbeat
-exchange with a \TT that has available map slots, the \JT will schedule map
-tasks from the highest priority job whose input data resides closest to the
-\TT.  Ideally, the input to the map task resides on the same machine or rack
-but if not then an arbitrary map task is scheduled, without considering other
-queued jobs.
+or reduce task slots.  Tasks are scheduled based on slot availability; if a
+task slot is available then schedule a task from the job with the highest
+priority.  To avoid data movement costs, the scheduling policy also consider
+the location of the input to the map task and tries to schedule the map task
+close to a machine that hosts its input data.  Ideally, the input to the map
+task resides on the same machine or rack but if not then an arbitrary map task
+is scheduled, without considering other queued jobs.  
 
 \begin{figure}
 \ssp
@@ -253,7 +251,7 @@ queued jobs.
 /* Assign each task a locality score on the given tracker. */
 s4 mapTaskLocality(TaskId, Tracker, Locality) :-
    heartbeat(Tracker, TrackerStatus, MapSlots, ReduceSlots),
-   hightestPriorityJob}(JobId),
+   hightestPriorityJob(JobId),
    task(JobId, TaskId, Type, _, InputSplits, StartTime, _),
    StartTime < 0, Type == "map",
    {
@@ -268,8 +266,8 @@ s4 mapTaskLocality(TaskId, Tracker, Locality) :-
 	
 /* For each task tracker, list the k best map tasks to 
    schedule, where k == MapSlots.  The result of this 
-   will be added to the schedule relation, the information 
-   in which is returned to the TaskTracker. */
+   will be added to the schedule relation, which is 
+   returned to the TaskTracker. */
 s5 schedule(Tracker, bottomK<MapID, MapSlots>) :-
    mapTaskLocality(TaskId, Tracker, Locality),
    heartbeat(Tracker, TrackerStatus, MapSlots, ReduceSlots),
@@ -281,25 +279,25 @@ s5 schedule(Tracker, bottomK<MapID, MapSlots>) :-
 \caption{\label{ch:boom:fig:schedule} Map task locality priority scheduler.}
 \end{figure}
 
-Figure~\ref{ch:boom:fig:schedule} shows two rules that together implement this
-default Hadoop policy, which is to schedule map tasks near the data.  When a \TT
-heartbeat is received, rule \ol{s4} assigns a locality metric to unscheduled
-tasks that belong to the highest priority job.  \JOL supports the ability to
-add Java code at the end of a rule body, delineated within brackets \{ ...  \}.
-This Java code executes last in the rule body, and will only see those tuples
-that represent actual deductions.  In rule \ol{s4}, the bracketed Java code
-assigns a {\em locality} metric according to the proximity of the heartbeat \TT to
-the map input data.
+Figure~\ref{ch:boom:fig:schedule} shows two rules that together implement, a
+locality aware, Hadoop FIFO policy.  When a \TT heartbeat is received, rule
+\ol{s4} assigns a locality metric to unscheduled tasks that belong to the
+highest priority job.  \JOL supports the ability to add Java code at the end of
+a rule body, delineated within brackets \{ ...  \}.  This Java code executes
+last in the rule body, and will only see those tuples that represent actual
+deductions.  In rule \ol{s4}, the bracketed Java code assigns a {\em locality}
+metric according to the proximity of the heartbeat \TT to the map input data.
 
 The result of rule \ol{s4} is evaluated in rule \ol{s5}, which schedules the
-map tasks whose inputs reside closest to the heartbeat \TT.  The {\bf bottomK}
+map tasks whose input resides closest to the heartbeat \TT.  The {\bf bottomK}
 aggregate orders the $MapID$s from lowest to highest $Locality$ and chooses the
-lowest $K$ map tasks in this order, not exceeding the number of available map slots
-($MapSlots$).  Each result tuple from rule \ol{s5} is converted, through a few
-imperative steps in the Java language, into a schedule action message that is
-returned to the \TT in its RPC call to the \JT.  The reduce task scheduling
-rule simply schedules reduces tasks from the highest priority job based on the
-reduce slot capacity of the heartbeat \TT, as per stock Hadoop.
+lowest $K$ map tasks in this order, not exceeding the number of available map
+slots ($MapSlots$).  Each result tuple from rule \ol{s5} is converted, through
+a few imperative steps in the Java language, into a schedule action message
+that is returned to the \TT in the RPC call made to the \JT.  The reduce task
+scheduling rule simply schedules reduces tasks from the highest priority job
+based on the availability of reduce slots from the heartbeat \TT, as per stock
+Hadoop.
 
 \subsection{Task Speculation in \OVERLOG}
 \label{ch:boom:sec:late}
@@ -349,20 +347,19 @@ speculative tasks based on {\em straggler} tasks~\cite{zaharia-late}.  There
 are two aspects to each policy: choosing which tasks to speculatively
 re-execute, and choosing {\TT}s to run those tasks.  Original Hadoop
 re-executes a task if its progress is more than 0.2 (on a scale of $[0..1]$)
-below the mean progress of similar tasks; it assigns speculative tasks using
-the same policy as it uses for initial tasks.  LATE chooses tasks to re-execute
-via an {\em estimated finish time} metric based on the task's \emph{progress
-rate}.  Moreover, it avoids assigning speculative tasks to {\TT}s that exhibit
-slow performance executing similar tasks, in hopes of preventing the creation
-of new stragglers.
+below the mean progress of similar tasks.  LATE, on the other hand, chooses to
+re-execute tasks via an {\em estimated finish time} metric that is based on the
+task's {\em progress rate}.  Moreover, it avoids assigning speculative tasks to
+{\TT}s that exhibit slow performance executing similar tasks, in hopes of
+preventing further stragglers.
 
-The LATE policy is specified in the paper via just three lines of pseudocode,
-which make use of three performance statistics called $SlowNodeThreshold$,
-$SlowTaskThreshold$ and $SpeculativeCap$.  The first two of these statistics
-correspond to the $25^{th}$ percentiles of progress rates across {\TT}s and
-across tasks, respectively.  The $SpeculativeCap$ indicates the maximum number
-of speculative tasks allowed at any given time, which is suggested to be set at
-$10\%$ of the total available task slots~\cite{zaharia-late}.
+The LATE policy is specified in the paper~\cite{zaharia-late} via three lines
+of pseudocode, which makes use of three performance related statistics called
+$SlowNodeThreshold$, $SlowTaskThreshold$ and $SpeculativeCap$.  The first two
+statistics correspond to the $25^{th}$ percentiles of progress rates across
+{\TT}s and across tasks, respectively.  The $SpeculativeCap$ indicates the
+maximum number of speculative tasks allowed at any given time, which is
+suggested to be set at $10\%$ of the total available task slots.
 
 We compute these thresholds via the five \OVERLOG rules shown in
 Figure~\ref{fig:latePolicy}.  A task is only considered for speculation if its
@@ -382,43 +379,43 @@ given \TT has made for each task category and stores that result in the
 category by determining the 25th percentile for each category of progress rates
 stored in the \ol{trackerPR} table.  Finally, query \ol{l5} counts the number
 of slots that can be used for task speculation.  Integrating the rules into
-\BOOM-MR required modifying two additional \OVERLOG rules that identify tasks
-to speculatively re-execute, and choose {\TT}s for scheduling those tasks, all
-while obeying the SpeculativeCap value.
+\BOOM-MR required two additional \OVERLOG rules that 1) identify tasks to
+speculatively re-execute, and 2) select an ideal {\TT}(s) on which to execute
+those tasks, all while obeying the SpeculativeCap value.
 
 \section{Evaluation}
 \label{ch:boom:sec:eval}
 
-We now validate our declarative specification of both Hadoop's default
-First-Come-First-Serve (FCFS) policy and the LATE policy proposed by Zaharia et
-al.~\cite{zaharia-late}. Our goals were both to evaluate the difficulty of
-building a new policy, and to confirm the faithfulness of our \OVERLOG-based
-{\JT} to the Hadoop {\JT} using two different scheduling algorithms.
+We now validate our declarative specification of both Hadoop's default FIFO
+policy and the LATE policy proposed by Zaharia et al.~\cite{zaharia-late}.  Our
+goals were both to evaluate the difficulty of building a new policy, and to
+confirm the faithfulness of our \OVERLOG-based {\JT} to the Hadoop {\JT} when
+using a logically identical scheduling policy and with the additional LATE
+policy.
 
-Implementing the default FCFS policy required 9 rules (96 lines of code).
-Implementing the LATE policy required 5 additional \OVERLOG rules (30 lines of
-code).  In comparison, LATE is specified in Zaharia et al.'s paper via just
-three lines of pseudocode, but their implementation of the policy for stock
-Hadoop required adding or modifying over $800$ lines of Java spread across $18$
-Java class files --- an order of magnitude more than our \OVERLOG
-implementation.  To be fair, the Java-based implementation represents
-production quality code, which increases code complexity and adds to the
-overall development time.  Nevertheless, much of this complexity comes from
-mapping LATE to a language that focuses on imperative steps rather than
-high-level specifications.
+%First, we compare our code size and development time.  Implementing the default
+%FIFO policy required 9 rules (96 lines of code).  Implementing the LATE policy
+%required 5 additional \OVERLOG rules (30 lines of code).  In comparison, LATE
+%is specified in Zaharia et al.'s paper via just three lines of pseudocode, but
+%their implementation of the policy for stock Hadoop required adding or
+%modifying over $800$ lines of Java spread across $18$ Java class files --- an
+%order of magnitude more than our \OVERLOG implementation.  To be fair, the
+%Java-based implementation represents production quality code, which increases
+%code complexity and adds to the overall development time.  Nevertheless, much
+%of this complexity comes from mapping LATE to a language that focuses on
+%imperative steps rather than high-level specifications.
 
-We evaluated our FCFS and LATE \OVERLOG policies using a 101-node virtual
-cluster on Amazon EC2.  One node executed the Hadoop \JT and the HDFS \NN,
-while the remaining 100 nodes served as slaves for running the Hadoop {\TT}s
-and HDFS {\DN}s.  Each {\TT} was configured to support executing up to two map
-tasks and two reduce tasks simultaneously.  The master node ran on a ``high-CPU
-extra large'' EC2 instance with 7.2 GB of memory and 8 virtual cores.  Our
-slave nodes executed on ``high-CPU medium'' EC2 instances with 1.7 GB of memory
-and 2 virtual cores.  Each virtual core is the equivalent of a 2007-era 2.5Ghz
-Intel Xeon processor.
+We evaluated our \OVERLOG policies using a 101-node virtual cluster on Amazon
+EC2.  One node executed the Hadoop \JT and the HDFS \NN, while the remaining
+100 nodes served as ``workers'' for running the Hadoop {\TT}s and HDFS {\DN}s.  Each
+{\TT} was configured to support up to two map tasks and two reduce
+tasks simultaneously.  The master node ran on a ``high-CPU extra large'' EC2
+instance with 7.2 GB of memory and 8 virtual cores.  Our worker nodes executed
+on ``high-CPU medium'' EC2 instances with 1.7 GB of memory and 2 virtual cores.
+Each virtual core is the equivalent of a 2007-era 2.5Ghz Intel Xeon processor.
 
 
-\subsection{First-Come-First-Serve policy}
+\subsection{FIFO policy}
 
 \begin{figure*}
 \ssp
@@ -431,10 +428,9 @@ Intel Xeon processor.
 \label{fig:ec2experiment}
 \end{figure*}
 
-While improved performance was not a goal of our work, we wanted to
-ensure that the performance of \BOOMA was competitive with Hadoop.
-The workload was a wordcount job on a 30 GB file, using 481 map tasks 
-and 100 reduce tasks.
+While improved performance was not a goal of our work, we wanted to ensure that
+the performance of \BOOMA was competitive with Hadoop.  The workload was a
+wordcount job on a 30 GB file, using 481 map tasks and 100 reduce tasks.
 
 Figure~\ref{fig:ec2experiment} contains four graphs comparing the performance of
 different combinations of Hadoop MapReduce, HDFS, \BOOM-MR, and \BOOM-FS\@. Each
@@ -448,7 +444,7 @@ task requires the output of all map tasks.
 The lower-left graph describes the performance of Hadoop running on top of HDFS,
 and hence serves as a baseline for the subsequent graphs. The upper-left graph
 details \BOOM-MR running over HDFS\@. This graph shows that map and reduce task
-durations under \BOOM-MR are nearly identical to Hadoop 18.1. The lower-right
+durations under \BOOM-MR are nearly identical to Hadoop 18.2. The lower-right
 and upper-right graphs detail the performance of Hadoop MapReduce and \BOOM-MR
 running on top of \BOOM-FS, respectively. \BOOM-FS performance is slightly
 slower than HDFS, but remains competitive.
@@ -456,19 +452,21 @@ slower than HDFS, but remains competitive.
 
 \subsection{LATE policy}
 
-We now compare the behavior of our LATE implementation with the results observed
-by Zaharia et al.\ using Hadoop MapReduce. LATE focuses on how to improve job completion time by reducing the impact of
-``straggler'' tasks. To simulate stragglers, we artificially placed additional
-load on six nodes. We ran a wordcount job on 30 GB of data, using 481 map tasks
-and 400 reduce tasks (which produced two distinct ``waves'' of reduces). We ran
-each experiment five times, and report the average over all
-runs. Figure~\ref{fig:ec2reduce} shows the reduce task duration CDF for three
-different configurations. The plot labeled ``No Stragglers'' represents normal
+We now compare the behavior of our LATE implementation with the results
+observed by Zaharia et al.\ using Hadoop MapReduce.  LATE focuses on how to
+improve job completion time by reducing the impact of ``straggler'' tasks.  To
+simulate stragglers, we artificially placed additional load on six nodes.  We
+ran the same wordcount job on 30 GB of data; using 481 map tasks and 400 reduce
+tasks, which produced two distinct ``waves'' of reduce tasks.  We ran each
+experiment five times, and report the average over these runs.
+
+Figure~\ref{fig:ec2reduce} shows the reduce task duration CDF for three
+different configurations.  The plot labeled ``No Stragglers'' represents normal
 load, while the ``Stragglers'' and ``Stragglers (LATE)'' plots describe
 performance in the presence in stragglers using the default FCFS policy and the
-LATE policy, respectively. We omit map task durations, because adding artificial
-load had little effect on map task execution --- it just resulted in slightly
-slower growth from just below 100\% to completion.
+LATE policy, respectively.  We omit map task durations, because adding
+artificial load had little effect on map task execution --- it just resulted in
+slightly slower growth from just below 100\% to completion.
 
 \begin{figure*}
 \ssp
@@ -478,17 +476,19 @@ slower growth from just below 100\% to completion.
   \label{fig:ec2reduce}
 \end{figure*}
 
-The first wave of 200 reduce tasks was scheduled at the beginning of the
-job. This first wave of reduce tasks cannot finish until all map tasks have
-completed, which increased the duration, hence the large runtime durations indicated in the right
-portion of the graph. The second wave of 200 reduce tasks did not experience
-delay due to unfinished map work since it was scheduled after all map tasks had
-finished. These shorter task durations are reported in the left portion of the
-graph. Furthermore, stragglers had less impact on the second wave of reduce
-tasks since less work (i.e., no map work) is being performed. Figure~\ref{fig:ec2reduce} 
-shows this effect, and also demonstrates how the LATE implementation in {\BOOMA} 
-handles stragglers much more effectively than the FCFS policy ported from Hadoop.  
-This echoes the results of Zaharia et al.~\cite{zaharia-late}
+The 200 reduce tasks were scheduled concurrently with the map step.  This first
+wave of reduce tasks cannot enter the reduce phase until all the map tasks have
+completed, which increased their duration, and resulted in the large runtime
+durations indicated in the right portion of the graph.  The second wave of 200
+reduce tasks did not experience this delay due to unfinished map work since
+these reduce tasks were scheduled after all map tasks had finished.  The second
+wave of reduce tasks are reported in the left portion of the graph.
+Consequently, stragglers had less of an impact on the second wave of reduce
+tasks since fewer resources (i.e., no map work) were being consumed.
+Figure~\ref{fig:ec2reduce} shows this effect, and also demonstrates how the
+LATE implementation in {\BOOMA} handles stragglers much more effectively than
+the default Hadoop policy.  This echoes the results reported by Zaharia et
+al.~\cite{zaharia-late}
 
 \section{Related Work}
 \label{ch:boom:sec:relwork}
@@ -520,32 +520,29 @@ styles is beyond the scope of this dissertation, but an interesting topic for fu
 \section{Summary}
 \label{ch:boom:sec:conclusion}
 
-The initial version of \BOOM-MR required one person-month of development time.
-We spent an additional two person-months debugging and tuning \BOOM-MR's
-performance for large jobs.  At the present time, \BOOM-MR represents the
-declarative specification of the core task scheduler (9 rules), the speculative
-task scheduler (5 rules), recovery from failed tasks (3 rules), and maintaining
-various job and task statistics (5 rules).  In total, \BOOM-MR consists of 22
-\OVERLOG rules in 156 lines of code, and 1269 lines of Java.  \BOOM-MR is based
-on Hadoop version 18.1; we estimate that we removed 6,573 lines from Hadoop
-(out of 88,864).  The removed code contained the core scheduling logic and the
-data structures that represent the components listed in
-Table~\ref{ch:boom:tbl:hcatalog}.  The \OVERLOG patch that replaces the
-original Hadoop scheduler contains an order of magnitude fewer lines of code.
-The performance of \BOOM-MR is very similar to that of Hadoop MapReduce, as we
-discuss in Chapter~\ref{ch:boom:sec:eval}.
+The initial version of \BOOM-MR required one person-month of development time
+and an additional two person-months debugging and tuning \BOOM-MR's performance
+for large jobs.  The final version of \BOOM-MR contained declarative
+specifications for the core task scheduler (9 rules), the speculative task
+scheduler (5 rules), recovery from failed tasks (3 rules), and maintenance of
+various job and task related statistics (5 rules).  In total, \BOOM-MR
+consisted of 22 \OVERLOG rules in 156 lines of code, and 1269 lines of Java.
+\BOOM-MR was based on Hadoop version 18.2; we estimate that we removed 6,573
+lines of code (out of 88,863) from the \ol{org.apache.hadoop.mapred} Hadoop
+package.  In many fewer lines of code and development time, we were able to
+achieve performance characteristics that were competitive to stock Hadoop.
 
-For this ``porting'' exercise, it was handy to leverage \JOL's Java interfaces
-and draw the Java/\OVERLOG boundaries flexibly.  This allowed us to focus on
-porting the more interesting Hadoop logic into \OVERLOG, while avoiding ports of
-relatively mechanical details.  For example, we chose to leave the data
-representation of the \emph{jobConf} as a Java object rather than flatten it
-into a relation because it had no effect on the scheduling logic.
+%For this ``porting'' exercise, it was handy to leverage \JOL's Java interfaces
+%and draw the Java/\OVERLOG boundaries flexibly.  This allowed us to focus on
+%porting the more interesting Hadoop logic into \OVERLOG, while avoiding ports of
+%relatively mechanical details.  For example, we chose to leave the data
+%representation of the {\em jobConf} as a Java object rather than flatten it
+%into a relation because it had no effect on the scheduling logic.
 
-We found that scheduling policies were a good fit for a declarative language
-like \OVERLOG.  In retrospect, this is because scheduling can be decomposed
-into two tasks: \emph{monitoring} the state of a system and applying
-\emph{policies} for how to react to changes to that state.  Monitoring is
+In the end, we found that scheduling policies were a good fit for a declarative
+language like \OVERLOG.  In retrospect, this is because scheduling can be
+decomposed into two tasks: {\em monitoring} the state of a system and applying
+{\em policies} for how to react to changes to that state.  Monitoring is
 well-handled by \OVERLOG: we found that the statistics about {\TT} state
 required by the LATE policy are naturally realized as aggregate functions, and
 \JOL took care of automatically updating those statistics as new messages from
@@ -556,21 +553,16 @@ statistics have been imported into \JOL, we can build some very interesting
 scheduling policies around them.
 
 It is also unsurprisingly that a logic language should be well-suited to
-specifying policy.  Indeed, the rules in Chapters~\ref{ch:p2}
-and~\ref{ch:evita} can be viewed as search policies for shortest paths in a
-network and an optimal plan for a query.  Moreover, the rules that govern
-bottom-up and top-down plan enumeration can be viewed as {\em search strategy}
-policies.  In the current context, we found the \BOOM-MR scheduler much simpler
-to extend and modify than the original Hadoop Java code, as demonstrated by our
-experience with LATE\@.  Informally, the \OVERLOG code in \BOOM-MR seems about
-as complex as it should be: Hadoop's MapReduce task coordination logic is a
-simple and clean design, and the compactness of \BOOM-MR reflects that
-simplicity appropriately.  In Chapter~\ref{ch:hop}, we extended the MapReduce
-batch-oriented model to a pipelining model.  Pipelining MapReduce requires
-operators be coscheduled; a policy that is easily handled by a few extra
-\OVERLOG rules beyond those discussed here.
-
-
-
-
+specifying policy.  We found the \BOOM-MR scheduler much simpler to extend and
+modify than the original Hadoop Java code, as demonstrated by our experience
+with LATE\@.  Informally, the \OVERLOG code in \BOOM-MR seems about as complex
+as it should be: Hadoop's MapReduce task coordination logic is a simple and
+clean design, and the compactness of \BOOM-MR reflects that simplicity
+appropriately.  The extensibility of \BOOM-MR benefited us when we extended the
+MapReduce batch-oriented model to one that pipelined data between operators
+(Chapter~\ref{ch:hop}); supporting both online aggregation~\cite{onlineagg} and
+stream processing~\cite{stream} jobs.  
+%Pipelining MapReduce required a more
+%aggressive operator coscheduling policy that we captured in a few extra
+%\OVERLOG rules, beyond those discussed here.
 
