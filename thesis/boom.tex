@@ -19,8 +19,10 @@ engine~\cite{boom}.  Our declarative version of these two components were named
 preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
 internal state with a set of relations, and implemented key system logic with
 code written in a declarative language.  In this thesis, we focus on
-declarative scheduling (\BOOM-MR), but include some experimental results that
-show \BOOM-FS performance is on par with HDFS.
+declarative scheduling (\BOOM-MR), rather than \BOOM-FS which was led by other
+members of the \BOOMA team.  However, we do include some \BOOM-FS
+results---showing its performance is on par with HDFS---to validate the
+performance of the \JOL runtime, which was a project within this thesis.
 
 The remainder of this chapter is organized as follows.
 Chapter~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library,
@@ -29,19 +31,19 @@ infrastructure.  In Chapter~\ref{ch:boom:sec:port}, we discuss the \BOOM-MR
 scheduling harness; embedded in the \JT component of Hadoop.
 Chapter~\ref{ch:boom:sec:hadoop} reviews the scheduling state and
 protocol---implemented in Hadoop version 18.2---that we modeled in our
-declarative code.  Chapter~\ref{ch:boom:sec:tables} captures the entities
-and relationships of the Hadoop scheduler in four (catalog) tables.  Using these
+declarative code.  Chapter~\ref{ch:boom:sec:tables} captures the entities and
+relationships of the Hadoop scheduler in four (catalog) tables.  Using these
 tables, we develop a scheduling policy in Chapter~\ref{ch:boom:sec:scheduler}
 that models the Hadoop FIFO policy.  We then extend these rules in
-Chapter~\ref{ch:boom:sec:late} with the LATE policy for scheduling ``speculative''
-tasks.  Our declarative LATE port took {\em orders of magnitude} less time and
-code than the (logically) equivalent Java port~\cite{jira-2141}; once the basic
-relational infrastructure was in place.  Chapter~\ref{ch:boom:sec:eval}
-evaluates the performance of jobs scheduled by our declarative FIFO policy
-against those scheduled by the original (unmodified) Hadoop scheduler.
-Finally, Chapter~\ref{ch:boom:sec:relwork} examines some of the related work
-and Chapter~\ref{ch:boom:sec:conclusion} concludes with a summary of our
-experience with \BOOMA.
+Chapter~\ref{ch:boom:sec:late} with the LATE policy for scheduling
+``speculative'' tasks.  Our declarative LATE port took {\em orders of
+magnitude} less time and code than the (logically) equivalent Java
+port~\cite{jira-2141}; once the basic relational infrastructure was in place.
+Chapter~\ref{ch:boom:sec:eval} evaluates the performance of jobs scheduled by
+our declarative FIFO policy against those scheduled by the original
+(unmodified) Hadoop scheduler.  Finally, Chapter~\ref{ch:boom:sec:relwork}
+examines some of the related work and Chapter~\ref{ch:boom:sec:conclusion}
+concludes with a summary of our experience with \BOOMA.
 
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
