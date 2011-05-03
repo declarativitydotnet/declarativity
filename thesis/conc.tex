@@ -62,20 +62,21 @@ languages do not necessarily encourage data-centric programming, the development
 of libraries and tools to support this design style is a promising direction for 
 future work.
 
-Moving forward, our experience highlighted problems with \OVERLOG that emphasize some
-new research challenges; we mention two here briefly.  First and most urgent is
-the need to codify the semantics of asynchronous computations and updateable
-state in a declarative language.  Recent follow on work has made some progress on
-defining a semantic foundation for this~\cite{dedalus-tr}, but it remains an
-open problem to surface these semantics to programmers in an intuitive fashion.
-A second key challenge is to clarify the implementation of invariants, both
-local and global.  In an ideal declarative language, the specification of an
-invariant should entail its automatic implementation.  In our experience with
-\OVERLOG this was hampered both by the need to explicitly write protocols to test
-global invariants, and the multitude of possible mechanisms for enforcing
-invariants, be they local or global.  A better understanding of the design space
-for invariant detection and enforcement would be of substantial use in building
-distributed systems, which are often defined by such invariants.
+Moving forward, our experience highlighted problems with \OVERLOG that
+emphasize some new research challenges; we mention two here briefly.  First,
+and most urgent, is the need to codify the semantics of asynchronous
+computations and updateable state in a declarative language.  Recent follow on
+work has made some progress on defining a semantic foundation for
+this~\cite{dedalus-tr}, and initial efforts at a programmer-friendly
+language~\cite{calm-cidr}.  A second key challenge is to clarify the
+implementation of invariants, both local and global.  In an ideal declarative
+language, the specification of an invariant should entail its automatic
+implementation.  In our experience with \OVERLOG this was hampered both by the
+need to explicitly write protocols to test global invariants, and the multitude
+of possible mechanisms for enforcing invariants, be they local or global.  A
+better understanding of the design space for invariant detection and
+enforcement would be of substantial use in building distributed systems, which
+are often defined by such invariants.
 
 
 MapReduce is another example of raising the level of abstraction to the programming
