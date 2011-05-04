@@ -22,8 +22,8 @@ expressing scheduling constraints as data, and having that data processed by a
 special dataflow element for scheduling.  Our hypothesis that a Datalog-style
 language was a good fit for typical query optimizations was largely borne out,
 despite some immaturity in the \OVERLOG language and P2 infrastructure.  We
-were able to express three of the most important optimizer frameworks -- System
-R, Cascades, and Magic-sets -- in only a few dozen rules each.
+were able to express three of the most important optimizer frameworks --- System
+R, Cascades, and Magic-sets --- in only a few dozen rules each.
 
 %Going forward, we hope to exploit the use of a declarative language for benefits beyond code 
 %compactness.  The tabularization of the optimizer state is particularly suggestive.  It can be used 
@@ -98,8 +98,8 @@ communication between reduces and maps (bypassing the distributed file system) o
 opportunities and challenges in carefully co-locating tasks from different jobs, to avoid 
 communication when possible.  
 
-Olston and colleagues have noted that MapReduce systems---unlike traditional
-databases---employ ``model-light'' optimization approaches that gather and
+Olston and colleagues have noted that MapReduce systems --- unlike traditional
+databases --- employ ``model-light'' optimization approaches that gather and
 react to performance information during runtime~\cite{olston-usenix08}.  The
 continuous query facilities of HOP enable powerful introspective programming
 interfaces for this: a full-featured MapReduce interface can be used to script

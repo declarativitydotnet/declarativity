@@ -5,10 +5,10 @@ The Berkeley Orders Of Magnitude (BOOM) project began with an experiment in
 construction, by implementing a substantial piece of distributed software in a
 data-centric, declarative style.  Upon review of recent literature on
 data center infrastructure (e.g.,~\cite{chubby,gfs-sosp,dynamo,mapreduce-osdi}),
-we observed that most of the complexity in these systems relates to the
+we observed that most of the complexity in these systems related to the
 management of various forms of asynchronously-updated state, including
 sessions, protocols and storage.  Although quite complex, few of these systems
-involve intricate, uninterrupted sequences of computational steps.  Hence, we
+involved intricate, uninterrupted sequences of computational steps.  Hence, we
 suspected that data center infrastructure might be a good initial litmus test
 for our hypotheses about building distributed software.
 
@@ -17,20 +17,20 @@ of the HDFS distributed file system and the Hadoop MapReduce
 engine~\cite{boom}.  Our declarative version of these two components were named
 {\em \BOOM-FS} and {\em \BOOM-MR}, respectively.  In writing \BOOMA, we
 preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
-internal state with a set of relations, and implemented key system logic with
-code written in a declarative language.  In this thesis, we focus on
-declarative scheduling (\BOOM-MR), rather than \BOOM-FS which was led by other
-members of the \BOOMA team.  However, we do include some \BOOM-FS
-results---showing its performance is on par with HDFS---to validate the
-performance of the \JOL runtime, which was a project within this thesis.
+internal state with relations, and implemented key system logic with code
+written in a declarative language.  In this thesis, we focus on declarative
+scheduling (\BOOM-MR), rather than \BOOM-FS which was led by other members of
+the \BOOMA team.  However, we do include some \BOOM-FS results --- showing its
+performance is on par with HDFS --- to validate the performance of the \JOL
+runtime, which was a project within this thesis.
 
 The remainder of this chapter is organized as follows.
 Chapter~\ref{ch:boom:sec:jol} describes a new Java-based \OVERLOG library,
-which we used execute \OVERLOG programs within the (Java-based) Hadoop
+which we used to execute \OVERLOG programs within the (Java-based) Hadoop
 infrastructure.  In Chapter~\ref{ch:boom:sec:port}, we discuss the \BOOM-MR
 scheduling harness; embedded in the \JT component of Hadoop.
 Chapter~\ref{ch:boom:sec:hadoop} reviews the scheduling state and
-protocol---implemented in Hadoop version 18.2---that we modeled in our
+protocol --- implemented in Hadoop version 18.2 --- that we modeled in our
 declarative code.  Chapter~\ref{ch:boom:sec:tables} captures the entities and
 relationships of the Hadoop scheduler in four (catalog) tables.  Using these
 tables, we develop a scheduling policy in Chapter~\ref{ch:boom:sec:scheduler}
@@ -48,35 +48,38 @@ concludes with a summary of our experience with \BOOMA.
 \section{Java \OVERLOG Library (JOL)}
 \label{ch:boom:sec:jol}
 
-In previous chapters we saw that P2's lack of support for stratified Datalog
+In previous chapters we witnessed P2's lack of support for stratified Datalog
 forced us to implement a number of imperative hacks, which often involved
 (event) manipulations of the underlying dataflow fixpoints.  Most of these
 hacks were required for detecting the termination of a group of rules, which
 would have been implicitly handled by imposing a natural stratum boundary
 (e.g., count aggregate).  Our workaround involved adding a number of conditions
-that detected stratum boundaries, and ensured that these ``conditions'' were
+that detected stratum boundaries, and ensuring that these ``conditions'' were
 evaluated in separate P2 dataflow fixpoints.  This was a hard lesson, which led
-us to develop an entirely new \OVERLOG implementation that supports stratified
+us to develop an entirely new \OVERLOG implementation that supported stratified
 Datalog.  We briefly describe this new Java \OVERLOG Library (JOL), which we
 used to implement the remaining \OVERLOG programs described in this thesis.
 
-Like P2, \JOL compiles \OVERLOG programs into pipelined dataflow graphs of
+Like P2, \JOL compiled \OVERLOG programs into pipelined dataflow graphs of
 operators (similar to ``elements'' in the Click modular router~\cite{click}).
-\JOL provides {\em metaprogramming} support akin to P2's Evita Raced
-extension (Chapter~\ref{ch:evita}): each \OVERLOG program is compiled into a
+\JOL provided {\em metaprogramming} support akin to P2's Evita Raced extension
+(Chapter~\ref{ch:evita}): each \OVERLOG program is compiled into a
 representation that is captured in rows of tables.  Program testing,
-optimization and rewriting can be written concisely as metaprograms in \OVERLOG
-that manipulate those tables.
+optimization and rewriting could be written concisely as metaprograms in
+\OVERLOG that manipulated those tables.
 
 The \JOL system matured when we targeted the Hadoop stack, which required tight
 integration between \OVERLOG and Java code.  The latest version of \JOL
-includes Java-based extensibility in the model of Postgres~\cite{postgres}.  It
-supports Java classes as abstract data types, allowing Java objects to be
+included Java-based extensibility in the model of Postgres~\cite{postgres}.  It
+supported Java classes as abstract data types, allowing Java objects to be
 stored in fields of tuples, and Java methods to be invoked on those fields from
-\OVERLOG.  \JOL also allows Java-based aggregation functions to run on sets of
-column values, and supports Java {\em table functions}: Java iterators
+\OVERLOG.  \JOL also allowed Java-based aggregation functions to run on sets of
+column values, and supported Java {\em table functions}: Java iterators
 producing tuples, which can be referenced in \OVERLOG rules as ordinary
-relations.  We made significant use of each of these features in \BOOMA.
+relations.  We made significant use of these features in \BOOMA; using native
+Hadoop data structures as column types (Chapter~\ref{ch:boom:sec:tables}), and
+integrating with legacy Hadoop code (Chapters~\ref{ch:boom:sec:fifo}
+and~\ref{ch:hop:sec:jolport}).
 
 %In addition, inspired by the ideas of Evita Raced, we metaprogrammed \JOL's
 %core execution loop and scheduler in \OVERLOG as well.  Rather than using a
@@ -91,7 +94,7 @@ relations.  We made significant use of each of these features in \BOOMA.
 \label{ch:boom:sec:port}
 
 In this section, we describe our declarative version of the Hadoop MapReduce
-scheduled, which we call \BOOM-MR.  Using \BOOM-MR, we explored embedding a
+scheduler, which we call \BOOM-MR.  Using \BOOM-MR, we explored embedding a
 data-centric rewrite of a non-trivial component into an existing procedural
 system.  MapReduce scheduling policies are one issue that has been treated in
 recent literature (e.g.,~\cite{zaharia-late,delay-sched}).  To enable credible
@@ -126,11 +129,11 @@ schedule further tasks on the {\TT}.  Also, Hadoop will attempt to schedule
 \subsection{Table-izing MapReduce}
 \label{ch:boom:sec:tables}
 
-\BOOM-MR is a port of the Hadoop \JT code to \OVERLOG.  In this chapter, we
-identify the key state maintained by the {\JT}.  This state includes both data
-structures to track the ongoing status of the system and transient state in the
-form of messages sent and received by the {\JT}.  We captured this information
-the four \OVERLOG tables shown in Table~\ref{ch:boom:tbl:hcatalog}.
+\BOOM-MR is a port of the Hadoop \JT code to \OVERLOG.  Here, we identify the
+key state maintained by the {\JT}.  This state includes both data structures to
+track the ongoing status of the system and transient state in the form of
+messages sent and received by the {\JT}.  We captured this information the four
+\OVERLOG tables shown in Table~\ref{ch:boom:tbl:hcatalog}.
 
 \begin{table}
 \ssp
@@ -197,6 +200,7 @@ difficulty of prototyping a new policy, and (b) the faithfulness of our
 algorithms.
 
 \subsubsection{First-Come-First-Served Scheduling}
+\label{ch:boom:sec:fifo}
 
 \begin{figure}
 \label{fig:joborder}
@@ -287,8 +291,9 @@ locality aware, Hadoop FIFO policy.  When a \TT heartbeat is received, rule
 highest priority job.  \JOL supports the ability to add Java code at the end of
 a rule body, delineated within brackets \{ ...  \}.  This Java code executes
 last in the rule body, and will only see those tuples that represent actual
-deductions.  In rule \ol{s4}, the bracketed Java code assigns a {\em locality}
-metric according to the proximity of the heartbeat \TT to the map input data.
+deductions.~\footnote{A useful feature for \ol{printf} style debugging.} In
+rule \ol{s4}, the bracketed Java code assigns a {\em locality} metric according
+to the proximity of the heartbeat \TT to the map input data.
 
 The result of rule \ol{s4} is evaluated in rule \ol{s5}, which schedules the
 map tasks whose input resides closest to the heartbeat \TT.  The {\bf bottomK}

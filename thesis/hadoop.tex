@@ -4,16 +4,14 @@
 In this chapter, we review the MapReduce programming
 model~\cite{mapreduce-osdi} and the Hadoop system~\cite{hadoop} --- an
 open-source software framework that supports data-intensive distributed
-applications.  We focus on those aspects of the Hadoop system kernel that
-concern the remaining chapters of this thesis.  We begin in
-Chapter~\ref{ch:hadoop:sec:progmodel} with the MapReduce programming model,
-which is based on two operations: {\em map} and {\em reduce}.
-Chapter~\ref{ch:hadoop:sec:hadoop} discusses the Hadoop implementation, which
-is comprised of a MapReduce dataflow engine, inspired by Google's
-MapReduce~\cite{mapreduce-osdi}, and a distributed file system that models the
-Google File System (GFS)~\cite{gfs-sosp}.  Chapter~\ref{ch:hadoop:sec:conclude}
-contains a high-level description our work in this area; postponing the details
-to remaining chapters of this thesis.
+applications.  We begin in Chapter~\ref{ch:hadoop:sec:progmodel} with the
+MapReduce programming model, which is based on two operations: {\em map} and
+{\em reduce}.  Chapter~\ref{ch:hadoop:sec:hadoop} discusses the Hadoop
+implementation, which is comprised of a MapReduce dataflow engine, inspired by
+Google's MapReduce~\cite{mapreduce-osdi}, and a distributed file system that
+models the Google File System (GFS)~\cite{gfs-sosp}.
+Chapter~\ref{ch:hadoop:sec:conclude} summarizes the remaining chapters of this
+thesis as it pertains to the background material described here.
 
 \section{MapReduce Programming Model}
 \label{ch:hadoop:sec:progmodel}
@@ -47,7 +45,7 @@ the output of the reduce step.  Note that HDFS is {\em not} used to store
 intermediate results (e.g., the output of the map step): these are kept on each
 node's local file system.
 
-A Hadoop installation consists of a single master node and many worker nodes.
+An Hadoop installation consists of a single master node and many worker nodes.
 The master, called the {\em JobTracker}, is responsible for accepting jobs
 from clients, dividing those jobs into {\em tasks}, and assigning those tasks
 to be executed by worker nodes.  Each worker runs a {\em TaskTracker} process
@@ -168,9 +166,9 @@ public interface Reducer<K2, V2, K3, V3> {
 \end{figure*}
 
 After receiving its partition from all map outputs, the reduce task enters the
-{\em sort} phase~\footnote{Some pre-sorting work is done during the shuffle
-phase.}.  The map output for each partition is already sorted by the reduce
-key.  Therefore, the reduce task will merge these runs together to produce a
+{\em sort} phase.~\footnote{Some pre-sorting work is done during the shuffle
+phase.}  The map output for each partition is already sorted by the reduce
+key.  Therefore, the reduce task simply merges these runs together to produce a
 single run that is sorted by key.  The task then enters the {\em reduce} phase,
 during which it invokes the user-defined reduce function for each distinct key
 (in sorted order) and associated list of values.  The output of the reduce
@@ -219,9 +217,9 @@ learning~\cite{mahout}) while allowing significant flexibility in the system
 implementation.  Fault-tolerance was an early part of the MapReduce system
 design, and one of its most attractive features.  The fault-tolerance model is
 predicated on the batch-oriented nature of MapReduce, allowing the recovery of
-a task to simply be restarting it on some (possibly alternate) machine.  Since
-no state, in the form of output data, is allowed to exit a task (map or
-reduce), no further recovery actions are required.
+a task to simply be restarting it on some (possibly alternative) node.  Since
+no state, in the form of output data, is allowed to exit an unfinished task
+(map or reduce), no further recovery actions are required.
 
 Optimization at the MapReduce level often comes in the form of scheduling
 policies that primarily focus on job response time.  The runtime of a MapReduce
@@ -232,7 +230,7 @@ belong to them.  The slowest reduce task determines the finishing time of the
 overall job since a job does not complete until all reduce tasks complete.
 Speculation is a response-time optimization that executes clones of tasks
 deemed to be slow.  Alternative speculation policies for identifying and
-speculatively scheduling these 'straggler' tasks exist~\cite{mapreduce-osdi,
+speculatively scheduling these ``straggler'' tasks exist~\cite{mapreduce-osdi,
 zaharia-late}, but there is no consensus on a policy that works well for all
 jobs and cluster configurations.
 
