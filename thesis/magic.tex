@@ -40,9 +40,10 @@ rewrite in $44$ \OVERLOG rules.  We divide these rules into two logical groups.
 The first is presented in Chapter~\ref{ch:magic:sec:rgconstruct}, which
 constructs the rule/goal graph via a transitive closure on the Metacompiler
 Catalog.  Our second group of rules, presented in
-Chapter~\ref{ch:magic:sec:rewrite}, also performs a transitive closure; this
-time on the rule/goal graph to obtain the rewritten rules that include the
-predicates used to filter tuples known not to be part of the final result.
+Chapter~\ref{ch:magic:sec:rewrite}, also performs a transitive closure, but
+this time on the rule/goal graph itself, to obtain the rewritten rules that
+include the predicates used to filter tuples that are not relevant to the final
+answer.
 
 \section{Magic-sets in a Nutshell}
 \label{ch:magic:sec:review}
@@ -76,7 +77,7 @@ query path(``node1'', Y, P, C).
 \end{figure*}
 
 The magic-sets technique rewrites logical rules so that bottom-up evaluation
-over the rewritten rules has all the advantages of a top-down and bottom-up
+over the rewritten rules has all the advantages of a top-down and a bottom-up
 evaluation strategy.  We give some intuition here by reviewing the advantages
 of magic-sets using the path program shown in
 Figure~\ref{ch:magic:fig:basicSP}.  For the purpose of this discussion, lets
@@ -85,7 +86,7 @@ tuples forming the topology shown in Figure~\ref{ch:magic:fig:topo}.  The
 abbreviated list of facts shown at the beginning of
 Figure~\ref{ch:magic:fig:basicSP} populate the \ol{link} relation with our
 basic topology information.  Our goal is to find all paths that start at
-``node1''.
+``node1.''
 
 A straightforward bottom-up evaluation of this program applies the \ol{link}
 tuples to rule \ol{r1}, creating the initial set of {\tt path} tuples.  Rule
@@ -156,9 +157,10 @@ predicates prefixed with \ol{magic\_} and \ol{sup\_} that are included in the
 rule body with the \ol{link} and \ol{path} predicates.
 Ullman~\cite{ullmanbook} refers to these new predicates as magic predicates
 (i.e., \ol{magic\_path}) and supplementary predicates (i.e., \ol{sup\_r2\_1},
-\ol{sup\_r2\_2}).  Magic predicates maintain bindings of the final query
-predicate, while supplementary predicates pass bindings along rule bodies,
-ensuring that no extraneous deductions are made along the way.
+\ol{sup\_r2\_2}).  Magic predicates maintain bindings relevant to query
+predicates (i.e., \ol{path}), while supplementary predicates pass bindings
+along rule bodies, ensuring that no extraneous deductions are made along the
+way.
 
 We now describe the rewritten rules, which are named by 1) the original rule
 name, and 2) a ``case'' number that will be described in
@@ -169,7 +171,7 @@ Figure~\ref{ch:magic:fig:basicSP}, again assuming we are running locally with
 all facts in the \ol{link} relation.  As it stands, rule~\ol{r1} will generate
 \ol{path} tuples using any of the \ol{link} tuples, regardless of whether they
 contribute to answering the final query.  To avoid extraneous deductions, we
-add the \ol{magic\_path} predicate to the body of this rule giving us
+add the \ol{magic\_path} predicate to the body of this rule, giving us
 rule~\ol{r1\_case5} in Figure~\ref{ch:magic:fig:magicSP}.
 
 The rewrite of rule~\ol{r2} appears to be quite a bit more complicated,
@@ -187,7 +189,7 @@ This brings us to the more interesting case~$3$ w.r.t, rule~\ol{r2}.  Here we
 are feeding \ol{sup\_r2\_1} tuples into the \ol{magic\_path} relation.  At a
 high-level, this rule updates the \ol{magic\_path} table with tuples that
 satisfy the constraints imposed by the current \ol{magic\_path} table instance
-and include the new (path) information from the \ol{link} predicate.  Observe
+and includes the new (path) information from the \ol{link} predicate.  Observe
 that rule~\ol{r2\_case3} feeds \ol{magic\_path} values from its $Y$ variable,
 which represents the intermediate hop in rule~\ol{r2}, and therefore must be
 part of the final answer.  In this example, rule~\ol{r2\_case3} is responsible
@@ -240,19 +242,24 @@ Consider again the path program in Figure~\ref{ch:magic:fig:basicSP}.  The
 query predicate \ol{path(``node1'', Y, P, C)} asks for all paths that originate
 from ``node1''.  An {\em adornment} is a binding pattern that contains a string
 of {\em b's} (bound) and {\em f's} (free) of length {\em k}, for each {\em k}
-arguments of path.  In the current context, the {\em path} query predicate
+arguments of \ol{path}.  In the current context, the {\em path} query predicate
 matches the $path^{bfff}$ {\em adornment} since the first argument is bound to
 a constant and the last three variables are free to take on any value.  Such
 {\em goal adornments} are assigned to rule predicates, based on the position of
-the predicate in the rule and the bindings associated with that position.
+the predicate in the rule and the bindings associated with that rule position.
 
-Rule bindings are assigned according to a left-to-right (SIP) evaluation order.
-The steps for assigning {\em rule adornments} are as follows.
+Rule bindings are assigned by position, according to a left-to-right (SIP)
+evaluation order.  The steps for assigning {\em rule adornments} are as
+follows.
 \begin{enumerate}
     \ssp
-    \item A variable appearing in a bound argument of the rule head is bound before processing any subgoals.
+    \item A variable appearing in a bound argument of the rule head is bound 
+      before processing any subgoals i.e., $path^{bfff}$ binds $@X$ in the 
+      \ol{path} head of rule~\ol{r2}.
     \item A variable is bound after processing subgoal $G_i$ if it was bound 
-          before processing $G_i$ or if it appears anywhere in $G_i$.
+          before processing $G_i$ or if it appears anywhere in $G_i$ i.e.,
+	  the \ol{link} subgoal binds the $@Y$ variable in the \ol{path} subgoal
+	  of rule~\ol{r2} (variables $Z$, $P2$, and $C2$ in \ol{path} remain free).
 \end{enumerate}
 The format of a rule adornment differs from that of a predicate.  It follows the form
 $[B_1,\cdots,B_m|F_1,\cdots,F_n]$, which contains two sublists of variables
@@ -262,11 +269,11 @@ $F_1,\cdots,F_n$) are free.
 
 A given rule contains a number of these binding patterns, one for each subgoal
 position.  That is, a rule adornment is a binding pattern of a rule at a given
-rule position.  The notation that we follow here for rule adornments identifies
-the rule's position as a subscript and the binding pattern as a superscript.
-For example, $r1_0^{[@X|Y,P,C]}$ is the adornment for rule \ol{r1} at position
-$0$, which is based on the binding pattern of the $path^{bfff}$ adornment
-relative to its head predicate schema.
+rule position.  The notation that we follow here identifies the rule's position
+as a subscript and the binding pattern as a superscript.  For example,
+$r1_0^{[@X|Y,P,C]}$ is the adornment for rule \ol{r1} at position $0$, which is
+based on the binding pattern of the $path^{bfff}$ adornment relative to the
+head predicate schema.
 
 Continuing, $r2_0^{[@X,|Y,Z,C1,P,C]}$ represents the adornment for rule~\ol{r2}
 at the head position $0$, again binding the first variable of the head
@@ -290,7 +297,7 @@ A rule/goal graph is a representation of binding patterns that occur in a
 collection of Datalog (\OVERLOG) rules.  The graph consists of {\em rule} and
 {\em goal} vertices.  A goal vertex consists of a predicate with an adornment
 (e.g., $path^{bfff}$) and similarly, a rule vertex represents the adornment of
-the rule in a particular position (e.g., $r1_0^{[@X|Y,P,C]}$).
+the rule in a particular position (i.e., $r1_0^{[@X|Y,P,C]}$).
 
 Figure~\ref{ch:magic:fig:rggraph} illustrates the {\em rule/goal} graph for our
 Figure~\ref{ch:magic:fig:basicSP} example.  To construct this graph, we start
@@ -300,7 +307,7 @@ rule adornment relative to position~$0$.  For rule~\ol{r1} this is
 $r1_0^{[@X|Y,P,C]}$ and for rule~\ol{r2} we have $r2_0^{[@X,|Y,Z,C1,P,C]}$.  A
 rule vertex feeds bindings to the subgoal just beyond its position.  Both rules
 in position $0$ bind the \ol{link} predicate variable $X$.  In the case of
-rule~\ol{r2}, rule position~$1$ receives the bindings of its parent rule and
+rule~\ol{r2}, position~$1$ receives the bindings of its parent rule and
 the bindings from the \ol{link} subgoal, giving us the
 $r1_1^{[@X,Y,C1,|Z,P,C]}$ rule vertex.
 
@@ -371,7 +378,7 @@ query predicate is identified in P2 by a rule containing a single goal ($Goals
 == 1$).  The sole predicate in this rule has a schema ($Schema$) that contains
 some number of (binding) constants and (free) variables.  The function \ol{f\_adornment} 
 takes such a schema object as its argument and returns a string
-representing an adornment signature (binding pattern).
+representing an adornment signature (the binding pattern).
 
 Rule~\ol{ms1} creates the top-level goal node that represents the root of the
 rule/goal graph.  The group of rules in Figure~\ref{ch:magic:fig:magic2} deal
@@ -453,8 +460,8 @@ The rules that receive a \ol{sup} tuple are consider next by creating further
 and ``assignment'' statements create new bindings.  As a result, \ol{sup}
 tuples are only generated for rule positions relevant to such terms: relational
 predicates (rule~\ol{ms3}) and assignment statements (rule~\ol{ms4}).  The
-\ol{f\_merge} and \ol{f\_assignschema} functions are used to update the
-schema object with the bindings of the current term position.  A series of
+\ol{f\_merge} and \ol{f\_assignschema} functions are used to update the schema
+object with the bindings of the current term position.  A series of
 \ol{supNext} tuples is created for each rule position to considered.  The
 \ol{supNext} relation is generated by rule~\ol{ms5} for predicate and
 assignment terms, and rule~\ol{ms6} for selection predicate terms, which add no
@@ -486,8 +493,8 @@ adornment for a subgoal that references a magic predicate.  If the adornment is
 different than the previous, then multiple rows will exist in the
 \ol{magicPred} relation, signaling the presence of multiple magic predicate
 binding patterns.  A simple count query (Figure~\ref{ch:magic:fig:magic4}:
-count~\ol{ms12} and check~\ol{ms13}) is used to detect these unique binding
-property violations.
+count~\ol{ms12} and check~\ol{ms13}) is used to detect violations of the unique
+binding property.
 
 \begin{figure*}[!t]
 \ssp
@@ -635,7 +642,7 @@ top level rule that is to be rewritten. }
 \end{figure*}
 
 The \ol{rewriteRule} predicate is used in Figure~\ref{ch:magic:fig:rewrite2} to
-create the magic predicate~$m_p$ in the event position ($1$) and to initiate a
+create the magic predicate~$m_p$ in the event position (one) and to initiate a
 \ol{rewriteIter} tuple.  Rule~\ol{ms15} concurrently handles the magic
 predicate for {\bf cases 2 and 5}, using the rule/goal graph information for \ol{sup}
 position $0$.  The next step is to walk down the list of subgoals in the
@@ -682,13 +689,13 @@ the new rule undergoing the rewrite. }
 
 The primary purpose of the \ol{rewriteIter} is to reference the subgoals of the
 original rule leading up to a predicate that references a magic predicate.
-These prior subgoals need to be copied to the new rule.  This is
-handled by the rules in Figure~\ref{ch:magic:fig:rewrite3}.  Rule~\ol{ms17}
-copies the predicate at position $RulePos$ (starting at position $1$) in the
-original rule to position $NewPos$ (starting at position $2$, just after the
-``magic'' event predicate) in the new rule.  Rules~\ol{ms18} and
-\ol{ms19} simply copy non-magical subgoals that refer to assignment statements
-and selection predicates in the old rule.
+These prior subgoals need to be copied to the new rule.  This is handled by the
+rules in Figure~\ref{ch:magic:fig:rewrite3}.  Rule~\ol{ms17} copies the
+predicate at position $RulePos$ (starting at position $1$) in the original rule
+to position $NewPos$ (starting at position $2$, just after the ``magic'' event
+predicate) in the new rule.  Rules~\ol{ms18} and \ol{ms19} simply copy EDB
+subgoals --- including assignment and selection predicates --- in the old rule
+to the new rule.
 
 
 \begin{figure*}[!t]
@@ -866,7 +873,7 @@ position.  This supplementary predicate will be the head predicate in the {\bf
 case 4} rule, and it is created by rule~\ol{ms30}.  We then come to
 rule~\ol{ms31}, which creates a reference to supplementary predicate
 $sup_{i-1}$ in the event position of the body.  The subgoal in the original
-rule at position $RulePos$ is copied to the second position by rule~\ol{32}.
+rule at position $RulePos$ is copied to the second position by rule~\ol{ms32}.
 Finally, rule~\ol{ms33} completes {\bf case 4} by deriving a \ol{rule} tuple
 with the appropriate information (i.e., $3$ terms).
 
@@ -906,7 +913,7 @@ new rule and head predicate identifier (for the next {\bf case 2/5} rule).
 Rule~\ol{ms35} adds the $sup_i$ ($i==RulePos$) supplementary predicate to
 the first position of the new rule for the next iteration.  And finally,
 rule~\ol{ms36} generates a new \ol{rewriteIter} tuple with the new position
-($NewPos$), starting at $2$ since $sup_{i}$ is already at the event 
+($NewPos$), starting at two since $sup_{i}$ is already at the event 
 position~$1$.
 
 \subsubsection{Finally}
@@ -943,7 +950,7 @@ need copy the head predicate from the old rule to be the head of the new rule.}
 
 Figure~\ref{ch:magic:fig:rewrite9} contains the rules that handle {\bf case 5},
 which is similar to {\bf case 2}.  The difference here is that we have reached
-the end of the original rule terms.  Therefore, we need a finalizer rule, whose
+the last term in the original rule.  Therefore, we need a finalizer rule, whose
 body already contains the previous supplementary predicate and subsequent
 subgoals that do not refer to a magic predicate; all copied during the
 \ol{rewriteIter} traversal using rules~\ol{ms17}, \ol{ms18} and \ol{ms19}.  The
