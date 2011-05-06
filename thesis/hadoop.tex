@@ -235,16 +235,14 @@ zaharia-late}, but there is no consensus on a policy that works well for all
 jobs and cluster configurations.
 
 In Chapter~\ref{ch:boom}, we describe an implementation of the Hadoop MapReduce
-engine in the \OVERLOG language.  This declarative specification of Hadoop
-enables us to build alternative scheduling policies and optimizations in a high
-level query language improving the development cycle and decreasing the lines
-of code by {\em orders of magnitude}, all while supporting a richer suite of
-scheduling strategies.  In Chapter~\ref{ch:hop}, we move from a batch-oriented
-execution model to a pipelined model where tasks incrementally send their
-output.  Pipelining enables two new features in the context of MapReduce:
-online aggregation~\cite{onlineagg} and continuous queries.  We show that a
-pipelined implementation of MapReduce does not sacrifice the original system
-interface or its ability to tolerate faults.  A pipelined MapReduce model
-extends the range of scheduling alternatives, which we easily support through
-policies written in \OVERLOG.
+engine in the \OVERLOG language.  Using our declarative version of Hadoop, we
+implemented alternative scheduling policies in \OVERLOG that closely resemble
+the (policy) pseudo-code descriptions.  In Chapter~\ref{ch:hop}, we move from a
+batch-oriented execution model to a pipelined model where tasks incrementally
+send their output.  Pipelining enables two new features in the context of
+MapReduce: online aggregation~\cite{onlineagg} and continuous queries.  We show
+that a pipelined implementation of MapReduce does not sacrifice the original
+system interface or its ability to tolerate faults.  A pipelined MapReduce
+model adds scheduling alternatives that we explored through policies written in
+\OVERLOG.
 

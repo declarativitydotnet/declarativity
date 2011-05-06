@@ -149,8 +149,8 @@ The conversion from ER diagram to relational format was a textbook
 exercise~\cite{DBTextbook}.  Table~\ref{tbl:catalog} lists the set of relations
 that capture the entities mentioned in the ER diagram; we refer to this as the
 {\em Metacompiler Catalog}.  We modified P2 to create these tables at system
-startup, and they are accessible to any \OVERLOG programs (i.e., optimizations)
-added to the system.
+startup, and they are accessible to any system-authorized \OVERLOG programs
+(i.e., optimizations) added to the system.
 
 \subsection{Metacompiler Architecture}
 \label{ch:evita:sec:arch}
@@ -388,11 +388,13 @@ column(s) during program compilation.  We have added two elements to the P2
 runtime that perform a simple nested-loop join and a sort-merge join on a tuple
 from the outer input, with a relation on the inner.  We note that our
 sort-merge join is not traditional: it only requires the inner relation to be
-sorted.  The P2 architecture does not allow us to sort the outer relation, so
-instead we perform a binary search on the inner relation.  The \ol{predicate}
-relation contains the choice of join method as one of its attributes, and the
-Planner creates the appropriate dataflow element that implements the given join
-method.
+sorted.  The P2 architecture was not optimized for blocking operators; a
+consequence of its tuple at a time dataflow evaluator
+(Chapter~\ref{ch:p2:sec:dataflow}).  Therefore, we decided not to sort the
+outer relation in a sort-merge join, and instead perform a binary search on the
+inner relation for each outer (streaming) tuple.  The \ol{predicate} relation
+contains the choice of join method as one of its attributes, and the Planner
+creates the appropriate dataflow element that implements the given join method.
 
 %% Those are naturally introduced to the P2 physical planner
 %% machinery and otherwise
@@ -514,10 +516,10 @@ have used it to enhance P2 with support for new languages at both its input and
 output.  First, by extending the Parser element and registering some \OVERLOG
 rules, Abadi and Loo were able to get P2 to optimize and rewrite programs
 written in a new language, which extends \OVERLOG with the ability to attest to
-the provenance of data in a manner similar to that of~\cite{abadi-netdb07}.
-Second, Chu, et al. were able to use Evita Raced to cross-compile \OVERLOG programs
-into dataflow specifications that execute on the DSN platform, a declarative
-networking system that runs on wireless sensor nodes~\cite{chu-sensys07}.
+the provenance of data~\cite{abadi-netdb07}.  Second, Chu, et al.  were able to
+use Evita Raced to cross-compile \OVERLOG programs into dataflow specifications
+that execute on the DSN platform, a declarative networking system that runs on
+wireless sensor nodes~\cite{chu-sensys07}.
 
 
 \section{The Delta Rewrite}
@@ -559,7 +561,7 @@ r4 shortestPath(@X, Y, P, C) :-
 \caption{\label{ch:evita:fig:basicSP}Shortest path program.}
 \end{figure*}
 
-Consider the shortest path program in Figure~\ref{ch:evita:fig:basicSP}: copied
+Consider the shortest path program in Figure~\ref{ch:evita:fig:basicSP}, copied
 over from Figure~\ref{ch:p2:fig:overlogSP}.  First thing to notice is the {\bf
 materialize} statements at the top.  They indicate that positive lifetime
 tables should exist for \ol{link}, \ol{path}, and \ol{shortestPath} tuples,

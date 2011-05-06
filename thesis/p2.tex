@@ -56,8 +56,8 @@ to each other in a cyclic fashion.  That is, the head predicate also appears as
 a subgoal in the rule, or indirectly through some other subgoal predicates.
 
 A predicate literal is a named reference to a set of data tuples associated
-with a specific schema.  In Datalog, a data tuple is referred to as {\em fact},
-which is stored in a relational table, that may not necessarily fit in memory.
+with a specific schema.  In Datalog, a data tuple is referred to as a {\em fact},
+which is stored in a relational table that may not necessarily fit in memory.
 A predicate whose relation is stored in the database is called an {\em
 extensional database} (EDB) relation, while those that are defined by logical
 rules are called {\em intensional database} (IDB) relations.  In other words,
@@ -77,31 +77,6 @@ capacity of a machine's main memory.
 %operators (i.e., select, project, join).  As a further result, Prolog's state
 %is confined to the main memory boundaries of the running system, since its
 %``graph'' based algorithm requires all facts be accounted for at once.
-
-\subsection{Safety First}
-\label{ch:p2:sec:safety}
-
-There are constraints that must be in place for a Datalog program to make sense
-as operations on finite relations.  
-\begin{mydef}
-\ssp
-A {\em safe} Datalog rule ensures that all variables mentioned in the rule
-appear in some nonnegated subgoal table predicate of the rule body.
-\end{mydef}
-This definition ensures that all variables in negated subgoals and the head
-predicate are restricted by some nonnegated subgoal table predicate.  For example,
-the following rule is not safe since it does not restrict the $P$ variable in
-the \ol{path} head predicate.
-\begin{lstlisting}[frame=none]
-path(X, Y, P, C) :- link(X, Y, C).
-\end{lstlisting}
-The above rule generates an infinite number of \ol{path} tuples since we can
-substitute any conceivable value for $P$.  This ``safety'' restriction imposed
-by Datalog semantics ensures that a finite (IDB) solution is obtained from
-applying a finite set of rules to a finite (EDB) input.  Datalog further
-restricts its (IDB) output to set semantics, as opposed to bag semantics that
-allow duplicate tuples.  The reader can assume these safe restrictions in all
-the rules presented in this thesis.
 
 \subsection{Datalog Syntax}
 
@@ -129,8 +104,7 @@ existence of two data tuples in the \ol{link} table with the given attribute
 constants.  Each row of the \ol{link} table contains three attributes; two
 strings, and an integer.  The program rules derive all reachable paths from
 this initial set of known \ol{link} tuples, and presents that result in a
-relational view called \ol{path}~\footnote{Henceforth, we refer to simply as a
-``relation.''}.
+relational view called \ol{path}.
 
 Base derivations proceed from the rule body (those predicates to the right of
 ``\ol{:-}'') and project onto the rule head (to the left of ``\ol{:-}'').  The
@@ -140,15 +114,44 @@ to $Y$ at cost $C$, then there exists a \ol{path} from $X$ to $Y$ consisting of
 nodes $X, Y$ at cost $C$.'' Both initial facts meet this criterion and hence
 are included in the \ol{path} relation.
 
-Rule~\ol{r2} expresses a transitive closure over the \ol{link} and
-\ol{path} relations.  The rule reads ``if there is a link from $X$ to $Y$ at
-cost $C$, and there is a \ol{path} $P2$ from $Y$ to $Z$ at cost $C2$, then
-there is a path from $X$ to $Z$ via $P2$ at cost of $C1+C3$.'' A path from
-``node1'' to ``node3'', through ``node2'', satisfies this criterion, and such a
-tuple is included in the \ol{path} IDB relation.  The predicate, shown at
-the bottom of Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start
-at ``node1.'' The \ol{path} tuples that begin with ``node1'' and end at
-``node2'' and ``node3'' (via ``node2'') both meet this query constraint.
+Rule~\ol{r2} expresses a transitive closure over the \ol{link} and \ol{path}
+relations.  The rule reads ``if there is a link from $X$ to $Y$ at cost $C$,
+and there is a \ol{path} $P2$ from $Y$ to $Z$ at cost $C2$, then there is a
+path from $X$ to $Z$ via $P2$ at cost $C1+C3$.'' A path from ``node1'' to
+``node3'', through ``node2'', satisfies this criterion, and such a tuple is
+included in the \ol{path} IDB relation.  The selection predicate
+\ol{contains(X, P2) == false} avoids cyclic paths to ensure a finite result and
+program termination.  The ``query'' predicate at the bottom of
+Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start at ``node1.''
+The \ol{path} tuples that begin with ``node1'' and end at ``node2'' and
+``node3'' (via ``node2'') both meet this query constraint.
+
+\subsection{Safety First}
+\label{ch:p2:sec:safety}
+
+There are constraints that must be in place for a Datalog program to make sense
+as operations on finite relations.  
+\begin{mydef}
+\ssp
+A {\em safe} Datalog rule ensures that all variables mentioned in the rule
+appear in some nonnegated subgoal table predicate of the rule body.
+\end{mydef}
+This definition ensures that all variables in negated subgoals and the head
+predicate are restricted by some nonnegated subgoal table predicate.  For example,
+the following rule is not safe since it does not restrict the $P$ variable in
+the \ol{path} head predicate.
+\begin{lstlisting}[frame=none]
+path(X, Y, P, C) :- link(X, Y, C).
+\end{lstlisting}
+The above rule generates an infinite number of \ol{path} tuples since we can
+substitute any conceivable value for $P$.  A safe Datalog rule is a necessary,
+but not sufficient,~\footnote{The programmer can still express an infinite
+solution i.e., by leaving out \ol{contains(X,~P2)~==~false} in rule~\ol{r2}}
+condition to obtaining a finite (IDB) solution from evaluating a finite set of
+rules on a finite (EDB) input.  Datalog further restricts its (IDB) output to
+set semantics, as opposed to bag semantics that allow duplicate tuples.  The
+reader can assume these safety restrictions in all the rules presented in this
+thesis.
 
 \subsection{Evaluation of Datalog Rules}
 \label{ch:p2:sec:eval}
@@ -193,10 +196,10 @@ instantiated with facts that were inferred in round~$i-1$.''~\cite{ullmanbook}
 path program in Figure~\ref{ch:p2:fig:datalogPath}.}
 \end{figure*}
 
-Figure~\ref{ch:p2:fig:seminaive} describes the steps through the algorithm that
-performs a semina\"{\i}ve evaluation on the path program shown in
-Figure~\ref{ch:p2:fig:datalogPath}.  It maintains a $\Delta$\ol{path} reference
-to the set of new tuples added to the \ol{path} relation in the previous round.
+Figure~\ref{ch:p2:fig:seminaive} describes the steps performed by a
+semina\"{\i}ve evaluation of the path program shown in
+Figure~\ref{ch:p2:fig:datalogPath}.  $\Delta$\ol{path} references
+the set of new tuples added to the \ol{path} relation in the previous round.
 In round one, line~$1$ of the algorithm uses rule~\ol{r1} to derive the initial
 set of \ol{path} tuples from the EDB \ol{link} relation.  Subsequent rounds are
 carried out in the \ol{while} loop (lines $2 \cdots 6$) until $\Delta$\ol{path}
@@ -223,17 +226,16 @@ round, and that the new deductions are accumulated in the \ol{path} relation.
 
 Datalog is a monotonic language: once a fact is derived during evaluation it is
 certain to be in the final answer.  The evaluation of a program proceeds as a
-series of deductions to the IDB.  Since Datalog has {\em set semantics}, only
-new deductions will be added to the IDB, and therefore it is guaranteed to
-terminate under safe conditions (Chapter~\ref{ch:p2:sec:safety}).  A Datalog
-program is said to be at {\em fixed point} when no further deductions can be
-made relative to the current EDB and IDB tuples.  The result derived at fixed
-point is a model for the Datalog program.  Given a model~$m$ and a Datalog
-program~$p$, $m$ is a minimal model if and only if no proper subset of
-$m$ is a model for $p$.  In the absence of negated subgoals, a Datalog program
-has one and only one minimal model.  A logic program with negation may have
-more than one minimal model; however, if the program is ``stratified'', then once
-again there is a unique minimal model.~\cite{ullmanbook}
+series of deductions to the IDB.  A Datalog program is said to be at a {\em
+fixed point} when no further deductions can be made relative to the current EDB
+and IDB tuples.  The result derived at a fixed point is a model for the Datalog
+program.  Given a model~$m$ and a Datalog program~$p$, $m$ is a minimal model
+if and only if no proper subset of $m$ is a model for $p$.  In the absence of
+negated subgoals, a Datalog program has one and only one minimal model.  A
+logic program with negation may have more than one minimal model. However, if
+the program is ``stratified'' then there is a uniquely identifiable
+``intended'' minimal model, based on the (stratification) order in which the
+relations are (intended to be) minimized.~\cite{deductive-database}
 
 
 \subsection{Negation and Stratification}
@@ -321,11 +323,10 @@ IDB predicates by their assigned stratum, and follow this order when choosing
 $\Delta$ predicates (e.g., $\Delta$ \ol{path}) to evaluate in the loop.  This
 order ensures that if the program is stratified then any negated subgoal (e.g.,
 \ol{detour}) has already had its relation fully evaluated first.  The result of
-this evaluation is called a {\em stratified model}~\footnote{We note that the
-notion of stratified Datalog has nothing to do with the termination of a
-Datalog program.  An unstratified Datalog program that is ``safe'' is
-guaranteed to terminate.  The issue here is whether the result produced by that
-evaluation is consistent with the programmer's intent.}.
+this evaluation is called a {\em stratified model}~\footnote{We further note
+that the notion of stratified Datalog has nothing to do with the termination of
+a Datalog program.  The issue here is the existence a unique minimal result
+that is consistent with the programmer's intent.}.
 
 We revisit the notion of stratified Datalog throughout this thesis.  It turns
 out that the P2 system does not supported stratified Datalog, which slightly
@@ -335,12 +336,12 @@ locally stratified} Datalog programs that ``make sense'' on certain data.
 
 \subsection{Local Stratification}
 
-Stratified Datalog is defined in terms of a syntactic property, which
-translates to cycles through negations in the dependency graph of a collection
-of rules.  An extension to this definition is a class of locally stratified
-programs, which is defined in terms of a data dependent property.  These
-programs are not necessary stratified according the their rules, but they are
-stratified when we instantiate those rules with a specific collection of data.
+Stratified Datalog is defined in terms of a syntactic property that translates
+to cycles through negations in the dependency graph of a collection of rules.
+An extension to this definition is a class of locally stratified programs,
+which is defined in terms of a data dependent property.  Intuitively, these
+programs are not necessarily stratified according to their rules, but they are
+stratified when we instantiate those rules on a specific collection of data.
 Many of the programs presented in this thesis fall into the class of locally
 stratified rules.
 
@@ -391,10 +392,9 @@ The dependency graph for this program is shown in
 Figure~\ref{ch:p2:fig:datalogSP}.  As shown, this program is not stratified
 since there is a cyclic path in the rule dependency graph that traverses an
 aggregation.  Intuitively, we need to derive all \ol{path} tuples before we can
-identify the one that is the minimum cost.  Yet, \ol{path} derivations are
-based on what ``currently'' exists in the \ol{shortestPath} relation.  As a
-result, the Datalog program in Figure~\ref{ch:p2:fig:datalogSP} is not
-stratified.
+identify the one that is of minimum cost.  Yet, \ol{path} derivations are based
+on what ``currently'' exists in the \ol{shortestPath} relation.  As a result,
+the Datalog program in Figure~\ref{ch:p2:fig:datalogSP} is not stratified.
 
 It is however locally stratified.  Assume that this program is evaluated using
 the semina\"{\i}ve algorithm (e.g., Figure~\ref{ch:p2:fig:seminaive}).  The
@@ -511,7 +511,7 @@ allows for the definition of a stream that periodically (based on real-time)
 produces a tuple with a unique identifier.}, or through some arbitrary C++ code
 that updates the database.  These events are queued in the first phase of the
 evaluation.  An evaluator loop dequeues some number of these events and
-atomically executes a Datalog fixed point.  The rule deductions take the form
+atomically executes a Datalog iteration.  The rule deductions take the form
 of actions, which, in the third phase, cause data to be sent over the network
 or perform updates to the local database.  These three phases represent a
 single time-step in the \OVERLOG language.
@@ -530,14 +530,14 @@ a materialized table.  At any time-step instance, at any given node in the
 network, the contents of the local \OVERLOG ``database'' are considered to be:
 (a) the local tuples in materialized tables whose lifetime has not run out, (b)
 at most one local event fact across {\em all} event tables, and (c) any derived
-local tuples that can be deduced from (a) and (b) via the program rules.  Note
-that while (b) specifies that only one event fact is considered to be live at a
-time per node, (c) could include {\em derived} local events, which are
-considered to be live simultaneously with the event fact.  This three-part
-definition defines the semantics of an \OVERLOG program at a ``snapshot in
-time.'' \OVERLOG has no defined semantics across ``time'' and space (in the network);
-we describe the relevant operational semantics of the prototype in
-Chapter~\ref{ch:p2:sec:p2}.
+local tuples that can be deduced from (a) and (b) via one or more iterations of
+the program rules.  Note that while (b) specifies that only one event fact is
+considered to be live at a time per node, (c) could include {\em derived} local
+events, which are considered to be live simultaneously with the event fact.
+This three-part definition defines the semantics of an \OVERLOG program at a
+``snapshot in time.'' \OVERLOG has no defined semantics across ``time'' and
+space (in the network); we describe the relevant operational semantics of the
+prototype in Chapter~\ref{ch:p2:sec:p2}.
      
 \subsection{Deletions and Updates}
 

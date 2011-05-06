@@ -3,7 +3,7 @@
 
 Having described the Evita Raced infrastructure, we now turn to our use of it
 to specify query optimizations in \OVERLOG.  Using Evita Raced, we have
-developed three optimization techniques from the literature: the magic-sets
+implemented three optimization techniques from the literature: the magic-sets
 rewrite~\cite{magic-sets1, magic-sets2}, the System R dynamic
 program~\cite{selinger} and the Cascades branch-and-bound
 algorithm~\cite{cascades}.  We begin in this chapter with the magic-sets
@@ -102,7 +102,7 @@ unifying the query predicate with the head predicate of rules \ol{r1} and
 ``node1'' in both rules, which is then carried over to the predicates in the
 rule body.
 
-The magic-sets rewrite is an optimization that can accomplish the same
+The magic-sets rewrite is an optimization that can achieve the same
 efficiency found in the top-down evaluation, using a bottom-up evaluator.
 Since it is still bottom-up, we retain all the benefits of semina\"{\i}ve
 evaluation: set-oriented evaluations, unique minimal model and stratification.
@@ -152,7 +152,7 @@ the rules in Figure~\ref{ch:magic:fig:basicSP}.}
 \end{figure*}
 
 Figure~\ref{ch:magic:fig:magicSP} shows the rewritten rules from the path
-program in Figure~\ref{ch:magic:fig:basicSP}.  The program contains a some new
+program in Figure~\ref{ch:magic:fig:basicSP}.  The program contains some new
 predicates prefixed with \ol{magic\_} and \ol{sup\_} that are included in the
 rule body with the \ol{link} and \ol{path} predicates.
 Ullman~\cite{ullmanbook} refers to these new predicates as magic predicates
@@ -185,7 +185,7 @@ information.  The interesting bit here is that, in rule~\ol{r2\_case4}, the
 effectively uses the \ol{magic\_path} predicate to prune superfluous tuples
 from \ol{link} before ``joining'' with the \ol{path} relation.
 
-This brings us to the more interesting case~$3$ w.r.t, rule~\ol{r2}.  Here we
+This brings us to the more interesting case~$3$ w.r.t.\@ rule~\ol{r2}.  Here we
 are feeding \ol{sup\_r2\_1} tuples into the \ol{magic\_path} relation.  At a
 high-level, this rule updates the \ol{magic\_path} table with tuples that
 satisfy the constraints imposed by the current \ol{magic\_path} table instance
