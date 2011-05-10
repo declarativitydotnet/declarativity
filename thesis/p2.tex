@@ -29,14 +29,16 @@ notation to specify the location of data, provides some SQL-style extensions
 such as primary keys and aggregation, and adds a flexible notion of state
 lifetime.  Chapter~\ref{ch:p2:sec:p2} describes the P2 runtime, which is
 responsible for compiling and executing \OVERLOG programs on a set of
-distributed nodes.  The design of P2 was inspired by prior work in both
-databases and networking.  It is based in large part upon a side-by-side
-comparison of the PIER peer-to-peer query engine~\cite{pier-cidr05} and the
-Click modular router~\cite{click-tocs}.  Like PIER, P2 can manage structured
-data tuples flowing through a broad range of query processing elements, which
-may accumulate significant state and perform substantial asynchronous
-processing.  Like Click, P2 stresses high-performance transfers of data units,
-as well as dataflow elements with both ``push'' and ``pull'' modalities.
+distributed nodes.  The design of P2 was inspired by prior work in programming
+languages~\cite{Shapiro84}, databases~\cite{nail, ldl, telegraphcq,
+pier-cidr05}, systems~\cite{bamboo}, and networking~\cite{chord, click-tocs}.
+The P2 implementation is based in large part upon a side-by-side comparison of
+the PIER peer-to-peer query engine~\cite{pier-cidr05} and the Click modular
+router~\cite{click-tocs}.  Like PIER, P2 can manage structured data tuples
+flowing through a broad range of query processing elements, which may
+accumulate significant state and perform substantial asynchronous processing.
+Like Click, P2 stresses high-performance transfers of data units, as well as
+dataflow elements with both ``push'' and ``pull'' modalities.
 
 \section{Introduction to Datalog}
 \label{ch:p2:sec:datalog}
