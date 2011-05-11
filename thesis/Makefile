@@ -1,6 +1,6 @@
 NAME=thesis
 USE_PDFLATEX=1
-TEXSRCS=thesis.tex abstract.tex p2.tex evita.tex magic.tex opt.tex evitaend.tex cloud.tex hadoop.tex boom.tex hop.tex conc.tex overview.tex title.tex
+TEXSRCS=ack.tex thesis.tex abstract.tex p2.tex evita.tex magic.tex opt.tex evitaend.tex cloud.tex hadoop.tex boom.tex hop.tex conc.tex overview.tex title.tex
 BIBTEXSRCS=thesis.bib
 
 ifeq ($(shell uname), Linux)
