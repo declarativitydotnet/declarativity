@@ -128,8 +128,9 @@ key index, which P2 always constructs).  Some relations may contain {\em facts}
 must reference a single table.
 
 \begin{figure*}
+\centering
 \ssp
-\begin{tabular}{|l|l|p{7cm}|} \hline
+\begin{tabular}{|l|l|p{6.3cm}|} \hline
 {\it Name}& {\it Description} & {\it Relevant attributes} \\ \hline\hline
 table     & Table definitions & {\bf table\_id}, primary\_key\\ \hline
 index     & Index definitions & {\bf index\_id}, {\bf table\_id}, keys, type \\ \hline
@@ -158,7 +159,7 @@ startup, and they are accessible to any system-authorized \OVERLOG programs
 \begin{figure*}[htbp]
 \centering
 \ssp
-\begin{tabular}{|p{2.6cm}|l|p{10cm}|} \hline
+\begin{tabular}{|p{2.6cm}|l|p{9.3cm}|} \hline
 {\it Stage name}& {\it Language} & {\it Description} \\ \hline\hline
 StageScheduler \text{(Chapter~\ref{ch:evita:sec:stageschedule})} & C++ & 
 Coordinates the compilation of stages.\\ \hline
@@ -533,7 +534,7 @@ the rewrite, we describe its actions by example.
 
 \subsection{Delta by Example}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -571,7 +572,7 @@ tuples to be events, that will end up triggering rule~\ol{r4} when ``pulled''
 from the event queue.  The question then is, what triggers the other rules to
 produce \ol{minCostPath} event tuples?
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -629,7 +630,7 @@ relation, which in turn triggers further invocations of rule~\ol{r2b} on new
 
 \subsection{Declarative Delta}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -670,7 +671,7 @@ event tuple for each predicate in the target rule's body.  The $Pos > 1$
 selection avoids the head predicate (position $0$) and the first predicate
 already handled by rule~\ol{d1}.
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -711,7 +712,7 @@ given a new predicate identifier ($NewHeadID$) and the new rule identifier
 ($NewRid$).
 
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -771,7 +772,7 @@ DeltaPos$.  The remaining rules (\ol{d7}, \ol{d8} and \ol{d9}) deal with
 copying subgoals rule~$r$ to the new $\Delta r_i$ rule.  Notice that rule~\ol{d7}
 skips predicate $p_i$ at position $DeltaPos$.
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -809,7 +810,7 @@ is performed in a single P2 {\em dataflow} fixpoint.}
 \section{The Localization Rewrite}
 \label{ch:evita:sec:local}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}

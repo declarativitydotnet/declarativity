@@ -135,14 +135,12 @@ sent and received by the {\JT}.  We captured this information in the four
 \begin{table}
 \ssp
 \centering
-\begin{tabular}{|l|l|l|} \hline
+\begin{tabular}{|l|l|p{8cm}|} \hline
 \textit{Name}   & \textit{Description} & \textit{Relevant attributes} \\ \hline\hline
-job         & Job definitions   & \underline{JobId}, Priority, SubmitTime, Status, JobConf \\ \hline
+job         & Job definitions    & \underline{JobId}, Priority, SubmitTime, Status, JobConf \\ \hline
 task         & Task definitions  & \underline{JobId}, \underline{TaskId}, Type, Partition, Status \\ \hline
-taskAttempt  & Task attempts      & \underline{JobId}, \underline{TaskId}, \underline{AttemptId}, Progress, \\
-             &       & State, Phase, Tracker, InputLoc, Start, Finish \\ \hline
-taskTracker  & {\TT} State  & \underline{Name}, Hostname, State, \\
-             &       & MapCount, ReduceCount, MaxMap, MaxReduce\\ \hline
+taskAttempt  & Task instance   & \underline{JobId}, \underline{TaskId}, \underline{AttemptId}, Progress, State, Phase, Tracker, InputLoc, Start, Finish \\ \hline
+taskTracker  & {\TT} state  & \underline{Name}, Hostname, State, MapCount, ReduceCount, MaxMap, MaxReduce\\ \hline
 \end{tabular}
 \caption{\BOOM-MR relations defining {\JT} state.}
 \label{ch:boom:tbl:hcatalog}
@@ -262,7 +260,7 @@ s4 mapTaskLocality(TaskId, Tracker, Locality) :-
    heartbeat(Tracker, TrackerStatus, MapSlots, ReduceSlots),
    hightestPriorityJob(JobId),
    task(JobId, TaskId, Type, _, InputSplits, StartTime, _),
-   StartTime < 0, Type == "map",
+   StartTime < 0, Type == ``map'',
    {
      if (InputSplits.contains(TrackerStatus.getHost())) { 
        Locality := 1; // same machine
