@@ -48,7 +48,7 @@ answer.
 \section{Magic-sets in a Nutshell}
 \label{ch:magic:sec:review}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -116,7 +116,8 @@ intersperses selection predicates $s_{1,...,k}$ to generate the rule form $H\
 selection predicates are generated according to attribute bindings in the
 user's query or from other rule predicates in the program, to constant values.
 
-\begin{figure*}[!t]
+\begin{figure*}
+\centering
 \ssp
 \begin{lstlisting}
 link(``node1'', ``node2'', 1).
@@ -286,7 +287,7 @@ the $path^{bfff}$ adornment by binding the $Y$ variable in the first argument.
 
 \subsection{Rule/Goal Graphs}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \begin{center}
 \includegraphics[scale=0.5]{figures/RuleGoalGraph}
 \caption{\label{ch:magic:fig:rggraph}Rule/Goal graph of the program in Figure~\ref{ch:magic:fig:basicSP}.}
@@ -356,7 +357,7 @@ are also created as we recursively walk the rules in a left-to-right (SIP)
 order.
 
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -397,7 +398,7 @@ to create supplementary predicates in Chapter~\ref{ch:magic:sec:rewrite}.  A
     in Figure~\ref{ch:magic:fig:magicSP}).
 \end{itemize}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -468,7 +469,7 @@ assignment terms, and rule~\ol{ms6} for selection predicate terms, which add no
 new bindings to the previous schema.
 
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -496,7 +497,7 @@ binding patterns.  A simple count query (Figure~\ref{ch:magic:fig:magic4}:
 count~\ol{ms12} and check~\ol{ms13}) is used to detect violations of the unique
 binding property.
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -592,7 +593,7 @@ predicate~$p$.  We now describe these steps declaratively.
 
 \subsubsection{Initialization}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -618,7 +619,7 @@ predicate that matches an existing magic predicate.  The schema of
 rule, and corresponding head predicate, that will handle {\bf case 3} and
 {\bf case 5}, depending on a condition we defer for now.
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -660,7 +661,7 @@ invoking this fact through a \ol{rewriteIter} tuple with the following informati
   \item A position of the subgoal in the new rule.
 \end{enumerate}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -698,7 +699,7 @@ subgoals --- including assignment and selection predicates --- in the old rule
 to the new rule.
 
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -742,7 +743,7 @@ conclude this section with a description of the final case.
 
 \subsubsection{Not yet}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -783,7 +784,7 @@ the supplementary predicate $sup_{i-1}$ in the head of the rule.  And finally
 in rule~\ol{ms24}, we commit this rule information to the \ol{rule} relation,
 indicating the relevant identifiers and the number of terms ($NewPos$) in it.
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -827,7 +828,7 @@ to the $sup_{i-1}$ supplementary predicate in the event position.
 We commit our {\bf case 3} rule in rule~\ol{ms28}, which indicates that the
 new rule contains exactly two terms.
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -878,7 +879,7 @@ Finally, rule~\ol{ms33} completes {\bf case 4} by deriving a \ol{rule} tuple
 with the appropriate information (i.e., $3$ terms).
 
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -918,7 +919,7 @@ position~$1$.
 
 \subsubsection{Finally}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}
@@ -963,7 +964,7 @@ rule information.
 
 \subsection{Termination}
 
-\begin{figure*}[!t]
+\begin{figure*}
 \ssp
 \centering
 \begin{lstlisting}

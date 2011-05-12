@@ -1339,7 +1339,7 @@ description and severity of outlier measurement.
 
 s1 mostRecentCriticalAlert(TaskId, Measure, a_min<AlertTime>) :-
    alert(TaskId, AlertTime, Measure, Desc, Severity),
-   Severity.contains("critical");  /* The alert is critical */
+   Severity.contains(``critical'');  /* The alert is critical */
 
 s2 schedule(Tracker, list<TaskId, MapSlots>) :-
    heartbeat(Tracker, TrackerStatus, MapSlots, _),
@@ -1355,15 +1355,15 @@ s2 schedule(Tracker, list<TaskId, MapSlots>) :-
    jobStat(JobId, TaskType, COMP_EST, JobStat),
    TaskStat < JobStat.percentile(0.25),
 
-   /* Schedule backup if host has split or task has no splits 
-      (e.g., reduce) AND no backup task has been scheduled */
+   /* Schedule backup map task if host has split AND 
+      no backup task has yet been scheduled */
    task(JobId, TaskId, ..., Splits, ...), TaskId.isMap(),
    taskAttemptCount(TaskId, Count), Count == 1,
    InputSplits.contains(TrackerStatus.getHost());
 \end{lstlisting}
 \caption{\label{ch:hop:fig:speculation} 
 Rule for map task speculation based on alert system data. Reduce task 
-speculation rule is similar and therefore omitted. }
+speculation rule is similar (we do no consider splits) and therefore omitted. }
 \end{figure}    
    
 Figure~\ref{ch:hop:fig:speculation} contains a rule that reschedules map tasks
