@@ -33,18 +33,21 @@ in the overall development effort.  We reflect on the practicalities of a
 declarative approach to query compilation and our overall experience with Evita
 Raced in Chapter~\ref{ch:evitaend}.
 
-In Chapter~\ref{ch:cloud}, we turn our attention to {\em cloud
-computing}~\cite{abovetheclouds} and develop a declarative version of Apache
-Hadoop~\cite{hadoop}.  In Chapter~\ref{ch:hadoop}, we review the salient
-aspects of Hadoop and the MapReduce programming model that it implements.
-Chapter~\ref{ch:boom} describes our rewrite of the Hadoop scheduler in a
-declarative language and shows that equivalent performance, fault-tolerance,
-and scalability properties can be achieved in a declarative language.  In
-Chapter~\ref{ch:hop}, we evolve the batch-oriented data flow implemented by
-Hadoop to a more online execution model that pipelines data between operators.
-This chapter also includes extensions to the declarative scheduler that
-accommodate pipelined plans.  Finally, we conclude in
-Chapter~\ref{ch:conclusion} with a discussion of future directions.
+In Chapter~\ref{ch:cloud}, we turn to the topic of {\em cloud
+computing}~\cite{abovetheclouds} and introduce the \BOOM project: an effort to
+explore implementing cloud software using declarative, data-centric languages.
+As a first concrete exercise, we built \BOOMA: an API-compliant
+reimplementation of Hadoop MapReduce in a declarative language.  In
+Chapter~\ref{ch:hadoop}, we review the salient aspects of Hadoop and the
+MapReduce programming model that it implements.  In Chapter~\ref{ch:boom}, we
+describe our rewrite of the Hadoop scheduler in a declarative language and show
+that equivalent performance, fault-tolerance, and scalability properties can be
+achieved in a declarative language.  In Chapter~\ref{ch:hop}, we evolve the
+batch-oriented data flow implemented by Hadoop to a more online execution model
+that pipelines data between operators.  We then describe extra scheduling
+policies implemented in the declarative scheduler that accommodate pipelined plans.
+Finally, we conclude in Chapter~\ref{ch:conclusion} with a discussion of future
+directions.
 
 
 %Hadoop is an open source software project that
