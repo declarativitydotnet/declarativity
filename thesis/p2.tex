@@ -122,9 +122,9 @@ and there is a \ol{path} $P2$ from $Y$ to $Z$ at cost $C2$, then there is a
 path from $X$ to $Z$ via $P2$ at cost $C1+C3$.'' A path from ``node1'' to
 ``node3'', through ``node2'', satisfies this criterion, and such a tuple is
 included in the \ol{path} IDB relation.  The selection predicate
-\ol{contains(X, P2) == false} avoids cyclic paths to ensure a finite result and
+\ol{contains(X, P2) == false} avoids cyclic paths, ensuring a finite result and
 program termination.  The ``query'' predicate at the bottom of
-Figure~\ref{ch:p2:fig:datalogPath}, asks for all paths that start at ``node1.''
+Figure~\ref{ch:p2:fig:datalogPath} asks for all paths that start at ``node1.''
 The \ol{path} tuples that begin with ``node1'' and end at ``node2'' and
 ``node3'' (via ``node2'') both meet this query constraint.
 
@@ -149,7 +149,7 @@ The above rule generates an infinite number of \ol{path} tuples since we can
 substitute any conceivable value for $P$.  A safe Datalog rule is a necessary,
 but not sufficient,~\footnote{The programmer can still express an infinite
 solution, for example by simply leaving out the \ol{contains(X,~P2)~==~false}
-predicate in rule~\ol{r2}} condition to obtaining a finite (IDB) solution from
+predicate in rule~\ol{r2}} condition for obtaining a finite (IDB) solution from
 evaluating a finite set of rules on a finite (EDB) input.  Datalog further
 restricts its (IDB) output to set semantics, as opposed to bag semantics that
 allow duplicate tuples.  The reader can assume these safety restrictions in all
@@ -270,20 +270,21 @@ Consider rule~\ol{r4} in Figure~\ref{ch:p2:fig:negation}, which formulates a
 \ol{path} from a \ol{link} if $X$ and $Y$ does not cross a detour.
 Unfortunately, the complement of the \ol{detour} relation is not well-defined;
 since the variables range over an infinite domain the compliment is also
-infinite.  Moreover, we cannot specify this complete relation prior to
-evaluation, since \ol{detour} is an IDB predicate.  If we were to simply
-evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using for example the
-semina\"{\i}ve algorithm) then we could end up with \ol{path} tuples that cross
-detours.  To see this, lets assume that we start by evaluating rule~\ol{r4}
-with the initial facts in the \ol{link} relation.  The execution plan for the
-negated \ol{detour} is similar to an anti-join operation, where tuples from
-\ol{link} relation pass if they do not already exist in the current \ol{detour}
-relation.  Since we have not yet evaluated rule~\ol{r5}, all \ol{link} tuples
-pass the anti-join, and produce a set of \ol{path} deductions in rule~\ol{r4}.
-Subsequently evaluating rule~\ol{r5} would give us our \ol{detour} tuples, but
-this would be too late in the sense that we have already made incorrect
-deductions, and cannot take them back.~\footnote{Recall: Datalog is a monotonic
-language (Chapter~\ref{ch:p2:sec:fixpoint}).}
+infinite.  Moreover, we cannot specify the complete \ol{detour} relation prior
+to evaluation, since it is an IDB predicate (due to rule~\ol{r5}).  If we were
+to simply evaluate the rules in Figure~\ref{ch:p2:fig:negation} (using for
+example the semina\"{\i}ve algorithm) then we could end up with \ol{path}
+tuples that cross detours.  To see this, lets assume that we start by
+evaluating rule~\ol{r4} with the initial facts in the \ol{link} relation.  The
+execution plan for the negated \ol{detour} is similar to an anti-join
+operation, where tuples from \ol{link} relation pass if they do not already
+exist in the current \ol{detour} relation.  Since we have not yet evaluated
+rule~\ol{r5}, all \ol{link} tuples pass the anti-join, and produce a set of
+\ol{path} deductions in rule~\ol{r4}.  Subsequently evaluating rule~\ol{r5}
+would give us our \ol{detour} tuples, but this would be too late in the sense
+that we have already made incorrect deductions, and cannot take them
+back.~\footnote{Recall: Datalog is a monotonic language
+(Chapter~\ref{ch:p2:sec:fixpoint}).}
 
 \begin{figure*} 
 \ssp
@@ -313,20 +314,19 @@ dependencies, while rule~\ol{r5} supplies the $detour~\rightarrow~link$ edge
 dependency.
 
 The stratum of an IDB predicate $p$ is defined to be the largest number of
-negations ($\neg$) along any path involving predicate $p$.  The dependency graph
-in Figure~\ref{ch:p2:fig:dependency} places predicates \ol{detour} and
+negations ($\neg$) along any path involving predicate $p$.  The dependency
+graph in Figure~\ref{ch:p2:fig:dependency} places predicates \ol{detour} and
 \ol{link} in the lowest stratum~$0$, while the \ol{path} predicate is in
 stratum~$1$.  If all IDB predicates have a finite stratum, then the Datalog
 program is {\em stratified}.  If any IDB predicate has an $\infty$ stratum,
 then the program is unstratified.  An IDB predicate is assigned an $\infty$
-stratum if it defines a negated subgoal on a path that contains a cycle (due
-to arbitrary recursion).
+stratum if it is included in a cyclic path crosses a negated (subgoal) edge.
 
 We evaluate a stratified Datalog program using the semina\"{\i}ve algorithm
 (e.g., Figure~\ref{ch:p2:fig:seminaive}) but with a slight twist -- we sort the
 IDB predicates by their assigned stratum, and follow this order when choosing
 $\Delta$ predicates (e.g., $\Delta$ \ol{path}) to evaluate in the loop.  This
-order ensures that if the program is stratified then any negated subgoal (e.g.,
+order ensures that if the program is stratified then any negated subgoal (i.e.,
 \ol{detour}) has already had its relation fully evaluated first.  The result of
 this evaluation is called a {\em stratified model}.~\footnote{We further note
 that the notion of stratified Datalog has nothing to do with the termination of
@@ -337,8 +337,7 @@ We revisit the notion of stratified Datalog throughout this thesis.  It turns
 out that the P2 system did not supported stratified Datalog, which slightly
 complicated the (\OVERLOG) program rules described in Chapters~\ref{ch:evita},
 \ref{ch:magic} and~\ref{ch:opt}.  Fortunately, there is another class of {\em
-locally stratified} Datalog programs that ``make sense'' on certain data (i.e.,
-the plan state of a query optimizer).
+locally stratified} Datalog programs that ``make sense'' on certain data. 
 
 \subsection{Local Stratification}
 
