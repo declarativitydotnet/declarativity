@@ -1,5 +1,42 @@
-\section{\large \bf \lang}
+\section{Background}
 \label{sec:foundation}
+
+\subsection{Preliminary definitions}
+
+All values come from a fixed, infinite universe called $\mathcal{U}$
+
+A {\em schema} $\mathcal{S}$ is a set of relation names (also called {\em predicates}) with associated finite arities.  We refer to the elements of this set as {\em relation schemas}.
+
+A {\em fact} over a relation schema with arity $n$ is a pair consisting of the relation name, and an $n$-tuple $(c_1, \ldots, c_n)$, where $c_i \in \mathcal{U}$ for $i = 1, \ldots, n$.  We will also talk about the {\em tuples} in a relation name R, meaning the $n$ tuples of the facts that are associated with relation name R.  An {\em instance} over a schema $\mathcal{S}$ is a finite set of facts over relation schemas in $\mathcal{S}$.
+
+Given a schema $\mathcal{S}$, we use $\mathcal{S}^*$ to denote the extension of $\mathcal{S}$ obtained by increasing the arity of all relation schemas in $\mathcal{S}$ by two; the relation names remain unchanged.  The first component of every tuple, the {\em spatial attribute}, indicates the location of the tuple, and the second component, referred to as the {\em temporal attribute} or {\em timestamp}, is a value of the logical clock at the tuple's location for which the tuple exists.  We call $\mathcal{S}^*$ a {\em spatio-temporal schema}.
+
+Any spatio-temporal schema defines the following special relations: a unary relation \dedalus{time}, equivalent to $\mathbb{N}$, a binary relation \dedalus{succ}, the successor relation over $\mathbb{N}$ \wrm{define}, and a unary relation \dedalus{node}, whose purpose we will describe later.  These relations are special because they have neither a spatial nor a temporal attribute.
+
+Given a schema $\mathcal{S}$, an {\em instance} is a finite set of facts over relation schemas in $\mathcal{S}$, and a {\em spatio-temporal instance} is a finite set of facts over relation schemas in $\mathcal{S*}$.
+
+
+\subsection{\large \bf Dedalus}
+
+A {\em rule} over a schema $\mathcal{S}$ is a first-order clause of the form:
+
+\begin{Dedalus}
+p_0(\bar{X_0}) <- p_1(\bar{X_1}), \ldots, p_n(\bar{X_n});
+\end{Dedalus}
+
+where \dedalus{\bar{X_i}} is an $n_i$-tuple of variables and/or values from $\mathcal{U}$. \wrm{do a much better job here...}
+
+A {\em spatio-temporal rule} over a schema $\mathcal{S}^*$ is a rule of the form:
+
+\begin{Dedalus}
+p_0(N_h, T_h, \bar{X_0}) <- p_1(N_b, T_b, \bar{X_0}), \ldots p_n(N_b, T_b, \bar{X_n}), node(N_b), \bar{S};
+\end{Dedalus}
+
+where $\bar{S}$ is either empty, is equal to $succ(T_h, T_b)$, or equal to $choice((\bar{X_0}, \ldots, \bar{X_n}, N_b, T_b) (T_h)), time(T_h)$.  In the first case, we refer to the rule as {\em deductive}, in the second case, we refer to the rule as {\em inductive}, and in the latter case, we refer to the rule as {\em asynchronous}. \wrm{explain more}
+
+A \lang program consists of a spatio-temporal schema $\mathcal{S}^*$, together with a finite set of spatio-temporal rules over $\mathcal{S}^*$.
+
+\wrm{integrate this with later stuff}
 
 \lang is based on Datalog$\lnot$~\cite{ullmanbook}: Datalog enhanced with
 arbitrary negation (we will henceforth refer to Datalog$\lnot$ as ``Datalog'').
