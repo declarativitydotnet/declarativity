@@ -4,7 +4,6 @@ Although there is much discussion among software developers about distributed ``
 This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: that distributed evaluation is equivalent to sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  In the last PODS conference, the ``CALM'' conjecture was presented to link this notion of consistency to monotonicity properties~\cite{declarative-imperative}; we formalize that connection here. 
 
 Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
-%which only occurs in asynchronous rules to model network nondeterminism.  
 which model temporal nondeterminism in unreliable networks.
 Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
 
@@ -19,36 +18,30 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 Confluence of a \lang program is undecidable.
 \end{lemma}
 \begin{proof}
-We reduce the undecidable problem of determining whether a two-counter machine accepts any input to testing confluence of a \lang program.  See appendix for the full proof.
+By reduction to the undecidable problem of determining whether a two-counter machine accepts any input.  See appendix.
 \end{proof}
 
 Given undecidability, we will first identify classes of programs that have a unique ultimate model.  However, in general, a \lang program may encode many ultimate models.  We will show that many \lang programs have a ``natural'' ultimate model that is preferable to all other ultimate models, and corresponds to intuition.  We show how to induce this ultimate model by rewriting the program.
 
-%Fortunately, as we will show, there is a rich class of programs that can be statically detected as confluent.  Furthermore, many other programs have a ``natural'' ultimate model
-%that corresponds to intuition; we show how to induce this ultimate model by augmenting the program.
-%We will first consider programs that we can statically check as having a unique ultimate model.
-%However, a \lang program may encode many ultimate models, so there is a question as to which ultimate model is preferable.
-%\lang programs without negation are trivially confluent, as they are certain to have
-%only one stable model.  The same is true of both negation-free and temporally stratified \lang programs that do not use the  {\em choice} construct.
-%Cast in operational terms this is
-%unsurprising: programs with no sources of nondeterminism have deterministic executions.
-
-\eat{
-\begin{example}
-\label{ex:nonconfluent}
-A diffluent \lang program.
-
-\begin{Dedalus}
-p(x)@async <- p_edb(X);
-q(X)@next <- p(X), !q(_);
-q(X)@next <- q(X);
-\end{Dedalus}
-\end{example}
-
-In the above program, assume the EDB contains facts \dedalus{p\_edb(1)} and \dedalus{p\_edb(2)}.  If the nondeterministic choice of \dedalus{async} chooses an earlier timestamp for \dedalus{p(1)} than \dedalus{p(2)}, then the ultimate model will consist of the single fact \dedalus{q(1)}.  Similarly, if \dedalus{p(2)} is assigned an earlier timestamp than \dedalus{p(1)}, then the ultimate model will consist of the single fact \dedalus{q(2)}.  If \dedalus{p(1)} and \dedalus{p(2)} are assigned the same timestamp, then the ultimate model will consist of the two facts \dedalus{q(1)} and \dedalus{q(2)}.  Since the program does not have a unique ultimate model for this EDB, it is diffluent.
-}
+\begin{lemma}
+\label{lem:monotonic-guarded-async-confluent}
+\end{lemma}
+\begin{proof}
+\end{proof}
 
 \subsection{Sources of Diffluence}
+
+A relation is {\em tainted with asynchrony} if it transitively dependent on an \dedalus{async} predicate.
+
+\begin{lemma}
+A \lang program where every rule body has at most one relation tainted with asynchrony is confluent.
+\end{lemma}
+\begin{proof}
+\end{proof}
+
+
+
+Broadly, a \lang program is diffluent for 
 
 %Any \lang programs that use asynchronous rules have an infinite
 %number of stable models, but as we will see, in many cases these correspond to a
@@ -211,11 +204,17 @@ Hence $a$ must exist in all ultimate models.
 If either qualification is false, problems can result, as we have previously illustrated.
 
 
-\subsection{Monotonic Properties}
+\subsection{A simple algebra}
 
 % \paa{add some nice text here transitioning the discussion into distributed systems etc}
 % 
-In practice, many natural distributed programs are not negation-free~\cite{cidr11}, and the conditions of Lemma~\ref{lem:guarding} do not hold.  Still, there are cases where these programs contain monotonicities that can be used to guarantee confluence.  In this section we broaden our notion of monotonicity, enabling us to verify the confluence of a larger class of programs.
+In practice, many natural distributed programs are not negation-free~\cite{cidr11}, and the conditions of Lemma~\ref{lem:guarding} do not hold.  Many interesting programs with negation are monotonic, and thus confluent.  In this section we broaden our static tests for monotonicity, enabling us to verify the confluence of a larger class of programs.
+
+We begin by introducing a simple type for every predicate.  A predicate may have one of the following types: \dedalus{oneshot}, \dedalus{atomic}, \dedalus{ground}, \dedalus{monotonic}, \dedalus{antimonotonic}, or \dedalus{nonmonotonic}.  We will briefly explain each type.  A predicate is \dedalus{oneshot} if for every fact, if the fact exists at time $t$, then all other facts in the predicate must exist at time $t$.  A predicate is \dedalus{atomic} if for every fact, if the fact exists at time $t$, then all other facts in the predicate must exist at time $t$ and time $t+1$.  A predicate is \dedalus{ground} if every fact in the predicate exists at all times.  A predicate is \dedalus{monotonic} if for every fact, if the fact exists at time $t$, it exists at time $t+1$.  A predicate is \dedalus{antimonotonic} if for every fact, if the fact exists at time $t$, it exists at time $t-1$.  A predicate is \dedalus{nonmonotonic} if none of the previous definitions apply.
+
+There are three operations in our algebra: join, negation, and async.  Note that the negation of an \dedalus{atomic} predicate is \dedalus{atomic}, the negation of a \dedalus{ground} predicate is \dedalus{ground}, and \dedalus{monotonic} and \dedalus{antimonotonic} are negatives of each other.
+
+We will show that if all output predciates are \dedalus{monotonic}, then the program is guaranteed to be confluent.
 
 We begin by considering the following example of a Dedalus program with negation, which we can argue is both monotonic and confluent:
 \begin{example}
@@ -224,13 +223,14 @@ We begin by considering the following example of a Dedalus program with negation
 %Example of a logically monotonic Dedalus program:\\
 \begin{Dedalus}
 response(X)@async <- response_edb(X);
-node(X)@next <- node(X);
 response(X)@next <- response(X);
-all_responded() <- !not_responded(_);
-not_responded(X) <- node(X), !response(X);
+all_responded() <- !not_responded();
+not_responded() <- node(X), !response(X);
 all_responded()@next <- all_responded();
 \end{Dedalus}
 \end{example}
+
+Note that \dedalus{response_edb} is ground, \dedalus{response} is monotonic, \dedalus{all_responded} is atomic, because \dedalus{!not_responded} is oneshot, since \dedalus{!response} is antimonotonic and \dedalus{node} is static, and the body universally quantifies over the atomic set (generalization of ``it only has one fact, and it's persisted'').
 
 %\jmh{suddenly we're getting to the nub of our application domain.  needs more prose to set this up; possibly even a section break}
 %The above program is very nearly monotonic \jmh{whatever that means}. 
@@ -238,14 +238,14 @@ all_responded()@next <- all_responded();
 If we assume that 
 %the contents of \texttt{node}
 %are fixed (e.g., it is EDB and given \emph{a priori}), 
-\texttt{node} is a ground truth,
+\texttt{node} is a static set,
 there is only one possible nonempty ultimate model, which contains \dedalus{all\_responded()}.
 This fact is implied by the predicate \dedalus{!not\_responded(\_)}, which 
 %\jmh{not sure what ``which'' refers to} 
-is monotonic because it is {\em positive} (i.e. the negation depth is even). 
-Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either every node has an associated response, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response, leading to an empty ultimate model.
+is monotonic because it is {\em positive} (i.e. the negation depth is even to all non-static relations).  Note that the negation of a static relation is static, and thus it is monotonic ``by default''.
+Note that the program is also confluent, because for any EDB, there is a unique ultimate model: either the EDB contains a response associated with every node, leading to a model with \dedalus{all\_responded()}, or there exists some node without an associated response in the EDB, leading to an empty ultimate model.
 
-Note however that if the set \texttt{node} is not fixed, the program is not monotonic, because 
+Note however that if the set \texttt{node} is not a static set, the program is not monotonic, because 
 \texttt{all\_responded} is defined with odd negation depth over \texttt{node}: adding a tuple
 to \texttt{node} may cause a fact in \texttt{all\_responded} to become false.  If such inserts
 are possible, careful maintenance of \texttt{node} is required to ensure confluence: we will
