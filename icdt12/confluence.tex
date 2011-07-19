@@ -1,26 +1,26 @@
 \section{Problems}
 \label{sec:confluence}
-%Although there is much discussion among software developers about distributed ``consistency,'' the term is used in a number of different ways.  One common usage refers narrowly to the consistency of data replicas across machines; this is a topic we cover in Section~\ref{sec:consistency}.  More generally, we might ask for a consistent interpretation of the logical consequences of a program on a given input, independent of nondeterminism arising from distribution. 
-%This corresponds to the Church-Rosser notion of confluence, which we adapt to our setting in this section.  Note that confluence implies another useful notion of consistency: that distributed evaluation is equivalent to sequential evaluation.  When this property can be proven, complications of parallelism can be safely ignored by the programmer.  In the last PODS conference, the ``CALM'' conjecture was presented to link this notion of consistency to monotonicity properties~\cite{declarative-imperative}; we formalize that connection here. 
 
-Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
+Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
+
+First, it is easy to write programs with non-deterministic behavior (multiple ultimate models).
+
+%Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
-which model temporal nondeterminism in unreliable networks.
-Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
+%which model temporal nondeterminism in unreliable networks.
+%Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
 
 \begin{definition}
-A \lang program is {\em confluent} (has a deterministic output) if, for every EDB, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
+A \lang program is {\em confluent} (has a deterministic output) if, for every instance of the program, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
 \end{definition}
-
-\wrm{say what the ``output'' relations are in each case}
 
 Two examples of diffluent programs:
 
 \begin{Dedalus}
+output p.
 q()@async <- q_edb();
 r()@async <- r_edb();
 p() <- q(), !r();
-p()@next <- p();
 q()@next <- q();
 r()@next <- r();
 \end{Dedalus}
@@ -28,14 +28,15 @@ r()@next <- r();
 Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
 
 \begin{Dedalus}
+output p.
 q()@async <- q_edb();
 r()@async <- r_edb();
 p() <- q(), r();
-p()@next <- p();
 q()@next <- q();
 \end{Dedalus}
 
-As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
+As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
+%However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
 
 \wrm{these examples show the only things that can cause non-confluence}
 
@@ -46,18 +47,89 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 Confluence of a \lang program is undecidable.
 \end{lemma}
 \begin{proof}
-Using the construction in \wrm{cite}, it is possible to encode a Turing Machine's transition relation and as much tape as necessary in the EDB, and reduce checking termination to checking confluence. \wrm{show this construction}
+Using the construction in~\cite{undecidable-datalog}, it is possible to write a Datalog program that encodes any two-counter machine's transition relation and an arbitrarily long finite successor relation in the EDB, and define a 0-ary output predicate \dedalus{accept} that is true if and only if the two-counter machine accepts and the transition and successor relations are valid.  As the construction is possible in Datalog, it is also possible in Dedalus.
+
+We add the following rules to the construction, to nondeterministically decide whether to run the machine or not:
+
+\begin{Dedalus}
+message(0)@async.
+message(1)@async.
+
+run_machine() <- message(0), message(1).
+accept() <- message(0), !message(1), input_valid().
+accept() <- !message(0), message(1), input_valid().
+\end{Dedalus}
+
+Note that the first two lines are actually rules.  The unsugared form of the first rule is \dedalus{message(L,S,0) <- node(L), time(T), time(S), T < S, choice((L, T, 0), (S)).}
+
+For valid inputs, the ultimate model is ${\dedalus{accept()}}$ if and only if either \dedalus{message(0)} and \dedalus{message(1)} are assigned the same timestamp and the machine accepts, or if the timestamps are different.  For invalid inputs, all ultimate models are empty.
+
+If we could decide confluence for this program, we could decide whether there is any valid input for which an arbitrary two-counter machine halts in an accepting state.
 \end{proof}
 
 \wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
-Another problem is that \lang is too expressive -- it captures PSPACE.
+Another problem is that \lang is too expressive -- it captures PSPACE as shown by the following Lemma.
 
-\wrm{Show simplified version of QBF in Dedalus.}
+\begin{lemma}
+\label{lem:lang-pspace}
+\lang captures PSPACE.
+\end{lemma}
+\begin{proof}
+We show how to write QBF in Dedalus.
+
+Assuming the formula is in prenex normal form, the textbook recursive algorithm for QBF involves removing the first quantifier, and checking both $0$ and $1$ for the first variable.  If the first quantifier was existential, then we return true if QBF of one of the subformulas is true.  If the first quantifier was universal, then we return true if QBF of both of the subformulas is true.
+
+If the quantifier depth is $n$, then it is clear that each leaf in the recursive call tree can be represented as an $n$-bit binary number.  If we assume that the left child is always $0$ and the right child $1$, then we can view our algorithm as a postorder traversal of the recursive call tree.
+
+First, we iterate through all of the $n$-bit binary numbers, one per timestamp.  We assume that the order over the variables is such that the leftmost variable in the formula (the high-order bit) is the first, and the rightmost is the last.  Thus, our addition is ``backwards'' in that it propagates carries to the predecessors:
+
+\begin{Dedalus}
+carry(V) <- var_last(V).
+one(V)@next <- carry(V), !one(V).
+one(V)@next <- one(V), !carry(V).
+carry(U) <- carry(V), one(V), var_succ(U, V).
+\end{Dedalus}
+
+At each timestep, we check whether the current variable assignment is true.  If it is true, then \dedalus{formula\_true()} is true at that timestep.  We omit these rules.
+
+We propagate truth information up the recursive call tree.  A node propagates a $1$ to its parent if the quantifier associated with that node is existential and at least one of its children is true, or the quantifier is universal and both of its children are true.  A node propagates a $0$ to its parent otherwise.  If the output of the root is $1$, the formula is satisfiable, otherwise it is not: \wrm{more explanation here}
+
+\begin{Dedalus}
+var_sat_in(V, 1) <- formula_true(), var_last(V).
+
+var_sat(0, V, B)@next <- var_sat_in(V, B),
+!var_sat(_, V, _).
+var_sat(1, V, B)@next <- var_sat_in(V, B),
+var_sat(0, V, _).
+
+// existential quantifier
+var_sat_left_in(vn, 1) <- exists(vn),
+var_sat(_, vn, 1).
+var_sat_left_in(vn, 0) <- exists(vn),
+var_sat(0, vn, 0), var_sat(1, vn, 0).
+
+// universal quantifier
+var_sat_left_in(vn_succ, 1) <- forall(vn),
+var_sat(0, vn, 1), var_sat(1, vn, 1).
+var_sat_left_in(vn_succ, 0) <- forall(vn),
+var_sat(_, vn, false).
+
+var_sat_in(N, U, B) <- var_sat_left_in(V, B),
+var_succ(U, V).
+
+// persist var_sat until we get 2 of them
+var_sat(N, V, B)@next <- var_sat(N, V, B),
+!var_sat(1, V, _);
+
+// the output of the last 
+satisfiable(B) <- var_sat_left_in(V, B), var_last(V).
+\end{Dedalus}
+\end{proof}
 
 
 \wrm{We will present a natural restriction of \lang that is confluent, and prove that it captures exactly PTIME.  Negation free, and guarded asynchrony.}
-\wrm{DON'T FORGET UNIVERSAL QUANTIFIERS}
+\wrm{DON'T FORGET UNIVERSAL QUANTIFIERS -- easy, use order, what about recursion thru universal quantification?}
 
 
 \begin{definition}
@@ -69,7 +141,7 @@ A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear
 A \lang program has {\em guarded asynchrony} if all relations
 %\jmh{we have async rules, not async preds} 
 appearing in the heads of \dedalus{async} rules
-are simply persisted.
+are simply persisted. \wrm{define simply persisted}
 \end{definition}
 
 

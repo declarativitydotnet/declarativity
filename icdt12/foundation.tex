@@ -14,7 +14,7 @@ p(\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)({\(\overline{\dedalus{X}\sb{1
 !c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
-where \dedalus{h}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)}, \dedalus{\(\dedalus{c}_1\), \ldots, \(\dedalus{c}_m\)} are relations in $\mathcal{S}$, and $\overline{\dedalus{X}_i}$ and $\overline{\dedalus{Y}_i}$ denote a tuple (of the appropriate arity) consisting of variable symbols, constants from $\mathcal{U}$.  Note that we maintain the usual safety restrictions of Datalog rules: any variable symbol $V$ that appears in $\overline{\dedalus{Y}_i}$ for some $1 \leq i \leq m$ must also appear in $\overline{\dedalus{X}_j}$ for some $1 \leq j \leq n$, but only if $V$ appears in $\overline{\dedalus{X}_0}$ or $V$ appears in $\overline{\dedalus{Y}_k}$ for some $k \neq i$ -- i.e., variable symbols that only appear in a single negated atom and do not appear in the head need not also appear in a positive atom \wrm{cite ullman}.
+where \dedalus{h}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)}, \dedalus{\(\dedalus{c}_1\), \ldots, \(\dedalus{c}_m\)} are relations in $\mathcal{S}$, and $\overline{\dedalus{X}_i}$ and $\overline{\dedalus{Y}_i}$ denote a tuple (of the appropriate arity) consisting of variable symbols, constants from $\mathcal{U}$.  Note that we maintain the usual safety restrictions of Datalog rules: any variable symbol \dedalus{V} that appears in $\overline{\dedalus{Y}_i}$ for some $1 \leq i \leq m$ must also appear in $\overline{\dedalus{X}_j}$ for some $1 \leq j \leq n$, but only if \dedalus{V} appears in $\overline{\dedalus{X}_0}$ or \dedalus{V} appears in $\overline{\dedalus{Y}_k}$ for some $k \neq i$ -- i.e., variable symbols that only appear in a single negated atom and do not appear in the head need not also appear in a positive atom \wrm{cite ullman}.
 
 \wrm{describe recursion, rule out recursion through negation, define EDB}
 
@@ -25,6 +25,8 @@ Given a schema $\mathcal{S}$, we use $\mathcal{S}^*$ to denote the extension of 
 A {\em spatio-temporal} fact over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
 
 A {\em spatio-temporal rule} over a spatio-temporal schema $\mathcal{S}^*$ is a rule of one of the following three forms:
+
+\wrm{put node(L) and time(T) in the body of all rules!}
 
 A {\em deductive} rule:
 
@@ -45,7 +47,7 @@ An {\em asynchronous local} rule:
 \begin{Dedalus}
 p(L,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
 !c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
-S > T, choice((L, T, \(\overline{\dedalus{B}}\)),(S)).
+T < S, choice((L, T, \(\overline{\dedalus{B}}\)),(S)).
 \end{Dedalus}
 
 An {\em asynchronous communication} rule:
@@ -53,7 +55,7 @@ An {\em asynchronous communication} rule:
 \begin{Dedalus}
 p(D,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
 !c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
-S > T, choice((L, T, \(\overline{\dedalus{B}}\)),(S)), node(D).
+T < S, choice((L, T, \(\overline{\dedalus{B}}\)),(S)), node(D).
 \end{Dedalus}
 
 where all symbols are as defined before, $\overline{\dedalus{B}}$ is a list of all of the distinct variable symbols in $\overline{\dedalus{X}_1}, \ldots, \overline{\dedalus{X}_n}, \overline{\dedalus{Y}_1}, \ldots, \overline{\dedalus{Y}_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\overline{\dedalus{B}}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\overline{\dedalus{B}}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
