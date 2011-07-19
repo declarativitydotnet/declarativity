@@ -144,22 +144,15 @@ appearing in the heads of \dedalus{async} rules
 are simply persisted. \wrm{define simply persisted}
 \end{definition}
 
+We will refer to the language of negation-free \lang programs with guarded asynchrony as \slang.
 
-\wrm{re-evaluate this proof}
-\begin{lemma}
-\label{lem:guarding}
-A negation-free \lang program with guarded asynchrony is confluent.
-\end{lemma}
+\wrm{look at this proof again}
+\begin{theorem}
+\label{thm:confluence}
+\slang programs are confluent.
+\end{theorem}
 \begin{proof}
 
-
-%Sketch: only possible way two ultimate models are different is if two facts (or predicates, e.g. 
-%``!'' on facts) join in one trace, but not the other.  If the program has guarded asynchrony, then 
-%it is impossible for a join to succeed in one trace and not another.
-
-%\wrm{yeah, this is right, need to define terms though-- define ``ground atom'' as ``first time %something in the ultimate model is true before it is eventually always true'', change ``join'' to %``unification'', change ``eventually always succeed'' to ``eventually always satisfied'' or %something, define ``modulo time'' define ``identical tuple''.  i'll let you fix this. you can delete %my sketch above too}
-
-%\paa{I think I addressed everything but "change join to unify," which I don't agree with}
 Towards a proof by contradiction, consider a negation-free \lang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
@@ -196,16 +189,33 @@ Hence $a$ must exist in all ultimate models.
 
 If either qualification is false, problems can result, as we have previously illustrated.
 
+\wrm{improve the diction here}
+\begin{theorem}
+\slang programs capture exactly PTIME.
+\end{theorem}
+\begin{proof}
+We will show how to convert any \slang program to an FO[IFP] formula, and how to convert any FO[IFP] formula to a \slang program.  It is known that FO[IFP] captures exactly PTIME over ordered structures.
+
+Since \slang has only EDB negation, we first show that in any FO[IFP] formula, negation can be pushed down to the EDB.  This is not hard to show.  Since FO[IFP] has a negation normal form where negation only applies to atoms \wrm{cite}, we can always push negation down through quantifiers and boolean operators using the usual DeMorgan dualities.  \wrm{Universal quantifiers are expressed like...}
+
+Since \slang admits a least fixpoint in each iteration, we need to show we can rewrite this formula to an inflationary fixpoint formula.  \wrm{But we can rewrite the least fixpoint as an FO[IFP] formula, and nesting of inflationary fixpoints does not increase expressive power -- citation?}
+
+We need to show that non-determinism does not increase expressive power.  Clearly it does not because all ultimate models are equivalent in \slang, so in particular, we could correctly compute the unique ultimate model of any \slang program deterministically by replacing \dedalus{@async} with \dedalus{@next}.
+
+Thus, we can convert a \slang program into an FO[IFP] formula. \wrm{need to say something about simultaneous inductions, blah blah?}.
+
+We can convert any FO[IFP] formula with only EDB negation into a \slang program by converting it into rule form \wrm{i.e. splitting up each disjunct into a rule, rewrite universal quantification using order, etc.}.
+\end{proof}
 
 %\subsection{Monotonic Properties}
 %\wrm{The gist of this section is that we want to somehow expand ``negation-free'' to ``positive''.  I'm not sure if this works in general, so maybe we just axe this section.}
 
 
-This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction for a broad definition of monotonicity.  
-We now show by example that the other direction does not hold: logical monotonicity is not necessary for confluence.
+This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction.
+Clearly, there are confluent programs not in \slang.  For example:
 
 \begin{example}
-A confluent Dedalus program that is not logically monotonic.
+A confluent \lang program that is not a \slang program.
 
 \begin{Dedalus}
 //client
@@ -218,21 +228,12 @@ dequeued(I)@next <- b(I), !b_lt(_, I);
 mem(I) <- dequeued(I), !bt_lt(_, _);
 
 \end{Dedalus}
-
-%\paa{don't we just want to add a subgoal node(s) ?}
-%\wrm{or, just consider the 2 counter machine...?}
 \end{example}
 
-%odd()@next <- odd(), !dequeued(_);
-%odd()@next <- dequeued(), even();
-%even() <- !odd();
-
-%The ultimate model contains \dedalus{odd()} if there are an odd number of \dedalus{b\_edb(I)} %facts, and \dedalus{even()} otherwise.  
 This program has a single ultimate model in which \dedalus{mem()} contains the highest
 element in \dedalus{b\_edb()} according to the order \dedalus{<}.
 Thus it is confluent.  However, the program is not logically monotonic because neither \dedalus{dequeued()} nor \dedalus{!dequeued()} are monotonic, so \dedalus{mem()} is not supported by only monotonic properties. Thus the program is not logically monotonic.
 
-%\jmh{I'm kinda bummed out that we don't let UCS help us broaden monotonic properties here further.}
 
 \subsection{Perfect Ultimate Model}
 %\wrm{rework definition to make clear we aren't coordinating @nexts}
