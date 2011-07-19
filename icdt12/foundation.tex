@@ -1,0 +1,120 @@
+\section{\large \bf \lang}
+\label{sec:foundation}
+
+\subsection{Preliminary Definitions}
+
+We assume an infinite universe $\mathcal{U}$.
+
+A {\em relation schema} is a pair consisting of a relation name and its arity.  A {\em schema} $\mathcal{S}$ is a set of relation schemas.  As in \wrm{cite Immerman}, we assume the existence of an order.  Thus, all schemas contain the following relational schemas: \dedalus{lt} -- a relation of arity two that is true whenever the second argument is greater than the first (we will write this relation in infix form using the \dedalus{<} symbol) -- \dedalus{suc} -- a relation of arity two that defines a total order over $\mathcal{U}$ \wrm{different from succ}.
+
+A {\em rule} over a schema $\mathcal{S}$ is a clause of the form:
+
+\begin{Dedalus}
+p(\(\bar{X_0}\)) <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+\end{Dedalus}
+
+where \dedalus{h}, \dedalus{\(b_1\), \ldots, \(b_n\)}, \dedalus{\(c_1\), \ldots, \(c_m\)} are relations in $\mathcal{S}$, and $\bar{X_i}$ and $\bar{Y_i}$ denote a tuple (of the appropriate arity) consisting of variable symbols, constants from $\mathcal{U}$.  Note that we maintain the usual safety restrictions of Datalog rules: any variable symbol $V$ that appears in $\bar{Y_i}$ for some $1 \leq i \leq m$ must also appear in $\bar{X_j}$ for some $1 \leq j \leq n$, but only if $V$ appears in $\bar{X_0}$ or $V$ appears in $\bar{Y_k}$ for some $k \neq i$ -- i.e., variable symbols that only appear in a single negated atom and do not appear in the head need not also appear in a positive atom \wrm{cite ullman}.
+
+\wrm{describe recursion, rule out recursion through negation, define EDB}
+
+A {\em fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in \mathcal{U}$.  An instance $\mathcal{I}$ over a schema $\mathcal{S}$ is a set of facts.
+
+Given a schema $\mathcal{S}$, we use $\mathcal{S}^*$ to denote the extension of $\mathcal{S}$ obtained by adding two columns to each relation schema in $\mathcal{S}$, and adding three additional relation schemas to $\mathcal{S}$.  The first additional column, the {\em location specifier}, indicates the ``location'' of the tuple, and the second additional column, the {\em timestamp}, is a natural number representing a logical time.  \wrm{As in...} We call $\mathcal{S}^*$ a {\em spatio-temporal} schema.  The three relations we add are: \dedalus{time}, a unary relation equivalent to $\mathbb{N}$, \dedalus{succ}, a binary relation representing the natural successor relation over $\mathbb{N}$, and \dedalus{node}, a unary relation that represents all locations (the meaning of ``location'' will become clear later).
+
+A {\em spatio-temporal} fact over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
+
+A {\em spatio-temporal rule} over a spatio-temporal schema $\mathcal{S}^*$ is a rule of one of the following three forms:
+
+A {\em deductive} rule:
+\begin{Dedalus}
+p(L,T,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)), \ldots, b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)).
+\end{Dedalus}
+
+An {\em inductive} rule:
+\begin{Dedalus}
+p(L,S,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)), \ldots, b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)), succ(T,S).
+\end{Dedalus}
+
+An {\em asynchronous local} rule:
+\begin{Dedalus}
+p(L,S,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)),\ldots,b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)), time(S), S > T, choice((L, T, \(\bar{B}\)),(S)).
+\end{Dedalus}
+
+An {\em asynchronous communication} rule:
+\begin{Dedalus}
+p(D,S,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)),\ldots,b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)), time(S), S > T, choice((L, T, \(\bar{B}\)),(S)), node(D).
+\end{Dedalus}
+
+where all symbols are as defined before, $\bar{B}$ is a list of all of the distinct variable symbols in $\bar{X_1}, \ldots, \bar{X_n}, \bar{Y_1}, \ldots, \bar{Y_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\bar{B}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\bar{B}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
+
+A \lang {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\mathcal{S}^*$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable $D$ appears in the body in asynchronous communication rules.
+
+A \lang {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations.
+
+\noindent
+\textbf{Syntactic sugar for space-time in \lang:}
+The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  
+
+The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
+Communication rules must include the location attribute of their head predicate; by definition this is a different variable than that of the body predicates.
+ Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
+
+Deductive:
+\begin{Dedalus}
+p(\(\bar{X_0}\)) <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+\end{Dedalus}
+
+Inductive:
+\begin{Dedalus}
+p(\(\bar{X_0}\))@next <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+\end{Dedalus}
+
+Asynchronous local:
+\begin{Dedalus}
+p(\(\bar{X_0}\))@async <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+\end{Dedalus}
+
+Asynchronous communication:
+\begin{Dedalus}
+p(#D,\(\bar{X_0}\))@async <- b_1(#L,\(\bar{X_1}\)), \ldots, b_n(#L,\(\bar{X_n}\)), !c_1(#L,\(\bar{Y_1}\)), \ldots, !c_m(#L,\(\bar{Y_m}\)).
+\end{Dedalus}
+
+Asynchronous communication rules require the body location specifier to be explicit, because it may be unified with other body attributes.
+
+
+%\vspace{1em}
+%\noindent 
+%\textbf{Predicate Dependence Graphs in \lang}: 
+%A \lang program's {\em predicate dependency graph}~\cite{ullmanbook} PDG is 
+%a directed graph that has one node per predicate, and an edge from \dedalus{q} to \dedalus{p} if predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, or a \dedalus{count} appears in the head of the rule, we mark the edge as negated.  If the rule is inductive or asynchronous, we annotate the edge with the rule type.  The PDG omits the \dedalus{time} and \dedalus{successor} predicates, and the nodes and edges for \dedalus{choice}.  We write $\dedalus{q} \to \dedalus{p}$ if there exists a path following forward edges from \dedalus{q} to \dedalus{p}.  We write $\dedalus{q} \nrightarrow \dedalus{p}$ if there exists a forward path from \dedalus{q} to \dedalus{p} that crosses a negated edge.  We write $\dedalus{q} \circleright \dedalus{p}$ if all forward paths from \dedalus{q} to \dedalus{p} traverse an asynchronous or inductive edge.  We write $\dedalus{q} \Diamondright \dedalus{p}$ if at least one forward path from \dedalus{q} to \dedalus{p} traverses an async edge. 
+
+
+
+\subsection{Semantics}
+One interpretation of a \lang instance is given by the possible worlds of the stable model semantics~\cite{stable-model}.  We do not review the stable model semantics here -- the only salient detail is the interaction of\dedalus{choice} with the stable model semantics.  \dedalus{choice} induces a separate stable model foreach possible sequence of choices of timestamps.  Note that without \dedalus{choice} -- i.e., without any asynchronous local or asynchronous communication rules -- a \lang program has a unique stable model, because it is locally stratified.
+
+There are two potential problems with considering a stable model as the meaning of a \lang instance.  First, every program with at least one asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
+
+\begin{example}
+\label{ex:flipflop}
+A \lang program with an infinite stable model.
+
+\begin{Dedalus}
+flipflop(Y,X)@next \(\leftarrow\) flipflop(X,Y);
+flipflop(1,2)@1;
+\end{Dedalus}
+
+\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
+\end{example}
+
+\wrm{explain the ultimate model in terms of defining an output schema, and everything that is ever asserted into that output schema is part of the output}.
+
+
+
+\subsection{Operational Interpretation}
+\label{sec:operational}
+
+Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.
+
+\wrm{describe what kind of system this models, how it would be executed}
+\wrm{describe failure model -- all messages eventually delivered}

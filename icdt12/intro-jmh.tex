@@ -1,0 +1,23 @@
+\section{Introduction}
+There is widespread belief that the foundations of distributed data management
+are a poor fit to popular new platforms for distributed
+computing~\cite{ladis}. Classical protocols for transactional atomicity and
+distributed consensus rely on timely messaging. But typical modern platforms
+consist of thousands of machines in datacenters spread across the world and
+exhibit relatively frequent message delays and component failures.  As a result,
+many programmers today avoid classical protocols and attempt to build
+applications that operate correctly using only loose notions of data
+consistency.  While there are software engineering patterns to inform this
+process~\cite{quicksand}, there is a need for formal tools to help programmers
+reason about distributed data management at the application level.
+
+In recent years there has been revived interest in logic programming as a framework for developing distributed systems (e.g.,~\cite{reactors,boom}).  This has led in turn to optimism about using database theory as a foundation for modeling key correctness issues in distributed programs~\cite{declarative-imperative}.
+In this paper we report concrete progress on this front.  
+
+Utilizing a model-theoretic framework for analyzing distributed programs, we demonstrate the undecidability of tests for two key properties of distributed programs: confluence in the face of message delays and reordering, and eventual consistency of replicas.  We then use the same framework to derive a number of constructive results that follow from earlier conjectures~\cite{declarative-imperative}.
+First, we demonstrate that distributed programs satisfying a broad definition of  monotonicity are guaranteed to be confluent, producing consistent results in the face of arbitrary message delays and reordering.  We then turn our attention to non-monotonic programs, and provide a generic construction for distributed coordination that guarantees adherence to a natural semantic interpretation.  Finally, we show how to guarantee the eventual consistency of distributed replicas by rewriting programs with a simple generic protocol for data replication.
+
+To connect these results to traditional imperative models of distributed programming, we provide a mapping from our logical framework to a more traditional state-machine model.  In concurrent work we have also used these results directly, to develop practical software analysis tools for distributed logic programming~\cite{cidr11}.  
+
+\subsection{Organization}
+In Section~\ref{sec:foundation} we introduce \lang, the distributed logic programming language that we use throughout the paper.  Section~\ref{sec:operational} presents an operational interpretation of a distributed system, and proves a correspondence between \lang models and operational behavior.  We present our confluence results in section~\ref{sec:confluence}, and in Section~\ref{sec:consistency} we examine the issue of replica consistency.  We conclude with a discussion of related and future work (Sections~\ref{sec:relwork} and~\ref{sec:conclusion}).
