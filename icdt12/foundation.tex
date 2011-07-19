@@ -10,10 +10,11 @@ A {\em relation schema} is a pair consisting of a relation name and its arity.  
 A {\em rule} over a schema $\mathcal{S}$ is a clause of the form:
 
 \begin{Dedalus}
-p(\(\bar{X_0}\)) <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+p(\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)({\(\overline{\dedalus{X}\sb{1}}\)}), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
-where \dedalus{h}, \dedalus{\(b_1\), \ldots, \(b_n\)}, \dedalus{\(c_1\), \ldots, \(c_m\)} are relations in $\mathcal{S}$, and $\bar{X_i}$ and $\bar{Y_i}$ denote a tuple (of the appropriate arity) consisting of variable symbols, constants from $\mathcal{U}$.  Note that we maintain the usual safety restrictions of Datalog rules: any variable symbol $V$ that appears in $\bar{Y_i}$ for some $1 \leq i \leq m$ must also appear in $\bar{X_j}$ for some $1 \leq j \leq n$, but only if $V$ appears in $\bar{X_0}$ or $V$ appears in $\bar{Y_k}$ for some $k \neq i$ -- i.e., variable symbols that only appear in a single negated atom and do not appear in the head need not also appear in a positive atom \wrm{cite ullman}.
+where \dedalus{h}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)}, \dedalus{\(\dedalus{c}_1\), \ldots, \(\dedalus{c}_m\)} are relations in $\mathcal{S}$, and $\overline{\dedalus{X}_i}$ and $\overline{\dedalus{Y}_i}$ denote a tuple (of the appropriate arity) consisting of variable symbols, constants from $\mathcal{U}$.  Note that we maintain the usual safety restrictions of Datalog rules: any variable symbol $V$ that appears in $\overline{\dedalus{Y}_i}$ for some $1 \leq i \leq m$ must also appear in $\overline{\dedalus{X}_j}$ for some $1 \leq j \leq n$, but only if $V$ appears in $\overline{\dedalus{X}_0}$ or $V$ appears in $\overline{\dedalus{Y}_k}$ for some $k \neq i$ -- i.e., variable symbols that only appear in a single negated atom and do not appear in the head need not also appear in a positive atom \wrm{cite ullman}.
 
 \wrm{describe recursion, rule out recursion through negation, define EDB}
 
@@ -26,28 +27,38 @@ A {\em spatio-temporal} fact over a relation schema of arity $n$ is a pair consi
 A {\em spatio-temporal rule} over a spatio-temporal schema $\mathcal{S}^*$ is a rule of one of the following three forms:
 
 A {\em deductive} rule:
+
 \begin{Dedalus}
-p(L,T,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)), \ldots, b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)).
+p(L,T,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
 An {\em inductive} rule:
+
 \begin{Dedalus}
-p(L,S,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)), \ldots, b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)), succ(T,S).
+p(L,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), succ(T,S).
 \end{Dedalus}
 
 An {\em asynchronous local} rule:
+
 \begin{Dedalus}
-p(L,S,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)),\ldots,b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)), time(S), S > T, choice((L, T, \(\bar{B}\)),(S)).
+p(L,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
+S > T, choice((L, T, \(\overline{\dedalus{B}}\)),(S)).
 \end{Dedalus}
 
 An {\em asynchronous communication} rule:
+
 \begin{Dedalus}
-p(D,S,\(\bar{X_0}\)) <- b_1(L,T,\(\bar{X_1}\)),\ldots,b_n(L,T,\(\bar{X_n}\)), !c_1(L,T,\(\bar{Y_1}\)), \ldots, !c_m(L,T,\(\bar{Y_m}\)), time(S), S > T, choice((L, T, \(\bar{B}\)),(S)), node(D).
+p(D,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
+S > T, choice((L, T, \(\overline{\dedalus{B}}\)),(S)), node(D).
 \end{Dedalus}
 
-where all symbols are as defined before, $\bar{B}$ is a list of all of the distinct variable symbols in $\bar{X_1}, \ldots, \bar{X_n}, \bar{Y_1}, \ldots, \bar{Y_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\bar{B}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\bar{B}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
+where all symbols are as defined before, $\overline{\dedalus{B}}$ is a list of all of the distinct variable symbols in $\overline{\dedalus{X}_1}, \ldots, \overline{\dedalus{X}_n}, \overline{\dedalus{Y}_1}, \ldots, \overline{\dedalus{Y}_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\overline{\dedalus{B}}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\overline{\dedalus{B}}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
-A \lang {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\mathcal{S}^*$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable $D$ appears in the body in asynchronous communication rules.
+A \lang {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\mathcal{S}^*$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules.
 
 A \lang {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations.
 
@@ -60,23 +71,31 @@ Communication rules must include the location attribute of their head predicate;
  Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
 
 Deductive:
+
 \begin{Dedalus}
-p(\(\bar{X_0}\)) <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+p(\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
 Inductive:
+
 \begin{Dedalus}
-p(\(\bar{X_0}\))@next <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+p(\(\overline{\dedalus{X}\sb{0}}\))@next <- b\(\sb{1}\)(\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
 Asynchronous local:
+
 \begin{Dedalus}
-p(\(\bar{X_0}\))@async <- b_1(\(\bar{X_1}\)), \ldots, b_n(\(\bar{X_n}\)), !c_1(\(\bar{Y_1}\)), \ldots, !c_m(\(\bar{Y_m}\)).
+p(\(\overline{\dedalus{X}\sb{0}}\))@async <- b\(\sb{1}\)(\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
 Asynchronous communication:
+
 \begin{Dedalus}
-p(#D,\(\bar{X_0}\))@async <- b_1(#L,\(\bar{X_1}\)), \ldots, b_n(#L,\(\bar{X_n}\)), !c_1(#L,\(\bar{Y_1}\)), \ldots, !c_m(#L,\(\bar{Y_m}\)).
+p(#D,\(\overline{\dedalus{X}\sb{0}}\))@async <- b\(\sb{1}\)(#L,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(#L,\(\overline{\dedalus{X}\sb{n}}\)),
+!c\(\sb{1}\)(#L,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(#L,\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
 Asynchronous communication rules require the body location specifier to be explicit, because it may be unified with other body attributes.
