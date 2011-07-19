@@ -1,0 +1,160 @@
+\documentclass{sig-alternate}
+
+\usepackage[usenames, dvipsnames]{color}
+%\usepackage{times}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{url}
+\usepackage{amsmath, amssymb}
+%\usepackage[protrusion=true,expansion=true]{microtype}
+%\usepackage{float}
+\usepackage{alltt}
+\usepackage{appendix}
+%\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+%\usepackage{texlive-science}
+\usepackage{comment}
+
+\pdfinfo{/Title (Model-Theoretic Correctness Criteria for Distributed Systems)}
+
+\usepackage{txfonts}
+\newcommand{\Tau}{\mathcal{T}}
+\newcommand{\SDedalus}{\mathcal{S}}
+\newcommand{\Consts}{\mathcal{C}}
+\newcommand{\Vars}{\mathcal{A}}
+%\newcommand{\pos}{\protect{$_{pos}$}}
+%\newcommand{\nega}{\protect{$_{neg}$}}
+% RCS: Would like to use the above ones, but can't get them to work in Dedalus env.
+\newcommand{\pos}{\_pos}
+\newcommand{\nega}{\_neg}
+\newcommand{\eat}[1]{}
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+\newcommand{\smallurl}[1]{{\small \url{#1}}}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+%\theoremstyle{definition}
+\newdef{example}{Example}
+\newdef{definition}{Definition}
+
+%\def\slang{synchronous Dedalus\xspace}
+\def\lang{\textsc{Dedalus}\xspace}
+%\def\slang{\textsc{Dedalus\ensuremath{_{{0}}}}\xspace}
+%\def\synclang{{Dedalus\ensuremath{_{\large 0}}}\xspace}
+\newcommand{\naive}      {na\"{\i}ve\xspace}
+\newcommand{\Naive}      {Na\"{\i}ve\xspace}
+%dedalus environment for code
+
+\newenvironment{Dedalus}{
+\vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
+\begin{alltt}\fontsize{9pt}{9pt}\selectfont}
+{\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
+\newcommand{\dbar}[1]{\(\bar{\text{\dedalus{#1}}}\)}
+
+\begin{document}
+
+%\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+\title{Model-Theoretic Correctness Criteria for Distributed Systems}
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+\numberofauthors{6}
+
+\author{
+%
+William R. Marczak \quad Peter Alvaro \quad Joseph M. Hellerstein \quad Neil Conway
+\\\\
+%
+\fontsize{10}{10}\selectfont\itshape 
+%\vspace{0.05in}
+University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upshape
+%
+\{wrm,palvaro,hellerstein,nrc\}@cs.berkeley.edu
+%
+}
+
+\toappear{}
+
+\maketitle
+
+\begin{abstract} 
+	Building on recent interest in distributed logic programming, we take a model-theoretic approach to analyzing and enforcing correctness of distributed programs.
+We address two key properties of distributed software: deterministic
+execution and eventual consistency of replicas in the face of message reordering and delay.  We demonstrate the undecidability of checking programs for these properties in general.  We then prove that monotonicity, broadly defined, guarantees deterministic outcomes in the face of nondeterministic message scheduling.  For non-monotonic programs, we define a natural semantics in the face of nondeterministic messaging and provide a generic construction for distributed coordination that achieves this semantics using intuition from stratified negation.  We also provide a similarly generic construction for achieving eventual consistency of replicated data.
+%
+%We present a formal definition of the \lang language and prove conjectures.
+
+% An increasing amount of interest surrounds the use of logic languages such as
+% Datalog to ease the design and verification of asynchronous distributed
+% systems.  An oft-cited reason is the model-theoretic semantics of logic
+% programming, which underpin a robust literature on analysis techniques to
+% ensure, among other things, termination and the existince and uniqueness of a
+% program result.  While prior work on logic programming for distributed systems
+% has demonstrated compactness of representation and efficiency of execution, the
+% tantalizing possibility of leveraging model theory to realize analysis
+% techniques for distributed systems correctness criteria has gone largely
+% unrealized.  In this paper, we define model-theoretic notions for two such
+% criteria popular in the distributed systems domain: {\em determinism} and {\em
+% eventual consistency}.  Unfortunately, we show that these are undecidable
+% properties in the general case.  However, we prove the conjectured result that
+% {\em monotonicity} of logic can be a powerful conservative test for these
+% criteria, and we leverage existing static {\em stratification} checks from
+% logic programming to enforce monotonicity in a large class of programs by
+% instrumenting them with {\em coordination logic}.
+
+%However, using analyses from logic programming, including {\em stratification} analyses, 
+
+%Recent distributed systems research has used variants of Datalog to specify and implement large-scale practical systems, showing orders of magnitude reduction in code size~\cite{boon}, and in some cases applying or reinterpreting 
+
+%Programs written in declarative logic languages such as Datalog have a model-theoretic semantics that
+%is independent of how the program is executed.  As a result, they are amenable to simple and powerful
+%static analysis techniques to ensure, among other things, termination and the existence and uniqueness
+%of a program result.  Recent distributed systems research has experimented with using variants of 
+%Datalog to specify and implement large-scale practical systems, in some cases applying or reinterpreting
+%existing analyses with respect to the new domain~\cite{dedalus}.  
+
+%Continuing in this vein, it is only natural 
+%to ask to what extent we can characterize notions of correctness and ``good behavior'' that are unique to distributed 
+%systems, like determinism of distributed computations and eventual consistency of replicated state,
+% in a model theoretic framework, and whether we may add or adapt program analyses for these properties.
+
+%In this paper, we define a model-theoretic notions of {\em confluence, consistency} and {\em eventual
+%consistency}, which are based on the existence of an {\em ultimate models}, or equivalence classes among 
+%distributed traces \paa{ummmm}.  We show that for programs that do not have a unique ultimate model, 
+%there often exists a single ultimate model that corresponds to the intuitive semantics of the program,
+%and which can be enforced via a program rewrite that adds additional {\em coordination} logic to the given
+%program to suppress the other models.  We also show that in general, the problem of deciding whether a program
+%is consistent or confluent for all EDBs is undecidable, and as a correlary that it is impossible in general to
+%soundly and completely verify that a program is correctly ``coordinated.''  
+%Nevertheless, we propose a set of conservative tests that suffice for a wide variety of practical systems.
+%
+\end{abstract}
+
+\input{intro-jmh}
+\input{foundation}
+\input{confluence}
+
+\input{relwork}
+\input{conclusion}
+\bibliographystyle{abbrv}
+\bibliography{pods,declarativity}
+
+%\appendix
+%\input{appendix}
+
+%%\input{attic}
+
+\end{document}
