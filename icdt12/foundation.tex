@@ -115,7 +115,7 @@ Asynchronous communication rules require the body location specifier to be expli
 
 
 \subsection{Semantics}
-One interpretation of a \lang instance is given by the possible worlds of the stable model semantics~\cite{stable-model}.  We do not review the stable model semantics here -- the only salient detail is the interaction of\dedalus{choice} with the stable model semantics.  \dedalus{choice} induces a separate stable model foreach possible sequence of choices of timestamps.  Note that without \dedalus{choice} -- i.e., without any asynchronous local or asynchronous communication rules -- a \lang program has a unique stable model, because it is locally stratified.
+One interpretation of a \lang instance is given by the possible worlds of the stable model semantics~\cite{stable-model}.  We do not review the stable model semantics here -- the only salient detail is the interaction of\dedalus{choice} with the stable model semantics.  \dedalus{choice} induces a separate stable model for each possible sequence of choices of timestamps.  Note that without \dedalus{choice} -- i.e., without any asynchronous local or asynchronous communication rules -- a \lang program has a unique stable model, because it is locally stratified.
 
 There are two potential problems with considering a stable model as the meaning of a \lang instance.  First, every program with at least one asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
 
