@@ -3,8 +3,10 @@
 
 \subsection{Preliminary Definitions}
 
-\wrm{define output fact, define head and body of rule}
-\wrm{say something about the partitioning or accessibility of the order??}
+\todo{define head and body of rule}
+\todo{say something about the partitioning or accessibility of the order}
+\todo{make sure it's clear that $\mathcal{U}$ includes \dedalus{node} but not \dedalus{time}}
+\todo{make sure usage of ``relation'' vs ``relation schema'' is consistent}
 
 We assume an infinite universe $\mathcal{U}$.
 
@@ -23,9 +25,16 @@ where \dedalus{h}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)}, \deda
 
 A {\em fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in \mathcal{U}$.  An instance $\mathcal{I}$ over a schema $\mathcal{S}$ is a set of facts.
 
-Given a schema $\mathcal{S}$, we use $\mathcal{S}^*$ to denote the extension of $\mathcal{S}$ obtained by adding two columns to each relation schema in $\mathcal{S}$, and adding three additional relation schemas to $\mathcal{S}$.  The first additional column, the {\em location specifier}, indicates the ``location'' of the tuple, and the second additional column, the {\em timestamp}, is a natural number representing a logical time.  \wrm{As in...} We call $\mathcal{S}^*$ a {\em spatio-temporal} schema.  The three relations we add are: \dedalus{time}, a unary relation equivalent to $\mathbb{N}$, \dedalus{succ}, a binary relation representing the natural successor relation over $\mathbb{N}$, and \dedalus{node}, a unary relation that represents all locations (the meaning of ``location'' will become clear later).
+\todo{Following the terminology of...}
+Given a schema $\mathcal{S}$, we use $\mathcal{S}^+$ to denote the extension of $\mathcal{S}$ obtained by adding a column to each relation schema in $\mathcal{S}$, and adding an additional relation schema to $\mathcal{S}$.  The additional column is the {\em location specifier} -- the ``location'' of the tuple.  By convention, this is represented as the first column.  The additional relation is \dedalus{node}, a unary relation that represents all ``locations''.  We call $\mathcal{S}^+$ a {\em spatial} schema.
 
-A {\em spatio-temporal} fact over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
+Given a spatial schema $\mathcal{S}^+$, we use $\mathcal{S}^*$ to denote the extension of $\mathcal{S}^+$ obtained by adding a column to each relation schema in $\mathcal{S}^+$, and adding two additional relation schemas to $\mathcal{S}^+$.  The additional column is the {\em timestamp} -- a natural number representing a logical time.  By convention, the location specifier is the first column, and the timestamp is the second.  The additional relations we add are: \dedalus{time}, a unary relation equivalent to $\mathbb{N}$, and \dedalus{succ}, a binary relation representing the natural successor relation over $\mathbb{N}$.  We call $\mathcal{S}^*$ a {\em spatio-temporal} schema.
+
+Given a spatio-temporal schema $\mathcal{S}^*$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations, and the additional column from each relation schema.
+
+A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$ tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$.
+
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
 
 A {\em spatio-temporal rule} over a spatio-temporal schema $\mathcal{S}^*$ is a rule of one of the following three forms:
 
@@ -60,6 +69,8 @@ p(D,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{
 !c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
 T < S, choice((L, T, \(\overline{\dedalus{B}}\)),(S)), node(D).
 \end{Dedalus}
+
+\wrm{The latter two kinds of rules are referred to as asynchronous rules.}
 
 where all symbols are as defined before, $\overline{\dedalus{B}}$ is a list of all of the distinct variable symbols in $\overline{\dedalus{X}_1}, \ldots, \overline{\dedalus{X}_n}, \overline{\dedalus{Y}_1}, \ldots, \overline{\dedalus{Y}_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\overline{\dedalus{B}}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\overline{\dedalus{B}}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
@@ -106,11 +117,6 @@ p(#D,\(\overline{\dedalus{X}\sb{0}}\))@async <- b\(\sb{1}\)(#L,\(\overline{\deda
 Asynchronous communication rules require the body location specifier to be explicit, because it may be unified with other body attributes.
 
 
-%\vspace{1em}
-%\noindent 
-%\textbf{Predicate Dependence Graphs in \lang}: 
-%A \lang program's {\em predicate dependency graph}~\cite{ullmanbook} PDG is 
-%a directed graph that has one node per predicate, and an edge from \dedalus{q} to \dedalus{p} if predicate \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, or a \dedalus{count} appears in the head of the rule, we mark the edge as negated.  If the rule is inductive or asynchronous, we annotate the edge with the rule type.  The PDG omits the \dedalus{time} and \dedalus{successor} predicates, and the nodes and edges for \dedalus{choice}.  We write $\dedalus{q} \to \dedalus{p}$ if there exists a path following forward edges from \dedalus{q} to \dedalus{p}.  We write $\dedalus{q} \nrightarrow \dedalus{p}$ if there exists a forward path from \dedalus{q} to \dedalus{p} that crosses a negated edge.  We write $\dedalus{q} \circleright \dedalus{p}$ if all forward paths from \dedalus{q} to \dedalus{p} traverse an asynchronous or inductive edge.  We write $\dedalus{q} \Diamondright \dedalus{p}$ if at least one forward path from \dedalus{q} to \dedalus{p} traverses an async edge. 
 
 
 
@@ -137,6 +143,34 @@ flipflop(1,2)@1;
 
 \dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
+
+
+\subsection{Termination}
+
+\wrm{There are two cases: (1) Predicate is computed immediately upon receipt of all messages; (2) some time is taken (async or @next recursion).  Maybe just expose the former case here, and latter case goes in the appendix?}
+
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, the edge is said to be negated.  The PDG does not contain any nodes or edges involving the \dedalus{time} or \dedalus{successor} relations, or \dedalus{choice}.
+
+A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component.  Each collapsed node is called a {\em recursive} node.  Each collapsed node whose label contains a member of the program's output schema is called an {\em output} node.  A collapsed PDG is acyclic.  Let the nodes are numbered $1,\ldots,n$.
+
+\todo{make more formal}
+We will compute 0-ary relations \dedalus{\(\dedalus{done}\sb{1}\)()}, \ldots, \dedalus{\(\dedalus{done}\sb{n}\)()}, one for each node in the collapsed PDG.  Without loss of generality, let the output nodes be $1,\ldots,k$; we add the rule: \dedalus{done() <- \(\dedalus{done}\sb{1}\)(), \ldots, \(\dedalus{done}\sb{k}\)().}.
+
+For ease of exposition, we will first show a simple protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for non-recursive nodes $i$.  There is a generalized protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for all nodes $i$.
+
+\wrm{Note that \dedalus{done} is never true for some programs; these programs have no ultimate model.  This is another problem solved by \slang.}
+
+%Given a relation \dedalus{p}, the set of relations that \dedalus{p} depends on is the union of the labels of all edges to \dedalus{p}.
+
+%A program has terminated when the \dedalus{done()} relation is nonempty.  We define \dedalus{done()} relations for each node in the collapsed PDG.  Intuitively, a \dedalus{done()} relation is true when all of the relations in that node's label are ``at fixpoint'', and there are no ``unacknowledged'' messages in relations in that node's label.
+
+%\wrm{Rewrite all asyncs to acknowledge}
+%\wrm{}
+
+
+
+
+An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\mathcal{S}^*$ is a subset of $\mathcal{S}^+$.  An ultimate model of a \lang program $P$ is a set of spatial facts in relations 
 
 \wrm{explain the ultimate model in terms of defining an output schema, and everything that is ever asserted into that output schema is part of the output; output is finalized when 0-ary predicate done() is true; user-defined}.
 

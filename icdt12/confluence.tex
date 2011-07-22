@@ -1,4 +1,4 @@
-\section{Problems}
+\section{\slang}
 \label{sec:confluence}
 
 Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
@@ -133,20 +133,20 @@ satisfiable(B) <- var_sat_left_in(V, B), var_last(V).
 
 
 \begin{definition}
-A \lang program is {\em negation-free} if the \dedalus{!} symbol does not appear in the program.
+A \lang program is {\em IDB negation-free} if the \dedalus{!} symbol only appears on EDB relations in the program.
 \end{definition}
-
 
 \begin{definition}
-A \lang program has {\em guarded asynchrony} if all relations
-%\jmh{we have async rules, not async preds} 
-appearing in the heads of \dedalus{async} rules
-are simply persisted. \wrm{define simply persisted}
+A relation \dedalus{r} in a program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next <- p(\(\overline{\dedalus{X}}\)).}
 \end{definition}
 
-We will refer to the language of negation-free \lang programs with guarded asynchrony as \slang.
+\begin{definition}
+A \lang program has {\em guarded asynchrony} if all relations appearing in the heads of asynchronous rules are simply persisted.
+\end{definition}
 
-\wrm{look at this proof again}
+We will refer to the language of IDB negation-free \lang programs with guarded asynchrony as \slang.
+
+\wrm{Peter to improve}
 \begin{theorem}
 \label{thm:confluence}
 \slang programs are confluent.
@@ -194,7 +194,7 @@ If either qualification is false, problems can result, as we have previously ill
 \slang programs capture exactly PTIME.
 \end{theorem}
 \begin{proof}
-We will show how to convert any \slang program to an FO[IFP] formula, and how to convert any FO[IFP] formula to a \slang program.  It is known that FO[IFP] captures exactly PTIME over ordered structures.
+We will show how to convert any \slang program to an FO[IFP] formula, and how to convert any FO[IFP] formula to a \slang program.  It is known that FO[IFP] captures exactly PTIME over ordered structures \wrm{cite}.
 
 Since \slang has only EDB negation, we first show that in any FO[IFP] formula, negation can be pushed down to the EDB.  This is not hard to show.  Since FO[IFP] has a negation normal form where negation only applies to atoms \wrm{cite}, we can always push negation down through quantifiers and boolean operators using the usual DeMorgan dualities.  \wrm{Universal quantifiers are expressed like...}
 
@@ -207,8 +207,8 @@ Thus, we can convert a \slang program into an FO[IFP] formula. \wrm{need to say 
 We can convert any FO[IFP] formula with only EDB negation into a \slang program by converting it into rule form \wrm{i.e. splitting up each disjunct into a rule, rewrite universal quantification using order, etc.}.
 \end{proof}
 
-%\subsection{Monotonic Properties}
-%\wrm{The gist of this section is that we want to somehow expand ``negation-free'' to ``positive''.  I'm not sure if this works in general, so maybe we just axe this section.}
+% \subsection{Monotonic Properties}
+% XXX: Can we relax ``IDB negation free'' to be ``IDB positive''?
 
 
 This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction.
@@ -217,8 +217,7 @@ Clearly, there are confluent programs not in \slang.  For example:
 \begin{example}
 A confluent \lang program that is not a \slang program.
 
-\wrm{check example with rule sugaring guidelines in foundation}
-\wrm{consider NOT using order in this example -- it is easily possible to rewrite this example in a confluent way by just having the client compute and transmit the b\_edb ordering to the server...}
+\todo{check example with rule sugaring guidelines in foundation}
 
 \begin{Dedalus}
 //client
@@ -240,16 +239,10 @@ Thus it is confluent, but the program uses negation, and \dedalus{b} is not simp
 
 \subsection{Perfect Ultimate Model}
 
-\wrm{it would be nice to allow negation in Dedalus programs, to allow us to compute negative properties}
+Thus, we should allow negation back into logic programs.  
 
 \subsection{Connection with Practice}
 
 \wrm{Connect stratification with coordination protocols used in practice in distributed systems.}
 
 
-
-%The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, the edge is said to be negated.  The PDG does not contain any nodes or edges involving the \dedalus{time} or \dedalus{successor} relations, or \dedalus{choice}.
-
-%A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component.  A collapsed PDG is acyclic.
-
-%Given a relation \dedalus{p}, the set of relations that \dedalus{p} depends on is the union of the labels of all edges to \dedalus{p}.
