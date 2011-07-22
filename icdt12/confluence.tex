@@ -3,7 +3,7 @@
 
 Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 
-First, it is easy to write programs with non-deterministic behavior (multiple ultimate models).
+First, it is easy to write programs with non-deterministic output (multiple ultimate models).
 
 %Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
@@ -241,3 +241,15 @@ Thus it is confluent, but the program uses negation, and \dedalus{b} is not simp
 \subsection{Perfect Ultimate Model}
 
 \wrm{it would be nice to allow negation in Dedalus programs, to allow us to compute negative properties}
+
+\subsection{Connection with Practice}
+
+\wrm{Connect stratification with coordination protocols used in practice in distributed systems.}
+
+
+
+%The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, the edge is said to be negated.  The PDG does not contain any nodes or edges involving the \dedalus{time} or \dedalus{successor} relations, or \dedalus{choice}.
+
+%A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component.  A collapsed PDG is acyclic.
+
+%Given a relation \dedalus{p}, the set of relations that \dedalus{p} depends on is the union of the labels of all edges to \dedalus{p}.
