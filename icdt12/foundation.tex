@@ -10,7 +10,9 @@
 
 We assume an infinite universe $\mathcal{U}$.
 
-A {\em relation schema} is a pair consisting of a relation name and its arity.  A {\em schema} $\mathcal{S}$ is a set of relation schemas.  As in \wrm{cite Immerman}, we assume the existence of an order.  Thus, all schemas contain the following relational schemas: \dedalus{lt} -- a relation of arity two that is true whenever the second argument is greater than the first (we will write this relation in infix form using the \dedalus{<} symbol) -- \dedalus{suc} -- a relation of arity two that defines a total order over $\mathcal{U}$ \wrm{different from succ}.
+A {\em relation schema} is a pair consisting of a relation name and its arity.
+A {\em schema} $\mathcal{S}$ is a set of relation schemas.  \nrc{Confusing:
+  relation schema is a singleton, but ``schema'' is a set of relation schemas?} As in \wrm{cite Immerman}, we assume the existence of an order.  Thus, all schemas contain the following relational schemas: \dedalus{lt} -- a relation of arity two that is true whenever the second argument is greater than the first (we will write this relation in infix form using the \dedalus{<} symbol) -- \dedalus{suc} -- a relation of arity two that defines a total order over $\mathcal{U}$ \wrm{different from succ}.
 
 A {\em rule} over a schema $\mathcal{S}$ is a clause of the form:
 
@@ -19,16 +21,44 @@ p(\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)({\(\overline{\dedalus{X}\sb{1
 !c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
 \end{Dedalus}
 
-where \dedalus{h}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)}, \dedalus{\(\dedalus{c}_1\), \ldots, \(\dedalus{c}_m\)} are relations in $\mathcal{S}$, and $\overline{\dedalus{X}_i}$ and $\overline{\dedalus{Y}_i}$ denote a tuple (of the appropriate arity) consisting of variable symbols, constants from $\mathcal{U}$.  Note that we maintain the usual safety restrictions of Datalog rules: any variable symbol \dedalus{V} that appears in $\overline{\dedalus{Y}_i}$ for some $1 \leq i \leq m$ must also appear in $\overline{\dedalus{X}_j}$ for some $1 \leq j \leq n$, but only if \dedalus{V} appears in $\overline{\dedalus{X}_0}$ or \dedalus{V} appears in $\overline{\dedalus{Y}_k}$ for some $k \neq i$ -- i.e., variable symbols that only appear in a single negated atom and do not appear in the head need not also appear in a positive atom \wrm{cite ullman}.
+where \dedalus{p}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)},
+\dedalus{\(\dedalus{c}_1\), \ldots, \(\dedalus{c}_m\)} are relations in
+$\mathcal{S}$, and $\overline{\dedalus{X}_i}$ and $\overline{\dedalus{Y}_j}$
+denote a tuple (of the appropriate arity) consisting of variable symbols or
+constants from $\mathcal{U}$.  Note that we maintain the usual safety
+restrictions of Datalog rules: any variable symbol \dedalus{V} that appears in
+$\overline{\dedalus{Y}_i}$ for some $1 \leq i \leq m$ must also appear in
+$\overline{\dedalus{X}_j}$ for some $1 \leq j \leq n$, but only if \dedalus{V}
+appears in $\overline{\dedalus{X}_0}$ or \dedalus{V} appears in
+$\overline{\dedalus{Y}_k}$ for some $k \neq i$ -- i.e., variable symbols that
+only appear in a single negated atom and do not appear in the head need not also
+appear in a positive atom \wrm{cite ullman}.
 
 \wrm{describe recursion, rule out recursion through negation, define EDB}
 
-A {\em fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in \mathcal{U}$.  An instance $\mathcal{I}$ over a schema $\mathcal{S}$ is a set of facts.
+A {\em fact} over a relation schema of arity $n$ is a pair consisting of the
+relation name and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in
+\mathcal{U}$.  An \emph{instance} $\mathcal{I}$ over a schema $\mathcal{S}$ is a
+set of facts.
 
-\todo{Following the terminology of...}
-Given a schema $\mathcal{S}$, we use $\mathcal{S}^+$ to denote the extension of $\mathcal{S}$ obtained by adding a column to each relation schema in $\mathcal{S}$, and adding an additional relation schema to $\mathcal{S}$.  The additional column is the {\em location specifier} -- the ``location'' of the tuple.  By convention, this is represented as the first column.  The additional relation is \dedalus{node}, a unary relation that represents all ``locations''.  We call $\mathcal{S}^+$ a {\em spatial} schema.
+\todo{Following the terminology of...}  Given a schema $\mathcal{S}$, we use
+$\mathcal{S}^+$ to denote the extension of $\mathcal{S}$ obtained by adding a
+column to each relation schema in $\mathcal{S}$ and adding an additional
+relation schema to $\mathcal{S}$.  The additional column is the {\em location
+  specifier}, which gives the ``location'' of the tuple.  By convention, this is
+represented as the first column.  The additional relation schema is \dedalus{node}, a
+unary relation that represents all ``locations.''  We call $\mathcal{S}^+$ a
+{\em spatial} schema.
 
-Given a spatial schema $\mathcal{S}^+$, we use $\mathcal{S}^*$ to denote the extension of $\mathcal{S}^+$ obtained by adding a column to each relation schema in $\mathcal{S}^+$, and adding two additional relation schemas to $\mathcal{S}^+$.  The additional column is the {\em timestamp} -- a natural number representing a logical time.  By convention, the location specifier is the first column, and the timestamp is the second.  The additional relations we add are: \dedalus{time}, a unary relation equivalent to $\mathbb{N}$, and \dedalus{succ}, a binary relation representing the natural successor relation over $\mathbb{N}$.  We call $\mathcal{S}^*$ a {\em spatio-temporal} schema.
+Given a spatial schema $\mathcal{S}^+$, we use $\mathcal{S}^*$ to denote the
+extension of $\mathcal{S}^+$ obtained by adding a column to each relation schema
+in $\mathcal{S}^+$ and adding two additional relation schemas.  The additional
+column is the {\em timestamp}, a natural number representing a logical time.  By
+convention, the location specifier is the first column and the timestamp is the
+second.  The additional relation schemas we add are: \dedalus{time}, a unary
+relation equivalent to $\mathbb{N}$, and \dedalus{succ}, a binary relation
+representing the natural successor relation over $\mathbb{N}$.  We call
+$\mathcal{S}^*$ a {\em spatio-temporal} schema.
 
 Given a spatio-temporal schema $\mathcal{S}^*$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations, and the additional column from each relation schema.
 
@@ -84,7 +114,7 @@ The restrictions on temporal and location attributes suggest a natural syntactic
 
 The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
 Communication rules must include the location attribute of their head predicate; by definition this is a different variable than that of the body predicates.
- Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit, and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
+ Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
 
 Deductive:
 
