@@ -90,18 +90,18 @@ University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upsha
 
 \maketitle
 
-\begin{abstract} 
-  Building on recent interest in distributed logic programming, we take a
-  model-theoretic approach to the correctness of asynchronous distributed
-  programs.  We show that the features added in Dedalus, a language previously
-  proposed as an extension of Datalog for modeling asynchronous distributed
-  programs, increase the expressivity beyond PTIME and allow the specification
-  of programs that have non-deterministic results.  As non-determinism is
-  undecidable \nrc{This is strangely worded. What do you mean, exactly?}, we
-  present a restriction of Dedalus -- which restricts Dedalus to be inflationary
-  and removes negation -- that is both deterministic and PTIME.  We add back a
-  stratified negation semantics based on practice in the distributed systems
-  community.
+\begin{abstract}
+
+Building on recent interest in distributed logic programming, we take a
+model-theoretic approach to the correctness of asynchronous distributed
+programs.  We show that the features added in Dedalus, a language previously
+proposed as an extension of Datalog for modeling asynchronous distributed
+programs, increase the expressivity beyond PTIME and allow the specification of
+programs that have non-deterministic results.  Whether a Dedalus program is
+non-deterministic is undecidable, so we present \slang, a deterministic and
+PTIME variant of \lang which requires programs to be inflationary and restricts
+the use of negation.  We show the restricted usage of negation corresponds to
+coordination protocols from the distributed systems community.
 
 %
 %We present a formal definition of the \lang language and prove conjectures.
