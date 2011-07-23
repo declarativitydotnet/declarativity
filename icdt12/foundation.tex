@@ -184,32 +184,53 @@ flipflop(1,2)@1;
 
 \subsection{Termination}
 
-\wrm{There are two cases: (1) Predicate is computed immediately upon receipt of all messages; (2) some time is taken (async or @next recursion).  Maybe just expose the former case here, and latter case goes in the appendix?}
+An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\mathcal{S}^*$ is a subset of $\mathcal{S}^+$.  We denote the output schema as $\mathcal{S}^O$.
 
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If \dedalus{q} is negated, the edge is said to be negated.  The PDG does not contain any nodes or edges involving the \dedalus{time} or \dedalus{successor} relations, or \dedalus{choice}.
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous or inductive, then the edge is said to be {\em temporal}. \todo{check to see whether we define ``temporal'' as asynchronous or inductive in foundation, then we can replace ``...is asynchronous or inductive...'' with ``is temporal''}
+%If \dedalus{q} is negated, the edge is said to be negated.
+The PDG does not contain nodes for the \dedalus{time} or \dedalus{successor} relations, or the \dedalus{choice} construct.
 
-A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component.  Each collapsed node is called a {\em recursive} node.  Each collapsed node whose label contains a member of the program's output schema is called an {\em output} node. \paa{I think this is slightly broken: need to define output schema first, and surely non-recursive nodes can also be output nodes...}  A collapsed PDG is acyclic.  Let the nodes are numbered $1,\ldots,n$.
+A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component.
+%We call such a node a {\em recursive} node.
+If a strongly connected component has any temporal edges, we call the resulting collapsed node a {\em temporally recursive} node.  Each node in the collapsed PDG whose label contains a member of the program's output schema is called an {\em output} node.  Note that a collapsed PDG is acyclic.
 
-\todo{make more formal}
-We will compute 0-ary relations \dedalus{\(\dedalus{done}\sb{1}\)()}, \ldots, \dedalus{\(\dedalus{done}\sb{n}\)()}, one for each node in the collapsed PDG.  Without loss of generality, let the output nodes be $1,\ldots,k$; we add the rule: \dedalus{done() <- \(\dedalus{done}\sb{1}\)(), \ldots, \(\dedalus{done}\sb{k}\)().}.
+\todo{notation for the label of a node...}
 
-For ease of exposition, we will first show a simple protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for non-recursive nodes $i$.  There is a generalized protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for all nodes $i$.
+Assume some numbering of the nodes in the collapsed PDG $1,\ldots,n$.
+We will compute 0-ary relations \dedalus{\(\dedalus{done}\sb{1}\)()}, \ldots, \dedalus{\(\dedalus{done}\sb{n}\)()}, one for each node $1,\ldots,n$.  The relations \dedalus{done\(\sb{i}\)()} have the property that if they are non-empty (true) at timestamp \dedalus{t}, then are true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{done\(\sb{i}\)()} is true at timestamp \dedalus{t}, then for all relations \dedalus{r} in the label of node $i$, $(f \in \dedalus{r}@\dedalus{s} \land \dedalus{s} > \dedalus{t}) \Rightarrow (f \in \dedalus{r}@\dedalus{t})$. \todo{introduce the former notation}.  Intuitively, \dedalus{done\(\sb{i}\)()} is true when the contents of all relations in the label of node $i$ are {\em sealed} (henceforth unchanging).
 
-\wrm{Note that \dedalus{done} is never true for some programs; these programs have no ultimate model.  This is another problem solved by \slang.}
+Without loss of generality, assume the numbering is chosen such that the output nodes are $1,\ldots,k$; we add the rule: \dedalus{done() <- \(\dedalus{done}\sb{1}\)(), \ldots, \(\dedalus{done}\sb{k}\)().}.  The \dedalus{done()} relation is true when the contents of all output relations are sealed.  For ease of exposition, we will first show a simple protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for non-temporally-recursive nodes $i$.  There is a generalized protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for all nodes $i$.
 
-%Given a relation \dedalus{p}, the set of relations that \dedalus{p} depends on is the union of the labels of all edges to \dedalus{p}.
+\todo{Explain the temporal terms ``never'', ``henceforth'', ..., in foundation section}
 
-%A program has terminated when the \dedalus{done()} relation is nonempty.  We define \dedalus{done()} relations for each node in the collapsed PDG.  Intuitively, a \dedalus{done()} relation is true when all of the relations in that node's label are ``at fixpoint'', and there are no ``unacknowledged'' messages in relations in that node's label.
+An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\mathcal{S}^*$ is the contents of the relations in $\mathcal{S}^O$ when the \dedalus{done()} relation is true.  Note that \dedalus{done} may never be true for some \lang programs, such as the program in Example~\ref{ex:flipflop}.  Such a program has no ultimate model.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
 
-%\wrm{Rewrite all asyncs to acknowledge}
-%\wrm{}
+\begin{example}
+\label{ex:diffluent1}
+\begin{Dedalus}
+output p.
+q()@async <- q_edb();
+r()@async <- r_edb();
+p() <- q(), !r();
+q()@next <- q();
+r()@next <- r();
+\end{Dedalus}
 
+Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
+\end{example}
 
+\begin{example}
+\label{ex:diffluent2}
+\begin{Dedalus}
+output p.
+q()@async <- q_edb();
+r()@async <- r_edb();
+p() <- q(), r();
+q()@next <- q();
+\end{Dedalus}
 
-
-An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\mathcal{S}^*$ is a subset of $\mathcal{S}^+$.  An ultimate model of a \lang program $P$ is a set of spatial facts in relations 
-
-\wrm{explain the ultimate model in terms of defining an output schema, and everything that is ever asserted into that output schema is part of the output; output is finalized when 0-ary predicate done() is true; user-defined}.
+As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
+\end{example}
 
 \subsection{Operational Interpretation}
 \label{sec:operational}

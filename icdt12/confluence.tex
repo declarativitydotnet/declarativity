@@ -3,42 +3,13 @@
 
 Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 
-First, it is easy to write programs with non-deterministic output (multiple ultimate models), \paa{though in practice such programs are rarely desired and indeed often indicate a bug (or something like that)}.
-
-%Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
-%which only occurs in asynchronous rules to model network nondeterminism.  
-%which model temporal nondeterminism in unreliable networks.
-%Model-theoretically, a nondeterministic result is manifest in multiple ultimate models.
+First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  We would always like our distributed program to have a single output, regardless of any non-deterministic behavior.
 
 \begin{definition}
 A \lang program is {\em confluent} (has a deterministic output) if, for every instance of the program, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
 \end{definition}
 
-Two examples of diffluent programs:
-
-\begin{Dedalus}
-output p.
-q()@async <- q_edb();
-r()@async <- r_edb();
-p() <- q(), !r();
-q()@next <- q();
-r()@next <- r();
-\end{Dedalus}
-
-Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
-
-\begin{Dedalus}
-output p.
-q()@async <- q_edb();
-r()@async <- r_edb();
-p() <- q(), r();
-q()@next <- q();
-\end{Dedalus}
-
-As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
-%However, this example becomes confluent if we admit the last rule of Example~\ref{ex:nonconfluent2}: \dedalus{r()@next <- r();}.
-
-\wrm{these examples show the only things that can cause non-confluence}
+Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2} are two examples of diffluent programs.
 
 Unfortunately, confluence is an undecidable property of \lang programs:
 
