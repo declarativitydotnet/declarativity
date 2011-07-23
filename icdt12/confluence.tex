@@ -3,7 +3,7 @@
 
 Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 
-First, it is easy to write programs with non-deterministic output (multiple ultimate models).
+First, it is easy to write programs with non-deterministic output (multiple ultimate models), \paa{though in practice such programs are rarely desired and indeed often indicate a bug (or something like that)}.
 
 %Recall that nondeterminism in \lang only arises due to \dedalus{choice} in asynchronous rules, 
 %which only occurs in asynchronous rules to model network nondeterminism.  
@@ -78,7 +78,7 @@ Another problem is that \lang is too expressive -- it captures PSPACE as shown b
 \begin{proof}
 We show how to write QBF in Dedalus.
 
-Assuming the formula is in prenex normal form, the textbook recursive algorithm for QBF involves removing the first quantifier, and checking both $0$ and $1$ for the first variable.  If the first quantifier was existential, then we return true if QBF of one of the subformulas is true.  If the first quantifier was universal, then we return true if QBF of both of the subformulas is true.
+Assuming the formula is in prenex normal form, the textbook recursive algorithm for QBF \paa{please cite} involves removing the first quantifier, and checking both $0$ and $1$ for the first variable.  If the first quantifier was existential, then we return true if QBF of one of the subformulas is true.  If the first quantifier was universal, then we return true if QBF of both of the subformulas is true.
 
 If the quantifier depth is $n$, then it is clear that each leaf in the recursive call tree can be represented as an $n$-bit binary number.  If we assume that the left child is always $0$ and the right child $1$, then we can view our algorithm as a postorder traversal of the recursive call tree.
 
