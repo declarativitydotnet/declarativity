@@ -5,32 +5,32 @@
 
 \todo{define head and body of rule}
 \todo{say something about the partitioning or accessibility of the order}
-\todo{make sure it's clear that $\mathcal{U}$ includes \dedalus{node} but not \dedalus{time}}
+\todo{make sure it's clear that $\univ$ includes \dedalus{node} but not \dedalus{time}}
 \todo{make sure usage of ``relation'' vs ``relation schema'' is consistent}
 
-We assume an infinite universe $\mathcal{U}$.
+We assume an infinite universe $\univ$.
 
 A {\em relation schema} is a pair consisting of a relation name and its arity.
-A {\em schema} $\mathcal{S}$ is a set of relation schemas.  \nrc{Confusing:
-  relation schema is a singleton, but ``schema'' is a set of relation schemas?} As in \wrm{cite Immerman}, we assume the existence of an order.  Thus, all schemas contain the following relational schemas: \dedalus{lt} -- a relation of arity two that is true whenever the second argument is greater than the first (we will write this relation in infix form using the \dedalus{<} symbol) -- \dedalus{suc} -- a relation of arity two that defines a total order over $\mathcal{U}$ \wrm{different from succ}.
+A {\em schema} $\schema$ is a set of relation schemas.  \nrc{Confusing:
+  relation schema is a singleton, but ``schema'' is a set of relation schemas?} As in \wrm{cite Immerman}, we assume the existence of an order.  Thus, all schemas contain the following relational schemas: \dedalus{lt} -- a relation of arity two that is true whenever the second argument is greater than the first (we will write this relation in infix form using the \dedalus{<} symbol) -- \dedalus{suc} -- a relation of arity two that defines a total order over $\univ$ \wrm{different from succ}.
 
-A {\em rule} over a schema $\mathcal{S}$ is a clause of the form:
+A {\em rule} over a schema $\schema$ is a clause of the form:
 
 \begin{Dedalus}
-p(\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)({\(\overline{\dedalus{X}\sb{1}}\)}), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
+p(\od{X\sub{0}}) <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
+!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
-where \dedalus{p}, \dedalus{\(\dedalus{b}_1\), \ldots, \(\dedalus{b}_n\)},
-\dedalus{\(\dedalus{c}_1\), \ldots, \(\dedalus{c}_m\)} are relations in
-$\mathcal{S}$, and $\overline{\dedalus{X}_i}$ and $\overline{\dedalus{Y}_j}$
+where \dedalus{p}, \dedalus{b\sub{1}}, \ldots, \dedalus{b\sub{n}},
+\dedalus{c\sub{1}}, \ldots, \dedalus{c\sub{m}} are relations in
+$\schema$, and \od{X\sub{i}} and \od{Y\sub{j}}
 denote a tuple (of the appropriate arity) consisting of variable symbols or
-constants from $\mathcal{U}$.  Note that we maintain the usual safety
+constants from $\univ$.  Note that we maintain the usual safety
 restrictions of Datalog rules: any variable symbol \dedalus{V} that appears in
-$\overline{\dedalus{Y}_i}$ for some $1 \leq i \leq m$ must also appear in
-$\overline{\dedalus{X}_j}$ for some $1 \leq j \leq n$, but only if \dedalus{V}
-appears in $\overline{\dedalus{X}_0}$ or \dedalus{V} appears in
-$\overline{\dedalus{Y}_k}$ for some $k \neq i$ -- i.e., variable symbols that
+\od{Y\sub{i}} for some $1 \leq i \leq m$ must also appear in
+\od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
+appears in \od{X\sub{0}} or \dedalus{V} appears in
+\od{Y\sub{k}} for some $k \neq i$ -- i.e., variable symbols that
 only appear in a single negated atom and do not appear in the head need not also
 appear in a positive atom \wrm{cite ullman}.
 
@@ -38,73 +38,75 @@ appear in a positive atom \wrm{cite ullman}.
 
 A {\em fact} over a relation schema of arity $n$ is a pair consisting of the
 relation name and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in
-\mathcal{U}$.  An \emph{instance} $\mathcal{I}$ over a schema $\mathcal{S}$ is a
-set of facts.
+\univ$.  An \emph{instance} $\mathcal{I}$ over a schema $\schema$ is a
+set of facts. \todo{check the rest of the paper to make sure we're using ``instance'' as appropriate}
 
-\todo{Following the terminology of...}  Given a schema $\mathcal{S}$, we use
-$\mathcal{S}^+$ to denote the extension of $\mathcal{S}$ obtained by adding a
-column to each relation schema in $\mathcal{S}$ and adding an additional
-relation schema to $\mathcal{S}$.  The additional column is the {\em location
+\todo{Following the terminology of...}  Given a schema $\schema$, we use
+$\sschema$ to denote the extension of $\schema$ obtained by adding a
+column to each relation schema in $\schema$ and adding an additional
+relation schema to $\schema$.  The additional column is the {\em location
   specifier}, which gives the ``location'' of the tuple.  By convention, this is
 represented as the first column.  The additional relation schema is \dedalus{node}, a
-unary relation that represents all ``locations.''  We call $\mathcal{S}^+$ a
+unary relation that represents all ``locations.''  We call $\sschema$ a
 {\em spatial} schema.
 
-Given a spatial schema $\mathcal{S}^+$, we use $\mathcal{S}^*$ to denote the
-extension of $\mathcal{S}^+$ obtained by adding a column to each relation schema
-in $\mathcal{S}^+$ and adding two additional relation schemas.  The additional
+\todo{``a'' vs ``the'' spatial schema}
+
+Given a spatial schema $\sschema$, we use $\stschema$ to denote the
+extension of $\sschema$ obtained by adding a column to each relation schema
+in $\sschema$ and adding two additional relation schemas.  The additional
 column is the {\em timestamp}, a natural number representing a logical time.  By
 convention, the location specifier is the first column and the timestamp is the
 second.  The additional relation schemas we add are: \dedalus{time}, a unary
 relation equivalent to $\mathbb{N}$, and \dedalus{succ}, a binary relation
 representing the natural successor relation over $\mathbb{N}$.  We call
-$\mathcal{S}^*$ a {\em spatio-temporal} schema.
+$\stschema$ a {\em spatio-temporal} schema.
 
-Given a spatio-temporal schema $\mathcal{S}^*$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations, and the additional column from each relation schema.
+Given a spatio-temporal schema $\stschema$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations, and the additional column from each relation schema.
 
-A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$ tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$.
+A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$ tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \mathcal{U}$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
 
-A {\em spatio-temporal rule} over a spatio-temporal schema $\mathcal{S}^*$ is a rule of one of the following three forms:
+A {\em spatio-temporal rule} over a spatio-temporal schema $\stschema$ is a rule of one of the following three forms:
 
 \wrm{put node(L) and time(T) in the body of all rules!}
 
 A {\em deductive} rule:
 
 \begin{Dedalus}
-p(L,T,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)).
+p(L,T,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}).
 \end{Dedalus}
 
 An {\em inductive} rule:
 
 \begin{Dedalus}
-p(L,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), succ(T,S).
+p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), succ(T,S).
 \end{Dedalus}
 
 An {\em asynchronous local} rule:
 
 \begin{Dedalus}
-p(L,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
-T < S, choice((L, T, \(\overline{\dedalus{B}}\)),(S)).
+p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), time(S),
+T < S, choice((L, T, \od{B}),(S)).
 \end{Dedalus}
 
 An {\em asynchronous communication} rule:
 
 \begin{Dedalus}
-p(D,S,\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(L,T,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(L,T,\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(L,T,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(L,T,\(\overline{\dedalus{Y}\sb{m}}\)), time(S),
-T < S, choice((L, T, \(\overline{\dedalus{B}}\)),(S)), node(D).
+p(D,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), time(S),
+T < S, choice((L, T, \od{B}),(S)), node(D).
 \end{Dedalus}
 
 \wrm{The latter two kinds of rules are referred to as asynchronous rules.}
 
-where all symbols are as defined before, $\overline{\dedalus{B}}$ is a list of all of the distinct variable symbols in $\overline{\dedalus{X}_1}, \ldots, \overline{\dedalus{X}_n}, \overline{\dedalus{Y}_1}, \ldots, \overline{\dedalus{Y}_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\overline{\dedalus{B}}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\overline{\dedalus{B}}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
+where all symbols are as defined before, \od{B} is a list of all of the distinct variable symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in \od{B}, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in \od{B}, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
-A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\mathcal{S}^*$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules. \paa{this confused me.  you are saying that the mapping from a 'plain old datalog' program to a dedalus program isn't 1-1?  this is obvious, right?  if this isn't what is intended, how do "rules" "give rise to" "dedalus programs"?}
+A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules. \paa{this confused me.  you are saying that the mapping from a 'plain old datalog' program to a dedalus program isn't 1-1?  this is obvious, right?  if this isn't what is intended, how do "rules" "give rise to" "dedalus programs"?}
 
 A \lang\ {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations.
 
@@ -119,29 +121,29 @@ Communication rules must include the location attribute of their head predicate;
 Deductive:
 
 \begin{Dedalus}
-p(\(\overline{\dedalus{X}\sb{0}}\)) <- b\(\sb{1}\)(\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
+p(\od{X\sub{0}}) <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
+!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
 Inductive:
 
 \begin{Dedalus}
-p(\(\overline{\dedalus{X}\sb{0}}\))@next <- b\(\sb{1}\)(\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
+p(\od{X\sub{0}})@next <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),   
+!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
 Asynchronous local:
 
 \begin{Dedalus}
-p(\(\overline{\dedalus{X}\sb{0}}\))@async <- b\(\sb{1}\)(\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(\(\overline{\dedalus{Y}\sb{m}}\)).
+p(\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
+!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
 Asynchronous communication:
 
 \begin{Dedalus}
-p(#D,\(\overline{\dedalus{X}\sb{0}}\))@async <- b\(\sb{1}\)(#L,\(\overline{\dedalus{X}\sb{1}}\)), \ldots, b\(\sb{n}\)(#L,\(\overline{\dedalus{X}\sb{n}}\)),
-!c\(\sb{1}\)(#L,\(\overline{\dedalus{Y}\sb{1}}\)), \ldots, !c\(\sb{m}\)(#L,\(\overline{\dedalus{Y}\sb{m}}\)).
+p(#D,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
+!c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}}).
 \end{Dedalus}
 
 Asynchronous communication rules require the body location specifier to be explicit, because it may be unified with other body attributes.
@@ -184,7 +186,7 @@ flipflop(1,2)@1;
 
 \subsection{Termination}
 
-An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\mathcal{S}^*$ is a subset of $\mathcal{S}^+$.  We denote the output schema as $\mathcal{S}^O$.
+An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $\sschema$.  We denote the output schema as $\oschema$.
 
 The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous or inductive, then the edge is said to be {\em temporal}. \todo{check to see whether we define ``temporal'' as asynchronous or inductive in foundation, then we can replace ``...is asynchronous or inductive...'' with ``is temporal''}
 %If \dedalus{q} is negated, the edge is said to be negated.
@@ -197,16 +199,24 @@ If a strongly connected component has any temporal edges, we call the resulting 
 \todo{notation for the label of a node...}
 
 Assume some numbering of the nodes in the collapsed PDG $1,\ldots,n$.
-We will compute 0-ary relations \dedalus{\(\dedalus{done}\sb{1}\)()}, \ldots, \dedalus{\(\dedalus{done}\sb{n}\)()}, one for each node $1,\ldots,n$.  The relations \dedalus{done\(\sb{i}\)()} have the property that if they are non-empty (true) at timestamp \dedalus{t}, then are true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{done\(\sb{i}\)()} is true at timestamp \dedalus{t}, then for all relations \dedalus{r} in the label of node $i$, $(f \in \dedalus{r}@\dedalus{s} \land \dedalus{s} > \dedalus{t}) \Rightarrow (f \in \dedalus{r}@\dedalus{t})$. \todo{introduce the former notation}.  Intuitively, \dedalus{done\(\sb{i}\)()} is true when the contents of all relations in the label of node $i$ are {\em sealed} (henceforth unchanging).
+We will compute 0-ary relations \dedalus{done\sub{1}()}, \ldots, \dedalus{done\sub{n}()}, one for each node $1,\ldots,n$.  The relations \dedalus{done\sub{i}()} have the property that if they are non-empty (true) at timestamp \dedalus{t}, then are true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{done\sub{i}()} is true at timestamp \dedalus{t}, then for all relations \dedalus{r} in the label of node $i$, $(f \in \dedalus{r}@\dedalus{s} \land \dedalus{s} > \dedalus{t}) \Rightarrow (f \in \dedalus{r}@\dedalus{t})$. \todo{introduce the former notation}.  Intuitively, \dedalus{done\sub{i}()} is true when the contents of all relations in the label of node $i$ are {\em sealed} (henceforth unchanging).
 
-Without loss of generality, assume the numbering is chosen such that the output nodes are $1,\ldots,k$; we add the rule: \dedalus{done() <- \(\dedalus{done}\sb{1}\)(), \ldots, \(\dedalus{done}\sb{k}\)().}.  The \dedalus{done()} relation is true when the contents of all output relations are sealed.  For ease of exposition, we will first show a simple protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for non-temporally-recursive nodes $i$.  There is a generalized protocol that can compute \dedalus{\(\dedalus{done}\sb{i}\)()} for all nodes $i$.
+Without loss of generality, assume the numbering is chosen such that the output nodes are $1,\ldots,k$; we add the rule: \dedalus{done() <- done\sub{1}(), \ldots, done\sub{k}().}.  The \dedalus{done()} relation is true when the contents of all output relations are sealed.  For ease of exposition, we will first show a simple protocol that can compute \dedalus{done\sub{i}()} for non-temporally-recursive nodes $i$.  There is a generalized protocol that can compute \dedalus{done\sub{i}()} for all nodes $i$.
+
+\begin{Dedalus}
+p_max(\od{X}) <-
+p_succ() <-
+p_min() <-
+\end{Dedalus}
 
 \todo{Explain the temporal terms ``never'', ``henceforth'', ..., in foundation section}
 
-An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\mathcal{S}^*$ is the contents of the relations in $\mathcal{S}^O$ when the \dedalus{done()} relation is true.  Note that \dedalus{done} may never be true for some \lang programs, such as the program in Example~\ref{ex:flipflop}.  Such a program has no ultimate model.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
+An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the contents of the relations in $\oschema$ when the \dedalus{done()} relation is true.  Note that \dedalus{done} may never be true for some \lang programs, such as the program in Example~\ref{ex:flipflop}.  Such a program has no ultimate model.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
 
 \begin{example}
 \label{ex:diffluent1}
+A diffluent \lang program.
+
 \begin{Dedalus}
 output p.
 q()@async <- q_edb();
@@ -221,6 +231,8 @@ Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{
 
 \begin{example}
 \label{ex:diffluent2}
+A diffluent \lang program.
+
 \begin{Dedalus}
 output p.
 q()@async <- q_edb();
