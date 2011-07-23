@@ -104,7 +104,7 @@ T < S, choice((L, T, \(\overline{\dedalus{B}}\)),(S)), node(D).
 
 where all symbols are as defined before, $\overline{\dedalus{B}}$ is a list of all of the distinct variable symbols in $\overline{\dedalus{X}_1}, \ldots, \overline{\dedalus{X}_n}, \overline{\dedalus{Y}_1}, \ldots, \overline{\dedalus{Y}_m}$; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in $\overline{\dedalus{B}}$, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in $\overline{\dedalus{B}}$, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
-A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\mathcal{S}^*$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules.
+A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\mathcal{S}^*$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules. \paa{this confused me.  you are saying that the mapping from a 'plain old datalog' program to a dedalus program isn't 1-1?  this is obvious, right?  if this isn't what is intended, how do "rules" "give rise to" "dedalus programs"?}
 
 A \lang\ {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations.
 
@@ -155,12 +155,19 @@ One interpretation of a \lang instance is given by the possible worlds of the
 stable model semantics~\cite{stable-model}.  We do not review the stable model
 semantics here -- the only salient detail is the interaction of \dedalus{choice}
 with the stable model semantics.  \dedalus{choice} induces a separate stable
-model for each possible sequence of choices of timestamps.  Note that without
+model for each possible sequence of choices \paa{sequence of?} of timestamps.  Note that without
 \dedalus{choice} -- i.e., without any asynchronous local or asynchronous
 communication rules -- a \lang program has a unique stable model, because it is
-locally stratified.
+locally stratified. \paa{cite dedalus paper?}
 
-There are two potential problems with considering a stable model as the meaning of a \lang instance.  First, every program with at least one asynchronous rule has infinitely many stable models.  Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
+There are two potential problems with considering a stable model as the meaning of a \lang instance.  
+%%First, every program with at least one asynchronous rule has infinitely many stable models.  
+First, any program with even one asynchronous rule has infinitely many stable models.  
+Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
+
+\paa{looks like we still need to define this.  perhaps we should define it exactly as we did in the other paper -- the UM is exactly the set of facts with trivial periodicities; the set of things eventually always true.  dedalus-c restricts the definition: the 
+UM is the set of output tuples that is eventually always true, and since these are simply peristed this reduces to the set of tuples that are ever true.  
+the burden is now on the programmer and coordination protocol to ensure that nothing goes into the output predicates until it is surely true.}
 
 \begin{example}
 \label{ex:flipflop}
