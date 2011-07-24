@@ -210,7 +210,94 @@ Thus it is confluent, but the program uses negation, and \dedalus{b} is not simp
 
 \subsection{Perfect Ultimate Model}
 
-Thus, we should allow negation back into logic programs.  
+\wrm{There is a usage of negation that is both intuitive, and corresponds to practices in distributed systems.. this is stratified negation.  So how do we implement stratification in Dedalus?  We use \dedalus{done} relations.  We explain how to compute these below, and later formally define exactly how negation can be used.}
+
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous or inductive, then the edge is said to be {\em temporal}. \todo{check to see whether we define ``temporal'' as asynchronous or inductive in foundation, then we can replace ``...is asynchronous or inductive...'' with ``is temporal''}
+The PDG does not contain nodes for the \dedalus{time} or \dedalus{successor} relations, or the \dedalus{choice} construct.
+
+A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component. If a strongly connected component has any asynchronous edges, we call the resulting collapsed node {\em async recursive}.  If a strongly connected component has no asynchronous edges, but has inductive edges, we call the resulting collapsed node {\em inductive recursive}.  \todo{check we describe what an inductive and asynchronous edge in the PDG def.} These two types of nodes are collectively referred to as {\em temporally recursive}.  Each node in the collapsed PDG whose label contains a member of the program's output schema is called an {\em output} node.  Note that a collapsed PDG is acyclic.
+
+\todo{notation for the label of a node...}
+
+Assume some numbering of the nodes in the collapsed PDG $1,\ldots,n$.  We will compute 0-ary relations \dedalus{done\sub{1}()}, \ldots, \dedalus{done\sub{n}()}, one for each node $1,\ldots,n$.  The relations \dedalus{done\sub{i}()} have the property that if they are non-empty (true) at timestamp \dedalus{t}, then are true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{done\sub{i}()} is true at timestamp \dedalus{t}, then for all relations \dedalus{r} in the label of node $i$, $(f \in \dedalus{r}@\dedalus{s} \land \dedalus{s} > \dedalus{t}) \Rightarrow (f \in \dedalus{r}@\dedalus{t})$. \todo{introduce the former notation}.  Intuitively, \dedalus{done\sub{i}()} is true when the contents of all relations in the label of node $i$ are {\em sealed} (henceforth unchanging).
+
+%Let $\{O_1, \ldots, O_k\} \subset \{1, \ldots n\}$ be the output nodes; we add the rule: \dedalus{done() <- done\sub{O_1}(), \ldots, done\sub{O_k}().}.  The \dedalus{done()} relation is true when the contents of all output relations are sealed.
+
+For ease of exposition, we will first present the computation of \dedalus{done\sub{i}()} for non-temporally-recursive nodes $i$.  We will then explain how to support temporally recursive nodes $i$.
+
+\subsubsection{Non-Temporally-Recursive Nodes}
+
+For each non-temporally-recursive node $i$, assume the rules whose head relation name is in $L(i)$ are numbered $1, \ldots, i_p$.  The rule for \dedalus{done\sub{i}} shall be:
+
+\begin{Dedalus}
+done\sub{i}() <- r\sub{1}_done(), \ldots, r\sub{i_p}_done().
+\end{Dedalus}
+
+Assume that the nodes in the collapsed PDG connected via incoming edges to node $i$ are numbered $1, \ldots, i_q$.
+
+For each rule \todo{introduce some symbol like $P$ for the program} $1 \leq j \leq i_p$ with head relation \dedalus{p}, if $j$ is asynchronous, add the rule:
+
+\begin{Dedalus}
+r\sub{j}_done() <- n\sub{1}_done(), \ldots, n\sub{i_q}_done().
+\end{Dedalus}
+
+else if $j$ is inductive, add the rule:
+
+\begin{Dedalus}
+r\sub{j}_done()@next <- n\sub{1}_done(), \ldots, n\sub{i_q}_done().
+\end{Dedalus}
+
+else $j$ is asynchronous; replace the original rule:
+
+\begin{Dedalus}
+p(#N,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{x\sub{n}}),
+c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}}).
+\end{Dedalus}
+
+with the following set of rules:
+
+\todo{DOESNT OBEY THE NEGATION CONVENTION OF DEDALUS-C UNFORTUNATELY so we need to rewrite this using an order which is going to blow up the number of rules by a ton}
+
+%p\sub{j}_to_send_min(N,\od{X}) <- p\sub{j}_to_send(N,\od{X}), !p\sub{j}_to_send_succ(N,\od{_},\od{X}).                                                                         
+%p\sub{j}_to_send_max(N,\od{X}) <- p\sub{j}_to_send(N,\od{X}), !p\sub{j}_to_send_succ(N,\od{X},\od{_}).                                                                         
+%p\sub{j}_to_send_succ{N,\od{X},\od{Y}) <- p\sub{j}_to_send(N,\od{X}), p\sub{j}_to_send(N,\od{Y}), !p\sub{j}_to_send_not_succ(N,\od{X},\od{Y}).                                 
+%p\sub{j}_to_send_not_succ{N,\od{X},\od{Y}) <- p\sub{j}_to_send(N,\od{X}), p\sub{j}_to_send(N,\od{Y}), p\sub{j}_to_send(N,\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}. 
+
+\begin{Dedalus}
+p\sub{j}_to_send(N,\od{X\sub{0}}) <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
+c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}}).
+p\sub{j}_send(#N,L,\od{X})@async <- p\sub{j}_to_send(#L,N,\od{X}).
+p\sub{j}_ack(#N,L,\od{X})@async <- p\sub{j}_send(#L,N,\od{X}).
+
+p\sub{j}_unacknowledged() <- p\sub{j}_to_send(N,\od{X\sub{0}}), !p\sub{j}_ack(N,\od{X\sub{0}}).
+r\sub{j}_done() <- n\sub{1}_done(), \ldots, n\sub{i_q}_done(),
+!p\sub{j}_unacknowledged().
+\end{Dedalus}
+
+\subsubsection{Inductive Recursive Nodes}
+
+For each inductive recursive node $i$, assume that the relations in $L(i)$ are numbered $1,\ldots,i_p$.  Add the rule:
+
+\begin{Dedalus}
+n\sub{i}_done() <- !not_n\sub{j}_fixpoint().
+\end{Dedalus}
+
+For each $1 \leq j \leq i_p $, add the rule:
+
+\todo{Again, doesn't obey the negation convention of Dedalus-C, so we need to rewrite using order}
+
+\begin{Dedalus}
+p\sub{j}_prev(\od{X})@next <- p\sub{j}(\od{X}).
+not_n\sub{j}_fixpoint() <- p(\od{X}), !p_prev(\od{X}).
+\end{Dedalus}
+
+\subsubsection{Async Recursive Nodes}
+
+\todo{write this section}
+
+\todo{Explain the temporal terms ``never'', ``henceforth'', ..., in foundation section}
+
+\wrm{Formally, every usage of negation \dedalus{!p} must also have the following atom in the rule body \dedalus{n\sub{i}\_complete()}, where $\dedalus{p} \in L(i)$}
 
 \subsection{Connection with Practice}
 
