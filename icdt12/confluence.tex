@@ -217,6 +217,9 @@ Thus it is confluent, but the program uses negation, and \dedalus{b} is not simp
 
 \subsection{Perfect Ultimate Model}
 
+\paa{we need some transition text here.  dedalus-c is nice, but as we remember from datalog ;) IDB negation makes it easier to write programs (should be easy to give an example).  can we get some IDB negation back
+without sacrificing what's we've gained going to dedalus-c?}
+
 There is a usage of negation that is both intuitive, and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p\_done()}.  The relation \dedalus{p\_done()} has the property that if it is non-empty (true) at timestamp \dedalus{t}, then it is true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{p\_done()} is true at timestamp \dedalus{t}, then $\left(f \in \dedalus{p}@\dedalus{s} \land \dedalus{s} > \dedalus{t}\right) \Rightarrow \left(f \in \dedalus{p}@\dedalus{t}\right)$ \todo{introduce the former notation}.  Intuitively, \dedalus{p\_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
 We will explain how to define \dedalus{p\_done()} after introducing some preliminary definitions.
