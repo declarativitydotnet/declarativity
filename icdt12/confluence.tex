@@ -105,13 +105,17 @@ satisfiable(B) <- var_sat_left_in(V, B), var_last(V).
 \wrm{We will present a natural restriction of \lang that is confluent, and prove that it captures exactly PTIME.  Negation free, and guarded asynchrony.}
 \wrm{DON'T FORGET UNIVERSAL QUANTIFIERS -- easy, use order, what about recursion thru universal quantification?}
 
+Distributed programs that diverge, produce nondeterministic outputs or have runtimes exponential in their inputs are undesirable in practice.
+Since testing \lang programs to rule out these undesirable properties is undecidable in general, we may instead ask whether a more
+constrained language will exclude such programs while retaining the convenience and power of \lang.
+We will present a natural restriction of \lang that is confluent, and prove that it captures exactly PTIME.
 
 \begin{definition}
 A \lang program is {\em IDB negation-free} if the \dedalus{!} symbol only appears on EDB relations in the program.
 \end{definition}
 
 \begin{definition}
-A relation \dedalus{r} in a program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next <- p(\(\overline{\dedalus{X}}\)).}
+A relation \dedalus{p} in a program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next <- p(\(\overline{\dedalus{X}}\)).}
 \end{definition}
 
 \begin{definition}
@@ -127,10 +131,10 @@ We will refer to the language of IDB negation-free \lang programs with guarded a
 \end{theorem}
 \begin{proof}
 
-Towards a proof by contradiction, consider a negation-free \lang program that 
+Towards a proof by contradiction, consider a \slang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
-not in another model, and $a$ must be persistent, or it would not be
+not in another model, and $p$ must be persistent, or $a$ it would not be
 in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
 choice of timestamp via an {\em async} rule, then certainly 
