@@ -1,9 +1,12 @@
 \section{\slang}
 \label{sec:confluence}
 
-Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
-
-First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  We would always like our distributed program to have a single output, regardless of any non-deterministic behavior.
+%Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
+\lang can express a broad class of distributed systems as compact, declarative specifications, but this flexibility comes at a cost.
+As we have shown, it is easy to write programs that have nondeterministic outputs (multiple ultimate models) or diverge (no ultimate model).  In practice, such programs are rarely 
+desired and indeed often indicate a bug in the specification.
+%%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
+We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
 \begin{definition}
 A \lang program is {\em confluent} (has a deterministic output) if, for every instance of the program, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
