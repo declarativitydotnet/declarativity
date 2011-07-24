@@ -3,6 +3,7 @@
 
 \subsection{Preliminary Definitions}
 
+\todo{Thread a running example through the paper}
 \todo{define head and body of rule}
 \todo{say something about the partitioning or accessibility of the order}
 \todo{make sure it's clear that $\univ$ includes \dedalus{node} but not \dedalus{time}}
@@ -103,7 +104,7 @@ p(D,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\
 T < S, choice((L, T, \od{B}),(S)), node(D).
 \end{Dedalus}
 
-\wrm{The latter two kinds of rules are referred to as asynchronous rules.}
+\wrm{The latter two kinds of rules are referred to as temporal rules.}
 
 where all symbols are as defined before, \od{B} is a list of all of the distinct variable symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in \od{B}, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in \od{B}, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
@@ -250,7 +251,4 @@ As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model wher
 \subsection{Operational Interpretation}
 \label{sec:operational}
 
-Our goal in defining an operational formalism is to demonstrate that our model-theoretic view of distributed systems corresponds to the real-world behaviors of such systems.
-
-\wrm{describe what kind of system this models, how it would be executed}
-\wrm{describe failure model -- all messages eventually delivered}
+\todo{See if any transducers/Dedalus stuff has been published, and cite it here.}
