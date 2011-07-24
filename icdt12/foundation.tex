@@ -70,35 +70,36 @@ A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consi
 
 A {\em spatio-temporal rule} over a spatio-temporal schema $\stschema$ is a rule of one of the following three forms:
 
-\wrm{put node(L) and time(T) in the body of all rules!}
+\todo{ensure sugaring diction reflects that we have a node(L) and time(T) in the body of all rules!}
+\todo{ensure that it's clear that asynchronous rules can also be local}
 
 A {\em deductive} rule:
 
 \begin{Dedalus}
 p(L,T,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}).
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T).
 \end{Dedalus}
 
 An {\em inductive} rule:
 
 \begin{Dedalus}
 p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), succ(T,S).
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S).
 \end{Dedalus}
 
-An {\em asynchronous local} rule:
+%An {\em asynchronous local} rule:
+%
+%\begin{Dedalus}
+%p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+%!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), time(S),
+%T < S, choice((L, T, \od{B}),(S)).
+%\end{Dedalus}
 
-\begin{Dedalus}
-p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), time(S),
-T < S, choice((L, T, \od{B}),(S)).
-\end{Dedalus}
-
-An {\em asynchronous communication} rule:
+An {\em asynchronous} rule:
 
 \begin{Dedalus}
 p(D,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), time(S),
+!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), time(S),
 T < S, choice((L, T, \od{B}),(S)), node(D).
 \end{Dedalus}
 
@@ -132,22 +133,28 @@ p(\od{X\sub{0}})@next <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}
 !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
-Asynchronous local:
+%Asynchronous local:
+%
+%\begin{Dedalus}
+%p(\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
+%!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
+%\end{Dedalus}
+
+Asynchronous:
 
 \begin{Dedalus}
-p(\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
+p(#D,\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
 !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
-Asynchronous communication:
+\todo{integrate this better:}
+
+Spatial entanglement involves making the location specifiers in the body explicit.  A rule with spatial entanglement may be of any of the varieties above.  As an example, here is an asynchronous rule with spatial entanglement:
 
 \begin{Dedalus}
 p(#D,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
 !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}}).
 \end{Dedalus}
-
-Asynchronous communication rules require the body location specifier to be explicit, because it may be unified with other body attributes.
-
 
 
 
@@ -158,8 +165,7 @@ stable model semantics~\cite{stable-model}.  We do not review the stable model
 semantics here -- the only salient detail is the interaction of \dedalus{choice}
 with the stable model semantics.  \dedalus{choice} induces a separate stable
 model for each possible sequence of choices \paa{sequence of?} of timestamps.  Note that without
-\dedalus{choice} -- i.e., without any asynchronous local or asynchronous
-communication rules -- a \lang program has a unique stable model, because it is
+\dedalus{choice} -- i.e., without any asynchronous rules -- a \lang program has a unique stable model, because it is
 locally stratified. \paa{cite dedalus paper?}
 
 There are two potential problems with considering a stable model as the meaning of a \lang instance.  
@@ -183,35 +189,11 @@ flipflop(1,2)@1;
 \dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
 
-
-\subsection{Termination}
-
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $\sschema$.  We denote the output schema as $\oschema$.
 
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program is a directed graph with one node per relation -- each node's label is a singleton set representing a different relation.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous or inductive, then the edge is said to be {\em temporal}. \todo{check to see whether we define ``temporal'' as asynchronous or inductive in foundation, then we can replace ``...is asynchronous or inductive...'' with ``is temporal''}
-%If \dedalus{q} is negated, the edge is said to be negated.
-The PDG does not contain nodes for the \dedalus{time} or \dedalus{successor} relations, or the \dedalus{choice} construct.
+An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the contents of the relations in $\oschema$ \wrm{that are eventually always true...} \todo{copy/paste definition from PODS2011 submission}
 
-A {\em collapsed PDG} of a \lang program is the graph obtained by replacing each strongly connected component of the program's PDG with a single node whose label comprises the set of all relation names from the component.
-%We call such a node a {\em recursive} node.
-If a strongly connected component has any temporal edges, we call the resulting collapsed node a {\em temporally recursive} node.  Each node in the collapsed PDG whose label contains a member of the program's output schema is called an {\em output} node.  Note that a collapsed PDG is acyclic.
-
-\todo{notation for the label of a node...}
-
-Assume some numbering of the nodes in the collapsed PDG $1,\ldots,n$.
-We will compute 0-ary relations \dedalus{done\sub{1}()}, \ldots, \dedalus{done\sub{n}()}, one for each node $1,\ldots,n$.  The relations \dedalus{done\sub{i}()} have the property that if they are non-empty (true) at timestamp \dedalus{t}, then are true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{done\sub{i}()} is true at timestamp \dedalus{t}, then for all relations \dedalus{r} in the label of node $i$, $(f \in \dedalus{r}@\dedalus{s} \land \dedalus{s} > \dedalus{t}) \Rightarrow (f \in \dedalus{r}@\dedalus{t})$. \todo{introduce the former notation}.  Intuitively, \dedalus{done\sub{i}()} is true when the contents of all relations in the label of node $i$ are {\em sealed} (henceforth unchanging).
-
-Without loss of generality, assume the numbering is chosen such that the output nodes are $1,\ldots,k$; we add the rule: \dedalus{done() <- done\sub{1}(), \ldots, done\sub{k}().}.  The \dedalus{done()} relation is true when the contents of all output relations are sealed.  For ease of exposition, we will first show a simple protocol that can compute \dedalus{done\sub{i}()} for non-temporally-recursive nodes $i$.  There is a generalized protocol that can compute \dedalus{done\sub{i}()} for all nodes $i$.
-
-\begin{Dedalus}
-p_max(\od{X}) <-
-p_succ() <-
-p_min() <-
-\end{Dedalus}
-
-\todo{Explain the temporal terms ``never'', ``henceforth'', ..., in foundation section}
-
-An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the contents of the relations in $\oschema$ when the \dedalus{done()} relation is true.  Note that \dedalus{done} may never be true for some \lang programs, such as the program in Example~\ref{ex:flipflop}.  Such a program has no ultimate model.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
+Note that some nontrivial programs may have an empty ultimate model, such as the program in Example~\ref{ex:flipflop}.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
 
 \begin{example}
 \label{ex:diffluent1}
