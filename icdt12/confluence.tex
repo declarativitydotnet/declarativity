@@ -213,39 +213,49 @@ Thus it is confluent, but the program uses negation, and \dedalus{b} is not simp
 
 \subsection{Perfect Ultimate Model}
 
-\wrm{There is a usage of negation that is both intuitive, and corresponds to practices in distributed systems.. this is stratified negation.  So how do we implement stratification in Dedalus?  We use \dedalus{done} relations.  We explain how to compute these below, and later formally define exactly how negation can be used.}
+There is a usage of negation that is both intuitive, and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p\_done()}.  The relation \dedalus{p\_done()} has the property that if it is non-empty (true) at timestamp \dedalus{t}, then it is true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{p\_done()} is true at timestamp \dedalus{t}, then $\left(f \in \dedalus{p}@\dedalus{s} \land \dedalus{s} > \dedalus{t}\right) \Rightarrow \left(f \in \dedalus{p}@\dedalus{t}\right)$ \todo{introduce the former notation}.  Intuitively, \dedalus{p\_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be asynchronous (resp. inductive).  Collectively, these two types of edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time} or \dedalus{successor} relations, or the \dedalus{choice} construct.
+We will explain how to define \dedalus{p\_done()} after introducing some preliminary definitions.
+
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \slang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be asynchronous (resp. inductive).  Collectively, these two types of edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time} or \dedalus{successor} relations, or the \dedalus{choice} construct.
 
 A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly connected component of the PDG of $P$ with a single node whose label comprises the set of all relation names from the component.  If a strongly connected component has any asynchronous edges, we call the resulting collapsed node {\em async recursive}.  If a strongly connected component has no asynchronous edges, but has inductive edges, we call the resulting collapsed node {\em inductive recursive}.  These two types of nodes are collectively referred to as {\em temporally recursive}.  Each node in the collapsed PDG whose label contains a relation name in $\oschema$ is called an {\em output} node.  Note that a collapsed PDG is acyclic.
 
-Assume some numbering of the nodes in the collapsed PDG $1,\ldots,n$.  We will compute 0-ary relations \dedalus{done\sub{1}()}, \ldots, \dedalus{done\sub{n}()}, one for each node $1,\ldots,n$.  The relations \dedalus{done\sub{i}()} have the property that if they are non-empty (true) at timestamp \dedalus{t}, then are true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{done\sub{i}()} is true at timestamp \dedalus{t}, then for all relations \dedalus{r} in $L(i)$, $(f \in \dedalus{r}@\dedalus{s} \land \dedalus{s} > \dedalus{t}) \Rightarrow (f \in \dedalus{r}@\dedalus{t})$. \todo{introduce the former notation}.  Intuitively, \dedalus{done\sub{i}()} is true when the contents of all relations in the label of node $i$ are {\em sealed} (henceforth unchanging).
+For EDB relations \dedalus{p}, $P$ must contain a \dedalus{p\_done()} fact.  For non-EDB relations, defining \dedalus{p\_done()} takes some work.  A rule defining \dedalus{p\_done()} for IDB relation \dedalus{p} may use \dedalus{q\_done()} in its body only if there is an edge in the collapsed PDG from a node $i$ with $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 
-For ease of exposition, we will first present the computation of \dedalus{done\sub{i}()} for non-temporally-recursive nodes $i$.  We will then explain how to support temporally recursive nodes $i$.
+For ease of exposition, we will first present the computation of \dedalus{p\_done()} for \dedalus{p} in non-temporally-recursive nodes.  We will then explain how to support temporally recursive nodes.
 
 \subsubsection{Non-Temporally-Recursive Nodes}
 
-For each non-temporally-recursive node $i$, assume the rules whose head relation name is in $L(i)$ are numbered $1, \ldots, i_p$.  The rule for \dedalus{done\sub{i}} shall be:
+For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation \dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p\_done()} is:
 
 \begin{Dedalus}
-done\sub{i}() <- r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done().
+p\_done()() <- r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done().
 \end{Dedalus}
 
-Assume that the nodes in the collapsed PDG connected via incoming edges to node $i$ are numbered $1, \ldots, i_q$.
+Let the nodes in the collapsed PDG connected via incoming edges to node $i$ be denoted by $E(i)$.  Let the relations $\bigcup_{k \in E(i)} L(k)$ be named $\dedalus{p}_1, \ldots, \dedalus{p}_{i_q}$.
 
-For each rule $1 \leq j \leq i_p$ in $P$ with head relation \dedalus{p}, if $j$ is asynchronous, add the rule:
+For each rule $1 \leq j \leq i_p$ in $P$ with head relation \dedalus{p}, if $j$ is:
+
+\noindent
+\textbf{Atemporal:}
+Add the rule:
 
 \begin{Dedalus}
-r\sub{j}_done() <- n\sub{1}_done(), \ldots, n\sub{i\sb{q}}_done().
+r\sub{j}_done() <- p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done().
 \end{Dedalus}
 
-else if $j$ is inductive, add the rule:
+\noindent
+\textbf{Inductive:}
+Add the rule:
 
 \begin{Dedalus}
-r\sub{j}_done()@next <- n\sub{1}_done(), \ldots, n\sub{i\sb{q}}_done().
+r\sub{j}_done()@next <- p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done().
 \end{Dedalus}
 
-else $j$ is asynchronous; replace the original rule:
+\noindent
+\textbf{Asynchronous:}
+Replace the original rule:
 
 \begin{Dedalus}
 p(#N,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{x\sub{n}}),
@@ -265,15 +275,13 @@ c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}}).
 p\sub{j}_send(#N,L,\od{X})@async <- p\sub{j}_to_send(#L,N,\od{X}).
 p\sub{j}_ack(#N,L,\od{X})@async <- p\sub{j}_send(#L,N,\od{X}).
 
-r\sub{j}_done_node(#L,N)@async <- n\sub{1}_done(#N), \ldots,
-n\sub{i_q}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}\_to\_send(#N,L,\od{X})} \Rightarrow \dedalus{p\sub{j}\_ack(#N,L,\od{X})}\right)\).
+r\sub{j}_done_node(#L,N)@async <- p\sub{1}_done(#N), \ldots,
+p\sub{i\sb{q}}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}\_to\_send(#N,L,\od{X})} \Rightarrow \dedalus{p\sub{j}\_ack(#N,L,\od{X})}\right)\).
 
 r\sub{j}_done() <- \(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}\_done\_node(N)}\right)\).
 \end{Dedalus}
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
-
-\todo{done() predicates are improperly named.  they should be numbered by the numbering assigned to the nodes in the collapsed PDG, but I was lazy and instead lettered them by the predicate names}
 
 \begin{Dedalus}
 p\sub{\phi}_min(\od{W},\od{X}) <- p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{_},\od{X}), p\sub{\phi}_succ_done().
@@ -293,13 +301,16 @@ forall\sub{\phi}(\od{W}) <- forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max
 forall\sub{\phi}(\od{W}) <- !p(\od{W},\od{_}), p_done().
 \end{Dedalus}
 
+Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
+
 \subsubsection{Inductive Recursive Nodes}
 
-For each inductive recursive node $i$, assume that the relations in $L(i)$ are numbered $1,\ldots,i_p$.  For each $1 \leq j \leq i_p $, add the rules:
+For each inductive recursive node $i$, assume that the relations in $L(i)$ are numbered $1,\ldots,i_p$.  For each $1 \leq j \leq i_p$, add the rules:
 
 \begin{Dedalus}
 p\sub{j}_prev(\od{X})@next <- p\sub{j}(\od{X}).
 n\sub{i}_done() <- \(\left(\forall \od{X} . p\sub{j}(\od{X}) \Rightarrow p\sub{j}_prev(\od{X})\right)\).
+p\sub{j}_done() <- n\sub{i}_done().
 \end{Dedalus}
 
 \subsubsection{Async Recursive Nodes}
