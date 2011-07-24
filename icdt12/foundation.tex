@@ -108,7 +108,9 @@ T < S, choice((L, T, \od{B}),(S)), node(D).
 
 where all symbols are as defined before, \od{B} is a list of all of the distinct variable symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in \od{B}, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in \od{B}, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
-A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules. \paa{this confused me.  you are saying that the mapping from a 'plain old datalog' program to a dedalus program isn't 1-1?  this is obvious, right?  if this isn't what is intended, how do "rules" "give rise to" "dedalus programs"?}
+A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  
+
+%%Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules. \paa{this confused me.  you are saying that the mapping from a 'plain old datalog' program to a dedalus program isn't 1-1?  this is obvious, right?  if this isn't what is intended, how do "rules" "give rise to" "dedalus programs"?}
 
 A \lang\ {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations. \todo{explain how a fact is really a sugared atemporal rule with no body; implicit in the sugaring is the time(T) and node(N) relations in the body.}
 
@@ -148,9 +150,12 @@ p(#D,\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub
 !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
 \end{Dedalus}
 
-\todo{integrate this better:}
 
-Spatial entanglement involves making the location specifiers in the body explicit.  A rule with spatial entanglement may be of any of the varieties above.  As an example, here is an asynchronous rule with spatial entanglement:
+%Spatial entanglement involves making the location specifiers in the body explicit.  A rule with spatial entanglement may be of any of the varieties above.  As an example, here is an asynchronous rule with spatial entanglement:
+The syntactic sugar is optional, and as we shall see it is often useful to explicitly reference location specifiers in rules.  A rule of any of the
+varieties above may be \emph{spatially entangled} in this way. For example, the rule below is a spatially entangled asynchronous rule if $L$ appears
+in $\od{X\sub{0}}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 < i < n$ and $0 < j < m$.
+
 
 \begin{Dedalus}
 p(#D,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
@@ -189,6 +194,9 @@ q(n1,T,1) <- time(T).
 To compute a particular stable model $(n_1,n_2)$, we can treat \dedalus{choice} as an EDB relation, and for each of $n_1$ and $n_2$, create functions $f_1, f_2 : \mathbb{N} \rightarrow \mathbb{N}$, such that the image of $f_1$ is $n_1$, and the image of $f_2$ is $n_2$.  Then, add the appropriate infinite set of \dedalus{choice} facts to the EDB to encode the functions.  The resulting instance has a unique stable model as it is locally stratified, which coincides with its locally stratified model.
 \end{example}
 
+\paa{not ready to whack it yet, but we should consider breaking the above discussion into two (more chewable) pieces: first, making no assumptions about q's persistence, show that a single async rule induces an infinite number of stable models, and how each model may be viewed as fixing a 'choice function' as EDB.  then, mention among the 'problems' below that rules with
+all persistent subgoals make an infinite number of choices, inducing an uncountable number of stable models}
+
 There are two potential problems with considering a stable model as the meaning of a \lang instance.  
 %%First, every program with at least one asynchronous rule has infinitely many stable models.  
 First, a program with even one asynchronous rule may have uncountably many stable models.  
@@ -214,6 +222,7 @@ flipflop(1,2)@1;
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $\sschema$.  We denote the output schema as $\oschema$.
 
 An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the spatial facts in $\oschema$ that are ``eventually always'' true.  In other words spatial fact $f$ is in the ultimate model if the relation of $f$ is in $\oschema$ and $\forall t : f@t => f@t+1$. \todo{make sure this notation is introduced}
+An ultimate model is always finite, due to the finiteness of $\univ$, and by the same reasoning any \lang program has only a finite number of ultimate models.
 
 Note that some nontrivial programs may have an empty ultimate model, such as the program in Example~\ref{ex:flipflop}.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
 
