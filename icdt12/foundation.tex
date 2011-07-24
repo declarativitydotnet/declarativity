@@ -66,7 +66,7 @@ Given a spatio-temporal schema $\stschema$, there is a unique corresponding spat
 
 A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$ tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$, and $t = 0$ (all spatio-temporal facts must be supplied with timestamp 0).
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$ tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$, and $t \in \mathbb{N}$.
 
 A {\em spatio-temporal rule} over a spatio-temporal schema $\stschema$ is a rule of one of the following three forms:
 
@@ -109,7 +109,7 @@ where all symbols are as defined before, \od{B} is a list of all of the distinct
 
 A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  Note that a given set of rules over a schema may give rise to many different \lang programs, depending on which type of spatio-temporal rule each rule is converted into, and depending on where or if the variable \dedalus{D} appears in the body in asynchronous communication rules. \paa{this confused me.  you are saying that the mapping from a 'plain old datalog' program to a dedalus program isn't 1-1?  this is obvious, right?  if this isn't what is intended, how do "rules" "give rise to" "dedalus programs"?}
 
-A \lang\ {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations.
+A \lang\ {\em instance} is a program with a set of spatio-temporal facts specified for EDB relations. \todo{explain how a fact is really a sugared atemporal rule with no body; implicit in the sugaring is the time(T) and node(N) relations in the body.}
 
 \noindent
 \textbf{Syntactic sugar for space-time in \lang:}
@@ -161,22 +161,43 @@ p(#D,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od
 
 \subsection{Semantics}
 One interpretation of a \lang instance is given by the possible worlds of the
-stable model semantics~\cite{stable-model}.  We do not review the stable model
+stable model semantics~\cite{stable-model}.  The stable model semantics is proposed for \dedalus{choice} by Sacca and Zaniolo \wrm{cite}.
+We do not review the stable model
 semantics here -- the only salient detail is the interaction of \dedalus{choice}
-with the stable model semantics.  \dedalus{choice} induces a separate stable
-model for each possible sequence of choices \paa{sequence of?} of timestamps.  Note that without
-\dedalus{choice} -- i.e., without any asynchronous rules -- a \lang program has a unique stable model, because it is
-locally stratified. \paa{cite dedalus paper?}
+with the stable model semantics.  Since the stable model semantics coincides with the locally stratified semantics \wrm{cite}, a \lang program without \dedalus{choice} (i.e., without an asynchronous rule) has a unique stable model as it is locally stratified.  A \lang program with asynchronous rules has infinitely many stable models.  Each stable model is the locally stratified model obtained by treating the \dedalus{choice} construct as an EDB relation, and adding facts for all chosen timestamps.
+
+\begin{example}
+Take the following \lang instance:
+
+\begin{Dedalus}
+p(#L,X)@async <- q(#L,X).
+node(n1).
+q(#n1,0).
+q(#n1,1).
+\end{Dedalus}
+
+Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.  The possible stable models are exactly the elements $(n_1, n_2) \in \mathcal{N} \times \mathcal{N}$, where the first coordinate represents the set of all timestamps for which \dedalus{p(n1,0)} is true, and second represents the set of all timestamps for which \dedalus{p(n1,1)} is true.  Consider the unsugared version of the program:
+
+\begin{Dedalus}
+p(L,S,X) <- q(L,T,X), node(L), time(T), time(S), T < S, choice((L,T,X),(S)).
+node(L,T,n1) <- node(L), time(T).
+q(n1,T,0) <- time(T).
+q(n1,T,1) <- time(T).
+\end{Dedalus}
+
+To compute a particular stable model $(n_1,n_2)$, we can treat \dedalus{choice} as an EDB relation, and for each of $n_1$ and $n_2$, create functions $f_1, f_2 : \mathbb{N} \rightarrow \mathbb{N}$, such that the image of $f_1$ is $n_1$, and the image of $f_2$ is $n_2$.  Then, add the appropriate infinite set of \dedalus{choice} facts to the EDB to encode the functions.  The resulting instance has a unique stable model as it is locally stratified, which coincides with its locally stratified model.
+\end{example}
 
 There are two potential problems with considering a stable model as the meaning of a \lang instance.  
 %%First, every program with at least one asynchronous rule has infinitely many stable models.  
-First, any program with even one asynchronous rule has infinitely many stable models.  
+First, a program with even one asynchronous rule may have uncountably many stable models.  
 Not all of these stable models may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
 
-\paa{looks like we still need to define this.  perhaps we should define it exactly as we did in the other paper -- the UM is exactly the set of facts with trivial periodicities; the set of things eventually always true.  dedalus-c restricts the definition: the 
-UM is the set of output tuples that is eventually always true, and since these are simply peristed this reduces to the set of tuples that are ever true.  
-the burden is now on the programmer and coordination protocol to ensure that nothing goes into the output predicates until it is surely true.}
+%\paa{looks like we still need to define this.  perhaps we should define it exactly as we did in the other paper -- the UM is exactly the set of facts with trivial periodicities; the set of things eventually always true.  dedalus-c restricts the definition: the 
+%UM is the set of output tuples that is eventually always true, and since these are simply peristed this reduces to the set of tuples that are ever true.  
+%the burden is now on the programmer and coordination protocol to ensure that nothing goes into the output predicates until it is surely true.}
 
+\todo{the above example also has an infinite stable model, but we like flip flop as well because it shows a nontrivial periodicity; integrate this with the definition of ultimate model}
 \begin{example}
 \label{ex:flipflop}
 A \lang program with an infinite stable model.
@@ -191,7 +212,7 @@ flipflop(1,2)@1;
 
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $\sschema$.  We denote the output schema as $\oschema$.
 
-An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the contents of the relations in $\oschema$ \wrm{that are eventually always true...} \todo{copy/paste definition from PODS2011 submission}
+An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the spatial facts in $\oschema$ that are ``eventually always'' true.  In other words spatial fact $f$ is in the ultimate model if the relation of $f$ is in $\oschema$ and $\forall t : f@t => f@t+1$. \todo{make sure this notation is introduced}
 
 Note that some nontrivial programs may have an empty ultimate model, such as the program in Example~\ref{ex:flipflop}.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
 
