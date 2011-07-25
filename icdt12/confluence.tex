@@ -35,7 +35,7 @@ We add the following rules to the construction, to nondeterministically decide w
 
 \begin{Drules}
   \dfact{message(0)@async} \\
-  \dfact{message(1)@async}
+  \dfact{message(1)@async} \\
   \drule{run\_machine()}
         {message(0), message(1)} \\
   \drule{accept()}
@@ -250,15 +250,31 @@ We will explain how to define \dedalus{p\_done()} after introducing some prelimi
 
 The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \slang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be asynchronous (resp. inductive).  Collectively, these two types of edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time} or \dedalus{succ} relations, or the \dedalus{choice} construct.
 
-A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly connected component of the PDG of $P$ with a single node whose label comprises the set of all relation names from the component.  If a strongly connected component has any asynchronous edges, we call the resulting collapsed node {\em async recursive}.  If a strongly connected component has no asynchronous edges, but has inductive edges, we call the resulting collapsed node {\em inductive recursive}.  These two types of nodes are collectively referred to as {\em temporally recursive}.  Each node in the collapsed PDG whose label contains a relation name in $\oschema$ is called an {\em output} node.  Note that a collapsed PDG is acyclic.
+A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
+connected component of the PDG of $P$ with a single node whose label comprises
+the set of all relation names from the component.  If a strongly connected
+component has any asynchronous edges, we call the resulting collapsed node {\em
+  async recursive}.  If a strongly connected component has inductive edges but
+no asynchronous edges, we call the resulting collapsed node {\em inductive
+  recursive}.  These two types of nodes are collectively referred to as {\em
+  temporally recursive}.  Each node in the collapsed PDG whose label contains a
+relation name in $\oschema$ is called an {\em output} node.  Note that a
+collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, $P$ must contain a \dedalus{p\_done()} fact.  For non-EDB relations, defining \dedalus{p\_done()} takes some work.  A rule defining \dedalus{p\_done()} for IDB relation \dedalus{p} may use \dedalus{q\_done()} in its body only if there is an edge in the collapsed PDG from a node $i$ with $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
+For EDB relations \dedalus{p}, $P$ must contain a \dedalus{p\_done()} fact.  For
+IDB relations, defining \dedalus{p\_done()} takes some work.  A rule defining
+\dedalus{p\_done()} for IDB relation \dedalus{p} may use \dedalus{q\_done()} in
+its body only if there is an edge in the collapsed PDG from a node $i$ with
+$\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 
 For ease of exposition, we will first present the computation of \dedalus{p\_done()} for \dedalus{p} in non-temporally-recursive nodes.  We will then explain how to support temporally recursive nodes.
 
 \subsubsection{Non-Temporally-Recursive Nodes}
 
-For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation \dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p\_done()} is:
+For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting
+of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation
+\dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p\_done()}
+is:\nrc{why p\_done()() on the LHS?}
 
 \begin{Dedalus}
 p\_done()() <- r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done().
