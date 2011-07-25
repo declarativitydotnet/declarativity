@@ -13,12 +13,14 @@ desired and indeed often indicate a bug in the specification.\nrc{Dubious:
 We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
 \begin{definition}
-A \lang program is {\em confluent} (has a deterministic output) if, for every
-instance of the program, it has a unique ultimate model.  A program that is not
-confluent is {\em diffluent}.
+  A \lang program is {\em confluent} if, for any assignment of facts to its EDB
+  relations, it has a single ultimate model.  A program that is not confluent is
+  {\em diffluent}.
 \end{definition}
 
-Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2} are two examples of diffluent programs.
+Confluence corresponds roughly to the intuition that a program has a
+deterministic output set. Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2}
+are two examples of diffluent programs.
 
 Unfortunately, confluence is an undecidable property of \lang programs:
 
