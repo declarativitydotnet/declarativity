@@ -63,7 +63,7 @@ relation equivalent to $\mathbb{N}$, and \dedalus{succ}, a binary relation
 representing the natural successor relation over $\mathbb{N}$.  We call
 $\stschema$ a {\em spatio-temporal} schema.
 
-Given a spatio-temporal schema $\stschema$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations, and the additional column from each relation schema.
+Given a spatio-temporal schema $\stschema$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations and the additional column from each relation schema.
 
 A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$ tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.
 
@@ -100,12 +100,19 @@ An {\em asynchronous} rule:
 
 \begin{Drules}
   \drule{p(D,S,\od{X\sub{0}})}
-        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+          !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}),
+          node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
 \end{Drules}
 
 \wrm{The latter two kinds of rules are referred to as temporal rules.}
 
-where all symbols are as defined before, \od{B} is a list of all of the distinct variable symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}; \dedalus{D} and \dedalus{L} are variable symbols that may also appear in \od{B}, \dedalus{T} and \dedalus{S} are variable symbols that may not appear in \od{B}, and \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
+where all symbols are defined as before, and \od{B} contains all the distinct
+variable symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots,
+\od{Y\sub{m}}. In addition, \dedalus{D} and \dedalus{L} are variable symbols
+that may also appear in \od{B}, while \dedalus{T} and \dedalus{S} are variable
+symbols that may not appear in \od{B}. \dedalus{choice} is the construct of
+Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will presently describe.
 
 A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  
 
@@ -127,7 +134,7 @@ predicates with \dedalus{@async}; deductive rules have no head annotation.
 Given these conventions, the presence of appropriate \dedalus{succ},
 \dedalus{choice} and \dedalus{node} predicates in the body are implicit and can
 be omitted.  The result is a syntax that reads like a simple temporal variant of
-Datalog.
+Datalog. \nrc{Need to introduce hash-mark syntax for location specifiers.}
 
 Deductive:
 
@@ -242,9 +249,8 @@ Note that some nontrivial programs may have an empty ultimate model, such as the
 
 \begin{example}
 \label{ex:diffluent1}
-A diffluent \lang program.
-
-\wrm{p is an output relation}
+A diffluent \lang program. \wrm{p is an output relation} \nrc{Diffluent not
+  defined yet.}
 
 \begin{Drules}
   \drule{q()@async}
