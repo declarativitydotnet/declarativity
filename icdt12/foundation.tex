@@ -19,7 +19,7 @@ A {\em rule} over a schema $\schema$ is a clause of the form:
 
 \begin{Drules}
   \drule{p(\od{X\sub{0}})}
-        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\_\sub{m}(\od{Y\sub{m}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
 where \dedalus{p}, \dedalus{b\sub{1}}, \ldots, \dedalus{b\sub{n}},
@@ -117,9 +117,17 @@ A \lang\ {\em instance} is a program with a set of spatio-temporal facts specifi
 \textbf{Syntactic sugar for space-time in \lang:}
 The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  
 
-The three temporal classes of rules listed above can be distinguished by annotating inductive head predicates with \dedalus{@next}, and asynchronous head predicates with \dedalus{@async}; simple deductive rules have no head annotation. 
-Communication rules must include the location attribute of their head predicate; by definition this is a different variable than that of the body predicates.
- Given these conventions, the presence of appropriate \dedalus{successor}, \dedalus{choice} and \dedalus{node} predicates in the body are implicit and can be omitted.  The result is a syntax that reads like a simple temporal variant of Datalog.
+The three temporal classes of rules listed above can be distinguished by
+annotating inductive head predicates with \dedalus{@next} and asynchronous head
+predicates with \dedalus{@async}; deductive rules have no head annotation. 
+% nrc: Removed, because "communication rules" is not defined (or used subsequently)
+% Communication rules must include the location attribute of their head
+% predicate; by definition this is a different variable than that of the body
+% predicates.
+Given these conventions, the presence of appropriate \dedalus{succ},
+\dedalus{choice} and \dedalus{node} predicates in the body are implicit and can
+be omitted.  The result is a syntax that reads like a simple temporal variant of
+Datalog.
 
 Deductive:
 
@@ -162,10 +170,10 @@ in $\od{X\sub{0}}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 <
 
 \subsection{Semantics}
 One interpretation of a \lang instance is given by the possible worlds of the
-stable model semantics~\cite{stable-model}.  The stable model semantics is proposed for \dedalus{choice} by Sacca and Zaniolo \wrm{cite}.
+stable model semantics~\cite{stable-model}.  The stable model semantics is proposed for \dedalus{choice} by Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}.
 We do not review the stable model
 semantics here -- the only salient detail is the interaction of \dedalus{choice}
-with the stable model semantics.  Since the stable model semantics coincides with the locally stratified semantics \wrm{cite}, a \lang program without \dedalus{choice} (i.e., without an asynchronous rule) has a unique stable model as it is locally stratified.  A \lang program with asynchronous rules has infinitely many stable models.  Each stable model is the locally stratified model obtained by treating the \dedalus{choice} construct as an EDB relation, and adding facts for all chosen timestamps.
+with the stable model semantics.  Since the stable model semantics coincides with the locally stratified semantics \wrm{cite}, a \lang program without \dedalus{choice} (i.e., without an asynchronous rule) has a unique stable model as it is locally stratified.  A \lang program with asynchronous rules has infinitely many stable models.  Each stable model is the locally stratified model obtained by treating the \dedalus{choice} construct as an EDB relation and adding facts for all chosen timestamps.
 
 \begin{example}
 Take the following \lang instance:
@@ -178,7 +186,12 @@ Take the following \lang instance:
   \dfact{q(\#n1,1)}
 \end{Drules}
 
-Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.  The possible stable models are exactly the elements $(n_1, n_2) \in \mathcal{N} \times \mathcal{N}$, where the first coordinate represents the set of all timestamps for which \dedalus{p(n1,0)} is true, and second represents the set of all timestamps for which \dedalus{p(n1,1)} is true.  Consider the unsugared version of the program:
+Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
+The possible stable models are exactly the elements $(n_1, n_2) \in \mathcal{N}
+\times \mathcal{N}$, where the first coordinate represents the set of all
+timestamps for which \dedalus{p(n1,0)} is true, and the second represents the
+set of all timestamps for which \dedalus{p(n1,1)} is true.  Consider the
+unsugared version of the program:
 
 \begin{Drules}
   \drule{p(L,S,X)}
@@ -217,7 +230,7 @@ A \lang program with an infinite stable model.
   \dfact{flipflop(1,2)@1}
 \end{Drules}
 
-\dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
+\dedalus{flipflop(1,2)} is true at all odd times and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
 
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $\sschema$.  We denote the output schema as $\oschema$.
