@@ -172,7 +172,7 @@ Asynchronous:
 The syntactic sugar is optional, and as we shall see it is often useful to explicitly reference location specifiers in rules.  A rule of any of the
 varieties above may be \emph{spatially entangled} in this way. For example, the rule below is a spatially entangled asynchronous rule if $L$ appears
 in $\od{X\sub{0}}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 <
-i < n$ and $0 < j < m$. \nrc{Do we also need to define temporal entanglement?}
+i \leq n$ and $0 < j \leq m$. \nrc{Do we also need to define temporal entanglement?}
 
 \begin{Drules}
   \drule{p(\#D,\od{X\sub{0}})@async}
