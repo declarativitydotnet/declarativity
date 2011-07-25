@@ -43,27 +43,31 @@ relation name and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in
 set of facts. \todo{check the rest of the paper to make sure we're using ``instance'' as appropriate}
 
 \todo{Following the terminology of...}  Given a schema $\schema$, we use
-$\sschema$ to denote the extension of $\schema$ obtained by adding a
-column to each relation schema in $\schema$ and adding an additional
-relation schema to $\schema$.  The additional column is the {\em location
-  specifier}, which gives the ``location'' of the tuple.  By convention, this is
-represented as the first column.  The additional relation schema is \dedalus{node}, a
-unary relation that represents all ``locations.''  We call $\sschema$ a
-{\em spatial} schema.
+$\sschema$ to denote the extension of $\schema$ obtained by adding a column to
+each relation schema in $\schema$ and adding an additional relation schema.  The
+additional column is the {\em location specifier}, which gives the ``location''
+of a fact.  By convention, this is represented as the first column.  The
+additional relation schema is \dedalus{node}, a unary relation that represents
+all ``locations.''  We call $\sschema$ a {\em spatial} schema.
 
 \todo{``a'' vs ``the'' spatial schema}
 
-Given a spatial schema $\sschema$, we use $\stschema$ to denote the
-extension of $\sschema$ obtained by adding a column to each relation schema
-in $\sschema$ and adding two additional relation schemas.  The additional
-column is the {\em timestamp}, a natural number representing a logical time.  By
-convention, the location specifier is the first column and the timestamp is the
-second.  The additional relation schemas we add are: \dedalus{time}, a unary
-relation equivalent to $\mathbb{N}$, and \dedalus{succ}, a binary relation
-representing the natural successor relation over $\mathbb{N}$.  We call
-$\stschema$ a {\em spatio-temporal} schema.
+Given a spatial schema $\sschema$, we use $\stschema$ to denote the extension of
+$\sschema$ obtained by adding a column to each relation schema in $\sschema$ and
+adding two additional relation schemas. \nrc{This implies that the
+  \dedalus{node} relation schema has a timestamp column, which is not intended.}
+The additional column is the {\em timestamp}, a natural number representing a
+logical time.  By convention, the location specifier is the first column and the
+timestamp is the second.  The additional relation schemas we add are:
+\dedalus{time}, a unary relation equivalent to $\mathbb{N}$, and \dedalus{succ},
+a binary relation representing the natural successor relation over $\mathbb{N}$.
+We call $\stschema$ a {\em spatio-temporal} schema. \nrc{Clarify that
+  $b_1,\ldots,b_n,c_1,\ldots,c_m$ cannot range over \dedalus{time},
+  \dedalus{succ}, or \dedalus{node}.}
 
-Given a spatio-temporal schema $\stschema$, there is a unique corresponding spatial schema that corresponds with dropping the additional relations and the additional column from each relation schema.
+Given a spatio-temporal schema $\stschema$, there is a unique corresponding
+spatial schema that corresponds with dropping the additional relations and the
+additional column from each relation schema. \nrc{Why does this matter?}
 
 A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$ tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.
 
