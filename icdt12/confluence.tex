@@ -25,14 +25,16 @@ Using the construction in~\cite{undecidable-datalog}, it is possible to write a 
 
 We add the following rules to the construction, to nondeterministically decide whether to run the machine or not:
 
-\begin{Dedalus}
-message(0)@async.
-message(1)@async.
-
-run_machine() <- message(0), message(1).
-accept() <- message(0), !message(1), input_valid().
-accept() <- !message(0), message(1), input_valid().
-\end{Dedalus}
+\begin{Drules}
+  \dfact{message(0)@async} \\
+  \dfact{message(1)@async}
+  \drule{run\_machine()}
+        {message(0), message(1)} \\
+  \drule{accept()}
+        {message(0), !message(1), input\_valid()} \\
+  \drule{accept()}
+        {!message(0), message(1), input\_valid()}
+\end{Drules}
 
 Note that the first two lines are actually rules.  The unsugared form of the first rule is \dedalus{message(L,S,0) <- node(L), time(T), time(S), T < S, choice((L, T, 0), (S)).}
 
@@ -58,47 +60,58 @@ If the quantifier depth is $n$, then it is clear that each leaf in the recursive
 
 First, we iterate through all of the $n$-bit binary numbers, one per timestamp.  We assume that the order over the variables is such that the leftmost variable in the formula (the high-order bit) is the first, and the rightmost is the last.  Thus, our addition is ``backwards'' in that it propagates carries to the predecessors:
 
-\begin{Dedalus}
-carry(V) <- var_last(V).
-one(V)@next <- carry(V), !one(V).
-one(V)@next <- one(V), !carry(V).
-carry(U) <- carry(V), one(V), var_succ(U, V).
-\end{Dedalus}
+\begin{Drules}
+  \drule{carry(V)}
+        {var\_last(V)} \\
+  \drule{one(V)@next}
+        {carry(V), !one(V)} \\
+  \drule{one(V)@next}
+        {one(V), !carry(V)} \\
+  \drule{carry(U)}
+        {carry(V), one(V), var\_succ(U, V)}
+\end{Drules}
 
 At each timestep, we check whether the current variable assignment is true.  If it is true, then \dedalus{formula\_true()} is true at that timestep.  We omit these rules.
 
 We propagate truth information up the recursive call tree.  A node propagates a $1$ to its parent if the quantifier associated with that node is existential and at least one of its children is true, or the quantifier is universal and both of its children are true.  A node propagates a $0$ to its parent otherwise.  If the output of the root is $1$, the formula is satisfiable, otherwise it is not: \wrm{more explanation here}
 
-\begin{Dedalus}
-var_sat_in(V, 1) <- formula_true(), var_last(V).
+\begin{Drules}
+  \drule{var\_sat\_in(V, 1)}
+        {formula\_true(), var\_last(V)} \\
+  \drule{var\_sat(0, V, B)@next}
+        {var\_sat\_in(V, B), !var\_sat(\_, V, \_)} \\
+  \drule{var\_sat(1, V, B)@next}
+        {var\_sat\_in(V, B), var\_sat(0, V, \_).} \\
+\end{Drules}
 
-var_sat(0, V, B)@next <- var_sat_in(V, B),
-!var_sat(_, V, _).
-var_sat(1, V, B)@next <- var_sat_in(V, B),
-var_sat(0, V, _).
+\begin{Drules}
+  \drule{var\_sat\_left\_in(vn, 1)}
+        {exists(vn), var\_sat(\_, vn, 1)} \\
+  \drule{var\_sat\_left\_in(vn, 0)}
+        {exists(vn), var\_sat(0, vn, 0), var\_sat(1, vn, 0)} \\
+\end{Drules}
 
-// existential quantifier
-var_sat_left_in(vn, 1) <- exists(vn),
-var_sat(_, vn, 1).
-var_sat_left_in(vn, 0) <- exists(vn),
-var_sat(0, vn, 0), var_sat(1, vn, 0).
+\begin{Drules}
+  \drule{var\_sat\_left\_in(vn\_succ, 1)}
+        {forall(vn), var\_sat(0, vn, 1), var\_sat(1, vn, 1)} \\
+  \drule{var\_sat\_left\_in(vn\_succ, 0)}
+        {forall(vn), var\_sat(\_, vn, false)} \\
+\end{Drules}
 
-// universal quantifier
-var_sat_left_in(vn_succ, 1) <- forall(vn),
-var_sat(0, vn, 1), var_sat(1, vn, 1).
-var_sat_left_in(vn_succ, 0) <- forall(vn),
-var_sat(_, vn, false).
+\begin{Drules}
+  \drule{var\_sat\_in(N, U, B)}
+        {var\_sat\_left\_in(V, B), var\_succ(U, V)} \\
+\end{Drules}
 
-var_sat_in(N, U, B) <- var_sat_left_in(V, B),
-var_succ(U, V).
+\begin{Drules}
+  \drule{var\_sat(N, V, B)@next}
+        {var\_sat(N, V, B), !var\_sat(1, V, \_)} \\
+\end{Drules}
 
-// persist var_sat until we get 2 of them
-var_sat(N, V, B)@next <- var_sat(N, V, B),
-!var_sat(1, V, _);
-
-// the output of the last 
-satisfiable(B) <- var_sat_left_in(V, B), var_last(V).
-\end{Dedalus}
+\begin{Drules}
+  \drule{satisfiable(B)}
+        {var\_sat\_left\_in(V, B), var\_last(V)}
+\end{Drules}
 \end{proof}
 
 
