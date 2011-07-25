@@ -17,10 +17,10 @@ A {\em schema} $\schema$ is a set of relation schemas.  \nrc{Confusing:
 
 A {\em rule} over a schema $\schema$ is a clause of the form:
 
-\begin{Dedalus}
-p(\od{X\sub{0}}) <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
-!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(\od{X\sub{0}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\_\sub{m}(\od{Y\sub{m}})}
+\end{Drules}
 
 where \dedalus{p}, \dedalus{b\sub{1}}, \ldots, \dedalus{b\sub{n}},
 \dedalus{c\sub{1}}, \ldots, \dedalus{c\sub{m}} are relations in
@@ -76,17 +76,17 @@ A {\em spatio-temporal rule} over a spatio-temporal schema $\stschema$ is a rule
 
 A {\em deductive} rule:
 
-\begin{Dedalus}
-p(L,T,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(L,T,\od{X\sub{0}})}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T)}
+\end{Drules}
 
 An {\em inductive} rule:
 
-\begin{Dedalus}
-p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(L,S,\od{X\sub{0}})}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S)}
+\end{Drules}
 
 %An {\em asynchronous local} rule:
 %
@@ -98,11 +98,10 @@ p(L,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\
 
 An {\em asynchronous} rule:
 
-\begin{Dedalus}
-p(D,S,\od{X\sub{0}}) <- b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
-!c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), time(S),
-T < S, choice((L, T, \od{B}),(S)), node(D).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(D,S,\od{X\sub{0}})}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
+\end{Drules}
 
 \wrm{The latter two kinds of rules are referred to as temporal rules.}
 
@@ -124,17 +123,17 @@ Communication rules must include the location attribute of their head predicate;
 
 Deductive:
 
-\begin{Dedalus}
-p(\od{X\sub{0}}) <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
-!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(\od{X\sub{0}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+\end{Drules}
 
 Inductive:
 
-\begin{Dedalus}
-p(\od{X\sub{0}})@next <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),   
-!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(\od{X\sub{0}})@next}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+\end{Drules}
 
 %Asynchronous local:
 %
@@ -145,24 +144,20 @@ p(\od{X\sub{0}})@next <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}
 
 Asynchronous:
 
-\begin{Dedalus}
-p(#D,\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
-!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
-\end{Dedalus}
-
+\begin{Drules}
+  \drule{p(\#D,\od{X\sub{0}})@async}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+\end{Drules}
 
 %Spatial entanglement involves making the location specifiers in the body explicit.  A rule with spatial entanglement may be of any of the varieties above.  As an example, here is an asynchronous rule with spatial entanglement:
 The syntactic sugar is optional, and as we shall see it is often useful to explicitly reference location specifiers in rules.  A rule of any of the
 varieties above may be \emph{spatially entangled} in this way. For example, the rule below is a spatially entangled asynchronous rule if $L$ appears
 in $\od{X\sub{0}}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 < i < n$ and $0 < j < m$.
 
-
-\begin{Dedalus}
-p(#D,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
-!c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}}).
-\end{Dedalus}
-
-
+\begin{Drules}
+  \drule{p(\#D,\od{X\sub{0}})@async}
+        {b\sub{1}(\#L,\od{X\sub{1}}), \ldots, b\sub{n}(\#L,\od{X\sub{n}}), !c\sub{1}(\#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(\#L,\od{Y\sub{m}})}
+\end{Drules}
 
 
 \subsection{Semantics}
@@ -175,21 +170,26 @@ with the stable model semantics.  Since the stable model semantics coincides wit
 \begin{example}
 Take the following \lang instance:
 
-\begin{Dedalus}
-p(#L,X)@async <- q(#L,X).
-node(n1).
-q(#n1,0).
-q(#n1,1).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(\#L,X)@async}
+        {q(\#L,X)} \\
+  \dfact{node(n1)} \\
+  \dfact{q(\#n1,0)} \\
+  \dfact{q(\#n1,1)}
+\end{Drules}
 
 Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.  The possible stable models are exactly the elements $(n_1, n_2) \in \mathcal{N} \times \mathcal{N}$, where the first coordinate represents the set of all timestamps for which \dedalus{p(n1,0)} is true, and second represents the set of all timestamps for which \dedalus{p(n1,1)} is true.  Consider the unsugared version of the program:
 
-\begin{Dedalus}
-p(L,S,X) <- q(L,T,X), node(L), time(T), time(S), T < S, choice((L,T,X),(S)).
-node(L,T,n1) <- node(L), time(T).
-q(n1,T,0) <- time(T).
-q(n1,T,1) <- time(T).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(L,S,X)}
+        {q(L,T,X), node(L), time(T), time(S), T < S, choice((L,T,X),(S))} \\
+  \drule{node(L,T,n1)}
+        {node(L), time(T)} \\
+  \drule{q(n1,T,0)}
+        {time(T)} \\
+  \drule{q(n1,T,1)}
+        {time(T)}
+\end{Drules}
 
 To compute a particular stable model $(n_1,n_2)$, we can treat \dedalus{choice} as an EDB relation, and for each of $n_1$ and $n_2$, create functions $f_1, f_2 : \mathbb{N} \rightarrow \mathbb{N}$, such that the image of $f_1$ is $n_1$, and the image of $f_2$ is $n_2$.  Then, add the appropriate infinite set of \dedalus{choice} facts to the EDB to encode the functions.  The resulting instance has a unique stable model as it is locally stratified, which coincides with its locally stratified model.
 \end{example}
@@ -211,10 +211,11 @@ Not all of these stable models may be meaningfully different.  Second, a stable 
 \label{ex:flipflop}
 A \lang program with an infinite stable model.
 
-\begin{Dedalus}
-flipflop(Y,X)@next \(\leftarrow\) flipflop(X,Y);
-flipflop(1,2)@1;
-\end{Dedalus}
+\begin{Drules}
+  \drule{flipflop(Y,X)@next}
+        {flipflop(X,Y)} \\
+  \dfact{flipflop(1,2)@1}
+\end{Drules}
 
 \dedalus{flipflop(1,2)} is true at all odd times, and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
@@ -230,14 +231,20 @@ Note that some nontrivial programs may have an empty ultimate model, such as the
 \label{ex:diffluent1}
 A diffluent \lang program.
 
-\begin{Dedalus}
-output p.
-q()@async <- q_edb();
-r()@async <- r_edb();
-p() <- q(), !r();
-q()@next <- q();
-r()@next <- r();
-\end{Dedalus}
+\wrm{p is an output relation}
+
+\begin{Drules}
+  \drule{q()@async}
+        {q\_edb()} \\
+  \drule{r()@async}
+        {r\_edb()} \\
+  \drule{p()}
+        {q(), !r()} \\
+  \drule{q()@next}
+        {q()} \\
+  \drule{r()@next}
+        {r()}
+\end{Drules}
 
 Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
 \end{example}
@@ -245,14 +252,17 @@ Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{
 \begin{example}
 \label{ex:diffluent2}
 A diffluent \lang program.
-
-\begin{Dedalus}
-output p.
-q()@async <- q_edb();
-r()@async <- r_edb();
-p() <- q(), r();
-q()@next <- q();
-\end{Dedalus}
+\wrm{p is an output relation}
+\begin{Drules}
+  \drule{q()@async}
+        {q\_edb()} \\
+  \drule{r()@async}
+        {r\_edb()} \\
+  \drule{p()}
+        {q(), r()} \\
+  \drule{q()@next}
+        {q()}
+\end{Drules}
 
 As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
 \end{example}
