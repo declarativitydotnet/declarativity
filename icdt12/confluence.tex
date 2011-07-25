@@ -13,7 +13,9 @@ desired and indeed often indicate a bug in the specification.\nrc{Dubious:
 We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
 \begin{definition}
-A \lang program is {\em confluent} (has a deterministic output) if, for every instance of the program, it has a unique ultimate model.  A program that is not confluent is {\em diffluent}.
+A \lang program is {\em confluent} (has a deterministic output) if, for every
+instance of the program, it has a unique ultimate model.  A program that is not
+confluent is {\em diffluent}.
 \end{definition}
 
 Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2} are two examples of diffluent programs.
@@ -25,7 +27,7 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 Confluence of a \lang program is undecidable.
 \end{lemma}
 \begin{proof}
-Using the construction in~\cite{undecidable-datalog}, it is possible to write a Datalog program that encodes any two-counter machine's transition relation and an arbitrarily long finite successor relation in the EDB, and define a 0-ary output predicate \dedalus{accept} that is true if and only if the two-counter machine accepts and the transition and successor relations are valid.  As the construction is possible in Datalog, it is also possible in Dedalus.
+Using the construction in~\cite{undecidable-datalog}, it is possible to write a Datalog program that encodes any two-counter machine's transition relation and an arbitrarily long finite successor relation in the EDB, and define a 0-ary output predicate \dedalus{accept} that is true if and only if the two-counter machine accepts and the transition and successor relations are valid.  As the construction is possible in Datalog, it is also possible in \lang.
 
 We add the following rules to the construction, to nondeterministically decide whether to run the machine or not:
 
@@ -56,7 +58,7 @@ Another problem is that \lang is too expressive -- it captures PSPACE as shown b
 \lang captures PSPACE.
 \end{lemma}
 \begin{proof}
-We show how to write QBF in Dedalus.
+We show how to write QBF in \lang.
 
 Assuming the formula is in prenex normal form, the textbook recursive algorithm for QBF \paa{please cite} involves removing the first quantifier, and checking both $0$ and $1$ for the first variable.  If the first quantifier was existential, then we return true if QBF of one of the subformulas is true.  If the first quantifier was universal, then we return true if QBF of both of the subformulas is true.
 
@@ -122,10 +124,13 @@ We propagate truth information up the recursive call tree.  A node propagates a 
 \wrm{We will present a natural restriction of \lang that is confluent, and prove that it captures exactly PTIME.  Negation free, and guarded asynchrony.}
 \wrm{DON'T FORGET UNIVERSAL QUANTIFIERS -- easy, use order, what about recursion thru universal quantification?}
 
-Distributed programs that diverge, produce nondeterministic outputs or have runtimes exponential in their inputs are undesirable in practice.
-Since testing \lang programs to rule out these undesirable properties is undecidable in general, we may instead ask whether a more
-constrained language will exclude such programs while retaining the convenience and power of \lang.
-We will present a natural restriction of \lang that is confluent, and prove that it captures exactly PTIME.
+Distributed programs that diverge, produce nondeterministic outputs or have
+runtimes exponential in their inputs are undesirable in practice.  Since testing
+\lang programs to rule out these undesirable properties is undecidable in
+general, we may instead ask whether a more constrained language will exclude
+such programs while retaining the convenience and power of \lang.  We will
+present a natural restriction of \lang that allows only confluent programs, and
+prove that it captures exactly PTIME.
 
 \begin{definition}
 A \lang program is {\em IDB negation-free} if the \dedalus{!} symbol only appears on EDB relations in the program.
