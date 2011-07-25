@@ -16,6 +16,7 @@
 \usepackage{algpseudocode}
 %\usepackage{texlive-science}
 \usepackage{comment}
+\usepackage{array,tabularx}
 
 \pdfinfo{/Title (Model Theoretic Correctness Criteria for Distributed Systems)}
 
@@ -64,6 +65,13 @@
 \vspace{0.5em}\begin{minipage}{0.95\textwidth}%\linespread{1.3}
 \begin{alltt}\fontsize{9pt}{9pt}\selectfont}
 {\end{alltt}\end{minipage}\vspace{0.5em}}
+
+\newenvironment{Drules}{
+\vspace{0.5em}\tabularx{0.45\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}}
+{\endtabularx\vspace{0.5em}}
+
+\newcommand{\drule}[2]{\dedalus{#1}&$\leftarrow$&\dedalus{#2.}}
+\newcommand{\dfact}[1]{\dedalus{#1.}}
 
 \newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
 \newcommand{\dbar}[1]{\(\bar{\text{\dedalus{#1}}}\)}
