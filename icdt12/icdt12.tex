@@ -106,30 +106,18 @@ University of California, Berkeley\\\\ \fontsize{9}{9}\selectfont\ttfamily\upsha
 \maketitle
 
 \begin{abstract}
-  % Better or worse? -nrc
-  % Building on recent interest in distributed logic programming \nrc{Not sure
-  %   this is worth including}, we take a model-theoretic approach to the
-  % correctness of asynchronous distributed programs. We begin by reviewing
-  % Dedalus, a previously proposed extension to Datalog for modeling distributed
-  % programs. We show that Dedalus can express programs that are not in PTIME and
-  % that do not have deterministic results. We show that checking whether a
-  % Dedalus program has non-deterministic results is undecidable, and hence we
-  % present \slang, a restriction of Dedalus that admits only PTIME programs with
-  % deterministic results. \slang requires that programs be inflationary and
-  % restricts the use of negation. We show that this restricted use of negation
-  % corresponds to popular coordination protocols from the distributed systems
-  % literature.
-
-Building on recent interest in distributed logic programming, we take a
-model-theoretic approach to the correctness of asynchronous distributed
-programs.  We show that the features added in Dedalus, a language previously
-proposed as an extension of Datalog for modeling asynchronous distributed
-programs, increase the expressivity beyond PTIME and allow the specification of
-programs that have non-deterministic results.  Whether a Dedalus program is
-non-deterministic is undecidable, so we present \slang, a deterministic and
-PTIME variant of \lang which requires programs to be inflationary and restricts
-the use of negation.  We show the restricted usage of negation corresponds to
-coordination protocols from the distributed systems community.
+  Building on recent interest in distributed logic programming \nrc{Not sure
+    this is worth including}, we take a model-theoretic approach to the
+  correctness of asynchronous distributed programs. We begin by reviewing
+  Dedalus, a previously proposed extension to Datalog for modeling distributed
+  programs. We show that Dedalus can express programs that are not in PTIME, and
+  those that do not have deterministic results. We show that checking whether a
+  Dedalus program has non-deterministic results is undecidable, and hence we
+  present \slang, a restriction of Dedalus that admits only PTIME programs with
+  deterministic results. \slang requires that programs be inflationary and
+  restricts the use of negation. We show that this restricted use of negation
+  corresponds to popular coordination protocols from the distributed systems
+  literature.
 
 %
 %We present a formal definition of the \lang language and prove conjectures.
