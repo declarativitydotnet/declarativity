@@ -36,14 +36,14 @@ Using the construction in~\cite{undecidable-datalog}, it is possible to write a 
 We add the following rules to the construction, to nondeterministically decide whether to run the machine or not:
 
 \begin{Drules}
-  \dfact{message(0)@async} \\
-  \dfact{message(1)@async} \\
-  \drule{run\_machine()}
-        {message(0), message(1)} \\
+  \dfact{message(0)@async}
+  \dfact{message(1)@async}
+  \drule{run_machine()}
+        {message(0), message(1)}
   \drule{accept()}
-        {message(0), !message(1), input\_valid()} \\
+        {message(0), !message(1), input_valid()}
   \drule{accept()}
-        {!message(0), message(1), input\_valid()}
+        {!message(0), message(1), input_valid()}
 \end{Drules}
 
 Note that the first two lines are actually rules.  The unsugared form of the first rule is \dedalus{message(L,S,0) <- node(L), time(T), time(S), T < S, choice((L, T, 0), (S)).}
@@ -72,55 +72,55 @@ First, we iterate through all of the $n$-bit binary numbers, one per timestamp. 
 
 \begin{Drules}
   \drule{carry(V)}
-        {var\_last(V)} \\
+        {var_last(V)}
   \drule{one(V)@next}
-        {carry(V), !one(V)} \\
+        {carry(V), !one(V)}
   \drule{one(V)@next}
-        {one(V), !carry(V)} \\
+        {one(V), !carry(V)}
   \drule{carry(U)}
-        {carry(V), one(V), var\_succ(U, V)}
+        {carry(V), one(V), var_succ(U, V)}
 \end{Drules}
 
-At each timestep, we check whether the current variable assignment is true.  If it is true, then \dedalus{formula\_true()} is true at that timestep.  We omit these rules.
+At each timestep, we check whether the current variable assignment is true.  If it is true, then \dedalus{formula_true()} is true at that timestep.  We omit these rules.
 
 We propagate truth information up the recursive call tree.  A node propagates a $1$ to its parent if the quantifier associated with that node is existential and at least one of its children is true, or the quantifier is universal and both of its children are true.  A node propagates a $0$ to its parent otherwise.  If the output of the root is $1$, the formula is satisfiable, otherwise it is not: \wrm{more explanation here}
 
 \begin{Drules}
-  \drule{var\_sat\_in(V, 1)}
-        {formula\_true(), var\_last(V)} \\
-  \drule{var\_sat(0, V, B)@next}
-        {var\_sat\_in(V, B), !var\_sat(\_, V, \_)} \\
-  \drule{var\_sat(1, V, B)@next}
-        {var\_sat\_in(V, B), var\_sat(0, V, \_).} \\
+  \drule{var_sat_in(V, 1)}
+        {formula_true(), var_last(V)}
+  \drule{var_sat(0, V, B)@next}
+        {var_sat_in(V, B), !var_sat(_, V, _)}
+  \drule{var_sat(1, V, B)@next}
+        {var_sat_in(V, B), var_sat(0, V, _).}
 \end{Drules}
 
 \begin{Drules}
-  \drule{var\_sat\_left\_in(vn, 1)}
-        {exists(vn), var\_sat(\_, vn, 1)} \\
-  \drule{var\_sat\_left\_in(vn, 0)}
-        {exists(vn), var\_sat(0, vn, 0), var\_sat(1, vn, 0)} \\
+  \drule{var_sat_left_in(vn, 1)}
+        {exists(vn), var_sat(_, vn, 1)}
+  \drule{var_sat_left_in(vn, 0)}
+        {exists(vn), var_sat(0, vn, 0), var_sat(1, vn, 0)}
 \end{Drules}
 
 \begin{Drules}
-  \drule{var\_sat\_left\_in(vn\_succ, 1)}
-        {forall(vn), var\_sat(0, vn, 1), var\_sat(1, vn, 1)} \\
-  \drule{var\_sat\_left\_in(vn\_succ, 0)}
-        {forall(vn), var\_sat(\_, vn, false)} \\
+  \drule{var_sat_left_in(vn_succ, 1)}
+        {forall(vn), var_sat(0, vn, 1), var_sat(1, vn, 1)}
+  \drule{var_sat_left_in(vn_succ, 0)}
+        {forall(vn), var_sat(_, vn, false)}
 \end{Drules}
 
 \begin{Drules}
-  \drule{var\_sat\_in(N, U, B)}
-        {var\_sat\_left\_in(V, B), var\_succ(U, V)} \\
+  \drule{var_sat_in(N, U, B)}
+        {var_sat_left_in(V, B), var_succ(U, V)}
 \end{Drules}
 
 \begin{Drules}
-  \drule{var\_sat(N, V, B)@next}
-        {var\_sat(N, V, B), !var\_sat(1, V, \_)} \\
+  \drule{var_sat(N, V, B)@next}
+        {var_sat(N, V, B), !var_sat(1, V, _)}
 \end{Drules}
 
 \begin{Drules}
   \drule{satisfiable(B)}
-        {var\_sat\_left\_in(V, B), var\_last(V)}
+        {var_sat_left_in(V, B), var_last(V)}
 \end{Drules}
 \end{proof}
 
@@ -223,21 +223,26 @@ A confluent \lang program that is not a \slang program.
 
 \todo{check example with rule sugaring guidelines in foundation}
 
-\begin{Dedalus}
+\begin{Drules}
 //client
-b(#S, I)@async :- b_edb(I), server(S);
+\drule{b(#S, I)@async}
+      {b_edb(I), server(S)}
 
 //server
-b(I)@next <- b(I), !dequeued(I);
-b_lt(I, J) <- b(I), b(J), I < J;
-dequeued(I)@next <- b(I), !b_lt(_, I);
-mem(I) <- dequeued(I), !bt_lt(_, _);
+\drule{b(I)@next}
+      {b(I), !dequeued(I)}
+\drule{b_lt(I, J)}
+      {b(I), b(J), I < J}
+\drule{dequeued(I)@next}
+      {b(I), !b_lt(_, I)}
+\drule{mem(I)}
+      {dequeued(I), !bt_lt(_, _)}
 
-\end{Dedalus}
+\end{Drules}
 \end{example}
 
 This program has a single ultimate model in which \dedalus{mem()} contains the highest
-element in \dedalus{b\_edb()} according to the order \dedalus{<}.
+element in \dedalus{b_edb()} according to the order \dedalus{<}.
 Thus it is confluent, but the program uses negation, and \dedalus{b} is not simply persisted.
 
 
@@ -246,9 +251,9 @@ Thus it is confluent, but the program uses negation, and \dedalus{b} is not simp
 \paa{we need some transition text here.  dedalus-c is nice, but as we remember from datalog ;) IDB negation makes it easier to write programs (should be easy to give an example).  can we get some IDB negation back
 without sacrificing what's we've gained going to dedalus-c?}
 
-There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p\_done()}.  The relation \dedalus{p\_done()} has the property that if it is non-empty (true) at timestamp \dedalus{t}, then it is true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{p\_done()} is true at timestamp \dedalus{t}, then $\left(f \in \dedalus{p}@\dedalus{s} \land \dedalus{s} > \dedalus{t}\right) \Rightarrow \left(f \in \dedalus{p}@\dedalus{t}\right)$ \todo{introduce the former notation}.  Intuitively, \dedalus{p\_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
+There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that if it is non-empty (true) at timestamp \dedalus{t}, then it is true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{p_done()} is true at timestamp \dedalus{t}, then $\left(f \in \dedalus{p}@\dedalus{s} \land \dedalus{s} > \dedalus{t}\right) \Rightarrow \left(f \in \dedalus{p}@\dedalus{t}\right)$ \todo{introduce the former notation}.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
-We will explain how to define \dedalus{p\_done()} after introducing some preliminary definitions.
+We will explain how to define \dedalus{p_done()} after introducing some preliminary definitions.
 
 The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \slang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be asynchronous (resp. inductive).  Collectively, these two types of edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time} or \dedalus{succ} relations, or the \dedalus{choice} construct.
 
@@ -263,24 +268,25 @@ no asynchronous edges, we call the resulting collapsed node {\em inductive
 relation name in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, $P$ must contain a \dedalus{p\_done()} fact.  For
-IDB relations, defining \dedalus{p\_done()} takes some work.  A rule defining
-\dedalus{p\_done()} for IDB relation \dedalus{p} may use \dedalus{q\_done()} in
+For EDB relations \dedalus{p}, $P$ must contain a \dedalus{p_done()} fact.  For
+IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
+\dedalus{p_done()} for IDB relation \dedalus{p} may use \dedalus{q_done()} in
 its body only if there is an edge in the collapsed PDG from a node $i$ with
 $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 
-For ease of exposition, we will first present the computation of \dedalus{p\_done()} for \dedalus{p} in non-temporally-recursive nodes.  We will then explain how to support temporally recursive nodes.
+For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-temporally-recursive nodes.  We will then explain how to support temporally recursive nodes.
 
 \subsubsection{Non-Temporally-Recursive Nodes}
 
 For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting
 of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation
-\dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p\_done()}
+\dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p_done()}
 is:\nrc{why p\_done()() on the LHS?}
 
-\begin{Dedalus}
-p\_done()() <- r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done().
-\end{Dedalus}
+\begin{Drules}
+  \drule{p_done()}
+        {r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done()}
+\end{Drules}
 
 Let the nodes in the collapsed PDG connected via incoming edges to node $i$ be denoted by $E(i)$.  Let the relations $\bigcup_{k \in E(i)} L(k)$ be named $\dedalus{p}_1, \ldots, \dedalus{p}_{i_q}$.
 
@@ -290,26 +296,28 @@ For each rule $1 \leq j \leq i_p$ in $P$ with head relation \dedalus{p}, if $j$ 
 \textbf{Atemporal:}
 Add the rule:
 
-\begin{Dedalus}
-r\sub{j}_done() <- p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done().
-\end{Dedalus}
+\begin{Drules}
+  \drule{r\sub{j}_done()}
+        {p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()}
+\end{Drules}
 
 \noindent
 \textbf{Inductive:}
 Add the rule:
 
-\begin{Dedalus}
-r\sub{j}_done()@next <- p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done().
-\end{Dedalus}
+\begin{Drules}
+  \drule{r\sub{j}_done()@next}
+        {p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()}
+\end{Drules}
 
 \noindent
 \textbf{Asynchronous:}
 Replace the original rule:
 
-\begin{Dedalus}
-p(#N,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
-c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}}).
-\end{Dedalus}
+\begin{Drules}
+  \drule{p(#N,\od{X\sub{0}})@async}
+        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}})}
+\end{Drules}
 
 with the following set of rules:
 
@@ -317,38 +325,45 @@ with the following set of rules:
 %uq\sub{\phi}(\od{W}, \od{X}, 0) <- min(\od{X}), $!\phi(\od{W}, \od{X})$.
 %uq\sub{\phi}(\od{W}, \od{Y}, 0) <- uq\sub{\phi}(\od{W}, \od{X}, 0), succ(\od{X}, \od{Y}).
 %uq\sub{\phi}(\od{W}, \od{Y}, 1) <- uq\sub{\phi}(\od{W}, \od{X}, 1), succ(\od{X}, \od{Y}), $\phi(\od{W}, \od{X})$.
+\begin{Drules}
+\drule{p\sub{j}_to_send(N,\od{X\sub{0}})}
+      {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}})}
+\drule{p\sub{j}_send(#N,L,\od{X})@async}
+      {p\sub{j}_to_send(#L,N,\od{X})}
+\drule{p\sub{j}_ack(#N,L,\od{X})@async}
+      {p\sub{j}_send(#L,N,\od{X})}
 
-\begin{Dedalus}
-p\sub{j}_to_send(N,\od{X\sub{0}}) <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}).
-c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}}).
-p\sub{j}_send(#N,L,\od{X})@async <- p\sub{j}_to_send(#L,N,\od{X}).
-p\sub{j}_ack(#N,L,\od{X})@async <- p\sub{j}_send(#L,N,\od{X}).
+\drule{r\sub{j}_done_node(#L,N)@async}
+      {p\sub{1}_done(#N), \ldots, p\sub{i\sb{q}}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}_to_send(#N,L,\od{X})} \Rightarrow \dedalus{p\sub{j}_ack(#N,L,\od{X})}\right)\)}
 
-r\sub{j}_done_node(#L,N)@async <- p\sub{1}_done(#N), \ldots,
-p\sub{i\sb{q}}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}\_to\_send(#N,L,\od{X})} \Rightarrow \dedalus{p\sub{j}\_ack(#N,L,\od{X})}\right)\).
-
-r\sub{j}_done() <- \(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}\_done\_node(N)}\right)\).
-\end{Dedalus}
+\drule{r\sub{j}_done()}
+      {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
+\end{Drules}
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
 
-\begin{Dedalus}
-p\sub{\phi}_min(\od{W},\od{X}) <- p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{_},\od{X}), p\sub{\phi}_succ_done().
-p\sub{\phi}_max(\od{W},\od{X}) <- p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{X},\od{_}), p\sub{\phi}_succ_done().
-p\sub{\phi}_succ(\od{W},\od{X},\od{Y}) <- p(\od{W},\od{X}), p(\od{W},\od{Y}), !p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}),
-p\sub{\phi}_not_succ_done().
-p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}) <- p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z},
-\od{Z} < \od{Y}.
-
-p\sub{\phi}_not_succ_done() <- p_done().
-p\sub{\phi}_succ_done() <- p\sub{\phi}_not_succ_done().
-
-forall\sub{\phi}_ind(\od{W},\od{X}) <- p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X}).
-forall\sub{\phi}_ind(\od{W},\od{X}) <- forall\sub{\phi}_ind(\od{W},\od{Y}), p\sub{\phi}_succ(\od{W},\od{Y},\od{X}),
-q(\od{W},\od{X}).
-forall\sub{\phi}(\od{W}) <- forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X}).
-forall\sub{\phi}(\od{W}) <- !p(\od{W},\od{_}), p_done().
-\end{Dedalus}
+\begin{Drules}
+\drule{p\sub{\phi}_min(\od{W},\od{X})}
+      {p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{_},\od{X}), p\sub{\phi}_succ_done()}
+\drule{p\sub{\phi}_max(\od{W},\od{X})}
+      {p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{X},\od{_}), p\sub{\phi}_succ_done()}
+\drule{p\sub{\phi}_succ(\od{W},\od{X},\od{Y})}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), !p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
+\drule{p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y})}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}}
+\drule{p\sub{\phi}_not_succ_done()}
+      {p_done()}
+\drule{p\sub{\phi}_succ_done()}
+      {p\sub{\phi}_not_succ_done()}
+\drule{forall\sub{\phi}_ind(\od{W},\od{X})}
+      {p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X}).}
+\drule{forall\sub{\phi}_ind(\od{W},\od{X})}
+      {forall\sub{\phi}_ind(\od{W},\od{Y}), p\sub{\phi}_succ(\od{W},\od{Y},\od{X}), q(\od{W},\od{X}).}
+\drule{forall\sub{\phi}(\od{W})}
+      {forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X})}
+\drule{forall\sub{\phi}(\od{W})}
+      {!p(\od{W},\od{_}), p_done()}
+\end{Drules}
 
 Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
@@ -356,11 +371,14 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 For each inductive recursive node $i$, assume that the relations in $L(i)$ are numbered $1,\ldots,i_p$.  For each $1 \leq j \leq i_p$, add the rules:
 
-\begin{Dedalus}
-p\sub{j}_prev(\od{X})@next <- p\sub{j}(\od{X}).
-n\sub{i}_done() <- \(\left(\forall \od{X} . p\sub{j}(\od{X}) \Rightarrow p\sub{j}_prev(\od{X})\right)\).
-p\sub{j}_done() <- n\sub{i}_done().
-\end{Dedalus}
+\begin{Drules}
+\drule{p\sub{j}_prev(\od{X})@next}
+      {p\sub{j}(\od{X})}
+\drule{n\sub{i}_done()}
+      {\(\left(\forall \od{X} . p\sub{j}(\od{X}) \Rightarrow p\sub{j}_prev(\od{X})\right)\)}
+\drule{p\sub{j}_done()}
+      {n\sub{i}_done()}
+\end{Drules}
 
 \subsubsection{Async Recursive Nodes}
 
@@ -368,7 +386,7 @@ p\sub{j}_done() <- n\sub{i}_done().
 
 \todo{Explain the temporal terms ``never'', ``henceforth'', ..., in foundation section}
 
-\wrm{Formally, every usage of negation \dedalus{!p} must also have the following atom in the rule body \dedalus{n\sub{i}\_complete()}, where $\dedalus{p} \in L(i)$}
+\wrm{Formally, every usage of negation \dedalus{!p} must also have the following atom in the rule body \dedalus{n\sub{i}_complete()}, where $\dedalus{p} \in L(i)$}
 
 \subsection{Connection with Practice}
 

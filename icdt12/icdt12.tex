@@ -18,6 +18,7 @@
 \usepackage{comment}
 \usepackage{array,tabularx}
 
+
 \pdfinfo{/Title (Model Theoretic Correctness Criteria for Distributed Systems)}
 
 \usepackage{txfonts}
@@ -38,7 +39,8 @@
 \newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
 \newcommand{\todo}[1]{{\color{Red}{\textbf{TODO: #1}}}}
 \newcommand{\smallurl}[1]{{\small \url{#1}}}
-\newcommand{\od}[1]{{\ensuremath{\overline{\dedalus{#1}}}}}
+%\newcommand{\od}[1]{{\ensuremath{\overline{\dedalus{#1}}}}}
+\newcommand{\od}[1]{\ensuremath{\overline{\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}}}}
 \newcommand{\schema}{\mathcal{S}}
 \newcommand{\sschema}{\schema^+}
 \newcommand{\stschema}{\schema^*}
@@ -66,15 +68,52 @@
 \begin{alltt}\fontsize{9pt}{9pt}\selectfont}
 {\end{alltt}\end{minipage}\vspace{0.5em}}
 
-\newenvironment{Drules}{
-\vspace{0.5em}\tabularx{0.45\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}}
-{\endtabularx\vspace{0.5em}}
+% XXX: old way of doing things -- aligns all rule bodies in a ``Drules'' block -- this is a problem if some heads are much longer than others
+%\newenvironment{Drules}{
+%\vspace{0.5em}\tabularx{0.45\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}}
+%{\endtabularx\vspace{0.5em}}
+%\newcommand{\drule}[2]{\dedalus{#1}&$\leftarrow$&\dedalus{#2.}}
+%\newcommand{\dfact}[1]{\dedalus{#1.}}
 
-\newcommand{\drule}[2]{\dedalus{#1}&$\leftarrow$&\dedalus{#2.}}
-\newcommand{\dfact}[1]{\dedalus{#1.}}
+\newenvironment{Drules}{\vspace{0.5em}\begin{minipage}{0.45\textwidth}}
+{\end{minipage}\vspace{0.5em}}
 
-\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont #1}}
-\newcommand{\dbar}[1]{\(\bar{\text{\dedalus{#1}}}\)}
+% XXX: commented out for escaping # and _ in \dedalus blocks.  See below comment.
+%\newcommand{\drule}[2]{\begin{tabularx}{\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}\dedalus{#1}&$\leftarrow$&\dedalus{#2.}\end{tabularx}}
+%\newcommand{\dfact}[1]{\begin{tabularx}{\textwidth}{l}\dedalus{#1}\end{tabularx}}
+
+% define drule and dfact and without reference to \dedalus -- this is annoying! but I can't figure out how to make the pound escaping work in the style of the underscore escaping without duplicating pounds
+\makeatletter
+\DeclareRobustCommand*{\dfact}{\begingroup\@makeother\#\@escapehashfact}
+\DeclareRobustCommand*{\@escapehashfact}[1]{\begin{tabularx}{\textwidth}{l}\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}.\end{tabularx}\endgroup}
+\makeatother
+
+\makeatletter           
+\DeclareRobustCommand*{\drule}{\begingroup\@makeother\#\@escapehashtwo}
+\DeclareRobustCommand*{\@escapehashtwo}[2]{\begin{tabularx}{\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}&$\leftarrow$&\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#2}}.\end{tabularx}\endgroup}
+\makeatother
+
+%\makeatletter
+%\DeclareRobustCommand*{\od}{\begingroup\@makeother\#\@escapehashod}
+%\DeclareRobustCommand*{\@escapehashod}[1]{\ensuremath{\overline{\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}}}\endgroup}
+%\makeatother
+
+% Dedalus escapes pounds
+\makeatletter
+\DeclareRobustCommand*{\dedalus}{\begingroup\@makeother\#\@escapehash}
+\DeclareRobustCommand*{\@escapehash}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}\endgroup}
+\makeatother
+
+% Escape underscores
+\makeatletter
+\DeclareRobustCommand*{\escapeus}[1]{%
+  \begingroup\@activeus\scantokens{#1\endinput}\endgroup}
+\begingroup\lccode`\~=`\_\relax
+   \lowercase{\endgroup\def\@activeus{\catcode`\_=\active \let~\_}}
+\makeatother
+
+
+%\newcommand{\dedalus}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}}
 
 \begin{document}
 
