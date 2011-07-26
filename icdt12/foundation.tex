@@ -245,17 +245,27 @@ A \lang program with an infinite stable model.
 \dedalus{flipflop(1,2)} is true at all odd times and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.
 \end{example}
 
-An {\em output schema} for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $\sschema$.  We denote the output schema as $\oschema$.
+An {\em output schema} for a \lang program $P$ with spatio-temporal schema
+$\stschema$ is a subset of $\sschema$.  We denote the output schema as
+$\oschema$. An \emph{output relation schema} is a member of $\oschema$.
 
-An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema $\stschema$ is the spatial facts in $\oschema$ that are ``eventually always'' true.  In other words spatial fact $f$ is in the ultimate model if the relation of $f$ is in $\oschema$ and $\forall t : f@t => f@t+1$. \todo{make sure this notation is introduced}
-An ultimate model is always finite, due to the finiteness of $\univ$, and by the same reasoning any \lang program has only a finite number of ultimate models.
+An {\em ultimate model} of a \lang program $P$ with spatio-temporal schema
+$\stschema$ and output schema $\oschema$ consists of all the spatial facts in
+$\oschema$ that are ``eventually always'' true.  In other words spatial fact $f$
+is in the ultimate model if the relation of $f$ is in $\oschema$ and $\forall t
+: f@t => f@t+1$. \todo{make sure this notation is introduced} An ultimate model
+is always finite, due to the finiteness of $\univ$, and by the same reasoning
+any \lang program has only a finite number of ultimate models.
 
-Note that some nontrivial programs may have an empty ultimate model, such as the program in Example~\ref{ex:flipflop}.  Further, a \lang program may have multiple ultimate models.  We give two such examples:
+Note that some nontrivial programs may have an empty ultimate model, such as the
+program in Example~\ref{ex:flipflop}.  Further, a \lang program may have
+multiple ultimate models.  We give two such examples below. In both examples, we
+assume that the output relation schema is \dedalus{p} and the EDB consists of
+\dedalus{q\_edb(), r\_edb()}.
 
 \begin{example}
 \label{ex:diffluent1}
-A diffluent \lang program. \wrm{p is an output relation} \nrc{Diffluent not
-  defined yet.}
+A \lang program with multiple ultimate models.
 
 \begin{Drules}
   \drule{q()@async}
@@ -270,13 +280,13 @@ A diffluent \lang program. \wrm{p is an output relation} \nrc{Diffluent not
         {r()}
 \end{Drules}
 
-Assume an EDB of \dedalus{q_edb(), r_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
+Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
 \end{example}
 
 \begin{example}
 \label{ex:diffluent2}
-A diffluent \lang program.
-\wrm{p is an output relation}
+A \lang program with multiple ultimate models.
+
 \begin{Drules}
   \drule{q()@async}
         {q_edb()}
@@ -288,7 +298,7 @@ A diffluent \lang program.
         {q()}
 \end{Drules}
 
-As before, assume an EDB of \dedalus{q_edb(), r_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
+Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
 \end{example}
 
 \subsection{Operational Interpretation}

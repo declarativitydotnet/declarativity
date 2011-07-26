@@ -9,13 +9,13 @@ outputs (multiple ultimate models) or diverge (no ultimate model). \nrc{This is
   program + some trivially-persistent state).}  In practice, such programs are rarely 
 desired and indeed often indicate a bug in the specification.\nrc{Dubious:
   long-running services might well have no ultimate model according to this
-  formulation. We should probably concede that confluence, as formulated, is not
+  formulation. Somewhere, we should probably concede that confluence, as formulated, is not
   a general correctness criteria.}
 %%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
 We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
 \begin{definition}
-  A \lang program is {\em confluent} if, for any assignment of facts to its EDB
+  A \lang program is {\em confluent} if, for every assignment of facts to its EDB
   relations, it has a single ultimate model.  A program that is not confluent is
   {\em diffluent}.
 \end{definition}
