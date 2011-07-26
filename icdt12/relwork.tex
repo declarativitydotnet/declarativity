@@ -64,7 +64,8 @@ Significant recent work (\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.
 primitives to the problem of specifying and implementing network protocols and distributed systems.  Lemma~\ref{lem:guarding} resembles the  correctness proof of ``pipelined
 semi-naive evaluation'' for distributed Datalog presented by Loo et al.~\cite{loo-sigmod06}.
 Inspired by those results, we extend them here to programs that are not syntactically 
-monotonic and channels that may drop or arbitrarily reorder messages.
+monotonic and channels that may drop or arbitrarily reorder messages \nrc{We
+  don't handle message drops at the moment}.
 In general, however, the language extensions 
 proposed in much of this prior work added
 expressivity and domain applicability but compromised the declarative

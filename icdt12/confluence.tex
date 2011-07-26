@@ -8,7 +8,9 @@ outputs (multiple ultimate models) or diverge (no ultimate model). \nrc{This is
   wrong: a program can easily diverge but have an ultimate model (e.g., flipflop
   program + some trivially-persistent state).}  In practice, such programs are rarely 
 desired and indeed often indicate a bug in the specification.\nrc{Dubious:
-  long-running services might well have no ultimate model according to this formulation.}
+  long-running services might well have no ultimate model according to this
+  formulation. We should probably concede that confluence, as formulated, is not
+  a general correctness criteria.}
 %%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
 We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
@@ -305,7 +307,7 @@ r\sub{j}_done()@next <- p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done().
 Replace the original rule:
 
 \begin{Dedalus}
-p(#N,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{x\sub{n}}),
+p(#N,\od{X\sub{0}})@async <- b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}),
 c\sub{1}(#L,\od{X\sub{1}}), \ldots, c\sub{m}(#L,\od{X\sub{m}}).
 \end{Dedalus}
 
