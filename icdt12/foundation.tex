@@ -40,19 +40,19 @@ only appear in a single negated atom and do not appear in the head need not also
 appear in a positive atom~\cite{ullmanbook}.  Also, any variable symbol \dedalus{V} that appears in \od{W} must appear in some \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
 Furthermore, if \dedalus{b\sub{i}} (resp. \dedalus{c\sub{i}}) is \dedalus{<}, then any variable that appears in \dedalus{X\sub{i}} (resp. \dedalus{Y\sub{i}}) must also appear in \dedalus{X\sub{j}} for some $j \neq i$ -- i.e., variable symbols that appear in a \dedalus{<} atom must also appear in a non-negated atom.
 
-Given a schema $\schema$, we use
-$\sschema$ to denote the extension of $\schema$ obtained by adding a column to
-each relation schema in $\schema$ (except \dedalus{<}) and adding an additional relation schema to $\schema$.  The
-additional column is called a {\em location specifier}.  
-By convention, the location specifier is the first column of every relation in $\sschema$.  The
-additional relation schema is $(\dedalus{node},1)$.
-We call $\sschema$ a {\em spatial} schema.
+Given a schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
+obtained by adding a column to each relation schema in $\schema$ (except
+\dedalus{<}) and adding an additional relation schema to $\schema$.  The
+additional column is called a {\em location specifier}.  By convention, the
+location specifier is the first column of every relation in $\sschema$.  The
+additional relation schema is $(\dedalus{node},1)$.  We call $\sschema$ a {\em
+  spatial} schema.
 
 A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$-tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.  A {\em spatial database instance} is defined similarly to a database instance.
 
 Given a schema $\schema$, we use $\stschema$ to denote the extension of
 $\schema$ obtained by adding two additional columns to each relation schema in $\schema$ and adding three additional relation schemas to $\schema$. 
-The first additional column is a location specifier, the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$, and the timestamp is the second.  
+The first additional column is a location specifier, the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$ and the timestamp is the second.  
 The additional relation schemas we add are: $(\dedalus{node},1)$,
 $(\dedalus{time},1)$, and $(\dedalus{succ},2)$.
 We call $\stschema$ a {\em spatio-temporal} schema.
@@ -90,7 +90,7 @@ In the above rules, \od{B} is a tuple that contains all of the distinct variable
 
 \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}; the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed in \od{Y} are functionally dependent on the variables in \dedalus{X} with respect to any function.  Due to variable binding restrictions, only asynchronous rules may have a different value for the head location specifier than the body location specifier.  Intuitively, different values for the location specifiers represents cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B} (which must include \dedalus{D} due to safety restrictions) represents a message being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact that the network may arbitrarily delay, re-order, and batch messages, any single value of head timestamp \dedalus{S} is permissible for a message as long as it obeys the {\em causality constraint} \dedalus{T < S}.
 
-A \lang {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  We restrict the usage of negation (\dedalus{!}) in \lang programs.
+A \lang \emph{program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  We restrict the usage of negation (\dedalus{!}) in \lang programs.
 
 The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be {\em asynchronous} (resp. {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, or \dedalus{<} relations, or the \dedalus{choice} construct.
 
