@@ -4,13 +4,12 @@
 %Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 \lang can express a broad class of distributed systems but this flexibility comes at a cost.
 As we have shown, it is easy to write programs that have nondeterministic
-outputs (multiple ultimate models) or diverge (no ultimate model). \nrc{This is
-  wrong: a program can easily diverge but have an ultimate model (e.g., flipflop
-  program + some trivially-persistent state).}  In practice, such programs are rarely 
-desired and indeed often indicate a bug in the specification.\nrc{Dubious:
-  long-running services might well have no ultimate model according to this
-  formulation. Somewhere, we should probably concede that confluence, as formulated, is not
-  a general correctness criteria.}
+outputs (multiple ultimate models), as well as nontrivial programs with an empty ultimate model.  Such programs are rarely desired and may indicate a bug.
+%\nrc{Dubious:
+%  long-running services might well have no ultimate model according to this
+%  formulation. Somewhere, we should probably concede that confluence, as formulated, is not
+%  a general correctness criteria.}
+% Commented out for now, because Dedalus_C doesn't model long-running services, as the entire EDB is assumed to be given at time 0.
 %%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
 We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
@@ -30,28 +29,7 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 \label{lem:confluence-undecidable}
 Confluence of a \lang program is undecidable.
 \end{lemma}
-\begin{proof}
-Using the construction in~\cite{undecidable-datalog}, it is possible to write a Datalog program that encodes any two-counter machine's transition relation and an arbitrarily long finite successor relation in the EDB, and define a 0-ary output predicate \dedalus{accept} that is true if and only if the two-counter machine accepts and the transition and successor relations are valid.  As the construction is possible in Datalog, it is also possible in \lang.
-
-We add the following rules to the construction, to nondeterministically decide whether to run the machine or not:
-
-\begin{Drules}
-  \dfact{message(0)@async}
-  \dfact{message(1)@async}
-  \drule{run_machine()}
-        {message(0), message(1)}
-  \drule{accept()}
-        {message(0), !message(1), input_valid()}
-  \drule{accept()}
-        {!message(0), message(1), input_valid()}
-\end{Drules}
-
-Note that the first two lines are actually rules.  The unsugared form of the first rule is \dedalus{message(L,S,0) <- node(L), time(T), time(S), T < S, choice((L, T, 0), (S)).}
-
-For valid inputs, the ultimate model is ${\dedalus{accept()}}$ if and only if either \dedalus{message(0)} and \dedalus{message(1)} are assigned the same timestamp and the machine accepts, or if the timestamps are different.  For invalid inputs, all ultimate models are empty.
-
-If we could decide confluence for this program, we could decide whether there is any valid input for which an arbitrary two-counter machine halts in an accepting state.
-\end{proof}
+This is perhaps not a surprising result, as confluence is defined over all EDBs.  We present a proof in the appendix.
 
 \wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
@@ -254,8 +232,6 @@ without sacrificing what's we've gained going to dedalus-c?}
 There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that if it is non-empty (true) at timestamp \dedalus{t}, then it is true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{p_done()} is true at timestamp \dedalus{t}, then $\left(f \in \dedalus{p}@\dedalus{s} \land \dedalus{s} > \dedalus{t}\right) \Rightarrow \left(f \in \dedalus{p}@\dedalus{t}\right)$ \todo{introduce the former notation}.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
 We will explain how to define \dedalus{p_done()} after introducing some preliminary definitions.
-
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \slang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be asynchronous (resp. inductive).  Collectively, these two types of edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time} or \dedalus{succ} relations, or the \dedalus{choice} construct.
 
 A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
 connected component of the PDG of $P$ with a single node whose label comprises
