@@ -142,7 +142,7 @@ A rule body's location specifier can be accessed by including a variable symbol 
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
 An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, and maps each IDB relation \dedalus{r} to the empty spatial relation instance.
 
-We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{T}$.  The mapping is defined by: $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K} \Rightarrow \{ \, \dedalus(r,t,c\sub{1},\ldots,c\sub{n}) \, | \, t \in \mathbb{N} \, \} \subset \mathcal{T}$. 
+We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{T}$.  The mapping is defined by: $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K} \Rightarrow \{ \, \dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \, | \, t \in \mathbb{N} \, \} \subset \mathcal{T}$. 
 
 We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from \lang instances to spatio-temporal database instances.
 
