@@ -1,27 +1,26 @@
-\section{\slang}
+\section{\large \bf \slang}
 \label{sec:confluence}
 
 %Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 \lang can express a broad class of distributed systems but this flexibility comes at a cost.
-As we have shown, it is easy to write programs that have nondeterministic
-outputs (multiple ultimate models), as well as nontrivial programs with an empty ultimate model.  Such programs are rarely desired and may indicate a bug.
+As we have shown, it is easy to write programs that have multiple ultimate models, which intuitively means that the program has non-deterministic output.  \wrm{Also say something about non-trivial programs with an empty ultimate model.}
+%as well as nontrivial programs with an empty ultimate model.
+Such programs are rarely desired and may indicate a bug.
 %\nrc{Dubious:
 %  long-running services might well have no ultimate model according to this
 %  formulation. Somewhere, we should probably concede that confluence, as formulated, is not
 %  a general correctness criteria.}
 % Commented out for now, because Dedalus_C doesn't model long-running services, as the entire EDB is assumed to be given at time 0.
 %%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
-We typically would always like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
+We typically would like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
 \begin{definition}
-  A \lang program is {\em confluent} if, for every assignment of facts to its EDB
-  relations, it has a single ultimate model.  A program that is not confluent is
-  {\em diffluent}.
+  A \lang program is {\em confluent} if, for every EDB instance, it has a single ultimate model.  A program that is not confluent is {\em diffluent}.
 \end{definition}
 
-Confluence corresponds roughly to the intuition that a program has a
-deterministic output set. Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2}
-are two examples of diffluent programs.
+%Confluence corresponds to the intuition that a program has a
+%deterministic output set. Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2}
+%are two examples of diffluent programs.
 
 Unfortunately, confluence is an undecidable property of \lang programs:
 
@@ -29,22 +28,23 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 \label{lem:confluence-undecidable}
 Confluence of a \lang program is undecidable.
 \end{lemma}
-This is perhaps not a surprising result, as confluence is defined over all EDBs.  We present a proof in the appendix.
+This is perhaps not a surprising result, as confluence is defined over all EDB instances.  We present a proof in the appendix.
 
-\wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
+%\wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
-Another problem is that \lang is too expressive -- it captures PSPACE as shown by the following Lemma.
+Another problem is that \lang is too expressive -- it captures PSPACE.
 
+\todo{Add some more intuition to this proof, and possibly move to appendix.}
 \begin{lemma}
 \label{lem:lang-pspace}
 \lang captures PSPACE.
 \end{lemma}
 \begin{proof}
-We show how to write QBF in \lang.
+We show how to write the PSPACE-complete QBF problem in \lang.
 
 Assuming the formula is in prenex normal form, the textbook recursive algorithm for QBF \paa{please cite} involves removing the first quantifier, and checking both $0$ and $1$ for the first variable.  If the first quantifier was existential, then we return true if QBF of one of the subformulas is true.  If the first quantifier was universal, then we return true if QBF of both of the subformulas is true.
 
-If the quantifier depth is $n$, then it is clear that each leaf in the recursive call tree can be represented as an $n$-bit binary number.  If we assume that the left child is always $0$ and the right child $1$, then we can view our algorithm as a postorder traversal of the recursive call tree.
+If the quantifier depth is $n$, then it is clear that each leaf in the recursive call tree can be represented as an $n$-bit binary number.  If we assume that the left child is always $0$ and the right child $1$, then we can view the algorithm as a postorder traversal of the recursive call tree.
 
 First, we iterate through all of the $n$-bit binary numbers, one per timestamp.  We assume that the order over the variables is such that the leftmost variable in the formula (the high-order bit) is the first, and the rightmost is the last.  Thus, our addition is ``backwards'' in that it propagates carries to the predecessors:
 
@@ -59,9 +59,9 @@ First, we iterate through all of the $n$-bit binary numbers, one per timestamp. 
         {carry(V), one(V), var_succ(U, V)}
 \end{Drules}
 
-At each timestep, we check whether the current variable assignment is true.  If it is true, then \dedalus{formula_true()} is true at that timestep.  We omit these rules.
+At each timestep, we check whether the current variable assignment is true.  If it is true, then \dedalus{formula_true()} is true at that timestep.  We omit these rules, because it is clear that a suitable encoding for the first-order formula can be devised, and first-order satisfiability can be checked.
 
-We propagate truth information up the recursive call tree.  A node propagates a $1$ to its parent if the quantifier associated with that node is existential and at least one of its children is true, or the quantifier is universal and both of its children are true.  A node propagates a $0$ to its parent otherwise.  If the output of the root is $1$, the formula is satisfiable, otherwise it is not: \wrm{more explanation here}
+We propagate truth information up the recursive call tree.  A node sets its value to $1$ (representing ``true'') if the quantifier associated with that node is existential and at least one of its children is has value $1$, or the quantifier is universal and both of its children have value $1$.  A node sets its value as $0$ otherwise.  If the root is set to $1$, the formula is satisfiable, otherwise it is not.
 
 \begin{Drules}
   \drule{var_sat_in(V, 1)}
@@ -102,11 +102,7 @@ We propagate truth information up the recursive call tree.  A node propagates a 
 \end{Drules}
 \end{proof}
 
-
-\wrm{We will present a natural restriction of \lang that is confluent, and prove that it captures exactly PTIME.  Negation free, and guarded asynchrony.}
-\wrm{DON'T FORGET UNIVERSAL QUANTIFIERS -- easy, use order, what about recursion thru universal quantification?}
-
-Distributed programs that diverge, produce nondeterministic outputs or have
+Distributed programs that produce nondeterministic outputs or have
 runtimes exponential in their inputs are undesirable in practice.  Since testing
 \lang programs to rule out these undesirable properties is undecidable in
 general, we may instead ask whether a more constrained language will exclude
@@ -128,7 +124,7 @@ A \lang program has {\em guarded asynchrony} if all relations appearing in the h
 
 We will refer to the language of IDB negation-free \lang programs with guarded asynchrony as \slang.
 
-\wrm{Peter to improve}
+\todo{Peter to improve this proof.}
 \begin{theorem}
 \label{thm:confluence}
 \slang programs are confluent.
@@ -169,31 +165,33 @@ Hence $a$ must exist in all ultimate models.
 \end{proof}
 
 
-If either qualification is false, problems can result, as we have previously illustrated.
+If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
 
-\wrm{improve the diction here}
+\todo{Bill to improve this proof.}
 \begin{theorem}
 \slang programs capture exactly PTIME.
 \end{theorem}
 \begin{proof}
-We will show how to convert any \slang program to an FO[IFP] formula, and how to convert any FO[IFP] formula to a \slang program.  It is known that FO[IFP] captures exactly PTIME over ordered structures \wrm{cite}.
+We will show how to convert any \slang program to an FO[IFP] formula, and how to convert any FO[IFP] formula to a \slang program.  It is known that FO[IFP] captures exactly PTIME over ordered structures~\cite{immerman-ptime}.
 
-Since \slang has only EDB negation, we first show that in any FO[IFP] formula, negation can be pushed down to the EDB.  This is not hard to show.  Since FO[IFP] has a negation normal form where negation only applies to atoms \wrm{cite}, we can always push negation down through quantifiers and boolean operators using the usual DeMorgan dualities.  \wrm{Universal quantifiers are expressed like...}
+First, it is obvious that the non-determinism of \dedalus{choice} does not increase the expressive power of \slang, because all \slang programs are confluent by Theorem~\ref{thm:confluence}.  Thus, the temporal annotations on all asynchronous rules may be changed to \dedalus{@next}; the rewritten program computes the same ultimate model.  \wrm{But, technically this violates the condition that only async rules can have different location specifiers in the head than the body.}
 
-Since \slang admits a least fixpoint in each iteration, we need to show we can rewrite this formula to an inflationary fixpoint formula.  \wrm{But we can rewrite the least fixpoint as an FO[IFP] formula, and nesting of inflationary fixpoints does not increase expressive power -- citation?}
+It is is clear that \slang is inflationary.  We would like the timestamps of a \slang program to correspond with the iterations of an FO[IFP] formula.  However, \slang timestamps may contain recursion.  We can rewrite a \slang program so that the timestamps are first order.  \todo{Figure out how exactly I want to show this.  Think hard about recursion through universal quantification, as well as stratified negation.}
 
-We need to show that non-determinism does not increase expressive power.  Clearly it does not because all ultimate models are equivalent in \slang, so in particular, we could correctly compute the unique ultimate model of any \slang program deterministically by replacing \dedalus{@async} with \dedalus{@next}.
+\slang admits a least fixpoint in each iteration; we need to show we can rewrite this formula to an inflationary fixpoint formula.  \wrm{But we can rewrite the least fixpoint as an FO[IFP] formula, and nesting of inflationary fixpoints does not increase expressive power -- citation?}
 
-Thus, we can convert a \slang program into an FO[IFP] formula. \wrm{need to say something about simultaneous inductions, blah blah?}.
+Thus, we can convert a \slang program into an FO[IFP] formula.
 
-We can convert any FO[IFP] formula with only EDB negation into a \slang program by converting it into rule form \wrm{i.e. splitting up each disjunct into a rule, rewrite universal quantification using order, etc.}.
+We can convert any FO[IFP] formula into a \slang program by pushing negation down to the EDB by applying negation pushdown results for FO[LFP] from~\cite{immerman-ptime}.  \todo{Clafiry w/ Neil I. about whether this pushdown uses universal quantification.  This isn't essential though, we can just convert any FO[IFP] formula into a turing machine, and re-express the turing machine in \slang.}
+
+\wrm{Also, we probably should explain how to convert between FO[IFP] and ``rule form''?}
 \end{proof}
 
 % \subsection{Monotonic Properties}
 % XXX: Can we relax ``IDB negation free'' to be ``IDB positive''?
 
 
-This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction.
+This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction. \todo{Tie this in with the CALM conjecture.}
 Clearly, there are confluent programs not in \slang.  For example:
 
 \begin{example}
@@ -202,11 +200,8 @@ A confluent \lang program that is not a \slang program.
 \todo{check example with rule sugaring guidelines in foundation}
 
 \begin{Drules}
-//client
-\drule{b(#S, I)@async}
-      {b_edb(I), server(S)}
-
-//server
+\drule{b(#n1, I)@async}
+      {b_edb(#L,I)}
 \drule{b(I)@next}
       {b(I), !dequeued(I)}
 \drule{b_lt(I, J)}
@@ -215,21 +210,21 @@ A confluent \lang program that is not a \slang program.
       {b(I), !b_lt(_, I)}
 \drule{mem(I)}
       {dequeued(I), !bt_lt(_, _)}
-
+\dfact{node(n1)}
 \end{Drules}
 \end{example}
 
-This program has a single ultimate model in which \dedalus{mem()} contains the highest
-element in \dedalus{b_edb()} according to the order \dedalus{<}.
-Thus it is confluent, but the program uses negation, and \dedalus{b} is not simply persisted.
-
+Any instance of this program has a single ultimate model in which \dedalus{mem()} contains the highest element in \dedalus{b_edb()} according to the order \dedalus{<}.
+Thus it is confluent, but the program uses IDB negation, and does not have guarded asynchrony.
 
 \subsection{Perfect Ultimate Model}
+
+\todo{Put in running example here.}
 
 \paa{we need some transition text here.  dedalus-c is nice, but as we remember from datalog ;) IDB negation makes it easier to write programs (should be easy to give an example).  can we get some IDB negation back
 without sacrificing what's we've gained going to dedalus-c?}
 
-There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that if it is non-empty (true) at timestamp \dedalus{t}, then it is true for all timestamps \dedalus{s} > \dedalus{t}.  Furthermore, if \dedalus{p_done()} is true at timestamp \dedalus{t}, then $\left(f \in \dedalus{p}@\dedalus{s} \land \dedalus{s} > \dedalus{t}\right) \Rightarrow \left(f \in \dedalus{p}@\dedalus{t}\right)$ \todo{introduce the former notation}.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
+There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{done_p(l,t)} \in \mathcal{S}$,  then $\dedalus{done_p(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{done_p(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
 We will explain how to define \dedalus{p_done()} after introducing some preliminary definitions.
 
@@ -244,7 +239,7 @@ no asynchronous edges, we call the resulting collapsed node {\em inductive
 relation name in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, $P$ must contain a \dedalus{p_done()} fact.  For
+For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done()}.  For
 IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
 \dedalus{p_done()} for IDB relation \dedalus{p} may use \dedalus{q_done()} in
 its body only if there is an edge in the collapsed PDG from a node $i$ with
@@ -257,7 +252,9 @@ For ease of exposition, we will first present the computation of \dedalus{p_done
 For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting
 of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation
 \dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p_done()}
-is:\nrc{why p\_done()() on the LHS?}
+is:
+%\nrc{why p\_done()() on the LHS?}
+%removed the extra parenthesis, is this what you were objecting to?
 
 \begin{Drules}
   \drule{p_done()}
@@ -345,6 +342,8 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsubsection{Inductive Recursive Nodes}
 
+\todo{Figure out how this can be done in \slang; the below rules are broken.}
+
 For each inductive recursive node $i$, assume that the relations in $L(i)$ are numbered $1,\ldots,i_p$.  For each $1 \leq j \leq i_p$, add the rules:
 
 \begin{Drules}
@@ -358,14 +357,10 @@ For each inductive recursive node $i$, assume that the relations in $L(i)$ are n
 
 \subsubsection{Async Recursive Nodes}
 
-\todo{write this section}
-
-\todo{Explain the temporal terms ``never'', ``henceforth'', ..., in foundation section}
-
-\wrm{Formally, every usage of negation \dedalus{!p} must also have the following atom in the rule body \dedalus{n\sub{i}_complete()}, where $\dedalus{p} \in L(i)$}
+\todo{Figure out if/how this can be done in \slang.}
 
 \subsection{Connection with Practice}
 
-\wrm{Connect stratification with coordination protocols used in practice in distributed systems.}
+\todo{Connect stratification with coordination protocols used in practice in distributed systems.}
 
 
