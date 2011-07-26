@@ -149,7 +149,7 @@ We refer to a \lang program together with an EDB instance as a {\em \lang instan
 to say that a d-program can be viewed as a function from EDB-instances to st-instances?}
 
 A \lang program without \dedalus{choice} -- recall that choice is only used in asynchronous rules -- is {\em locally stratified}~\cite{local-strat}, because of restrictions on negation; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint \paa{the what?}; every possible function that obeys the causality constraint defines a stable model.  It is known that the stable model semantics is equivalent to the locally stratified semantics~\cite{stable-model}.  \paa{it is?  I thought the stable model semantics is larger than the 
-locally stratified semantics, and they're only equivalent for programs that have a single stable model.  for example, "p if not q; q if not p" has 2 stable models but no locally stratified model, right?  dang it, now I need to go read that gelfond & livshits paper.}
+locally stratified semantics, and they're only equivalent for programs that have a single stable model.  for example, "p if not q; q if not p" has 2 stable models but no locally stratified model, right?  dang it, now I need to go read that gelfond and livshits paper.}
 
 \begin{example}
 \label{ex:uncountable}
