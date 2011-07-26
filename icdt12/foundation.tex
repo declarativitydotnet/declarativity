@@ -178,6 +178,10 @@ The stable models are exactly $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j
         {time(T)}
 \end{Drules}
 
+\paa{not sure why we don't just say that all facts have a simple persistence rule.  we could retain the notational convenience of $\Box$ and $\Diamond$ by defining them
+separately, and perhaps pointing out that $p \Rightarrow \Box p$ whenever $p$ is simply persisted}
+
+
 A given stable model $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j)\in (t_1, t_2) \, \land \, (t_1, t_2)\in \mathcal{N}                                                    
 \times \mathcal{N} \, \}$ corresponds to the function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$, and the image of $h(x)$ is $t_2$.
 \end{example}
@@ -192,7 +196,7 @@ $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  We denote the outpu
 $\oschema$.
 %An \emph{output relation schema} is a member of $\oschema$.
 
-Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\mathcal{K}$.  For every spatio-temporal fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
+Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\mathcal{K}$.  For every spatio-temporal fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ \paa{do you mean $\in \Diamond\Box(\mathcal{T})$ ?} if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
 
 The set of {\em ultimate models} of a \lang instance $I$ is $\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$  $\text{is a stable model of I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations in the output schema that are eventually always true in a stable model.
 
@@ -238,7 +242,10 @@ A \lang program with multiple ultimate models.
         {r()}
 \end{Drules}
 
+\paa{don't we also need to persist p, to get the nd choice into the ultimate model?  otherwise p might be true at some point, but it is eventually always false.}
+
 Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
+\paa{note that although all predicates are inflationary, the negation (and persistence of p) induces multiple UMs}
 \end{example}
 
 \begin{example}
@@ -257,6 +264,8 @@ A \lang program with multiple ultimate models.
 \end{Drules}
 
 Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
+
+\paa{note now that although there is no negation, the noninflationary-ness of r induces multiple ultimate models}
 \end{example}
 
 \subsection{Operational Interpretation}
