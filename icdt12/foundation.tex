@@ -164,7 +164,7 @@ Inductive:
 Asynchronous:
 
 \begin{Drules}
-  \drule{p(\#D,\od{X\sub{0}})@async}
+  \drule{p(#D,\od{X\sub{0}})@async}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
@@ -175,8 +175,8 @@ in $\od{X\sub{0}}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 <
 i \leq n$ and $0 < j \leq m$. \nrc{Do we also need to define temporal entanglement?}
 
 \begin{Drules}
-  \drule{p(\#D,\od{X\sub{0}})@async}
-        {b\sub{1}(\#L,\od{X\sub{1}}), \ldots, b\sub{n}(\#L,\od{X\sub{n}}), !c\sub{1}(\#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(\#L,\od{Y\sub{m}})}
+  \drule{p(#D,\od{X\sub{0}})@async}
+        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
 \end{Drules}
 
 
@@ -191,11 +191,11 @@ with the stable model semantics.  Since the stable model semantics coincides wit
 Take the following \lang instance:
 
 \begin{Drules}
-  \drule{p(\#L,X)@async}
-        {q(\#L,X)} \\
-  \dfact{node(n1)} \\
-  \dfact{q(\#n1,0)} \\
-  \dfact{q(\#n1,1)}
+  \drule{p(#L,X)@async}
+        {q(#L,X)}
+  \dfact{node(n1)}
+  \dfact{q(#n1,0)}
+  \dfact{q(#n1,1)}
 \end{Drules}
 
 Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
@@ -207,11 +207,11 @@ unsugared version of the program:
 
 \begin{Drules}
   \drule{p(L,S,X)}
-        {q(L,T,X), node(L), time(T), time(S), T < S, choice((L,T,X),(S))} \\
+        {q(L,T,X), node(L), time(T), time(S), T < S, choice((L,T,X),(S))}
   \drule{node(L,T,n1)}
-        {node(L), time(T)} \\
+        {node(L), time(T)}
   \drule{q(n1,T,0)}
-        {time(T)} \\
+        {time(T)}
   \drule{q(n1,T,1)}
         {time(T)}
 \end{Drules}
@@ -238,7 +238,7 @@ A \lang program with an infinite stable model.
 
 \begin{Drules}
   \drule{flipflop(Y,X)@next}
-        {flipflop(X,Y)} \\
+        {flipflop(X,Y)}
   \dfact{flipflop(1,2)@1}
 \end{Drules}
 
@@ -259,18 +259,18 @@ A diffluent \lang program. \wrm{p is an output relation} \nrc{Diffluent not
 
 \begin{Drules}
   \drule{q()@async}
-        {q\_edb()} \\
+        {q_edb()}
   \drule{r()@async}
-        {r\_edb()} \\
+        {r_edb()}
   \drule{p()}
-        {q(), !r()} \\
+        {q(), !r()}
   \drule{q()@next}
-        {q()} \\
+        {q()}
   \drule{r()@next}
         {r()}
 \end{Drules}
 
-Assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
+Assume an EDB of \dedalus{q_edb(), r_edb()}.  Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  \wrm{The problem here is negation}.
 \end{example}
 
 \begin{example}
@@ -279,16 +279,16 @@ A diffluent \lang program.
 \wrm{p is an output relation}
 \begin{Drules}
   \drule{q()@async}
-        {q\_edb()} \\
+        {q_edb()}
   \drule{r()@async}
-        {r\_edb()} \\
+        {r_edb()}
   \drule{p()}
-        {q(), r()} \\
+        {q(), r()}
   \drule{q()@next}
         {q()}
 \end{Drules}
 
-As before, assume an EDB of \dedalus{q\_edb(), r\_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
+As before, assume an EDB of \dedalus{q_edb(), r_edb()}.  Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
 \end{example}
 
 \subsection{Operational Interpretation}
