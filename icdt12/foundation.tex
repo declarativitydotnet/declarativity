@@ -5,8 +5,6 @@
 
 \todo{Thread a running example through the paper}
 \todo{define head and body of rule}
-\todo{say something about the partitioning or accessibility of the order}
-\todo{make sure it's clear that $\univ$ includes \dedalus{node} but not \dedalus{time}}
 \todo{make sure usage of ``relation'' vs ``relation schema'' is consistent}
 
 We assume an infinite universe $\univ$.
@@ -68,14 +66,14 @@ A {\em spatio-temporal rule} over a spatio-temporal schema $\stschema$ is a rule
 A {\em deductive} rule:
 
 \begin{Drules}
-  \drule{p(L,T,\od{X\sub{0}})}
+  \drule{p(L,T,\od{W})}
         {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T)}
 \end{Drules}
 
 An {\em inductive} rule:
 
 \begin{Drules}
-  \drule{p(L,S,\od{X\sub{0}})}
+  \drule{p(L,S,\od{W})}
         {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S)}
 \end{Drules}
 
@@ -90,65 +88,51 @@ An {\em asynchronous} rule:
 
 The latter two kinds of rules are collectively called {\em temporal} rules.
 
-In the above rules, \od{B} is a tuple that contains all of the distinct variable symbols in  \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}} or \od{W}, whereas \dedalus{T} and \dedalus{S} may not.  \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.  \dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be \dedalus{succ} or \dedalus{time}.  \dedalus{choice} is the construct of
+In the above rules, \od{B} is a tuple that contains all of the distinct variable symbols in  \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.  \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.  \dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be \dedalus{succ} or \dedalus{time}.  \dedalus{choice} is the construct of
 Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}, which we will describe later.
 
 A \lang\ {\em program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  
 
 \noindent
 \textbf{Syntactic sugar for space-time in \lang:}
-The restrictions on temporal and location attributes suggest a natural syntactic sugar to improve readability.  Given the unification requirements for location and temporal attributes in rule bodies, we can omit these attributes from predicates without risk of ambiguity.  
-
-The three temporal classes of rules listed above can be distinguished by
-annotating inductive head predicates with \dedalus{@next} and asynchronous head
-predicates with \dedalus{@async}; deductive rules have no head annotation. 
-% nrc: Removed, because "communication rules" is not defined (or used subsequently)
-% Communication rules must include the location attribute of their head
-% predicate; by definition this is a different variable than that of the body
-% predicates.
-Given these conventions, the presence of appropriate \dedalus{succ},
-\dedalus{choice} and \dedalus{node} predicates in the body are implicit and can
-be omitted.  The result is a syntax that reads like a simple temporal variant of
-Datalog. \nrc{Need to introduce hash-mark syntax for location specifiers.}
+The restrictions on timestamps and location specifiers suggest a natural syntactic sugar to improve readability.  We annotate inductive head predicates with \dedalus{@next} and asynchronous head predicates with \dedalus{@async}; deductive rules have no head annotation.  These annotations allow us to scrap the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule heads and bodies.  We also hide location specifiers by default. The three kinds of rules listed above are expressed as follows:
 
 Deductive:
 
 \begin{Drules}
-  \drule{p(\od{X\sub{0}})}
+  \drule{p(\od{W})}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
 Inductive:
 
 \begin{Drules}
-  \drule{p(\od{X\sub{0}})@next}
+  \drule{p(\od{W})@next}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
-
-%Asynchronous local:
-%
-%\begin{Dedalus}
-%p(\od{X\sub{0}})@async <- b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}),
-%!c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}}).
-%\end{Dedalus}
 
 Asynchronous:
 
 \begin{Drules}
-  \drule{p(#D,\od{X\sub{0}})@async}
+  \drule{p(\od{W})@async}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-%Spatial entanglement involves making the location specifiers in the body explicit.  A rule with spatial entanglement may be of any of the varieties above.  As an example, here is an asynchronous rule with spatial entanglement:
-The syntactic sugar is optional, and as we shall see it is often useful to explicitly reference location specifiers in rules.  A rule of any of the
-varieties above may be \emph{spatially entangled} in this way. For example, the rule below is a spatially entangled asynchronous rule if $L$ appears
-in $\od{X\sub{0}}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 <
-i \leq n$ and $0 < j \leq m$. \nrc{Do we also need to define temporal entanglement?}
+A rule body's location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as any body atom's first argument.  In asynchronous rules only, the head location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as the head atom's first argument.  Below is an example of an asynchronous rule that binds body and head location specifiers to \dedalus{#L} and \dedalus{#D} respectively.  Recall that \dedalus{L} and \dedalus{D} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots \od{Y\sub{m}}}.
 
 \begin{Drules}
-  \drule{p(#D,\od{X\sub{0}})@async}
+  \drule{p(#D,\od{W})@async}
         {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
 \end{Drules}
+
+\wrm{Previously, we had a definition of ``spatial entanglement'' here, which said that the above rule was ``spatially entangled'' if L appeared in \od{W}, or D appeared in the body.  I feel like we don't need to define this term, as we don't use it later.}
+
+%The syntactic sugar is optional, and as we shall see it is often useful to explicitly reference location specifiers in rules.  A rule of any of the
+%varieties above may be \emph{spatially entangled} in this way. For example, the rule below is a spatially entangled asynchronous rule if $L$ appears
+%in $\od{W}$ or $D$ appears in $\od{X\sub{i}}$ or $\od{Y\sub{j}}$ for $0 <
+%i \leq n$ and $0 < j \leq m$.
+%\nrc{Do we also need to define temporal entanglement?} no, we're going to steer clear of that for this paper, I think it only adds complexity. -wrm.
+
 
 
 \subsection{Semantics}
