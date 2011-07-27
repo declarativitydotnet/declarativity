@@ -1,6 +1,25 @@
 \section{\large \bf \lang}
 \label{sec:foundation}
 
+We use the \lang~\cite{dedalus} language to model logic programs running in an asynchronous distributed system.
+In designing \lang, we extended the well-understood Datalog language with temporal constructs that allowed
+us to model time-varying state and channel reordering and delay.  As we shall see, both extensions are made
+possible by admitting a representation of logical time into the program schema, allowing the consequences of
+deductions to hold ``at a different time'' than their antecedents.  By narrowly constraining such temporal 
+deductions, \lang faithfully models systems that communicated over unreliable media, and mutate state over time.
+
+In this section we formally present the syntax of \lang.  We then show that the stable model semantics may be
+used to assign meaning to executions of a \lang program, much as an trace captures a particular execution of a
+typical distributed program.  
+This interpretation presents certain obstacles:
+even in the case of programs whose outputs are deterministic, channel nondeterminism may cause a given program 
+may induce an infinite number of stable models, each corresponding to a superficially different execution.
+We then present the ultimate model semantics, an abstraction that associates a program with a finite model of 
+its ``eventual'' execution state.  We show that a deterministic program always has a single ultimate model,
+regardless of any ``internal'' nondeterminism.  In the event of multiple ultimate models, each corresponds to a
+legitimately different, nondeterministic program output.
+
+
 \subsection{Preliminary Definitions}
 
 \todo{Thread a running example through the paper}
