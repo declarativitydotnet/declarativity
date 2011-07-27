@@ -96,7 +96,19 @@ The latter two kinds of rules are collectively called {\em temporal} rules.
 
 In the above rules, \od{B} is a tuple that contains all of the distinct variable symbols in  \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.  \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.  \dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be \dedalus{succ} or \dedalus{time}.
 
-\dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}; the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed in \od{Y} are functionally dependent on the variables in \dedalus{X} with respect to any function.  Due to variable binding restrictions, only asynchronous rules may have a different value for the head location specifier than the body location specifier.  Intuitively, different values for the location specifiers represents cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B} (which must include \dedalus{D} due to safety restrictions) represents a message being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact that the network may arbitrarily delay, re-order, and batch messages, any single value of head timestamp \dedalus{S} is permissible for a message as long as it obeys the {\em causality constraint} \dedalus{T < S}.
+\dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo};
+the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
+in \od{Y} are functionally dependent on the variables in \od{X} with respect to
+any function.  Due to variable binding restrictions, only asynchronous rules may
+have a different value for the head location specifier than the body location
+specifier.  Intuitively, different values for the location specifiers represents
+cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B}
+(which must include \dedalus{D} due to safety restrictions) represents a message
+being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
+that the network may arbitrarily delay, re-order, and batch messages, any single
+value of head timestamp \dedalus{S} is permissible for a message as long as it
+obeys the {\em causality constraint} \dedalus{T < S}.\nrc{Worth noting here that
+  we disallow message drops in this paper?}
 
 A \lang \emph{program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  We restrict the usage of negation (\dedalus{!}) in \lang programs.
 
