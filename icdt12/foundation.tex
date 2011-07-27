@@ -133,8 +133,11 @@ cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B}
 being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
 that the network may arbitrarily delay, re-order, and batch messages, any single
 value of head timestamp \dedalus{S} is permissible for a message as long as it
-obeys the {\em causality constraint} \dedalus{T < S}.\nrc{Worth noting here that
-  we disallow message drops in this paper?}
+obeys the {\em causality constraint} \dedalus{T < S}.\footnote{Note that in
+  other presentations of \lang (e.g.,~\cite{dedalus}), message timestamps are
+  chosen from $\mathbb{N} \cup \{\Tau\}$, where $\Tau$ represents a special value
+  indicating that the message was dropped by the network. In this paper, we
+  assume reliable delivery of messages.}
 
 A \lang \emph{program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  We restrict the usage of negation (\dedalus{!}) in \lang programs.
 
