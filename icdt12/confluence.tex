@@ -199,7 +199,21 @@ A \lang program has {\em guarded asynchrony} if all relations appearing in the h
 
 We will refer to the language of IDB negation-free \lang programs with guarded asynchrony as \slang.
 
-\todo{Peter to improve this proof.}
+Define the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by substituting the constant \dedalus{t} for the timestamp.
+
+\begin{lemma}
+\label{lem:inflationary}
+\slang programs are {\em inflationary}, i.e. if a stable model of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
+\end{lemma}
+\begin{proof}
+Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head -- if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
+
+For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle -- simply repeat the following process for each tree.
+
+If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp. atemporal), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp. \dedalus{g@t}), the fact \dedalus{g@t} (resp. \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule and which is not EDB.  However, the path will eventually terminate at a leaf (an EDB node) providing a contradiction, because EDB facts exist at all timesteps.
+\end{proof}
+
+
 \begin{theorem}
 \label{thm:confluence}
 \slang programs are confluent.
@@ -207,32 +221,28 @@ We will refer to the language of IDB negation-free \lang programs with guarded a
 \begin{proof}
 
 Towards a proof by contradiction, consider a \slang program that 
-induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
-that is true in one but
-not in another model.
-Consider a derivation of $a$: a finite tree of applications of
-implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
-choice of timestamp via an {\em async} rule, then certainly 
-$a$ occurs in all stable models of the program,
-so there must be at least one {\em async} rule in $a$'s derivation, contributing an atom
-$r$.  
-If $a$ is derived directly from 
-$r$ via a series of derivation steps without any joins, then every stable
-model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
-and hence correspond to the same ultimate model.
-Therefore, $a$ must have at least one join step (i.e., a rule with at least two subgoals)
-in its derivation following $r$,
-which succeeded in this stable model (producing $a$ or an antecedent of $a$), but did not succeed in another.  
+induces two ultimate models $\mathcal{U}_1, \mathcal{U}_2$ for some EDB.  There must be a spatial fact \dedalus{f}, such that 
+$\dedalus{f} \in \mathcal{U}_1$ and $\dedalus{f} \not\in \mathcal{U}_2$.
+
+Recall that if spatial fact \dedalus{f} is in some ultimate model, then for some $\dedalus{t\sub{0}} \in \mathbb{N}$, there is some stable model that contains \dedalus{f@t} for all \dedalus{t} > \dedalus{t\sub{0}}.
+
+Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yields $\mathcal{U}_1$.  Again, for simplicity, we assume uniqueness of this derivation tree.  For some child of \dedalus{f@t\sub{0}}, call it \dedalus{g@s}, for all stable models that yield $\mathcal{U}_2$ there is no \dedalus{r} such that \dedalus{g@r} is in the stable model by Lemma~\ref{lem:inflationary}.  Continue traversing the tree, at each step picking such a \dedalus{g}.  Eventually, the traversal terminates at an EDB node, leading to a contradiction.
+%If $a$ is derived directly from 
+%$r$ via a series of derivation steps without any joins, then every stable
+%model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
+%and hence correspond to the same ultimate model.
+%Therefore, $a$ must have at least one join step (i.e., a rule with at least two subgoals)
+%in its derivation following $r$,
+%which succeeded in this stable model (producing $a$ or an antecedent of $a$), but did not succeed in another.  
 %Guarded joins always
 %eventually succeed, \jmh{don't you need to define ``join success'' and prove that guarded asynchrony does what you say?} what it and 
-
-Consider such  a join rule.  One of its subgoals $s$ corresponds to a derivation that depends
-on the async-derived atom $r$.  
-Regardless of the nondeterministic choice of timestamp for $r$, there
-is some timestamp $V_m$ in every stable model $m$ of the program such that $s$ is true
-for all $W > V$.  Hence in all stable models, $s$ is ``eventually'' true.  The same argument holds
-for all subgoals of the rule under consideration.
-Hence $a$ must exist in all ultimate models.
+%Consider such  a join rule.  One of its subgoals $s$ corresponds to a derivation that depends
+%on the async-derived atom $r$.  
+%Regardless of the nondeterministic choice of timestamp for $r$, there
+%is some timestamp $V_m$ in every stable model $m$ of the program such that $s$ is true
+%for all $W > V$.  Hence in all stable models, $s$ is ``eventually'' true.  The same argument holds
+%for all subgoals of the rule under consideration.
+%Hence $a$ must exist in all ultimate models.
 \end{proof}
 
 
