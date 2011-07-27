@@ -1,4 +1,5 @@
 \section{\large \bf \slang}
+\section{\large \bf Refining \lang}
 \label{sec:confluence}
 
 %Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
@@ -13,6 +14,68 @@ Such programs are rarely desired and may indicate a bug.
 % Commented out for now, because Dedalus_C doesn't model long-running services, as the entire EDB is assumed to be given at time 0.
 %%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
 We typically would like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
+
+Having defined the \lang language, we will refer to two running examples for the remainder of the paper.  
+
+\begin{example}
+\label{ex:marriage}
+An asynchronous marriage ceremony:
+
+\begin{Drules}
+  \drule{groom_i_do()@async}
+        {groom_i_do_edb()}
+  \drule{bride_i_do()@async}
+        {bride_i_do_edb()}
+  \drule{runaway()}        {groom_i_do(), !bride_i_do()}  
+  \drule{runaway()}        {!groom_i_do(), bride_i_do()}  
+  \drule{groom_i_do()@next}
+        {groom_i_do()}
+  \drule{bride_i_do()@next}
+        {bride_i_do()}
+  \drule{runaway()@next}
+        {runaway()}
+\end{Drules}
+\end{example}
+Example~\ref{ex:marriage} presents a very simple implementation of a distributed vote with a fixed membership group: a bride and a groom.
+The marriage is off ($runaway$ is true) if either party does not say "I do."  
+
+However, the \lang program as given does not correctly implement such a vote.  Any stable model where \dedalus{groom_i_do()} and \dedalus{bride_i_do()} disagree in their their first assignments of timestamps yields an ultimate model containing \dedalus{runaway()}.  If the votes are assigned the same timestamp,
+ the ultimate
+model does not contain \dedalus{runaway()}.  While the value of \dedalus{runaway} eventually converges to false, execution timing may
+``seal'' a true value into the persistent predicate, effectively witnessing a message race.  Note that all predicates are inflationary.
+
+\begin{example}
+\label{ex:gc}
+Distributed garbage collection:
+
+\begin{Drules}
+  \drule{points_to_global(Master, Src, Dst)@async}
+        {points_to(_, Src, Dst), master(Master)}
+  \drule{reach(Src, Dst)}
+        {points_to_global(Src, Dst)}
+  \drule{reach(Src, Dst)}
+        {points_to_global(Src, Nxt), reach(Src, Dst)}
+  \drule{unreach(Ref)} 
+        {ref(Ref), roots(Root), not reach(Root, Dst)}
+  \drule{unreach(Ref)@next} {unreach(Ref)}
+\end{Drules}
+\end{example}
+
+The program in Example~\ref{ex:gc} represents the control logic of a distributed garbage collection system for a separately managed
+shared memory.  The \dedalus{points\_to} relation is partitioned across a set of nodes, each of which owns its own root pointer into
+a reference tree.  Nodes forward the contents of their local \dedalus{points\_to} relation to a coordinator, who computes reachability
+by taking the transitive closure of this relation.  Any memory reference not in the closure of \dedalus{points\_to\_global} is 
+considered orphaned and may be garbage collected: we model this side-effecting computation by inserting into the immutably persistent
+relation \dedalus{orphan}.
+
+This more complicated example suffers from the same ambiguity as the marriage ceremony presented previously.  While the program has 
+an ultimate model corresponding to executions in which \dedalus{unreach} is not computed until the transitive closure of 
+\dedalus{points\_to\_global} is fully determined (i.e., after all messages have been delivered), it also has models corresponding to 
+executions in which it is ``prematurely'' computed.  These models all result in correctness violations, in which active memory is reclaimed.
+
+
+
+\subsection{Problems with \lang}
 
 \begin{definition}
   A \lang program is {\em confluent} if, for every EDB instance, it has a single ultimate model.  A program that is not confluent is {\em diffluent}.
