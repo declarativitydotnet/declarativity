@@ -134,33 +134,29 @@ We will refer to the language of IDB negation-free \lang programs with guarded a
 Towards a proof by contradiction, consider a \slang program that 
 induces more than one ultimate model.  There must be a ground atom $a$ for a predicate $p$
 that is true in one but
-not in another model, and $p$ must be persistent, or $a$ it would not be
-in the ultimate model.  Consider a derivation of $a$: a finite tree of applications of
+not in another model.
+Consider a derivation of $a$: a finite tree of applications of
 implication whose leaves are EDB atoms.  If none of the implications involve a nondeterministic
 choice of timestamp via an {\em async} rule, then certainly 
 $a$ occurs in all stable models of the program,
-%there is only one stable model of the program
-%\jmh{I don't buy this; we're scoped down to atom $a$ here and the rules that feed into it}, 
 so there must be at least one {\em async} rule in $a$'s derivation, contributing an atom
 $r$.  
-If $p$ is derived directly from 
+If $a$ is derived directly from 
 $r$ via a series of derivation steps without any joins, then every stable
 model $m$ will have a tuple $a_m$ in $p$ that differs from $a$ only in its timestamp, 
 and hence correspond to the same ultimate model.
 Therefore, $a$ must have at least one join step (i.e., a rule with at least two subgoals)
 in its derivation following $r$,
-which succeeded in this stable model (producing $a$), but did not succeed in another.  
+which succeeded in this stable model (producing $a$ or an antecedent of $a$), but did not succeed in another.  
 %Guarded joins always
 %eventually succeed, \jmh{don't you need to define ``join success'' and prove that guarded asynchrony does what you say?} what it and 
 
 Consider such  a join rule.  One of its subgoals $s$ corresponds to a derivation that depends
-on the async-derived atom $r$.  If any predicate between $s$ and $r$ is simply persisted and 
-the program is negation-free,
-then $s$ is persistent.  Regardless of the nondeterministic choice of timestamp for $r$, there
+on the async-derived atom $r$.  
+Regardless of the nondeterministic choice of timestamp for $r$, there
 is some timestamp $V_m$ in every stable model $m$ of the program such that $s$ is true
 for all $W > V$.  Hence in all stable models, $s$ is ``eventually'' true.  The same argument holds
-for all subgoals of the rule under consideration, and hence guarded asynchrony implies that
-all joins will eventually succeed.
+for all subgoals of the rule under consideration.
 Hence $a$ must exist in all ultimate models.
 \end{proof}
 
