@@ -236,6 +236,8 @@ A \lang program with multiple ultimate models.
         {q()}
   \drule{r()@next}
         {r()}
+  \drule{p()@next}
+        {p()}
 \end{Drules}
 
 Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  Note that all predicates are inflationary.  The \lang instance obtained by removing the negation from \dedalus{r()} has a unique ultimate model.
@@ -254,6 +256,8 @@ A \lang program with multiple ultimate models.
         {q(), r()}
   \drule{q()@next}
         {q()}
+  \drule{p()@next}
+        {p()}
 \end{Drules}
 
 Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  Note that the program is negation-free.  The \lang instance obtained by adding the rule \dedalus{r()@next $\leftarrow$ r().} has a unique ultimate model.
