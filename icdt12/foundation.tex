@@ -5,7 +5,6 @@
 
 \todo{Thread a running example through the paper}
 \todo{ensure ``relation'' vs ``relation name'' usage is consistent}
-\todo{EDB is not defined}
 
 We assume an infinite universe $\univ$.
 
@@ -144,12 +143,9 @@ An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps eac
 
 We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{T}$.  The mapping is defined by: $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K} \Rightarrow \{ \, \dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \, | \, t \in \mathbb{N} \, \} \subset \mathcal{T}$. 
 
-We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from \lang instances to spatio-temporal database instances.
-\paa{this definition confused me.  first we say a d-instance is a d-program + EDB-instance.  then we say a d-program "can be viewed" as a function from d-instances to st-instances.  maybe you mean
-to say that a d-program can be viewed as a function from EDB-instances to st-instances?}
+We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from EDB instances to spatio-temporal database instances.
 
-A \lang program without \dedalus{choice} -- recall that choice is only used in asynchronous rules -- is {\em locally stratified}~\cite{local-strat}, because of restrictions on negation; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint \paa{the what?}; every possible function that obeys the causality constraint defines a stable model.  It is known that the stable model semantics is equivalent to the locally stratified semantics~\cite{stable-model}.  \paa{it is?  I thought the stable model semantics is larger than the 
-locally stratified semantics, and they're only equivalent for programs that have a single stable model.  for example, "p if not q; q if not p" has 2 stable models but no locally stratified model, right?  dang it, now I need to go read that gelfond and livshits paper.}
+A \lang program without \dedalus{choice} -- recall that choice is only used in asynchronous rules -- is {\em locally stratified}~\cite{local-strat}, because of restrictions on negation; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint; every possible function that obeys the causality constraint defines a stable model.  It is known that the stable model semantics coincides with the locally stratified semantics~\cite{stable-model} for locally stratified programs.
 
 \begin{example}
 \label{ex:uncountable}
@@ -196,7 +192,7 @@ $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  We denote the outpu
 $\oschema$.
 %An \emph{output relation schema} is a member of $\oschema$.
 
-Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\mathcal{K}$.  For every spatio-temporal fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ \paa{do you mean $\in \Diamond\Box(\mathcal{T})$ ?} if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
+Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\Diamond\Box\mathcal{T}$.  For every spatio-temporal fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \Diamond\Box\mathcal{T}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
 
 The set of {\em ultimate models} of a \lang instance $I$ is $\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$  $\text{is a stable model of I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations in the output schema that are eventually always true in a stable model.
 
@@ -242,10 +238,7 @@ A \lang program with multiple ultimate models.
         {r()}
 \end{Drules}
 
-\paa{don't we also need to persist p, to get the nd choice into the ultimate model?  otherwise p might be true at some point, but it is eventually always false.}
-
-Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
-\paa{note that although all predicates are inflationary, the negation (and persistence of p) induces multiple UMs}
+Any stable model where \dedalus{q()} has a lower timestamp than \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  Note that all predicates are inflationary.  The \lang instance obtained by removing the negation from \dedalus{r()} has a unique ultimate model.
 \end{example}
 
 \begin{example}
@@ -263,9 +256,7 @@ A \lang program with multiple ultimate models.
         {q()}
 \end{Drules}
 
-Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.
-
-\paa{note now that although there is no negation, the noninflationary-ness of r induces multiple ultimate models}
+Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  Note that the program is negation-free.  The \lang instance obtained by adding the rule \dedalus{r()@next $\leftarrow$ r().} has a unique ultimate model.
 \end{example}
 
 \subsection{Operational Interpretation}
