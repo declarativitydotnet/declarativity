@@ -40,7 +40,7 @@ An asynchronous marriage ceremony with no IDB negation:
 The garbage collection program from Example~\ref{ex:gc} is likewise outside \slang due to IDB negation, but it presents a much more difficult problem.  
 Because of the negation of a transitive closure computation in the rule defining \dedalus{unreach},
 ``pushing down'' the negation to EDB would entail moving the negation sign into the recursion. \paa{cite something}.
-It is not immediately obvious how to do this in a way that preserve the intended semantics of the program.
+It is not immediately obvious how to do this in a way that preserves the intended semantics of the program.
 In general, the restriction of negation to EDB predicates presents a significant barrier to expressing practical programs.
 
 There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{done_p(l,t)} \in \mathcal{S}$,  then $\dedalus{done_p(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{done_p(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
