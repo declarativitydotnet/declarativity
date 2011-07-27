@@ -38,13 +38,13 @@ the relation name \dedalus{r} and an $n$-tuple $(c_1,\ldots,c_n)$, where each
 $c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by
 \dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
-$(\dedalus{<},2)$~\footnote{We will often write \dedalus{<} in infix notation.}.
+$(\dedalus{<},2)$.\footnote{We will often write \dedalus{<} in infix notation.}
 A {\em relation instance} for relation \dedalus{r} is a set of facts for
 \dedalus{r}.  A {\em database instance} maps each relation $\dedalus{r} !=
 \dedalus{<}$ to a relation instance for \dedalus{r}, and maps \dedalus{<} to an
 infinite set of \dedalus{<} facts that encode a total ordering over $\univ$.
 
-By a {\em rule} over a schema $\schema$, we mean a Datalog-style rule -- a clause of the form:
+A {\em rule} over a schema $\schema$ is a clause of the form:
 
 \begin{Drules}
   \drule{p(\od{W})}
@@ -113,7 +113,14 @@ An {\em asynchronous} rule:
 
 The latter two kinds of rules are collectively called {\em temporal} rules.
 
-In the above rules, \od{B} is a tuple that contains all of the distinct variable symbols in  \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.  \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.  \dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be \dedalus{succ} or \dedalus{time}.
+In the above rules, \od{B} is a tuple that contains all of the distinct variable
+symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots,
+\od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in
+any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}},
+  \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.
+\dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.
+\dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be
+\dedalus{succ} or \dedalus{time}.
 
 \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo};
 the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
@@ -160,7 +167,7 @@ Asynchronous:
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-A rule body's location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as any body atom's first argument.  In asynchronous rules only, the head location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as the head atom's first argument.  Below is an example of an asynchronous rule that binds body and head location specifiers to \dedalus{#L} and \dedalus{#D} respectively.  Recall that \dedalus{L} and \dedalus{D} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots \od{Y\sub{m}}}.
+A rule body's location specifier can be accessed by including a variable symbol or constant prefixed with \dedalus{#} as any body atom's first argument.  In asynchronous rules only, the head location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as the head atom's first argument.  Below is an example of an asynchronous rule that binds body and head location specifiers to \dedalus{#L} and \dedalus{#D} respectively.  Recall that \dedalus{L} and \dedalus{D} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots \od{Y\sub{m}}}.
 
 \begin{Drules}
   \drule{p(#D,\od{W})@async}
