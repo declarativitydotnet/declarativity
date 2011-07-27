@@ -257,6 +257,8 @@ The set of ultimate models for the \lang instance shown in Example~\ref{ex:uncou
 %\dedalus{flipflop(1,2)} is true at all odd times and \dedalus{flipflop(2,1)} is true at all even times.  Thus, \dedalus{flipflop(1,2)} and \dedalus{flipflop(2,1)} are each cyclic with period 2.                                                                       
 %\end{example}
 
+\begin{comment}
+%% paa -- I don't think we need these anymore
 We give two more examples of programs with ultimate models:
 
 In both examples, we assume that the output schema consists of \dedalus{p}, and the EDB instance consists of $\{\dedalus{q_edb(), r_edb()}\}$.
@@ -302,6 +304,7 @@ A \lang program with multiple ultimate models.
 
 Any stable model where the timestamp of \dedalus{q()} is less than or equal to the timestamp of \dedalus{r()} yields an ultimate model containing \dedalus{p()}.  Otherwise, the ultimate model does not contain \dedalus{p()}.  Note that the program is negation-free.  The \lang instance obtained by adding the rule \dedalus{r()@next $\leftarrow$ r().} has a unique ultimate model.
 \end{example}
+\end{comment}
 
 \subsection{Operational Interpretation}
 \label{sec:operational}
