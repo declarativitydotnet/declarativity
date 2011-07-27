@@ -5,6 +5,7 @@
 
 \todo{Thread a running example through the paper}
 \todo{ensure ``relation'' vs ``relation name'' usage is consistent}
+\todo{Cite Datalog 2.0 workshop paper}
 
 We assume an infinite universe $\univ$.
 
@@ -13,8 +14,16 @@ A {\em database schema} $\schema$ is a finite set of relation schemas.
 %\nrc{Confusing: relation schema is a singleton, but ``schema'' is a set of relation schemas?} 
 %I'm changing ``schema'' to ``database schema''.  A google search for [``relational schema'' ``database schema''] reveals this to be at least somewhat standard.
 
-A {\em fact} over a relation schema $(\dedalus{r}, n)$ is a pair consisting of the
-relation name \dedalus{r} and an $n$-tuple $(c_1,\ldots,c_n)$, where each $c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by \dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume the existence of an order: every database schema contains the relation schema $(\dedalus{<},2)$~\footnote{We will often write \dedalus{<} in infix notation.}.  A {\em relation instance} for relation \dedalus{r} is a set of facts for\dedalus{r}.  A {\em database instance} maps each relation $\dedalus{r} != \dedalus{<}$ to a relation instance for \dedalus{r}, and maps \dedalus{<} to an infinite set of \dedalus{<} facts that encode a total ordering over $\univ$.
+A {\em fact} over a relation schema $(\dedalus{r}, n)$ is a pair consisting of
+the relation name \dedalus{r} and an $n$-tuple $(c_1,\ldots,c_n)$, where each
+$c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by
+\dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume
+the existence of an order: every database schema contains the relation schema
+$(\dedalus{<},2)$~\footnote{We will often write \dedalus{<} in infix notation.}.
+A {\em relation instance} for relation \dedalus{r} is a set of facts for
+\dedalus{r}.  A {\em database instance} maps each relation $\dedalus{r} !=
+\dedalus{<}$ to a relation instance for \dedalus{r}, and maps \dedalus{<} to an
+infinite set of \dedalus{<} facts that encode a total ordering over $\univ$.
 
 By a {\em rule} over a schema $\schema$, we mean a Datalog-style rule -- a clause of the form:
 
