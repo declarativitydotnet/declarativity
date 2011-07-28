@@ -80,10 +80,10 @@ owns a fixed set of pointers, stored in the EDB relation
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
 corresponding to executions in which \dedalus{unreach} is not computed until the
-transitive closure of \dedalus{points\_to\_global} is fully determined (i.e.,
-after all messages have been delivered), it also has models corresponding to
-executions in which it is ``prematurely'' computed.  These models all result in
-correctness violations, in which active memory is reclaimed.
+transitive closure of \dedalus{points\_to} is fully determined (i.e., after all
+messages have been delivered), it also has models corresponding to executions in
+which it is ``prematurely'' computed.  These models all result in correctness
+violations, in which active memory is reclaimed.
 
 Note that in both examples, there is a single ultimate model corresponding to
 the execution in which the nonmonotonic negation operator is not applied to a
