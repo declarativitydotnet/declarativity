@@ -48,10 +48,7 @@ A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
 connected component of the PDG of $P$ with a single node whose label comprises
 the set of all relation names from the component.  If a strongly connected
 component has any asynchronous edges, we call the resulting collapsed node {\em
-  async recursive}.  If a strongly connected component has inductive edges but
-no asynchronous edges, we call the resulting collapsed node {\em inductive
-  recursive}.  These two types of nodes are collectively referred to as {\em
-  temporally recursive}.  Each node in the collapsed PDG whose label contains a
+  async recursive}.  Each node in the collapsed PDG whose label contains a
 relation name in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
@@ -61,9 +58,9 @@ IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
 its body only if there is an edge in the collapsed PDG from a node $i$ with
 $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 
-For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-temporally-recursive nodes.  We will then explain how to support temporally recursive nodes.
+For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.
 
-\subsubsection{Non-Temporally-Recursive Nodes}
+\subsubsection{Non-Async-Recursive Nodes}
 
 For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting
 of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation
