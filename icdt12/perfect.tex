@@ -222,7 +222,7 @@ that a \lang programmer could have written by hand to ensure that the local
 predicate \dedalus{points\_to} is a faithful representation of global state.  In
 distributed systems, global computation barriers are commonly enforced by
 protocols based on voting: the two-phase commit protocol from distributed
-databases is a straightforward example~\cite{2pc}.  In essence, every agent
+databases is a straightforward example~\cite{gray-tp}.  In essence, every agent
 responsible for a fragment of the global state must ``vote'' that every message
 they send to the coordinator has been acknowledged.  The coordinator must tally
 these votes and ensure that the vote is unanimous for all agents.  If the
