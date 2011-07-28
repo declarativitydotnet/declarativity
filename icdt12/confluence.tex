@@ -108,6 +108,10 @@ single, ``preferred'' model.
 %deterministic output set. Examples~\ref{ex:diffluent1} and \ref{ex:diffluent2}
 %are two examples of diffluent programs.
 
+Confluence is a desirable, albeit conservative, correctness property for a distributed program.  A program that is
+confluent produces a deterministic output in spite of nondeterministic orders in its execution.  For example, if
+we could show that a data replication protocol was confluent, we could prove that all replicas were ``eventually consistent''
+after all messages were delivered, in spite of delay and reordering.
 Unfortunately, confluence is an undecidable property of \lang programs:
 
 \begin{lemma}
