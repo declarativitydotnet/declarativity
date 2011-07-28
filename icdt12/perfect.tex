@@ -42,7 +42,10 @@ a blowup in the arity of the relations.\nrc{Specify the degree of blowup?}
 %Because of the negation of a transitive closure computation in the rule defining \dedalus{unreach},
 %``pushing down'' the negation to EDB would entail moving the negation sign into the recursion. \paa{cite something}.
 %It is not immediately obvious how to do this in a way that preserves the intended semantics of the program.
-In general, the restriction of negation to EDB predicates presents a significant barrier to expressing practical programs.
+In general, the restriction of negation to EDB predicates presents a significant
+barrier to expressing practical programs.
+
+\subsection{Safe IDB Negation}
 
 \paa{do we now introduce a third language?}
 \wrm{yes}
@@ -156,6 +159,11 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 \subsubsection{Async Recursive Nodes}
 
 \todo{Figure out if/how this can be done in \slang.}
+
+\subsection{Properties of \plang}
+
+\todo{Show that \plang programs are confluent.}\\
+\todo{Show that \plang captures exactly PTIME.}
 
 \subsection{Connection with Practice}
 

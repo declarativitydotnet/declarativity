@@ -73,14 +73,12 @@ Example~\ref{ex:gc} presents a simple garbage collection program for a
 distributed memory system. Each node manages a set of pointers and forwards this
 information to a central coordinator node. The coordinator computes the set of
 transitively reachable addresses; if an address is not reachable from the root
-address, it is considered an orphan and can be garbage collected. Note that we
-would like the semantics of \dedalus{unreach} to be inflationary: once an
-address becomes eligible to be garbage collected, it should not later
-``disappear'' from \dedalus{unreach}. For simplicity, we assume that each node
-owns a fixed set of pointers, stored in the EDB relation
-\dedalus{local_ptr_edb}. \nrc{Problem with this example: \dedalus{unreach()}
-  will always be true at the first timestep, because no async facts will be
-  delivered yet.}
+address, it is considered an orphan and can be garbage collected. For
+simplicity, we assume that each node owns a fixed set of pointers, stored in the
+EDB relation \dedalus{local_ptr_edb}. \nrc{Problem with this example:
+  \dedalus{unreach()} will always be true at the first timestep, because no
+  async facts will be delivered yet. Also, claim about inflationary could be
+  tightened up.}
 
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
@@ -88,7 +86,7 @@ corresponding to executions in which \dedalus{unreach} is not computed until the
 transitive closure of \dedalus{points\_to} is fully determined (i.e., after all
 messages have been delivered), it also has models corresponding to executions in
 which it is ``prematurely'' computed.  These models all result in correctness
-violations, in which reachable memory is reclaimed.
+violations: reachable memory addresses appear in the \dedalus{unreach} relation.
 
 Note that for both examples, there is a single ultimate model corresponding to
 the execution in which negation is not applied to a set until the content of the
