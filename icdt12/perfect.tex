@@ -67,7 +67,7 @@ IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
 its body only if there is an edge in the collapsed PDG from a node $i$ with
 $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 
-For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to atemporal rules (Lemma~\ref{lem:no-inductive}).
+For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to deductive rules (Lemma~\ref{lem:no-inductive}).
 
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
@@ -89,7 +89,7 @@ Let the nodes in the collapsed PDG connected via incoming edges to node $i$ be d
 For each rule $1 \leq j \leq i_p$ in $P$ with head relation \dedalus{p}, if $j$ is:
 
 \noindent
-\textbf{Atemporal:}
+\textbf{Deductive:}
 Add the rule:
 
 \begin{Drules}
