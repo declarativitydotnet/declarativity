@@ -71,9 +71,10 @@ $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to atemporal rules (Lemma~\ref{lem:no-inductive}).
 
 \subsubsection{Non-Async-Recursive Nodes}
+\label{sec:nonasyncrecursive}
 
-For each non-temporally-recursive node $i$, note that $L(i)$ is a set consisting
-of a single relation \dedalus{p}.  Assume the rules in $P$ with head relation
+Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
+Assume the rules in $P$ with head relation
 \dedalus{p} are numbered $1, \ldots, i_p$.  The rule for \dedalus{p_done()}
 is:
 %\nrc{why p\_done()() on the LHS?}
@@ -121,7 +122,7 @@ with the following set of rules:
       {p\sub{j}_send(#L,N,\od{X})}
 
 \drule{r\sub{j}_done_node(#L,N)@async}
-      {p\sub{1}_done(#N), \ldots, p\sub{i\sb{q}}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}_to_send(#N,L,\od{X})} \Rightarrow \dedalus{p\sub{j}_ack(#N,L,\od{X})}\right)\)}
+      {p\sub{1}_done(#N), \ldots, p\sub{i\sb{q}}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}_to_send(#N,L,\od{X})} \Rightarrow \right.\) \(\left. \dedalus{p\sub{j}_ack(#N,L,\od{X})}\right)\)}
 
 \drule{r\sub{j}_done()}
       {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
@@ -158,12 +159,15 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsubsection{Async Recursive Nodes}
 
-\todo{Figure out if/how this can be done in \slang.}
+
+\todo{todo}
+
 
 \subsection{Properties of \plang}
 
 \todo{Show that \plang programs are confluent.}\\
 \todo{Show that \plang captures exactly PTIME.}
+
 
 \subsection{Connection with Practice}
 

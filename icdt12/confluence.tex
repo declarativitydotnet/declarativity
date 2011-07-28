@@ -288,7 +288,7 @@ A confluent \lang program that is not a \slang program.
 \drule{b_lt(I, J)}
       {b(I), b(J), I < J}
 \drule{dequeued(I)@next}
-      {b(I), !b_lt(_, I)}
+      {b(I), !b_lt(_, I), b_lt(_,_)}
 \drule{mem(I)}
       {dequeued(I), !bt_lt(_, _)}
 \dfact{node(n1)}
