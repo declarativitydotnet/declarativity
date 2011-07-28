@@ -78,7 +78,9 @@ would like the semantics of \dedalus{unreach} to be inflationary: once an
 address becomes eligible to be garbage collected, it should not later
 ``disappear'' from \dedalus{unreach}. For simplicity, we assume that each node
 owns a fixed set of pointers, stored in the EDB relation
-\dedalus{local_ptr_edb}.
+\dedalus{local_ptr_edb}. \nrc{Problem with this example: \dedalus{unreach()}
+  will always be true at the first timestep, because no async facts will be
+  delivered yet.}
 
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
@@ -89,14 +91,14 @@ which it is ``prematurely'' computed.  These models all result in correctness
 violations, in which reachable memory is reclaimed.
 
 Note that for both examples, there is a single ultimate model corresponding to
-the execution in which the nonmonotonic negation operator is not applied to a
-set until the set is fully determined.  This ``preferred'' model is akin to the
-perfect model computed by a centralized Datalog evaluator that computes rules in
-stratum order~\cite{ullman}, applying the closed-world assumption to predicates
-only when it is certain that they will no longer change.
+the execution in which negation is not applied to a set until the content of the
+set has been fully determined.  This ``preferred'' model is akin to the perfect
+model computed by a centralized Datalog evaluator that computes rules in stratum
+order~\cite{ullman}, applying the closed-world assumption to predicates only
+when it is certain that they will no longer change.
 
 In the remainder of this section, we explore the features of \lang that allow
-such ambiguities, and consider a restricted language \slang that rules them out
+such ambiguities and propose a restricted language \slang that rules them out
 (but prohibits or complicates our implementations).  In
 Section~\ref{sec:perfect}, we consider a relaxation of \slang that forces a
 single, ``preferred'' model.
