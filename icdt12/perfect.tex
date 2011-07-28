@@ -58,7 +58,7 @@ IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
 its body only if there is an edge in the collapsed PDG from a node $i$ with
 $\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
 
-For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.
+For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to atemporal rules (Lemma~\ref{lem:no-inductive}).
 
 \subsubsection{Non-Async-Recursive Nodes}
 
@@ -84,15 +84,6 @@ Add the rule:
 
 \begin{Drules}
   \drule{r\sub{j}_done()}
-        {p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()}
-\end{Drules}
-
-\noindent
-\textbf{Inductive:}
-Add the rule:
-
-\begin{Drules}
-  \drule{r\sub{j}_done()@next}
         {p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()}
 \end{Drules}
 
@@ -153,20 +144,6 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
 
 Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
-\subsubsection{Inductive Recursive Nodes}
-
-\todo{Figure out how this can be done in \slang; the below rules are broken.}
-
-For each inductive recursive node $i$, assume that the relations in $L(i)$ are numbered $1,\ldots,i_p$.  For each $1 \leq j \leq i_p$, add the rules:
-
-\begin{Drules}
-\drule{p\sub{j}_prev(\od{X})@next}
-      {p\sub{j}(\od{X})}
-\drule{n\sub{i}_done()}
-      {\(\left(\forall \od{X} . p\sub{j}(\od{X}) \Rightarrow p\sub{j}_prev(\od{X})\right)\)}
-\drule{p\sub{j}_done()}
-      {n\sub{i}_done()}
-\end{Drules}
 
 \subsubsection{Async Recursive Nodes}
 
