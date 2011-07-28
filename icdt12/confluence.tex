@@ -275,37 +275,7 @@ An easy corollary is that we can fix some deterministic choice function, since a
 Converting an asynchronous rule to an inductive rule in any \slang program preserves the ultimate model.
 \end{corollary}
 
-Not only are \slang programs confluent, but they also capture exactly PTIME.  We will prove this by showing an equivalence to Datalog programs, which are known to capture exactly PTIME over ordered structures.
-
-First, we note that it is clear that inductive rules can be converted into atemporal rules without effect to the ultimate model.
-
-\begin{lemma}
-\label{cor:no-inductive}
-Any inductive rule can be converted into an atemporal rule -- except for the basic persistence rules for the head predicate of any asynchronous rule -- with no effect to the ultimate model.
-\end{lemma}
-\begin{proof}
-Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into atemporal rules -- except the basic persistence rules for asynchrony -- preserves inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary} -- there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the proceduere, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
-\end{proof}
-
-%If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
-
-\begin{theorem}
-\slang programs capture exactly PTIME.
-\end{theorem}
-\begin{proof}
-First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into atemporal rules.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged.  Since all rules are atemporal, there is a unique stable model, which is also the same for every timestamp.
-
-Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  The minimal model is exactly the ultimate model.
-
-In the other direction, it is clear that we can encode any Datalog program with EDB negation in \slang using atemporal rules; the ultimate model coincides with the minimal model of the Datalog program.
-\end{proof}
-
-% \subsection{Monotonic Properties}
-% XXX: Can we relax ``IDB negation free'' to be ``IDB positive''?
-
-
-This discussion formalizes the CALM Conjecture~\cite{declarative-imperative} with respect to confluence, and proves it in one direction. \todo{Tie this in with the CALM conjecture.}
-Clearly, there are confluent programs not in \slang.  For example:
+Of course, there are confluent \lang programs not in \slang.  For example:
 
 \begin{example}
 A confluent \lang program that is not a \slang program.
@@ -325,5 +295,36 @@ A confluent \lang program that is not a \slang program.
 \end{Drules}
 \end{example}
 
-Any instance of this program has a single ultimate model in which \dedalus{mem()} contains the highest element in \dedalus{b_edb()} according to the order \dedalus{<}.
-Thus it is confluent, but the program uses IDB negation, and does not have guarded asynchrony.
+Any instance of this program has a single ultimate model in which \dedalus{mem()} contains the highest element in \dedalus{b_edb()} according to the order \dedalus{<}.  Thus it is confluent, but the program uses IDB negation, and does not have guarded asynchrony.
+
+Not only are \slang programs confluent, but they also capture exactly PTIME.  We will prove this by showing an equivalence to Datalog programs, which are known to capture exactly PTIME over ordered structures.
+
+First, we note that it is clear that inductive rules can be converted into atemporal rules without effect to the ultimate model.
+
+\begin{lemma}
+\label{lem:no-inductive}
+Any inductive rule can be converted into an atemporal rule -- except for the basic persistence rules for the head predicate of any asynchronous rule -- with no effect to the ultimate model.
+\end{lemma}
+\begin{proof}
+Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into atemporal rules -- except the basic persistence rules for asynchrony -- preserves inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary} -- there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the proceduere, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
+\end{proof}
+
+%If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
+
+\begin{theorem}
+\slang programs capture exactly PTIME.
+\end{theorem}
+\begin{proof}
+First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into atemporal rules using Lemma~\ref{lem:no-inductive}.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged.  Since all rules are atemporal, there is a unique stable model, which is also the same for every timestamp.
+
+Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  The minimal model is exactly the ultimate model.
+
+In the other direction, it is clear that we can encode any Datalog program with EDB negation in \slang using atemporal rules; the ultimate model coincides with the minimal model of the Datalog program.
+\end{proof}
+
+% \subsection{Monotonic Properties}
+% XXX: Can we relax ``IDB negation free'' to be ``IDB positive''?
+
+
+%This discussion formalizes the CALM Conjecture~\cite{declarative-imperative} with respect to confluence, and proves it in one direction. \todo{Tie this in with the CALM conjectu%re.}
+%Clearly, there are confluent programs not in \slang.  For example:
