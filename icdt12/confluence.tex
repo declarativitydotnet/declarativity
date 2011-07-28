@@ -59,8 +59,8 @@ Distributed garbage collection:
   \drule{points_to(Src,Dst)@next}{points_to(Src,Dst)}
   \drule{reach(Src,Dst)}
         {points_to(Src,Dst)}
-  \drule{reach(Src,Nxt)}
-        {reach(Src,Dst), points_to(Dst,Nxt)}
+  \drule{reach(Src,Next)}
+        {reach(Src,Dst), points_to(Dst,Next)}
   \drule{unreach(Addr)}
         {addr_edb(Addr), root_edb(Root), !reach(Root, Addr)}
   \drule{unreach(Addr)@next} {unreach(Addr)}
@@ -83,9 +83,9 @@ corresponding to executions in which \dedalus{unreach} is not computed until the
 transitive closure of \dedalus{points\_to} is fully determined (i.e., after all
 messages have been delivered), it also has models corresponding to executions in
 which it is ``prematurely'' computed.  These models all result in correctness
-violations, in which active memory is reclaimed.
+violations, in which reachable memory is reclaimed.
 
-Note that in both examples, there is a single ultimate model corresponding to
+Note that for both examples, there is a single ultimate model corresponding to
 the execution in which the nonmonotonic negation operator is not applied to a
 set until the set is fully determined.  This ``preferred'' model is akin to the
 perfect model computed by a centralized Datalog evaluator that computes rules in
@@ -112,7 +112,7 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 
 \begin{lemma}
 \label{lem:confluence-undecidable}
-Confluence of a \lang program is undecidable.
+Confluence of \lang programs is undecidable.
 \end{lemma}
 This is perhaps not a surprising result, as confluence is defined over all EDB instances.  We present a proof in the appendix.
 
