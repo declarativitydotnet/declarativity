@@ -122,7 +122,7 @@ This is perhaps not a surprising result, as confluence is defined over all EDB i
 
 %\wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
-Another problem is that \lang is too expressive -- it captures PSPACE.
+Another problem is that \lang is too expressive -- it captures PSPACE.  
 
 \begin{lemma}
 \label{lem:lang-pspace}
@@ -194,6 +194,8 @@ Finally, the entire formula is \dedalus{satisfiable(1)} (satisfiable) if the out
 \end{Drules}
 \end{proof}
 
+\subsection{\large \bf \slang}
+
 Distributed programs that produce nondeterministic outputs or have
 runtimes exponential in their inputs are undesirable in practice.  Since testing
 \lang programs to rule out these undesirable properties is undecidable in
@@ -263,7 +265,7 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 \end{proof}
 
 
-If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
+%%If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
 
 \todo{Bill to improve this proof.}
 \begin{theorem}
@@ -289,7 +291,7 @@ We can convert any FO[IFP] formula into a \slang program by pushing negation dow
 % XXX: Can we relax ``IDB negation free'' to be ``IDB positive''?
 
 
-This discussion formalizes the CALM Conjecture mentioned above with respect to confluence, and proves it in one direction. \todo{Tie this in with the CALM conjecture.}
+This discussion formalizes the CALM Conjecture~\cite{declarative-imperative} with respect to confluence, and proves it in one direction. \todo{Tie this in with the CALM conjecture.}
 Clearly, there are confluent programs not in \slang.  For example:
 
 \begin{example}
