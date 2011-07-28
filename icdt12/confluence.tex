@@ -37,7 +37,7 @@ An asynchronous marriage ceremony:
 \end{Drules}
 \end{example}
 Example~\ref{ex:marriage} presents a simple distributed voting program with a
-fixed membership group: a bride and a groom.  The marriage is off
+fixed set of members: a bride and a groom.  The marriage is off
 (\dedalus{runaway()} is true) if either party does not say ``I do.''
 
 However, the \lang program as given does not correctly implement such a vote.
@@ -47,45 +47,56 @@ containing \dedalus{runaway()}.  If the votes are assigned the same timestamp,
 the ultimate model does not contain \dedalus{runaway()}. In operational terms,
 this program exhibits a race condition: when the EDB contains ``I do'' votes
 from both parties, the truth value of \dedalus{runaway()} depends on the times
-at which the votes are delivered. Note that all predicates are
-inflationary.
+at which the votes are delivered. Note that all predicates are inflationary.
 
 \begin{example}
 \label{ex:gc}
 Distributed garbage collection:
 
 \begin{Drules}
-  \drule{points_to_global(Master, Src, Dst)@async}
-        {points_to(_, Src, Dst), master(Master)}
-  \drule{reach(Src, Dst)}
-        {points_to_global(Src, Dst)}
-  \drule{reach(Src, Dst)}
-        {points_to_global(Src, Nxt), reach(Src, Dst)}
-  \drule{unreach(Ref)} 
-        {ref(Ref), roots(Root), not reach(Root, Dst)}
-  \drule{unreach(Ref)@next} {unreach(Ref)}
+  \drule{points_to(#M,Src,Dst)@async}
+        {local_ptr_edb(#N, Src,Dst), master(#M)}
+  \drule{points_to(Src,Dst)@next}{points_to(Src,Dst)}
+  \drule{reach(Src,Dst)}
+        {points_to(Src,Dst)}
+  \drule{reach(Src,Nxt)}
+        {reach(Src,Dst), points_to(Dst,Nxt)}
+  \drule{unreach(Addr)}
+        {addr_edb(Addr), root_edb(Root), !reach(Root, Addr)}
+  \drule{unreach(Addr)@next} {unreach(Addr)}
 \end{Drules}
 \end{example}
-The program in Example~\ref{ex:gc} represents the control logic of a distributed garbage collection system for a separately managed
-shared memory.  The \dedalus{points\_to} relation is partitioned across a set of nodes, each of which owns its own root pointer into
-a reference tree.  Nodes forward the contents of their local \dedalus{points\_to} relation to a coordinator, who computes reachability
-by taking the transitive closure of this relation.  Any memory reference not in the closure of \dedalus{points\_to\_global} is 
-considered orphaned and may be garbage collected: we model this side-effecting computation by inserting into the immutably persistent
-relation \dedalus{orphan}.
+Example~\ref{ex:gc} presents a simple garbage collection program for a
+distributed memory system. Each node manages a set of pointers and forwards this
+information to a central coordinator node. The coordinator computes the set of
+transitively reachable addresses; if an address is not reachable from the root
+address, it is considered an orphan and can be garbage collected. Note that we
+would like the semantics of \dedalus{unreach} to be inflationary: once an
+address becomes a subject to garbage collection, it should not later
+``disappear'' from \dedalus{unreach}. For simplicity, we assume that each node
+owns a fixed set of pointers, stored in the EDB relation
+\dedalus{local_ptr_edb}.
 
-This more complicated example suffers from the same ambiguity as the marriage ceremony presented previously.  While the program has 
-an ultimate model corresponding to executions in which \dedalus{unreach} is not computed until the transitive closure of 
-\dedalus{points\_to\_global} is fully determined (i.e., after all messages have been delivered), it also has models corresponding to 
-executions in which it is ``prematurely'' computed.  These models all result in correctness violations, in which active memory is reclaimed.
+This more complicated example suffers from the same ambiguity as the marriage
+ceremony presented previously.  While the program has an ultimate model
+corresponding to executions in which \dedalus{unreach} is not computed until the
+transitive closure of \dedalus{points\_to\_global} is fully determined (i.e.,
+after all messages have been delivered), it also has models corresponding to
+executions in which it is ``prematurely'' computed.  These models all result in
+correctness violations, in which active memory is reclaimed.
 
-Note that in both examples, there is a single ultimate model corresponding to the execution in which the nonmonotonic negation
-operator is not applied to a set until the set is fully determined.  This ``preferred'' model is akin to the perfect model computed
-by a centralized Datalog evaluator that computes rules in stratum order~\cite{ullman}, applying the closed-world assumption to
-predicates only when it is certain that they will no longer change.
+Note that in both examples, there is a single ultimate model corresponding to
+the execution in which the nonmonotonic negation operator is not applied to a
+set until the set is fully determined.  This ``preferred'' model is akin to the
+perfect model computed by a centralized Datalog evaluator that computes rules in
+stratum order~\cite{ullman}, applying the closed-world assumption to predicates
+only when it is certain that they will no longer change.
 
-In the remainder of this section, we explore the features of \lang that allow such ambiguities, and consider a restricted language \slang that
-rules them out (but prohibits or complicates our implementations).  In Section~\ref{sec:perfect}, we consider a relaxation of \slang
-that forces a single, ``preferred'' model.
+In the remainder of this section, we explore the features of \lang that allow
+such ambiguities, and consider a restricted language \slang that rules them out
+(but prohibits or complicates our implementations).  In
+Section~\ref{sec:perfect}, we consider a relaxation of \slang that forces a
+single, ``preferred'' model.
 
 \subsection{Problems with \large \bf \lang}
 

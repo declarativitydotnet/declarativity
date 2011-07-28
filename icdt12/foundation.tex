@@ -147,7 +147,16 @@ All cycles involving a negated edge in a \lang program's PDG must also involve a
 
 \noindent
 \textbf{Syntactic sugar for space-time in \lang:}
-The restrictions on timestamps and location specifiers suggest a natural syntactic sugar to improve readability.  We annotate inductive head predicates with \dedalus{@next} and asynchronous head predicates with \dedalus{@async}; deductive rules have no head annotation.  These annotations allow us to scrap the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule heads and bodies.  We also hide location specifiers by default. The three kinds of rules listed above are expressed as follows:
+The restrictions on timestamps and location specifiers suggest a natural
+syntactic sugar to improve readability.  We annotate inductive head predicates
+with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
+deductive rules have no head annotation.  These annotations allow us to scrap
+the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and
+\dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
+heads and bodies.  We also omit location specifiers by default.\nrc{For async
+  rules, simply ``omitting'' locspecs is not sufficient: what is the default
+  location spec?} The three kinds of rules listed above are expressed as
+follows:
 
 Deductive:
 
