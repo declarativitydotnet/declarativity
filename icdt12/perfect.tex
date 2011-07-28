@@ -1,4 +1,5 @@
-\subsection{Perfect Ultimate Model}
+\section{Perfect Ultimate Model}
+\label{sec:perfect}
 
 Returning to our running examples, it is easy to see that neither program is directly expressible in \slang.  The marriage program
 from Example~\ref{ex:marriage} uses IDB negation to determine the truth value of \dedalus{runaway}.
@@ -6,7 +7,7 @@ from Example~\ref{ex:marriage} uses IDB negation to determine the truth value of
 %%from Example~\ref{ex:gc} negates the recursively-defined IDB predicate \dedalus{reach} to define \dedalus{unreach}.  
 We may, however, rewrite the program to
 ``push down'' negation to the EDB relations \dedalus{groom_i_do} and \dedalus{bride_i_do}, and then derive the \dedalus{runaway}
-IDB predicate positively as shown in Example~\ref{ex:marriage2}
+IDB predicate positively as shown in Example~\ref{ex:marriage2}.
 %~\footnote{Note that because the predicates are 0-ary (i.e., propositional), the first two rules obey our safety restrictions, in spite of the fact that they have a single negated subgoal.}.
 % commenting this out because there's no reason to believe, based on our presentation of range restriction, that this would be a problem.  we say it like ``any variable that appears in a negated subgoal...''
 While the rewrite is straightforward, a majority of the program statements need to be modified.
@@ -21,17 +22,23 @@ An asynchronous marriage ceremony with no IDB negation:
   \drule{bride_i_dont()@async}
         {!bride_i_do_edb()}
   \drule{runaway()}        {groom_i_dont()}
-  \drule{runaway()}        {groom_i_dont()}
+  \drule{runaway()}        {bride_i_dont()}
+  \drule{runaway()@next}
+        {runaway()}
   \drule{groom_i_dont()@next}
         {groom_i_dont()}
   \drule{bride_i_dont()@next}
         {bride_i_dont()}
-  \drule{runaway()@next}
-        {runaway()}
 \end{Drules}
 \end{example}
 
-The garbage collection program from Example~\ref{ex:gc} is likewise outside \slang due to IDB negation, but it presents a slightly more difficult problem, as negation must be pushed down through recursion.  The rules for positively computing the negation of a transitive closure are not particularly intuitive, and expressing the negation of an arbitrary recursive computation is even more difficult~\cite{immerman-ptime}.  Furthermore, the best known strategies involve a blowup in the arity of the relations.
+The garbage collection program from Example~\ref{ex:gc} is likewise outside
+\slang due to IDB negation but it presents a slightly more difficult problem, as
+negation must be pushed down through recursion.  The rules for positively
+computing the negation of a transitive closure are not particularly intuitive,
+and expressing the negation of an arbitrary recursive computation is even more
+difficult~\cite{immerman-ptime}.  Furthermore, the best known strategies involve
+a blowup in the arity of the relations.\nrc{Specify the degree of blowup?}
 %Because of the negation of a transitive closure computation in the rule defining \dedalus{unreach},
 %``pushing down'' the negation to EDB would entail moving the negation sign into the recursion. \paa{cite something}.
 %It is not immediately obvious how to do this in a way that preserves the intended semantics of the program.
