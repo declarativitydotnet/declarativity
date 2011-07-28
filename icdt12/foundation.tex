@@ -144,12 +144,9 @@ obeys the {\em causality constraint} \dedalus{T < S}.\footnote{Note that in
 
 A \lang \emph{program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  We restrict the usage of negation (\dedalus{!}) in \lang programs.
 
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be {\em asynchronous} (resp. {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, or \dedalus{<} relations, or the \dedalus{choice} construct.
-
-All cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
-
-\noindent
-\textbf{Syntactic sugar for space-time in \lang:}
+%%\noindent
+%%\textbf{Syntactic sugar for space-time in \lang:}
+\subsubsection{Syntactic Sugar}
 The restrictions on timestamps and location specifiers suggest a natural
 syntactic sugar to improve readability.  We annotate inductive head predicates
 with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
@@ -200,6 +197,9 @@ A rule body's location specifier can be accessed by including a variable symbol 
 
 
 \subsection{Semantics}
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp. inductive), then the edge is said to be {\em asynchronous} (resp. {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, or \dedalus{<} relations, or the \dedalus{choice} construct.
+
+All cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
 An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, and maps each IDB relation \dedalus{r} to the empty spatial relation instance.
 
