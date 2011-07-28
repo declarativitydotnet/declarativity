@@ -45,9 +45,14 @@ In general, the restriction of negation to EDB predicates presents a significant
 barrier to expressing practical programs. In this section, we introduce \plang,
 an extension of \slang that allows a limited form of IDB negation but retains
 the benefits of \slang: \plang also captures PTIME exactly and allows only
-confluent programs.
+confluent programs. First, we show how to safely allow IDB negation in \plang by
+inserting a coordination protocol between nodes, ensuring that negation is used
+safely. We then prove that \plang and \slang are equivalently expressive: any
+\plang program can be translated into an \slang program with the same ultimate
+model.
 
 \subsection{Safe IDB Negation}
+\label{sec:perfect-construction}
 
 There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{done_p(l,t)} \in \mathcal{S}$,  then $\dedalus{done_p(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{done_p(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
@@ -159,7 +164,7 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 \subsubsection{Async Recursive Nodes}
 
 
-\todo{Todo: not expresible in \plang}
+\todo{Todo: not expressible in \plang}
 
 
 \subsection{Properties of \plang}
@@ -169,13 +174,13 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 
 \subsection{Discussion}
-
-Submitting the garbage collection code from Example~\ref{ex:gc} as a dedalus\_d
-program results in the addition of the following rules:
+The garbage collection program from Example~\ref{ex:gc} can be made a legal 
+\plang program by adding the following rules:
 
 \begin{example}
-Synthesized rules for the garbage collection program
+Synthesized rules for the garbage collection program:
 
+\begin{Drules}
   \drule{points_to_to_send(M,Src,Dst)}
         {local_ptr_edb(N, Src,Dst), master(M)}
   \drule{points_to_send(#M, L, Src, Dst)@async}
@@ -190,6 +195,7 @@ Synthesized rules for the garbage collection program
         {points_to_done()}
 
   \drule{\(\forall\) N.nodes(N) \(\Rightarrow\) local_ptr_edb_done(N)} {}
+\end{Drules}
 \end{example}
 
 One rule from the original program must also be rewritten to include the
@@ -198,37 +204,39 @@ new subgoal \dedalus{reach\_done}:
 \begin{example}
 Garbage collection rewrite
 
+\begin{Drules}
   \drule{unreach(Addr)} 
         {addr_edb(Addr), root_edb(Root), !reach(Root,Addr), reach_done()}
+\end{Drules}
 \end{example}
 
-As we have shown, the resulting program has a single ultimate model.
-This model corresponds exactly with one of the ultimate models of the original
-program from Example~\ref{ex:gc}: the model in which \dedalus{!reach} is not evaluated until \dedalus{reach} is fully determined.  The rewrite has effectively
-forced an evaluation strategy analogous to stratum-order evaluation in a 
-centralized Datalog program.
+As we have shown, the resulting program has a single ultimate model.  This model
+corresponds exactly with one of the ultimate models of the original program from
+Example~\ref{ex:gc}: the model in which \dedalus{!reach} is not evaluated until
+\dedalus{reach} is fully determined.  The rewrite has effectively forced an
+evaluation strategy analogous to stratum-order evaluation in a centralized
+Datalog program.
 
-Note also that the rewrite code is a generalization of the ``coordination''
-code that a \lang programmer could have written by hand to ensure that the 
-local predicate \dedalus{points\_to} is a faithful representation of global 
-state.  
-In distributed systems, global computation barriers are commonly enforced
-by protocols based on voting: the two-phase commit protocol from distributed
-databases is a straightforward example.
-In essence, every agent responsible for a fragment of the global state
-must ``vote'' that every message they send to the coordinator has been acknowledged.  The coordinator must tally these votes, and ensure that the vote is 
-unanimous for all agents.  If the protocol completes successfully, the 
-coordinator may proceed past the barrier.
+Note also that the rewrite code is a generalization of the ``coordination'' code
+that a \lang programmer could have written by hand to ensure that the local
+predicate \dedalus{points\_to} is a faithful representation of global state.  In
+distributed systems, global computation barriers are commonly enforced by
+protocols based on voting: the two-phase commit protocol from distributed
+databases is a straightforward example~\cite{2pc}.  In essence, every agent
+responsible for a fragment of the global state must ``vote'' that every message
+they send to the coordinator has been acknowledged.  The coordinator must tally
+these votes and ensure that the vote is unanimous for all agents.  If the
+protocol completes successfully, the coordinator may proceed past the barrier.
 
 An explicit goal of our work with \lang has been to view general distributed
 systems through a model-theoretic lens.  From this perspective, the connection
 between coordination protocols that enforce barriers and stratified evaluation
-of logic programs is unsurprising.  Indeed, when distributed systems are 
-implemented in dedalus\_d, the two strategies have exactly the same consequences with respect
-to an appropriate model-theoretic semantics. Both ensure that among the 
-multiplicity of models induced by nonmonotonic logic, program evaluation will
-always select the model that corresponds to an intuitive evaluation order in
-which negation (a form of universal quantification) is applied only when it
+of logic programs is unsurprising.  Indeed, when distributed systems are
+implemented in \plang, the two strategies have exactly the same consequences
+with respect to an appropriate model-theoretic semantics. Both ensure that among
+the multiplicity of models induced by nonmonotonic logic, program evaluation
+will always select the model that corresponds to an intuitive evaluation order
+in which negation (a form of universal quantification) is applied only when it
 is certain that its consequences can never be retracted.
 
 
