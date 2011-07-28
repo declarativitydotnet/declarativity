@@ -2,9 +2,12 @@
 \section{Refining \large \bf \lang}
 \label{sec:confluence}
 
+\todo{Brag that \slang has a well-defined termination condition, whereas \lang does not}
+
 %Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 \lang can express a broad class of distributed systems but this flexibility comes at a cost.
-As we have shown, it is easy to write programs that have multiple ultimate models, which intuitively means that the program has non-deterministic output.  \wrm{Also say something about non-trivial programs with an empty ultimate model.}
+As we have shown, it is easy to write programs that have multiple ultimate models, which intuitively means that the program has non-deterministic output.
+%\wrm{Also say something about non-trivial programs with an empty ultimate model.}
 %as well as nontrivial programs with an empty ultimate model.
 Such programs are rarely desired and may indicate a bug.
 %\nrc{Dubious:
@@ -131,9 +134,9 @@ Another problem is that \lang is too expressive -- it captures PSPACE.
 \begin{proof}
 If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subset \text{PSPACE}$.
 
-We show how to write the PSPACE-complete QBF problem in \lang. Since \lang is closed under first-order reductions \todo{cite theorem here}, and QBF is PSPACE complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.
+We show how to write the PSPACE-complete QBF problem in \lang. Since \lang is closed under first-order reductions, and QBF is PSPACE complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.
 
-Assume that the QBF formula is in prenex normal form: $Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF \paa{please cite} involves removing $Q_1$, and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
+Assume that the QBF formula is in prenex normal form: \linebreak$Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF involves removing $Q_1$, and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
 
 The leaves of the tree of recursive calls can each be represented as an $n$-bit binary number, where bit $i$ holds the value of $x_i$.  Assume the left child of a node at depth $i$ of the recursive call tree represents binding $x_{i}$ to $0$, and the right child $1$.
 
@@ -299,8 +302,6 @@ Clearly, there are confluent programs not in \slang.  For example:
 \begin{example}
 A confluent \lang program that is not a \slang program.
 
-\todo{check example with rule sugaring guidelines in foundation}
-
 \begin{Drules}
 \drule{b(#n1, I)@async}
       {b_edb(#L,I)}
@@ -318,6 +319,3 @@ A confluent \lang program that is not a \slang program.
 
 Any instance of this program has a single ultimate model in which \dedalus{mem()} contains the highest element in \dedalus{b_edb()} according to the order \dedalus{<}.
 Thus it is confluent, but the program uses IDB negation, and does not have guarded asynchrony.
-
-
-
