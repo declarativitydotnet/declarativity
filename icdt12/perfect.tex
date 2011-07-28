@@ -1,16 +1,17 @@
 \section{Perfect Ultimate Model}
 \label{sec:perfect}
 
-Returning to our running examples, it is easy to see that neither program is directly expressible in \slang.  The marriage program
-from Example~\ref{ex:marriage} uses IDB negation to determine the truth value of \dedalus{runaway}.
-%%, and the garbage collection program
-%%from Example~\ref{ex:gc} negates the recursively-defined IDB predicate \dedalus{reach} to define \dedalus{unreach}.  
-We may, however, rewrite the program to
-``push down'' negation to the EDB relations \dedalus{groom_i_do} and \dedalus{bride_i_do}, and then derive the \dedalus{runaway}
-IDB predicate positively as shown in Example~\ref{ex:marriage2}.
-%~\footnote{Note that because the predicates are 0-ary (i.e., propositional), the first two rules obey our safety restrictions, in spite of the fact that they have a single negated subgoal.}.
-% commenting this out because there's no reason to believe, based on our presentation of range restriction, that this would be a problem.  we say it like ``any variable that appears in a negated subgoal...''
-While the rewrite is straightforward, a majority of the program statements need to be modified.
+Returning to our running examples, it is easy to see that neither program is
+directly expressible in \slang.  The marriage program from
+Example~\ref{ex:marriage} uses IDB negation to determine the truth value of
+\dedalus{runaway}.  We may, however, rewrite the program to ``push down''
+negation to the EDB relations \dedalus{groom_i_do} and \dedalus{bride_i_do}, and
+then derive the \dedalus{runaway} IDB predicate positively as shown in
+Example~\ref{ex:marriage2}.  While the rewrite is straightforward, a majority of
+the program statements need to be modified. Note that since the rewritten
+program can be expressed in \slang, it is confluent and is therefore not subject
+to the non-deterministic output observed for the original marriage program
+(Example~\ref{ex:marriage}).
 
 \begin{example}
 \label{ex:marriage2}
