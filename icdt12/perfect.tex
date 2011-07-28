@@ -125,7 +125,7 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
 \drule{p\sub{\phi}_max(\od{W},\od{X})}
       {p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{X},\od{_}), p\sub{\phi}_succ_done()}
 \drule{p\sub{\phi}_succ(\od{W},\od{X},\od{Y})}
-      {p(\od{W},\od{X}), p(\od{W},\od{Y}), !p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), \od{X} < \od{Y}, !p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
 \drule{p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y})}
       {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}}
 \drule{p\sub{\phi}_not_succ_done()}
@@ -133,17 +133,18 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
 \drule{p\sub{\phi}_succ_done()}
       {p\sub{\phi}_not_succ_done()}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
-      {p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X}).}
+      {p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X})}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
-      {forall\sub{\phi}_ind(\od{W},\od{Y}), p\sub{\phi}_succ(\od{W},\od{Y},\od{X}), q(\od{W},\od{X}).}
+      {forall\sub{\phi}_ind(\od{W},\od{Y}), p\sub{\phi}_succ(\od{W},\od{Y},\od{X}), q(\od{W},\od{X})}
 \drule{forall\sub{\phi}(\od{W})}
       {forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X})}
 \drule{forall\sub{\phi}(\od{W})}
       {!p(\od{W},\od{_}), p_done()}
 \end{Drules}
 
-Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
+The first four rules above compute a dense order over \dedalus{p\sub{phi}}, the next two rules compute completeness information used in the first four rules.  The final four rules iterate over the dense order of \dedalus{p\sub{phi}}, and checking each \dedalus{p\sub{phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} (or there are no \dedalus{p}) then \dedalus{forall\sub{\phi}} is true.
 
+Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
 \subsubsection{Async Recursive Nodes}
 
