@@ -19,8 +19,9 @@ its ``eventual'' execution state.  We show that a deterministic program always h
 regardless of any ``internal'' nondeterminism.  In the event of multiple ultimate models, each corresponds to a
 legitimately different, nondeterministic program output.
 
+\subsection{Syntax}
 
-\subsection{Preliminary Definitions}
+\subsubsection{Preliminary Definitions}
 
 \todo{Thread a running example through the paper}
 \todo{ensure ``relation'' vs ``relation name'' usage is consistent}
@@ -66,6 +67,8 @@ appears in \od{W} or \dedalus{V} appears in
 only appear in a single negated atom and do not appear in the head need not also
 appear in a positive atom~\cite{ullmanbook}.  Also, any variable symbol \dedalus{V} that appears in \od{W} must appear in some \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
 Furthermore, if \dedalus{b\sub{i}} (resp. \dedalus{c\sub{i}}) is \dedalus{<}, then any variable that appears in \dedalus{X\sub{i}} (resp. \dedalus{Y\sub{i}}) must also appear in \dedalus{X\sub{j}} for some $j \neq i$ -- i.e., variable symbols that appear in a \dedalus{<} atom must also appear in a non-negated atom.
+
+\subsubsection{\large \bf \lang}
 
 Given a schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
 obtained by adding a column to each relation schema in $\schema$ (except
