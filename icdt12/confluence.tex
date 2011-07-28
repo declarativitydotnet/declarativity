@@ -325,7 +325,7 @@ Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deduc
 %If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
 
 \begin{theorem}
-\slang programs capture exactly PTIME.
+\slang captures exactly PTIME.
 \end{theorem}
 \begin{proof}
 First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into deductive rules using Lemma~\ref{lem:no-inductive}.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged.  Since all rules are deductive, there is a unique stable model, which is also the same for every timestamp.

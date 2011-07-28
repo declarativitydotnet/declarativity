@@ -4,14 +4,14 @@
 Returning to our running examples, it is easy to see that neither program is
 directly expressible in \slang.  The marriage program from
 Example~\ref{ex:marriage} uses IDB negation to determine the truth value of
-\dedalus{runaway}.  We may, however, rewrite the program to ``push down''
-negation to the EDB relations \dedalus{groom_i_do} and \dedalus{bride_i_do}, and
-then derive the \dedalus{runaway} IDB predicate positively as shown in
-Example~\ref{ex:marriage2}.  While the rewrite is straightforward, a majority of
-the program statements need to be modified. Note that since
-Example~\ref{ex:marriage2} is written in \slang, the program is confluent;
-therefore, it is not subject to the non-deterministic output observed for the
-original marriage program (Example~\ref{ex:marriage}).
+\dedalus{runaway}. To avoid using IDB negation, we can rewrite the program to
+``push down'' negation to the EDB relations \dedalus{groom_i_do} and
+\dedalus{bride_i_do}, and then derive the \dedalus{runaway} IDB predicate
+positively as shown in Example~\ref{ex:marriage2}.  While the rewrite is
+straightforward, a majority of the program's rules need to be modified. Note
+that since Example~\ref{ex:marriage2} is written in \slang, the program must be
+confluent; therefore, it is not subject to the non-deterministic output observed
+for the original marriage program (Example~\ref{ex:marriage}).
 
 \begin{example}
 \label{ex:marriage2}
