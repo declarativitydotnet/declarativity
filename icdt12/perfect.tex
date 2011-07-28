@@ -173,6 +173,67 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 \paa{or a discussion section, at least, in which we point out that we can run those same example programs and get an intuitive,
 unambiguous semantics}
 
+Submitting the garbage collection code from Example~\ref{ex:gc} as a dedalus\_d
+program results in the addition of the following rules:
+
+\begin{example}
+Synthesized rules for the garbage collection program
+
+  \drule{points_to_to_send(M,Src,Dst)}
+        {local_ptr_edb(N, Src,Dst), master(M)}
+  \drule{points_to_send(#M, L, Src, Dst)@async}
+        {points_to_to_send(#L, M, Src, Dst)}
+  \drule{points_to_ack(#N, L, Src, Dst)}
+        {points_to_send(#L, N, Src, Dst)}
+  \drule{points_to_done_node(#M, N)@async}
+        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.points_to_to_send(#N, M, \od{X}) \Rightarrow points_to_ack(#N, M, \od{X})\)}
+  \drule{points_to_done(M)}
+        {\(\forall N.nodes(N) \Rightarrow points_to_done_node(M, N)\)}
+  \drule{reach_done()}
+        {points_to_done()}
+
+  \drule{\(\forall\) N.nodes(N) \(\Rightarrow\) local_ptr_edb_done(N)} {}
+\end{example}
+
+One rule from the original program must also be rewritten to include the
+new subgoal \dedalus{reach\_done}:
+
+\begin{example}
+Garbage collection rewrite
+
+  \drule{unreach(Addr)} 
+        {addr_edb(Addr), root_edb(Root), !reach(Root,Addr), reach_done()}
+\end{example}
+
+As we have shown, the resulting program has a single ultimate model.
+This model corresponds exactly with one of the ultimate models of the original
+program from Example~\ref{ex:gc}: the model in which \dedalus{!reach} is not evaluated until \dedalus{reach} is fully determined.  The rewrite has effectively
+forced an evaluation strategy analogous to stratum-order evaluation in a 
+centralized Datalog program.
+
+Note also that the rewrite code is a generalization of the ``coordination''
+code that a \lang programmer could have written by hand to ensure that the 
+local predicate \dedalus{points\_to} is a faithful representation of global 
+state.  
+In distributed systems, global computation barriers are commonly enforced
+by protocols based on voting: the two-phase commit protocol from distributed
+databases is a straightforward example.
+In essence, every agent responsible for a fragment of the global state
+must ``vote'' that every message they send to the coordinator has been acknowledged.  The coordinator must tally these votes, and ensure that the vote is 
+unanimous for all agents.  If the protocol completes successfully, the 
+coordinator may proceed past the barrier.
+
+An explicit goal of our work with \lang has been to view general distributed
+systems through a model-theoretic lens.  From this perspective, the connection
+between coordination protocols that enforce barriers and stratified evaluation
+of logic programs is unsurprising.  Indeed, when distributed systems are 
+implemented in dedalus\_d, the two strategies have exactly the same consequences with respect
+to an appropriate model-theoretic semantics. Both ensure that among the 
+multiplicity of models induced by nonmonotonic logic, program evaluation will
+always select the model that corresponds to an intuitive evaluation order in
+which negation (a form of universal quantification) is applied only when it
+is certain that its consequences can never be retracted.
+
 \todo{Connect stratification with coordination protocols used in practice in distributed systems.}
 
 
