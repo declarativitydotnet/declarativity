@@ -8,7 +8,7 @@ possible by admitting a representation of logical time into the program schema, 
 deductions to hold ``at a different time'' than their antecedents.  By narrowly constraining such temporal 
 deductions, \lang faithfully models systems that communicated over unreliable media, and mutate state over time.
 
-\todo{Get rid of ``stable model semantics''}
+%\todo{Get rid of ``stable model semantics''}
 In this section we formally present the syntax of \lang.  We then show that the stable model semantics may be
 used to assign meaning to executions of a \lang program, much as an trace captures a particular execution of a
 typical distributed program.  
@@ -154,10 +154,11 @@ with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
 deductive rules have no head annotation.  These annotations allow us to scrap
 the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
-heads and bodies.  We also omit location specifiers by default.\nrc{For async
-  rules, simply ``omitting'' locspecs is not sufficient: what is the default
-  location spec?} The three kinds of rules listed above are expressed as
-follows:
+heads and bodies.  We also omit location specifiers by default; when ommitted, the meaning in asynchronous rules is that the head location specifier equals the body's.
+%\nrc{For async
+%  rules, simply ``omitting'' locspecs is not sufficient: what is the default
+%  location spec?}
+The three kinds of rules listed above are expressed as follows:
 
 Deductive:
 
