@@ -72,7 +72,7 @@ information to a central coordinator node. The coordinator computes the set of
 transitively reachable addresses; if an address is not reachable from the root
 address, it is considered an orphan and can be garbage collected. Note that we
 would like the semantics of \dedalus{unreach} to be inflationary: once an
-address becomes a subject to garbage collection, it should not later
+address becomes eligible to be garbage collected, it should not later
 ``disappear'' from \dedalus{unreach}. For simplicity, we assume that each node
 owns a fixed set of pointers, stored in the EDB relation
 \dedalus{local_ptr_edb}.
