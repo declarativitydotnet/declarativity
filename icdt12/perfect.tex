@@ -222,7 +222,7 @@ that a \lang programmer could have written by hand to ensure that the local
 predicate \dedalus{points\_to} is a faithful representation of global state.  In
 distributed systems, global computation barriers are commonly enforced by
 protocols based on voting: the two-phase commit protocol from distributed
-databases is a straightforward example~\cite{gray-tp}.  In essence, every agent
+databases is a straightforward example~\cite{gray-tp}.  In the synthesized protocol shown above, every agent
 responsible for a fragment of the global state must ``vote'' that every message
 they send to the coordinator has been acknowledged.  The coordinator must tally
 these votes and ensure that the vote is unanimous for all agents.  If the
@@ -237,7 +237,7 @@ with respect to an appropriate model-theoretic semantics. Both ensure that among
 the multiplicity of models induced by nonmonotonic logic, program evaluation
 will always select the model that corresponds to an intuitive evaluation order
 in which negation (a form of universal quantification) is applied only when it
-is certain that its consequences can never be retracted.
+is certain that its consequences will never be retracted.
 
 
 
