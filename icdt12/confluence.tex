@@ -201,20 +201,20 @@ Finally, the entire formula is \dedalus{satisfiable(1)} (satisfiable) if the out
 
 \subsection{\large \bf \slang}
 
-Distributed programs that produce nondeterministic outputs or have
-runtimes exponential in their inputs are undesirable in practice.  Since testing
-\lang programs to rule out these undesirable properties is undecidable in
-general, we may instead ask whether a more constrained language will exclude
-such programs while retaining the convenience of \lang.  We will present a
-natural restriction of \lang that allows only confluent programs, and prove that
-it captures exactly PTIME.
+Distributed programs that produce nondeterministic outputs or have runtimes
+exponential in their inputs are undesirable in practice.  Since testing \lang
+programs to rule out these undesirable properties is undecidable in general, we
+may instead ask whether a more constrained language will exclude such programs
+while retaining the convenience of \lang.  We will present a restriction of
+\lang that allows only confluent programs and prove that it captures exactly
+PTIME.
 
 \begin{definition}
 A \lang program is {\em IDB negation-free} if the \dedalus{!} symbol only appears on EDB relations in the program.
 \end{definition}
 
 \begin{definition}
-A relation \dedalus{p} in a program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next <- p(\(\overline{\dedalus{X}}\)).}
+A relation \dedalus{p} in a \lang program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next <- p(\(\overline{\dedalus{X}}\)).}
 \end{definition}
 
 \begin{definition}
@@ -223,11 +223,11 @@ A \lang program has {\em guarded asynchrony} if all relations appearing in the h
 
 We will refer to the language of IDB negation-free \lang programs with guarded asynchrony as \slang.  Define the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by substituting the constant \dedalus{t} for the timestamp. 
 
-First we sill see that \slang programs are {\em inflationary} -- i.e., if a stable model of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
+First we will see that \slang programs are {\em inflationary} -- i.e., if a stable model of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
 
 \begin{lemma}
 \label{lem:inflationary}
-\slang programs are {\em inflationary}, i.e. if a stable model of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
+\slang programs are {\em inflationary}.
 \end{lemma}
 \begin{proof}
 Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head -- if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
@@ -284,7 +284,7 @@ A confluent \lang program that is not a \slang program.
 
 \begin{Drules}
 \drule{b(#n1, I)@async}
-      {b_edb(#L,I)}
+      {b_edb(#L, I)}
 \drule{b(I)@next}
       {b(I), !dequeued(I)}
 \drule{b_lt(I, J)}
