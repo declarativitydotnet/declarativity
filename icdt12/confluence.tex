@@ -216,9 +216,9 @@ A relation \dedalus{p} in a program $P$ is {\em simply persisted} if $P$ has the
 A \lang program has {\em guarded asynchrony} if all relations appearing in the heads of asynchronous rules are simply persisted.
 \end{definition}
 
-We will refer to the language of IDB negation-free \lang programs with guarded asynchrony as \slang.
+We will refer to the language of IDB negation-free \lang programs with guarded asynchrony as \slang.  Define the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by substituting the constant \dedalus{t} for the timestamp. 
 
-Define the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by substituting the constant \dedalus{t} for the timestamp.
+First we sill see that \slang programs are {\em inflationary} -- i.e., if a stable model of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
 
 \begin{lemma}
 \label{lem:inflationary}
@@ -232,6 +232,7 @@ For the moment, we assume that every fact has a unique derivation tree.  Multipl
 If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp. atemporal), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp. \dedalus{g@t}), the fact \dedalus{g@t} (resp. \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule and which is not EDB.  However, the path will eventually terminate at a leaf (an EDB node) providing a contradiction, because EDB facts exist at all timesteps.
 \end{proof}
 
+A consequence of inflation is that all \slang programs are confluent.
 
 \begin{theorem}
 \label{thm:confluence}
@@ -264,27 +265,28 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 %Hence $a$ must exist in all ultimate models.
 \end{proof}
 
+An easy corollary is that we can fix some deterministic choice function, since all choice functions yield the same ultimate model.  In particular, we have:
 
-%%If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
+\begin{corollary}
+\label{cor:no-async}
+Converting an asynchronous rule to an inductive rule in any \slang program preserves the ultimate model.
+\end{corollary}
 
-\todo{Bill to improve this proof.}
+Not only are \slang programs confluent, but they also capture exactly PTIME.  We will prove this by showing an equivalence to Datalog programs, which are known to capture exactly PTIME over ordered structures.
+
+First, we note that it is clear that inductive rules can be converted into atemporal rules without effect to the ultimate model.
+
+%If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
+
 \begin{theorem}
 \slang programs capture exactly PTIME.
 \end{theorem}
 \begin{proof}
-We will show how to convert any \slang program to an FO[IFP] formula, and how to convert any FO[IFP] formula to a \slang program.  It is known that FO[IFP] captures exactly PTIME over ordered structures~\cite{immerman-ptime}.
+First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into atemporal rules.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged.  Since all rules are atemporal, there is a unique stable model, which is also the same for every timestamp.
 
-First, it is obvious that the non-determinism of \dedalus{choice} does not increase the expressive power of \slang, because all \slang programs are confluent by Theorem~\ref{thm:confluence}.  Thus, the temporal annotations on all asynchronous rules may be changed to \dedalus{@next}; the rewritten program computes the same ultimate model.  \wrm{But, technically this violates the condition that only async rules can have different location specifiers in the head than the body.}
+Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  The minimal model is exactly the ultimate model.
 
-It is is clear that \slang is inflationary.  We would like the timestamps of a \slang program to correspond with the iterations of an FO[IFP] formula.  However, \slang timestamps may contain recursion.  We can rewrite a \slang program so that the timestamps are first order.  \todo{Figure out how exactly I want to show this.  Think hard about recursion through universal quantification, as well as stratified negation.}
-
-\slang admits a least fixpoint in each iteration; we need to show we can rewrite this formula to an inflationary fixpoint formula.  \wrm{But we can rewrite the least fixpoint as an FO[IFP] formula, and nesting of inflationary fixpoints does not increase expressive power -- citation?}
-
-Thus, we can convert a \slang program into an FO[IFP] formula.
-
-We can convert any FO[IFP] formula into a \slang program by pushing negation down to the EDB by applying negation pushdown results for FO[LFP] from~\cite{immerman-ptime}.  \todo{Clafiry w/ Neil I. about whether this pushdown uses universal quantification.  This isn't essential though, we can just convert any FO[IFP] formula into a turing machine, and re-express the turing machine in \slang.}
-
-\wrm{Also, we probably should explain how to convert between FO[IFP] and ``rule form''?}
+In the other direction, it is clear that we can encode any Datalog program with EDB negation in \slang using atemporal rules; the ultimate model coincides with the minimal model of the Datalog program.
 \end{proof}
 
 % \subsection{Monotonic Properties}
