@@ -69,7 +69,7 @@ only appear in a single negated atom and do not appear in the head need not also
 appear in a positive atom~\cite{ullmanbook}.  Also, any variable symbol \dedalus{V} that appears in \od{W} must appear in some \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
 Furthermore, if \dedalus{b\sub{i}} (resp.\ \dedalus{c\sub{i}}) is \dedalus{<}, then any variable that appears in \dedalus{X\sub{i}} (resp.\ \dedalus{Y\sub{i}}) must also appear in \dedalus{X\sub{j}} for some $j \neq i$ -- i.e., variable symbols that appear in a \dedalus{<} atom must also appear in a non-negated atom.
 
-\subsubsection{\large \bf \lang}
+\subsubsection{Spatial and Temporal Extensions}
 
 Given a schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
 obtained by adding a column to each relation schema in $\schema$ (except
@@ -143,10 +143,10 @@ obeys the {\em causality constraint} \dedalus{T < S}.\footnote{Note that in
   indicating that the message was dropped by the network. In this paper, we
   assume reliable delivery of messages.}
 
-A \lang \emph{program} is a set of spatio-temporal rules over some spatio-temporal schema $\stschema$.  We restrict the usage of negation (\dedalus{!}) in \lang programs.
+A \lang \emph{program} is a set of spatio-temporal rules over some
+spatio-temporal schema $\stschema$.  We restrict the usage of negation
+(\dedalus{!}) in \lang programs.\nrc{\ldots in what way do we restrict it?}
 
-%%\noindent
-%%\textbf{Syntactic sugar for space-time in \lang:}
 \subsubsection{Syntactic Sugar}
 The restrictions on timestamps and location specifiers suggest a natural
 syntactic sugar to improve readability.  We annotate inductive head predicates
@@ -154,11 +154,9 @@ with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
 deductive rules have no head annotation.  These annotations allow us to scrap
 the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
-heads and bodies.  We also omit location specifiers by default; when ommitted, the meaning in asynchronous rules is that the head location specifier equals the body's.
-%\nrc{For async
-%  rules, simply ``omitting'' locspecs is not sufficient: what is the default
-%  location spec?}
-The three kinds of rules listed above are expressed as follows:
+heads and bodies.  We also omit location specifiers by default; when ommitted,
+the meaning in asynchronous rules is that the head location specifier equals the
+body's.  The three kinds of rules listed above are expressed as follows:
 
 Deductive:
 
