@@ -61,21 +61,21 @@ left of the $\leftarrow$ is called the {\em head} of the rule, and the
 conjunction of atoms to the right is called the rule's {\em body}.
 \jmh{Following on to the question above about \dedalus{<}, shouldn't we use
   obligatory boilerplate about Horn clauses and finite Herbrand universes?} The
-head of a rule \dedalus{p} may not be \dedalus{<}.
+head of a rule \dedalus{p} may not be \dedalus{<}. Furthermore, if
+\dedalus{b\sub{i}} (resp.\ \dedalus{c\sub{i}}) is \dedalus{<}, then any variable
+that appears in \dedalus{X\sub{i}} (resp.\ \dedalus{Y\sub{i}}) must also appear
+in \dedalus{X\sub{j}} for some $b_j \neq \dedalus{<}$. That is, variable symbols
+that appear in a \dedalus{<} atom must also appear in a non-negated atom that is
+not \dedalus{<}.
 
-Note that we maintain the usual safety
-restrictions of Datalog rules: \jmh{does this colon introduce the entire rest of this paragraph?  If so you need to punctuate a bit differently.  The remainder of the paragraph is pretty boring it'd be nice to know I can skip it as ``yeah yeah, safety''} any variable symbol \dedalus{V} that appears in
-\od{Y\sub{i}} for some $1 \leq i \leq m$ must also appear in
-\od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
-appears in \od{W} or \dedalus{V} appears in
-\od{Y\sub{k}} for some $k \neq i$---i.e., variable symbols that
-only appear in a single negated atom and do not appear in the head need not also
-appear in a positive atom~\cite{ullmanbook}.  Also, any variable symbol that appears in \od{W} must appear in some \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
-Furthermore, if \dedalus{b\sub{i}} (resp.\ \dedalus{c\sub{i}}) is \dedalus{<},
-then any variable that appears in \dedalus{X\sub{i}} (resp.\ \dedalus{Y\sub{i}})
-must also appear in \dedalus{X\sub{j}} for some $b_j \neq \dedalus{<}$. That is,
-variable symbols that appear in a \dedalus{<} atom must also appear in a
-non-negated atom that is not \dedalus{<}.
+Note that we also maintain the usual Datalog safety restrictions: any variable
+symbol \dedalus{V} that appears in \od{Y\sub{i}} for some $1 \leq i \leq m$ must
+also appear in \od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
+appears in \od{W} or \dedalus{V} appears in \od{Y\sub{k}} for some $k \neq
+i$---i.e., variable symbols that only appear in a single negated atom and do not
+appear in the head need not also appear in a positive atom~\cite{ullmanbook}.
+Also, any variable symbol that appears in \od{W} must appear in some
+\dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
 
 \subsubsection{Spatial and Temporal Extensions}
 
