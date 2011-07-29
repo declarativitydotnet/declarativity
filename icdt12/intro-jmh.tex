@@ -5,7 +5,13 @@ Traditional lines of attack on the problem focus on techniques for constraining 
 
 By focusing on low-level features like message receipt and read/write dependencies, these protocols lead to conservative assessments of the risk of interleavings, even when application semantics might indicate the commutativity of certain tasks at a higher level. Developers are therefore often tempted to avoid these protocols and attempt to ensure coordination-free correctness via higher-level semantic properties.  But there are few formal tools to help programmers guarantee that their reasoning is sound.
 
-In recent years there has been optimism that declarative languages grounded in Datalog can provide a clean foundation for distributed programming~\cite{declarative-imperative}.  This has led to activity in language and system design~\cite{declarative-distributed-languages}, as well as formal models for distributed computation using such languages~\cite{relational-transducers,navarro-oper-sem,card-abstraction}.
+In recent years there has been optimism that declarative languages grounded in
+Datalog can provide a clean foundation for distributed
+programming~\cite{declarative-imperative}.  This has led to activity in language
+and system design (e.g.,~\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}), as well as formal
+models for distributed computation using such
+languages (e.g.,~\cite{relational-transducers,navarro-oper-sem,card-abstraction}).\nrc{TODO:
+  cite Abiteboul and Vianu on RTs? Other system cites?}
 
 In this paper we place distributed programs on a model-theoretic foundation, and use that foundation to study program correctness at a relatively high semantic level.  We are interested in a model-theoretic approach because of its declarativity---it focuses attention on the connection between the specification of a program and its intended outcome, without resorting to operational reasoning.  We show how this approach allows us to characterize a family of programs that are indifferent to non-deterministic message orders (confluent), and a syntactically richer family of programs that judiciously use coordination logic to ensure confluence by defining computations over appropriate sets of received messages.
 
