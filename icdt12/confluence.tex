@@ -9,20 +9,21 @@
 As we have shown, it is easy to write programs that have multiple ultimate models, which intuitively means that the program has non-deterministic output.
 %\wrm{Also say something about non-trivial programs with an empty ultimate model.}
 %as well as nontrivial programs with an empty ultimate model.
-Such programs are rarely desired and may indicate a bug.
+However, it is typically desirable to ensure that a program specification on a fixed input has a single, deterministic output, regardless of non-determinism in the order of message arrivals (captured in Dedalus by \dedalus{choice}).  
+% Such programs are rarely desired and may indicate a bug.
 %\nrc{Dubious:
 %  long-running services might well have no ultimate model according to this
 %  formulation. Somewhere, we should probably concede that confluence, as formulated, is not
 %  a general correctness criteria.}
 % Commented out for now, because Dedalus_C doesn't model long-running services, as the entire EDB is assumed to be given at time 0.
 %%First, the problem of multiple ultimate models, or no ultimate model, is a problem.  In practice, such programs are rarely desired and indeed often indicate a bug.  
-We typically would like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
+% We typically would like our distributed program to have a single output, regardless of any non-deterministic behavior within an execution.
 
 Having defined the \lang language, we will refer to two running examples for the remainder of the paper.  
 
 \begin{example}
 \label{ex:marriage}
-An asynchronous marriage ceremony:
+A simple asynchronous marriage ceremony:
 
 \begin{Drules}
   \drule{groom_i_do()@async}
@@ -39,18 +40,19 @@ An asynchronous marriage ceremony:
         {bride_i_do()}
 \end{Drules}
 \end{example}
-Example~\ref{ex:marriage} presents a simple distributed voting program with a
+In a classic paper, Gray notes the strong similarity between distributed commit protocols and marriage ceremonies~\cite{graytransactionconcept}.  For simplicity (and felicity), Example~\ref{ex:marriage} presents a simple distributed voting program with a
 fixed set of members: a bride and a groom.  The marriage is off
 (\dedalus{runaway()} is true) if either party does not say ``I do.''
 
-However, the \lang program as given does not correctly implement such a vote.
+However, the \lang program as given does not correctly implement such a vote. 
+% as it relies on a non-deterministic ``synchronicity'' of the two parties.
 Any stable model where \dedalus{groom_i_do()} and \dedalus{bride_i_do()}
-disagree in their first assignments of timestamps yields an ultimate model
-containing \dedalus{runaway()}.  If the votes are assigned the same timestamp,
+{\em disagree} in their first assignments of timestamps yields an ultimate model
+containing \dedalus{runaway()}.  By contrast, if the votes are assigned the same timestamp,
 the ultimate model does not contain \dedalus{runaway()}. In operational terms,
 this program exhibits a race condition: when the EDB contains ``I do'' votes
-from both parties, the truth value of \dedalus{runaway()} depends on the times
-at which the votes are delivered.
+from both parties, the truth value of \dedalus{runaway()} depends on the (non-deterministic) times
+at which their messages are delivered.
 %Note that all predicates are inflationary.
 %Removed this, because "inflationary" has not yet been defined; not sure it is
 %crucial, anyway. -nrc
@@ -85,8 +87,8 @@ EDB relation \dedalus{local_ptr_edb}.
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
 corresponding to executions in which \dedalus{unreach} is not computed until the
-transitive closure of \dedalus{points\_to} is fully determined (i.e., after all
-messages have been delivered), it also has models corresponding to executions in
+transitive closure of \dedalus{points\_to} \jmh{don't you mean reach?} is fully determined (i.e., after all
+messages have been delivered), it also has ultimate models corresponding to executions in
 which it is ``prematurely'' computed.  These models all result in correctness
 violations: reachable memory addresses appear in the \dedalus{unreach} relation.
 
@@ -97,10 +99,10 @@ model computed by a centralized Datalog evaluator that computes rules in stratum
 order~\cite{ullman}, applying the closed-world assumption to predicates only
 when it is certain that they will no longer change.
 
-In the remainder of this section, we explore the features of \lang that allow
+In the remainder of this section, we explore the aspects of \lang that allow
 such ambiguities and propose a restricted language \slang that rules them out
-(but prohibits or complicates our implementations).  In
-Section~\ref{sec:perfect}, we consider a relaxation of \slang that forces a
+(but prohibits or complicates the specifications of programs like our examples above).  In
+Section~\ref{sec:perfect}, we consider a relaxation of \slang that allows relatively intuitive program specifications like our examples, but narrows their interpretation to a
 single, ``preferred'' model.
 
 \subsection{Problems with \large \bf \lang}
@@ -115,7 +117,7 @@ single, ``preferred'' model.
 
 Confluence is a desirable, albeit conservative, correctness property for a distributed program.  A program that is
 confluent produces a deterministic output in spite of nondeterministic orders in its execution.  For example, if
-we could show that a data replication protocol was confluent, we could prove that all replicas were ``eventually consistent''
+we could show that a data replication protocol was confluent, we could formally prove a version of the commonly-desired property that all replicas be ``eventually consistent''
 after all messages were delivered, in spite of delay and reordering.
 Unfortunately, confluence is an undecidable property of \lang programs:
 
@@ -127,16 +129,18 @@ This is perhaps not a surprising result, as confluence is defined over all EDB i
 
 %\wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
-Another problem is that \lang is too expressive -- it captures PSPACE.  
+Another symptom of \lang being ``too big'' a language is its expressive power: it captures PSPACE.  
 
 \begin{lemma}
 \label{lem:lang-pspace}
 \lang captures exactly PSPACE.
 \end{lemma}
+\jmh{I vote to move the proof to the appendix, and give a hint here of how it's done (via QBF).}
+
 \begin{proof}
 If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subset \text{PSPACE}$.
 
-We show how to write the PSPACE-complete QBF problem in \lang. Since \lang is closed under first-order reductions, and QBF is PSPACE complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.
+We show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem \jmh{Citation needed, even if only to Garey/Johnson} in \lang. Since \lang is closed under first-order reductions, and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.
 
 Assume that the QBF formula is in prenex normal form: \linebreak$Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF involves removing $Q_1$, and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
 
@@ -224,20 +228,20 @@ A \lang program has {\em guarded asynchrony} if all relations appearing in the h
 We will refer to the language of IDB negation-free \lang programs with guarded
 asynchrony as \slang.  Define the notation \dedalus{f@t} to mean the
 spatio-temporal fact obtained from the spatial fact \dedalus{f} by substituting
-the constant \dedalus{t} for the timestamp.
+the constant \dedalus{t} for the timestamp. \jmh{This important notation comes rather "by the way" here.  Is there a better spot to introduce it?}
 
 First we will see that \slang programs are {\em inflationary}: if a stable model
 of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also
-contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
+contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}). \jmh{Doesn't inflationary have a meaning in Datalog?  Do we need to coin a term like "temporally inflationary"?}
 
 \begin{lemma}
 \label{lem:inflationary}
 \slang programs are {\em inflationary}.
 \end{lemma}
 \begin{proof}
-Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head -- if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
+Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
 
-For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle -- simply repeat the following process for each tree.
+For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle---simply repeat the following process for each tree.
 
 If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp.\ deductive), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp.\ \dedalus{g@t}), the fact \dedalus{g@t} (resp.\ \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule and which is not EDB.  However, the path will eventually terminate at a leaf (an EDB node) providing a contradiction, because EDB facts exist at all timesteps.
 \end{proof}
@@ -275,7 +279,7 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 %Hence $a$ must exist in all ultimate models.
 \end{proof}
 
-An easy corollary is that we can fix some deterministic choice function, since all choice functions yield the same ultimate model.  In particular, we have:
+An easy corollary is that we can fix some deterministic choice function \jmh{when?  and get what?}, since all choice functions yield the same ultimate model. \jmh{The previous sentence is a bit vague about the goals of this corollary.  Try rewording.  Or if you want to get more formal, you could  do this stepwise showing that an ultimate model represents an equivalence class of stable models leading to the same final state, and a program with only one ultimate model has an ``inductive'' stable model is in that equivalence class.} In particular, we have:
 
 \begin{corollary}
 \label{cor:no-async}
@@ -309,15 +313,15 @@ Not only are \slang programs confluent, but they also capture exactly PTIME.  We
 will prove this by showing an equivalence to Datalog programs, which are known
 to capture exactly PTIME over ordered structures~\cite{immerman-book}.
 
-First, we note that inductive rules can be converted into deductive rules without
-affecting the ultimate model.
+First, we note that inductive rules in \slang can be converted into deductive rules without
+affecting the ultimate model. \jmh{The below strikes me as being rather sloppier than the rest of the discussion.  You talk about program transformations in a pretty offhanded way (as compared to the development of spatiotemporal rules, for example).  The special treatment of simple persistence rules makes this feel even sloppier.  Might be worth specifying the transformation in the style you use in Section 2, and then proving the equivalence of pre- and post-transformed programs.}
 
 \begin{lemma}
 \label{lem:no-inductive}
-Any inductive rule can be converted into a deductive rule -- except for simple persistence rules for the head predicate of any asynchronous rule -- with no effect to the ultimate model.
+Any inductive rule in \slang can be converted into a deductive rule---except for simple persistence rules for the head predicate of any asynchronous rule ---with no effect to the ultimate model.
 \end{lemma}
 \begin{proof}
-Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deductive rules -- except the simple persistence rules for asynchrony -- preserves inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary} -- there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
+Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deductive rules---except the simple persistence rules for asynchrony---preserves inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
 \end{proof}
 
 %If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
@@ -327,9 +331,9 @@ Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deduc
 \slang captures exactly PTIME.
 \end{theorem}
 \begin{proof}
-First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into deductive rules using Lemma~\ref{lem:no-inductive}.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged.  Since all rules are deductive, there is a unique stable model, which is also the same for every timestamp.
+First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into deductive rules using Lemma~\ref{lem:no-inductive}.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged. \jmh{That line of reasoning seems a bit sloppy; we haven't explored carefully how the expressive power etc. changes when you do away with causality!} Since all rules are deductive, there is a unique stable model, which is also the same for every timestamp.
 
-Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  The minimal model is exactly the ultimate model.
+Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  Its minimal model is exactly the ultimate model of the single-timestep \slang program.
 
 In the other direction, it is clear that we can encode any Datalog program with EDB negation in \slang using deductive rules; the ultimate model coincides with the minimal model of the Datalog program.
 \end{proof}
