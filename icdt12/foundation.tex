@@ -32,7 +32,7 @@ its ``eventual'' execution state.  Even with this simplification, some programs 
 
 We assume a finite universe $\univ$ of values.
 
-A {\em relation schema} $(dedalus{r},n)$ is a pair consisting of a relation name $\dedalus{r}$ and its arity $n$.
+A {\em relation schema} $(\dedalus{r},n)$ is a pair consisting of a relation name $\dedalus{r}$ and its arity $n$.
 A {\em database schema} $\schema$ is a finite set of relation schemas.
 %\nrc{Confusing: relation schema is a singleton, but ``schema'' is a set of relation schemas?} 
 %I'm changing ``schema'' to ``database schema''.  A google search for [``relational schema'' ``database schema''] reveals this to be at least somewhat standard.
@@ -71,9 +71,9 @@ variable symbols that appear in a \dedalus{<} atom must also appear in a
 non-negated atom that is not \dedalus{<}.
 
 \subsubsection{Safety}
-Note that we also maintain the usual Datalog safety restrictions: any variable
-symbol \dedalus{V} that appears in \od{Y\sub{i}} for some $1 \leq i \leq m$ must
-also appear in \od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
+\lang maintains the usual Datalog safety restrictions: any variable symbol
+\dedalus{V} that appears in \od{Y\sub{i}} for some $1 \leq i \leq m$ must also
+appear in \od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
 appears in \od{W} or \dedalus{V} appears in \od{Y\sub{k}} for some $k \neq
 i$---i.e., variable symbols that only appear in a single negated atom and do not
 appear in the head need not also appear in a positive atom~\cite{ullmanbook}.
