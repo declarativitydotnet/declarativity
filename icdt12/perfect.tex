@@ -169,9 +169,71 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsection{Properties of \plang}
 
-\todo{Show that \plang programs are confluent.}\\
-\todo{Show that \plang captures exactly PTIME.}
+\begin{lemma}
+\label{lem:plang-done-right}
+The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in \mathcal{S}$,  then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.
+\end{lemma}
+\begin{proof}
+We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} are correct.
 
+Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the atemporal case.
+
+In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality constraint implies that the timestamp on acknowledgements is later than the timestamp on the facts they acknowledge, and thus the timestamp on each node's \dedalus{r\sub{j}_node_done} fact is greater than the timestamp on the acknowledged facts.  Thus, before a node concludes \dedalus{p_done()}, that node has all facts, assuming that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} are correct.
+
+\todo{fix up}
+In the asynchronous recursive case, the causality constraint ensures that every response in the second round is received at a time greater than every response in the first round.  Thus, between at least the last response of the first round, and the last response of the second round, no node has outstanding messages, and no node sends a message.  This implies that no node ever sends a message again.
+\end{proof}
+
+\begin{lemma}
+\label{lem:plang-inflationary}
+\plang programs are inflationary.
+\end{lemma}
+\begin{proof}
+Since a \dedalus{!p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
+\end{proof}
+
+\todo{ensure recursion through negation is ruled out earlier...}
+
+The {\em stratum} of a relation \dedalus{r} is the maximum number of negated edges on any path in the PDG from \dedalus{r} to an EDB relation.  Clearly this is finite, as \plang programs do not have recursion through negation.
+
+Note that we can convert an $n$-stratum \plang program into $n$ \slang programs, one per stratum.  Stratum $i$'s program, $P_i$, consists of all rules whose head relation is in stratum $i$.  The output schema of $P_i$ contains all relations in stratum $i+1$, and $P_i$'s EDB contains all relations in stratum $j < i$.  $P_0$'s EDB contains all EDB relations.  $P_n$'s output schema contains all relations in $P$'s output schema.  We will show that running these programs in sequence gives the same result as $P(E)$:
+
+\begin{lemma}
+\label{lem:can-stratify}
+The ultimate model of $P(E)$ is equivalent to the ultimate model of $P_n(\ldots P_1(P_0(E)) \ldots ) = Q(E)$
+\end{lemma}
+\begin{proof}
+Note that for any fact \dedalus{p@t} in any stable model of $P_0(E)$, \dedalus{p} is in the ultimate model of $P_0(E)$ (Lemma~\ref{lem:inflationary}).
+
+Any path from \dedalus{p} to any EDB relation in the PDG passes through no negations.  Thus, we can consider a derivation tree of \dedalus{p@t}, and use a similar argument as in Lemma~\ref{lem:inflationary} to show that \dedalus{p@s} is in any stable model of $P(E)$ for some \dedalus{s}, and thus is the ultimate model of $P(E)$ (Lemma~\ref{lem:plang-inflationary}).
+
+We can continue this proof inductively; if the ultimate model of $P_0(E)$ is contained in the ultimate model of $P(E)$, then we apply Lemmas~\ref{lem:inflationary} and~\ref{lem:plang-inflationary} to obtain a contradiction of the ultimate model of $P_{i+1}(\ldots P_1(P_0(E)) \ldots)$ is not contained in the ultimate model of $P(E)$.  Thus, the ultimate models are equal.
+\end{proof}
+
+As corollaries of the above Lemma, we can apply several previous results, treathing each stratum as a separate program with only EDB negation.
+
+\begin{corollary}
+\label{cor:plang-confluent}
+\plang programs are confluent.
+\end{corollary}
+
+Note that every \slang program is a \plang program.  Thus we have:
+
+\begin{corollary}
+\label{cor:plang-ptime}
+\plang programs capture exactly PTIME.
+\end{corollary}
+
+%\begin{theorem}
+%\label{thm:plang-ptime}
+%\plang programs capture exactly PTIME
+%\end{theorem}
+%\begin{proof} 
+%Since \plang programs are confluent, Corollary~\ref{cor:no-async} applies.  Thus, asynch%ronous rules may be replaced with inductive rules.  We can assume these are the only ind%uctive rules in the program, by Lemma~\ref{lem:no-inductive}.  Using a proof in the styl%e of Lemma~\ref{lem:no-inductive}, considering each stratum at a time, we can also see t%hat these inductive rules can be converted into atemporal rules with no effect to the ul%timate model.  The stable model of the resulting program is unique, and is also the same% for every timestamp.
+
+%As in Theorem~\ref{thm:ptime}, we remove the timestamp attribute from all relations, and% the \dedalus{time} relations from all rule bodies.  The result is a Datalog program wit%h stratified negation.  The perfect model of the Datalog program is exactly the ultimate% model, as the stable model semantics coincides with the perfect model semantics for str%atified programs.  It is known that for ordered structures, stratified Datalog is also e%quivalent to PTIME, due to negation pushdown results in~\cite{immerman-ptime}.
+
+%In the other direction, it is clear that we can encode any stratified Datalog program in% \plang using atemporal rules: the ultimate model coincides wieh the perfect model of th%e Datalog program.                                                                   %\end{proof}  
 
 \subsection{Discussion}
 The garbage collection program from Example~\ref{ex:gc} can be made a legal 
