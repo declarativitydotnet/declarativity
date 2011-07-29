@@ -63,10 +63,10 @@ conjunction of atoms to the right is called the rule's {\em body}.
   obligatory boilerplate about Horn clauses and finite Herbrand universes?} The
 head of a rule \dedalus{p} may not be \dedalus{<}. Furthermore, if
 \dedalus{b\sub{i}} (resp.\ \dedalus{c\sub{i}}) is \dedalus{<}, then any variable
-that appears in \dedalus{X\sub{i}} (resp.\ \dedalus{Y\sub{i}}) must also appear
-in \dedalus{X\sub{j}} for some $b_j \neq \dedalus{<}$. That is, variable symbols
-that appear in a \dedalus{<} atom must also appear in a non-negated atom that is
-not \dedalus{<}.
+that appears in \dedalus{\od{X\sub{i}}} (resp.\ \dedalus{\od{Y\sub{i}}}) must
+also appear in \dedalus{\od{X\sub{j}}} for some $b_j \neq \dedalus{<}$. That is,
+variable symbols that appear in a \dedalus{<} atom must also appear in a
+non-negated atom that is not \dedalus{<}.
 
 \subsubsection{Safety}
 Note that we also maintain the usual Datalog safety restrictions: any variable
