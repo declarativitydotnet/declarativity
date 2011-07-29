@@ -163,6 +163,8 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsubsection{Async Recursive Nodes}
 
+\todo{Mention that this is not in \plang}
+
 Consider an async recursive node $i$.
 
 Let the asynchronous rules with head relations in $L(i)$ be numbered $1, \ldots, i_p$.  Add the rule:
@@ -222,7 +224,7 @@ To count votes, we assume the following rules are instantiated for $k=1$ and $2$
       {!not_all_recv_k\sub{i}(), not_all_comp_k\sub{i}()}
 \end{Drules}
 
-Once a node has received a \dedalus{vote_1} vote solicitation, it also begins keeping track of whether it has sent any messages in the async recursive component; this information is erased if another \dedalus{vote_1} solicitation is received.  The causality constraint implies that \dedalus{!all_ack()} is true if a message is sent, because messages cannot be instantly acknowledged.
+Once a node has received a \dedalus{vote_1\sub{i}} vote solicitation, it also begins keeping track of whether it has sent any messages in the async recursive component; this information is erased if another \dedalus{vote_1\sub{i}} solicitation is received.  The causality constraint implies that \dedalus{!all_ack\sub{i}()} is true if a message is sent, because messages cannot be instantly acknowledged.
 
 \begin{Drules}
 \drule{sent\sub{i}()}
@@ -249,7 +251,7 @@ The voting for round 2 is shown below.  Notes vote \dedalus{incomplete_2\sub{i}}
       {vote_2\sub{i}(#N), sent\sub{i}(#N), node_min(#N,M)}
 \end{Drules}
 
-The entire async recursive node $i$ is done when all nodes have voted \dedalus{complete_2}.
+The entire async recursive node $i$ is done when all nodes have voted \dedalus{complete_2\sub{i}}.
 
 \begin{Drules}
 \drule{done_recursion\sub{i}()}
