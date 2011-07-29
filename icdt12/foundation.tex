@@ -28,7 +28,7 @@ its ``eventual'' execution state.  Even with this simplification, some programs 
 \todo{ensure ``relation'' vs ``relation name'' usage is consistent}
 \todo{Cite Datalog 2.0 workshop paper}
 
-We assume an infinite universe $\univ$.
+We assume an finite universe $\univ$.
 
 A {\em relation schema} is a pair consisting of a relation name and its arity.
 A {\em database schema} $\schema$ is a finite set of relation schemas.
@@ -41,10 +41,10 @@ $c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by
 \dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
 $(\dedalus{<},2)$.\footnote{We will often write \dedalus{<} in infix notation.} 
-A {\em relation instance} for relation \dedalus{r} is a \jmh{finite} set of facts for
+A {\em relation instance} for relation \dedalus{r} is a finite set of facts for
 \dedalus{r}.  A {\em database instance} maps each relation $\dedalus{r} \ne
-\dedalus{<}$ to a relation instance for \dedalus{r}, and maps \dedalus{<} to an
-infinite set of \dedalus{<} facts that encode a total ordering over $\univ$.  \jmh{Should we bother to constrain \dedalus{<} to the finite domain of symbols in the relation instances?}
+\dedalus{<}$ to a relation instance for \dedalus{r}, and maps \dedalus{<} to a
+finite set of \dedalus{<} facts that encode a total ordering over $\univ$.
 
 A {\em rule} over a database schema $\schema$ is a clause of the form:
 
@@ -68,6 +68,7 @@ in \dedalus{X\sub{j}} for some $b_j \neq \dedalus{<}$. That is, variable symbols
 that appear in a \dedalus{<} atom must also appear in a non-negated atom that is
 not \dedalus{<}.
 
+\subsubsection{Safety}
 Note that we also maintain the usual Datalog safety restrictions: any variable
 symbol \dedalus{V} that appears in \od{Y\sub{i}} for some $1 \leq i \leq m$ must
 also appear in \od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
@@ -151,10 +152,11 @@ obeys the {\em causality constraint} \dedalus{T < S}.\footnote{Note that in
   assume reliable delivery of messages.}
 
 A \lang \emph{program} is a set of spatio-temporal rules over some
-spatio-temporal schema $\stschema$.  We will see in Section~\ref{sec:semantics}
-that the usage of negation (\dedalus{!}) in \lang programs is
-restricted. \nrc{Why does this sentence come here? Seems weird; if we don't
-  state the restrictions on negation in this section, why mention it?}
+spatio-temporal schema $\stschema$.  
+%We will see in Section~\ref{sec:semantics}
+%that the usage of negation (\dedalus{!}) in \lang programs is
+%restricted. \nrc{Why does this sentence come here? Seems weird; if we don't
+%  state the restrictions on negation in this section, why mention it?}
 
 \subsubsection{Syntactic Sugar}
 The restrictions on timestamps and location specifiers suggest a natural
@@ -218,15 +220,16 @@ Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
 \jmh{Abrupt start here.  Why is a PDG a good way to begin the discussion of semantics?}
 The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, or \dedalus{<} relations, or the \dedalus{choice} construct.
 
-All cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.  \jmh{Why?  Sez Who?}
+We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
 An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, and maps each IDB relation \dedalus{r} to the empty spatial relation instance.
 
-We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{T}$.  The mapping is defined by: $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K} \Rightarrow \{ \, \dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \, | \, t \in \mathbb{N} \, \} \subset \mathcal{T}$. \jmh{I'm confused---this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
+We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$ for all $\mathcal{T} \in \mathbb{N}$.
+%\jmh{I'm confused---this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
 
 We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from EDB instances to spatio-temporal database instances.
 
-Recall that \dedalus{choice} is only used in asynchronous rules.  A \lang program without \dedalus{choice} is {\em locally stratified}~\cite{local-strat}, because of restrictions on negation \jmh{elaborate?}; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  \jmh{So screw you, lazy reader!  I.e. this sounds rude.  Can we find a way to give them what they need to proceed?}  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint; every possible function that obeys the causality constraint defines a stable model.  \jmh{Maybe worth stating the goal of this paragraph at its top, and if you need to make reference to esoterica you will have at least motivated it up front.}  It is known that the stable model semantics coincides with the locally stratified semantics~\cite{stable-model} for locally stratified programs.
+Recall that \dedalus{choice} is only used in asynchronous rules.  A \lang program without \dedalus{choice} is {\em locally stratified}~\cite{local-strat} on the values of its timestamp attributes, because of the restriction that all PDG cycles involving a negated edge also involve a temporal edge; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  \jmh{So screw you, lazy reader!  I.e. this sounds rude.  Can we find a way to give them what they need to proceed?}  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint; every possible function that obeys the causality constraint defines a stable model.  \jmh{Maybe worth stating the goal of this paragraph at its top, and if you need to make reference to esoterica you will have at least motivated it up front.}  It is known that the stable model semantics coincides with the locally stratified semantics~\cite{stable-model} for locally stratified programs.
 
 \begin{example}
 \label{ex:uncountable}
@@ -241,7 +244,7 @@ Take the following \lang program, with the empty EDB instance:
 \end{Drules}
 
 Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-The stable models \jmh{of \dedalus{q}??} are exactly $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j) \in (t_1, t_2) \, \land \, (t_1, t_2) \in \mathcal{N}
+The stable models (with \dedalus{q} facts ommitted) are exactly $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j) \in (t_1, t_2) \, \land \, (t_1, t_2) \in \mathcal{N}
 \times \mathcal{N} \, \}$.  To see this, consider the unsugared version of the program:
 
 \begin{Drules}
@@ -255,7 +258,7 @@ The stable models \jmh{of \dedalus{q}??} are exactly $\{ \, \dedalus{q(n1,i,0), 
         {time(T)}
 \end{Drules}
 
-A given stable model $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j)\in (t_1, t_2) \, \land \, (t_1, t_2)\in \mathcal{N}                                                    
+A given stable model $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j)\in (t_1, t_2) \, \land \, (t_1, t_2)\in \mathcal{N}                                                    
 \times \mathcal{N} \, \}$ corresponds to the function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$ and the image of $h(x)$ is $t_2$.
 \end{example}
 
