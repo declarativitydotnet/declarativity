@@ -162,8 +162,8 @@ spatio-temporal schema $\stschema$.
 The restrictions on timestamps and location specifiers suggest a natural
 syntactic sugar to improve readability.  We annotate inductive head predicates
 with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
-deductive rules have no head annotation.  These annotations allow us to scrap
-the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and
+deductive rules have no head annotation.  These annotations allow us to omit
+the boilerplate usage of \dedalus{node}, \dedalus{time}, \dedalus{succ} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
 heads and bodies.  We also omit location specifiers by default. The only non-trivial use of location specifiers is in asynchronous rules; we include them in such rules if the head location specifier is not equal to the
 body's.  The three kinds of rules listed above are expressed as follows:
