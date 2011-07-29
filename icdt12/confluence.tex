@@ -159,7 +159,7 @@ A \lang program is {\em IDB negation-free} if the \dedalus{!} symbol only appear
 \end{definition}
 
 \begin{definition}
-A relation \dedalus{p} in a \lang program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next <- p(\(\overline{\dedalus{X}}\)).}
+A relation \dedalus{p} in a \lang program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next \leftarrow p(\(\overline{\dedalus{X}}\)).}
 \end{definition}
 
 \begin{definition}
@@ -178,7 +178,7 @@ contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
 \slang programs are temporally inflationary
 \end{lemma}
 \begin{proof}
-Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
+Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{time_lt}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
 
 For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle---simply repeat the following process for each tree.
 
