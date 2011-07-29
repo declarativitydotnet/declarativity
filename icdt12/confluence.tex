@@ -165,17 +165,15 @@ A \lang program has {\em guarded asynchrony} if all relations appearing in the h
 \end{definition}
 
 We will refer to the language of IDB negation-free \lang programs with guarded
-asynchrony as \slang.  Define the notation \dedalus{f@t} to mean the
-spatio-temporal fact obtained from the spatial fact \dedalus{f} by substituting
-the constant \dedalus{t} for the timestamp. \jmh{This important notation comes rather "by the way" here.  Is there a better spot to introduce it?}
+asynchrony as \slang.
 
-First we will see that \slang programs are {\em inflationary}: if a stable model
+First we will see that \slang programs are {\em temporally inflationary}: if a stable model
 of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also
-contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}). \jmh{Doesn't inflationary have a meaning in Datalog?  Do we need to coin a term like "temporally inflationary"?}
+contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
 
 \begin{lemma}
 \label{lem:inflationary}
-\slang programs are {\em inflationary}.
+\slang programs are temporally inflationary
 \end{lemma}
 \begin{proof}
 Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
@@ -185,7 +183,7 @@ For the moment, we assume that every fact has a unique derivation tree.  Multipl
 If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp.\ deductive), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp.\ \dedalus{g@t}), the fact \dedalus{g@t} (resp.\ \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule and which is not EDB.  However, the path will eventually terminate at a leaf (an EDB node) providing a contradiction, because EDB facts exist at all timesteps.
 \end{proof}
 
-A consequence of inflation is that all \slang programs are confluent.
+A consequence of temporal inflation is that all \slang programs are confluent.
 
 \begin{theorem}
 \label{thm:confluence}
@@ -260,7 +258,7 @@ affecting the ultimate model. \jmh{The below strikes me as being rather sloppier
 Any inductive rule in \slang can be converted into a deductive rule---except for simple persistence rules for the head predicate of any asynchronous rule ---with no effect to the ultimate model.
 \end{lemma}
 \begin{proof}
-Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deductive rules---except the simple persistence rules for asynchrony---preserves inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
+Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deductive rules---except the simple persistence rules for asynchrony---preserves temporal inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
 \end{proof}
 
 %If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
