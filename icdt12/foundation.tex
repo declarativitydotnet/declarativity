@@ -120,20 +120,22 @@ We will use the notation \dedalus{f@t} to mean the spatio-temporal fact obtained
 
 A {\em spatio-temporal rule} over a spatio-temporal schema $\stschema$ is a rule of one of the following three forms:
 
+\begin{enumerate}
+\item 
 A {\em deductive} rule:
 
 \begin{Drules}
   \drule{p(L,T,\od{W})}
         {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T)}
 \end{Drules}
-
+\item 
 An {\em inductive} rule:
 
 \begin{Drules}
   \drule{p(L,S,\od{W})}
         {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S)}
 \end{Drules}
-
+\item 
 An {\em asynchronous} rule:
 
 \begin{Drules}
@@ -142,7 +144,7 @@ An {\em asynchronous} rule:
           !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}),
           node(L), time(T), time(S), time_lt(T,S), choice((L, T, \od{B}),(S)), node(D)}
 \end{Drules}
-
+\end{enumerate}
 The latter two kinds of rules are collectively called {\em temporal} rules.
 
 In the above rules, \od{B} is a tuple that contains all of the distinct variable
@@ -193,26 +195,29 @@ in such rules if the head location specifier is not equal to the body's. Using
 this syntactic sugar, the three kinds of rules listed above can be expressed as
 follows:
 
-Deductive:
+\begin{enumerate}
+
+\item Deductive:
 
 \begin{Drules}
   \drule{p(\od{W})}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-Inductive:
+\item Inductive:
 
 \begin{Drules}
   \drule{p(\od{W})@next}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-Asynchronous:
+\item Asynchronous:
 
 \begin{Drules}
   \drule{p(\od{W})@async}
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
+\end{enumerate}
 
 A rule body's location specifier can be accessed by including a variable symbol
 or constant prefixed with \dedalus{#} as any body atom's first argument.  In

@@ -10,8 +10,7 @@ Datalog can provide a clean foundation for distributed
 programming~\cite{declarative-imperative}.  This has led to activity in language
 and system design (e.g.,~\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}), as well as formal
 models for distributed computation using such
-languages (e.g.,~\cite{relational-transducers,navarro-oper-sem,card-abstraction}).\nrc{TODO:
-  cite Abiteboul and Vianu on RTs? Other system cites?}
+languages (e.g.,~\cite{relational-transducers,navarro-oper-sem,card-abstraction}).
 
 In this paper we place distributed programs on a model-theoretic foundation and use that foundation to study program correctness at a relatively high semantic level.  We are interested in a model-theoretic approach because of its declarativity---it focuses attention on the connection between the specification of a program and its intended outcome, without resorting to operational reasoning.  We show how this approach allows us to characterize a family of programs that are indifferent to non-deterministic message orders (\emph{confluent}), and a syntactically richer family of programs that judiciously use coordination logic to ensure confluence by defining computations over appropriate sets of received messages.
 
