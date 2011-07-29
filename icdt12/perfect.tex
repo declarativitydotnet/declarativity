@@ -6,7 +6,7 @@ directly expressible in \slang.  The marriage program from
 Example~\ref{ex:marriage} uses IDB negation to determine the truth value of
 \dedalus{runaway}. To avoid using IDB negation, we can rewrite the program to
 ``push down'' negation to the EDB relations \dedalus{groom_i_do} and
-\dedalus{bride_i_do}, and then derive the \dedalus{runaway} IDB predicate
+\dedalus{bride_i_do}, and then derive the \dedalus{runaway} IDB relation
 positively as shown in Example~\ref{ex:marriage2}.  While the rewrite is
 straightforward, a majority of the program's rules need to be modified. Note
 that since Example~\ref{ex:marriage2} is written in \slang, the program must be
@@ -41,7 +41,7 @@ and expressing the negation of an arbitrary recursive computation is even more
 difficult~\cite{immerman-ptime}.  Furthermore, the best known strategies involve
 at least a doubling in the arity of the relations.
 
-In general, the restriction of negation to EDB predicates presents a significant
+In general, the restriction of negation to EDB relations presents a significant
 barrier to expressing practical programs. In this section, we introduce \plang,
 an extension of \slang that allows a limited form of IDB negation but retains
 the benefits of \slang: \plang also captures PTIME exactly and allows only
@@ -163,9 +163,105 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsubsection{Async Recursive Nodes}
 
+Consider an async recursive node $i$.
 
-\todo{Todo: not expressible in \plang}
+Let the asynchronous rules with head relations in $L(i)$ be numbered $1, \ldots, i_p$.  Add the rule:
 
+\begin{Drules}
+  \drule{all_ack\sub{i}()}
+        {r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done()}
+\end{Drules}
+
+For each rule $j$, perform the asynchronous rewrite from the previous section, except for the last two rules.  Instead write:
+
+\begin{Drules}
+\drule{r\sub{j}_not_done()}
+      {p\sub{j}_to_send(\od{X}), !p\sub{j}_ack(\od{X})}
+\drule{r\sub{j}_done()}
+      {!r\sub{j}_not_done()}
+\end{Drules}
+
+We perform a two-round voting protocol amongst the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following.  The following rules begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true -- intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
+
+\begin{Drules}
+\drule{start_round_1\sub{i}()}
+      {node_min(#L,L), !round_1\sub{i}()}
+\drule{round_1\sub{i}()@next}
+      {start_round_1\sub{i}()}
+\drule{round_1\sub{i}()@next}
+      {round_1\sub{i}(), !start_round_2\sub{i}()}
+\drule{vote_1\sub{i}(#N)@async}
+      {start_round_1\sub{i}(), node(N)}
+\drule{complete_1\sub{i}(#M,N)@async}
+      {vote_1\sub{i}(#N), all_ack\sub{i}(#N), node_min(#N,M)}
+\drule{incomplete_1\sub{i}(#M,N)@async}
+      {vote_1\sub{i}(#N), !all_ack\sub{i}(#N), node_min(#N,M)}
+\end{Drules}
+
+To persist votes until round 1 begins again, the following rules are instantiated for $k=1$ and $2$.
+
+\begin{Drules}
+\drule{complete_k\sub{i}(N)@next}
+      {complete_k\sub{i}(N), !start_round_1\sub{i}()}
+\drule{incomplete_k\sub{i}(N)@next}
+      {incomplete_k\sub{i}(N), !start_round_1\sub{i}()}
+\end{Drules}
+
+To count votes, we assume the following rules are instantiated for $k=1$ and $2$.  Round 1 is restarted if some node votes \dedalus{incomplete_1\sub{i}} in round 1 -- i.e., it has an outstanding unacknowledged message -- or \dedalus{incomplete_2\sub{i}} in round 2.
+
+\begin{Drules}
+\drule{recv_k\sub{i}(N)}
+      {complete_k\sub{i}(N)}
+\drule{recv_k\sub{i}(N)}
+      {incomplete_k\sub{i}(N)}
+\drule{not_all_recv_k\sub{i}()}
+      {node(N), !recv_k\sub{i}(N)}
+\drule{not_all_comp_k\sub{i}()}
+      {node(N), !complete_k\sub{i}(N)}
+\drule{start_round_1\sub{i}()}
+      {!not_all_recv_k\sub{i}(), not_all_comp_k\sub{i}()}
+\end{Drules}
+
+Once a node has received a \dedalus{vote_1} vote solicitation, it also begins keeping track of whether it has sent any messages in the async recursive component; this information is erased if another \dedalus{vote_1} solicitation is received.  The causality constraint implies that \dedalus{!all_ack()} is true if a message is sent, because messages cannot be instantly acknowledged.
+
+\begin{Drules}
+\drule{sent\sub{i}()}
+      {!all_ack\sub{i}()}
+\drule{sent\sub{i}()@next}
+      {sent\sub{i}(), !vote_1\sub{i}()}
+\end{Drules}
+
+Round 2 is started by the master if no node has an outstanding message.
+
+\begin{Drules}
+\drule{start_round_2\sub{i}()}
+      {!not_all_recv_1\sub{i}(), !not_all_comp_1\sub{i}()}
+\end{Drules}
+
+The voting for round 2 is shown below.  Notes vote \dedalus{incomplete_2\sub{i}} if they have sent any messages since the last \dedalus{vote_1\sub{i}} solicitation.  Recall that any \dedalus{incomplete_2\sub{i}} votes result in the protocol restarting with round 1.
+
+\begin{Drules}
+\drule{vote_2\sub{i}(#N)@async}
+      {start_round_2\sub{i}(), node(N)}
+\drule{complete_2\sub{i}(#M,N)@async}
+      {vote_2\sub{i}(#N), all_ack\sub{i}(#N), !sent\sub{i}(#N), node_min(#N,M)}
+\drule{incomplete_2\sub{i}(#M,N)@async}
+      {vote_2\sub{i}(#N), sent\sub{i}(#N), node_min(#N,M)}
+\end{Drules}
+
+The entire async recursive node $i$ is done when all nodes have voted \dedalus{complete_2}.
+
+\begin{Drules}
+\drule{done_recursion\sub{i}()}
+      {!not_all_recv_2\sub{i}(), !not_all_comp_2\sub{i}()}
+\end{Drules}
+
+For every relation $\dedalus{p} \in L(i)$, add the rule:
+
+\begin{Drules}
+\drule{p_done()}
+      {done_recursion\sub{i}()}
+\end{Drules}
 
 \subsection{Properties of \plang}
 
@@ -281,7 +377,7 @@ Datalog program.
 
 Note also that the rewrite code is a generalization of the ``coordination'' code
 that a \lang programmer could have written by hand to ensure that the local
-predicate \dedalus{points\_to} is a faithful representation of global state.  In
+relation \dedalus{points\_to} is a faithful representation of global state.  In
 distributed systems, global computation barriers are commonly enforced by
 protocols based on voting: the two-phase commit protocol from distributed
 databases is a straightforward example~\cite{gray-tp}.  In the synthesized protocol shown above, every agent
