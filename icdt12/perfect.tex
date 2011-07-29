@@ -71,10 +71,10 @@ We will present a specification of \dedalus{p_done()} after introducing some pre
 
 A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
 connected component of the PDG of $P$ with a single node whose label comprises
-the set of all relation names from the component.  If a strongly connected
+the set of all relations from the component.  If a strongly connected
 component has any asynchronous edges, we call the resulting collapsed node {\em
   async recursive}.  Each node in the collapsed PDG whose label contains a
-relation name in $\oschema$ is called an {\em output} node.  Note that a
+relation names in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
 For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done()} \jmh{Huh?  \dedalus{p_done()} is not a rule.  What do you mean here?}.  For
