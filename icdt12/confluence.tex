@@ -135,72 +135,11 @@ Another symptom of \lang being ``too big'' a language is its expressive power: i
 \label{lem:lang-pspace}
 \lang captures exactly PSPACE.
 \end{lemma}
-\jmh{I vote to move the proof to the appendix, and give a hint here of how it's done (via QBF).}
 
 \begin{proof}
-If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subset \text{PSPACE}$.
+If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subset \text{NPSPACE} = \text{PSPACE}$.
 
-We show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem \jmh{Citation needed, even if only to Garey/Johnson} in \lang. Since \lang is closed under first-order reductions, and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.
-
-Assume that the QBF formula is in prenex normal form: \linebreak$Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF involves removing $Q_1$, and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
-
-The leaves of the tree of recursive calls can each be represented as an $n$-bit binary number, where bit $i$ holds the value of $x_i$.  Assume the left child of a node at depth $i$ of the recursive call tree represents binding $x_{i}$ to $0$, and the right child $1$.
-
-Our algorithm is intuitively similar to a postorder traversal of this recursive call tree.  Recursively, first visit the left node, then visit the right node, then visit the root.  If we are visiting a leaf node, we evaluate the formula for the given variable binding, and store a $0$ or $1$ at the node depending on whether the formula is false or true for that particular binding.  If we are visiting a non-root node at level $i$, we apply the quantifier $Q_i$ to the values stored in the child nodes.  Even though the recursive call tree is exponential in size, we only require $O(n)$ space due to the sequentiality of the traversal.
-
-First, we iterate through all of the $n$-bit binary numbers, one per timestamp.  We assume that the order over the variables is such that the leftmost variable in the formula (the high-order bit) is the $x_1$ (the first), and the rightmost is $x_n$ (the last).  Thus, our addition is ``backwards'' in that it propagates carries from $x_i$ to $x_{i-1}$:
-
-\begin{Drules}
-  \drule{carry(V)}
-        {var_last(V)}
-  \drule{one(V)@next}
-        {carry(V), !one(V)}
-  \drule{one(V)@next}
-        {one(V), !carry(V)}
-  \drule{carry(U)}
-        {carry(V), one(V), var_succ(U, V)}
-\end{Drules}
-
-At each timestep, we check whether the current assignment of values to the variables makes the formula true.  We omit these rules for brevity.  If the formula is true, then \dedalus{formula_true()} is true at that timestep.
-
-The following rules handle how nodes set their values to either $0$ or $1$.  Note that we only require $2n$ bits of space for this step: each depth $1,\ldots,n$ in the recursive call tree has two one-bit registers (labelled by constant symbols \dedalus{a} and \dedalus{b}) representing the current values of the children in the traversal.
-
-\dedalus{var_sat_in} associates a depth with a given truth value ($0$ or $1$).  This value is placed into \dedalus{var_sat} at depth \dedalus{V} in register \dedalus{a} if \dedalus{a} is empty, or \dedalus{b} otherwise.  Once a value is placed in register \dedalus{b}, it is deleted in the immediate next timestamp.  As we will see later, before with this deletion, the parent node applies its quantifier to the values in the two registers.
-
-The truth value at depth $n$ (denoted by \dedalus{var_last}) is the truth value of the formula (\dedalus{formula_true()}) for the assignment of variables at the current timestep.
-
-\begin{Drules}
-  \drule{var_sat_in(V, 1)}
-        {formula_true(), var_last(V)}
-  \drule{var_sat(a, V, B)@next}
-        {var_sat_in(V, B), !var_sat(_, V, _)}
-  \drule{var_sat(b, V, B)@next}
-        {var_sat_in(V, B), var_sat(a, V, _).}
-  \drule{var_sat(N, V, B)@next}
-        {var_sat(N, V, B), !var_sat(b, V, _)}
-\end{Drules}
-
-\dedalus{var_sat_left_in} associates a value with the parent of a given depth.  This is used for propagating the result of the quantifier application to the parent.  The cases for existential (\dedalus{exists}) and universal (\dedalus{forall}) quantifiers are clear.
-
-\begin{Drules}
-  \drule{var_sat_in(N, U, B)}
-        {var_sat_left_in(V, B), var_succ(U, V)}
-  \drule{var_sat_left_in(vn, 1)}
-        {exists(vn), var_sat(_, vn, 1)}
-  \drule{var_sat_left_in(vn, 0)}
-        {exists(vn), var_sat(a, vn, 0), var_sat(b, vn, 0)}
-  \drule{var_sat_left_in(vn_succ, 1)}
-        {forall(vn), var_sat(a, vn, 1), var_sat(b, vn, 1)}
-  \drule{var_sat_left_in(vn_succ, 0)}
-        {forall(vn), var_sat(_, vn, false)}
-\end{Drules}
-
-Finally, the entire formula is \dedalus{satisfiable(1)} (satisfiable) if the output of the first quantifier is $1$, and \dedalus{satisfiable(0)} (unsatisfiable) if the output of the first quantifier is $0$.
-
-\begin{Drules}
-  \drule{satisfiable(B)}
-        {var_sat_left_in(V, B), var_first(V)}
-\end{Drules}
+In the other direction of the proof, we show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions, and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.  Full details are in the appendix.
 \end{proof}
 
 \subsection{\large \bf \slang}

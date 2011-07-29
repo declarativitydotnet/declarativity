@@ -123,7 +123,7 @@ An {\em asynchronous} rule:
           node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
 \end{Drules}
 
-The latter two kinds of rules are collectively called {\em temporal} rules.  \jmh{Give intuition.  Note the unification of the spatial and temporal attributes in all body predicates; this restriction corresponds intuitively to considering deductions that can be evaluated at a single node at a single point in time.  ALSO NOTE SUCC AND CHOICE.}
+The latter two kinds of rules are collectively called {\em temporal} rules.
 
 In the above rules, \od{B} is a tuple that contains all of the distinct variable
 symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots,
@@ -133,6 +133,8 @@ any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}},
 \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.
 \dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be
 \dedalus{succ} or \dedalus{time}.
+
+The unification of location specifiers and timestamps in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules intuitively use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
 
 \dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo};
 the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
