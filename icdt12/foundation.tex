@@ -91,7 +91,7 @@ non-negated atom that is not \dedalus{<}.
 \dedalus{V} that appears in \od{Y\sub{i}} for some $1 \leq i \leq m$ must also
 appear in \od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
 appears in \od{W} or \dedalus{V} appears in \od{Y\sub{k}} for some $k \neq
-i$---i.e., variable symbols that only appear in a single negated atom and do not
+i$. That is, variable symbols that only appear in a single negated atom and do not
 appear in the head need not also appear in a positive atom~\cite{ullmanbook}.
 Also, any variable symbol that appears in \od{W} must appear in some
 \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{l}}}.
@@ -109,7 +109,7 @@ A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of
 
 Given a database schema $\schema$, we use $\stschema$ to denote the extension of
 $\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding four additional relation schemas to $\schema$. 
-The first additional column is a location specifier, the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$ and the timestamp is the second.  
+The first additional column is a location specifier and the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$ and the timestamp is the second.  
 The additional relation schemas we add are: $(\dedalus{node},1)$,
 $(\dedalus{time},1)$, $(\dedalus{succ},2)$, and $(\dedalus{time_lt},2)$.
 We call $\stschema$ a {\em spatio-temporal} schema.
@@ -156,12 +156,12 @@ Head relation name \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \de
 
 The unification of location specifiers and timestamps in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules intuitively use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
 
-The \dedalus{choice} construct is from Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo};
-the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
+The \dedalus{choice} construct is from Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}.
+The meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
 in \od{Y} are non-deterministically functionally dependent on the variables in \od{X} with respect to
 any function.  Due to variable binding restrictions, only asynchronous rules may
 have a different value for the head location specifier than the body location
-specifier.  Intuitively, different values for the location specifiers represents
+specifier.  Intuitively, different values for the head and body location specifiers represents
 cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B}
 (which must include \dedalus{D} due to safety restrictions) represents a message
 being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
