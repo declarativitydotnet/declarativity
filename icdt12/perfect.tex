@@ -71,7 +71,8 @@ when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 We will present a specification of \dedalus{p_done()} after introducing some preliminary definitions.
 
 A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
-connected component of the PDG of $P$ with a single node whose label comprises
+connected component of the PDG of $P$ with a single node $i$, such that $L(i)$
+comprises
 the set of all relations from the component.  If a strongly connected
 component has any asynchronous edges, we call the resulting collapsed node {\em
   async recursive}.  Each node in the collapsed PDG whose label contains a

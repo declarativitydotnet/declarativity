@@ -202,8 +202,8 @@ A rule body's location specifier can be accessed by including a variable symbol
 or constant prefixed with \dedalus{#} as any body atom's first argument.  In
 asynchronous rules only, the head location specifier can be accessed by
 including a variable symbol or constant prefixed with a \dedalus{#} as the head
-atom's first argument.  Below is an example of an asynchronous rule that binds
-head and body location specifiers to \dedalus{D} and \dedalus{L} respectively.
+atom's first argument.  The asynchronous rule below shows the pattern of binding location specifiers using \dedalus{#}; the
+head and body location specifiers are bound to \dedalus{D} and \dedalus{L} respectively.
 Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
   \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}.
 %\jmh{I'd give a little intuition about why spatial entanglement is cool (finite
@@ -227,7 +227,7 @@ Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
 \subsection{Semantics}
 \label{sec:semantics}
 \jmh{Abrupt start here.  Why is a PDG a good way to begin the discussion of semantics?}
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, \dedalus{time_lt}, or \dedalus{<} relations, or the \dedalus{choice} construct.
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, \dedalus{time_lt}, or \dedalus{<} relations, or the \dedalus{choice} construct.
 
 We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
