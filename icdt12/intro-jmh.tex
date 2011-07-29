@@ -1,3 +1,4 @@
+\section{Introduction}
 Determining the correctness of distributed programs is a longstanding topic of research with roots in both databases and distributed systems.  Distributed systems are difficult to program because of the asynchronous nature of their execution: participating machines run independently, communicating via non-deterministic channels that may reorder or delay messages arbitrarily.  
 
 Traditional lines of attack on the problem focus on techniques for constraining low-level features of computation, such as the interleaving of message receipt with state transition (in the distributed systems literature) or data reads, writes and commits (in the database literature.)  Typical techniques involve constraining the possible interleavings of these features via various coordination protocols, which cause machines to postpone certain actions until appropriate distributed data dependencies can be ensured.
