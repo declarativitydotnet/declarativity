@@ -40,8 +40,10 @@ A simple asynchronous marriage ceremony:
         {bride_i_do()}
 \end{Drules}
 \end{example}
-In a classic paper, Gray notes the strong similarity between distributed commit protocols and marriage ceremonies~\cite{graytransactionconcept}.  For simplicity (and felicity), Example~\ref{ex:marriage} presents a simple distributed voting program with a
-fixed set of members: a bride and a groom.  The marriage is off
+In a classic paper, Gray notes the similarity between distributed commit
+protocols and marriage ceremonies~\cite{graytransactionconcept}.  For simplicity
+(and felicity), Example~\ref{ex:marriage} presents a simple distributed voting
+program with a fixed set of members: a bride and a groom.  The marriage is off
 (\dedalus{runaway()} is true) if either party does not say ``I do.''
 
 However, the \lang program as given does not correctly implement such a vote. 
