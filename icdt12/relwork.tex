@@ -44,7 +44,7 @@ should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{
 monotonicity properties (i.e., programs without negation or fact deletion)
 are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
 \emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
-Navarro et al.~\cite{navarro} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
+Navarro et al.~\cite{navarro-oper-sem} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
 \emph{event creation vs.\ effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
 the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao2009}.
 
@@ -69,7 +69,7 @@ monotonic and channels that may drop or arbitrarily reorder messages \nrc{We
 In general, however, the language extensions 
 proposed in much of this prior work added
 expressivity and domain applicability but compromised the declarative
-semantics of Datalog, making formal analysis difficult~\cite{Mao2009, navarro}.
+semantics of Datalog, making formal analysis difficult~\cite{Mao2009, navarro-oper-sem}.
 In designing \lang, we tried to recover and extend the model-theoretic analyses applicable
 to pure Datalog, while preserving the features appropriate to modeling loosely coupled
 distributed systems.
