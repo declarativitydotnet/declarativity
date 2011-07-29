@@ -236,13 +236,15 @@ The stable models \jmh{of \dedalus{q}??} are exactly $\{ \, \dedalus{q(n1,i,0), 
 \end{Drules}
 
 A given stable model $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j)\in (t_1, t_2) \, \land \, (t_1, t_2)\in \mathcal{N}                                                    
-\times \mathcal{N} \, \}$ corresponds to the function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$, and the image of $h(x)$ is $t_2$.
+\times \mathcal{N} \, \}$ corresponds to the function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$ and the image of $h(x)$ is $t_2$.
 \end{example}
 
 \paa{not ready to whack it yet, but we should consider breaking the above discussion into two (more chewable) pieces: first, making no assumptions about q's persistence, show that a single async rule induces an infinite number of stable models, and how each model may be viewed as fixing a 'choice function' as EDB.  then, mention among the 'problems' below that rules with all persistent subgoals make an infinite number of choices, inducing an uncountable number of stable models}
 
-\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
+\jmh{Yes this stuff flies by too quickly and with too little
+  motivation/explanation.}
 
+\subsubsection{Ultimate Models}
 There are two potential problems with considering the stable models as the meaning of a \lang instance.  
 First, a program with even one asynchronous rule may have uncountably many stable models, and not all of these may be meaningfully different. \jmh{meaningful in what sense??} Second, a stable model of a \lang program may itself be infinite.  \jmh{So what?}  We address both concerns in our definition of an {\em ultimate model}.
 
