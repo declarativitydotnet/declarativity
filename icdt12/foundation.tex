@@ -51,10 +51,10 @@ A {\em rule} over a database schema $\schema$ is a clause of the form:
 
 \begin{Drules}
   \drule{p(\od{W})}
-        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-\noindent where \dedalus{p}, \dedalus{b\sub{1}}, \ldots, \dedalus{b\sub{n}},
+\noindent where \dedalus{p}, \dedalus{b\sub{1}}, \ldots, \dedalus{b\sub{l}},
 \dedalus{c\sub{1}}, \ldots, \dedalus{c\sub{m}} are relations in $\schema$, and \od{W},
 \od{X\sub{i}} and \od{Y\sub{j}} denote a tuple (of the appropriate arity)
 consisting of constants from $\univ$ or variable symbols.  The {\em atom} to the
@@ -77,7 +77,7 @@ appears in \od{W} or \dedalus{V} appears in \od{Y\sub{k}} for some $k \neq
 i$---i.e., variable symbols that only appear in a single negated atom and do not
 appear in the head need not also appear in a positive atom~\cite{ullmanbook}.
 Also, any variable symbol that appears in \od{W} must appear in some
-\dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
+\dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{l}}}.
 
 \subsubsection{Spatial and Temporal Extensions}
 
@@ -97,7 +97,7 @@ The additional relation schemas we add are: $(\dedalus{node},1)$,
 $(\dedalus{time},1)$, and $(\dedalus{succ},2)$.
 We call $\stschema$ a {\em spatio-temporal} schema.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$, and $t \in \mathbb{N}$.  A {\em spatio-temporal database instance} is defined similarly to a database instance, except \dedalus{time} is mapped to an infinite set of \dedalus{time} facts representing $\mathbb{N}$, and \dedalus{succ} is mapped to an infinite set of \dedalus{succ} facts representing the natural successor relation over $\mathbb{N}$.
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(l)}, and \dedalus{time(t)}.  A {\em spatio-temporal database instance} is defined similarly to a database instance, except \dedalus{time} is mapped to an infinite set of \dedalus{time} facts representing $\mathbb{N}$, and \dedalus{succ} is mapped to an infinite set of \dedalus{succ} facts representing the natural successor relation over $\mathbb{N}$.
 
 We will use the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by adding a timestamp column with the constant \dedalus{t}.
 
@@ -107,21 +107,21 @@ A {\em deductive} rule:
 
 \begin{Drules}
   \drule{p(L,T,\od{W})}
-        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T)}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T)}
 \end{Drules}
 
 An {\em inductive} rule:
 
 \begin{Drules}
   \drule{p(L,S,\od{W})}
-        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S)}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}), !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S)}
 \end{Drules}
 
 An {\em asynchronous} rule:
 
 \begin{Drules}
   \drule{p(D,S,\od{W})}
-        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{n}(L,T,\od{X\sub{n}}),
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}),
           !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}),
           node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
 \end{Drules}
@@ -129,12 +129,12 @@ An {\em asynchronous} rule:
 The latter two kinds of rules are collectively called {\em temporal} rules.
 
 In the above rules, \od{B} is a tuple that contains all of the distinct variable
-symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots,
+symbols in \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}}, \ldots,
 \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in
-any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}},
+any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}},
   \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.
 \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.
-\dedalus{b\sub{1}, \ldots, b\sub{n}, c\sub{1}, \ldots, c\sub{m}} may not be
+\dedalus{b\sub{1}, \ldots, b\sub{l}, c\sub{1}, \ldots, c\sub{m}} may not be
 \dedalus{succ} or \dedalus{time}.
 
 The unification of location specifiers and timestamps in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules intuitively use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
@@ -177,21 +177,21 @@ Deductive:
 
 \begin{Drules}
   \drule{p(\od{W})}
-        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
 Inductive:
 
 \begin{Drules}
   \drule{p(\od{W})@next}
-        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
 Asynchronous:
 
 \begin{Drules}
   \drule{p(\od{W})@async}
-        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
+        {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{l}(\od{X\sub{l}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
 A rule body's location specifier can be accessed by including a variable symbol
@@ -201,13 +201,13 @@ including a variable symbol or constant prefixed with a \dedalus{#} as the head
 atom's first argument.  Below is an example of an asynchronous rule that binds
 head and body location specifiers to \dedalus{D} and \dedalus{L} respectively.
 Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
-  \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}.
+  \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}.
 %\jmh{I'd give a little intuition about why spatial entanglement is cool (finite
 %  domain of node) while temporal wouldn't be (infinite domain of time).}
 
 \begin{Drules}
   \drule{p(#D,\od{W})@async}
-        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
+        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
 \end{Drules}
 
 %\wrm{Previously, we had a definition of ``spatial entanglement'' here, which said that the above rule was ``spatially entangled'' if L appeared in \od{W}, or D appeared in the body.  I feel like we don't need to define this term, as we don't use it later.}
