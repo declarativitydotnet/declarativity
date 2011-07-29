@@ -310,7 +310,7 @@ will prove this by showing an equivalence to Datalog programs, which are known
 to capture exactly PTIME over ordered structures~\cite{immerman-book}.
 
 First, we note that inductive rules can be converted into deductive rules without
-effecting the ultimate model.
+affecting the ultimate model.
 
 \begin{lemma}
 \label{lem:no-inductive}
@@ -323,6 +323,7 @@ Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deduc
 %If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
 
 \begin{theorem}
+\label{thm:ptime}
 \slang captures exactly PTIME.
 \end{theorem}
 \begin{proof}
