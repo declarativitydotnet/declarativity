@@ -13,7 +13,7 @@ We begin this section by reviewing the syntax of \lang that was first presented 
 used to assign meanings to \lang programs that capture the mutation of state over logical time, much as an execution trace \jmh{do you want to cite somebody theoretical for a definition of a trace in imperative-land?  E.g. I/O Automata ``executions''?} captures the behavior of a
 typical imperative distributed program over time.  
 This interpretation presents certain obstacles:
-even if a \lang program has a deterministic final state, channel nondeterminism may induce an infinite number of stable models, each corresponding to a superficially different evolution toward that state over logical time.  To project away the (potentially infinite) variety of these distinctions, we present the {\em ultimate model} semantics, an abstraction that associates a program with a finite model of 
+even if a \lang program has a deterministic final state, channel non-determinism may induce an infinite number of stable models, each corresponding to a superficially different evolution toward that state over logical time.  To project away the (potentially infinite) variety of these distinctions, we present the {\em ultimate model} semantics, an abstraction that associates a program with a finite model of 
 its ``eventual'' execution state.  Even with this simplification, some programs may have more than one ultimate model.  We conclude by showing a natural correspondence between the multiple ultimate models and sensitivities of the specification to the main non-determinism inherent in distributed systems: message delays and reordering.  
 
 \jmh{I shortened the end of the above as I think you were skidding into deeper water than you want to explain here in an intro.}

@@ -118,7 +118,7 @@ single, ``preferred'' model.
 %are two examples of diffluent programs.
 
 Confluence is a desirable, albeit conservative, correctness property for a distributed program.  A program that is
-confluent produces a deterministic output in spite of nondeterministic orders in its execution.  For example, if
+confluent produces a deterministic output in spite of non-deterministic orders in its execution.  For example, if
 we could show that a data replication protocol was confluent, we could formally prove a version of the commonly-desired property that all replicas be ``eventually consistent''
 after all messages were delivered, in spite of delay and reordering.
 Unfortunately, confluence is an undecidable property of \lang programs:
@@ -146,7 +146,7 @@ In the other direction of the proof, we show how to write the PSPACE-complete Qu
 
 \subsection{\large \bf \slang}
 
-Distributed programs that produce nondeterministic outputs or have runtimes
+Distributed programs that produce non-deterministic outputs or have runtimes
 exponential in their inputs are undesirable in practice.  Since testing \lang
 programs to rule out these undesirable properties is undecidable in general, we
 may instead ask whether a more constrained language will exclude such programs
@@ -211,7 +211,7 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 %eventually succeed, \jmh{don't you need to define ``join success'' and prove that guarded asynchrony does what you say?} what it and 
 %Consider such  a join rule.  One of its subgoals $s$ corresponds to a derivation that depends
 %on the async-derived atom $r$.  
-%Regardless of the nondeterministic choice of timestamp for $r$, there
+%Regardless of the non-deterministic choice of timestamp for $r$, there
 %is some timestamp $V_m$ in every stable model $m$ of the program such that $s$ is true
 %for all $W > V$.  Hence in all stable models, $s$ is ``eventually'' true.  The same argument holds
 %for all subgoals of the rule under consideration.
