@@ -293,7 +293,7 @@ Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the at
 In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality constraint implies that the timestamp on acknowledgements is later than the timestamp on the facts they acknowledge, and thus the timestamp on each node's \dedalus{r\sub{j}_node_done} fact is greater than the timestamp on the acknowledged facts.  Thus, before a node concludes \dedalus{p_done()}, that node has all facts, assuming that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} are correct.
 
 \todo{fix up}
-In the asynchronous recursive case, the causality constraint ensures that every response in the second round is received at a time greater than every response in the first round.  Thus, between at least the last response of the first round, and the last response of the second round, no node has outstanding messages, and no node sends a message.  This implies that no node ever sends a message again.
+In the asynchronous recursive case, the causality constraint ensures that every response in the second round is received at a time greater than every response in the first round.  Thus, between at least the last response of the first round and the last response of the second round, no node has outstanding messages and no node sends a message.  This implies that no node ever sends a message again.
 \end{proof}
 
 \begin{lemma}
