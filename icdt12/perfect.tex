@@ -34,7 +34,7 @@ An asynchronous marriage ceremony without IDB negation:
 \end{example}
 
 The garbage collection program from Example~\ref{ex:gc} is likewise outside
-\slang due to IDB negation but it presents a slightly more difficult problem, as
+\slang due to IDB negation but it presents a rather more difficult problem, as
 negation must be pushed down through recursion.  The rules for positively
 computing the negation of a transitive closure are not particularly intuitive,
 and expressing the negation of an arbitrary recursive computation is even more
@@ -54,9 +54,9 @@ model.
 \subsection{Safe IDB Negation}
 \label{sec:perfect-construction}
 
-There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}.  The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{done_p(l,t)} \in \mathcal{S}$,  then $\dedalus{done_p(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{done_p(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true when the contents of \dedalus{p} is {\em sealed} (henceforth unchanging).
+There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, we will require that if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}. \jmh{\dedalus{p_done()} vs. \dedalus{done_p()}?  Check throughout!} The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{done_p(l,t)} \in \mathcal{S}$,  then $\dedalus{done_p(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{done_p(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
-We will explain how to define \dedalus{p_done()} after introducing some preliminary definitions.
+We will present a specification of \dedalus{p_done()} after introducing some preliminary definitions.
 
 A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
 connected component of the PDG of $P$ with a single node whose label comprises
@@ -66,16 +66,18 @@ component has any asynchronous edges, we call the resulting collapsed node {\em
 relation name in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done()}.  For
+For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done()} \jmh{Huh?  \dedalus{p_done()} is not a rule.  What do you mean here?}.  For
 IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
 \dedalus{p_done()} for IDB relation \dedalus{p} may use \dedalus{q_done()} in
 its body only if there is an edge in the collapsed PDG from a node $i$ with
-$\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.
+$\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.  \jmh{Now you lost me -- you seem to have dipped into a proofy discussion without the requisite setup.  Rewrite and stick to intuition/introduction.}
 
 For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to deductive rules (Lemma~\ref{lem:no-inductive}).
 
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
+
+\jmh{Give intuition about your strategy, and point out that it comes from a natural distributed ``protocol'' (and cite if you can.)}
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
 Assume the rules in $P$ with head relation
@@ -163,7 +165,7 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsubsection{Async Recursive Nodes}
 
-\todo{Mention that this is not in \plang}
+\todo{Mention that this is not in \plang}  \jmh{What does that suggest?  Isn't there something wrong with annotating \plang programs with non-\plang stuff in order to achieve a property you are asserting for \plang?}
 
 Consider an async recursive node $i$.
 
@@ -266,8 +268,8 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
 \end{Drules}
 
 \subsection{Properties of \plang}
-
-\begin{lemma}
+\jmh{A bit of connective flow text here?}
+\begin{lemma}[Sealing]
 \label{lem:plang-done-right}
 The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in \mathcal{S}$,  then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.
 \end{lemma}
@@ -292,6 +294,8 @@ Since a \dedalus{!p} atom in a rule body must appear in conjunction with a \deda
 
 \todo{ensure recursion through negation is ruled out earlier...}
 
+\jmh{A bit of intuitive text here about the appeal to ideas from stratified negation?  And perhaps connection to ``global barrier'' protocols?}
+
 The {\em stratum} of a relation \dedalus{r} is the maximum number of negated edges on any path in the PDG from \dedalus{r} to an EDB relation.  Clearly this is finite, as \plang programs do not have recursion through negation.
 
 Note that we can convert an $n$-stratum \plang program into $n$ \slang programs, one per stratum.  Stratum $i$'s program, $P_i$, consists of all rules whose head relation is in stratum $i$.  The output schema of $P_i$ contains all relations in stratum $i+1$, and $P_i$'s EDB contains all relations in stratum $j < i$.  $P_0$'s EDB contains all EDB relations.  $P_n$'s output schema contains all relations in $P$'s output schema.  We will show that running these programs in sequence gives the same result as $P(E)$:
@@ -308,7 +312,7 @@ Any path from \dedalus{p} to any EDB relation in the PDG passes through no negat
 We can continue this proof inductively; if the ultimate model of $P_0(E)$ is contained in the ultimate model of $P(E)$, then we apply Lemmas~\ref{lem:inflationary} and~\ref{lem:plang-inflationary} to obtain a contradiction of the ultimate model of $P_{i+1}(\ldots P_1(P_0(E)) \ldots)$ is not contained in the ultimate model of $P(E)$.  Thus, the ultimate models are equal.
 \end{proof}
 
-As corollaries of the above Lemma, we can apply several previous results, treathing each stratum as a separate program with only EDB negation.
+As corollaries of the above Lemma, we can apply several previous results, treating each stratum as a separate program with only EDB negation.
 
 \begin{corollary}
 \label{cor:plang-confluent}
@@ -379,7 +383,8 @@ Datalog program.
 
 Note also that the rewrite code is a generalization of the ``coordination'' code
 that a \lang programmer could have written by hand to ensure that the local
-relation \dedalus{points\_to} is a faithful representation of global state.  In
+relation \dedalus{points\_to} is a faithful representation of global state.  \jmh{The following feels like it should come earlier as motivation, and then be reiterated here.}
+In
 distributed systems, global computation barriers are commonly enforced by
 protocols based on voting: the two-phase commit protocol from distributed
 databases is a straightforward example~\cite{gray-tp}.  In the synthesized protocol shown above, every agent
@@ -388,12 +393,13 @@ they send to the coordinator has been acknowledged.  The coordinator must tally
 these votes and ensure that the vote is unanimous for all agents.  If the
 protocol completes successfully, the coordinator may proceed past the barrier.
 
+\jmh{Same with this intro sentence: seems like the ``explicit goal'' should come much earlier, and be referenced again here as a form of bragging that we hit an important yardstick.}
 An explicit goal of our work with \lang has been to view general distributed
 systems through a model-theoretic lens.  From this perspective, the connection
 between coordination protocols that enforce barriers and stratified evaluation
 of logic programs is unsurprising.  Indeed, when distributed systems are
 implemented in \plang, the two strategies have exactly the same consequences
-with respect to an appropriate model-theoretic semantics. Both ensure that among
+with respect to an appropriate model-theoretic semantics. \jmh{I'm not sure what the previous sentence says, since we don't have a formal notion of coordination protocols or barriers.} Both ensure that among
 the multiplicity of models induced by nonmonotonic logic, program evaluation
 will always select the model that corresponds to an intuitive evaluation order
 in which negation (a form of universal quantification) is applied only when it
