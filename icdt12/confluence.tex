@@ -87,10 +87,12 @@ EDB relation \dedalus{local_ptr_edb}.
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
 corresponding to executions in which \dedalus{unreach} is not computed until the
-transitive closure of \dedalus{points\_to} \jmh{don't you mean reach?} is fully determined (i.e., after all
-messages have been delivered), it also has ultimate models corresponding to executions in
-which it is ``prematurely'' computed.  These models all result in correctness
-violations: reachable memory addresses appear in the \dedalus{unreach} relation.
+transitive closure of \dedalus{points\_to} has been fully determined (i.e.,
+after all messages have been delivered), it also has ultimate models
+corresponding to executions in which \dedalus{unreach} is ``prematurely''
+computed.  When \dedalus{unreach} is computed before all the \dedalus{points_to}
+messages have been delivered, there is a correctness violation: reachable memory
+addresses appear in the \dedalus{unreach} relation.
 
 Note that for both examples, there is a single ultimate model corresponding to
 the execution in which negation is not applied to a set until the content of the
