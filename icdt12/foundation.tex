@@ -187,7 +187,16 @@ Asynchronous:
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-A rule body's location specifier can be accessed by including a variable symbol or constant prefixed with \dedalus{#} as any body atom's first argument.  In asynchronous rules only, the head location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as the head atom's first argument.  Below is an example of an asynchronous rule that binds body and head location specifiers to \dedalus{#L} and \dedalus{#D} respectively.  Recall that \dedalus{L} and \dedalus{D} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots \od{Y\sub{m}}}.  \jmh{I'd give a little intuition about why spatial entanglement is cool (finite domain of node) while temporal wouldn't be (infinite domain of time).}
+A rule body's location specifier can be accessed by including a variable symbol
+or constant prefixed with \dedalus{#} as any body atom's first argument.  In
+asynchronous rules only, the head location specifier can be accessed by
+including a variable symbol or constant prefixed with a \dedalus{#} as the head
+atom's first argument.  Below is an example of an asynchronous rule that binds
+head and body location specifiers to \dedalus{D} and \dedalus{L} respectively.
+Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
+  \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots, \od{Y\sub{m}}}.
+\jmh{I'd give a little intuition about why spatial entanglement is cool (finite
+  domain of node) while temporal wouldn't be (infinite domain of time).}
 
 \begin{Drules}
   \drule{p(#D,\od{W})@async}
