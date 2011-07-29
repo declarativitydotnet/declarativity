@@ -26,7 +26,6 @@ its ``eventual'' execution state.  Even with this simplification, some programs 
 
 %\todo{Thread a running example through the paper}
 %\todo{ensure ``relation'' vs ``relation name'' usage is consistent}
-\todo{Cite Datalog 2.0 workshop paper}
 \todo{define ``relation'', ``maps''?}
 \todo{Put in examples of notation close to where the notation is introduced -Dave Maier}
 
@@ -43,8 +42,8 @@ $c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by
 \dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
 $(\dedalus{<},2)$.\footnote{We will often write \dedalus{<} in infix notation.} 
-A {\em relation instance} for relation scheme $(\dedalus{r},n)$ is a finite set of facts for
-$(\dedalus{r},n)$.  A {\em database instance} maps each relation scheme $(\dedalus{r},n) \ne
+A {\em relation instance} for relation schema $(\dedalus{r},n)$ is a finite set of facts for
+$(\dedalus{r},n)$.  A {\em database instance} maps each relation schema $(\dedalus{r},n) \ne
 (\dedalus{<},2)$ to a relation instance for $(\dedalus{r},n)$, and maps $(\dedalus{<},2)$ to a
 finite set of \dedalus{<} facts that encode a total ordering over $\univ$.
 
