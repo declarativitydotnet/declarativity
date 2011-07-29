@@ -1,24 +1,24 @@
 \section{\large \bf \lang}
 \label{sec:foundation}
 
-We use the \lang~\cite{dedalus} language to model logic programs running in an asynchronous distributed system.
+To arrive at a formal semantics for distributed programs, we present the \lang~\cite{dedalus} language, which formally captures the intuitive notion of logic programs being executed asynchronously across the nodes of a distributed system.
 In designing \lang, we extended the well-understood Datalog language with temporal constructs that allowed
 us to model time-varying state and channel reordering and delay.  As we shall see, both extensions are made
 possible by admitting a representation of logical time into the program schema, allowing the consequences of
 deductions to hold ``at a different time'' than their antecedents.  By narrowly constraining such temporal 
-deductions, \lang faithfully models systems that communicated over unreliable media, and mutate state over time.
+deductions, we argue that \lang captures salient features of systems that communicate over unreliable networks, and mutate state over time.
 
 %\todo{Get rid of ``stable model semantics''}
-In this section we formally present the syntax of \lang.  We then show that the stable model semantics may be
-used to assign meaning to executions of a \lang program, much as an trace captures a particular execution of a
-typical distributed program.  
+We begin this section by presenting the syntax of \lang. We then show that the stable model semantics may be
+used to assign meanings to \lang programs that capture the mutation of state over logical time, much as an execution trace \jmh{do you want to cite somebody theoretical for a definition of a trace in imperative-land?  E.g. I/O Automata ``executions''?} captures the behavior of a
+typical imperative distributed program over time.  
 This interpretation presents certain obstacles:
-even in the case of programs whose outputs are deterministic, channel nondeterminism may cause a given program 
-may induce an infinite number of stable models, each corresponding to a superficially different execution.
-We then present the ultimate model semantics, an abstraction that associates a program with a finite model of 
-its ``eventual'' execution state.  We show that a deterministic program always has a single ultimate model,
-regardless of any ``internal'' nondeterminism.  In the event of multiple ultimate models, each corresponds to a
-legitimately different, nondeterministic program output.
+even if a \lang program has a deterministic final state, channel nondeterminism may induce an infinite number of stable models, each corresponding to a superficially different evolution toward that state over logical time.  To project away the (potentially infinite) variety of these distinctions, we present the {\em ultimate model} semantics, an abstraction that associates a program with a finite model of 
+its ``eventual'' execution state.  Even with this simplification, some programs may have more than one ultimate model.  We conclude by showing a natural correspondence between the multiple ultimate models and sensitivities of the specification to the main non-determinism inherent in distributed systems: message delays and reordering.  
+
+\jmh{I shortened the end of the above as I think you were skidding into deeper water than you want to explain here in an intro.}
+
+\jmh{PS: Should we make an argument that the ultimate models cover all possible message orderings?  Or all ``interesting'' (non-commuting) permutations of messages?}
 
 \subsection{Syntax}
 
@@ -40,11 +40,11 @@ the relation name \dedalus{r} and an $n$-tuple $(c_1,\ldots,c_n)$, where each
 $c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by
 \dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
-$(\dedalus{<},2)$.\footnote{We will often write \dedalus{<} in infix notation.}
-A {\em relation instance} for relation \dedalus{r} is a set of facts for
-\dedalus{r}.  A {\em database instance} maps each relation $\dedalus{r} !=
+$(\dedalus{<},2)$.\footnote{We will often write \dedalus{<} in infix notation.} 
+A {\em relation instance} for relation \dedalus{r} is a \jmh{finite} set of facts for
+\dedalus{r}.  A {\em database instance} maps each relation $\dedalus{r} \ne
 \dedalus{<}$ to a relation instance for \dedalus{r}, and maps \dedalus{<} to an
-infinite set of \dedalus{<} facts that encode a total ordering over $\univ$.
+infinite set of \dedalus{<} facts that encode a total ordering over $\univ$.  \jmh{Should we bother to constrain \dedalus{<} to the finite domain of symbols in the relation instances?}
 
 A {\em rule} over a schema $\schema$ is a clause of the form:
 
@@ -57,32 +57,31 @@ where \dedalus{p}, \dedalus{b\sub{1}}, \ldots, \dedalus{b\sub{n}},
 \dedalus{c\sub{1}}, \ldots, \dedalus{c\sub{m}} are relations in
 $\schema$, and \od{X\sub{i}} and \od{Y\sub{j}}
 denote a tuple (of the appropriate arity) consisting of
-constants from $\univ$ or variable symbols.  The {\em atom} to the left of the $\leftarrow$ is called the {\em head} of the rule, and the conjunction of atoms to the right is called the rule's {\em body}.
+constants from $\univ$ or variable symbols.  The {\em atom} to the left of the $\leftarrow$ is called the {\em head} of the rule, and the conjunction of atoms to the right is called the rule's {\em body}.  \jmh{Following on to the question above about \dedalus{<}, shouldn't we use obligatory boilerplate about Horn clauses and finite Herbrand universes?}
 
-\dedalus{p} may not be \dedalus{<}.  Note that we maintain the usual safety
-restrictions of Datalog rules: any variable symbol \dedalus{V} that appears in
+The head of a rule \dedalus{p} may not be \dedalus{<}.  Note that we maintain the usual safety
+restrictions of Datalog rules: \jmh{does this colon introduce the entire rest of this paragraph?  If so you need to punctuate a bit differently.  The remainder of the paragraph is pretty boring it'd be nice to know I can skip it as ``yeah yeah, safety''} any variable symbol \dedalus{V} that appears in
 \od{Y\sub{i}} for some $1 \leq i \leq m$ must also appear in
 \od{X\sub{j}} for some $1 \leq j \leq n$, but only if \dedalus{V}
 appears in \od{W} or \dedalus{V} appears in
-\od{Y\sub{k}} for some $k \neq i$ -- i.e., variable symbols that
+\od{Y\sub{k}} for some $k \neq i$---i.e., variable symbols that
 only appear in a single negated atom and do not appear in the head need not also
 appear in a positive atom~\cite{ullmanbook}.  Also, any variable symbol \dedalus{V} that appears in \od{W} must appear in some \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{n}}}.
 Furthermore, if \dedalus{b\sub{i}} (resp.\ \dedalus{c\sub{i}}) is \dedalus{<}, then any variable that appears in \dedalus{X\sub{i}} (resp.\ \dedalus{Y\sub{i}}) must also appear in \dedalus{X\sub{j}} for some $j \neq i$ -- i.e., variable symbols that appear in a \dedalus{<} atom must also appear in a non-negated atom.
 
 \subsubsection{Spatial and Temporal Extensions}
 
-Given a schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
-obtained by adding a column to each relation schema in $\schema$ (except
-\dedalus{<}) and adding an additional relation schema to $\schema$.  The
-additional column is called a {\em location specifier}.  By convention, the
-location specifier is the first column of every relation in $\sschema$.  The
-additional relation schema is $(\dedalus{node},1)$.  We call $\sschema$ a {\em
-  spatial} schema.
+Given a database schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
+obtained as follows. For each relation schema $(\dedalus{r}, n) \in (\schema-\{\dedalus{<}\}$), we include a relation schema $(\dedalus{r}, n+1)$ in $\sschema$. The
+additional column being added to each relation schema is called a {\em location specifier}; by convention, the
+location specifier is the first column of every relation in $\sschema$.
+Additionally, $\sschema$ includes $\dedalus{<}$, and a relation schema $(\dedalus{node},1)$.
+We call $\sschema$ a {\em spatial schema}.
 
-A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+1$-tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.  A {\em spatial database instance} is defined similarly to a database instance.
+A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $l \in \dedalus{node}$.  A {\em spatial database instance} is defined similarly to a database instance.
 
-Given a schema $\schema$, we use $\stschema$ to denote the extension of
-$\schema$ obtained by adding two additional columns to each relation schema in $\schema$ and adding three additional relation schemas to $\schema$. 
+Given a database schema $\schema$, we use $\stschema$ to denote the extension of
+$\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding three additional relation schemas to $\schema$. 
 The first additional column is a location specifier, the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$ and the timestamp is the second.  
 The additional relation schemas we add are: $(\dedalus{node},1)$,
 $(\dedalus{time},1)$, and $(\dedalus{succ},2)$.
@@ -115,7 +114,7 @@ An {\em asynchronous} rule:
           node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
 \end{Drules}
 
-The latter two kinds of rules are collectively called {\em temporal} rules.
+The latter two kinds of rules are collectively called {\em temporal} rules.  \jmh{Give intuition.  Note the unification of the spatial and temporal attributes in all body predicates; this restriction corresponds intuitively to considering deductions that can be evaluated at a single node at a single point in time.  ALSO NOTE SUCC AND CHOICE.}
 
 In the above rules, \od{B} is a tuple that contains all of the distinct variable
 symbols in \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots,
@@ -153,8 +152,7 @@ with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
 deductive rules have no head annotation.  These annotations allow us to scrap
 the boilerplate \dedalus{node}, \dedalus{time}, \dedalus{succ} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
-heads and bodies.  We also omit location specifiers by default; when ommitted,
-the meaning in asynchronous rules is that the head location specifier equals the
+heads and bodies.  We also omit location specifiers by default. The only non-trivial use of location specifiers is in asynchronous rules; we include them in such rules if the head location specifier is not equal to the
 body's.  The three kinds of rules listed above are expressed as follows:
 
 Deductive:
@@ -178,7 +176,7 @@ Asynchronous:
         {b\sub{1}(\od{X\sub{1}}), \ldots, b\sub{n}(\od{X\sub{n}}), !c\sub{1}(\od{Y\sub{1}}), \ldots, !c\sub{m}(\od{Y\sub{m}})}
 \end{Drules}
 
-A rule body's location specifier can be accessed by including a variable symbol or constant prefixed with \dedalus{#} as any body atom's first argument.  In asynchronous rules only, the head location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as the head atom's first argument.  Below is an example of an asynchronous rule that binds body and head location specifiers to \dedalus{#L} and \dedalus{#D} respectively.  Recall that \dedalus{L} and \dedalus{D} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots \od{Y\sub{m}}}.
+A rule body's location specifier can be accessed by including a variable symbol or constant prefixed with \dedalus{#} as any body atom's first argument.  In asynchronous rules only, the head location specifier can be accessed by including a variable symbol or constant prefixed with a \dedalus{#} as the head atom's first argument.  Below is an example of an asynchronous rule that binds body and head location specifiers to \dedalus{#L} and \dedalus{#D} respectively.  Recall that \dedalus{L} and \dedalus{D} may appear in any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{n}}, \od{Y\sub{1}}, \ldots \od{Y\sub{m}}}.  \jmh{I'd give a little intuition about why spatial entanglement is cool (finite domain of node) while temporal wouldn't be (infinite domain of time).}
 
 \begin{Drules}
   \drule{p(#D,\od{W})@async}
@@ -197,18 +195,18 @@ A rule body's location specifier can be accessed by including a variable symbol 
 
 \subsection{Semantics}
 \label{sec:semantics}
-
+\jmh{Abrupt start here.  Why is a PDG a good way to begin the discussion of semantics?}
 The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation -- each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, or \dedalus{<} relations, or the \dedalus{choice} construct.
 
-All cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
+All cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.  \jmh{Why?  Sez Who?}
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
 An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, and maps each IDB relation \dedalus{r} to the empty spatial relation instance.
 
-We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{T}$.  The mapping is defined by: $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K} \Rightarrow \{ \, \dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \, | \, t \in \mathbb{N} \, \} \subset \mathcal{T}$. 
+We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{T}$.  The mapping is defined by: $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K} \Rightarrow \{ \, \dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \, | \, t \in \mathbb{N} \, \} \subset \mathcal{T}$. \jmh{I'm confused -- this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
 
 We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from EDB instances to spatio-temporal database instances.
 
-A \lang program without \dedalus{choice} -- recall that choice is only used in asynchronous rules -- is {\em locally stratified}~\cite{local-strat}, because of restrictions on negation; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint; every possible function that obeys the causality constraint defines a stable model.  It is known that the stable model semantics coincides with the locally stratified semantics~\cite{stable-model} for locally stratified programs.
+Recall that \dedalus{choice} is only used in asynchronous rules.  A \lang program without \dedalus{choice} is {\em locally stratified}~\cite{local-strat}, because of restrictions on negation \jmh{elaborate?}; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.  Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}.  We do not review the stable model semantics here.  \jmh{So screw you, lazy reader!  I.e. this sounds rude.  Can we find a way to give them what they need to proceed?}  Defining the mapping using the stable model semantics, it is not hard to see that each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality constraint; every possible function that obeys the causality constraint defines a stable model.  \jmh{Wow, this was a jump.  First you assume we know stable models and say "it is not hard to see" something.  Then you make reference to causality constraints without defining them even by reference.  Yuck!  What is your point in this paragraph?  Maybe state the goal of the argument at the top of the para, and if you need to make reference to esoterica you will have motivated it up front.}  It is known that the stable model semantics coincides with the locally stratified semantics~\cite{stable-model} for locally stratified programs.
 
 \begin{example}
 \label{ex:uncountable}
@@ -223,7 +221,7 @@ Take the following \lang program, with the empty EDB instance:
 \end{Drules}
 
 Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-The stable models are exactly $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j) \in (t_1, t_2) \, \land \, (t_1, t_2) \in \mathcal{N}
+The stable models \jmh{of \dedalus{q}??} are exactly $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j) \in (t_1, t_2) \, \land \, (t_1, t_2) \in \mathcal{N}
 \times \mathcal{N} \, \}$.  To see this, consider the unsugared version of the program:
 
 \begin{Drules}
@@ -243,8 +241,10 @@ A given stable model $\{ \, \dedalus{q(n1,i,0), q(n1,j,1)} \, | \, (i,j)\in (t_1
 
 \paa{not ready to whack it yet, but we should consider breaking the above discussion into two (more chewable) pieces: first, making no assumptions about q's persistence, show that a single async rule induces an infinite number of stable models, and how each model may be viewed as fixing a 'choice function' as EDB.  then, mention among the 'problems' below that rules with all persistent subgoals make an infinite number of choices, inducing an uncountable number of stable models}
 
+\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
+
 There are two potential problems with considering the stable models as the meaning of a \lang instance.  
-First, a program with even one asynchronous rule may have uncountably many stable models, and not all of these may be meaningfully different.  Second, a stable model of a \lang program may itself be infinite.  We address both concerns in our definition of an {\em ultimate model}.
+First, a program with even one asynchronous rule may have uncountably many stable models, and not all of these may be meaningfully different. \jmh{meaningful in what sense??} Second, a stable model of a \lang program may itself be infinite.  \jmh{So what?}  We address both concerns in our definition of an {\em ultimate model}.
 
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema
 $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  We denote the output schema as
