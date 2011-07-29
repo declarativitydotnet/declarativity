@@ -54,7 +54,18 @@ model.
 \subsection{Safe IDB Negation}
 \label{sec:perfect-construction}
 
-There is a usage of negation that is both intuitive and corresponds to distributed systems practices.  Negation is not applied until the negated relation is ``done'' being computed.  Formally, we will require that if a rule body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must also contain an atom \dedalus{p_done()}. \jmh{\dedalus{p_done()} vs. \dedalus{done_p()}?  Check throughout!} The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{done_p(l,t)} \in \mathcal{S}$,  then $\dedalus{done_p(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{done_p(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
+There is a usage of negation that is both intuitive and corresponds to
+distributed systems practices.  Negation is not applied until the negated
+relation is ``done'' being computed.  Formally, we will require that if a rule
+body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must
+also contain an atom \dedalus{p_done()}. The relation \dedalus{p_done()} has the
+property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
+\mathcal{S}$, then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps
+$\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in
+\mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$
+implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all
+timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true
+when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
 We will present a specification of \dedalus{p_done()} after introducing some preliminary definitions.
 
