@@ -89,7 +89,7 @@ location specifier is the first column of every relation in $\sschema$.
 Additionally, $\sschema$ includes $\dedalus{<}$, and a relation schema $(\dedalus{node},1)$.
 We call $\sschema$ a {\em spatial schema}.
 
-A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$ and $\dedalus{node}(l)$.  A {\em spatial database instance} is defined similarly to a database instance.
+A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(d,c_1,\ldots,c_n)$ where each $c_i \in \univ$ and $\dedalus{node}(l)$.  A {\em spatial database instance} is defined similarly to a database instance.
 
 Given a database schema $\schema$, we use $\stschema$ to denote the extension of
 $\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding four additional relation schemas to $\schema$. 
@@ -98,7 +98,7 @@ The additional relation schemas we add are: $(\dedalus{node},1)$,
 $(\dedalus{time},1)$, $(\dedalus{succ},2)$, and $(\dedalus{time_lt},2)$.
 We call $\stschema$ a {\em spatio-temporal} schema.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(l)}, and \dedalus{time(t)}.  A {\em spatio-temporal database instance} is defined similarly to a database instance, \dedalus{time(t)} for all $\dedalus{t} \in \mathbb{N}$, \dedalus{succ(x,y)} for all $y = x + 1$, and \dedalus{time_lt(x,y)} for all $x < y$.
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(l)}, and \dedalus{time(t)}.  A {\em spatio-temporal database instance} is defined similarly to a database instance, \dedalus{time(t)} for all $\dedalus{t} \in \mathbb{N}$, \dedalus{succ(x,y)} for all $y = x + 1$, and \dedalus{time_lt(x,y)} for all $x < y$.
 
 We will use the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by adding a timestamp column with the constant \dedalus{t}.
 
@@ -227,13 +227,14 @@ Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
 \subsection{Semantics}
 \label{sec:semantics}
 \jmh{Abrupt start here.  Why is a PDG a good way to begin the discussion of semantics?}
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, \dedalus{time_lt}, or \dedalus{<} relations, or the \dedalus{choice} construct.
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{node}, \dedalus{time}, \dedalus{succ}, \dedalus{time_lt}, or \dedalus{<} relations, or the \dedalus{choice} construct.
 
-We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
-The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
-An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, and maps each IDB relation \dedalus{r} to the empty spatial relation instance.
+We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must involve a temporal edge.
+The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
+An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, each IDB relation \dedalus{r} to the empty spatial relation instance, and the \dedalus{node} relation to a relation instance for \dedalus{node}.
+\todo{Dave would expect something here about how the IDB is computed}
 
-We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$ for all $\mathcal{T} \in \mathbb{N}$.
+We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$ for all $\mathcal{T} \in \mathbb{N}$.
 %\jmh{I'm confused---this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
 
 We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from EDB instances to spatio-temporal database instances.
@@ -242,33 +243,24 @@ Recall that \dedalus{choice} is only used in asynchronous rules, to model the fa
 
 \begin{example}
 \label{ex:uncountable}
-Take the following \lang program, with the empty EDB instance:
+Take the following \lang program, with the EDB instance \{\dedalus{node(n1), q(n1,0), q(n1,1)}\}.
 
 \begin{Drules}
   \drule{p(#L,X)@async}
         {q(#L,X)}
-  \dfact{node(n1)}
-  \dfact{q(#n1,0)}
-  \dfact{q(#n1,1)}
 \end{Drules}
 
 Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-The stable models (with \dedalus{q} and \dedalus{node} facts ommitted) are exactly $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j) \in (t_1, t_2) \, \land \, (t_1, t_2) \in \mathcal{N}
+The stable models (with \dedalus{q} and \dedalus{node} facts ommitted) are exactly $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j) \in \mathcal{N}
 \times \mathcal{N} \, \}$.  To see this, consider the unsugared version of the program:
 
 \begin{Drules}
   \drule{p(L,S,X)}
         {q(L,T,X), node(L), time(T), time(S), time_lt(T,S), choice((L,T,X),(S))}
-  \drule{node(L,T,n1)}
-        {node(L), time(T)}
-  \drule{q(n1,T,0)}
-        {time(T)}
-  \drule{q(n1,T,1)}
-        {time(T)}
 \end{Drules}
 
-A given stable model $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j)\in (t_1, t_2) \, \land \, (t_1, t_2)\in \mathcal{N}                                                    
-\times \mathcal{N} \, \}$ corresponds to the function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$ and the image of $h(x)$ is $t_2$.
+A given stable model $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j)\in \mathcal{N}                                                    
+\times \mathcal{N} \, \}$ corresponds to a function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$ and the image of $h(x)$ is $t_2$.
 \end{example}
 
 \paa{not ready to whack it yet, but we should consider breaking the above discussion into two (more chewable) pieces: first, making no assumptions about q's persistence, show that a single async rule induces an infinite number of stable models, and how each model may be viewed as fixing a 'choice function' as EDB.  then, mention among the 'problems' below that rules with all persistent subgoals make an infinite number of choices, inducing an uncountable number of stable models}
@@ -285,7 +277,7 @@ $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  We denote the outpu
 $\oschema$.
 %An \emph{output relation schema} is a member of $\oschema$.
 
-Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\Diamond\Box\mathcal{T}$.  For every spatio-temporal fact $\dedalus{r(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(l,c\sub{1},\ldots,c\sub{n})} \in \Diamond\Box\mathcal{T}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
+Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\Diamond\Box\mathcal{T}$.  For every spatio-temporal fact $\dedalus{r(p,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(p,c\sub{1},\ldots,c\sub{n})} \in \Diamond\Box\mathcal{T}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(p,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
 
 The set of {\em ultimate models} of a \lang instance $I$ is $\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$  $\text{is a stable model of I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations in the output schema that are eventually always true in a stable model.
 
