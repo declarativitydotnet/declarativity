@@ -121,7 +121,7 @@ Replace the original rule:
 
 \begin{Drules}
   \drule{p(#N,\od{W})@async}
-        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
+        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
 \end{Drules}
 
 with the following set of rules:
@@ -132,7 +132,7 @@ with the following set of rules:
 %uq\sub{\phi}(\od{W}, \od{Y}, 1) <- uq\sub{\phi}(\od{W}, \od{X}, 1), succ(\od{X}, \od{Y}), $\phi(\od{W}, \od{X})$.
 \begin{Drules}
 \drule{p\sub{j}_to_send(N,\od{W})}
-      {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{n}(#L,\od{X\sub{n}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
+      {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
 \drule{p\sub{j}_send(#N,L,\od{X})@async}
       {p\sub{j}_to_send(#L,N,\od{X})}
 \drule{p\sub{j}_ack(#N,L,\od{X})@async}
