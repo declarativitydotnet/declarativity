@@ -91,13 +91,13 @@ We call $\sschema$ a {\em spatial schema}.
 A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(l,c_1,\ldots,c_n)$ where each $c_i \in \univ$ and $\dedalus{node}(l)$.  A {\em spatial database instance} is defined similarly to a database instance.
 
 Given a database schema $\schema$, we use $\stschema$ to denote the extension of
-$\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding three additional relation schemas to $\schema$. 
+$\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding four additional relation schemas to $\schema$. 
 The first additional column is a location specifier, the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$ and the timestamp is the second.  
 The additional relation schemas we add are: $(\dedalus{node},1)$,
-$(\dedalus{time},1)$, and $(\dedalus{succ},2)$.
+$(\dedalus{time},1)$, $(\dedalus{succ},2)$, and $(\dedalus{time_lt},2)$.
 We call $\stschema$ a {\em spatio-temporal} schema.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(l)}, and \dedalus{time(t)}.  A {\em spatio-temporal database instance} is defined similarly to a database instance, except \dedalus{time} is mapped to an infinite set of \dedalus{time} facts representing $\mathbb{N}$, and \dedalus{succ} is mapped to an infinite set of \dedalus{succ} facts representing the natural successor relation over $\mathbb{N}$.
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(l,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(l)}, and \dedalus{time(t)}.  A {\em spatio-temporal database instance} is defined similarly to a database instance, \dedalus{time(t)} for all $\dedalus{t} \in \mathbb{N}$, \dedalus{succ(x,y)} for all $y = x + 1$, and \dedalus{time_lt(x,y)} for all $x < y$.
 
 We will use the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by adding a timestamp column with the constant \dedalus{t}.
 
@@ -123,7 +123,7 @@ An {\em asynchronous} rule:
   \drule{p(D,S,\od{W})}
         {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}),
           !c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, !c\sub{m}(L,T,\od{Y\sub{m}}),
-          node(L), time(T), time(S), T < S, choice((L, T, \od{B}),(S)), node(D)}
+          node(L), time(T), time(S), time_lt(T,S), choice((L, T, \od{B}),(S)), node(D)}
 \end{Drules}
 
 The latter two kinds of rules are collectively called {\em temporal} rules.
@@ -133,15 +133,15 @@ symbols in \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}}, \ldots,
 \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in
 any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}},
   \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.
-\dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.
+Head relation name \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.
 \dedalus{b\sub{1}, \ldots, b\sub{l}, c\sub{1}, \ldots, c\sub{m}} may not be
-\dedalus{succ} or \dedalus{time}.
+\dedalus{succ}, \dedalus{time}, \dedalus{time_lt}, or \dedalus{<}.
 
 The unification of location specifiers and timestamps in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules intuitively use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
 
-\dedalus{choice} is the construct of Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo};
+The \dedalus{choice} construct is from Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo};
 the meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
-in \od{Y} are functionally dependent on the variables in \od{X} with respect to
+in \od{Y} are non-deterministically functionally dependent on the variables in \od{X} with respect to
 any function.  Due to variable binding restrictions, only asynchronous rules may
 have a different value for the head location specifier than the body location
 specifier.  Intuitively, different values for the location specifiers represents
@@ -150,7 +150,7 @@ cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B}
 being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
 that the network may arbitrarily delay, re-order, and batch messages, any single
 value of head timestamp \dedalus{S} is permissible for a message as long as it
-obeys the {\em causality constraint} \dedalus{T < S}.\footnote{Note that in
+obeys the {\em causality constraint} \dedalus{time_lt(T,S)}.\footnote{Note that in
   other presentations of \lang (e.g.,~\cite{dedalus}), message timestamps are
   chosen from $\mathbb{N} \cup \{\Tau\}$, where $\Tau$ represents a special value
   indicating that the message was dropped by the network. In this paper, we
@@ -165,8 +165,8 @@ spatio-temporal schema $\stschema$.
 
 \subsubsection{Syntactic Sugar}
 The restrictions on timestamps and location specifiers suggest a natural
-syntactic sugar to improve readability.  We annotate inductive head predicates
-with \dedalus{@next} and asynchronous head predicates with \dedalus{@async};
+syntactic sugar to improve readability.  We annotate inductive head relations
+with \dedalus{@next} and asynchronous head relations with \dedalus{@async};
 deductive rules have no head annotation.  These annotations allow us to omit the
 boilerplate usage of \dedalus{node}, \dedalus{time}, \dedalus{succ} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
@@ -226,7 +226,7 @@ Recall that \dedalus{D} and \dedalus{L} may appear in any of \dedalus{\od{W},
 \subsection{Semantics}
 \label{sec:semantics}
 \jmh{Abrupt start here.  Why is a PDG a good way to begin the discussion of semantics?}
-The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, or \dedalus{<} relations, or the \dedalus{choice} construct.
+The {\em predicate dependency graph} (PDG)~\cite{ullmanbook} of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation---each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \{\dedalus{p}\}$.  There is an edge from the node with label $\{\dedalus{q}\}$ to the node with label $\{\dedalus{p}\}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{!q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{time}, \dedalus{succ}, \dedalus{time_lt}, or \dedalus{<} relations, or the \dedalus{choice} construct.
 
 We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must also involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
@@ -257,7 +257,7 @@ The stable models (with \dedalus{q} and \dedalus{node} facts ommitted) are exact
 
 \begin{Drules}
   \drule{p(L,S,X)}
-        {q(L,T,X), node(L), time(T), time(S), T < S, choice((L,T,X),(S))}
+        {q(L,T,X), node(L), time(T), time(S), time_lt(T,S), choice((L,T,X),(S))}
   \drule{node(L,T,n1)}
         {node(L), time(T)}
   \drule{q(n1,T,0)}
