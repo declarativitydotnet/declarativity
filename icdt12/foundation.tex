@@ -1,20 +1,37 @@
 \section{\large \bf \lang}
 \label{sec:foundation}
 
-To arrive at a formal semantics for distributed programs, we present the \lang~\cite{dedalus} language, which formally captures the intuitive notion of logic programs being executed asynchronously across the nodes of a distributed system.
-In designing \lang, we extended the well-understood Datalog language with temporal constructs that allowed
-us to model time-varying state and channel reordering and delay.  As we shall see, both extensions are made
-possible by admitting a representation of logical time into the program schema, allowing the consequences of
-deductions to hold ``at a different time'' than their antecedents.  By narrowly constraining such temporal 
-deductions, we argue that \lang captures salient features of systems that communicate over unreliable networks and mutate state over time.
+To arrive at a formal semantics for distributed programs, we present the
+\lang~\cite{dedalus} language, which formally captures the intuitive notion of
+logic programs being executed asynchronously across the nodes of a distributed
+system.  In designing \lang, we extended the well-understood Datalog language
+with temporal constructs that allowed us to model time-varying state and channel
+non-determinism.  As we shall see, both extensions are made possible by
+admitting a representation of logical time into the program schema, allowing the
+consequences of deductions to hold ``at a different time'' than their
+antecedents.  By narrowly constraining such temporal deductions, we argue that
+\lang captures salient features of systems that communicate over unreliable
+networks and mutate state over time.
 
 %\todo{Get rid of ``stable model semantics''}
-We begin this section by reviewing the syntax of \lang that was first presented in~\cite{dedalus}. We then move on from that beginning by providing a model-theoretic semantics for \lang.  We note that the stable model semantics may be
-used to assign meanings to \lang programs that capture the mutation of state over logical time, much as an execution trace \jmh{do you want to cite somebody theoretical for a definition of a trace in imperative-land?  E.g. I/O Automata ``executions''?} captures the behavior of a
-typical imperative distributed program over time.  
-This interpretation presents certain obstacles:
-even if a \lang program has a deterministic final state, channel non-determinism may induce an infinite number of stable models, each corresponding to a superficially different evolution toward that state over logical time.  To project away the (potentially infinite) variety of these distinctions, we present the {\em ultimate model} semantics, an abstraction that associates a program with a finite model of 
-its ``eventual'' execution state.  Even with this simplification, some programs may have more than one ultimate model.  We conclude by showing a natural correspondence between the multiple ultimate models and sensitivities of the specification to the main non-determinism inherent in distributed systems: message delays and reordering.  
+We begin this section by reviewing the syntax of \lang that was first presented
+in~\cite{dedalus}. We then provide a model-theoretic semantics for \lang.  We
+note that the stable model semantics~\cite{stable-model} may be used to assign
+meanings to \lang programs that capture the mutation of state over logical time,
+much as an execution trace \jmh{do you want to cite somebody theoretical for a
+  definition of a trace in imperative-land?  E.g. I/O Automata ``executions''?}
+captures the behavior of a typical imperative distributed program over time.
+However, using the stable model semantics for \lang presents certain obstacles:
+even if a \lang program has a deterministic final state, channel non-determinism
+may induce an infinite number of stable models, each corresponding to a
+different evolution toward that state over logical time.  To project away the
+(potentially infinite) variety of these distinctions, we present the {\em
+  ultimate model} semantics, an abstraction that associates a program with a
+finite model of its ``eventual'' execution state.  Even with this
+simplification, some programs may have more than one ultimate model.  We
+conclude by showing a natural correspondence between the multiple ultimate
+models and sensitivities of the specification to the main non-determinism
+inherent in distributed systems: message delays and reordering.
 
 \jmh{I shortened the end of the above as I think you were skidding into deeper water than you want to explain here in an intro.}
 
@@ -39,7 +56,7 @@ A {\em database schema} $\schema$ is a finite set of relation schemas.
 A {\em fact} over a relation schema $(\dedalus{r}, n)$ is a pair consisting of
 the relation name \dedalus{r} and an $n$-tuple $(c_1,\ldots,c_n)$, where each
 $c_i \in \univ$.  We denote a fact with relation name \dedalus{r} by
-\dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in~\cite{immerman-ptime}, we assume
+\dedalus{r(c\sub{1}, \ldots, c\sub{n})}.  As in Immerman~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
 $(\dedalus{<},2)$.\footnote{We will often write \dedalus{<} in infix notation.} 
 A {\em relation instance} for relation schema $(\dedalus{r},n)$ is a finite set of facts for
