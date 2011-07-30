@@ -282,6 +282,8 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
 \end{Drules}
 
 \subsection{Properties of \plang}
+We show that \plang maintains the nice properties of \slang: it is both confluent PTIME.  We first argue that the rules for computing \dedalus{p_done{}} have the desired effect, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
+
 \jmh{A bit of connective flow text here?}
 \begin{lemma}[Sealing]
 \label{lem:plang-done-right}
