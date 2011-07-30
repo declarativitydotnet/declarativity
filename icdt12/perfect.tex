@@ -72,6 +72,8 @@ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all
 timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true
 when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
+Note that in addition to guarding negation, \dedalus{p_done()} relations can be used to determine when the output of a \plang program is complete.
+
 We will present a specification of \dedalus{p_done()} after introducing some preliminary definitions.
 
 A {\em collapsed PDG} of a \lang program $P$ is the graph obtained by replacing each strongly
