@@ -171,7 +171,7 @@ The first four rules above compute a dense order over \dedalus{p\sub{\phi}}.  Th
 
 We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ !p(\od{W},\od{_}), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{!p(\od{W}, \od{_})}.
 
-Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
+Note also that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
 \subsubsection{Async Recursive Nodes}
 
@@ -285,7 +285,7 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
 The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in \mathcal{S}$,  then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.
 \end{lemma}
 \begin{proof}
-We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} are correct.
+We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} have the properties mentioned in the Lemma.
 
 Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the atemporal case.
 
