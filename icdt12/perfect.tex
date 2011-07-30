@@ -79,11 +79,8 @@ component has any asynchronous edges, we call the resulting collapsed node {\em
 relation names in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done()} \jmh{Huh?  \dedalus{p_done()} is not a rule.  What do you mean here?}.  For
-IDB relations, defining \dedalus{p_done()} takes some work.  A rule defining
-\dedalus{p_done()} for IDB relation \dedalus{p} may use \dedalus{q_done()} in
-its body only if there is an edge in the collapsed PDG from a node $i$ with
-$\dedalus{p} \in L(i)$ to a node $j$ with $\dedalus{q} \in L(j)$.  \jmh{Now you lost me -- you seem to have dipped into a proofy discussion without the requisite setup.  Rewrite and stick to intuition/introduction.}
+For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done().}~\footnote{This is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
+IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively, \dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on \dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in the head.  Additionally, asynchronous rules take some care---while atemporally-defined relations are done in the same timestamp as all relations they depend on, there may be arbitrary delay before asynchronously-defined relations are done.
 
 For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to deductive rules (Lemma~\ref{lem:no-inductive}).
 
