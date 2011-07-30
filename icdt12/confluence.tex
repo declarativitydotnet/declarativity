@@ -6,7 +6,9 @@
 
 %Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 \lang can express a broad class of distributed systems but this flexibility comes at a cost.
-As we have shown, it is easy to write programs that have multiple ultimate models, which intuitively means that the program has non-deterministic output.
+As we have shown, it is easy to write programs that have multiple ultimate models, 
+%which intuitively means that the program has non-deterministic output.
+corresponding to executions that produce different outputs.
 %\wrm{Also say something about non-trivial programs with an empty ultimate model.}
 %as well as nontrivial programs with an empty ultimate model.
 However, it is typically desirable to ensure that a program specification on a fixed input has a single, deterministic output, regardless of non-determinism in the order of message arrivals (captured in \lang by \dedalus{choice}).  
