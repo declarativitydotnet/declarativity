@@ -187,9 +187,12 @@ A \lang program has {\em guarded asynchrony} if all relations appearing in the h
 We will refer to the language of IDB negation-free \lang programs with guarded
 asynchrony as \slang.
 
-First we will see that \slang programs are {\em temporally inflationary}: if a stable model
-of a \slang instance contains a spatio-temporal fact \dedalus{f@t}, then it also
-contains \dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
+\subsubsection{Confluence}
+
+To show that all \slang programs are confluent, we begin by showing that \slang
+programs are {\em temporally inflationary}: if a stable model of a \slang
+instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains
+\dedalus{f@t+1} (and thus the ultimate model contains \dedalus{f}).
 
 \begin{lemma}
 \label{lem:inflationary}
@@ -265,6 +268,7 @@ Any instance of this program has a single ultimate model in which \dedalus{b()}
 \dedalus{<}.  Thus it is confluent, but the program uses IDB negation and does
 not have guarded asynchrony.
 
+\subsubsection{Computational Complexity}
 Not only are \slang programs confluent, but they also capture exactly PTIME.  We
 will prove this by showing an equivalence to Datalog programs, which are known
 to capture exactly PTIME over ordered structures~\cite{immerman-book}.
