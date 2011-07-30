@@ -80,14 +80,19 @@ relation names in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
 For EDB relations \dedalus{p}, the rule for \dedalus{p_done} is \dedalus{p_done().}~\footnote{This is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
-IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively, \dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on \dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in the head.  Additionally, asynchronous rules take some care---while atemporally-defined relations are done in the same timestamp as all relations they depend on, there may be arbitrary delay before asynchronously-defined relations are done.
+IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively, \dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on \dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in the head.  Additionally, asynchronous rules take some care---while deductively-defined relations are done in the same timestamp as all relations they depend on, there may be arbitrary delay before asynchronously-defined relations are done.
 
 For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to deductive rules (Lemma~\ref{lem:no-inductive}).
 
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
 
-For non-async-recursive nodes, we can compute a \dedalus{done} relation for each rule, then collate these into \dedalus{done} relations for each relation.  We separately handle atemporal and asynchronous rules: an atemporal rule is done at the same time as its body relations; an asynchronous rule is done, intuitively, when ``all messages have been acknowledged.''  We assume guarded asynchrony applies to the rules in this section.
+For non-async-recursive nodes, we can compute a \dedalus{done} relation for each
+rule, then collate these into \dedalus{done} relations for each relation.  We
+handle deductive and asynchronous rules separately: a deductive rule is done at
+the same time as its body relations; an asynchronous rule is done, intuitively,
+when ``all messages have been acknowledged.''  We assume guarded asynchrony
+applies to the rules in this section.
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
 Assume the rules in $P$ with head relation
@@ -146,7 +151,11 @@ add the following set of rules:
       {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
 \end{Drules}
 
-The first rule stores messages to be sent at the body (source's) location specifier.  This is necessary so the source can check whether all messages have been acknowledged.  The original destination location specifier is stored as an ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence of \dedalus{#}).  Note that because this first rule is an atemporal rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule (this is shown in the second rule).  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all nodes have been received.
+The first rule stores messages to be sent at the body (source's) location
+specifier.  This is necessary so the source can check whether all messages have
+been acknowledged.  The original destination location specifier is stored as an
+ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence
+of \dedalus{#}).  Note that because this first rule is a deductive rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule (this is shown in the second rule).  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all nodes have been received.
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
 
@@ -287,7 +296,7 @@ The relation \dedalus{p_done()} has the property that in any stable model $\math
 \begin{proof}
 We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} have the properties mentioned in the Lemma.
 
-Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the atemporal case.
+Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the deductive case.
 
 In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality constraint implies that the timestamp on acknowledgements is later than the timestamp on the facts they acknowledge, and thus the timestamp on each node's \dedalus{r\sub{j}_node_done} fact is greater than the timestamp on the acknowledged facts.  Thus, before a node concludes \dedalus{p_done()}, that node has all \dedalus{p} facts.
 
@@ -340,11 +349,11 @@ Note that every \slang program is a \plang program.  Thus we have:
 %\plang programs capture exactly PTIME
 %\end{theorem}
 %\begin{proof} 
-%Since \plang programs are confluent, Corollary~\ref{cor:no-async} applies.  Thus, asynch%ronous rules may be replaced with inductive rules.  We can assume these are the only ind%uctive rules in the program, by Lemma~\ref{lem:no-inductive}.  Using a proof in the styl%e of Lemma~\ref{lem:no-inductive}, considering each stratum at a time, we can also see t%hat these inductive rules can be converted into atemporal rules with no effect to the ul%timate model.  The stable model of the resulting program is unique, and is also the same% for every timestamp.
+%Since \plang programs are confluent, Corollary~\ref{cor:no-async} applies.  Thus, asynch%ronous rules may be replaced with inductive rules.  We can assume these are the only ind%uctive rules in the program, by Lemma~\ref{lem:no-inductive}.  Using a proof in the styl%e of Lemma~\ref{lem:no-inductive}, considering each stratum at a time, we can also see t%hat these inductive rules can be converted into deductive rules with no effect to the ul%timate model.  The stable model of the resulting program is unique, and is also the same% for every timestamp.
 
 %As in Theorem~\ref{thm:ptime}, we remove the timestamp attribute from all relations, and% the \dedalus{time} relations from all rule bodies.  The result is a Datalog program wit%h stratified negation.  The perfect model of the Datalog program is exactly the ultimate% model, as the stable model semantics coincides with the perfect model semantics for str%atified programs.  It is known that for ordered structures, stratified Datalog is also e%quivalent to PTIME, due to negation pushdown results in~\cite{immerman-ptime}.
 
-%In the other direction, it is clear that we can encode any stratified Datalog program in% \plang using atemporal rules: the ultimate model coincides wieh the perfect model of th%e Datalog program.                                                                   %\end{proof}  
+%In the other direction, it is clear that we can encode any stratified Datalog program in% \plang using deductive rules: the ultimate model coincides wieh the perfect model of th%e Datalog program.                                                                   %\end{proof}  
 
 \subsection{Discussion}
 Applying the program transformation $\mathcal{P}$ to the garbage collection program from Example~\ref{ex:gc} results in the following rules being added.
