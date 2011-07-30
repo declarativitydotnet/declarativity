@@ -1,57 +1,6 @@
 \section{Related Work}
 \label{sec:relwork}
 
-\begin{comment}
-\subsection{Updateable State}
-
-Many deductive database systems, including LDL~\cite{ldl} and Glue-Nail~\cite{glue-nail}, admit procedural semantics to deal with updates using an
-assignment primitive.  In contrast, languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} retain a purely logical 
-interpretation by admitting temporal extensions into their syntax and interpreting assignment or update as a composite operation
-across timesteps~\cite{deductiveupdates} rather than as a primitive.  We follow the latter approach, but differ in several significant ways.
-First, we model persistence explicitly in our language, so that like updates, it is specified as a composite operation across timesteps.
-Partly as a result of this, we are able to enforce stricter constraints on the allowable time suffixes in rules: a program may only specify what deductions are visible
-in the current timestep, the immediate next timestep, and \emph{some} future timestep, as opposed to the free use of intervals allowed in rules in Liu et al.  Our simple inductive approach to persistence obviates the need to evaluate stabbing queries on time ``ranges.''
-\wrm{Rework the above to also incorporate Chomicki et al and other work on temporal deductive databases}
-
-Lamport's TLA+~\cite{tla} is a language for specifying 
-concurrent systems in terms of constraints over valuations of state, and temporal logic that describes admissible transitions.  The notion of 
-\emph{state predicates} being distinguishable from \emph{actions} in that they are ``invariant under stuttering'' is similar to our declarative definition 
-of table persistence.  Two distinguishing features of \lang with respect to TLA+ is our minimalist use of temporal constructs (next and later), and our unified treatment of temporal and other attributes of facts, enabling the full literature of Datalog to be applied both to temporal and instantaneous properties of programs.
-
-\paa{mention linearizability~\cite{linearizability} and 
-serializability~\cite{serializability} as lower-level attempts to formalize
-similar notions of consistency for concurrent systems}
-
-\subsection{Distributed Systems}
-
-Significant recent work (\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
-primitives to the problem of specifying and implementing network protocols and distributed systems.  Implementing distributed systems entails 
-a data store that changes over time, so any useful implementation of such a language addresses the updateable state issue in some manner. 
-\nrc{The ``existing'' should be qualified with ``most'', or ``notable.''} Existing distributed deductive languages like NDlog and Overlog adopt a \emph{chain of fixpoints} interpretation.  All rules are expressed as 
-straightforward Datalog, and evaluation proceeds in three phases:
-
-\begin{enumerate}
-\item Input from the external world, including network messages, clock interrupts and host language calls, is collected.
-\item Time is frozen, the union of the local store and the batch of events is taken as EDB, and the program is run to fixpoint.
-\item The deductions which cause side effects, including messages, writes and deletions of values in the local store, and host language callbacks are dealt with.  
-\end{enumerate}
-
-%%\jmh{You're sidestepping Delete an key update.}\rcs{think I fixed it in item
-%%3}
-\nrc{Which language descriptions? Should be more specific.}
-Unfortunately, the language descriptions give no careful specification of how and when deletions and updates
-should be made visible, so the third step is a ``black box.''  Loo et al.~\cite{loo-sigmod06} proved that classes of programs with certain 
-monotonicity properties (i.e., programs without negation or fact deletion)
-are equivalent (specifically, eventually consistent) when evaluated globally (via a single fixpoint computation) or in a distributed setting in which the 
-\emph{chain of fixpoints} interpretation is applied at each participating node, and no messages are lost.
-Navarro et al.~\cite{navarro-oper-sem} proposed an alternate syntax that addressed key ambiguities in Overlog, including the
-\emph{event creation vs.\ effect} ambiguity.  Their solution solves the problem by introducing procedural semantics to the interpretation of 
-the augmented Overlog programs.  A similar analysis was offered by Mao~\cite{Mao2009}.
-
-
-%%%Further background: \cite{constructivism,prz,tdccp,tccp}
-\end{comment}
-
 \lang shares features with a long history of deductive database systems.
 The purely declarative semantics of \lang, based on the reification of logical time into
 facts, are closer in spirit and interpretation to  Statelog~\cite{statelog} and
@@ -61,11 +10,11 @@ and deletion over time.
 Previous work in temporal deductive databases attempted to compute finite representations for periodic phenomena~\cite{tdd-infinite}: we reuse many of these results in \lang.
 
 Significant recent work (\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}, etc.) has focused on applying deductive database languages extended with networking 
-primitives to the problem of specifying and implementing network protocols and distributed systems.  Lemma~\ref{lem:guarding} resembles the  correctness proof of ``pipelined
+primitives to the problem of specifying and implementing network protocols and distributed systems.  Theorem~\ref{thm:confluence} resembles the  correctness proof of ``pipelined
 semi-naive evaluation'' for distributed Datalog presented by Loo et al.~\cite{loo-sigmod06}.
-Inspired by those results, we extend them here to programs that are not syntactically 
-monotonic and channels that may drop or arbitrarily reorder messages \nrc{We
-  don't handle message drops at the moment}.
+%Inspired by those results, we extend them here to programs that are not syntactically 
+%monotonic and channels that may drop or arbitrarily reorder messages \nrc{We
+%  don't handle message drops at the moment}.
 In general, however, the language extensions 
 proposed in much of this prior work added
 expressivity and domain applicability but compromised the declarative
@@ -73,24 +22,6 @@ semantics of Datalog, making formal analysis difficult~\cite{Mao2009, navarro-op
 In designing \lang, we tried to recover and extend the model-theoretic analyses applicable
 to pure Datalog, while preserving the features appropriate to modeling loosely coupled
 distributed systems.
-
-\begin{comment}
-\jmh{This whole paragraph makes me very nervous.  I'm not sure how what we're doing exactly relates to serializability, much less linearizability about which I know much less.  Do we really need to bring this up?}
-Our attempts to model and verify properties specific to distributed systems like 
-confluence and consistency of replicated state are similar in spirit to the database literature
-describing serializable transactions~\cite{serializability}.  Similarly, the programming languages
-community has formalized the notion of linearizable~\cite{linearizability} operations on
-concurrent data structures.  Abstractly, serializability differs from linearizability in that the
-former is a global property while the latter is local to individual structures and operations;
-our model-theoretic analyses encompass both global (e.g., confluence) and local (e.g., downstream 
-confluence) properties, but differ from both traditions in that they are applied at a higher
-level, based upon the scope and boundaries of logical monotonicity rather than the intersection of read and write sets for shared objects \paa{ugh, rewrite me please}.
-
-
-\jmh{How about a short paragraph on Vogel's alternative definitions of EC, and how they represent different constraints in the spirit of Section 4?  Leave it to future work to provably ensure these constraints.}
-
-\jmh{How about an admission that while our formalism is cool and enabled us to do new stuff, it would be nice to explore its relationship to traditional distributed systems formalisms like IOA and TLA+.}
-\end{comment}
 
 Specification languages like TLA~\cite{tla} and I/O Automata~\cite{ioa} employ
 first-order logic and set theory to model and prove properties about distributed
