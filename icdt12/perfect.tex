@@ -284,7 +284,6 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
 \subsection{Properties of \plang}
 We show that \plang maintains the nice properties of \slang: it is both confluent PTIME.  We first argue that the rules for computing \dedalus{p_done{}} have the desired effect, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
 
-\jmh{A bit of connective flow text here?}
 \begin{lemma}[Sealing]
 \label{lem:plang-done-right}
 The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in \mathcal{S}$,  then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.
@@ -294,9 +293,8 @@ We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} are corr
 
 Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the atemporal case.
 
-In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality constraint implies that the timestamp on acknowledgements is later than the timestamp on the facts they acknowledge, and thus the timestamp on each node's \dedalus{r\sub{j}_node_done} fact is greater than the timestamp on the acknowledged facts.  Thus, before a node concludes \dedalus{p_done()}, that node has all facts, assuming that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} are correct.
+In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality constraint implies that the timestamp on acknowledgements is later than the timestamp on the facts they acknowledge, and thus the timestamp on each node's \dedalus{r\sub{j}_node_done} fact is greater than the timestamp on the acknowledged facts.  Thus, before a node concludes \dedalus{p_done()}, that node has all \dedalus{p} facts.
 
-\todo{fix up}
 In the asynchronous recursive case, the causality constraint ensures that every response in the second round is received at a time greater than every response in the first round.  Thus, between at least the last response of the first round and the last response of the second round, no node has outstanding messages and no node sends a message.  This implies that no node ever sends a message again.
 \end{proof}
 
@@ -307,8 +305,6 @@ In the asynchronous recursive case, the causality constraint ensures that every 
 \begin{proof}
 Since a \dedalus{!p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
 \end{proof}
-
-\todo{ensure recursion through negation is ruled out earlier...}
 
 \jmh{A bit of intuitive text here about the appeal to ideas from stratified negation?  And perhaps connection to ``global barrier'' protocols?}
 
