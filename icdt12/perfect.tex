@@ -1,6 +1,5 @@
-\section{Perfect Ultimate Model}
+\section{{\large \bf \plang}}
 \label{sec:perfect}
-\nrc{Rename this section!}
 
 Returning to our running examples, it is easy to see that neither program is
 directly expressible in \slang.  The marriage program from
@@ -47,8 +46,7 @@ barrier to expressing practical programs. In this section, we introduce \plang,
 an extension of \slang that allows a limited form of IDB negation but retains
 the benefits of \slang: \plang also captures PTIME exactly and allows only
 confluent programs. First, we show how to safely allow IDB negation in \plang by
-inserting a coordination protocol between nodes, ensuring that negation is used
-safely. We then prove that \plang and \slang are equivalently expressive: any
+inserting a coordination protocol between nodes. We then prove that \plang and \slang are equivalently expressive.  This implies any
 \plang program can be translated into an \slang program with the same ultimate
 model.
 
@@ -57,9 +55,11 @@ model.
 
 There is a usage of negation that is both intuitive and corresponds to
 distributed systems practices.  Negation is not applied until the negated
-relation is ``done'' being computed.  Formally, we will require that if a rule
-body in program $P$ contains a negated atom \dedalus{!p()}, the rule body must
-also contain an atom \dedalus{p_done()}. The relation \dedalus{p_done()} has the
+relation is ``done'' being computed.  
+
+Formally, a \plang program is a \lang program $P$ with guarded asynchrony, whose PDG does not contain any cycles through negation.  All rules in $P$ with a \dedalus{!p()} body atom must also have a \dedalus{p_done()} atom in the body.  A \plang program must also contain rules that define \dedalus{p_done()}, for all relations \dedalus{p}, as described in subsequent sections; however, it will become clear that these rules can be automatically added, given a \plang program with no rules for \dedalus{p_done()}.
+
+The relation \dedalus{p_done()} has the
 property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
 \mathcal{S}$, then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps
 $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in
@@ -87,7 +87,7 @@ For ease of exposition, we will first present the computation of \dedalus{p_done
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
 
-\jmh{Give intuition about your strategy, and point out that it comes from a natural distributed ``protocol'' (and cite if you can.)}
+For non-async-recursive nodes, we can compute a \dedalus{done} relation for each rule, then collate these into \dedalus{done} relations for each relation.  We seperately handle atemporal and asynchronous rules: an atemporal rule is done at the same time as its body relations; an asynchronous rule is done, intuitively, when ``all messages have been acknowledged.''
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
 Assume the rules in $P$ with head relation
@@ -142,7 +142,11 @@ with the following set of rules:
 
 \drule{r\sub{j}_done()}
       {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
+\drule{p(\od{X})}
+      {p\sub{j}_send(_,\od{X})}
 \end{Drules}
+
+The first rule stores messages to be sent at the body (source's) location specifier.  This is necessary so the source can check whether all messages have been acknowledged.  The original destination location specifier is stored as an ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence of \dedalus{#}).  Note that because this first rule is an atemporal rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule.  The second rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The third derives acknowledgements at the source's location specifier.  The fourth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  The fifth rule (at the destination) asserts that the rule is done once \dedalus{r\sub{j}_done_node} has been received from all nodes.  The final rule copies \dedalus{p\sub{j}_send} into \dedalus{p}, as the original program references \dedalus{p}.
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
 
