@@ -103,7 +103,7 @@ the execution in which negation is not applied to a set until the content of the
 set has been fully determined.  This ``preferred'' model is akin to the perfect
 model computed by a centralized Datalog evaluator that evaluates rules in
 stratum order~\cite{ullmanbook}, applying the closed-world assumption to
-predicates only when it is certain that they will no longer change.
+relations only when it is certain that they will no longer change.
 Unfortunately, in an asynchronous distributed system it is difficult to
 distinguish the absence of a message (e.g., the \dedalus{bride_i_do} or some
 expected \dedalus{points_to} messages) from channel delay.  Hence both programs
@@ -281,7 +281,7 @@ affecting the ultimate model.
 
 \begin{lemma}
 \label{lem:no-inductive}
-Define the program transformation $\mathcal{I}(P)$ to be the transformation that, in every inductive rule of \slang program $P$---except any basic persistence rule for a predicate that appears in the head of an asynchronous rule---removes the \dedalus{succ(T,S)} body atom, and replaces all instances of the variable \dedalus{S} with the variable \dedalus{T}.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
+Define the program transformation $\mathcal{I}(P)$ to be the transformation that, in every inductive rule of \slang program $P$---except any basic persistence rule for a relation that appears in the head of an asynchronous rule---removes the \dedalus{succ(T,S)} body atom, and replaces all instances of the variable \dedalus{S} with the variable \dedalus{T}.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
 \end{lemma}
 \begin{proof}
 Note that by Lemma~\ref{lem:inflationary}, $\mathcal{I}(P)$ is inflationary.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for the fact to be absent from $\mathcal{U}_1$, the EDB must be different, which is a contradiction.
