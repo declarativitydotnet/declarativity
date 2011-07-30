@@ -41,8 +41,8 @@ inherent in distributed systems: message delays and reordering.
 
 %\todo{Thread a running example through the paper}
 %\todo{ensure ``relation'' vs ``relation name'' usage is consistent}
-\todo{define ``relation'', ``maps''?}
-\todo{Put in examples of notation close to where the notation is introduced -Dave Maier}
+%\todo{define ``relation'', ``maps''?}
+%\todo{Put in examples of notation close to where the notation is introduced -Dave Maier} % deferred to camera-ready
 
 We assume a finite universe $\univ$ of values.
 
@@ -253,7 +253,7 @@ The predicate dependency graph~\cite{ullmanbook} of a \lang program $P$ with spa
 We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
 An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, each IDB relation \dedalus{r} to the empty spatial relation instance, and the \dedalus{node} relation to a relation instance for \dedalus{node}.
-\todo{Dave would expect something here about how the IDB is computed}
+%\todo{Dave would expect something here about how the IDB is computed} % deferred to camera-ready
 
 We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$ for all $\mathcal{T} \in \mathbb{N}$.
 %\jmh{I'm confused---this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
@@ -272,7 +272,7 @@ Take the following \lang program, with the EDB instance \{\dedalus{node(n1), q(n
 \end{Drules}
 
 Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-The stable models (with \dedalus{q} and \dedalus{node} facts ommitted) are exactly $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j) \in \mathcal{N}
+The stable models (with \dedalus{q} and \dedalus{node} facts ommitted) are exactly \linebreak $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j) \in \mathcal{N}
 \times \mathcal{N} \, \}$.  To see this, consider the unsugared version of the program:
 
 \begin{Drules}
@@ -284,10 +284,9 @@ A given stable model $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j)\in \mat
 \times \mathcal{N} \, \}$ corresponds to a function $f : \left(\{\dedalus{n1}\} \times \mathbb{N} \times \{\dedalus{0},\dedalus{1}\}\right) \rightarrow \mathbb{N}$.  If $g(x) = f(\dedalus{n1}, x, \dedalus{0})$ and $h(x) = f(\dedalus{n1}, x, \dedalus{1})$, then the image of $g(x)$ is $t_1$ and the image of $h(x)$ is $t_2$.
 \end{example}
 
-\paa{not ready to whack it yet, but we should consider breaking the above discussion into two (more chewable) pieces: first, making no assumptions about q's persistence, show that a single async rule induces an infinite number of stable models, and how each model may be viewed as fixing a 'choice function' as EDB.  then, mention among the 'problems' below that rules with all persistent subgoals make an infinite number of choices, inducing an uncountable number of stable models}
-
-\jmh{Yes this stuff flies by too quickly and with too little
-  motivation/explanation.}
+%deferred to camera-ready
+%\paa{not ready to whack it yet, but we should consider breaking the above discussion into two (more chewable) pieces: first, making no assumptions about q's persistence, show that a single async rule induces an infinite number of stable models, and how each model may be viewed as fixing a 'choice function' as EDB.  then, mention among the 'problems' below that rules with all persistent subgoals make an infinite number of choices, inducing an uncountable number of stable models}
+%\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
 
 \subsubsection{Ultimate Models}
 There are two potential problems with considering the stable models as the output of a \lang instance.  
@@ -298,14 +297,14 @@ $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  We denote the outpu
 $\oschema$.
 %An \emph{output relation schema} is a member of $\oschema$.
 
-Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\Diamond\Box\mathcal{T}$.  For every spatio-temporal fact $\dedalus{r(p,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(p,c\sub{1},\ldots,c\sub{n})} \in \Diamond\Box\mathcal{T}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow \left(\dedalus{r(p,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
+Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\Diamond\Box\mathcal{T}$.  For every spatio-temporal fact $\dedalus{r(p,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(p,c\sub{1},\ldots,c\sub{n})} \in \Diamond\Box\mathcal{T}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow$ \linebreak $\left(\dedalus{r(p,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
 
 The set of {\em ultimate models} of a \lang instance $I$ is $\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$  $\text{is a stable model of I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations in the output schema that are eventually always true in a stable model.
 
 Note that an ultimate model is always finite, because of the finiteness of the EDB, the safety conditions on rules, the restrictions on the use of \dedalus{time} and \dedalus{succ}, and the prohibition on binding timestamps to non-timestamp attributes.  A \lang program only has a finite number of ultimate models for the same reason.
 
 \begin{example}
-The set of ultimate models for the \lang instance shown in Example~\ref{ex:uncountable} is $\{ \, \{\}, \{ \, \dedalus{p(n1,0)} \, \}, \{ \, \dedalus{p(n1,1)} \, \}, \{ \, \dedalus{p(n1,0), p(n1,1)} \, \} \, \}$.
+Assuming $\oschema = \{\dedalus{p}\}$, the set of ultimate models for the \lang instance shown in Example~\ref{ex:uncountable} is \linebreak $\{ \, \{\}, \{ \, \dedalus{p(n1,0)} \, \}, \{ \, \dedalus{p(n1,1)} \, \}, \{ \, \dedalus{p(n1,0), p(n1,1)} \, \} \, \}$.
 \end{example}
 
 %Note that some nontrivial programs may have an empty ultimate model, such as the
