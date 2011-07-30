@@ -346,9 +346,7 @@ Note that every \slang program is a \plang program.  Thus we have:
 %In the other direction, it is clear that we can encode any stratified Datalog program in% \plang using atemporal rules: the ultimate model coincides wieh the perfect model of th%e Datalog program.                                                                   %\end{proof}  
 
 \subsection{Discussion}
-The garbage collection program from Example~\ref{ex:gc} can be made
-\paa{this edit makes the statement too weak: these rules are automatically synthesized. if you submit the original GC example qua dedalus\_p program, this program is run.}
-a legal \plang program by adding the following rules:
+Applying the program transformation $\mathcal{P}$ to the garbage collection program from Example~\ref{ex:gc} results in the following rules being added.
 
 \begin{example}
 Synthesized rules for the garbage collection program:
@@ -361,13 +359,11 @@ Synthesized rules for the garbage collection program:
   \drule{points_to_ack(#N, L, Src, Dst)}
         {points_to_send(#L, N, Src, Dst)}
   \drule{points_to_done_node(#M, N)@async}
-        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.points_to_to_send(#N, M, \od{X}) \Rightarrow points_to_ack(#N, M, \od{X})\)}
+        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.\dedalus{points_to_to_send(#N, M, \od{X})} \Rightarrow \dedalus{points_to_ack(#N, M, \od{X})}\)}
   \drule{points_to_done(M)}
-        {\(\forall N.nodes(N) \Rightarrow points_to_done_node(M, N)\)}
+        {\(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{points_to_done_node(M, N)}\right)\)}
   \drule{reach_done()}
-        {points_to_done()}
-
-  \drule{\(\forall\) N.nodes(N) \(\Rightarrow\) local_ptr_edb_done(N)} {}
+        {points_to_done(), \(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{local_ptr_edb_done(N)}\right)\)}
 \end{Drules}
 \end{example}
 
