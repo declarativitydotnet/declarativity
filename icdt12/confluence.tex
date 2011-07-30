@@ -133,6 +133,9 @@ Confluence is a desirable, albeit conservative, correctness property for a distr
 confluent produces a deterministic output in spite of non-deterministic orders in its execution.  For example, if
 we could show that a data replication protocol was confluent, we could formally prove a version of the commonly-desired property that all replicas be ``eventually consistent''
 after all messages were delivered, in spite of delay and reordering.
+Confluence may be viewed as a specialization of the more general notion of consistency of distributed state, 
+which the CALM conjecture~\cite{declarative-imperative}
+argues is strongly connected with the model-theoretic property of logical monotonicity.
 Unfortunately, confluence is an undecidable property of \lang programs:
 
 \begin{lemma}
