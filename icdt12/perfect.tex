@@ -53,11 +53,11 @@ model.
 \subsection{Safe IDB Negation}
 \label{sec:perfect-construction}
 
-There is a usage of negation that is both intuitive and corresponds to
-distributed systems practices.  Negation is not applied until the negated
+There is a usage of negation that is both intuitive and corresponds to common
+distributed systems practices: negation is not applied until the negated
 relation is ``done'' being computed.
 
-Given a \lang program $S$ with guarded asynchrony, whose PDG does not contain any cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is the \lang program obtained by adding \dedalus{p_done()} to the body of any rule in $S$ that contains a \dedalus{!p(\ldots)} atom, and adding rules to define \dedalus{p_done()} as described in subsequent sections.
+Given a \lang program $S$ with guarded asynchrony whose PDG does not contain any cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is the \lang program obtained by adding \dedalus{p_done()} to the body of any rule in $S$ that contains a \dedalus{!p(\ldots)} atom and adding rules to define \dedalus{p_done()} as described in subsequent sections.
 
 We will see that \dedalus{p_done()} has the
 property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
