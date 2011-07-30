@@ -302,7 +302,8 @@ In the asynchronous recursive case, the causality constraint ensures that every 
 Since a \dedalus{!p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
 \end{proof}
 
-\jmh{A bit of intuitive text here about the appeal to ideas from stratified negation?  And perhaps connection to ``global barrier'' protocols?}
+%\jmh{A bit of intuitive text here about the appeal to ideas from stratified negation?  And perhaps connection to ``global barrier'' protocols?}
+% paa -- we present this intuition in the intro to sec 3 and the end of sec 4.  couldn't find a way to mention it here without too much repetition.
 
 The {\em stratum} of a relation \dedalus{r} is the maximum number of negated edges on any path in the PDG from \dedalus{r} to an EDB relation.  Clearly this is finite, as \plang programs do not have recursion through negation.
 
