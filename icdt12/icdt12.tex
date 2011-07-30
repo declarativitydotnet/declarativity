@@ -82,11 +82,21 @@
 %\newcommand{\dfact}[1]{\begin{tabularx}{\textwidth}{l}\dedalus{#1}\end{tabularx}}
 
 % define drule and dfact and without reference to \dedalus -- this is annoying! but I can't figure out how to make the pound escaping work in the style of the underscore escaping without duplicating pounds
+
+% XXX: Commented out due to extra long head relation names
+%\makeatletter
+%\DeclareRobustCommand*{\dfact}{\begingroup\@makeother\#\@escapehashfact}
+%\DeclareRobustCommand*{\@escapehashfact}[1]{\begin{tabularx}{\textwidth}{l}\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}.\end{tabularx}\endgroup}
+%\makeatother
+
 \makeatletter
 \DeclareRobustCommand*{\dfact}{\begingroup\@makeother\#\@escapehashfact}
-\DeclareRobustCommand*{\@escapehashfact}[1]{\begin{tabularx}{\textwidth}{l}\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}.\end{tabularx}\endgroup}
+\DeclareRobustCommand*{\@escapehashfact}[1]{
+\raggedright
+\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}.}\\ \endgroup}
 \makeatother
 
+% XXX: Commented out due to extra-long head relation names
 %\makeatletter           
 %\DeclareRobustCommand*{\drule}{\begingroup\@makeother\#\@escapehashtwo}
 %\DeclareRobustCommand*{\@escapehashtwo}[2]{\begin{tabularx}{\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}&$\leftarrow$&\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#2}.}\end{tabularx}\endgroup}
