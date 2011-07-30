@@ -1,7 +1,7 @@
 \section{Proof of Lemma 1}
 \begin{proof}
 
-Using the construction in~\cite{undecidable-datalog}, it is possible to write a Datalog program that encodes any two-counter machine's transition relation and an arbitrarily long finite successor relation in the EDB, and define a 0-ary output predicate \dedalus{accept} that is true if and only if the two-counter machine accepts and the transition and successor relations are valid.  As the construction is possible in Datalog, it is also possible in \lang.
+Using the construction presented by Gaifman et al.~\cite{undecidable-datalog}, it is possible to write a Datalog program that encodes any two-counter machine's transition relation and an arbitrarily long finite successor relation in the EDB, and define a 0-ary output predicate \dedalus{accept} that is true if and only if the two-counter machine accepts and the transition and successor relations are valid.  As the construction is possible in Datalog, it is also possible in \lang.
 
 We add the following rules to the construction, to non-deterministically decide whether to run the machine or not:
 
