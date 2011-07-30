@@ -55,11 +55,11 @@ model.
 
 There is a usage of negation that is both intuitive and corresponds to
 distributed systems practices.  Negation is not applied until the negated
-relation is ``done'' being computed.  
+relation is ``done'' being computed.
 
-Formally, a \plang program is a \lang program $P$ with guarded asynchrony, whose PDG does not contain any cycles through negation.  All rules in $P$ with a \dedalus{!p()} body atom must also have a \dedalus{p_done()} atom in the body.  A \plang program must also contain rules that define \dedalus{p_done()}, for all relations \dedalus{p}, as described in subsequent sections; however, it will become clear that these rules can be automatically added, given a \plang program with no rules for \dedalus{p_done()}.
+Given a \lang program $S$ with guarded asynchrony, whose PDG does not contain any cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is the \lang program obtained by adding \dedalus{p_done()} to the body of any rule in $S$ that contains a \dedalus{!p} atom, and adding rules to define \dedalus{p_done()} as described in subsequent sections.
 
-The relation \dedalus{p_done()} has the
+We will see the \dedalus{p_done()} has the
 property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
 \mathcal{S}$, then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps
 $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in
@@ -70,7 +70,7 @@ when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
 We will present a specification of \dedalus{p_done()} after introducing some preliminary definitions.
 
-A {\em collapsed PDG} of $P$ is the graph obtained by replacing each strongly
+A {\em collapsed PDG} of a \lang program $P$ is the graph obtained by replacing each strongly
 connected component of the PDG of $P$ with a single node $i$, such that $L(i)$
 comprises
 the set of all relations from the component.  If a strongly connected
@@ -79,7 +79,7 @@ component has any asynchronous edges, we call the resulting collapsed node {\em
 relation names in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, $P$ must contain the rule \dedalus{p_done().}~\footnote{This is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
+For EDB relations \dedalus{p}, the rule for \dedalus{p_done} is \dedalus{p_done().}~\footnote{This is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
 IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively, \dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on \dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in the head.  Additionally, asynchronous rules take some care---while atemporally-defined relations are done in the same timestamp as all relations they depend on, there may be arbitrary delay before asynchronously-defined relations are done.
 
 For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to deductive rules (Lemma~\ref{lem:no-inductive}).
@@ -116,14 +116,14 @@ Add the rule:
 
 \noindent
 \textbf{Asynchronous:}
-Replace the original rule:
+For each asynchronous rule:
 
 \begin{Drules}
   \drule{p(#N,\od{W})@async}
         {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
 \end{Drules}
 
-with the following set of rules:
+add the following set of rules:
 
 %uq\sub{\phi}(\od{W}, \od{X}, 1) <- min(\od{X}), $\phi(\od{W}, \od{X})$.
 %uq\sub{\phi}(\od{W}, \od{X}, 0) <- min(\od{X}), $!\phi(\od{W}, \od{X})$.
@@ -132,6 +132,8 @@ with the following set of rules:
 \begin{Drules}
 \drule{p\sub{j}_to_send(N,\od{W})}
       {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
+\drule{p\sub{j}_to_send_done()}
+      {b\sub{1}_done(), \ldots, b\sub{l}_done(), c\sub{1}_done(), \ldots, c\sub{m}_done()}
 \drule{p\sub{j}_send(#N,L,\od{X})@async}
       {p\sub{j}_to_send(#L,N,\od{X})}
 \drule{p\sub{j}_ack(#N,L,\od{X})@async}
@@ -142,11 +144,9 @@ with the following set of rules:
 
 \drule{r\sub{j}_done()}
       {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
-\drule{p(\od{X})}
-      {p\sub{j}_send(_,\od{X})}
 \end{Drules}
 
-The first rule stores messages to be sent at the body (source's) location specifier.  This is necessary so the source can check whether all messages have been acknowledged.  The original destination location specifier is stored as an ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence of \dedalus{#}).  Note that because this first rule is an atemporal rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule.  The second rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The third derives acknowledgements at the source's location specifier.  The fourth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  The fifth rule (at the destination) asserts that the rule is done once \dedalus{r\sub{j}_done_node} has been received from all nodes.  The final rule copies \dedalus{p\sub{j}_send} into \dedalus{p}, as the original program references \dedalus{p}.
+The first rule stores messages to be sent at the body (source's) location specifier.  This is necessary so the source can check whether all messages have been acknowledged.  The original destination location specifier is stored as an ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence of \dedalus{#}).  Note that because this first rule is an atemporal rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule (this is shown in the second rule).  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all noes have been received.
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
 
