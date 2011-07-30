@@ -18,8 +18,7 @@ We begin this section by reviewing the syntax of \lang that was first presented
 in~\cite{dedalus}. We then provide a model-theoretic semantics for \lang.  We
 note that the stable model semantics~\cite{stable-model} may be used to assign
 meanings to \lang programs that capture the mutation of state over logical time,
-much as an execution trace \jmh{do you want to cite somebody theoretical for a
-  definition of a trace in imperative-land?  E.g. I/O Automata ``executions''?}
+much as a trace or ``execution''~\cite{ioa}
 captures the behavior of a typical imperative distributed program over time.
 However, using the stable model semantics for \lang presents certain obstacles:
 even if a \lang program has a deterministic final state, channel non-determinism
@@ -33,9 +32,8 @@ conclude by showing a natural correspondence between the multiple ultimate
 models and sensitivities of the specification to the main non-determinism
 inherent in distributed systems: message delays and reordering.
 
-\jmh{I shortened the end of the above as I think you were skidding into deeper water than you want to explain here in an intro.}
-
-\jmh{PS: Should we make an argument that the ultimate models cover all possible message orderings?  Or all ``interesting'' (non-commuting) permutations of messages?}
+%\jmh{PS: Should we make an argument that the ultimate models cover all possible message orderings?  Or all ``interesting'' (non-commuting) permutations of messages?}
+% I couldn't find a way to make this an aside, since there is no discussion of message orderings in this section.
 
 \subsection{Syntax}
 
