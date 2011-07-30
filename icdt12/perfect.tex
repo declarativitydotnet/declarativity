@@ -212,7 +212,7 @@ For each rule $j$, add the rules for asynchronous rules in the previous section,
       {!r\sub{j}_not_done()}
 \end{Drules}
 
-We perform a two-round voting protocol amongst the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following protocol.  The rules shown below begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true -- intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
+We perform a two-round voting protocol among the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following protocol.  The rules shown below begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true -- intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
 
 \begin{Drules}
 \drule{start_round_1\sub{i}()}
