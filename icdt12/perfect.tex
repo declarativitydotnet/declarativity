@@ -87,7 +87,7 @@ For ease of exposition, we will first present the computation of \dedalus{p_done
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
 
-For non-async-recursive nodes, we can compute a \dedalus{done} relation for each rule, then collate these into \dedalus{done} relations for each relation.  We seperately handle atemporal and asynchronous rules: an atemporal rule is done at the same time as its body relations; an asynchronous rule is done, intuitively, when ``all messages have been acknowledged.''
+For non-async-recursive nodes, we can compute a \dedalus{done} relation for each rule, then collate these into \dedalus{done} relations for each relation.  We seperately handle atemporal and asynchronous rules: an atemporal rule is done at the same time as its body relations; an asynchronous rule is done, intuitively, when ``all messages have been acknowledged.''  We assume guarded asynchrony applies to the rules in this section.
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
 Assume the rules in $P$ with head relation
@@ -179,7 +179,7 @@ Note that we are abusing notation for the \dedalus{<} relation.  We previously d
 
 \subsubsection{Async Recursive Nodes}
 
-\todo{Mention that this is not in \plang}  \jmh{What does that suggest?  Isn't there something wrong with annotating \plang programs with non-\plang stuff in order to achieve a property you are asserting for \plang?}
+The difficulty with a relation \dedalus{p} in an async recursive node is that \dedalus{r} is done when all messages have been received in the node, and all messages have been received if \dedalus{p} is done.  To circumvent this circular dependency, we introduce a specialized two-phase voting protocol.
 
 Consider an async recursive node $i$.
 
@@ -190,7 +190,7 @@ Let the asynchronous rules with head relations in $L(i)$ be numbered $1, \ldots,
         {r\sub{1}_done(), \ldots, r\sub{i\sb{p}}_done()}
 \end{Drules}
 
-For each rule $j$, perform the asynchronous rewrite from the previous section, except for the last two rules.  Instead write:
+For each rule $j$, add the rules for asynchronous rules in the previous section, except for the last two rules.  Instead write:
 
 \begin{Drules}
 \drule{r\sub{j}_not_done()}
@@ -199,7 +199,7 @@ For each rule $j$, perform the asynchronous rewrite from the previous section, e
       {!r\sub{j}_not_done()}
 \end{Drules}
 
-We perform a two-round voting protocol amongst the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following.  The following rules begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true -- intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
+We perform a two-round voting protocol amongst the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following protocol.  The rules shown below begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true -- intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
 
 \begin{Drules}
 \drule{start_round_1\sub{i}()}
