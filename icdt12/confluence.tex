@@ -230,11 +230,11 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 %Hence $a$ must exist in all ultimate models.
 \end{proof}
 
-An easy corollary is that we can fix some deterministic choice function \jmh{when?  and get what?}, since all choice functions yield the same ultimate model. \jmh{The previous sentence is a bit vague about the goals of this corollary.  Try rewording.  Or if you want to get more formal, you could  do this stepwise showing that an ultimate model represents an equivalence class of stable models leading to the same final state, and a program with only one ultimate model has an ``inductive'' stable model is in that equivalence class.} In particular, we have:
+Since a \slang program has a unique ultimate model, the specific \dedalus{choice} of values for timestamps does not affect the ultimate model, as long as the choice respects the causality constraint.  In particular, we can assume that the \dedalus{succ} of the body timestamp is always chosen:
 
 \begin{corollary}
 \label{cor:no-async}
-Converting an asynchronous rule to an inductive rule in any \slang program preserves the ultimate model.
+Define the program transformation $\mathcal{A}(P)$ to be the transformation that, in every asynchronous rule of \slang program $P$, replaces the \dedalus{time_lt(T,S)} body atom with \dedalus{succ(T,S)}, and removes the \dedalus{choice} atom.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
 \end{corollary}
 
 Of course, there are confluent \lang programs not in \slang.  For example:
@@ -243,7 +243,7 @@ Of course, there are confluent \lang programs not in \slang.  For example:
 A confluent \lang program that is not a \slang program.
 
 \begin{Drules}
-\drule{b(#n1, I)@async}
+\drule{b(#N, I)@async}
       {b_edb(#L, I)}
 \drule{b(I)@next}
       {b(I), !dequeued(I)}
@@ -251,12 +251,11 @@ A confluent \lang program that is not a \slang program.
       {b(I), b(J), I < J}
 \drule{dequeued(I)@next}
       {b(I), !b_lt(_, I), b_lt(_, _)}
-\dfact{node(n1)}
 \end{Drules}
 \end{example}
 
 Any instance of this program has a single ultimate model in which \dedalus{b()}
-contains the highest element in \dedalus{b_edb()} according to the order
+(at all nodes) contains the highest element in \dedalus{b_edb()} according to the order
 \dedalus{<}.  Thus it is confluent, but the program uses IDB negation and does
 not have guarded asynchrony.
 
@@ -264,15 +263,16 @@ Not only are \slang programs confluent, but they also capture exactly PTIME.  We
 will prove this by showing an equivalence to Datalog programs, which are known
 to capture exactly PTIME over ordered structures~\cite{immerman-book}.
 
-First, we note that inductive rules in \slang can be converted into deductive rules without
-affecting the ultimate model. \jmh{The below strikes me as being rather sloppier than the rest of the discussion.  You talk about program transformations in a pretty offhanded way (as compared to the development of spatiotemporal rules, for example).  The special treatment of simple persistence rules makes this feel even sloppier.  Might be worth specifying the transformation in the style you use in Section 2, and then proving the equivalence of pre- and post-transformed programs.}
+First, we note that inductive rules in \slang can be ``converted'' into deductive rules without
+affecting the ultimate model. 
+%\jmh{The below strikes me as being rather sloppier than the rest of the discussion.  You talk about program transformations in a pretty offhanded way (as compared to the development of spatiotemporal rules, for example).  The special treatment of simple persistence rules makes this feel even sloppier.  Might be worth specifying the transformation in the style you use in Section 2, and then proving the equivalence of pre- and post-transformed programs.}
 
 \begin{lemma}
 \label{lem:no-inductive}
-Any inductive rule in \slang can be converted into a deductive rule---except for simple persistence rules for the head predicate of any asynchronous rule ---with no effect to the ultimate model.
+Define the program transformation $\mathcal{I}(P)$ to be the transformation that, in every inductive rule of \slang program $P$---except any basic persistence rule for a predicate that appears in the head of an asynchronous rule---removes the \dedalus{succ(T,S)} body atom, and replaces all instances of the variable \dedalus{S} with the variable \dedalus{T}.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
 \end{lemma}
 \begin{proof}
-Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deductive rules---except the simple persistence rules for asynchrony---preserves temporal inflation.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
+Note that by Lemma~\ref{lem:inflationary}, $\mathcal{I}(P)$ is inflationary.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for a fact to have disappeared, the EDB must be different, which is a contradiction.
 \end{proof}
 
 %If either qualification is false, problems can result: Example~\ref{ex:diffluent1} shows a diffluent program with guarded asynchrony and IDB negation, and Example~\ref{ex:diffluent2} shows a diffluent program that is IDB-negation free but does not have guarded asynchrony.
@@ -282,7 +282,7 @@ Note that by Lemma~\ref{lem:inflationary}, converting inductive rules into deduc
 \slang captures exactly PTIME.
 \end{theorem}
 \begin{proof}
-First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into deductive rules using Lemma~\ref{lem:no-inductive}.  Note that this technically violates the causality constraint, but in practice, the ultimate model remains unchanged. \jmh{That line of reasoning seems a bit sloppy; we haven't explored carefully how the expressive power etc. changes when you do away with causality!} Since all rules are deductive, there is a unique stable model, which is also the same for every timestamp.
+First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into deductive rules using Lemma~\ref{lem:no-inductive}.  Since all rules are deductive, there is a unique stable model, which is also the same for every timestamp.
 
 Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  Its minimal model is exactly the ultimate model of the single-timestep \slang program.
 
