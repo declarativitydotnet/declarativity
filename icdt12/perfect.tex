@@ -57,9 +57,9 @@ There is a usage of negation that is both intuitive and corresponds to
 distributed systems practices.  Negation is not applied until the negated
 relation is ``done'' being computed.
 
-Given a \lang program $S$ with guarded asynchrony, whose PDG does not contain any cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is the \lang program obtained by adding \dedalus{p_done()} to the body of any rule in $S$ that contains a \dedalus{!p} atom, and adding rules to define \dedalus{p_done()} as described in subsequent sections.
+Given a \lang program $S$ with guarded asynchrony, whose PDG does not contain any cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is the \lang program obtained by adding \dedalus{p_done()} to the body of any rule in $S$ that contains a \dedalus{!p(\ldots)} atom, and adding rules to define \dedalus{p_done()} as described in subsequent sections.
 
-We will see the \dedalus{p_done()} has the
+We will see that \dedalus{p_done()} has the
 property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
 \mathcal{S}$, then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps
 $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in
@@ -87,7 +87,7 @@ For ease of exposition, we will first present the computation of \dedalus{p_done
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
 
-For non-async-recursive nodes, we can compute a \dedalus{done} relation for each rule, then collate these into \dedalus{done} relations for each relation.  We seperately handle atemporal and asynchronous rules: an atemporal rule is done at the same time as its body relations; an asynchronous rule is done, intuitively, when ``all messages have been acknowledged.''  We assume guarded asynchrony applies to the rules in this section.
+For non-async-recursive nodes, we can compute a \dedalus{done} relation for each rule, then collate these into \dedalus{done} relations for each relation.  We separately handle atemporal and asynchronous rules: an atemporal rule is done at the same time as its body relations; an asynchronous rule is done, intuitively, when ``all messages have been acknowledged.''  We assume guarded asynchrony applies to the rules in this section.
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
 Assume the rules in $P$ with head relation
@@ -146,7 +146,7 @@ add the following set of rules:
       {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
 \end{Drules}
 
-The first rule stores messages to be sent at the body (source's) location specifier.  This is necessary so the source can check whether all messages have been acknowledged.  The original destination location specifier is stored as an ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence of \dedalus{#}).  Note that because this first rule is an atemporal rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule (this is shown in the second rule).  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all noes have been received.
+The first rule stores messages to be sent at the body (source's) location specifier.  This is necessary so the source can check whether all messages have been acknowledged.  The original destination location specifier is stored as an ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence of \dedalus{#}).  Note that because this first rule is an atemporal rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule (this is shown in the second rule).  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all nodes have been received.
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
 
@@ -159,21 +159,17 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
       {p(\od{W},\od{X}), p(\od{W},\od{Y}), \od{X} < \od{Y}, !p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
 \drule{p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y})}
       {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}}
-\drule{p\sub{\phi}_not_succ_done()}
-      {p_done()}
-\drule{p\sub{\phi}_succ_done()}
-      {p\sub{\phi}_not_succ_done()}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
       {p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X})}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
       {forall\sub{\phi}_ind(\od{W},\od{Y}), p\sub{\phi}_succ(\od{W},\od{Y},\od{X}), q(\od{W},\od{X})}
 \drule{forall\sub{\phi}(\od{W})}
       {forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X})}
-\drule{forall\sub{\phi}(\od{W})}
-      {!p(\od{W},\od{_}), p_done()}
 \end{Drules}
 
-The first four rules above compute a dense order over \dedalus{p\sub{phi}}, the next two rules compute completeness information used in the first four rules.  The final four rules iterate over the dense order of \dedalus{p\sub{phi}}, and checking each \dedalus{p\sub{phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} (or there are no \dedalus{p}) then \dedalus{forall\sub{\phi}} is true.
+The first four rules above compute a dense order over \dedalus{p\sub{\phi}}.  The final four rules iterate over the dense order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
+
+We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ !p(\od{W},\od{_}), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{!p(\od{W}, \od{_})}.
 
 Note that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
@@ -282,7 +278,7 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
 \end{Drules}
 
 \subsection{Properties of \plang}
-We show that \plang maintains the nice properties of \slang: it is both confluent PTIME.  We first argue that the rules for computing \dedalus{p_done{}} have the desired effect, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
+\plang maintains the nice properties of \slang: it is both confluent PTIME.  We first argue that the rules for computing \dedalus{p_done{}} have the desired effect, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
 
 \begin{lemma}[Sealing]
 \label{lem:plang-done-right}
