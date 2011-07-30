@@ -99,25 +99,25 @@ addresses appear in the \dedalus{unreach} relation.
 Note that for both examples, there is a single ultimate model corresponding to
 the execution in which negation is not applied to a set until the content of the
 set has been fully determined.  This ``preferred'' model is akin to the perfect
-model computed by a centralized Datalog evaluator that computes rules in stratum
-order~\cite{ullmanbook}, applying the closed-world assumption to predicates only
-when it is certain that they will no longer change.  Unfortunately, in an asynchronous
-distributed system it is difficult to distinguish the absence of a message (e.g., the
-\dedalus{bride_i_do} or some expected \dedalus{points_to} messages) from delivery delay.
-Hence both programs above are underspecified insofar as they conclude, as soon as they receive
-any messages, that no others will arrive.
-In practice, a programmer
-could remediate the problem by augmenting the given programs with \emph{coordination}
-code that enforces a computation barrier.  This technique generally entails a protocol
-(e.g., voting) that makes a round trip to all communicating agents and ensures that 
-there are no outstanding messages in flight.
-
+model computed by a centralized Datalog evaluator that evaluates rules in
+stratum order~\cite{ullmanbook}, applying the closed-world assumption to
+predicates only when it is certain that they will no longer change.
+Unfortunately, in an asynchronous distributed system it is difficult to
+distinguish the absence of a message (e.g., the \dedalus{bride_i_do} or some
+expected \dedalus{points_to} messages) from channel delay.  Hence both programs
+above are underspecified insofar as they conclude, as soon as they receive any
+messages, that no others will arrive.  In practice, a programmer could remediate
+the problem by augmenting their programs with \emph{coordination} code that
+enforces a computation barrier.  This technique generally entails a protocol
+(e.g., voting or consensus) that takes place between all communicating agents to
+ensure that there are no outstanding messages in flight.
 
 In the remainder of this section, we explore the aspects of \lang that allow
 such ambiguities and propose a restricted language \slang that rules them out
-(but prohibits or complicates the specifications of programs like our examples above).  In
-Section~\ref{sec:perfect}, we consider a relaxation of \slang that allows relatively intuitive program specifications like our examples, but narrows their interpretation to a
-single, ``preferred'' model.
+(but complicates the specification of programs like our examples above).  In
+Section~\ref{sec:perfect}, we consider a relaxation of \slang that allows
+relatively intuitive program specifications like our examples, but narrows their
+interpretation to a single, ``preferred'' model.
 
 \subsection{Problems with \large \bf \lang}
 
