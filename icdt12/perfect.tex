@@ -403,14 +403,19 @@ protocol completes successfully, the coordinator may proceed past the barrier.
 %% paa -- I think the intro tee'd this up nicely.
 An explicit goal of our work with \lang has been to view general distributed
 systems through a model-theoretic lens.  From this perspective, the connection
-between coordination protocols that enforce barriers and stratified evaluation
-of logic programs is unsurprising.  Indeed, when distributed systems are
-implemented in \plang, the two strategies have exactly the same consequences
-with respect to an appropriate model-theoretic semantics. \jmh{I'm not sure what the previous sentence says, since we don't have a formal notion of coordination protocols or barriers.} Both ensure that among
-the multiplicity of models induced by nonmonotonic logic, program evaluation
-will always select the model that corresponds to an intuitive evaluation order
-in which negation (a form of universal quantification) is applied only when it
-is certain that its consequences will never be retracted.
+between coordination protocols that enforce barriers and stratified evaluation 
+of logic programs is unsurprising.  Indeed, global stratification requires
+a coordination protocol to ensure a global consensus on set completion before
+negation is applied.
+
+
+%Indeed, when distributed systems are
+%implemented in \plang, the two strategies have exactly the same consequences
+%with respect to an appropriate model-theoretic semantics. \jmh{I'm not sure what the previous sentence says, since we don't have a formal notion of coordination protocols or barriers.} Both ensure that among
+%the multiplicity of models induced by nonmonotonic logic, program evaluation
+%will always select the model that corresponds to an intuitive evaluation order
+%in which negation (a form of universal quantification) is applied only when it
+%is certain that its consequences will never be retracted.
 
 
 
