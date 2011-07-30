@@ -24,7 +24,7 @@ If we could decide confluence for this program, we could decide whether there is
 \end{proof}
 
 
-\section{QBF in \lang}
+\section{QBF in {\large \bf \lang}}
 We assume that the QBF formula is in prenex normal form: \linebreak$Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF involves removing $Q_1$, and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
 
 The leaves of the tree of recursive calls can each be represented as an $n$-bit binary number, where bit $i$ holds the value of $x_i$.  Assume the left child of a node at depth $i$ of the recursive call tree represents binding $x_{i}$ to $0$, and the right child $1$.
