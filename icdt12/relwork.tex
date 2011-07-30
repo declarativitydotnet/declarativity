@@ -35,7 +35,7 @@ machines with explicitly specified transition systems.  We intend to further
 explore the relationship of \lang to these traditional distributed systems
 formalisms.
 
-\jmh{We are required to discuss the Belgian PODS paper, and we should figure out how to connect this to the Declarative Imperative paper.}
+Recently, Ameloot et. al. explored Hellerstein's CALM conjecture through the lense of relational transducers~\cite{relational-transducers}.  They proved that monotonic first order queries are exactly the set of queries that can be computed in a coordination-free fashion in their transducer formalism.  Their formalism uses some different assumptions than ours---for example, they assume that all messages sent by a node are multicast to a fixed set of neighbors, whereas \lang permits arbitrary unicast.
 
 Relational transducers have also been used to specify and show the correctness
 of interactive web services and electronic commerce workflows
