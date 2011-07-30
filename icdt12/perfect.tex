@@ -57,7 +57,11 @@ There is a usage of negation that is both intuitive and corresponds to common
 distributed systems practices: negation is not applied until the negated
 relation is ``done'' being computed.
 
-Given a \lang program $S$ with guarded asynchrony whose PDG does not contain any cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is the \lang program obtained by adding \dedalus{p_done()} to the body of any rule in $S$ that contains a \dedalus{!p(\ldots)} atom and adding rules to define \dedalus{p_done()} as described in subsequent sections.
+Given a \lang program $S$ with guarded asynchrony whose PDG does not contain any
+cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is
+the \lang program obtained by adding \dedalus{p_done()} to the body of any rule
+in $S$ that contains a \dedalus{!p(\ldots)} atom and adding rules to define
+\dedalus{p_done()} as described below.
 
 We will see that \dedalus{p_done()} has the
 property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
@@ -89,10 +93,12 @@ For ease of exposition, we will first present the computation of \dedalus{p_done
 
 For non-async-recursive nodes, we can compute a \dedalus{done} relation for each
 rule, then collate these into \dedalus{done} relations for each relation.  We
-handle deductive and asynchronous rules separately: a deductive rule is done at
-the same time as its body relations; an asynchronous rule is done, intuitively,
-when ``all messages have been acknowledged.''  We assume guarded asynchrony
-applies to the rules in this section.
+handle deductive and asynchronous rules separately. The \dedalus{done} relation
+for a deductive rule is complete when all of the relations in the body of the
+rule are complete. The \dedalus{done} relation for an asynchronous rule is
+complete, intuitively, when all the messages entailed by the relations in the
+body of the rule have been acknowledged. We assume guarded asynchrony applies to
+the rules in this section.
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
 Assume the rules in $P$ with head relation
