@@ -198,7 +198,7 @@ instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains
 
 \begin{lemma}
 \label{lem:inflationary}
-\slang programs are temporally inflationary
+\slang programs are temporally inflationary.
 \end{lemma}
 \begin{proof}
 Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{time_lt}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
