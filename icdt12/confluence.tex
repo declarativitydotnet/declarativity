@@ -160,9 +160,9 @@ Another symptom of \lang being ``too big'' a language is its expressive power: i
 \end{lemma}
 
 \begin{proof}
-If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subset \text{NPSPACE} = \text{PSPACE}$.
+If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subseteq \text{NPSPACE}$, and it is known that $\text{NPSPACE} = \text{PSPACE}$.
 
-In the other direction of the proof, we show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subset \lang$.  Full details are in the appendix.
+In the other direction of the proof, we show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subseteq \lang$.  Full details are in the appendix.
 \end{proof}
 
 \subsection{\large \bf \slang}
