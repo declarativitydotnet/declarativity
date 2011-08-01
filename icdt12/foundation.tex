@@ -290,8 +290,13 @@ A given stable model $\{ \, \dedalus{p(n1,i,0), p(n1,j,1)} \, | \, (i,j)\in \mat
 %\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
 
 \subsubsection{Ultimate Models}
-There are two potential problems with considering the stable models as the output of a \lang instance.  
-First, a program with even one asynchronous rule may have uncountably many stable models.  Many of these stable models have temporal differences that we are not interested in distinguishing.  Second, a stable model of a \lang program may itself be infinite, and we desire a finite representation.  We address both concerns in our definition of an {\em ultimate model}.
+There are two problems with using the stable model semantics to assign an
+interpretation to a \lang program. First, a program with even one asynchronous
+rule may have uncountably many stable models.  Many of these stable models have
+temporal differences that we are not interested in distinguishing.  Second, a
+stable model of a \lang program may itself be infinite, and we desire a finite
+representation.  We address both concerns in our definition of an {\em ultimate
+  model}.
 
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema
 $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  We denote the output schema as
@@ -300,7 +305,10 @@ $\oschema$.
 
 Recall that a stable model defines a spatio-temporal database instance, which is a mapping from every relation \dedalus{r} in $\stschema$ to a spatio-temporal relation instance for \dedalus{r}, which itself is a set of spatio-temporal facts for \dedalus{r}.  We define the {\em eventually always true} function $\Diamond\Box$, which maps a spatio-temporal database instance $\mathcal{T}$ to a spatial database instance $\Diamond\Box\mathcal{T}$.  For every spatio-temporal fact $\dedalus{r(p,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$, the spatial fact $\dedalus{r(p,c\sub{1},\ldots,c\sub{n})} \in \Diamond\Box\mathcal{T}$ if relation \dedalus{r} is in $\oschema$ and $\forall \dedalus{s}\, . \, \left(\dedalus{s} \in \mathbb{N} \land \dedalus{t} < \dedalus{s}\right) \Rightarrow$ \linebreak $\left(\dedalus{r(p,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}\right)$.
 
-The set of {\em ultimate models} of a \lang instance $I$ is $\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$  $\text{is a stable model of I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations in the output schema that are eventually always true in a stable model.
+The set of {\em ultimate models} of a \lang instance $I$ is
+$\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$ $\text{is a stable model of
+  I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations
+in the output schema that are eventually always true in a stable model.
 
 Note that an ultimate model is always finite, because of the finiteness of the EDB, the safety conditions on rules, the restrictions on the use of \dedalus{time} and \dedalus{succ}, and the prohibition on binding timestamps to non-timestamp attributes.  A \lang program only has a finite number of ultimate models for the same reason.
 
