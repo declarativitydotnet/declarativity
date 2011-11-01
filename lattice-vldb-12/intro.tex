@@ -1,2 +1,58 @@
 \section{Introduction}
-The text of the paper begins here.\cite{Alvaro2011}
+% Motivate the need for better tool support of distributed programs
+% TODO: rewrite, just stolen from CIDR
+Until fairly recently, distributed programming was the domain of a small group
+of experts. But recent technology trends have brought distributed programming to
+the mainstream of open source and commercial software.  The challenges of
+distribution---concurrency and asynchrony, performance variability, and partial
+failure---often translate into tricky data management challenges regarding task
+coordination and data consistency.  Given the growing need to wrestle with these
+challenges, there is increasing pressure on the data management community to
+help find solutions to the difficulty of distributed programming.
+
+% TODO: include "application-specific compensation logic"
+The inherent challenge of writing distributed code is exerbated by a recent
+trend away from traditional approaches to distributed consistency based on
+atomic commit protocols. Faced with the challenges of providing
+highly-available, geo-replicated online services, programmers are increasingly
+choosing to sacrifice sequential consistency for improved latency and
+availability. Although the design goal of these systems is typically to achieve
+a variant of ``eventual'' consistency, it 
+
+% Explain CALM as a proposed program analysis
+Recently, we proposed the CALM principle, which links distributed
+\emph{consistency} with \emph{logical
+  monotonicity}~\cite{Alvaro2011}. Intuitively, a logically monotonic program
+computes a set of facts that only grows over time; it never ``retracts'' an
+earlier conclusion in the face of new information. The CALM analysis is realized
+as part of Bloom, a Datalog-based DSL for distributed programming~\cite{bloom}.
+
+% Explain how lattices generalize monotonic datalog
+In this paper, we extend our previous results in several directions:
+\begin{enumerate}
+\item
+  First, we generalize the notion of \emph{monotonicity}: rather than dealing
+  only with sets, we allow program state to be represented using any structure
+  that ``grows'' over time. We formalize this notion using \emph{lattices}, and
+  propose a variant of Datalog extended with lattices we call Foo.
+
+\item
+  We prove that Foo generalizes Datalog, and formally prove that a sub-class of
+  Foo programs are confluent.
+
+\item
+  We describe how we extended the Bloom DSL to support user-defined lattices. We
+  detail the API that lattice implementations must support, and describe how we
+  extended the standard semi-na\"{i}ve Datalog evaluation scheme~\cite{semi-naive}
+  to support both lattices and traditional database relations.
+
+\item
+  Finally, we examine the effectiveness of lattices as a practical programming
+  construct through the use of two case studies: a causally-consistent
+  point-to-point delivery protocol and a replicated shopping cart service. In
+  both cases, we show how lattices enable a concise and intuitive
+  implementations of these designs. More importantly, we show how
+  domain-specific correctness criteria can be expressed in terms of lattice
+  properties, giving us more confidence in the correctness of our programs.
+
+\end{enumerate}
