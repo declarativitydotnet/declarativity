@@ -2,6 +2,9 @@
 \usepackage{graphicx}
 \usepackage{url}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
+\usepackage{xspace}
+
+\def\latlang{\textsc{Dedalus}$^L$\xspace}
 
 \begin{document}
 
@@ -25,9 +28,13 @@ Ben Trovato\\
 
 \input{intro}
 
-\section{Lattice Properties}
+\section{Lattice Proofs}
 
-\subsection{Proof of Equivalence to Monotonic Datalog}
+\subsection{\latlang Generalizes Dedalus}
+
+\subsection{Confluence in \latlang}
+
+\section{Lattices in Bloom}
 
 \section{Example Lattices}
 
@@ -35,9 +42,11 @@ Ben Trovato\\
 
 \subsection{Merge Map}
 
-\section{Case Study}
+\section{Case Studies}
 
-\section{Language Implementation}
+\subsection{Causal Delivery}
+
+\subsection{Shopping Cart Service}
 
 \section{Related Work}
 
