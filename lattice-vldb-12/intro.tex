@@ -31,14 +31,13 @@ as part of Bloom, a Datalog-based DSL for distributed programming~\cite{bloom}.
 In this paper, we extend our previous results in several directions:
 \begin{enumerate}
 \item
-  First, we generalize the notion of \emph{monotonicity}: rather than dealing
-  only with sets, we allow program state to be represented using any structure
-  that ``grows'' over time. We formalize this notion using \emph{lattices}, and
-  propose a variant of Datalog extended with lattices we call Foo.
+  First, we introduce lattices, explain the algebraic properties that must be
+  satisfied by lattice implementations, and present \latlang, a generalization
+  of Dedalus to support both lattices and traditional relations.
 
 \item
-  We prove that Foo generalizes Datalog, and formally prove that a sub-class of
-  Foo programs are confluent.
+  We prove that \latlang generalizes Datalog, and formally prove that a sub-class of
+  \latlang programs are confluent.
 
 \item
   We describe how we extended the Bloom DSL to support user-defined lattices. We
@@ -50,9 +49,8 @@ In this paper, we extend our previous results in several directions:
   Finally, we examine the effectiveness of lattices as a practical programming
   construct through the use of two case studies: a causally-consistent
   point-to-point delivery protocol and a replicated shopping cart service. In
-  both cases, we show how lattices enable a concise and intuitive
-  implementations of these designs. More importantly, we show how
-  domain-specific correctness criteria can be expressed in terms of lattice
-  properties, giving us more confidence in the correctness of our programs.
-
+  both cases, we show how lattices enable concise and intuitive implementations
+  of these designs. More importantly, we show how domain-specific correctness
+  criteria can be expressed in terms of lattice properties, giving us more
+  confidence in the correctness of our programs.
 \end{enumerate}
