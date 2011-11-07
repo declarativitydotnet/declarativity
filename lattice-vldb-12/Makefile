@@ -1,6 +1,6 @@
 NAME=vldb
 USE_PDFLATEX=1
-TEXSRCS=vldb.tex intro.tex causal.tex impl.tex
+TEXSRCS=vldb.tex intro.tex causal.tex impl.tex relwork.texx
 BIBTEXSRCS=vldb.bib
 
 ifeq ($(shell uname), Linux)
