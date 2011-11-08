@@ -253,7 +253,7 @@ directed graph with one node per relation; each node $i$ has a label $L(i)$.  If
 
 We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
-An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, each IDB relation \dedalus{r} to the empty spatial relation instance, and the \dedalus{node} relation to a relation instance for \dedalus{node}.
+An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, each IDB relation to the empty spatial relation instance, and the \dedalus{node} relation to a relation instance for \dedalus{node}.
 %\todo{Dave would expect something here about how the IDB is computed} % deferred to camera-ready
 
 We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{T}$ for all $\mathcal{T} \in \mathbb{N}$.
