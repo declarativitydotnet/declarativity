@@ -253,10 +253,10 @@ directed graph with one node per relation; each node $i$ has a label $L(i)$.  If
 
 We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must involve a temporal edge.
 The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
-An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, each IDB relation to the empty spatial relation instance, and the \dedalus{node} relation to a relation instance for \dedalus{node}.
+An {\em EDB instance} $\mathcal{E}$ \paa{this defn is broken.  what follows appears to define a whole spatial db, not an edb} is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}, each IDB relation to the empty spatial relation instance, and the \dedalus{node} relation to a relation instance for \dedalus{node}.
 %\todo{Dave would expect something here about how the IDB is computed} % deferred to camera-ready
 
-We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{\Box(\mathcal{K})}$ for all $\dedalus{t} \in \mathbb{N}$.
+We define the $\Box$ operator which maps a spatial database instance $\mathcal{K}$ to a spatio-temporal database instance $\mathcal{\Box(\mathcal{K})}$.  For every \linebreak $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$,  the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{\Box(\mathcal{K})}$ for all $\dedalus{t} \in \mathbb{N}$.  \paa{isn't the purpose of this para to then define something like a 'st edb' or 'dedalus edb' that is BOX(E) for some spatial EDB E?}
 %\jmh{I'm confused---this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
 
 We refer to a \lang program together with an EDB instance as a {\em \lang instance}.  A \lang program can be viewed as a mapping from EDB instances to spatio-temporal database instances.
@@ -294,8 +294,10 @@ There are two problems with using the stable model semantics to assign an
 interpretation to a \lang program. First, a program with even one asynchronous
 rule may have uncountably many stable models.  Many of these stable models have
 temporal differences that we are not interested in distinguishing.  Second, a
-stable model of a \lang program may itself be infinite, and we desire a finite
-representation.  We address both concerns in our definition of an {\em ultimate
+stable model of a \lang program may itself be infinite due to the interaction
+between temporal rules and the infinite time domain.
+%%, and we desire a finite representation.  
+We address both concerns in our definition of an {\em ultimate
   model}.
 
 An {\em output schema} for a \lang program $P$ with spatio-temporal schema
