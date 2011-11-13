@@ -175,7 +175,7 @@ convenience of \lang.  We will present a restriction of \lang that allows only
 confluent programs and prove that it captures exactly PTIME.
 
 \begin{definition}
-A \lang program is {\em IDB negation-free} if the \dedalus{!} symbol only appears on EDB relations in the program.
+A \lang program is {\em semipositive} if the \dedalus{!} symbol only appears on EDB relations in the program.
 \end{definition}
 
 \begin{definition}
@@ -186,7 +186,7 @@ A relation \dedalus{p} in a \lang program $P$ is {\em simply persisted} if $P$ h
 A \lang program has {\em guarded asynchrony} if all relations appearing in the heads of asynchronous rules are simply persisted.
 \end{definition}
 
-We will refer to the language of IDB negation-free \lang programs with guarded
+We will refer to the language of semipositive \lang programs with guarded
 asynchrony as \slang.
 
 \subsubsection{Confluence}
@@ -272,7 +272,7 @@ not have guarded asynchrony.
 
 \subsubsection{Computational Complexity}
 Not only are \slang programs confluent, but they also capture exactly PTIME.  We
-will prove this by showing an equivalence to Datalog programs, which are known
+will prove this by showing an equivalence to semipositive Datalog programs, which are known
 to capture exactly PTIME over ordered structures~\cite{immerman-book}.
 
 First, we note that inductive rules in \slang can be ``converted'' into deductive rules without
