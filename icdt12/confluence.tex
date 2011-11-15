@@ -32,8 +32,8 @@ A simple asynchronous marriage ceremony:
         {groom_i_do_edb()}
   \drule{bride_i_do()@async}
         {bride_i_do_edb()}
-  \drule{runaway()}        {groom_i_do(), !bride_i_do()}  
-  \drule{runaway()}        {!groom_i_do(), bride_i_do()}  
+  \drule{runaway()}        {groom_i_do(), $\lnot$bride_i_do()}  
+  \drule{runaway()}        {$\lnot$groom_i_do(), bride_i_do()}  
   \drule{runaway()@next}
         {runaway()}
   \drule{groom_i_do()@next}
@@ -76,7 +76,7 @@ Distributed garbage collection:
   \drule{reach(Src, Next)}
         {reach(Src, Dst), points_to(Dst, Next)}
   \drule{unreach(Addr)}
-        {addr(Addr), root_edb(Root), !reach(Root, Addr)}
+        {addr(Addr), root_edb(Root), $\lnot$reach(Root, Addr)}
   \drule{unreach(Addr)@next} {unreach(Addr)}
 \end{Drules}
 \end{example}
@@ -175,7 +175,7 @@ convenience of \lang.  We will present a restriction of \lang that allows only
 confluent programs and prove that it captures exactly PTIME.
 
 \begin{definition}
-A \lang program is {\em semipositive} if the \dedalus{!} symbol only appears on EDB relations in the program.
+A \lang program is {\em semipositive} if the \dedalus{$\lnot$} symbol only appears on EDB relations in the program.
 \end{definition}
 
 \begin{definition}
@@ -257,11 +257,11 @@ A confluent \lang program that is not a \slang program.
 \drule{b(#N, I)@async}
       {b_edb(#L, I)}
 \drule{b(I)@next}
-      {b(I), !dequeued(I)}
+      {b(I), $\lnot$dequeued(I)}
 \drule{b_lt(I, J)}
       {b(I), b(J), I < J}
 \drule{dequeued(I)@next}
-      {b(I), !b_lt(_, I), b_lt(_, _)}
+      {b(I), $\lnot$b_lt(_, I), b_lt(_, _)}
 \end{Drules}
 \end{example}
 

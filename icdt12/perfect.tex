@@ -19,9 +19,9 @@ An asynchronous marriage ceremony without IDB negation:
 
 \begin{Drules}
   \drule{groom_i_dont()@async}
-        {!groom_i_do_edb()}
+        {$\lnot$groom_i_do_edb()}
   \drule{bride_i_dont()@async}
-        {!bride_i_do_edb()}
+        {$\lnot$bride_i_do_edb()}
   \drule{runaway()}        {groom_i_dont()}
   \drule{runaway()}        {bride_i_dont()}
   \drule{runaway()@next}
@@ -60,7 +60,7 @@ relation is ``done'' being computed.
 Given a \lang program $S$ with guarded asynchrony whose PDG does not contain any
 cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is
 the \lang program obtained by adding \dedalus{p_done()} to the body of any rule
-in $S$ that contains a \dedalus{!p(\ldots)} atom and adding rules to define
+in $S$ that contains a \dedalus{$\lnot$p(\ldots)} atom and adding rules to define
 \dedalus{p_done()} as described below.
 
 We will see that \dedalus{p_done()} has the
@@ -133,18 +133,18 @@ For each asynchronous rule:
 
 \begin{Drules}
   \drule{p(#N,\od{W})@async}
-        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
+        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), $\lnot$c\sub{1}(#L,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(#L,\od{Y\sub{m}})}
 \end{Drules}
 
 add the following set of rules:
 
 %uq\sub{\phi}(\od{W}, \od{X}, 1) <- min(\od{X}), $\phi(\od{W}, \od{X})$.
-%uq\sub{\phi}(\od{W}, \od{X}, 0) <- min(\od{X}), $!\phi(\od{W}, \od{X})$.
+%uq\sub{\phi}(\od{W}, \od{X}, 0) <- min(\od{X}), $$\lnot$\phi(\od{W}, \od{X})$.
 %uq\sub{\phi}(\od{W}, \od{Y}, 0) <- uq\sub{\phi}(\od{W}, \od{X}, 0), succ(\od{X}, \od{Y}).
 %uq\sub{\phi}(\od{W}, \od{Y}, 1) <- uq\sub{\phi}(\od{W}, \od{X}, 1), succ(\od{X}, \od{Y}), $\phi(\od{W}, \od{X})$.
 \begin{Drules}
 \drule{p\sub{j}_to_send(N,\od{W})}
-      {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), !c\sub{1}(#L,\od{Y\sub{1}}), \ldots, !c\sub{m}(#L,\od{Y\sub{m}})}
+      {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), $\lnot$c\sub{1}(#L,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(#L,\od{Y\sub{m}})}
 \drule{p\sub{j}_to_send_done()}
       {b\sub{1}_done(), \ldots, b\sub{l}_done(), c\sub{1}_done(), \ldots, c\sub{m}_done()}
 \drule{p\sub{j}_send(#N,L,\od{X})@async}
@@ -169,11 +169,11 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
 
 \begin{Drules}
 \drule{p\sub{\phi}_min(\od{W},\od{X})}
-      {p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{_},\od{X}), p\sub{\phi}_succ_done()}
+      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},\od{_},\od{X}), p\sub{\phi}_succ_done()}
 \drule{p\sub{\phi}_max(\od{W},\od{X})}
-      {p(\od{W},\od{X}), !p\sub{\phi}_succ(\od{W},\od{X},\od{_}), p\sub{\phi}_succ_done()}
+      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},\od{X},\od{_}), p\sub{\phi}_succ_done()}
 \drule{p\sub{\phi}_succ(\od{W},\od{X},\od{Y})}
-      {p(\od{W},\od{X}), p(\od{W},\od{Y}), \od{X} < \od{Y}, !p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), \od{X} < \od{Y}, $\lnot$p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
 \drule{p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y})}
       {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
@@ -186,7 +186,7 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
 
 The first four rules above compute a dense order over \dedalus{p\sub{\phi}}.  The final four rules iterate over the dense order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
 
-We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ !p(\od{W},\od{_}), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{!p(\od{W}, \od{_})}.
+We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ $\lnot$p(\od{W},\od{_}), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{$\lnot$p(\od{W}, \od{_})}.
 
 Note also that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
@@ -207,35 +207,35 @@ For each rule $j$, add the rules for asynchronous rules in the previous section,
 
 \begin{Drules}
 \drule{r\sub{j}_not_done()}
-      {p\sub{j}_to_send(\od{X}), !p\sub{j}_ack(\od{X})}
+      {p\sub{j}_to_send(\od{X}), $\lnot$p\sub{j}_ack(\od{X})}
 \drule{r\sub{j}_done()}
-      {!r\sub{j}_not_done()}
+      {$\lnot$r\sub{j}_not_done()}
 \end{Drules}
 
 We perform a two-round voting protocol among the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following protocol.  The rules shown below begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true -- intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
 
 \begin{Drules}
 \drule{start_round_1\sub{i}()}
-      {node_min(#L,L), !round_1\sub{i}()}
+      {node_min(#L,L), $\lnot$round_1\sub{i}()}
 \drule{round_1\sub{i}()@next}
       {start_round_1\sub{i}()}
 \drule{round_1\sub{i}()@next}
-      {round_1\sub{i}(), !start_round_2\sub{i}()}
+      {round_1\sub{i}(), $\lnot$start_round_2\sub{i}()}
 \drule{vote_1\sub{i}(#N)@async}
       {start_round_1\sub{i}(), node(N)}
 \drule{complete_1\sub{i}(#M,N)@async}
       {vote_1\sub{i}(#N), all_ack\sub{i}(#N), node_min(#N,M)}
 \drule{incomplete_1\sub{i}(#M,N)@async}
-      {vote_1\sub{i}(#N), !all_ack\sub{i}(#N), node_min(#N,M)}
+      {vote_1\sub{i}(#N), $\lnot$all_ack\sub{i}(#N), node_min(#N,M)}
 \end{Drules}
 
 To persist votes until round 1 begins again, the following rules are instantiated for $k=1$ and $2$.
 
 \begin{Drules}
 \drule{complete_k\sub{i}(N)@next}
-      {complete_k\sub{i}(N), !start_round_1\sub{i}()}
+      {complete_k\sub{i}(N), $\lnot$start_round_1\sub{i}()}
 \drule{incomplete_k\sub{i}(N)@next}
-      {incomplete_k\sub{i}(N), !start_round_1\sub{i}()}
+      {incomplete_k\sub{i}(N), $\lnot$start_round_1\sub{i}()}
 \end{Drules}
 
 To count votes, we assume the following rules are instantiated for $k=1$ and $2$.  Round 1 is restarted if some node votes \dedalus{incomplete_1\sub{i}} in round 1 -- i.e., it has an outstanding unacknowledged message -- or \dedalus{incomplete_2\sub{i}} in round 2.
@@ -246,27 +246,27 @@ To count votes, we assume the following rules are instantiated for $k=1$ and $2$
 \drule{recv_k\sub{i}(N)}
       {incomplete_k\sub{i}(N)}
 \drule{not_all_recv_k\sub{i}()}
-      {node(N), !recv_k\sub{i}(N)}
+      {node(N), $\lnot$recv_k\sub{i}(N)}
 \drule{not_all_comp_k\sub{i}()}
-      {node(N), !complete_k\sub{i}(N)}
+      {node(N), $\lnot$complete_k\sub{i}(N)}
 \drule{start_round_1\sub{i}()}
-      {!not_all_recv_k\sub{i}(), not_all_comp_k\sub{i}()}
+      {$\lnot$not_all_recv_k\sub{i}(), not_all_comp_k\sub{i}()}
 \end{Drules}
 
-Once a node has received a \dedalus{vote_1\sub{i}} vote solicitation, it also begins keeping track of whether it has sent any messages in the async recursive component; this information is erased if another \dedalus{vote_1\sub{i}} solicitation is received.  The causality constraint implies that \dedalus{!all_ack\sub{i}()} is true if a message is sent, because messages cannot be instantly acknowledged.
+Once a node has received a \dedalus{vote_1\sub{i}} vote solicitation, it also begins keeping track of whether it has sent any messages in the async recursive component; this information is erased if another \dedalus{vote_1\sub{i}} solicitation is received.  The causality constraint implies that \dedalus{$\lnot$all_ack\sub{i}()} is true if a message is sent, because messages cannot be instantly acknowledged.
 
 \begin{Drules}
 \drule{sent\sub{i}()}
-      {!all_ack\sub{i}()}
+      {$\lnot$all_ack\sub{i}()}
 \drule{sent\sub{i}()@next}
-      {sent\sub{i}(), !vote_1\sub{i}()}
+      {sent\sub{i}(), $\lnot$vote_1\sub{i}()}
 \end{Drules}
 
 Round 2 is started by the master if no node has an outstanding message.
 
 \begin{Drules}
 \drule{start_round_2\sub{i}()}
-      {!not_all_recv_1\sub{i}(), !not_all_comp_1\sub{i}()}
+      {$\lnot$not_all_recv_1\sub{i}(), $\lnot$not_all_comp_1\sub{i}()}
 \end{Drules}
 
 The voting for round 2 is shown below.  Notes vote \dedalus{incomplete_2\sub{i}} if they have sent any messages since the last \dedalus{vote_1\sub{i}} solicitation.  Recall that any \dedalus{incomplete_2\sub{i}} votes result in the protocol restarting with round 1.
@@ -275,7 +275,7 @@ The voting for round 2 is shown below.  Notes vote \dedalus{incomplete_2\sub{i}}
 \drule{vote_2\sub{i}(#N)@async}
       {start_round_2\sub{i}(), node(N)}
 \drule{complete_2\sub{i}(#M,N)@async}
-      {vote_2\sub{i}(#N), all_ack\sub{i}(#N), !sent\sub{i}(#N), node_min(#N,M)}
+      {vote_2\sub{i}(#N), all_ack\sub{i}(#N), $\lnot$sent\sub{i}(#N), node_min(#N,M)}
 \drule{incomplete_2\sub{i}(#M,N)@async}
       {vote_2\sub{i}(#N), sent\sub{i}(#N), node_min(#N,M)}
 \end{Drules}
@@ -284,7 +284,7 @@ The entire async recursive node $i$ is done when all nodes have voted \dedalus{c
 
 \begin{Drules}
 \drule{done_recursion\sub{i}()}
-      {!not_all_recv_2\sub{i}(), !not_all_comp_2\sub{i}()}
+      {$\lnot$not_all_recv_2\sub{i}(), $\lnot$not_all_comp_2\sub{i}()}
 \end{Drules}
 
 For every relation $\dedalus{p} \in L(i)$, add the rule:
@@ -316,7 +316,7 @@ In the asynchronous recursive case, the causality constraint ensures that every 
 \plang programs are temporally inflationary.
 \end{lemma}
 \begin{proof}
-Since a \dedalus{!p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
+Since a \dedalus{$\lnot$p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
 \end{proof}
 
 %\jmh{A bit of intuitive text here about the appeal to ideas from stratified negation?  And perhaps connection to ``global barrier'' protocols?}
@@ -393,13 +393,13 @@ Garbage collection rewrite
 
 \begin{Drules}
   \drule{unreach(Addr)} 
-        {addr_edb(Addr), root_edb(Root), !reach(Root, Addr), reach_done()}
+        {addr_edb(Addr), root_edb(Root), $\lnot$reach(Root, Addr), reach_done()}
 \end{Drules}
 \end{example}
 
 As we have shown, the resulting program has a single ultimate model.  This model
 corresponds exactly with one of the ultimate models of the original program from
-Example~\ref{ex:gc}: the model in which \dedalus{!reach} is not evaluated until
+Example~\ref{ex:gc}: the model in which \dedalus{$\lnot$reach} is not evaluated until
 \dedalus{reach} is fully determined.  The rewrite has effectively forced an
 evaluation strategy analogous to stratum-order evaluation in a centralized
 Datalog program.
