@@ -28,6 +28,7 @@ and system design (e.g.,~\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}), as 
 models for distributed computation using such
 languages (e.g.,~\cite{relational-transducers,navarro-oper-sem,card-abstraction}).
 
+
 In this paper we place distributed programs on a model-theoretic foundation and use that foundation to study program correctness at a relatively high semantic level.  We are interested in a model-theoretic approach because of its declarativity---it focuses attention on the connection between the specification of a program and its intended outcome, without resorting to operational reasoning.  We show how this approach allows us to characterize a family of programs that are indifferent to non-deterministic message orders (\emph{confluent}), and a syntactically richer family of programs that judiciously use coordination logic to ensure confluence by defining computations over appropriate sets of received messages.
 
 Specifically, we begin by providing a model-theoretic semantics for \lang, a
@@ -54,3 +55,5 @@ the coordination protocols used in distributed systems.
 
 Our model-theoretic approach enables us to describe reasonably expressive distributed programming frameworks that free programmers from reasoning about message ordering and coordination protocols.  In addition, we believe it offers directions for a more fundamental understanding of the {\em raison d'\^{e}tre} of classical distributed properties and protocols.
 The confluence of \slang programs provides a model-theoretic formalism for addressing the ``CALM'' conjecture~\cite{declarative-imperative} regarding distributed consistency, which was recently formalized and proven through the more operational lens of relational transducers~\cite{relational-transducers}.  In addition, \plang demonstrates a natural connection between stratified negation and distributed coordination protocols, which points to directions for characterizing at a higher semantic level when and why distributed programs might have to ``wait.''
+
+
