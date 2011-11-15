@@ -11,9 +11,9 @@ We add the following rules to the construction, to non-deterministically decide 
   \drule{run_machine()}
         {message(0), message(1)}
   \drule{accept()}
-        {message(0), !message(1), input_valid()}
+        {message(0), $\lnot$message(1), input_valid()}
   \drule{accept()}
-        {!message(0), message(1), input_valid()}
+        {$\lnot$message(0), message(1), input_valid()}
 \end{Drules}
 
 Note that the first two lines are actually rules.  The unsugared form of the first rule is 
@@ -42,9 +42,9 @@ First, we iterate through all of the $n$-bit binary numbers, one per timestamp. 
   \drule{carry(V)}
         {var_last(V)}
   \drule{one(V)@next}
-        {carry(V), !one(V)}
+        {carry(V), $\lnot$one(V)}
   \drule{one(V)@next}
-  {one(V), !carry(V)}
+  {one(V), $\lnot$carry(V)}
   \drule{carry(U)}
         {carry(V), one(V), var_succ(U, V)}
 \end{Drules}
@@ -61,11 +61,11 @@ The truth value at depth $n$ (denoted by \dedalus{var_last}) is the truth value 
   \drule{var_sat_in(V, 1)}
         {formula_true(), var_last(V)}
   \drule{var_sat(a, V, B)@next}
-        {var_sat_in(V, B), !var_sat(_, V, _)}
+        {var_sat_in(V, B), $\lnot$var_sat(_, V, _)}
   \drule{var_sat(b, V, B)@next}
         {var_sat_in(V, B), var_sat(a, V, _).}
   \drule{var_sat(N, V, B)@next}
-        {var_sat(N, V, B), !var_sat(b, V, _)}
+        {var_sat(N, V, B), $\lnot$var_sat(b, V, _)}
 \end{Drules}
 
 \dedalus{var_sat_left_in} associates a value with the parent of a given depth.  This is used for propagating the result of the quantifier application to the parent.  The cases for existential (\dedalus{exists}) and universal (\dedalus{forall}) quantifiers are clear.
