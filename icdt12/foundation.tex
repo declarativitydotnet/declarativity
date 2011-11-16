@@ -104,7 +104,9 @@ Additionally, $\sschema$ includes $\dedalus{<}$, and a relation schema $(\dedalu
 We call $\sschema$ a {\em spatial schema}.~\footnote{The terms {\em spatial} and
   {\em spatio-temporal} are borrowed from Ameloot~\cite{ameloot-personal}.}
 
-A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(d,c_1,\ldots,c_n)$ where each $c_i \in \univ$ and $\dedalus{node}(d)$.  A {\em spatial database instance} is defined similarly to a database instance.
+A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(d,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ$, and $\dedalus{node}(d)$.  
+A {\em spatial relation instance} for a relation schema $(\dedalus{r},n)$ is a set of spatial facts for $(\dedalus{r},n+1)$.
+A {\em spatial database instance} is defined similarly to a database instance.
 
 Given a database schema $\schema$, we use $\stschema$ to denote the extension of
 $\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding four additional relation schemas to $\schema$. 
@@ -113,7 +115,8 @@ The additional relation schemas we add are: $(\dedalus{node},1)$,
 $(\dedalus{time},1)$, $(\dedalus{succ},2)$, and $(\dedalus{time_lt},2)$.
 We call $\stschema$ a {\em spatio-temporal} schema.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.  A {\em spatio-temporal database instance} is defined similarly to a database instance, \dedalus{time(t)} for all $\dedalus{t} \in \mathbb{N}$, \dedalus{succ(x,y)} for all $y = x + 1$, and \dedalus{time_lt(x,y)} for all $x < y$.
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.  A {\em spatio-temporal relation instance} for relation schema $(\dedalus{r},n)$ is a set of spatio-temporal facts for
+$(\dedalus{r},n+2)$.  A {\em spatio-temporal database instance} is defined similarly to a database instance, \dedalus{time(t)} for all $\dedalus{t} \in \mathbb{N}$, \dedalus{succ(x,y)} for all $y = x + 1$, and \dedalus{time_lt(x,y)} for all $x < y$.
 
 We will use the notation \dedalus{f@t} to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by adding a timestamp column with the constant \dedalus{t}.
 
