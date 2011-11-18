@@ -1,22 +1,32 @@
-\section{Motivation: the Bloom programming language}
+\section{Context: Bloom}
+Our work on Dedalus has been motivated by \emph{Bloom}, a domain-specific
+language (DSL) for distributed programming~\cite{bloom}. Unlike Dedalus, Bloom
+is intended to be a practical programming language: we have used Bloom to build
+a wide array of distributed protocols and several complete applications,
+including a distributed file system. Like Datalog, Bloom is a rule-based
+language in which all computation is expressed as transformations over
+collections.  Like sugared \lang, Bloom includes temporal operators that allow
+the programmer to indicate when certain deductions should be deferred to the
+next ``timestep'' of the system or when deductions must cross a network
+boundary. % XXX: connect Dedalus and Bloom more explicitly?
 
-Beginning with the P2 project~\cite{p2}, our research team has studied the use of high-level, practical declarative languages
-to implement distributed systems.  Most recently, we created the Bloom language~\cite{bloom}, which presents a syntactic ``skin''
-borrowed from the Ruby language atop a semantics based on \lang.  Bloom has been used to implement a collection of protocols from the distributed
-systems literature, as well as a number of applications including an HDFS-style distributed filesystem.  It is currently the instructional language for a distributed systems course
-taught at UC Berkeley.
+By developing Dedalus, our goal was to assign a model-theoretic semantics for
+distributed logic programs and hence clarify the semantic ambiguities that have
+plagued our prior work on distributed declarative programming
+(e.g.,~\cite{Mao2009,navarro-oper-sem}). In addition, Dedalus has been essential
+to the development of several program analysis tools for Bloom. Specifically,
+our goal was to develop tools to help developers understand where their programs
+required additional coordination in order to ensure deterministic
+outcomes. Inspired by the CALM theorem~\cite{calm}, coordination analysis
+identifies locations in the program's dataflow graph in which a nonmonotonic
+operation is applied to a collection that has been derived asynchronously (e.g.,
+via communication).  Intuitively, an asynchronously-derived collection contains
+at any time some nondeterministically selected subset of its inputs, and a
+nonmonotonically-derived collection may have different contents in different
+executions, if applied to different subsets of its inputs.  Hence such locations
+are flagged as ``points of order:'' locations at which additional program logic
+(i.e., coordination) should be supplied to ensure that all program executions
+(or operations on all replicas) apply the nonmonontonic operator to the same
+input set.
 
-Like Datalog, Bloom is a rule-based language in which all computation is expressed as transformations over collections.  Like sugared \lang,
-Bloom includes temporal operators that allow the programmer to indicate when certain deductions should be deferred to the next ``state'' of 
-the system, or when deductions must cross a network (and hence synchrony) boundary. 
-
-Bloom provides a number of program analysis tools to aid the developer in implementing correct programs.  In addition to fairly traditional dataflow analyses
-that ensure that the program is well formed and stratifiable, Bloom provides a ``coordination analysis'' feature that informs the programmer whether (and where)
-a submitted program requires additional coordination logic to ensure deterministic outputs.  Inspired by the CALM theorem~\cite{calm}, coordination analysis 
-identifies locations in the program's dataflow graph in which a nonmonotonic operation (e.g. negation) is applied to a collection that has been derived asynchronously
-(e.g., via communication).  Intuitively, an asynchronously-derived collection contains at any time some nondeterministically selected subset of its inputs, and a 
-nonmonotonically-derived collection may have different contents in different executions, if applied to different subsets of its inputs.  Hence such locations are
-flagged as ``points of order:'' locations at which additional program logic (i.e., coordination) should be supplied to ensure that all program executions (or operations
-on all replicas) apply the nonmonontonic operator to the same input set.
-
-We are interested in formalizing the semantics of \lang in general and \plang in particular
+% Explain how CALM connects to Dedalus
