@@ -201,7 +201,7 @@ instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains
 \slang programs are temporally inflationary.
 \end{lemma}
 \begin{proof}
-Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, \dedalus{time_lt}, \dedalus{<}, or \dedalus{choice}).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
+Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, or \dedalus{<}, or any relation introduced in the causality or \dedalus{choice} rewrites).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
 
 For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle---simply repeat the following process for each tree.
 
@@ -245,7 +245,7 @@ Since a \slang program has a unique ultimate model, the specific \dedalus{choice
 
 \begin{corollary}
 \label{cor:no-async}
-Define the program transformation $\mathcal{A}(P)$ to be the transformation that, in every asynchronous rule of \slang program $P$, replaces the \dedalus{time_lt(T,S)} body atom with \dedalus{succ(T,S)}, and removes the \dedalus{choice} atom.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
+Define the program transformation $\mathcal{A}(P)$ to be the transformation that, converts every asynchronous rule $\varphi$ of \slang program $P$ into an inductive rule by undoing the causality and \dedalus{choice} rewrites, dropping the \dedalus{choice} operator, and adding \dedalus{succ(T,S)} to $pos(\varphi)$.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
 \end{corollary}
 
 Of course, there are confluent \lang programs not in \slang.  For example:

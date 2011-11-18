@@ -45,20 +45,57 @@ In general, the restriction of negation to EDB relations presents a significant
 barrier to expressing practical programs. In this section, we introduce \plang,
 an extension of \slang that allows a limited form of IDB negation but retains
 the benefits of \slang: \plang also captures PTIME exactly and allows only
-confluent programs. First, we show how to safely allow IDB negation in \plang by
-inserting a coordination protocol between nodes. We then prove that \plang and \slang are equivalently expressive.  This implies any
-\plang program can be translated into an \slang program with the same ultimate
-model.
+confluent programs.  We show that \plang and \slang are equivalently expressive.
+Then, we show how to safely allow IDB negation in \plang by
+inserting a coordination protocol between nodes.
+%We then prove that \plang and \slang are equivalently expressive.  
+%This implies any
+%\plang program can be translated into an \slang program with the same ultimate
+%model.
 
 \subsection{Safe IDB Negation}
 \label{sec:perfect-construction}
 
-There is a usage of negation that is both intuitive and corresponds to common
+There is an alternative semantics that is both intuitive and corresponds to common
 distributed systems practices: negation is not applied until the negated
-relation is ``done'' being computed.
+relation is ``done'' being computed.  This is the stratified semantics for logic programming.
 
-Given a \lang program $S$ with guarded asynchrony whose PDG does not contain any
-cycles through negation, the \plang program of $S$, denoted $\mathcal{P}(S)$, is
+First, we define the notion of a {\em predicate dependency graph} (PDG).  The PDG of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation; each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{$\lnot$q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{node}, \dedalus{succ}, or \dedalus{time} relations, or any relation introduced in the causality or \dedalus{choice} rewrites.
+
+\plang is the language of \lang programs with guarded asynchrony whose PDG does not contain any cycles through negation.  As is standard, a \plang program can be partitioned into {\em strata}.  The {\em stratum} of a relation \dedalus{r} is the largest number of negated edges on any path from \dedalus{r}.
+
+Each stratum of an $n$-stratum \plang program can be viewed as a \slang program.  Stratum $i$'s program, $P_i$, consists of all rules whose head relation is in stratum $i$.  The output schema of $P_i$ contains all relations in stratum $i+1$, and $P_i$'s EDB contains all relations in stratum $j < i$.  $P_0$'s EDB contains all EDB relations.  $P_n$'s output schema contains all relations in $P$'s output schema.
+
+The {\em ultimate model} of a \slang program is the ultimate model $P_n(\ldots P_1(P_0(E)) \ldots )$.
+
+%\begin{lemma}
+%\label{lem:plang-inflationary}
+%\plang programs are temporally inflationary.
+%\end{lemma}
+%\begin{proof}
+%\end{proof}
+
+Since a \plang program is a straightforward composition of \slang programs, we can apply several previous results.  Note that \plang programs are temporally inflationary.
+
+\begin{corollary}
+\label{cor:plang-confluent}
+\plang programs are confluent.
+\end{corollary}
+
+Note that every \slang program is a \plang program, and every \plang program has a constant amount of strata in the size of its input.  Thus we have:
+
+\begin{corollary}
+\label{cor:plang-ptime}
+\plang programs capture exactly PTIME.
+\end{corollary}
+
+Thus, \plang maintains the desirable properties of \slang: it is both confluent and PTIME.
+
+\subsection{Coordination rewrite}
+
+The negation semantics of \plang are different than those of \lang.  However, we can rewrite any \plang program to a \lang program.  This implies that we can leverage the operational formalism of Ameloot \etal~\cite{ameloot-operational}.
+
+Given a \plang program $S$, the {\em coordination rewrite} $\mathcal{P}(S)$ of $S$ is
 the \lang program obtained by adding \dedalus{p_done()} to the body of any rule
 in $S$ that contains a \dedalus{$\lnot$p(\ldots)} atom and adding rules to define
 \dedalus{p_done()} as described below.
@@ -72,7 +109,7 @@ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all
 timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true
 when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
-Note that in addition to guarding negation, \dedalus{p_done()} relations can be used to determine when the output of a \plang program is complete.
+%Note that in addition to guarding negation, \dedalus{p_done()} relations can be used to determine when the output of a \plang program is complete.
 
 We will present a specification of \dedalus{p_done()} after introducing some preliminary definitions.
 
@@ -294,8 +331,10 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
       {done_recursion\sub{i}()}
 \end{Drules}
 
-\subsection{Properties of \plang}
-\plang maintains the desirable properties of \slang: it is both confluent and PTIME.  We first argue that the rules for computing \dedalus{p_done{}} have the desired effect, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
+\subsection{Equivalence of coordination rewrite to \plang}
+We first argue that the rules for computing \dedalus{p_done{}} have the desired effect.
+
+%, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
 
 \begin{lemma}[Sealing]
 \label{lem:plang-done-right}
@@ -311,46 +350,44 @@ In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality
 In the asynchronous recursive case, the causality constraint ensures that every response in the second round is received at a time greater than every response in the first round.  Thus, between at least the last response of the first round and the last response of the second round, no node has outstanding messages and no node sends a message.  This implies that no node ever sends a message again.
 \end{proof}
 
-\begin{lemma}
-\label{lem:plang-inflationary}
-\plang programs are temporally inflationary.
-\end{lemma}
-\begin{proof}
-Since a \dedalus{$\lnot$p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
-\end{proof}
+%\begin{lemma}
+%\label{lem:plang-inflationary}
+%\plang programs are temporally inflationary.
+%\end{lemma}
+%\begin{proof}
+%Since a \dedalus{$\lnot$p} atom in a rule body must appear in conjunction with a \dedalus{p_done()} atom, by Lemma~\ref{lem:plang-done-right}, all negation is applied to complete sets; the negation of a complete set yields a complete set.
+%\end{proof}
 
 %\jmh{A bit of intuitive text here about the appeal to ideas from stratified negation?  And perhaps connection to ``global barrier'' protocols?}
 % paa -- we present this intuition in the intro to sec 3 and the end of sec 4.  couldn't find a way to mention it here without too much repetition.
 
-The {\em stratum} of a relation \dedalus{r} is the maximum number of negated edges on any path in the PDG from \dedalus{r} to an EDB relation.  Clearly this is finite, as \plang programs do not have recursion through negation.
+The above Lemma implies that the ultimate model of \plang program $S$ is the same as the ultimate model of \lang program $\mathcal{P}(S)$, as relations in lower strata are complete before higher strata rules are satisfiable.
 
-Note that we can convert an $n$-stratum \plang program into $n$ \slang programs, one per stratum.  Stratum $i$'s program, $P_i$, consists of all rules whose head relation is in stratum $i$.  The output schema of $P_i$ contains all relations in stratum $i+1$, and $P_i$'s EDB contains all relations in stratum $j < i$.  $P_0$'s EDB contains all EDB relations.  $P_n$'s output schema contains all relations in $P$'s output schema.  We will show that running these programs in sequence gives the same result as $P(E)$:
+%\begin{lemma}
+%\label{lem:can-stratify}
+%The ultimate model of $P(E)$ is equivalent to the ultimate model of $P_n(\ldots P_1(P_0(E)) \ldots ) = Q(E)$
+%\end{lemma}
+%\begin{proof}
+%Note that for any fact \dedalus{p@t} in any stable model of $P_0(E)$, \dedalus{p} is in the ultimate model of $P_0(E)$ (Lemma~\ref{lem:inflationary}).
 
-\begin{lemma}
-\label{lem:can-stratify}
-The ultimate model of $P(E)$ is equivalent to the ultimate model of $P_n(\ldots P_1(P_0(E)) \ldots ) = Q(E)$
-\end{lemma}
-\begin{proof}
-Note that for any fact \dedalus{p@t} in any stable model of $P_0(E)$, \dedalus{p} is in the ultimate model of $P_0(E)$ (Lemma~\ref{lem:inflationary}).
+%Any path from \dedalus{p} to any EDB relation in the PDG passes through no negations.  Thus, we can consider a derivation tree of \dedalus{p@t}, and use a similar argument as in Lemma~\ref{lem:inflationary} to show that \dedalus{p@s} is in any stable model of $P(E)$ for some \dedalus{s}, and thus is the ultimate model of $P(E)$ (Lemma~\ref{lem:plang-inflationary}).
 
-Any path from \dedalus{p} to any EDB relation in the PDG passes through no negations.  Thus, we can consider a derivation tree of \dedalus{p@t}, and use a similar argument as in Lemma~\ref{lem:inflationary} to show that \dedalus{p@s} is in any stable model of $P(E)$ for some \dedalus{s}, and thus is the ultimate model of $P(E)$ (Lemma~\ref{lem:plang-inflationary}).
+%Given that the ultimate model of $P_0(E)$ is contained in the ultimate model of $P(E)$, then we can inductively apply Lemmas~\ref{lem:inflationary} and~\ref{lem:plang-inflationary} to see that if the ultimate model of $P_{i}(\ldots P_1(P_0(E)) \ldots)$ is contained in the ultimate model of $P(E)$, then so too is the ultimate model of $P_{i+1}(\ldots P_1(P_0(E)) \ldots)$.  Thus, the ultimate models are equal.
+%\end{proof}
 
-Given that the ultimate model of $P_0(E)$ is contained in the ultimate model of $P(E)$, then we can inductively apply Lemmas~\ref{lem:inflationary} and~\ref{lem:plang-inflationary} to see that if the ultimate model of $P_{i}(\ldots P_1(P_0(E)) \ldots)$ is contained in the ultimate model of $P(E)$, then so too is the ultimate model of $P_{i+1}(\ldots P_1(P_0(E)) \ldots)$.  Thus, the ultimate models are equal.
-\end{proof}
+%%As corollaries of the above Lemma, we can apply several previous results, treating each stratum as a separate program with only EDB negation.
 
-As corollaries of the above Lemma, we can apply several previous results, treating each stratum as a separate program with only EDB negation.
-
-\begin{corollary}
-\label{cor:plang-confluent}
-\plang programs are confluent.
-\end{corollary}
-
-Note that every \slang program is a \plang program.  Thus we have:
-
-\begin{corollary}
-\label{cor:plang-ptime}
-\plang programs capture exactly PTIME.
-\end{corollary}
+%\begin{corollary}
+%\label{cor:plang-confluent}
+%\plang programs are confluent.
+%\end{corollary}
+%
+%Note that every \slang program is a \plang program.  Thus we have:
+%
+%\begin{corollary}
+%\label{cor:plang-ptime}
+%\plang programs capture exactly PTIME.
+%\end{corollary}
 
 %\begin{theorem}
 %\label{thm:plang-ptime}

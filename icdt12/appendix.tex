@@ -16,12 +16,12 @@ We add the following rules to the construction, to non-deterministically decide 
         {$\lnot$message(0), message(1), input_valid()}
 \end{Drules}
 
-Note that the first two lines are actually rules.  The unsugared form of the first rule is 
+Note that the first two lines are actually rules.  %The unsugared form of the first rule is 
 
-\begin{Drules}
-\drule{message(L,S,0)}
-      {node(L), time(T), time(S), time_lt(T,S), choice((L, T, 0), (S))}
-\end{Drules}
+%\begin{Drules}
+%\drule{message(L,S,0)}
+%      {node(L), time(T), time(S), time_lt(T,S), choice((L, T, 0), (S))}
+%\end{Drules}
 
 For valid inputs, the ultimate model is ${\dedalus{accept()}}$ if and only if either \dedalus{message(0)} and \dedalus{message(1)} are assigned the same timestamp and the machine accepts, or if the timestamps are different.  For invalid inputs, all ultimate models are empty.
 
