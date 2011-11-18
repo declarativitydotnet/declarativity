@@ -3,11 +3,11 @@ Our work on Dedalus has been motivated by \emph{Bloom}, a domain-specific
 language (DSL) for distributed programming~\cite{bloom}. Unlike Dedalus, Bloom
 is intended to be a practical programming language: we have used Bloom to build
 a wide array of distributed protocols and several complete applications,
-including a distributed file system. Like Datalog, Bloom is a rule-based
-language in which all computation is expressed as transformations over
-collections.  Like sugared \lang, Bloom includes temporal operators that allow
-the programmer to indicate when certain deductions should be deferred to the
-next ``timestep'' of the system or when deductions must cross a network
+including a distributed file system. Bloom is a rule-based language in which
+computation is expressed as transformations over collections.  Like sugared
+\lang, Bloom includes temporal operators that allow the programmer to indicate
+when certain deductions should be deferred to the next ``timestep'' of the
+system or when deductions must cross a network
 boundary. % XXX: connect Dedalus and Bloom more explicitly?
 
 By developing Dedalus, our goal was to assign a model-theoretic semantics for
@@ -17,16 +17,16 @@ plagued our prior work on distributed declarative programming
 to the development of several program analysis tools for Bloom. Specifically,
 our goal was to develop tools to help developers understand where their programs
 required additional coordination in order to ensure deterministic
-outcomes. Inspired by the CALM theorem~\cite{calm}, coordination analysis
-identifies locations in the program's dataflow graph in which a nonmonotonic
-operation is applied to a collection that has been derived asynchronously (e.g.,
-via communication).  Intuitively, an asynchronously-derived collection contains
-at any time some nondeterministically selected subset of its inputs, and a
-nonmonotonically-derived collection may have different contents in different
-executions, if applied to different subsets of its inputs.  Hence such locations
-are flagged as ``points of order:'' locations at which additional program logic
-(i.e., coordination) should be supplied to ensure that all program executions
-(or operations on all replicas) apply the nonmonontonic operator to the same
-input set.
+outcomes. Inspired by the CALM conjecture~\cite{cidr11,declarative-imperative},
+coordination analysis identifies locations in the program's dataflow graph in
+which a nonmonotonic operation is applied to a collection that has been derived
+asynchronously (e.g., via communication).  Intuitively, an
+asynchronously-derived collection contains at any time some nondeterministically
+selected subset of its inputs, and a nonmonotonically-derived collection may
+have different contents in different executions, if applied to different subsets
+of its inputs.  Hence such locations are flagged as ``points of order:''
+locations at which additional program logic (i.e., coordination) should be
+supplied to ensure that all program executions (or operations on all replicas)
+apply the nonmonontonic operator to the same input set.
 
 % Explain how CALM connects to Dedalus
