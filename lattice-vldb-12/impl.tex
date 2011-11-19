@@ -1,7 +1,15 @@
 \section{Implementing Lattices in Bloom}
 
 \subsection{Background}
-Bloom is a Datalog-based DSL for distributed programming~\cite{Alvaro2011,bloom}.
+Bloom is a domain-specific language (DSL) for distributed
+programming~\cite{Alvaro2011,bloom}. In Bloom, program state is represented
+using \emph{collections} and computation is expressed using declarative
+\emph{rules}. The original Bloom language only provided set-oriented collections
+(as in traditional Datalog), and only allowed Datalog-style conjunctive queries
+over those collections; in this paper, we describe how we generalized Bloom to
+allow arbitrary lattices to be used to store state, and allow any collection of
+morphisms between lattices to be used to express computation.
+
 The current prototype implementation (``Bud'') uses Ruby as the host language
 for the DSL, but other host languages are planned.
 
