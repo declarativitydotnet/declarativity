@@ -429,7 +429,7 @@ new subgoal \dedalus{reach\_done}:
 Garbage collection rewrite
 
 \begin{Drules}
-  \drule{unreach(Addr)} 
+  \drule{garbage(Addr)} 
         {addr_edb(Addr), root_edb(Root), $\lnot$reach(Root, Addr), reach_done()}
 \end{Drules}
 \end{example}

@@ -75,28 +75,28 @@ Distributed garbage collection:
         {points_to(Src, Dst)}
   \drule{reach(Src, Next)}
         {reach(Src, Dst), points_to(Dst, Next)}
-  \drule{unreach(Addr)}
+  \drule{garbage(Addr)}
         {addr(Addr), root_edb(Root), $\lnot$reach(Root, Addr)}
-  \drule{unreach(Addr)@next} {unreach(Addr)}
+  \drule{garbage(Addr)@next} {garbage(Addr)}
 \end{Drules}
 \end{example}
 Example~\ref{ex:gc} presents a simple garbage collection program for a
 distributed memory system. Each node manages a set of pointers and forwards this
 information to a central coordinator node. The coordinator computes the set of
 transitively reachable addresses; if an address is not reachable from the root
-address, it is considered an orphan and can be garbage collected. For
+address, it can be garbage collected. For
 simplicity, we assume that each node owns a fixed set of pointers, stored in the
 EDB relation \dedalus{local_ptr_edb}.
 
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
-corresponding to executions in which \dedalus{unreach} is not computed until the
+corresponding to executions in which \dedalus{garbage} is not computed until the
 transitive closure of \dedalus{points\_to} has been fully determined (i.e.,
 after all messages have been delivered), it also has ultimate models
-corresponding to executions in which \dedalus{unreach} is ``prematurely''
-computed.  When \dedalus{unreach} is computed before all the \dedalus{points_to}
+corresponding to executions in which \dedalus{garbage} is ``prematurely''
+computed.  When \dedalus{garbage} is computed before all the \dedalus{points_to}
 messages have been delivered, there is a correctness violation: reachable memory
-addresses appear in the \dedalus{unreach} relation.
+addresses appear in the \dedalus{garbage} relation.
 
 Note that for both examples, there is a single ultimate model corresponding to
 the execution in which negation is not applied to a set until the content of the
