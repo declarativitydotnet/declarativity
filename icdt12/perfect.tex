@@ -221,7 +221,7 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
       {forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X})}
 \end{Drules}
 
-The first four rules above compute a dense order over \dedalus{p\sub{\phi}}.  The final four rules iterate over the dense order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
+The first four rules above compute a total order over \dedalus{p\sub{\phi}}.  The final four rules iterate over the total order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
 
 We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ $\lnot$p(\od{W},\od{_}), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{$\lnot$p(\od{W}, \od{_})}.
 
