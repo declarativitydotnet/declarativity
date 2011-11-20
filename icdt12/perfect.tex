@@ -407,8 +407,8 @@ Applying the program transformation $\mathcal{P}$ to the garbage collection prog
 Synthesized rules for the garbage collection program:
 
 \begin{Drules}
-  \drule{points_to_to_send(M,Src,Dst)}
-        {local_ptr_edb(N, Src,Dst), master(M)}
+  \drule{points_to_to_send(M, Src, Dst)}
+        {local_ptr_edb(N, Src, Dst), master(M)}
   \drule{points_to_send(#M, L, Src, Dst)@async}
         {points_to_to_send(#L, M, Src, Dst)}
   \drule{points_to_ack(#N, L, Src, Dst)}
