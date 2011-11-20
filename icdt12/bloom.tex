@@ -1,7 +1,7 @@
 \section{Context: Bloom}
-Dedalus has been motivated by our concurrent work on \emph{Bloom}, a
+\lang has been motivated by our concurrent work on \emph{Bloom}, a
 domain-specific language (DSL) for distributed programming~\cite{bloom}. Unlike
-Dedalus, Bloom is intended to be a practical programming language: we have used
+\lang, Bloom is intended to be a practical programming language: we have used
 Bloom to build a wide array of distributed protocols and several complete
 applications, including a distributed file system. Bloom is a declarative
 language in which computation is expressed as a collection of rules over
@@ -10,10 +10,10 @@ programmer to indicate when certain deductions should be deferred to the next
 ``timestep'' of the system or when deductions must cross a network
 boundary. % XXX: connect Dedalus and Bloom more explicitly?
 
-By developing Dedalus, our goal was to assign a model-theoretic semantics for
+By developing \lang, our goal was to assign a model-theoretic semantics for
 distributed logic programs and hence clarify the semantic ambiguities that have
 complicated our prior work on distributed declarative programming
-(e.g.,~\cite{Mao2009,navarro-oper-sem}). In addition, Dedalus has been essential
+(e.g.,~\cite{Mao2009,navarro-oper-sem}). In addition, \lang has been essential
 to the development of several program analysis tools for Bloom. Specifically,
 our goal was to develop tools to help developers understand where their programs
 required additional coordination in order to ensure deterministic
