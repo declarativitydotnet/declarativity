@@ -93,7 +93,9 @@ Thus, \plang maintains the desirable properties of \slang: it is both confluent 
 
 \subsection{Coordination rewrite}
 
-The negation semantics of \plang are different than those of \lang.  However, we can rewrite any \plang program to a \lang program.  This implies that we can leverage the operational formalism of Ameloot \etal~\cite{ameloot-operational}.
+While the model-theoretic semantics of \plang are clear, \plang's negation semantics are different than those of \lang.  Thus, we cannot directly apply the correspondence to a distributed operational semantics in~\ref{ameloot-operational}.  Fortunately, we can rewrite any \plang program to a \lang program.
+
+Intuitively, the rewrite involves determining when the 
 
 Given a \plang program $S$, the {\em coordination rewrite} $\mathcal{P}(S)$ of $S$ is
 the \lang program obtained by adding \dedalus{p_done()} to the body of any rule
@@ -130,13 +132,10 @@ For ease of exposition, we will first present the computation of \dedalus{p_done
 \subsubsection{Non-Async-Recursive Nodes}
 \label{sec:nonasyncrecursive}
 
-For non-async-recursive nodes, we can compute a \dedalus{done} relation for each
-rule, then collate these into \dedalus{done} relations for each relation.  We
-handle deductive and asynchronous rules separately. The \dedalus{done} relation
-for a deductive rule is complete when all of the relations in the body of the
-rule are complete. The \dedalus{done} relation for an asynchronous rule is
-complete, intuitively, when all the messages entailed by the relations in the
-body of the rule have been acknowledged. We assume guarded asynchrony applies to
+For non-async-recursive nodes, we can compute a \dedalus{done} fact for each
+rule, then collate these into \dedalus{done} facts for each relation.  We
+handle deductive and asynchronous rules separately. The \dedalus{done} fact for a deductive rule is true when all of the relations in the body of the
+rule are henceforth unchanging. The \dedalus{done} fact for an asynchronous rule is henceforth true at some local timestamp after all facts derived in the head relation are true at their respective locations.   We assume guarded asynchrony applies to
 the rules in this section.
 
 Let $i$ be a non-async-recursive node.  Repeat the following for each element of $\dedalus{p} \in L(i)$.
@@ -459,7 +458,7 @@ protocol completes successfully, the coordinator may proceed past the barrier.
 An explicit goal of our work with \lang has been to view general distributed
 systems through a model-theoretic lens.  From this perspective, the connection
 between coordination protocols that enforce barriers and stratified evaluation 
-of logic programs is unsurprising.  Indeed, global stratification requires
+of logic programs is clear.  Indeed, global stratification requires
 a coordination protocol to ensure a global consensus on set completion before
 negation is applied.
 
