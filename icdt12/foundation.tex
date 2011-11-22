@@ -45,7 +45,7 @@ inherent in distributed systems: message delays and reordering.
 
 We assume an finite universe $\univ$ of values.
 
-For simplicity, we use similar exposition as Ameloot \etal~\cite{ameloot-operational}.
+For simplicity, we use similar exposition as~\cite{ameloot-operational}.
 
 A {\em relation schema} is a pair $(R,k)$ where $R$ is a relation name and $k$ its arity.  We also write $(R,k)$ as $R^{(k)}$.
 A {\em database schema} $\schema$ is a set of relation schemas.  A relation name occurs at most once in a database schema.
@@ -132,6 +132,7 @@ For readability, we will use the underscore symbol (\dedalus{_}) to represent a 
 %Then, replace the \dedalus{c\sub{i}(\od{Y\sub{i}})} atom with a \dedalus{c\sub{i,x,w,u}(\od{Y\sub{i} \(\setminus\) V})} atom.
 
 \subsubsection{Spatial and Temporal Extensions}
+\label{sec:st}
 
 Given a database schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
 obtained as follows. For each relation schema $(\dedalus{r}, n) \in (\schema-\{\dedalus{<}\}$), we include a relation schema $(\dedalus{r}, n+1)$ in $\sschema$. The
@@ -244,7 +245,7 @@ being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
 that the network may arbitrarily delay, re-order, and batch messages, any single
 value of head timestamp \dedalus{S} is permissible.
 
-We use the causality rewrite of Ameloot \etal~\cite{ameloot-operational}, which introduces the following causality constraint: a message sent by a node $x$ at local timestamp $s$ cannot cause another message to arrive in the past of node $x$ (i.e., at a time before local timestamp $s$).\footnote{Note that in
+We use the causality rewrite of Alvaro \etal~\cite{ameloot-operational}, which introduces the following causality constraint: a message sent by a node $x$ at local timestamp $s$ cannot cause another message to arrive in the past of node $x$ (i.e., at a time before local timestamp $s$).\footnote{Note that in
   other presentations of \lang (e.g.,~\cite{dedalus}), message timestamps are
   chosen from $\mathbb{N} \cup \top$, where $\top$ represents a special value
   indicating that the message was dropped by the network. In this paper, we
@@ -327,12 +328,12 @@ We require the deductive rules to be syntactically stratified.  Thus, a \lang pr
 
 %We restrict the usage of negation in \lang so that all cycles involving a negated edge in a \lang program's PDG must involve a temporal edge.
 
-An {\em input schema} $\ischema$ for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  Every input schema contains the \dedalus{node} relation; we will not explicitly mention the presence of \dedalus{node} when detailing an input schema, it is simply understood to always be in the input schema.  A relation in $\ischema$ is called an {\em EDB relation}.  All other relations are called {\em IDB}.
+An {\em input schema} $\ischema$ for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  Every input schema contains the \dedalus{node} relation; we will not explicitly mention the presence of \dedalus{node} when detailing an input schema.  A relation in $\ischema$ is called an {\em EDB relation}.  All other relations are called {\em IDB}.
 
 %The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
 An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}.
 
-We can view an EDB instance as a spatio-temporal database instance $\mathcal{K}$.  For every $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{E}$, the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ for all $\dedalus{t} \in \mathbb{N}$.
+We can view an EDB instance as a spatio-temporal database instance $\mathcal{K}$.  For every $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{E}$, the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ for all $\dedalus{t} \in \mathbb{N}$.  Intuitively, EDB facts ``exist at all timesteps.''
 
 %\todo{Dave would expect something here about how the IDB is computed} % deferred to camera-ready
 %\jmh{I'm confused---this is a non-deterministic mapping to some random timesteps?  To only one timestep $t$?}
@@ -353,8 +354,8 @@ Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume th
 \end{Drules}
 
 %Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-Let the power set of $X$ be denoted $\mathcal{P}(X)$.  The stable models are exactly:
-$$\left\{ \, \{\dedalus{node(n1), p(n1,i)} \, | \, \dedalus{i} \in S \} \cup {\dedalus{q(n1,i)} \, | \, \dedalus{i} \in \mathbb{N}} \, | \, S \in \mathcal{P}(\mathcal{N} \setminus \{0\}) \, \right\}$$
+Let the power set of $X$ be denoted $\mathcal{P}(X)$.  For each $S \in \mathcal{P \setminus \{0\}}$, the following is a stable model:
+$$\{\dedalus{node(n1), p(n1,i)} \, | \, \dedalus{i} \in S \} \cup {\dedalus{q(n1,i)} \, | \, \dedalus{i} \in \mathbb{N}}$$
 
 %To see this, consider the unsugared version of the program:
 %\begin{Drules}
@@ -370,7 +371,7 @@ Since \dedalus{q} is part of the input schema, it is true at every time.  Every 
 %\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
 
 \subsubsection{Ultimate Models}
-The stable model semantics is a suitable model-theoretic characterization of the behavior of a program at each timestamp.  In particular, it corresponds exactly with traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, stable models capture behaviors that seem inappropriate to represent in the output.  We shall instead prefer the notion of an {\em ultimate model} to represent a program's ``output.''
+The stable model semantics is a suitable model-theoretic characterization of the behavior of a program at each timestamp.  In particular, it corresponds exactly with traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, we shall instead prefer the notion of an {\em ultimate model}to represent a program's ``output.''
 
 %There are two problems with using the stable model semantics to assign an
 %interpretation to a \lang program. First, an instance with one or more asynchronous

@@ -11,7 +11,7 @@ As we have shown, it is easy to write programs that have multiple ultimate model
 corresponding to executions that produce different outputs.
 %\wrm{Also say something about non-trivial programs with an empty ultimate model.}
 %as well as nontrivial programs with an empty ultimate model.
-However, it is typically desirable to ensure that a program specification on a fixed input has a single, deterministic output, regardless of non-determinism in the order of message arrivals (captured in \lang by \dedalus{choice}).  
+However, it is often desirable to ensure that a program specification on a fixed input has a single, deterministic output, regardless of non-determinism in the order of message arrivals (captured in \lang by \dedalus{choice}).  
 % Such programs are rarely desired and may indicate a bug.
 %\nrc{Dubious:
 %  long-running services might well have no ultimate model according to this
@@ -217,7 +217,7 @@ A consequence of temporal inflation is that all \slang programs are confluent.
 \begin{proof}
 
 Towards a proof by contradiction, consider a \slang program that 
-induces two ultimate models $\mathcal{U}_1, \mathcal{U}_2$ for some EDB.  There must be a spatial fact \dedalus{f}, such that 
+induces two ultimate models $\mathcal{U}_1, \mathcal{U}_2$ for some EDB.  Without loss of generality, there must be a spatial fact \dedalus{f}, such that 
 $\dedalus{f} \in \mathcal{U}_1$ and $\dedalus{f} \not\in \mathcal{U}_2$.
 
 Recall that if spatial fact \dedalus{f} is in some ultimate model, then for some $\dedalus{t\sub{0}} \in \mathbb{N}$, there is some stable model that contains \dedalus{f@t} for all \dedalus{t} > \dedalus{t\sub{0}}.
@@ -241,7 +241,9 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 %Hence $a$ must exist in all ultimate models.
 \end{proof}
 
-Since a \slang program has a unique ultimate model, the specific \dedalus{choice} of values for timestamps does not affect the ultimate model, as long as the choice respects the causality constraint.  In particular, we can assume that the \dedalus{succ} of the body timestamp is always chosen:
+Since a \slang program has a unique ultimate model, the specific \dedalus{choice} of values for timestamps does not affect the ultimate model.
+% as long as the choice respects the causality constraint, as described in Section~\ref{sec:st}.
+In particular, we can assume that the \dedalus{succ} of the body timestamp is always chosen:
 
 \begin{corollary}
 \label{cor:no-async}
