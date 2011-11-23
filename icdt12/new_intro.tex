@@ -1,0 +1,34 @@
+In recent years there has been optimism that declarative languages grounded in
+Datalog can provide a clean foundation for distributed
+programming~\cite{declarative-imperative}.  This has led to activity in language
+and system design (e.g.,~\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}), as well as formal
+models for distributed computation using such
+languages (e.g.,~\cite{relational-transducers,navarro-oper-sem,card-abstraction}).
+
+The bulk of this work has presented (or assumed) a formal semantics based on transition systems
+and traces of input events. 
+\paa{plug declarativity?  this is all well and good, but I thought that programming
+in a declarative language means I don't need to reason about execution to understand my program's meaning}  
+In a recent (companion) paper, we developed a model-theoretic 
+semantics for Dedalus, a distributed logic language based on Datalog, in which the ``meaning''
+of a program precisely its set of stable models~\cite{zaniolo}~\footnote{given a set of constraints that 
+model happens-before~\cite{lamport}}.  We show an equivalence between the model-theoretic semantics
+and the operational semantics.
+
+Distributed systems are difficult to reason about because of their inherent concurrency and asynchrony: multiple 
+isolated processes simultaneously compute, and communicate via networks that may arbitrarily delay, reorder or batch messages.
+We are required to model this nondeterminism, as it may affect the outcome of the program on different runs.  Our work on
+\lang provides a model-theoretic foundation upon which to reason about the meaning of distributed programs, based on their possible 
+\emph{eventual} outcomes or \emph{ultimate models}.  In this paper, we use this formal framework to develop a constrained variant
+of \lang that allows only \emph{confluent} programs, or programs that have a unique ultimate model, without sacrificing its ...
+
+The CALM theorem~\cite{calm, ameloot, imperative, ameloot} establishes a strong connection between confluence
+and logical monotonicity: monotonic distributed programs are confluent.  In principle, a language that allows only
+monotonic programs should be sufficiently expressive to implement the vast majority of practical distributed systems:
+Immerman~\cite{??} has demonstrated that semipositive Datalog captures PTIME.  
+%%We will show that confluence is undecidable for \lang programs in general, and that \lang subsumes PSPACE
+\lang is perhaps ``too large'' a language: we will show that it subsumes PSPACE, and that confluence is in general
+undecidable for \lang programs.  This motivates us to propose a semipositive fragment of \lang we call \slang, 
+for which confluence is easy to prove.
+
+Unfortunately, unlike \lang, \slang is not a natural or convenient language for specifying systems.  
