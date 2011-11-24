@@ -346,7 +346,7 @@ In other words, each different causal choice of timesteps for a \lang instance c
 
 \begin{example}
 \label{ex:infinitemodels}
-Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume the EDB instance is $\{\dedalus{node(n1)}, q(n1)\}$.
+Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1)}\}$.
 
 \begin{Drules}
   \drule{p(#L)@async}
@@ -370,7 +370,38 @@ These are the only stable models of the instance.  Since \dedalus{q} is part of 
 %\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
 
 \subsubsection{Ultimate Models}
-The stable model semantics is a suitable model-theoretic characterization of the behavior of a program at each timestamp.  In particular, it corresponds exactly with traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, we shall instead prefer the notion of an {\em ultimate model}to represent a program's ``output.''
+The stable model semantics is a suitable model-theoretic characterization of the behavior of a program in that there is a correspondence between stable models and traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, stable models highlight uninteresting temporal differences that may not be ``eventually'' meaningful, such as in the following example:
+
+\begin{example}
+Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1,0), q(n1,1)}\}$.
+
+\begin{Drules}
+  \drule{p(#L,X)@async}
+        {q(#L,X), $\lnot$r(#L,X)}
+  \drule{r(X)@next}
+        {q(X)}
+  \drule{r(X)@next}
+        {r(X)}
+  \drule{concurrent()}
+        {p(n1,0), p(n1,1)}
+  \drule{concurrent()@next}
+        {concurrent()}
+\end{Drules}
+
+For each $\dedalus{s}, \dedalus{t} \in \mathbb{N}$, the following is a stable model:
+\begin{eqnarray*}
+\{\dedalus{node(n1), p(n1,s,0), p(n1,t,1)}\} \, \cup \\
+\{\dedalus{concurrent(n1,i)} \, | \, \dedalus{i} \in \mathbb{N} \, \land \, \dedalus{s $\leq$ i}\} \, \text{if} \, \dedalus{s} = \dedalus{t} \, \cup \\
+\{\dedalus{q(n1,i,0), q(n1,i,1)} \, | \, \dedalus{i} \in \mathbb{N}\} \, \cup \\
+\{\dedalus{r(n1,i,0), r(n1,i,1)} \, | \, \dedalus{i} \in \mathbb{N} \setminus \{0\}\}
+\end{eqnarray*}
+
+These are the only stable models of the instance. Since \dedalus{q} is part of the input schema, \dedalus{q} facts are true at every time.  By the rules, \dedalus{r} facts are true at every time except time \dedalus{0}.  Thus, there is only one choice of timestamp for \dedalus{p} for each value of \dedalus{q}'s second argument.  If these choices are the same, then \dedalus{concurrent()} is true at all timestamps afterwards.
+
+However, note that while the specific values of \dedalus{s} and \dedalus{t} are unimportant in terms of the eventual contents of the \dedalus{concurrent} relation, there are different stable models for each of these choices.
+\end{example}
+
+In order to rule out such temporal differences that do not affect eventual behaviors, we will define the concept of an {\em ultimate model} to represent a program's ``output.''
 
 %There are two problems with using the stable model semantics to assign an
 %interpretation to a \lang program. First, an instance with one or more asynchronous
@@ -399,7 +430,9 @@ in the output schema that are eventually always true in a stable model.
 Note that an ultimate model is always finite because of the finiteness of the EDB, the safety conditions on rules, the restrictions on the use of \dedalus{succ} and \dedalus{time}, and the prohibition on binding timestamps to non-timestamp attributes.  A \lang program only has a finite number of ultimate models for the same reason.
 
 \begin{example}
-Assuming $\oschema = \{\dedalus{p}\}$, the set of ultimate models for the \lang instance shown in Example~\ref{ex:infinitemodels} is \linebreak $\{ \, \{\}, \{ \, \dedalus{p(n1)} \, \} \, \}$.
+For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are four ultimate models: $\{\}$, $\{\dedalus{p(0)}\}$, $\{\dedalus{p(1)}\}$, and $\{\dedalus{p(0), p(1)}\}$.
+
+For Example~\ref{ex:unimportant} with $\oschema = \{\dedalus{concurrent()}\}$, there are two ultimate models: $\{\}$ and $\{concurrent()\}$
 \end{example}
 
 %Note that some nontrivial programs may have an empty ultimate model, such as the
