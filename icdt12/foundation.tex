@@ -328,7 +328,9 @@ We restrict our attention to \lang programs whose deductive rules are syntactica
 An {\em input schema} $\ischema$ for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  Every input schema contains the \dedalus{node} relation; we will not explicitly mention the presence of \dedalus{node} when detailing an input schema.  A relation in $\ischema$ is called an {\em EDB relation}.  All other relations are called {\em IDB}.
 
 %The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
-An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}. The active domain $ADom(\mathcal{E},P)$ of an EDB instance $\mathcal{E}$ for a program $P$ is the set of constants appearing in $\mathcal{E}$ and $P$.  Every EDB instance maps the $<$ relation to a total order over $Adom(\mathcal{E},P)$.
+An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}. The {\em active domain}
+%$ADom(\mathcal{E},P)$
+of an EDB instance $\mathcal{E}$ for a program $P$ is the set of constants appearing in $\mathcal{E}$ and $P$.  Every EDB instance maps the $<$ relation to a total order over its active domain.
 
 We can view an EDB instance as a spatio-temporal database instance $\mathcal{K}$.  For every $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{E}$, the fact \linebreak $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ for all $\dedalus{t} \in \mathbb{N}$.  Intuitively, EDB facts ``exist at all timesteps.''
 
