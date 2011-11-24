@@ -35,7 +35,7 @@ We believe that the stable model semantics are inappropriate to represent the ou
 %networks and mutate state over time.
 
 We begin this section by reviewing the syntax of \lang that was first presented
-in~\cite{dedalus}. We then review the model-theoretic semantics for \lang presented in~\cite{ameloot-operational}.
+in~\cite{dedalus}. We then review the model-theoretic semantics for \lang presented in~\cite{ameloot-operational}.  For simplicity, we use a somewhat similar exposition as~\cite{ameloot-operational}.
 
 \subsection{Syntax}
 
@@ -46,9 +46,7 @@ in~\cite{dedalus}. We then review the model-theoretic semantics for \lang presen
 %\todo{define ``relation'', ``maps''?}
 %\todo{Put in examples of notation close to where the notation is introduced -Dave Maier} % deferred to camera-ready
 
-We assume an infinite universe $\univ$ of values.
-
-For simplicity, we use similar exposition as~\cite{ameloot-operational}.
+We assume an infinite universe $\univ$ of values.  We assume $\mathbb{N} \subset \univ$.
 
 A {\em relation schema} is a pair $(R,k)$ where $R$ is a relation name and $k$ its arity.  We also write $(R,k)$ as $R^{(k)}$.
 A {\em database schema} $\schema$ is a set of relation schemas.  A relation name occurs at most once in a database schema.
@@ -57,7 +55,7 @@ A {\em database schema} $\schema$ is a set of relation schemas.  A relation name
 
 As in Immerman~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
-$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix otation.}
+$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}
 
 A {\em fact} over a relation schema $R^{(n)}$ is a pair consisting of
 the relation name $R$ and an $n$-tuple $(c_1,\ldots,c_n)$, where each
@@ -90,7 +88,7 @@ consisting of constants from $\univ$ or variable symbols.
 %\jmh{Following on to the question above about \dedalus{<}, shouldn't we use
 %  obligatory boilerplate about Horn clauses and finite Herbrand universes?}
 
-The relation name \dedalus{<} may only appear in $ineq$, and may not appear in any atom in $head, pos$, or $neg$.  If a variable symbol \dedalus{V} appears in an inequality, it must appear in some atom in $pos$.
+The relation name \dedalus{<} may only appear in $ineq$; in particular, \dedalus{<} may not appear in any atom in $head, pos$, or $neg$.
 
 %Furthermore, if
 %\dedalus{b\sub{i}} (resp.\ \dedalus{c\sub{i}}) is \dedalus{<}, then any variable
@@ -108,12 +106,8 @@ The relation name \dedalus{<} may only appear in $ineq$, and may not appear in a
 For a variable symbol \dedalus{V} that appears exactly once in exactly one $neg$ atom, and does not appear elsewhere in the rule, there is a straightforward rewrite defined in~\cite{ullmanbook} that brings the rule into compliance with the safety restriction.  An example of the rewrite appears below.
 
 \begin{example}
-The unsafe rule:
-\begin{Drules}
-\drule{p(X)}
-      {q(X), !r(X,Y)}
-\end{Drules}
-is rewritten into the following two rules that obey the safety constraint
+The unsafe rule: \drule{p(X)}{q(X), !r(X,Y)}
+is rewritten into the following two rules that obey the safety constraint:
 
 \begin{Drules}
 \drule{p(X)}
@@ -139,26 +133,24 @@ For readability, we will use the underscore symbol (\dedalus{_}) to represent a 
 \label{sec:st}
 
 Given a database schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
-obtained as follows. For each relation schema $(\dedalus{r}, n) \in (\schema-\{\dedalus{<}\}$), we include a relation schema $(\dedalus{r}, n+1)$ in $\sschema$. The
-additional column being added to each relation schema is called a {\em location specifier}. By convention, the
-location specifier is the first column of every relation in $\sschema$.
-Additionally, $\sschema$ includes $\dedalus{<}$, and a relation schema $(\dedalus{node},1)$.
+obtained as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\}$), we include a relation schema $\dedalus{r}^{n+1}$ in $\sschema$. The
+additional column added to each relation schema is called the {\em location specifier}. By convention, the
+location specifier is the first column of the relation.
+$\sschema$ also includes $\dedalus{<}^{(1)}$, and a relation schema $\dedalus{node}^{(1)}$.
 We call $\sschema$ a {\em spatial schema}.~\footnote{The terms {\em spatial} and
   {\em spatio-temporal} are borrowed from Ameloot~\cite{ameloot-personal}.}
 
 A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(d,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ$, and $\dedalus{node}(d)$.  
-A {\em spatial relation instance} for a relation schema $(\dedalus{r},n)$ is a set of spatial facts for $(\dedalus{r},n+1)$.
+A {\em spatial relation instance} for a relation schema $\dedalus{r}^{(n)}$ is a set of spatial facts for $\dedalus{r}^{(n+1)}$.
 A {\em spatial database instance} is defined similarly to a database instance.
 
 Given a database schema $\schema$, we use $\stschema$ to denote the extension of
-$\schema$ obtained by adding two additional columns to each relation schema in ($\schema - \{\dedalus{<}\}$) and adding three additional relation schemas to $\schema$. 
-The first additional column is a location specifier and the second is a {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$ and the timestamp is the second.  
-The additional relation schemas we add are: $(\dedalus{node},1)$,
-$(\dedalus{time},1)$, and $(\dedalus{succ},2)$.%, and $(\dedalus{time_lt},2)$.
-We call $\stschema$ a {\em spatio-temporal} schema.
+$\schema$ obtained as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\})$ we include a relation schema $\dedalus{r}^{(n+2)}$ in $\stschema$.  The first additional column added is the location specifier, and the second is the {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$, and the timestamp is the second.  $\stschema$ also includes $\dedalus{<}^{(1)}$, $\dedalus{node}^{(1)}$, $\dedalus{time}^{(1)}$ and $\dedalus{succ}^{(2)}$,   We call $\stschema$ a {\em spatio-temporal schema}.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.  A {\em spatio-temporal relation instance} for relation schema $(\dedalus{r},n)$ is a set of spatio-temporal facts for
-$(\dedalus{r},n+2)$.  A {\em spatio-temporal database instance} is defined similarly to a database instance, \dedalus{time(t)} for all $\dedalus{t} \in \mathbb{N}$, and \dedalus{succ(x,y)} for all $y = x + 1$.%, and \dedalus{time_lt(x,y)} for all $x < y$.
+A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ, t \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.
+
+A {\em spatio-temporal relation instance} for relation schema $\dedalus{r}^{(n)}$ is a set of spatio-temporal facts for
+$\dedalus{r}^{(n+2)}$.  A {\em spatio-temporal database instance} is defined similarly to a database instance; in any spatio-temporal database instance, $\dedalus{time}^{(1)}$ is mapped to the set containing a \dedalus{time(t)} fact for all $\dedalus{t} \in \mathbb{N}$, and $\dedalus{succ}^{(2)}$ to the set containing a \dedalus{succ(x,y)} fact for all $y = x + 1$, $(x,y \in \mathbb{N})$.
 
 We will use the notation $\dedalus{f@t}$ to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by adding a timestamp column with the constant \dedalus{t}.
 
@@ -255,8 +247,7 @@ We use the causality rewrite of Alvaro \etal~\cite{ameloot-operational}, which i
   indicating that the message was dropped by the network. In this paper, we
   assume reliable delivery of messages.}  Full details are available in~\cite{ameloot-operational}.
 
-A \lang \emph{program} is a set of spatio-temporal rules over some
-spatio-temporal schema $\stschema$.  
+A \lang \emph{program} is a set of causally rewritten spatio-temporal rules over some spatio-temporal schema $\stschema$.  
 %We will see in Section~\ref{sec:semantics}
 %that the usage of negation (\dedalus{$\lnot$}) in \lang programs is
 %restricted. \nrc{Why does this sentence come here? Seems weird; if we don't
