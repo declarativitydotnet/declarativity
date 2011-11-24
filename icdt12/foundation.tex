@@ -1,38 +1,41 @@
 \section{\large \bf \lang}
 \label{sec:foundation}
 
-To arrive at a formal semantics for distributed programs, we present the
-\lang~\cite{dedalus} language, which formally captures the intuitive notion of
-logic programs being executed asynchronously across the nodes of a distributed
-system.  In designing \lang, we extended the well-understood Datalog language
-with temporal constructs that allowed us to model time-varying state and channel
-non-determinism.  As we shall see, both extensions are made possible by
-admitting a representation of logical time into the program schema, allowing the
-consequences of deductions to hold ``at a different time'' than their
-antecedents.  By narrowly constraining such temporal deductions, we argue that
-\lang captures salient features of systems that communicate over unreliable
-networks and mutate state over time.
+To arrive at a formal model-theoretic semantics for distributed programs, we present the
+\lang~\cite{dedalus} language.
+%, which formally captures the intuitive notion of
+%logic programs being executed asynchronously across the nodes of a distributed
+system.  %\lang extends Datalog with temporal constructs that enable time-varying state and non-deterministic channels to be modeled.
+\lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation, and through the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  In~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model -- an operational formalism for distributed systems -- and thus argue that \lang is a reasonable model for distributed systems.
+
+%We note that the stable model semantics~\cite{stable-model} may be used to assign
+%meanings to \lang programs that capture the mutation of state over logical time,
+%much as a trace or ``execution''~\cite{ioa} 
+%captures the behavior of a typical imperative distributed program over time.
+We believe that the stable model semantics are inappropriate to represent the output of a distributed system, as they contain a potentially infinite number of distinctions that are not meaningful in an ``eventual'' sense.  Thus, we introduce the {\em ultimate model} semantics as a representation of program output.  As one might imagine, even in the ultimate model semantics, some programs may have multiple ultimate models that correspond to meaningful distinctions between stable models.
+
+%However, using the stable model semantics for \lang presents certain obstacles:
+%even if a \lang program has a deterministic final state, channel non-determinism may induce an infinite number of stable models, each corresponding to a
+%different evolution toward that state over logical time.  To project away the
+%(potentially infinite) variety of these distinctions, we present the {\em ultimate model} semantics, an abstraction that associates a program with a
+%finite model of its ``eventual'' execution state.  Even with this
+%simplification, some programs may have more than one ultimate model.  We
+%conclude by showing a natural correspondence between the multiple ultimate
+%models and sensitivities of the specification to the main non-determinism
+%inherent in distributed systems: message delays and reordering.
+
+%\lang extends Datalog with temporal constructs that model non-deterministic channels, as well as time-varying state.
+%In designing \lang, we extended the well-understood Datalog language
+%with temporal constructs that allowed us to model time-varying state and channel
+%non-determinism.  As we shall see, both extensions are made possible by
+%admitting a representation of logical time into the program schema, allowing the
+%consequences of deductions to hold ``at a different time'' than their
+%antecedents.  By narrowly constraining such temporal deductions, we argue that
+%\lang captures salient features of systems that communicate over unreliable
+%networks and mutate state over time.
 
 We begin this section by reviewing the syntax of \lang that was first presented
-in~\cite{dedalus}. We then provide a model-theoretic semantics for \lang.  We
-note that the stable model semantics~\cite{stable-model} may be used to assign
-meanings to \lang programs that capture the mutation of state over logical time,
-much as a trace or ``execution''~\cite{ioa}
-captures the behavior of a typical imperative distributed program over time.
-However, using the stable model semantics for \lang presents certain obstacles:
-even if a \lang program has a deterministic final state, channel non-determinism
-may induce an infinite number of stable models, each corresponding to a
-different evolution toward that state over logical time.  To project away the
-(potentially infinite) variety of these distinctions, we present the {\em
-  ultimate model} semantics, an abstraction that associates a program with a
-finite model of its ``eventual'' execution state.  Even with this
-simplification, some programs may have more than one ultimate model.  We
-conclude by showing a natural correspondence between the multiple ultimate
-models and sensitivities of the specification to the main non-determinism
-inherent in distributed systems: message delays and reordering.
-
-%\jmh{PS: Should we make an argument that the ultimate models cover all possible message orderings?  Or all ``interesting'' (non-commuting) permutations of messages?}
-% I couldn't find a way to make this an aside, since there is no discussion of message orderings in this section.
+in~\cite{dedalus}. We then review the model-theoretic semantics for \lang presented in~\cite{ameloot-operational}.
 
 \subsection{Syntax}
 
@@ -62,7 +65,8 @@ $c_i \in \univ$.  We denote a fact over $R^{(n)}$ by \dedalus{R(c\sub{1}, \ldots
 
 A {\em relation instance} for relation schema $R^{(n)}$ is a set of facts whose relation is $R$.
 A {\em database instance} maps each relation schema $R^{(n)}$ to a corresponding relation instance for
-$R^{(n)}$, and maps $\dedalus{<}^{(2)}$ to the set of \dedalus{<} facts that encode a total ordering over $\univ$.
+$R^{(n)}$.
+% and maps $\dedalus{<}^{(2)}$ to the set of \dedalus{<} facts that encode a total ordering over $\univ$.
 
 A {\em rule} $\varphi$ consists of several distinct components: a head atom $head(\varphi)$, a set $pos(\varphi)$ of atoms, a set $neg(\varphi)$ of atoms, a set of inequalities $ineq(\varphi)$ of the form $x < y$, and a set of choice operators $cho(\varphi)$ (functional dependencies) applied to the variables.  The elements of $pos(\varphi)$ are called {\em positive body atoms}, and the elements $neg(\varphi)$ are called {\em negative body atoms}.
 
@@ -331,7 +335,7 @@ We require the deductive rules to be syntactically stratified.  Thus, a \lang pr
 An {\em input schema} $\ischema$ for a \lang program $P$ with spatio-temporal schema $\stschema$ is a subset of $P$'s spatial schema $\sschema$.  Every input schema contains the \dedalus{node} relation; we will not explicitly mention the presence of \dedalus{node} when detailing an input schema.  A relation in $\ischema$ is called an {\em EDB relation}.  All other relations are called {\em IDB}.
 
 %The {\em EDB relations} of a \lang program $P$ are the relations whose corresponding nodes in $P$'s PDG have no incoming edges.  All other relations are called {\em IDB}.
-An {\em EDB instance} $\mathcal{E}$ is a spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}.
+An {\em EDB instance} $\mathcal{E}$ is a finite spatial database instance that maps each EDB relation \dedalus{r} to a finite spatial relation instance for \dedalus{r}. The active domain $ADom(\mathcal{E},P)$ of an EDB instance $\mathcal{E}$ for a program $P$ is the set of constants appearing in $\mathcal{E}$ and $P$.  Every EDB instance also maps the $<$ relation to a total order over the active domain.
 
 We can view an EDB instance as a spatio-temporal database instance $\mathcal{K}$.  For every $\dedalus{r(d,c\sub{1},\ldots,c\sub{n})} \in \mathcal{E}$, the fact $\dedalus{r(d,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{K}$ for all $\dedalus{t} \in \mathbb{N}$.  Intuitively, EDB facts ``exist at all timesteps.''
 
