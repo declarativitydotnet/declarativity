@@ -373,7 +373,8 @@ These are the only stable models of the instance.  Since \dedalus{q} is part of 
 The stable model semantics is a suitable model-theoretic characterization of the behavior of a program in that there is a correspondence between stable models and traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, stable models highlight uninteresting temporal differences that may not be ``eventually'' meaningful, such as in the following example:
 
 \begin{example}
-Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1,0), q(n1,1)}\}$.
+\label{ex:unimportant}
+Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1,0),}$ \linebreak $\dedalus{q(n1,1)}\}$.
 
 \begin{Drules}
   \drule{p(#L,X)@async}
@@ -432,7 +433,7 @@ Note that an ultimate model is always finite because of the finiteness of the ED
 \begin{example}
 For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are four ultimate models: $\{\}$, $\{\dedalus{p(0)}\}$, $\{\dedalus{p(1)}\}$, and $\{\dedalus{p(0), p(1)}\}$.
 
-For Example~\ref{ex:unimportant} with $\oschema = \{\dedalus{concurrent()}\}$, there are two ultimate models: $\{\}$ and $\{concurrent()\}$
+For Example~\ref{ex:unimportant} with $\oschema = \{\dedalus{concurrent()}\}$, there are two ultimate models: $\{\}$ and $\{\dedalus{concurrent()}\}$.
 \end{example}
 
 %Note that some nontrivial programs may have an empty ultimate model, such as the

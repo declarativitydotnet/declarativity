@@ -6,12 +6,12 @@
 
 %Although \lang is a natural language for distributed systems, and it is easy to compactly specify complex distributed systems \wrm{cite something?}, \lang has several problems.
 \lang can express a broad class of distributed systems but this flexibility comes at a cost.
-As we have shown, it is easy to write programs that have multiple ultimate models, 
+As we have shown, a \lang program may have multiple ultimate models. %it is easy to write programs that have multiple ultimate models, 
 %which intuitively means that the program has non-deterministic output.
-corresponding to executions that produce different outputs.
+%corresponding to executions that produce different outputs.
 %\wrm{Also say something about non-trivial programs with an empty ultimate model.}
 %as well as nontrivial programs with an empty ultimate model.
-However, it is often desirable to ensure that a program specification on a fixed input has a single, deterministic output, regardless of non-determinism in the order of message arrivals (captured in \lang by \dedalus{choice}).  
+However, it is often desirable to ensure that a program has a single, deterministic output, regardless of non-determinism in its behavior. %in the order of message arrivals (captured in \lang by \dedalus{choice}).  
 % Such programs are rarely desired and may indicate a bug.
 %\nrc{Dubious:
 %  long-running services might well have no ultimate model according to this
@@ -51,12 +51,11 @@ program with a fixed set of members: a bride and a groom.  The marriage is off
 However, the \lang program as given does not correctly implement such a vote. 
 % as it relies on a non-deterministic ``synchronicity'' of the two parties.
 Any stable model where \dedalus{groom_i_do()} and \dedalus{bride_i_do()}
-{\em disagree} in their first assignments of timestamps yields an ultimate model
+disagree in their first chosen timestamps yields an ultimate model
 containing \dedalus{runaway()}.  By contrast, if the votes are assigned the same timestamp,
 the ultimate model does not contain \dedalus{runaway()}. In operational terms,
 this program exhibits a race condition: when the EDB contains ``I do'' votes
-from both parties, the truth value of \dedalus{runaway()} depends on the (non-deterministic) times
-at which their messages are delivered.
+from both parties, the truth value of \dedalus{runaway()} depends on the (non-deterministic) times at which their messages are delivered.
 %Note that all predicates are inflationary.
 %Removed this, because "inflationary" has not yet been defined; not sure it is
 %crucial, anyway. -nrc
@@ -117,7 +116,7 @@ ensure that there are no outstanding messages in flight.
 In the remainder of this section, we explore the aspects of \lang that allow
 such ambiguities and propose a restricted language \slang that rules them out
 (but complicates the specification of programs like our examples above).  In
-Section~\ref{sec:perfect}, we consider a relaxation of \slang that allows
+Section~\ref{sec:perfect}, we consider a different language -- \slang -- that allows
 relatively intuitive program specifications like our examples, but narrows their
 interpretation to a single, ``preferred'' model.
 
@@ -152,17 +151,19 @@ This is perhaps not a surprising result, as confluence is defined over all EDB i
 
 %\wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
-Another symptom of \lang being ``too big'' a language is its expressive power: it captures PSPACE.  
+Another symptom of \lang being ``too big'' a language is its expressive power: it subsumes PSPACE.  
 
 \begin{lemma}
 \label{lem:lang-pspace}
-\lang captures exactly PSPACE.
+\lang %captures exactly
+subsumes PSPACE.
 \end{lemma}
 
 \begin{proof}
-If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subseteq \text{NPSPACE}$, and it is known that $\text{NPSPACE} = \text{PSPACE}$.
+%If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subseteq \text{NPSPACE}$, and it is known that $\text{NPSPACE} = \text{PSPACE}$.
 
-In the other direction of the proof, we show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subseteq \lang$.  Full details are in the appendix.
+%In the other direction of the proof,
+We show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subseteq \lang$.  Full details are in the appendix.
 \end{proof}
 
 \subsection{\large \bf \slang}
