@@ -13,10 +13,10 @@ and traces of input events.  A model-theoretic semantics for behavior has been n
 %in a declarative language means I don't need to reason about execution to understand my program's meaning}  
 In a recent (companion) paper~\cite{ameloot-operational}, we developed a model-theoretic behavior
 semantics for Dedalus, a distributed logic language based on Datalog, in which the ``meaning''
-of a the behavior of a program is precisely its set of stable models~\cite{sacca-zaniolo} %~\footnote{given a set of constraints that model happens-before~\cite{lamport}}.
-In the paper, We also show an equivalence between the model-theoretic behavior semantics and an operational semantics for behavior based on network transducers which is familiar from the literature.
+of of a program is precisely its set of stable models~\cite{sacca-zaniolo}. %~\footnote{given a set of constraints that model happens-before~\cite{lamport}}.
+In the same paper, we show an equivalence between the model-theoretic semantics and an operational semantics for behavior based on network transducers which is familiar from the literature.
 
-It is difficult to reason about the output of distributed systems, because of their inherent concurrency and asynchrony: multiple 
+It is difficult to reason about the output of distributed systems because of their inherent concurrency and asynchrony: multiple 
 isolated processes simultaneously compute, and communicate via networks that may arbitrarily delay, reorder or batch messages.
 We are required to model this nondeterminism, as it may affect the outcome of the program on different runs.  Our work on
 \lang gives us a model-theoretic semantics for reasoning about the outcomes of distributed programs, based on their \emph{eventual} states or \emph{ultimate models}.  In this paper, we present this formal framework, and use it to develop a constrained variant
@@ -26,14 +26,15 @@ of \lang that allows only \emph{confluent} programs, or programs that have a uni
 The CALM theorem~\cite{cidr11, declarative-imperative, relational-transducers} establishes a connection between confluence
 and logical monotonicity: monotonic distributed programs are confluent.  In principle, a language that allows only
 monotonic programs should be sufficiently expressive to implement all confluent distributed systems.
-
-It is unlikely that practical distributed systems will be written in languages that allow computations beyond PTIME.  Immerman~\cite{immerman-ptime} has demonstrated that semipositive Datalog (Datalog$\lnot$ where negation is restricted to EDB relations) with an ordering over the universe captures PTIME.
+%%It is unlikely that practical distributed systems will be written in languages that allow computations beyond PTIME.  
+Immerman~\cite{immerman-ptime} has demonstrated that semipositive Datalog (Datalog$\lnot$ where negation is restricted to EDB relations) with an ordering over the universe captures PTIME.
 %%We will show that confluence is undecidable for \lang programs in general, and that \lang subsumes PSPACE
 We show that \lang is too expressive a language for this space, as it subsumes PSPACE, and that confluence is in general
 undecidable for \lang programs.  This motivates us to propose \slang, a restricted version of \lang that is intuitively similar to semipositive Datalog.  \slang captures PTIME, and \slang programs are guaranteed to be confluent.
 
-Another issue is that \lang and \slang are not natural or convenient ways for programmers to write certain kinds of systems.  Later in the paper we will give 
-an example of a distributed garbage collection algorithm that detects ``orphaned'' memory and marks it for deletion.  Orphaned memory is naturally thought of as memory that is not contained in the transitive closure of a points-to relation.  While the negation of a transitive closure is theoretically specifiable in both \lang and \slang.  It is inconvenient to write in \lang because of the issue of {\em coordination} -- ensuring the transitive closure is complete before applying negation (otherwise, multiple ultimate models may result).  It is inconvenient to write in \slang because although \slang programs are guaranteed to have a unique ultimate model, it is challenging to correctly specify the negation of a transitive closure using only semipositive rules.
+Unfortunately, \lang and \slang are not natural or convenient languages for programming certain kinds of systems.  Later in the paper we will give 
+an example of a distributed garbage collection algorithm that detects ``orphaned'' memory and marks it for deletion.  Orphaned memory is naturally thought of as memory that is not contained in the transitive closure of a points-to relation.  The negation of a transitive closure is theoretically specifiable -- but inconvenient
+to express -- in both \lang and \slang.  It is inconvenient to write in \lang because of the issue of {\em coordination} -- ensuring the transitive closure is complete before applying negation (otherwise, multiple ultimate models may result).  It is inconvenient to write in \slang because although \slang programs are guaranteed to have a unique ultimate model, it is challenging to correctly specify the negation of a transitive closure using only semipositive rules.
 
 %The theoretical result that this program \emph{could} be specified in the semipositive fragment
 %of \lang is unsatisfying from a programmability perspective.  The wealth of research on stratified Datalog and the perfect model semantics suggests ....
