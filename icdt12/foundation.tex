@@ -106,12 +106,12 @@ The relation name \dedalus{<} may only appear in $ineq$; in particular, \dedalus
 For a variable symbol \dedalus{V} that appears exactly once in exactly one $neg$ atom, and does not appear elsewhere in the rule, there is a straightforward rewrite defined in~\cite{ullmanbook} that brings the rule into compliance with the safety restriction.  An example of the rewrite appears below.
 
 \begin{example}
-The unsafe rule: \drule{p(X)}{q(X), !r(X,Y)}
+The unsafe rule: \drule{p(X)}{q(X), $\lnot$r(X,Y)}
 is rewritten into the following two rules that obey the safety constraint:
 
 \begin{Drules}
 \drule{p(X)}
-      {q(X), !r'(X)}
+      {q(X), $\lnot$r'(X)}
 \drule{r'(X)}
       {r(X,Y)}
 \end{Drules}
