@@ -431,7 +431,9 @@ in the output schema that are eventually always true in a stable model.
 Note that an ultimate model is always finite because of the finiteness of the EDB, the safety conditions on rules, the restrictions on the use of \dedalus{succ} and \dedalus{time}, and the prohibition on binding timestamps to non-timestamp attributes.  A \lang program only has a finite number of ultimate models for the same reason.
 
 \begin{example}
-For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are four ultimate models: $\{\}$, $\{\dedalus{p(0)}\}$, $\{\dedalus{p(1)}\}$, and $\{\dedalus{p(0), p(1)}\}$.
+%For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are four ultimate models: $\{\}$, $\{\dedalus{p(0)}\}$, $\{\dedalus{p(1)}\}$, and $\{\dedalus{p(0), p(1)}\}$.
+For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there is a unique ultimate model:
+$\{\dedalus{p(n1)}\}$.
 
 For Example~\ref{ex:unimportant} with $\oschema = \{\dedalus{concurrent()}\}$, there are two ultimate models: $\{\}$ and $\{\dedalus{concurrent()}\}$.
 \end{example}
