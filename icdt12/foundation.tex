@@ -6,7 +6,8 @@ To arrive at a formal model-theoretic semantics for distributed programs, we pre
 %, which formally captures the intuitive notion of
 %logic programs being executed asynchronously across the nodes of a distributed
 system.  %\lang extends Datalog with temporal constructs that enable time-varying state and non-deterministic channels to be modeled.
-\lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation, and through the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  In~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model -- an operational formalism for distributed systems -- and thus argue that \lang is a reasonable model for distributed systems.
+\lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation, and through the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  
+In a companion paper~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model -- an operational formalism for distributed systems -- and thus argue that \lang is a reasonable model for distributed systems.
 
 %We note that the stable model semantics~\cite{stable-model} may be used to assign
 %meanings to \lang programs that capture the mutation of state over logical time,
@@ -35,7 +36,8 @@ We believe that the stable model semantics are inappropriate to represent the ou
 %networks and mutate state over time.
 
 We begin this section by reviewing the syntax of \lang that was first presented
-in~\cite{dedalus}. We then review the model-theoretic semantics for \lang presented in~\cite{ameloot-operational}.  For simplicity, we use a somewhat similar exposition as~\cite{ameloot-operational}.
+in Alvaro et al~\cite{dedalus}. We then review the model-theoretic semantics for \lang presented in~\cite{ameloot-operational}.  For simplicity, we use a somewhat similar exposition as~\cite{ameloot-operational}.
+
 
 \subsection{Syntax}
 
@@ -49,7 +51,7 @@ in~\cite{dedalus}. We then review the model-theoretic semantics for \lang presen
 We assume an infinite universe $\univ$ of values.  We assume $\mathbb{N} \subset \univ$.
 
 A {\em relation schema} is a pair $(R,k)$ where $R$ is a relation name and $k$ its arity.  We also write $(R,k)$ as $R^{(k)}$.
-A {\em database schema} $\schema$ is a set of relation schemas.  A relation name occurs at most once in a database schema.
+A {\em database schema} $\schema$ is a set of relation schemas.  Any relation name occurs at most once in a database schema.
 %\nrc{Confusing: relation schema is a singleton, but ``schema'' is a set of relation schemas?} 
 %I'm changing ``schema'' to ``database schema''.  A google search for [``relational schema'' ``database schema''] reveals this to be at least somewhat standard.
 
@@ -103,7 +105,7 @@ The relation name \dedalus{<} may only appear in $ineq$; in particular, \dedalus
 
 %that appears in \od{Y\sub{i}} for some $1 \leq i \leq m$ must also
 %appear in \od{X\sub{j}} for some $1 \leq j \leq n$.  Furthermore, any variable symbol that appears in \od{W} must appear in some \dedalus{\od{X\sub{1}}, \ldots, \od{X\sub{l}}}.
-For a variable symbol \dedalus{V} that appears exactly once in exactly one $neg$ atom, and does not appear elsewhere in the rule, there is a straightforward rewrite defined in~\cite{ullmanbook} that brings the rule into compliance with the safety restriction.  An example of the rewrite appears below.
+For a variable symbol \dedalus{V} that appears exactly once in exactly one $neg$ atom, and does not appear elsewhere in the rule, there is a straightforward rewrite defined in Ullman~\cite{ullmanbook} that brings the rule into compliance with the safety restriction.  An example of the rewrite appears below.
 
 \begin{example}
 The unsafe rule: \drule{p(X)}{q(X), $\lnot$r(X,Y)}

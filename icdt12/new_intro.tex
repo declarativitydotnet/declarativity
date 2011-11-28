@@ -44,13 +44,17 @@ systems.  While its semantics are based on \lang, Bloom is intended to be a prac
 applications, including a distributed file system.
 Following the intuition of stratified negation, Bloom allows negation (and various forms of aggregation) over derived relations, provided that the program has a stratification.
 If a Bloom program has no asynchrony or has only a single stratum, Bloom's static analysis flags the 
-program as confluent.  If either of these conditions is false, the analysis tool identifies the asynchronously-derived relations that fall 
-at stratum boundaries as ``points of order'' which must be ``sealed'' by additional logic that prevents them from changing once the effects 
+program as confluent.  If either of these conditions is false, the analysis tool identifies the asynchronously derived relations that fall 
+at stratum boundaries as ``points of order'' that must be ``sealed'' by additional logic that prevents them from changing once the effects 
 of their negation have propagated to higher strata.  One would typically use a protocol similar to a coordination protocol from the distributed systems literature to ensure sealing.
 
-The intuition behind Bloom leads us to propose a confluent language with a natural stratified semantics that we call \plang.  Since the negation semantics of \plang is so different than \lang, we do not automatically get a corresponding operational semantics for \plang like we do for \slang.  To achieve an operational semantics, we reduce \plang to a subset of \lang through a rewrite.  The rewrite, in which nodes ``vote'' to seal strata, likewise echoes coordination protocols from the distributed systems literature.
+The intuition behind Bloom leads us to propose a confluent language with a natural stratified semantics that we call \plang.  Since the negation semantics of \plang is so different from \lang, we do not automatically get a corresponding operational semantics for \plang like we do for \slang.  To achieve an operational semantics, we reduce \plang to a subset of \lang through a rewrite.  The rewrite, in which nodes ``vote'' to seal strata, likewise echoes coordination protocols from the distributed systems literature.
 
 This paper makes three principal contributions.  We begin by proposing a new model-theoretic semantics for the output of \dedalus 
-programs based on the models of their \emph{eventual} outcomes.  These \emph{ultimate models} represent an equivalent class with a finite (single in the case of confluent 
-programs) number of members, among the infinite stable models of a \lang program.  We then show why \slang, the semipositive fragment of \lang, only admits confluent programs.  Finally, we propose \plang, a practical distributed logic language that likewise admits only confluent programs.
+programs based on the models of their \emph{eventual} outcomes.  
+%%These \emph{ultimate models} represent an equivalence class with a finite (single in the case of confluent 
+%%programs) number of members, among the infinite stable models of a \lang program.  
+Any \lang program has only a finite number of \emph{ultimate models} -- each representing an equivalence class among the program's infinite stable
+models -- and deterministic programs have only one.
+We then show why \slang, the semipositive fragment of \lang, only admits confluent programs.  Finally, we propose \plang, a practical distributed logic language that likewise admits only confluent programs.
 We show that \plang has a natural model-theoretic semantics corresponding to the stratified semantics for Datalog programs, and an equivalent operational semantics that echoes coordination protocols common in distributed systems.
