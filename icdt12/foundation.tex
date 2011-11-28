@@ -48,7 +48,7 @@ in Alvaro \etal~\cite{dedalus}. We then review the model-theoretic semantics for
 %\todo{define ``relation'', ``maps''?}
 %\todo{Put in examples of notation close to where the notation is introduced -Dave Maier} % deferred to camera-ready
 
-We assume an infinite universe $\univ$ of values.  We assume $\mathbb{N} \subset \univ$.
+We assume an infinite universe $\univ$ of values.  We assume $\mathbb{N} \subset \univ$.\footnote{$\mathbb{N} = \{0, 1, 2, \ldots\}$}
 
 A {\em relation schema} is a pair $(R,k)$ where $R$ is a relation name and $k$ its arity.  We also write $(R,k)$ as $R^{(k)}$.
 A {\em database schema} $\schema$ is a set of relation schemas.  Any relation name occurs at most once in a database schema.
@@ -138,7 +138,7 @@ Given a database schema $\schema$, we use $\sschema$ to denote the schema obtain
 as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\}$), we include a relation schema $\dedalus{r}^{n+1}$ in $\sschema$. The
 additional column added to each relation schema is called the {\em location specifier}. By convention, the
 location specifier is the first column of the relation.
-$\sschema$ also includes $\dedalus{<}^{(1)}$, and a relation schema $\dedalus{node}^{(1)}$: the set of node identifiers that represents all of the nodes in the distributed system.
+$\sschema$ also includes $\dedalus{<}^{(2)}$, and a relation schema $\dedalus{node}^{(1)}$: the finite set of node identifiers that represents all of the nodes in the distributed system.
 We call $\sschema$ a {\em spatial schema}.\footnote{The terms {\em spatial} and
   {\em spatio-temporal} are borrowed from Ameloot~\cite{ameloot-personal}.}
 
@@ -183,18 +183,18 @@ An {\em asynchronous} rule $\varphi$:
           node(L), time(T), time(S), choice((L, T, \od{B}),(S)), node(D), \(ineq(\varphi)\)}
 \end{Drules}
 \end{enumerate}
-The latter two kinds of rules are collectively called {\em temporal} rules.
+The last two kinds of rules are collectively called {\em temporal} rules.
 
-In the above rules, \od{B} is a tuple that contains all of the distinct variable
+In the rules above, \od{B} is a tuple that contains all of the distinct variable
 symbols in \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}}, \ldots,
 \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in
 any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}},
   \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.
-Head relation name \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}.
+Head relation name \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}. Relations
 \dedalus{b\sub{1}, \ldots, b\sub{l}, c\sub{1}, \ldots, c\sub{m}} may not be
 \dedalus{succ}, \dedalus{time}, or \dedalus{<}. %time_lt
 
-The unification of location specifiers and timestamps in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
+The use of a single location specifier and timestamp in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
 
 %%
 \begin{comment}
@@ -232,13 +232,13 @@ We rewrite it as the following batch of rules:
 
 Note that asynchronous rules are the only kinds of rules with $cho \neq \varnothing$.
 The \dedalus{choice} construct is from Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}.
-The meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
-in \od{Y} are non-deterministically functionally dependent on the variables in \od{X} with respect to
-any function.  Due to variable binding restrictions, only asynchronous rules may
+The \dedalus{choice((\od{X}), (\od{Y}))} construct represents the constraint that the variables in \od{Y} be functionally dependent on the variables in \od{X}.
+Due to variable binding restrictions, only asynchronous rules may
 have a different value for the head location specifier than the body location
 specifier.  Intuitively, different values for the head and body location specifiers represents
 cross-node communication; a binding of \dedalus{L}, \dedalus{T}, and \od{B}
-(which must include \dedalus{D} due to safety restrictions) represents a message
+%(which must include \dedalus{D} due to safety restrictions)
+represents a message
 being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
 that the network may arbitrarily delay, re-order, and batch messages, any single
 value of head timestamp \dedalus{S} is permissible.
@@ -247,7 +247,7 @@ We use the causality rewrite of Alvaro \etal~\cite{ameloot-operational}, which i
   other presentations of \lang (e.g.,~\cite{dedalus}), message timestamps are
   chosen from $\mathbb{N} \cup \top$, where $\top$ represents a special value
   indicating that the message was dropped by the network. In this paper, we
-  assume reliable delivery of messages.}  Full details are available in~\cite{ameloot-operational}.
+  assume reliable delivery of messages.}  Full details are available in a companion paper~\cite{ameloot-operational}.
 
 A \lang {\em program} is a finite set of causally rewritten spatio-temporal rules over some spatio-temporal schema $\stschema$.  
 %We will see in Section~\ref{sec:semantics}
@@ -262,7 +262,7 @@ with \dedalus{@next} and asynchronous head relations with \dedalus{@async};
 deductive rules have no head annotation.  These annotations allow us to omit the
 boilerplate usage of \dedalus{node}, \dedalus{time}, \dedalus{succ} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
-heads and bodies.  We also omit location specifiers by default, but allow them to be referenced if necessary, as described later.  Using this syntactic sugar, below are examples of the three kinds of rules listed above:
+heads and bodies.  We also omit location specifiers by default, but refer to them if necessary, as described later.  Using this syntactic sugar, below are examples of the three kinds of rules listed above.
 
 \begin{example}
 Example deductive, inductive, and asynchronous rules.
@@ -343,7 +343,7 @@ We refer to a \lang program together with an EDB instance as a {\em \lang instan
 
 Recall that \dedalus{choice} is only used in asynchronous rules, to model the fact that the network may arbitrarily delay, re-order, and batch messages.
 %A \lang program without \dedalus{choice} is {\em locally stratified}~\cite{local-strat} on the values of its timestamp attributes, because its deductive rules are stratified; thus, it is natural to use the locally stratified semantics to define the mapping for a \lang program of this kind.
-Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}, and we provide the model-theoretic details in~\cite{ameloot-operational}.  Intuitively, each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality rewrite; every possible function that obeys the causality rewrite defines a stable model.  %Each stable model corresponds with the locally stratified model~\cite{stable-model} obtained by treating \dedalus{choice} as a normal EDB relation, and representing the choice function as part of the EDB instance.  More details are explained in~\cite{ameloot-operational}.
+Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo} propose the {\em stable model semantics} as a natural interpretation of \dedalus{choice}, and we provide the model-theoretic details elsewhere~\cite{ameloot-operational}.  Intuitively, each stable model is a spatio-temporal database instance that defines a possible function for \dedalus{choice} that obeys the causality rewrite; every possible function that obeys the causality rewrite defines a stable model.  %Each stable model corresponds with the locally stratified model~\cite{stable-model} obtained by treating \dedalus{choice} as a normal EDB relation, and representing the choice function as part of the EDB instance.  More details are explained in~\cite{ameloot-operational}.
 In other words, each different causal choice of timesteps for a \lang instance corresponds to a different stable model of that instance.
 
 \begin{example}
@@ -356,8 +356,8 @@ Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume th
 \end{Drules}
 
 %Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-Let the power set of $X$ be denoted $\mathcal{P}(X)$.  For each $S \in (\mathcal{P} \setminus \{0\})$, the following is a stable model:
-$$\{\dedalus{node(n1), p(n1,i)} \, | \, \dedalus{i} \in S \} \cup \{{\dedalus{q(n1,i)} \, | \, \dedalus{i} \in \mathbb{N}}\}$$
+Let the power set of $X$ be denoted $\mathcal{P}(X)$.  For each $S \in \mathcal{P}(\mathbb{N} \setminus \{0\})$, the following is a stable model:
+$$\{\dedalus{node(n1)}\} \cup \{\dedalus{p(n1,i)} \, | \, \dedalus{i} \in S \} \cup \{{\dedalus{q(n1,i)} \, | \, \dedalus{i} \in \mathbb{N}}\}$$
 
 %To see this, consider the unsugared version of the program:
 %\begin{Drules}
@@ -372,11 +372,11 @@ These are the only stable models of the instance.  Since \dedalus{q} is part of 
 %\jmh{Yes this stuff flies by too quickly and with too little motivation/explanation.}
 
 \subsubsection{Ultimate Models}
-The stable model semantics is a suitable model-theoretic characterization of the behavior of a program in that there is a correspondence between stable models and traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, stable models highlight uninteresting temporal differences that may not be ``eventually'' meaningful, such as in the following example:
+The stable model semantics is a suitable model-theoretic characterization of the behavior of a program in that there is a correspondence between stable models and traces in an operational formalism based on network transducers~\cite{ameloot-operational}.  However, stable models highlight uninteresting temporal differences that may not be ``eventually'' significant, such as in the following example:
 
 \begin{example}
 \label{ex:unimportant}
-Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1,0),}$ \linebreak $\dedalus{q(n1,1)}\}$.
+Take the following \lang program with input schema $\{\dedalus{q}\}$.  The program determines whether two values, \dedalus{c1} and \dedalus{c2} ``arrive'' at the same time.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1,c1),}$ \linebreak $\dedalus{q(n1,c2)}\}$.
 
 \begin{Drules}
   \drule{p(#L,X)@async}
@@ -386,25 +386,25 @@ Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume th
   \drule{r(X)@next}
         {r(X)}
   \drule{concurrent()}
-        {p(n1,0), p(n1,1)}
+        {p(n1,c1), p(n1,c2)}
   \drule{concurrent()@next}
         {concurrent()}
 \end{Drules}
 
 For each $\dedalus{s}, \dedalus{t} \in \mathbb{N}$, the following is a stable model:
 \begin{eqnarray*}
-\{\dedalus{node(n1), p(n1,s,0), p(n1,t,1)}\} \, \cup \\
-\{\dedalus{concurrent(n1,i)} \, | \, \dedalus{i} \in \mathbb{N} \, \land \, \dedalus{s $\leq$ i}\} \, \text{if} \, \dedalus{s} = \dedalus{t} \, \cup \\
-\{\dedalus{q(n1,i,0), q(n1,i,1)} \, | \, \dedalus{i} \in \mathbb{N}\} \, \cup \\
-\{\dedalus{r(n1,i,0), r(n1,i,1)} \, | \, \dedalus{i} \in \mathbb{N} \setminus \{0\}\}
+\{\dedalus{q(n1,i,c1), q(n1,i,c2)} \, | \, \dedalus{i} \in \mathbb{N}\} \, \cup \\
+\{\dedalus{node(n1), p(n1,s,c1), p(n1,t,c2)}\} \, \cup \\
+\{\dedalus{r(n1,i,c1), r(n1,i,c2)} \, | \, \dedalus{i} \in \mathbb{N} \setminus \{0\}\} \\
+\{\dedalus{concurrent(n1,i)} \, | \, \dedalus{i} \in \mathbb{N} \, \land \, \dedalus{s $\leq$ i}\} \, \text{if} \, \dedalus{s} = \dedalus{t} \, \cup
 \end{eqnarray*}
 
-These are the only stable models of the instance. Since \dedalus{q} is part of the input schema, \dedalus{q} facts are true at every time.  By the rules, \dedalus{r} facts are true at every time except time \dedalus{0}.  Thus, there is only one choice of timestamp for \dedalus{p} for each value of \dedalus{q}'s second argument.  If these choices are the same, then \dedalus{concurrent()} is true at all timestamps afterwards.
+These are the only stable models of the instance. Since \dedalus{q} is part of the input schema, \dedalus{q} facts are true at every time.  By the rules, \dedalus{r} facts are true at every time except time \dedalus{0}.  Thus, there is only one choice of head timestamp for \dedalus{p} for each value of \dedalus{q}'s second argument -- this choice corresponds with a body timestamp of \dedalus{0}.  If these choices are the same, then \dedalus{concurrent()} is true at all timestamps afterwards.
 
-However, note that while the specific values of \dedalus{s} and \dedalus{t} are unimportant in terms of the eventual contents of the \dedalus{concurrent} relation, there are different stable models for each of these choices.
+However, note that while the specific values of \dedalus{s} and \dedalus{t} are unimportant in terms of the eventual contents of the \dedalus{concurrent} relation, there are different stable models for each of these choices.  Intuitively, we do not want these ``intermediate'' temporal behaviors that are not eventually significant, to differentiate program outputs.
 \end{example}
 
-In order to rule out such temporal differences that do not affect eventual behaviors, we will define the concept of an {\em ultimate model} to represent a program's ``output.''
+In order to rule out such behaviors from the output, we will define the concept of an {\em ultimate model} to represent a program's ``output.''
 
 %There are two problems with using the stable model semantics to assign an
 %interpretation to a \lang program. First, an instance with one or more asynchronous
@@ -434,10 +434,10 @@ Note that an ultimate model is always finite because of the finiteness of the ED
 
 \begin{example}
 %For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are four ultimate models: $\{\}$, $\{\dedalus{p(0)}\}$, $\{\dedalus{p(1)}\}$, and $\{\dedalus{p(0), p(1)}\}$.
-For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there is a unique ultimate model:
-$\{\dedalus{p(n1)}\}$.
+For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are two ultimate models:
+$\{\}$ and $\{\dedalus{p(n1)}\}$.  The latter corresponds to an element of the power set $S$ such that $\exists x \, . \, \forall y \, . \, (y > x) \Rightarrow (y \in S)$.  The former corresponds to an element $S$ that does not have this property.
 
-For Example~\ref{ex:unimportant} with $\oschema = \{\dedalus{concurrent()}\}$, there are two ultimate models: $\{\}$ and $\{\dedalus{concurrent()}\}$.
+For Example~\ref{ex:unimportant} with $\oschema = \{\dedalus{concurrent()}\}$, there are two ultimate models: $\{\}$ and $\{\dedalus{concurrent()}\}$.  The former corresponds to choices of timestamp for \dedalus{c1} and \dedalus{c2} that are not equal, whereas the latter corresponds to equal choices of timestamp.
 \end{example}
 
 %Note that some nontrivial programs may have an empty ultimate model, such as the

@@ -32,7 +32,7 @@ A simple asynchronous marriage ceremony:
         {groom_i_do_edb()}
   \drule{bride_i_do()@async}
         {bride_i_do_edb()}
-  \drule{runaway()}        {groom_i_do(), $\lnot$bride_i_do()}  
+  \drule{runaway()}        {$\lnot$bride_i_do(), groom_i_do()}  
   \drule{runaway()}        {$\lnot$groom_i_do(), bride_i_do()}  
   \drule{runaway()@next}
         {runaway()}
@@ -44,7 +44,7 @@ A simple asynchronous marriage ceremony:
 \end{example}
 In a classic paper, Gray notes the similarity between distributed commit
 protocols and marriage ceremonies~\cite{graytransactionconcept}.  For simplicity
-(and felicity), Example~\ref{ex:marriage} presents a simple distributed voting
+(and felicity), Example~\ref{ex:marriage} presents a simple asynchronous voting
 program with a fixed set of members: a bride and a groom.  The marriage is off
 (\dedalus{runaway()} is true) if one party says ``I do'' and the other does not.
 
@@ -81,7 +81,7 @@ Distributed garbage collection:
 \end{example}
 Example~\ref{ex:gc} presents a simple garbage collection program for a
 distributed memory system. Each node manages a set of pointers and forwards this
-information to a central coordinator node. The coordinator computes the set of
+information to a central master node. The master computes the set of
 transitively reachable addresses; if an address is not reachable from the root
 address, it can be garbage collected. For
 simplicity, we assume that each node owns a fixed set of pointers, stored in the
@@ -138,7 +138,7 @@ confluent, we could prove a version of the commonly desired property that all
 replicas be ``eventually consistent'' after all messages have been
 delivered~\cite{bayou,vogels-ec}.  Confluence may be viewed as a specialization of the
 more general notion of consistency of distributed state, which the CALM
-conjecture~\cite{declarative-imperative} argues is strongly connected with the
+theorem~\cite{declarative-imperative} argues is strongly connected with the
 model-theoretic property of logical monotonicity.
 
 Unfortunately, confluence is an undecidable property of \lang programs:
@@ -147,7 +147,7 @@ Unfortunately, confluence is an undecidable property of \lang programs:
 \label{lem:confluence-undecidable}
 Confluence of \lang programs is undecidable.
 \end{lemma}
-This is perhaps not a surprising result, as confluence is defined over all EDB instances.  We present a proof in the appendix.
+This result is perhaps not surprising, as confluence is defined over all EDB instances.  We present a proof in the appendix.
 
 %\wrm{Given undecidability, it would be great to have a restricted language that only allows us to write confluent stuff.}
 
@@ -163,7 +163,7 @@ subsumes PSPACE.
 %If we define the output of a \lang program to be the union of all ultimate models, then it is easy to see that there is an NPSPACE Turing Machine that can execute any \lang program: the maximum amount of space that a \lang program may use at any timestamp is bounded by $O(n^k)$, where $n$ is the size of the universe, and $k$ is the maximum arity of any relation.  Thus $\lang \subseteq \text{NPSPACE}$, and it is known that $\text{NPSPACE} = \text{PSPACE}$.
 
 %In the other direction of the proof,
-We show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subseteq \lang$.  Full details are in the appendix.
+We show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subseteq \lang$.  Details are in the appendix.
 \end{proof}
 
 \subsection{\large \bf \slang}
@@ -171,8 +171,9 @@ We show how to write the PSPACE-complete Quantified Boolean Formula (QBF) proble
 Distributed programs that produce non-deterministic outputs or have runtimes
 exponential in their inputs are often undesirable in practice. Since checking for
 confluence in \lang is undecidable in general, we may instead ask whether a more
-constrained language will exclude such undesirable programs while retaining the
-convenience of \lang.  We will present a restriction of \lang that allows only
+constrained language will exclude such undesirable programs. %while retaining the
+%convenience of \lang.
+We will present a restriction of \lang that allows only
 confluent programs and prove that it captures exactly PTIME.
 
 \begin{definition}
@@ -180,11 +181,7 @@ A \lang program is {\em semipositive} if the \dedalus{$\lnot$} symbol only appea
 \end{definition}
 
 \begin{definition}
-A relation \dedalus{p} in a \lang program $P$ is {\em simply persisted} if $P$ has the rule: \dedalus{p(\(\overline{\dedalus{X}}\))@next \(\leftarrow\) p(\(\overline{\dedalus{X}}\)).}
-\end{definition}
-
-\begin{definition}
-A \lang program has {\em guarded asynchrony} if all relations appearing in the heads of asynchronous rules are simply persisted.
+A \lang program $P$ has {\em guarded asynchrony} if for every relation \dedalus{p} appearing in the head of an asynchronous rule, the program $P$ has a rule \dedalus{p(\(\overline{\dedalus{X}}\))@next \(\leftarrow\) p(\(\overline{\dedalus{X}}\)).}
 \end{definition}
 
 We will refer to the language of semipositive \lang programs with guarded
@@ -202,7 +199,7 @@ instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains
 \slang programs are temporally inflationary.
 \end{lemma}
 \begin{proof}
-Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation is a spatio-temporal fact (we assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, or \dedalus{<}, or any relation introduced in the causality or \dedalus{choice} rewrites).  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just only the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
+Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules.  Note that the instantiated head atom, as well as every instantiated body relation, is a spatio-temporal fact. We assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, or \dedalus{<}, or any relation introduced in the causality or \dedalus{choice} rewrites.  The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact is EDB, the corresponding node contains just the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
 
 For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle---simply repeat the following process for each tree.
 
