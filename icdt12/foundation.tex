@@ -35,8 +35,8 @@ We believe that the stable model semantics are inappropriate to represent the ou
 %\lang captures salient features of systems that communicate over unreliable
 %networks and mutate state over time.
 
-We begin this section by reviewing the syntax of \lang that was first presented
-in Alvaro et al~\cite{dedalus}. We then review the model-theoretic semantics for \lang presented in~\cite{ameloot-operational}.  For simplicity, we use a somewhat similar exposition as~\cite{ameloot-operational}.
+We begin this section by reviewing the syntax of \lang first presented
+in Alvaro \etal~\cite{dedalus}. We then review the model-theoretic semantics for \lang~\cite{ameloot-operational}, using a somewhat similar exposition for simplicity.
 
 
 \subsection{Syntax}
@@ -57,7 +57,7 @@ A {\em database schema} $\schema$ is a set of relation schemas.  Any relation na
 
 As in Immerman~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
-$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}
+$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}  
 
 A {\em fact} over a relation schema $R^{(n)}$ is a pair consisting of
 the relation name $R$ and an $n$-tuple $(c_1,\ldots,c_n)$, where each
@@ -73,7 +73,7 @@ A {\em rule} $\varphi$ consists of several distinct components: a head atom $hea
 The conventional syntax for a rule is:
 $$head(\varphi) \leftarrow f_1,\ldots,f_n,\lnot g_1,\ldots,\lnot g_m, ineq(\varphi), cho(\varphi).$$
 
-where $f_i \in pos(\varphi)$ for $i = 1,\ldots,n$ and $g_i \in neg(\varphi)$ for $i = 1,\ldots,m$.  The following is an example of a rule over schema $\schema$ with $ineq(\varphi) = \emptyset$ and $cho(\varphi) = \emptyset$.
+where $f_i \in pos(\varphi)$ for $i = 1,\ldots,n$ and $g_i \in neg(\varphi)$ for $i = 1,\ldots,m$.  The following is an example of a rule over schema $\schema$ with $ineq(\varphi) = \varnothing$ and $cho(\varphi) = \varnothing$.
 
 \begin{Drules}
   \drule{p(\od{W})}
@@ -113,12 +113,12 @@ is rewritten into the following two rules that obey the safety constraint:
 
 \begin{Drules}
 \drule{p(X)}
-      {q(X), $\lnot$r'(X)}
-\drule{r'(X)}
+      {q(X), $\lnot\dedalus{r}^\prime$(X)}
+\drule{$\dedalus{r}^\prime$(X)}
       {r(X,Y)}
 \end{Drules}
 
-where $\dedalus{r'}^{(1)}$ is a relation schema that does not otherwise appear in the program.
+where $\dedalus{r}^{\prime(1)}$ is a relation schema that does not otherwise appear in the program.
 \end{example}
 
 For readability, we will use the underscore symbol (\dedalus{_}) to represent a variable that appears only once in a rule.
@@ -134,22 +134,22 @@ For readability, we will use the underscore symbol (\dedalus{_}) to represent a 
 \subsubsection{Spatial and Temporal Extensions}
 \label{sec:st}
 
-Given a database schema $\schema$, we use $\sschema$ to denote the extension of $\schema$
-obtained as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\}$), we include a relation schema $\dedalus{r}^{n+1}$ in $\sschema$. The
+Given a database schema $\schema$, we use $\sschema$ to denote the schema obtained
+as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\}$), we include a relation schema $\dedalus{r}^{n+1}$ in $\sschema$. The
 additional column added to each relation schema is called the {\em location specifier}. By convention, the
 location specifier is the first column of the relation.
-$\sschema$ also includes $\dedalus{<}^{(1)}$, and a relation schema $\dedalus{node}^{(1)}$.
-We call $\sschema$ a {\em spatial schema}.~\footnote{The terms {\em spatial} and
+$\sschema$ also includes $\dedalus{<}^{(1)}$, and a relation schema $\dedalus{node}^{(1)}$: the set of node identifiers that represents all of the nodes in the distributed system.
+We call $\sschema$ a {\em spatial schema}.\footnote{The terms {\em spatial} and
   {\em spatio-temporal} are borrowed from Ameloot~\cite{ameloot-personal}.}
 
-A {\em spatial fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $(n+1)$-tuple $(d,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ$, and $\dedalus{node}(d)$.  
+A {\em spatial fact} over a relation schema $R^{(n)}$ is a pair consisting of the relation name $R$ and an $(n+1)$-tuple $(d,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ$, and $\dedalus{node}(d)$.  We denote a spatial fact over $R^{(n)}$ by \dedalus{R(d, c\sub{1}, \ldots, c\sub{n})}.
 A {\em spatial relation instance} for a relation schema $\dedalus{r}^{(n)}$ is a set of spatial facts for $\dedalus{r}^{(n+1)}$.
 A {\em spatial database instance} is defined similarly to a database instance.
 
-Given a database schema $\schema$, we use $\stschema$ to denote the extension of
-$\schema$ obtained as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\})$ we include a relation schema $\dedalus{r}^{(n+2)}$ in $\stschema$.  The first additional column added is the location specifier, and the second is the {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$, and the timestamp is the second.  $\stschema$ also includes $\dedalus{<}^{(1)}$, $\dedalus{node}^{(1)}$, $\dedalus{time}^{(1)}$ and $\dedalus{succ}^{(2)}$,   We call $\stschema$ a {\em spatio-temporal schema}.
+Given a database schema $\schema$, we use $\stschema$ to denote the schema obtained 
+as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\})$ we include a relation schema $\dedalus{r}^{(n+2)}$ in $\stschema$.  The first additional column added is the location specifier, and the second is the {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$, and the timestamp is the second.  $\stschema$ also includes $\dedalus{<}^{(2)}$, $\dedalus{node}^{(1)}$, $\dedalus{time}^{(1)}$ and $\dedalus{succ}^{(2)}$,   We call $\stschema$ a {\em spatio-temporal schema}.
 
-A {\em spatio-temporal fact} over a relation schema of arity $n$ is a pair consisting of the relation name and an $n+2$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ, t \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.
+A {\em spatio-temporal fact} over a relation schema $R^{(n)}$ is a pair consisting of the relation name $R$ and an $(n+2)$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ, t \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.  We denote a spatial fact over $R^{(n)}$ by \dedalus{R(d, t, c\sub{1}, \ldots, c\sub{n})}.
 
 A {\em spatio-temporal relation instance} for relation schema $\dedalus{r}^{(n)}$ is a set of spatio-temporal facts for
 $\dedalus{r}^{(n+2)}$.  A {\em spatio-temporal database instance} is defined similarly to a database instance; in any spatio-temporal database instance, $\dedalus{time}^{(1)}$ is mapped to the set containing a \dedalus{time(t)} fact for all $\dedalus{t} \in \mathbb{N}$, and $\dedalus{succ}^{(2)}$ to the set containing a \dedalus{succ(x,y)} fact for all $y = x + 1$, $(x,y \in \mathbb{N})$.
@@ -230,7 +230,7 @@ We rewrite it as the following batch of rules:
 \end{comment}
 %%
 
-Note that asynchronous rules are the only kinds of rules with $cho \neq \emptyset$.
+Note that asynchronous rules are the only kinds of rules with $cho \neq \varnothing$.
 The \dedalus{choice} construct is from Sacc\`{a} and Zaniolo~\cite{sacca-zaniolo}.
 The meaning of \dedalus{choice((\od{X}), (\od{Y}))} is that the variables listed
 in \od{Y} are non-deterministically functionally dependent on the variables in \od{X} with respect to
