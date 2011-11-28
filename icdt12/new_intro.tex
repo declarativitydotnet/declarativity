@@ -32,15 +32,15 @@ Immerman~\cite{immerman-ptime} has demonstrated that semipositive Datalog (Datal
 We show that \lang is too expressive a language for this space, as it subsumes PSPACE, and that confluence is in general
 undecidable for \lang programs.  This motivates us to propose \slang, a restricted version of \lang that is intuitively similar to semipositive Datalog.  \slang captures PTIME, and \slang programs are guaranteed to be confluent.
 
-Unfortunately, \lang and \slang are not natural or convenient languages for programming certain kinds of systems.  Later in the paper we will give 
-an example of a distributed garbage collection algorithm that detects ``orphaned'' memory and marks it for deletion.  Orphaned memory is naturally thought of as memory that is not contained in the transitive closure of a points-to relation.  The negation of a transitive closure is theoretically specifiable -- but inconvenient
+Unfortunately, \lang and \slang are not natural or convenient languages for programming certain kinds of systems.  Later in the paper we give 
+an example of a distributed garbage-collection algorithm that detects ``orphaned'' memory and marks it for deletion.  Orphaned memory is naturally thought of as memory that is not contained in the transitive closure of a refers-to relation.  The negation of a transitive closure is theoretically specifiable -- but inconvenient
 to express -- in both \lang and \slang.  It is inconvenient to write in \lang because of the issue of {\em coordination} -- ensuring the transitive closure is complete before applying negation (otherwise, multiple ultimate models may result).  It is inconvenient to write in \slang because although \slang programs are guaranteed to have a unique ultimate model, it is challenging to correctly specify the negation of a transitive closure using only semipositive rules.
 
 %The theoretical result that this program \emph{could} be specified in the semipositive fragment
 %of \lang is unsatisfying from a programmability perspective.  The wealth of research on stratified Datalog and the perfect model semantics suggests ....
 
 In a recent paper targeting the systems community, we presented \emph{Bloom}, a domain-specific language (DSL) for implementing distributed 
-systems.  While its semantics are based on \lang, Bloom is intended to be a practical programming language: we have used Bloom to build a wide array of distributed protocols and several complete
+systems.  While its semantics are based on \lang, Bloom is intended to be a practical programming language: we have used it to build a wide array of distributed protocols and several complete
 applications, including a distributed file system.
 Following the intuition of stratified negation, Bloom allows negation (and various forms of aggregation) over derived relations, provided that the program has a stratification.
 If a Bloom program has no asynchrony or has only a single stratum, Bloom's static analysis flags the 
