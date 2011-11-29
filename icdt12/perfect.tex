@@ -61,7 +61,7 @@ The stratified semantics for logic programs with negation is both intuitive and 
 distributed systems practices: negation is not applied until the negated
 relation is ``done'' being computed.
 
-First, we define a {\em predicate dependency graph} (PDG).  The PDG of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation; each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{$\lnot$q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{node}, \dedalus{succ}, or \dedalus{time} relations, or any relation introduced in the causality~\cite{ameloot-operational} or \dedalus{choice}~\cite{sacca-zaniolo} rewrites.
+First, we define a {\em predicate dependency graph} (PDG).  The PDG of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation; each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{$\lnot$q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{node}, \dedalus{timeSucc}, or \dedalus{time} relations, or any relation introduced in the causality~\cite{ameloot-operational} or \dedalus{choice}~\cite{sacca-zaniolo} rewrites.
 
 \plang is the language of \lang programs with guarded asynchrony whose PDG does not contain any cycles through negation.  As is standard, a \plang program can be partitioned into {\em strata}.  The {\em stratum} of a relation \dedalus{r} is the largest number of negated edges on any path from \dedalus{r}.
 
@@ -185,8 +185,8 @@ add the following set of rules:
 
 %uq\sub{\phi}(\od{W}, \od{X}, 1) <- min(\od{X}), $\phi(\od{W}, \od{X})$.
 %uq\sub{\phi}(\od{W}, \od{X}, 0) <- min(\od{X}), $$\lnot$\phi(\od{W}, \od{X})$.
-%uq\sub{\phi}(\od{W}, \od{Y}, 0) <- uq\sub{\phi}(\od{W}, \od{X}, 0), succ(\od{X}, \od{Y}).
-%uq\sub{\phi}(\od{W}, \od{Y}, 1) <- uq\sub{\phi}(\od{W}, \od{X}, 1), succ(\od{X}, \od{Y}), $\phi(\od{W}, \od{X})$.
+%uq\sub{\phi}(\od{W}, \od{Y}, 0) <- uq\sub{\phi}(\od{W}, \od{X}, 0), timeSucc(\od{X}, \od{Y}).
+%uq\sub{\phi}(\od{W}, \od{Y}, 1) <- uq\sub{\phi}(\od{W}, \od{X}, 1), timeSucc(\od{X}, \od{Y}), $\phi(\od{W}, \od{X})$.
 \begin{Drules}
 \drule{p\sub{j}_to_send(N,\od{W})}
       {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), $\lnot$c\sub{1}(#L,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(#L,\od{Y\sub{m}})}
