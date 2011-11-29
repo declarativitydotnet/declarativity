@@ -8,14 +8,8 @@ Our network model is similarly restricted---in particular we have ignored messag
 Concurrent with this research, our team has been developing a practical language for implementing distributed
 systems called \emph{Bloom}.  Bloom has built-in support for input streams, including ``periodic'' relations,
 in which tuples appear at regular (wall clock) intervals and which are the basis of timeout logic.
-Instead of relying on language restrictions like those presented in this paper, Bloom allows programmers to use the full
-power of \lang, instead providing a conservative static analysis for confluence.
-This design choice allows programmers to choose from (and implement) a wide variety of coordination protocols, rather than
-simply allowing the system to synthesize a simple, generic protocol like the one we describe here.  
+Instead of relying on language restrictions like those presented in this paper, Bloom implements \lang, and provides a conservative static analysis for confluence.  The analysis marks the program as confluent if it is in \slang.  Otherwise, it alerts the programmer to uses of negation (and aggregation).  The programmer must then manually instrument their program with coordination logic, and manually verify its confluence.
+This allows programmers to choose from (and implement) a wide variety of coordination protocols, rather than the system synthesizing a simple, generic protocol like the one we describe here.  
 In practice, these protocols will perform very differently under different assumptions about the execution environment.
 
-Formalizing these practical concerns is another area for future research.  The asymptotic result that \plang is PTIME
-does not help us to distinguish among protocols with different performance characteristics relevant to practical
-implementations, like message complexity.  We are pursuing work on a formal model of ...
-
-
+Formalizing these practical concerns is another area for future research.  That two programs have the same complexity in a Turing Machine model does not mean they have similar network performance characteristics in the operational semantics of network transducers.  We are pursuing work on a complexity model that will address this.
