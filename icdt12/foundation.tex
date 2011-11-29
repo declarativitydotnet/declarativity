@@ -7,7 +7,7 @@ To arrive at a formal model-theoretic semantics for distributed programs, we pre
 %logic programs being executed asynchronously across the nodes of a distributed
 system.  %\lang extends Datalog with temporal constructs that enable time-varying state and non-deterministic channels to be modeled.
 \lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation, and through the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  
-In a companion paper~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model -- an operational formalism for distributed systems -- and thus argue that \lang is a reasonable model for distributed systems.
+In a companion paper~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model---an operational formalism for distributed systems---and thus argue that \lang is a reasonable model for distributed systems.
 
 %We note that the stable model semantics~\cite{stable-model} may be used to assign
 %meanings to \lang programs that capture the mutation of state over logical time,
@@ -399,7 +399,7 @@ For each $\dedalus{s}, \dedalus{t} \in \mathbb{N}$, the following is a stable mo
 \{\dedalus{concurrent(n1,i)} \, | \, \dedalus{i} \in \mathbb{N} \, \land \, \dedalus{s $\leq$ i}\} \, \text{if} \, \dedalus{s} = \dedalus{t} \, \cup
 \end{eqnarray*}
 
-These are the only stable models of the instance. Since \dedalus{q} is part of the input schema, \dedalus{q} facts are true at every time.  By the rules, \dedalus{r} facts are true at every time except time \dedalus{0}.  Thus, there is only one choice of head timestamp for \dedalus{p} for each value of \dedalus{q}'s second argument -- this choice corresponds with a body timestamp of \dedalus{0}.  If these choices are the same, then \dedalus{concurrent()} is true at all timestamps afterwards.
+These are the only stable models of the instance. Since \dedalus{q} is part of the input schema, \dedalus{q} facts are true at every time.  By the rules, \dedalus{r} facts are true at every time except time \dedalus{0}.  Thus, there is only one choice of head timestamp for \dedalus{p} for each value of \dedalus{q}'s second argument---this choice corresponds with a body timestamp of \dedalus{0}.  If these choices are the same, then \dedalus{concurrent()} is true at all timestamps afterwards.
 
 However, note that while the specific values of \dedalus{s} and \dedalus{t} are unimportant in terms of the eventual contents of the \dedalus{concurrent} relation, there are different stable models for each of these choices.  Intuitively, we do not want these ``intermediate'' temporal behaviors that are not eventually significant, to differentiate program outputs.
 \end{example}
