@@ -181,20 +181,16 @@
 
 \begin{abstract}
   Building on recent interest in distributed logic programming, we
-  take a model-theoretic approach to the correctness of asynchronous
-  distributed programs. We begin by providing a model-theoretic
-  semantics for \lang, a previously proposed extension to Datalog for
-  modeling distributed programs.  We show that \lang
-  captures too broad a complexity class of programs and
-  admits programs that have non-deterministic results. We prove that
-  checking whether a \lang program is confluent (has deterministic
-  results) is undecidable, and hence we present \slang, a restriction
-  of \lang that captures exactly PTIME and admits only confluent
-  programs. \slang restricts the use of negation to EDB relations,
-  which makes some natural distributed programs inconvenient to
-  express.  To remedy this, we introduce \plang, a restriction of
-  \lang that allows a more liberal use of negation, but retains the
-  confluence of \slang and similarly captures PTIME.
+  take a model-theoretic approach to analyzing confluence ("eventual consistency") of asynchronous
+  distributed programs. 
+  We begin with a model-theoretic
+  semantics for \lang~\cite{ameloot-operational}, and develop the concept of \emph{ultimate models} to capture the
+  non-deterministic eventual outcomes of distributed programs.  After demonstrating the undecidability of checking confluence for \lang programs, we look for restricted sub-languages that guarantee confluence while providing adequate expressivity.  
+We observe that a simple semipositive restriction called \slang guarantees confluence while capturing  PTIME, but demonstrate that the limited use of negation in \slang makes certain simple and practical programs very difficult to express.  To remedy this, we introduce \plang, a restriction of
+  \lang that allows a natural use of 
+  negation in the spirit of stratified negation, but retains the
+  confluence of \slang and similarly captures PTIME.  
+%\plang is the formal  basis for our applied programming language, Bloom~\cite{bloom}.
 
 %  Building on recent interest in distributed logic programming, we take a
 %  model-theoretic approach to the correctness of asynchronous distributed
