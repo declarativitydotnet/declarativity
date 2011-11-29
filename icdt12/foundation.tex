@@ -1,11 +1,10 @@
 \section{\large \bf \lang}
 \label{sec:foundation}
 
-To arrive at a formal model-theoretic semantics for distributed programs, we present the
-\lang~\cite{dedalus} language.
+%To arrive at a formal model-theoretic semantics for distributed programs, we present the
+%\lang~\cite{dedalus} language.
 %, which formally captures the intuitive notion of
-%logic programs being executed asynchronously across the nodes of a distributed
-system.  %\lang extends Datalog with temporal constructs that enable time-varying state and non-deterministic channels to be modeled.
+%logic programs being executed asynchronously across the nodes of a distributedsystem.  %\lang extends Datalog with temporal constructs that enable time-varying state and non-deterministic channels to be modeled.
 \lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation, and through the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  
 In a companion paper~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model---an operational formalism for distributed systems---and thus argue that \lang is a reasonable model for distributed systems.
 
@@ -36,7 +35,7 @@ We believe that the stable model semantics are inappropriate to represent the ou
 %networks and mutate state over time.
 
 We begin this section by reviewing the syntax of \lang first presented
-in Alvaro \etal~\cite{dedalus}. We then review the model-theoretic semantics for \lang~\cite{ameloot-operational}, using a somewhat similar exposition for simplicity.
+in Alvaro \etal~\cite{dedalus}. We then review the model-theoretic semantics for \lang~\cite{ameloot-operational}, using a similar exposition for simplicity.
 
 
 \subsection{Syntax}
