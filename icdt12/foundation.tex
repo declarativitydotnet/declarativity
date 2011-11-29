@@ -56,7 +56,7 @@ A {\em database schema} $\schema$ is a set of relation schemas.  Any relation na
 
 As in Immerman~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
-$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}  
+$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}
 
 A {\em fact} over a relation schema $R^{(n)}$ is a pair consisting of
 the relation name $R$ and an $n$-tuple $(c_1,\ldots,c_n)$, where each
@@ -355,7 +355,7 @@ Take the following \lang program with input schema $\{\dedalus{q}\}$.  Assume th
 \end{Drules}
 
 %Let $\mathcal{N}$ represent the set of all infinite subsets of $\mathbb{N}$.
-Let the power set of $X$ be denoted $\mathcal{P}(X)$.  For each $S \in \mathcal{P}(\mathbb{N} \setminus \{0\})$, the following is a stable model:
+Let the power set of $X$ be denoted $\mathcal{P}(X)$.  For each $S \in \mathcal{P}(\mathbb{N} \setminus \{0\})$, where $|S| = |\mathbb{N}|$, the following is a stable model:
 $$\{\dedalus{node(n1)}\} \cup \{\dedalus{p(n1,i)} \, | \, \dedalus{i} \in S \} \cup \{{\dedalus{q(n1,i)} \, | \, \dedalus{i} \in \mathbb{N}}\}$$
 
 %To see this, consider the unsugared version of the program:
@@ -363,7 +363,7 @@ $$\{\dedalus{node(n1)}\} \cup \{\dedalus{p(n1,i)} \, | \, \dedalus{i} \in S \} \
 %  \drule{p(L,S)}
 %        {q(L,T), node(L), time(T), time(S), time_lt(T,S), choice((L,T),(S))}
 %\end{Drules}
-These are the only stable models of the instance.  Since \dedalus{q} is part of the input schema, it is true at every time.  Every time involves a separate choice of time for \dedalus{p}, which must be later than time 0.
+These are the only stable models of the instance.  Since \dedalus{q} is part of the input schema, it is true at every time.  Every time involves a separate choice of time for \dedalus{p}, which must be later than time 0.  Elements $S$ of the power set with finite cardinality are ruled out, due to the causality constraint~\cite{ameloot-operational}.
 \end{example}
 
 %deferred to camera-ready
