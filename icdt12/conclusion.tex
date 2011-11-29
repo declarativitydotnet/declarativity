@@ -1,33 +1,21 @@
-\section{Conclusion and Future Work}
+\section{Future Work}
 \label{sec:conclusion}
-Much of the traditional discourse in distributed databases and distributed systems focuses on the construction and verification of specific protocols for ensuring desirable properties.  It is typical in that work to achieve general results by using minimalist models of program behavior: typically, traces of opaque reads, writes, and messages.  
-By starting with logic programming, our work has led us to a somewhat different angle of attack: the analysis of whole programs for desirable distributed properties.
-%Building on the literature of non-montonic logic, we can make good use of simple syntactic tests like the presence of negation
-%, and also reason about richer semantic tests for monotonic properties that can hold despite non-monotonic syntax.  \jmh{Is the previous sentence an allusion to stratified negation?  If so, clarify.  If it's an oblique hint about ``monotonic properties'' a la the PODS paper---i.e. Bill's work on lattices---that will be completely lost on the reader.}
-This approach can lead to more nuanced tests than traditional models, since it takes into account not only what a program may do \emph{to} data and in what order, but what the program may do \emph{with} that data in its downstream logic. 
-%As we saw, conservative tests on program syntax can sometimes entirely remove the need to worry about the ordering of what the program does to the data.  In other cases, our approach can guide the programmer to parsimonious use of protocols like coordination and replication in their code.  \jmh{The last 2 sentences are a bit retro w.r.t. our work---the current version of the paper characterizes sublanguages, rather than offering analysis and programmer guidance on using stuff in bigger languages.}In addition to the foundations presented here, we have begun realizing these analyses and constructions in practical software development tools~\cite{cidr11}.
 
-Given our results, we are encouraged to consider other important properties of distributed systems.  One classical property to investigate is the need for causality of message orderings, as described by Lamport~\cite{timeclocks}.  Our arguments about confluence reinforce the conjecture that for some class of distributed systems, causality may be unimportant~\cite{declarative-imperative}.  
-%%Another issue to revisit in our formalism is liveness: the property that a system will always eventually achieve desired goal.  
+An obvious area for future work is extending our focus on ``one-shot'' programs with well-defined inputs and outputs to reactive systems.  
+Many distributed computations are long-lived services whose semantics need to be described with respect to subsets or subsequences of their inputs and outputs.  To this end, models from stream queries may be useful (e.g.,~\cite{Chandramouli2009}).  
+Our network model is similarly restricted---in particular we have ignored message ``drops'' (infinite delays) and the standard ``timeout'' logic for dealing with them.  In our applied work~\cite{boom,cidr11} we have modeled timeouts as messages that arrive asynchronously under the control of an external ``clock'' agent.  Programs that reason about timeouts typically ``seal'' the contents of IDB relations based on the inherently non-deterministic subset of messages that ``beat the clock.''  It would be interesting to characterize a useful family of ultimate models in such programs without resorting to the full power of \lang.
 
-%Many other properties of interest only make sense if we extend our model to
-%differentiate separate ``tasks'' or ``transactions.''
-%We believe this can be
-%done mechanistically by introducing some bookkeeping logic into each \lang
-%program. \nrc{Why ``mechanistically''?}
-%Given such a framework, one traditional
-%issue to consider analyzing is fairness: the property that each independent task
-%will get an appropriate number of opportunities to evaluate its logic.  Another
-%is to recast the read/write reasoning behind serializability and linearizability
-%in terms of our formalism, and see if we can identify opportunities to relax the
-%need for concurrency control in certain programs.
-%One interesting conjecture
-%here is that standard lock-free data structures~\cite{lockfree} have inherent
-%monotonicities in their protocols, which would be automatically identifiable in
-%\lang specifications.
+Concurrent with this research, our team has been developing a practical language for implementing distributed
+systems called \emph{Bloom}.  Bloom has built-in support for input streams, including ``periodic'' relations,
+in which tuples appear at regular (wall clock) intervals and which are the basis of timeout logic.
+Instead of relying on language restrictions like those presented in this paper, Bloom allows programmers to use the full
+power of \lang, instead providing a conservative static analysis for confluence.
+This design choice allows programmers to choose from (and implement) a wide variety of coordination protocols, rather than
+simply allowing the system to synthesize a simple, generic protocol like the one we describe here.  
+In practice, these protocols will perform very differently under different assumptions about the execution environment.
 
-%One important limitation of our results is our use of a centralized Turing Machine as our operational formalism.  Besides computation, additional costs in an asynchronous distributed system include communication and coordination, for which a Turing Machine does not account.  Devising an appropriate model that captures these costs is important future work.
+Formalizing these practical concerns is another area for future research.  The asymptotic result that \plang is PTIME
+does not help us to distinguish among protocols with different performance characteristics relevant to practical
+implementations, like message complexity.  We are pursuing work on a formal model of ...
 
-An additional limitation of our models here is their focus on ``one-shot'' programs with well-defined inputs and outputs.  Many distributed computations are long-lived services whose semantics need to be described with respect to subsets or subsequences of their inputs and outputs.  To this end, models from stream queries may be useful (e.g.,~\cite{Chandramouli2009}).  A related set of concerns arise from our network model---in particular we have ignored message ``drops'' (infinite delays) and the standard ``timeout'' logic for dealing with them.  In our applied work~\cite{boom,cidr11} we have modeled timeouts as messages that arrive asynchronously under the control of an external ``clock'' agent.  Programs that reason about timeouts typically ``seal'' the contents of IDB relations based on the inherently non-deterministic subset of messages that ``beat the clock.''  It would be interesting to characterize a useful family of ultimate models in such programs without resorting to the full power of \lang.
 
-Reasoning about the correctness of such long-lived services seems to require correctness criteria other than confluence.  To this end, it would be useful to study how to recast the read/write reasoning behind serializability and linearizability---two common correctness conditions for such systems---in terms of our formalism.
