@@ -35,7 +35,7 @@ We believe that the stable model semantics are inappropriate to represent the ou
 %networks and mutate state over time.
 
 We begin this section by reviewing the syntax of \lang first presented
-in Alvaro \etal~\cite{dedalus}. We then review the model-theoretic semantics for \lang~\cite{ameloot-operational}, using a similar exposition for simplicity.
+in Alvaro \emph{et al}.~\cite{dedalus}. We then review the model-theoretic semantics for \lang~\cite{ameloot-operational}, using a similar exposition for simplicity.
 
 
 \subsection{Syntax}
@@ -242,7 +242,7 @@ being sent from location \dedalus{L} to location \dedalus{D}.  To model the fact
 that the network may arbitrarily delay, re-order, and batch messages, any single
 value of head timestamp \dedalus{S} is permissible.
 
-We use the causality rewrite of Alvaro \etal~\cite{ameloot-operational}, which introduces the following causality constraint: a message sent by a node $x$ at local timestamp $s$ cannot cause another message to arrive in the past of node $x$ (i.e., at a time before local timestamp $s$).\footnote{Note that in
+We use the causality rewrite of Alvaro \emph{et al}.~\cite{ameloot-operational}, which introduces the following causality constraint: a message sent by a node $x$ at local timestamp $s$ cannot cause another message to arrive in the past of node $x$ (i.e., at a time before local timestamp $s$).\footnote{Note that in
   other presentations of \lang (e.g.,~\cite{dedalus}), message timestamps are
   chosen from $\mathbb{N} \cup \top$, where $\top$ represents a special value
   indicating that the message was dropped by the network. In this paper, we
