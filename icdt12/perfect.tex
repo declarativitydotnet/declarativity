@@ -46,8 +46,9 @@ barrier to expressing practical programs. In this section, we introduce \plang,
 an extension of \slang that allows a limited form of IDB negation but retains
 the benefits of \slang: \plang also captures PTIME exactly and allows only
 confluent programs.  We show that \plang and \slang are equivalently expressive.
-Then, we show how to safely allow IDB negation in \plang by
-inserting a coordination protocol between nodes.
+Then we provide an operational semantics for \plang, based on the one for \lang~\ref{ameloot-operational}, employing familiar coordination protocols from distributed systems.
+%Then, we show how to safely allow IDB negation in \plang by
+%inserting a coordination protocol between nodes.
 %We then prove that \plang and \slang are equivalently expressive.  
 %This implies any
 %\plang program can be translated into an \slang program with the same ultimate
@@ -56,17 +57,17 @@ inserting a coordination protocol between nodes.
 \subsection{Safe IDB Negation}
 \label{sec:perfect-construction}
 
-There is an alternative semantics that is both intuitive and corresponds to common
+The stratified semantics logic programs with negation is both intuitive and corresponds to common
 distributed systems practices: negation is not applied until the negated
-relation is ``done'' being computed.  This is the stratified semantics for logic programming.
+relation is ``done'' being computed.
 
-First, we define the notion of a {\em predicate dependency graph} (PDG).  The PDG of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation; each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{$\lnot$q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{node}, \dedalus{succ}, or \dedalus{time} relations, or any relation introduced in the causality or \dedalus{choice} rewrites.
+First, we define a {\em predicate dependency graph} (PDG).  The PDG of a \lang program $P$ with spatio-temporal schema $\stschema$ is a directed graph with one node per relation; each node $i$ has a label $L(i)$.  If node $i$ represents relation \dedalus{p}, then $L(i) = \dedalus{p}$.  There is an edge from the node with label $\dedalus{q}$ to the node with label $\dedalus{p}$ if relation \dedalus{p} appears in the head of a rule with \dedalus{q} in its body.  If some rule with \dedalus{p} in the head and \dedalus{q} in the body is asynchronous (resp.\ inductive), then the edge is said to be {\em asynchronous} (resp.\ {\em inductive}).  If some rule with \dedalus{p} in the head has \dedalus{$\lnot$q} in its body, then the edge is said to be {\em negated}.  Collectively, asynchronous and inductive edges are referred to as {\em temporal edges}.  The PDG does not contain nodes for the \dedalus{node}, \dedalus{succ}, or \dedalus{time} relations, or any relation introduced in the causality~\cite{ameloot-operational} or \dedalus{choice}~\cite{sacca-zaniolo} rewrites.
 
 \plang is the language of \lang programs with guarded asynchrony whose PDG does not contain any cycles through negation.  As is standard, a \plang program can be partitioned into {\em strata}.  The {\em stratum} of a relation \dedalus{r} is the largest number of negated edges on any path from \dedalus{r}.
 
 Each stratum of an $n$-stratum \plang program can be viewed as a \slang program.  Stratum $i$'s program, $P_i$, consists of all rules whose head relation is in stratum $i$.  The output schema of $P_i$ contains all relations in stratum $i+1$, and $P_i$'s EDB contains all relations in stratum $j < i$.  $P_0$'s EDB contains all EDB relations.  $P_n$'s output schema contains all relations in $P$'s output schema.
 
-The {\em ultimate model} of a \slang program is the ultimate model $P_n(\ldots P_1(P_0(E)) \ldots )$.
+The {\em ultimate model} of a \plang program is the ultimate model $P_n(\ldots P_1(P_0(E)) \ldots )$.
 
 %\begin{lemma}
 %\label{lem:plang-inflationary}
@@ -82,7 +83,7 @@ Since a \plang program is a straightforward composition of \slang programs, we c
 \plang programs are confluent.
 \end{corollary}
 
-Note that every \slang program is a \plang program, and every \plang program has a constant amount of strata in the size of its input.  Thus we have:
+Note that every \slang program is a \plang program, and every \plang program has a constant number of strata in the size of its input.  Thus we have:
 
 \begin{corollary}
 \label{cor:plang-ptime}
@@ -93,13 +94,11 @@ Thus, \plang maintains the desirable properties of \slang: it is both confluent 
 
 \subsection{Coordination rewrite}
 
-While the model-theoretic semantics of \plang are clear, \plang's negation
+While the model-theoretic semantics of \plang are clear, its negation
 semantics are different than those of \lang.  Thus, we cannot directly apply the
 correspondence to a distributed operational semantics in Alvaro \emph{et
   al}.~\cite{ameloot-operational}.  Fortunately, we can rewrite any \plang
 program to a \lang program.
-
-Intuitively, the rewrite involves determining when the 
 
 Given a \plang program $S$, the {\em coordination rewrite} $\mathcal{P}(S)$ of $S$ is
 the \lang program obtained by adding \dedalus{p_done()} to the body of any rule
@@ -107,11 +106,11 @@ in $S$ that contains a \dedalus{$\lnot$p(\ldots)} atom and adding rules to defin
 \dedalus{p_done()} as described below.
 
 We will see that \dedalus{p_done()} has the
-property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in
-\mathcal{S}$, then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps
+property that in any stable model $\mathcal{M}$ if $\dedalus{p_done(l,t)} \in
+\mathcal{M}$, then $\dedalus{p_done(l,s)} \in \mathcal{M}$ for all timestamps
 $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in
-\mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$
-implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all
+\mathcal{M}$, then $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{M}$
+implies that $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{M}$ for all
 timestamps $\dedalus{s} > \dedalus{t}$.  Intuitively, \dedalus{p_done()} is true
 when the content of \dedalus{p} is {\em sealed} (henceforth unchanging).
 
@@ -128,7 +127,7 @@ component has any asynchronous edges, we call the resulting collapsed node {\em
 relation names in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
-For EDB relations \dedalus{p}, the rule for \dedalus{p_done} is \dedalus{p_done().}~\footnote{This is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
+For EDB relations \dedalus{p}, the rule for \dedalus{p_done} is \dedalus{p_done().}\footnote{This expression is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
 IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively,
 \dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on
 \dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in
@@ -205,22 +204,22 @@ add the following set of rules:
 \end{Drules}
 
 The first rule stores messages to be sent at the body (source's) location
-specifier.  This is necessary so the source can check whether all messages have
+specifier, so the source can check whether all messages have
 been acknowledged.  The original destination location specifier is stored as an
-ordinary column in the \dedalus{p\sub{j}_to_send} relation (due to the absence
-of \dedalus{#}).  Note that because this first rule is a deductive rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule (this is shown in the second rule).  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all nodes have been received.
+ordinary column in the \dedalus{p\sub{j}_to_send} relation (indicated by the absence
+of \dedalus{#}).  Note that because this first rule is a deductive rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule, as shown in the second rule.  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgements at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all nodes have been received.
 
 The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
 
 \begin{Drules}
 \drule{p\sub{\phi}_min(\od{W},\od{X})}
-      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},\od{_},\od{X}), p\sub{\phi}_succ_done()}
+      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},$\bar{\_}$,\od{X}), p\sub{\phi}_succ_done()}
 \drule{p\sub{\phi}_max(\od{W},\od{X})}
-      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},\od{X},\od{_}), p\sub{\phi}_succ_done()}
+      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},\od{X},$\bar{\_}$), p\sub{\phi}_succ_done()}
 \drule{p\sub{\phi}_succ(\od{W},\od{X},\od{Y})}
       {p(\od{W},\od{X}), p(\od{W},\od{Y}), \od{X} < \od{Y}, $\lnot$p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
 \drule{p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y})}
-      {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \linebreak \od{X} < \od{Z}, \od{Z} < \od{Y}}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
       {p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X})}
 \drule{forall\sub{\phi}_ind(\od{W},\od{X})}
@@ -229,9 +228,9 @@ The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W
       {forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X})}
 \end{Drules}
 
-The first four rules above compute a total order over \dedalus{p\sub{\phi}}.  The final four rules iterate over the total order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
+The first four rules above compute a total order over the facts in \dedalus{p\sub{\phi}}.  The final three rules iterate over the total order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
 
-We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ $\lnot$p(\od{W},\od{_}), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{$\lnot$p(\od{W}, \od{_})}.
+We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ $\lnot$p(\od{W},$\bar{\_}$), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{$\lnot$p(\od{W}, $\bar{\_}$)}.
 
 Note also that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
 
@@ -260,6 +259,10 @@ For each rule $j$, add the rules for asynchronous rules in the previous section,
 We perform a two-round voting protocol among the nodes; the node with the minimum identifier is the master.  We assume that guarded asynchrony does not apply to the relations that appear in the head of any asynchronous rule in the following protocol.  The rules shown below begin the first round of voting.  Nodes vote \dedalus{complete_1\sub{i}} if \dedalus{all_ack\sub{i}} is true---intuitively, if they have no outstanding unacknowledged messages.  Votes are sent to the node with minimum identifier (the master).
 
 \begin{Drules}
+\drule{not_node_min(L1)}
+      {node(L1), node(L2), L2 < L1}
+\drule{node_min(L)}
+      {$\lnot$not_node_min(L), node(L)}
 \drule{start_round_1\sub{i}()}
       {node_min(#L,L), $\lnot$round_1\sub{i}()}
 \drule{round_1\sub{i}()@next}
@@ -311,7 +314,7 @@ Round 2 is started by the master if no node has an outstanding message.
 
 \begin{Drules}
 \drule{start_round_2\sub{i}()}
-      {$\lnot$not_all_recv_1\sub{i}(), $\lnot$not_all_comp_1\sub{i}()}
+      {$\lnot$not_all_recv_1\sub{i}(), $\lnot$not_all_comp_1\sub{i}(), node_min(#L,L)}
 \end{Drules}
 
 The voting for round 2 is shown below.  Notes vote \dedalus{incomplete_2\sub{i}} if they have sent any messages since the last \dedalus{vote_1\sub{i}} solicitation.  Recall that any \dedalus{incomplete_2\sub{i}} votes result in the protocol restarting with round 1.
@@ -339,14 +342,14 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
       {done_recursion\sub{i}()}
 \end{Drules}
 
-\subsection{Equivalence of coordination rewrite to \plang}
+\subsection{Equivalence of coordination rewrite to \\ {\large \bf \plang}}
 We first argue that the rules for computing \dedalus{p_done{}} have the desired effect.
 
 %, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
 
 \begin{lemma}[Sealing]
 \label{lem:plang-done-right}
-The relation \dedalus{p_done()} has the property that in any stable model $\mathcal{S}$ if $\dedalus{p_done(l,t)} \in \mathcal{S}$,  then $\dedalus{p_done(l,s)} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in \mathcal{S}$, then $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ implies that $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{S}$ for all timestamps $\dedalus{s} > \dedalus{t}$.
+Assume a \plang program $S$ with relation \dedalus{p}.  The \lang program $\mathcal{P}(S)$ contains a relation \dedalus{p_done} with the following property: in any of its stable models $\mathcal{M}$, if $\dedalus{p_done(l,t)} \in \mathcal{M}$,  then $\dedalus{p_done(l,s)} \in \mathcal{M}$ for all timestamps $\dedalus{s} > \dedalus{t}$.  Furthermore, if $\dedalus{p_done(l,t)} \in \mathcal{M}$, then $\dedalus{p(l,s,c\sub{1},\ldots,c\sub{n})} \in \mathcal{M}$ implies that $\dedalus{p(l,t,c\sub{1},\ldots,c\sub{n})} \in \mathcal{M}$ for all timestamps $\dedalus{s} > \dedalus{t}$.
 \end{lemma}
 \begin{proof}
 We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} have the properties mentioned in the Lemma.
@@ -422,11 +425,11 @@ Synthesized rules for the garbage collection program:
   \drule{refers_to_ack(#N, L, Src, Dst)}
         {refers_to_send(#L, N, Src, Dst)}
   \drule{refers_to_done_node(#M, N)@async}
-        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.\dedalus{refers_to_to_send(#N, M, \od{X})} \Rightarrow \dedalus{refers_to_ack(#N, M, \od{X})}\)}
+        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.\dedalus{refers_to_to_send(#N, M, \od{X})} \Rightarrow \dedalus{refers_to_ack(#N, M, \od{X})}\))}
   \drule{refers_to_done(M)}
-        {\(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{refers_to_done_node(M, N)}\right)\)}
+        {(\(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{refers_to_done_node(M, N)}\))}
   \drule{reach_done()}
-        {refers_to_done(), \(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{local_ptr_edb_done(N)}\right)\)}
+        {refers_to_done(), (\(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{local_ptr_edb_done(N)}\))}
 \end{Drules}
 \end{example}
 
