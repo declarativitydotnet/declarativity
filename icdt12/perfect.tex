@@ -125,7 +125,12 @@ relation names in $\oschema$ is called an {\em output} node.  Note that a
 collapsed PDG is acyclic.
 
 For EDB relations \dedalus{p}, the rule for \dedalus{p_done} is \dedalus{p_done().}~\footnote{This is actually a rule.  Consider the unsugared form: \dedalus{p_done(L,T) \(\leftarrow\) node(L), time(T).}}  For
-IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively, \dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on \dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in the head.  Additionally, asynchronous rules take some care---while deductively-defined relations are done in the same timestamp as all relations they depend on, there may be arbitrary delay before asynchronously-defined relations are done.
+IDB relations, defining \dedalus{p_done()} takes some work.  Intuitively,
+\dedalus{p_done()} for $\dedalus{p} \in L(i)$ directly depends on
+\dedalus{r_done()} for any \dedalus{r} in the body of a rule with \dedalus{p} in
+the head.  Additionally, asynchronous rules take some care---while deductively
+defined relations are done in the same timestamp as all relations they depend
+on, there may be arbitrary delay before asynchronously defined relations are done.
 
 For ease of exposition, we will first present the computation of \dedalus{p_done()} for \dedalus{p} in non-async-recursive nodes.  We will then explain how to support async recursive nodes.  We assume that all inductive rules have been rewritten to deductive rules (Lemma~\ref{lem:no-inductive}).
 
