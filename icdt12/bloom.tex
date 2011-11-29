@@ -21,8 +21,8 @@ outcomes. Inspired by the CALM conjecture~\cite{cidr11,declarative-imperative},
 Bloom's \emph{coordination analysis} tool identifies locations in the program's
 dataflow graph where a non-monotonic operation is applied to a collection that
 has been derived asynchronously (e.g., via communication).  Intuitively, an
-asynchronously-derived collection contains at any time some nondeterministically
-selected subset of its inputs, and a nonmonotonically-derived collection may
+asynchronously derived collection contains at any time some nondeterministically
+selected subset of its inputs, and a nonmonotonically derived collection may
 have different contents in different executions, if applied to different subsets
 of its inputs.  Hence such locations are flagged as ``points of order:''
 locations at which additional program logic (i.e., coordination) should be
