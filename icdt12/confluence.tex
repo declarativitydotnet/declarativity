@@ -67,13 +67,13 @@ Distributed garbage collection:
 \begin{Drules}
   \drule{addr(Addr)@async}
         {addr_edb(Addr)}
-  \drule{points_to(#M, Src, Dst)@async}
+  \drule{refers_to(#M, Src, Dst)@async}
         {local_ptr_edb(#N, Src, Dst), master(#M)}
-  \drule{points_to(Src, Dst)@next}{points_to(Src, Dst)}
+  \drule{refers_to(Src, Dst)@next}{refers_to(Src, Dst)}
   \drule{reach(Src, Dst)}
-        {points_to(Src, Dst)}
+        {refers_to(Src, Dst)}
   \drule{reach(Src, Next)}
-        {reach(Src, Dst), points_to(Dst, Next)}
+        {reach(Src, Dst), refers_to(Dst, Next)}
   \drule{garbage(Addr)}
         {addr(Addr), root_edb(Root), $\lnot$reach(Root, Addr)}
   \drule{garbage(Addr)@next} {garbage(Addr)}
@@ -90,10 +90,10 @@ EDB relation \dedalus{local_ptr_edb}.
 This more complicated example suffers from the same ambiguity as the marriage
 ceremony presented previously.  While the program has an ultimate model
 corresponding to executions in which \dedalus{garbage} is not computed until the
-transitive closure of \dedalus{points\_to} has been fully determined (i.e.,
+transitive closure of \dedalus{refers\_to} has been fully determined (i.e.,
 after all messages have been delivered), it also has ultimate models
 corresponding to executions in which \dedalus{garbage} is ``prematurely''
-computed.  When \dedalus{garbage} is computed before all the \dedalus{points_to}
+computed.  When \dedalus{garbage} is computed before all the \dedalus{refers_to}
 messages have been delivered, there is a correctness violation: reachable memory
 addresses appear in the \dedalus{garbage} relation.
 
@@ -105,7 +105,7 @@ stratum order~\cite{ullmanbook}, applying the closed-world assumption to
 relations only when it is certain that they will no longer change.
 Unfortunately, in an asynchronous distributed system it is difficult to
 distinguish the absence of a message (e.g., the \dedalus{bride_i_do} or some
-expected \dedalus{points_to} messages) from channel delay.  Hence both programs
+expected \dedalus{refers_to} messages) from channel delay.  Hence both programs
 above are underspecified insofar as they conclude, as soon as they receive any
 messages, that no others will arrive.  In practice, a programmer could remediate
 the problem by augmenting their programs with \emph{coordination} code that

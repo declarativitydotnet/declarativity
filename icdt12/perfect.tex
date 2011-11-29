@@ -406,18 +406,18 @@ Applying the program transformation $\mathcal{P}$ to the garbage collection prog
 Synthesized rules for the garbage collection program:
 
 \begin{Drules}
-  \drule{points_to_to_send(M, Src, Dst)}
+  \drule{refers_to_to_send(M, Src, Dst)}
         {local_ptr_edb(N, Src, Dst), master(M)}
-  \drule{points_to_send(#M, L, Src, Dst)@async}
-        {points_to_to_send(#L, M, Src, Dst)}
-  \drule{points_to_ack(#N, L, Src, Dst)}
-        {points_to_send(#L, N, Src, Dst)}
-  \drule{points_to_done_node(#M, N)@async}
-        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.\dedalus{points_to_to_send(#N, M, \od{X})} \Rightarrow \dedalus{points_to_ack(#N, M, \od{X})}\)}
-  \drule{points_to_done(M)}
-        {\(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{points_to_done_node(M, N)}\right)\)}
+  \drule{refers_to_send(#M, L, Src, Dst)@async}
+        {refers_to_to_send(#L, M, Src, Dst)}
+  \drule{refers_to_ack(#N, L, Src, Dst)}
+        {refers_to_send(#L, N, Src, Dst)}
+  \drule{refers_to_done_node(#M, N)@async}
+        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.\dedalus{refers_to_to_send(#N, M, \od{X})} \Rightarrow \dedalus{refers_to_ack(#N, M, \od{X})}\)}
+  \drule{refers_to_done(M)}
+        {\(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{refers_to_done_node(M, N)}\right)\)}
   \drule{reach_done()}
-        {points_to_done(), \(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{local_ptr_edb_done(N)}\right)\)}
+        {refers_to_done(), \(\left(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{local_ptr_edb_done(N)}\right)\)}
 \end{Drules}
 \end{example}
 
