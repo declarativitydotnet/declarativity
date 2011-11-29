@@ -14,7 +14,7 @@ BIBINPUTS := .:${TEXINPUTS}
 all: pdf
 eps: fig obj
 
-PAPER=icdt12
+PAPER=pods12
 
 LATEX=pdflatex
 
