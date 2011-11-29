@@ -5,7 +5,7 @@
 %\lang~\cite{dedalus} language.
 %, which formally captures the intuitive notion of
 %logic programs being executed asynchronously across the nodes of a distributedsystem.  %\lang extends Datalog with temporal constructs that enable time-varying state and non-deterministic channels to be modeled.
-\lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation, and through the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  
+\lang extends Datalog by adding {\em spatial} and {\em temporal} attributes to every relation.  The critical semantic issue from distributed computing that we wish to capture is non-determinism of message timing across nodes.  This non-determinism is modeled simply by the use of a restricted version of Sacca and Zaniolo's {\em choice} construct~\cite{sacca-zaniolo}.  We use the stable model semantics~\cite{stable-model} to assign meanings to the behaviors of \lang programs over time.  
 In a companion paper~\cite{ameloot-operational}, we prove these stable models are equivalent to traces in a variation of the {\em network transducer} model---an operational formalism for distributed systems---and thus argue that \lang is a reasonable model for distributed systems.
 
 %We note that the stable model semantics~\cite{stable-model} may be used to assign
