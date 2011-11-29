@@ -93,6 +93,7 @@ Note that every \slang program is a \plang program, and every \plang program has
 Thus, \plang maintains the desirable properties of \slang: it is both confluent and PTIME.
 
 \subsection{Coordination rewrite}
+\label{sec:coordination}
 
 While the model-theoretic semantics of \plang are clear, its negation
 semantics are different than those of \lang.  Thus, we cannot directly apply the
@@ -343,6 +344,7 @@ For every relation $\dedalus{p} \in L(i)$, add the rule:
 \end{Drules}
 
 \subsection{Equivalence of coordination rewrite to \\ {\large \bf \plang}}
+\label{sec:equiv-p}
 We first argue that the rules for computing \dedalus{p_done{}} have the desired effect.
 
 %, explain why this implies \plang is temporally inflationary, and show how this implies that a \plang program can be decomposed into a sequence of \slang programs; the PTIME and confluence results are then simple corollaries.
