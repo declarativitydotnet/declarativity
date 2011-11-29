@@ -17,7 +17,7 @@ complicated our prior work on distributed declarative programming
 to the development of several program analysis tools for Bloom. Specifically,
 our goal was to develop tools to help developers understand where their programs
 required additional coordination in order to ensure deterministic
-outcomes. Inspired by the CALM conjecture~\cite{cidr11,declarative-imperative},
+outcomes. Inspired by the CALM theorem~\cite{cidr11,declarative-imperative},
 Bloom's \emph{coordination analysis} tool identifies locations in the program's
 dataflow graph where a non-monotonic operation is applied to a collection that
 has been derived asynchronously (e.g., via communication).  Intuitively, an
