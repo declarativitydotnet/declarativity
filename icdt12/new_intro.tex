@@ -32,9 +32,18 @@ Immerman~\cite{immerman-ptime} has demonstrated that semipositive Datalog (Datal
 We show that \lang is too expressive a language for this space, as it subsumes PSPACE, and that confluence is in general
 undecidable for \lang programs.  This motivates us to propose \slang, a restricted version of \lang that is intuitively similar to semipositive Datalog.  \slang captures PTIME, and \slang programs are guaranteed to be confluent.
 
-Unfortunately, \lang and \slang are not natural or convenient languages for programming certain kinds of systems.  Later in the paper we give 
-an example of a distributed garbage-collection algorithm that detects ``orphaned'' memory and marks it for deletion.  Orphaned memory is naturally thought of as memory that is not contained in the transitive closure of a refers-to relation.  The negation of a transitive closure is theoretically specifiable -- but inconvenient
-to express -- in both \lang and \slang.  It is inconvenient to write in \lang because of the issue of {\em coordination} -- ensuring the transitive closure is complete before applying negation (otherwise, multiple ultimate models may result).  It is inconvenient to write in \slang because although \slang programs are guaranteed to have a unique ultimate model, it is challenging to correctly specify the negation of a transitive closure using only semipositive rules.
+Unfortunately, \lang and \slang are not natural or convenient languages for
+programming certain kinds of systems.  Later in the paper we give an example of
+a distributed garbage-collection algorithm that detects ``orphaned'' memory and
+marks it for deletion.  Orphaned memory is naturally thought of as memory that
+is not contained in the transitive closure of a refers-to relation.  The
+negation of a transitive closure is theoretically specifiable---but inconvenient
+to express---in both \lang and \slang.  It is inconvenient to write in \lang
+because of the issue of {\em coordination}: ensuring the transitive closure is
+complete before applying negation (otherwise, multiple ultimate models may
+result).  It is inconvenient to write in \slang because although \slang programs
+are guaranteed to have a unique ultimate model, it is challenging to correctly
+specify the negation of a transitive closure using only semipositive rules.
 
 %The theoretical result that this program \emph{could} be specified in the semipositive fragment
 %of \lang is unsatisfying from a programmability perspective.  The wealth of research on stratified Datalog and the perfect model semantics suggests ....
@@ -54,7 +63,7 @@ This paper makes three principal contributions.  We begin by proposing a new mod
 programs based on the models of their \emph{eventual} outcomes.  
 %%These \emph{ultimate models} represent an equivalence class with a finite (single in the case of confluent 
 %%programs) number of members, among the infinite stable models of a \lang program.  
-Any \lang program has only a finite number of \emph{ultimate models} -- each representing an equivalence class among the program's infinite stable
-models -- and deterministic programs have only one.
+Any \lang program has only a finite number of \emph{ultimate models}---each representing an equivalence class among the program's infinite stable
+models---and deterministic programs have only one.
 We then show why \slang, the semipositive fragment of \lang, only admits confluent programs.  Finally, we propose \plang, a practical distributed logic language that likewise admits only confluent programs.
 We show that \plang has a natural model-theoretic semantics corresponding to the stratified semantics for Datalog programs, and an equivalent operational semantics that echoes coordination protocols common in distributed systems.
