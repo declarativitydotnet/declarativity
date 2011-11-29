@@ -201,12 +201,12 @@ instance contains a spatio-temporal fact \dedalus{f@t}, then it also contains
 \end{lemma}
 \begin{proof}
 Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules, where negation only occurs at the leaves.  Note that the instantiated head atom, as well as every instantiated body relation, is a spatio-temporal fact. 
-%We assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{succ}, \dedalus{node}, or \dedalus{<}, or any relation introduced in the causality or \dedalus{choice} rewrites.
+%We assume that the derivation tree does not include nodes for \dedalus{time}, \dedalus{timeSucc}, \dedalus{node}, or \dedalus{<}, or any relation introduced in the causality or \dedalus{choice} rewrites.
 The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact's relation does not appear in the head of any rule, then the corresponding node contains just the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
 
 For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle---simply repeat the following process for each tree.
 
-If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp.\ deductive), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp.\ \dedalus{g@t}), the fact \dedalus{g@t} (resp.\ \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule.  However, the path will eventually terminate at a leaf node providing a contradiction, because facts at leaf nodes are either EDB or negated EDB, meaning that they exist at all timestamps, or they are one of \dedalus{time}, \dedalus{succ}, or \dedalus{<}, which also exist at all timestamps.
+If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp.\ deductive), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp.\ \dedalus{g@t}), the fact \dedalus{g@t} (resp.\ \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule.  However, the path will eventually terminate at a leaf node providing a contradiction, because facts at leaf nodes are either EDB or negated EDB, meaning that they exist at all timestamps, or they are one of \dedalus{time}, \dedalus{timeSucc}, or \dedalus{<}, which also exist at all timestamps.
 \end{proof}
 
 A consequence of temporal inflation is that all \slang programs are confluent.
@@ -244,11 +244,11 @@ Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yie
 
 Since a \slang program has a unique ultimate model, the specific \dedalus{choice} of values for timestamps does not affect the ultimate model.
 % as long as the choice respects the causality constraint, as described in Section~\ref{sec:st}.
-In particular, we can assume that the \dedalus{succ} of the body timestamp is always chosen:
+In particular, we can assume that the \dedalus{timeSucc} of the body timestamp is always chosen:
 
 \begin{corollary}
 \label{cor:no-async}
-Define the program transformation $\mathcal{A}(P)$ to be the transformation that, converts every asynchronous rule $\varphi$ of \slang program $P$ into an inductive rule by undoing the causality and \dedalus{choice} rewrites, dropping the \dedalus{choice} operator, and adding \dedalus{succ(T,S)} to $pos(\varphi)$.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
+Define the program transformation $\mathcal{A}(P)$ to be the transformation that, converts every asynchronous rule $\varphi$ of \slang program $P$ into an inductive rule by undoing the causality and \dedalus{choice} rewrites, dropping the \dedalus{choice} operator, and adding \dedalus{timeSucc(T,S)} to $pos(\varphi)$.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
 \end{corollary}
 
 Of course, there are confluent \lang programs not in \slang.  For example:
@@ -286,7 +286,7 @@ affecting the ultimate model.
 \label{lem:no-inductive}
 Define the program transformation $\mathcal{I}(P)$ in the following way: in every inductive rule of \slang program 
 $P$---except any basic persistence rule for a relation that appears in the head of an asynchronous rule---remove 
-the \dedalus{succ(T,S)} body atom, and replace all instances of the variable \dedalus{S} with the variable \dedalus{T}.  
+the \dedalus{timeSucc(T,S)} body atom, and replace all instances of the variable \dedalus{S} with the variable \dedalus{T}.  
 The ultimate model of $\mathcal{I}(P)$ is the same as the ultimate model of $P$.
 \end{lemma}
 \begin{proof}

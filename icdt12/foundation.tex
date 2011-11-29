@@ -56,7 +56,7 @@ A {\em database schema} $\schema$ is a set of relation schemas.  Any relation na
 
 As in Immerman~\cite{immerman-ptime}, we assume
 the existence of an order: every database schema contains the relation schema
-$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}
+$\dedalus{<}^{(2)}$.\footnote{We will often write \dedalus{<} in infix notation.}  Later, we will introduce further restrictions on the order.
 
 A {\em fact} over a relation schema $R^{(n)}$ is a pair consisting of
 the relation name $R$ and an $n$-tuple $(c_1,\ldots,c_n)$, where each
@@ -146,12 +146,12 @@ A {\em spatial relation instance} for a relation schema $\dedalus{r}^{(n)}$ is a
 A {\em spatial database instance} is defined similarly to a database instance.
 
 Given a database schema $\schema$, we use $\stschema$ to denote the schema obtained 
-as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\})$ we include a relation schema $\dedalus{r}^{(n+2)}$ in $\stschema$.  The first additional column added is the location specifier, and the second is the {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$, and the timestamp is the second.  $\stschema$ also includes $\dedalus{<}^{(2)}$, $\dedalus{node}^{(1)}$, $\dedalus{time}^{(1)}$ and $\dedalus{succ}^{(2)}$,   We call $\stschema$ a {\em spatio-temporal schema}.
+as follows. For each relation schema $\dedalus{r}^{(n)} \in (\schema \setminus \{\dedalus{<}\})$ we include a relation schema $\dedalus{r}^{(n+2)}$ in $\stschema$.  The first additional column added is the location specifier, and the second is the {\em timestamp}.  By convention, the location specifier is the first column of every relation in $\stschema$, and the timestamp is the second.  $\stschema$ also includes $\dedalus{<}^{(2)}$, $\dedalus{node}^{(1)}$, $\dedalus{time}^{(1)}$ and $\dedalus{timeSucc}^{(2)}$,   We call $\stschema$ a {\em spatio-temporal schema}.
 
 A {\em spatio-temporal fact} over a relation schema $R^{(n)}$ is a pair consisting of the relation name $R$ and an $(n+2)$-tuple $(d,t,c_1,\ldots,c_n)$ where each $c_i \in \univ$, $d \in \univ, t \in \univ$, \dedalus{node(d)}, and \dedalus{time(t)}.  We denote a spatial fact over $R^{(n)}$ by \dedalus{R(d, t, c\sub{1}, \ldots, c\sub{n})}.
 
 A {\em spatio-temporal relation instance} for relation schema $\dedalus{r}^{(n)}$ is a set of spatio-temporal facts for
-$\dedalus{r}^{(n+2)}$.  A {\em spatio-temporal database instance} is defined similarly to a database instance; in any spatio-temporal database instance, $\dedalus{time}^{(1)}$ is mapped to the set containing a \dedalus{time(t)} fact for all $\dedalus{t} \in \mathbb{N}$, and $\dedalus{succ}^{(2)}$ to the set containing a \dedalus{succ(x,y)} fact for all $y = x + 1$, $(x,y \in \mathbb{N})$.
+$\dedalus{r}^{(n+2)}$.  A {\em spatio-temporal database instance} is defined similarly to a database instance; in any spatio-temporal database instance, $\dedalus{time}^{(1)}$ is mapped to the set containing a \dedalus{time(t)} fact for all $\dedalus{t} \in \mathbb{N}$, and $\dedalus{timeSucc}^{(2)}$ to the set containing a \dedalus{timeSucc(x,y)} fact for all $y = x + 1$, $(x,y \in \mathbb{N})$.
 
 We will use the notation $\dedalus{f@t}$ to mean the spatio-temporal fact obtained from the spatial fact \dedalus{f} by adding a timestamp column with the constant \dedalus{t}.
 
@@ -170,7 +170,7 @@ An {\em inductive} rule $\varphi$:
 
 \begin{Drules}
   \drule{p(L,S,\od{W})}
-        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}), $\lnot$c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), succ(T,S), \(ineq(\varphi)\)}
+        {b\sub{1}(L,T,\od{X\sub{1}}), \ldots, b\sub{l}(L,T,\od{X\sub{l}}), $\lnot$c\sub{1}(L,T,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(L,T,\od{Y\sub{m}}), node(L), time(T), timeSucc(T,S), \(ineq(\varphi)\)}
 \end{Drules}
 \item 
 An {\em asynchronous} rule $\varphi$:
@@ -189,11 +189,11 @@ symbols in \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}}, \ldots,
 \od{Y\sub{m}}.  The variable symbols \dedalus{D} and \dedalus{L} may appear in
 any of \dedalus{\od{W}, \od{X\sub{1}}, \ldots, \od{X\sub{l}}, \od{Y\sub{1}},
   \ldots, \od{Y\sub{m}}}, whereas \dedalus{T} and \dedalus{S} may not.
-Head relation name \dedalus{p} may not be \dedalus{time}, \dedalus{succ}, or \dedalus{node}. Relations
+Head relation name \dedalus{p} may not be \dedalus{time}, \dedalus{timeSucc}, or \dedalus{node}. Relations
 \dedalus{b\sub{1}, \ldots, b\sub{l}, c\sub{1}, \ldots, c\sub{m}} may not be
-\dedalus{succ}, \dedalus{time}, or \dedalus{<}. %time_lt
+\dedalus{timeSucc}, \dedalus{time}, or \dedalus{<}. %time_lt
 
-The use of a single location specifier and timestamp in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules use the \dedalus{succ} relation to carry the results of deductions into the next visible timestep.
+The use of a single location specifier and timestamp in rule bodies intuitively corresponds to considering deductions that can be evaluated at a single node at a single point in time.  Inductive rules use the \dedalus{timeSucc} relation to carry the results of deductions into the next visible timestep.
 
 %%
 \begin{comment}
@@ -203,7 +203,7 @@ As written, asynchronous rules can allow messages to travel back in time.  Intui
 
 \begin{Drules}
 \drule{notZero(T)}
-      {succ(T,S)}
+      {timeSucc(T,S)}
 \drule{zero(T)}
       {time(T), \lnot notZero(T)}
 \end{Drules}
@@ -259,7 +259,7 @@ The restrictions on timestamps and location specifiers suggest a natural
 syntactic sugar to improve readability.  We annotate inductive head relations
 with \dedalus{@next} and asynchronous head relations with \dedalus{@async};
 deductive rules have no head annotation.  These annotations allow us to omit the
-boilerplate usage of \dedalus{node}, \dedalus{time}, \dedalus{succ} and
+boilerplate usage of \dedalus{node}, \dedalus{time}, \dedalus{timeSucc} and
 \dedalus{choice} in rule bodies, as well as the timestamp attributes from rule
 heads and bodies.  We also omit location specifiers by default, but refer to them if necessary, as described later.  Using this syntactic sugar, below are examples of the three kinds of rules listed above.
 
@@ -429,7 +429,7 @@ $\{\Diamond\Box(\mathcal{T}) \, | \, \mathcal{T}$ $\text{is a stable model of
   I}\}$.  Intuitively, an ultimate model contains exactly the facts in relations
 in the output schema that are eventually always true in a stable model.
 
-Note that an ultimate model is always finite because of the finiteness of the EDB, the safety conditions on rules, the restrictions on the use of \dedalus{succ} and \dedalus{time}, and the prohibition on binding timestamps to non-timestamp attributes.  A \lang program only has a finite number of ultimate models for the same reason.
+Note that an ultimate model is always finite because of the finiteness of the EDB, the safety conditions on rules, the restrictions on the use of \dedalus{timeSucc} and \dedalus{time}, and the prohibition on binding timestamps to non-timestamp attributes.  A \lang program only has a finite number of ultimate models for the same reason.
 
 \begin{example}
 %For Example~\ref{ex:infinitemodels} with $\oschema = \{\dedalus{p}\}$, there are four ultimate models: $\{\}$, $\{\dedalus{p(0)}\}$, $\{\dedalus{p(1)}\}$, and $\{\dedalus{p(0), p(1)}\}$.
