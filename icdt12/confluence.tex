@@ -281,7 +281,10 @@ affecting the ultimate model.
 
 \begin{lemma}
 \label{lem:no-inductive}
-Define the program transformation $\mathcal{I}(P)$ to be the transformation that, in every inductive rule of \slang program $P$---except any basic persistence rule for a relation that appears in the head of an asynchronous rule---removes the \dedalus{succ(T,S)} body atom, and replaces all instances of the variable \dedalus{S} with the variable \dedalus{T}.  Then, the ultimate model of $\mathcal{A}(P)$ is the same as the ultimate model of $P$.
+Define the program transformation $\mathcal{I}(P)$ in the following way: in every inductive rule of \slang program 
+$P$---except any basic persistence rule for a relation that appears in the head of an asynchronous rule---remove 
+the \dedalus{succ(T,S)} body atom, and replace all instances of the variable \dedalus{S} with the variable \dedalus{T}.  
+The ultimate model of $\mathcal{I}(P)$ is the same as the ultimate model of $P$.
 \end{lemma}
 \begin{proof}
 Note that by Lemma~\ref{lem:inflationary}, $\mathcal{I}(P)$ is inflationary.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for the fact to be absent from $\mathcal{U}_1$, the EDB must be different, which is a contradiction.
