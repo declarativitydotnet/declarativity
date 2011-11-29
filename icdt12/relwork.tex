@@ -53,10 +53,9 @@ Datalog~\cite{Abiteboul2011} that bears many similarities to \lang.  They demons
 operational semantics similar to the operational semantics in \lang~\cite{ameloot-operational},
 and provide conservative conditions for confluence based on a variant of (node-local) stratification.
 Our work additionally provides a model-theoretic semantics for \plang that corresponds to the operational semantics.  
-In contrast to Webdamlog, \plang programs (which are guaranteed to be confluent) must be globally stratified, though their strata may span node boundaries.
-We employ a distributed coordination protocol to implement \plang programs in \lang.
-
-
+\plang programs (which are guaranteed to be confluent) 
+also admit a broader use of negation than their stratification condition, ensured via a synthesized
+coordination protocol.
 
 % \jmh{Chop the following?}
 % The notion of eventual consistency has been defined in various ways and at various levels of
