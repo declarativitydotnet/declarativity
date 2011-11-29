@@ -74,9 +74,9 @@ The truth value at depth $n$ (denoted by \dedalus{var_last}) is the truth value 
   \drule{var_sat_in(N, U, B)}
         {var_sat_left_in(V, B), var_succ(U, V)}
   \drule{var_sat_left_in(vn, 1)}
-        {exists(vn), var_sat(_, vn, 1)}
+        {exists(vn), \linebreak var_sat(_, vn, 1)}
   \drule{var_sat_left_in(vn, 0)}
-        {exists(vn), var_sat(a, vn, 0), var_sat(b, vn, 0)}
+        {exists(vn), \linebreak var_sat(a, vn, 0), var_sat(b, vn, 0)}
   \drule{var_sat_left_in(vn_succ, 1)}
         {forall(vn), var_sat(a, vn, 1), var_sat(b, vn, 1)}
   \drule{var_sat_left_in(vn_succ, 0)}
