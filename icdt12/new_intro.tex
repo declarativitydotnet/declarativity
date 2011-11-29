@@ -7,63 +7,67 @@ and system design (e.g.,~\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}), as 
 models for distributed computation using such
 languages (e.g.,~\cite{relational-transducers,navarro-oper-sem,card-abstraction}).
 
-The bulk of this work has presented (or assumed) a formal semantics for behavior based on transition systems
-and traces of input events.  A model-theoretic semantics for behavior has been notably absent.
+The bulk of this work has presented or assumed a formal operational semantics based on transition systems
+and traces of input events.  A model-theoretic semantics for these languages has been notably absent.
 %\paa{plug declarativity?  this is all well and good, but I thought that programming
 %in a declarative language means I don't need to reason about execution to understand my program's meaning}  
-In a recent (companion) paper~\cite{ameloot-operational}, we developed a model-theoretic behavior
-semantics for Dedalus, a distributed logic language based on Datalog, in which the ``meaning''
-of a program is precisely its set of stable models~\cite{sacca-zaniolo}. %~\footnote{given a set of constraints that model happens-before~\cite{lamport}}.
-In the same paper, we show an equivalence between the model-theoretic semantics and an operational semantics for behavior based on network transducers which is familiar from the literature.
+In a related paper~\cite{ameloot-operational}, we have developed a model-theoretic
+semantics for \lang, a distributed logic language based on Datalog, in which the ``meaning''
+of a program is precisely the set of stable models~\cite{sacca-zaniolo} that can arise via all possible temporal permutations of messages. %~\footnote{given a set of constraints that model happens-before~\cite{lamport}}.
+In the same paper, we demonstrate an equivalence of these models with all possible executions in a operational semantics akin to those in the prior literature.
 
-It is difficult to reason about the output of distributed systems because of their inherent concurrency and asynchrony: multiple 
-isolated processes simultaneously compute, and communicate via networks that may arbitrarily delay, reorder or batch messages.
-We are required to model this nondeterminism, as it may affect the outcome of the program on different runs.  Our work on
-\lang gives us a model-theoretic semantics for reasoning about the outcomes of distributed programs, based on their \emph{eventual} states or \emph{ultimate models}.  In this paper, we present this formal framework, and use it to develop a constrained variant
-of \lang that allows only \emph{confluent} programs, or programs that have a unique ultimate model.
-%, without sacrificing its ....
+In this paper we take advantage of the availability of declarative semantics to explore the correctness of distributed programs.  Specifically, we address the desire to ensure deterministic program outcomes---confluence---in the face of inherently non-deterministic timings of computation and messaging.  This is a matter of widespread practical concern in distributed systems, often cast in terms of ``eventual consistency''~\cite{bayou,vogels-ec}, and grounded in foundational issues of time and clocks in the theory of distributed computing~\cite{timeclocks}.  
 
-The CALM theorem~\cite{cidr11, relational-transducers, declarative-imperative} establishes a connection between confluence
-and logical monotonicity: monotonic distributed programs are confluent.  In principle, a language that allows only
-monotonic programs should be sufficiently expressive to implement all confluent distributed systems.
-%%It is unlikely that practical distributed systems will be written in languages that allow computations beyond PTIME.  
-Immerman~\cite{immerman-ptime} has demonstrated that semipositive Datalog (Datalog$\lnot$ where negation is restricted to EDB relations) with an ordering over the universe captures PTIME.
-%%We will show that confluence is undecidable for \lang programs in general, and that \lang subsumes PSPACE
-We show that \lang is too expressive a language for this space, as it subsumes PSPACE, and that confluence is in general
-undecidable for \lang programs.  This motivates us to propose \slang, a restricted version of \lang that is intuitively similar to semipositive Datalog.  \slang captures PTIME, and \slang programs are guaranteed to be confluent.
+Using our model-theoretic semantics for
+\lang, we can reason about the set of possible outcomes of a distributed program, based on what we define  as their \emph{ultimate models}.  This formal framework enables us to declaratively describe the potential for non-deterministic outcomes in \lang programs.  It also allows us to identify restricted sub-languages of \lang that ensure a model-theoretic notion of confluence: the existence of a unique ultimate model for any program expressible in that sub-language. The next question then is to identify a sub-language that ensures confluence without unduly constraining expressivity---both in terms of both computational power, and the ability to employ familiar programming constructs.
 
-Unfortunately, \lang and \slang are not natural or convenient languages for
-programming certain kinds of systems.  Later in the paper we give an example of
-a distributed garbage-collection algorithm that detects ``orphaned'' memory and
-marks it for deletion.  Orphaned memory is naturally thought of as memory that
-is not contained in the transitive closure of a refers-to relation.  The
-negation of a transitive closure is theoretically specifiable---but inconvenient
-to express---in both \lang and \slang.  It is inconvenient to write in \lang
-because of the issue of {\em coordination}: ensuring the transitive closure is
-complete before applying negation (otherwise, multiple ultimate models may
-result).  It is inconvenient to write in \slang because although \slang programs
-are guaranteed to have a unique ultimate model, it is challenging to correctly
-specify the negation of a transitive closure using only semipositive rules.
+One natural step in this direction is to drop back from the expressive power of \lang to a monotonic subset: a language we call \slang that disallows negation of IDB predicates.  This is inspired in part by the CALM conjecture~\cite{cidr11, declarative-imperative}, which proposed a connection between confluence
+and monotonicity; subsequent formalizations proved that monotonic distributed programs are indeed guaranteed to be confluent~\cite{relational-transducers, Abiteboul2011}.  
+%One might be concerned about the practical utility of such a restricted language, but this is a well-understood topic in database theory. 
+In terms of expressivity, Immerman's celebrated result regarding the collapse of the fixpoint hierarchy established that PTIME is captured by a similar monotonic language: semipositive Datalog (Datalog$\lnot$ where negation is restricted to EDB relations) augmented with an ordering over the universe~\cite{immerman-ptime}.  Put together, these results lead to a rather startling conclusion: \slang shows that it is possible to express any polynomial-time distributed algorithm (surely the vast majority of useful distributed code!) in an eventually-consistent manner.
 
-%The theoretical result that this program \emph{could} be specified in the semipositive fragment
-%of \lang is unsatisfying from a programmability perspective.  The wealth of research on stratified Datalog and the perfect model semantics suggests ....
+This result is intriguing, but not necessarily useful.  In particular, it does not guarantee that \slang or similar monotonic languages can be used to express {\em natural} declarations of programs. Perhaps this is why, despite Immerman's complexity results over 25 years ago, there has been ongoing interest in the topic of negation in logic programs.  More specifically, we have found that \slang is quite unnatural to use in many cases that interest us---we demonstrate this below via a practical system component (distributed garbage collection) that is easily written in \lang, but quite convoluted in \slang.
 
-In a recent paper targeting the systems community, we presented \emph{Bloom}, a domain-specific language (DSL) for implementing distributed 
-systems.  While its semantics are based on \lang, Bloom is intended to be a practical programming language: we have used it to build a wide array of distributed protocols and several complete
-applications, including a distributed file system.
-Following the intuition of stratified negation, Bloom allows negation (and various forms of aggregation) over derived relations, provided that the program has a stratification.
-If a Bloom program has no asynchrony or has only a single stratum, Bloom's static analysis flags the 
-program as confluent.  If either of these conditions is false, the analysis tool identifies the asynchronously derived relations that fall 
-at stratum boundaries as ``points of order'' that must be ``sealed'' by additional logic that prevents them from changing once the effects 
-of their negation have propagated to higher strata.  One would typically use a protocol similar to a coordination protocol from the distributed systems literature to ensure sealing.
+Given this background, we seek a more comfortable balance between expressive power, ease of programming and guarantees of confluence.  We achieve this via a controlled use of negation that draws inspiration from both stratified negation in logic, and coordination protocols from distributed computing.  We present a language called \plang whose semantics allow negated predicates, but subject to a closed-world assumption that these predicates are evaluated on their ``complete'', unchanging state.  To make this practical in a distributed context, we then show that an operational semantics for \plang can be achieved by compiling \plang programs into stylized \lang programs that augment the original code with ``coordination'' rules to establish completion of subgoals as needed. The operational semantics of the resulting \lang programs are then given by the prior literature.  The result is a sub-language that retains many of the features we desire: PTIME expressivity, guarantees of confluence, and an intuitive and familiar use of negation.  We believe the result is practically useful---indeed, \plang corresponds closely to Bloom, a practical programming we have used to implement a broad array of distributed systems~\cite{bloom}.
 
-The intuition behind Bloom leads us to propose a confluent language with a natural stratified semantics that we call \plang, whose semantics agree with \slang on all semipositive \lang programs.  Since the negation semantics of \plang is so different from \lang, we do not automatically get a corresponding operational semantics for \plang like we do for \slang.  To achieve an operational semantics, we reduce \plang to a subset of \lang through a rewrite.  The rewrite, in which nodes ``vote'' to seal strata, likewise echoes coordination protocols from the distributed systems literature.
+Our technical contributions in this paper include the following: (a) the definition of ultimate models as declarative framework for assessing outcomes of \lang programs and the undecidability of confluence for \lang programs (Section~\ref{sec:confluence}), (b) the introduction of \slang, its expressive power, and proof that it can only express programs with unique ultimate models (Section~\ref{sec:plus}), (c) the introduction of \plang, examples of its use, and model-theoretic proof of its confluence (Section~\ref{sec:perfect}, \ref{sec:perfect-construction}), and (d) an operational semantics for \plang achieved via a compilation of \plang programs into judiciously ``coordinated'' \lang programs (Section~\ref{sec:coordination}, \ref{sec:equiv-p}).
 
-This paper makes three principal contributions.  We begin by proposing a new model-theoretic semantics for the output of \dedalus 
-programs based on the models of their \emph{eventual} outcomes.  
-%%These \emph{ultimate models} represent an equivalence class with a finite (single in the case of confluent 
-%%programs) number of members, among the infinite stable models of a \lang program.  
-Any \lang program has only a finite number of \emph{ultimate models}---each representing an equivalence class among the program's infinite stable
-models---and deterministic programs have only one.
-We then show why \slang, the semipositive fragment of \lang, only admits confluent programs.  Finally, we propose \plang, a practical distributed logic language that likewise admits only confluent programs.
-We show that \plang has a natural model-theoretic semantics corresponding to the stratified semantics for Datalog programs, and an equivalent operational semantics that echoes coordination protocols common in distributed systems.
+% %%We will show that confluence is undecidable for \lang programs in general, and that \lang subsumes PSPACE
+% We show that \lang is too expressive a language for this space, as it subsumes PSPACE, and that confluence is in general
+% undecidable for \lang programs.  This motivates us to propose \slang, a restricted version of \lang that is intuitively similar to semipositive Datalog.  \slang captures PTIME, and \slang programs are guaranteed to be confluent.
+% 
+% Unfortunately, \lang and \slang are not natural or convenient languages for programming certain kinds of systems.  Later in the paper we give 
+% an example of a distributed garbage-collection algorithm that detects ``orphaned'' memory and marks it for deletion.  Orphaned memory is naturally thought of as memory that is not contained in the transitive closure of a refers-to relation.  The negation of a transitive closure is theoretically specifiable---but unnatural
+% to express---in both \lang and \slang.  It is inconvenient to write in \lang because of the classical distributed systems issue of {\em coordination}: one must be sure that a distributed computation of the transitive closure is complete before applying negation (otherwise, multiple ultimate models may result).  By contrast, it is challenging to correctly specify this program in \slang: it is quite unnatural to emulate the semantics of a simple negated transitive closure using strictly semipositive rules.
+% 
+% %The theoretical result that this program \emph{could} be specified in the semipositive fragment
+% %of \lang is unsatisfying from a programmability perspective.  The wealth of research on stratified Datalog and the perfect model semantics suggests ....
+% 
+% In a recent paper targeting the systems community, we presented \emph{Bloom}, a domain-specific language (DSL) for implementing distributed 
+% systems.  While its semantics are based on \lang, Bloom is intended to be a practical programming language: we have used it to build a wide array of distributed protocols and several complete
+% applications, including a distributed file system.
+% Following the intuition of stratified negation, Bloom allows negation (and various forms of aggregation) over derived relations, provided that the program has a stratification.
+% If a Bloom program has no asynchrony or has only a single stratum, Bloom's static analysis flags the 
+% program as confluent.  If either of these conditions is false, the analysis tool identifies the asynchronously derived relations that fall 
+% at stratum boundaries as ``points of order'' that must be ``sealed'' by additional logic that prevents them from changing once the effects 
+% of their negation have propagated to higher strata.  One would typically use a protocol similar to a coordination protocol from the distributed systems literature to ensure sealing.
+% 
+% The intuition behind Bloom leads us to propose a confluent language with a natural stratified semantics that we call \plang, whose semantics agree with \slang on all semipositive \lang programs.  Since the negation semantics of \plang is so different from \lang, we do not automatically get a corresponding operational semantics for \plang like we do for \slang.  To achieve an operational semantics, we reduce \plang to a subset of \lang through a rewrite.  The rewrite, in which nodes ``vote'' to seal strata, likewise echoes coordination protocols from the distributed systems literature.
+% 
+% This paper makes three principal contributions.  We begin by proposing a new model-theoretic semantics for the output of \dedalus 
+% programs based on the models of their \emph{eventual} outcomes.  
+% %%These \emph{ultimate models} represent an equivalence class with a finite (single in the case of confluent 
+% %%programs) number of members, among the infinite stable models of a \lang program.  
+% Any \lang program has only a finite number of \emph{ultimate models} -- each representing an equivalence class among the program's infinite stable
+% models -- and deterministic programs have only one.
+% We then show why \slang, the semipositive fragment of \lang, only admits confluent programs.  Finally, we propose \plang, a practical distributed logic language that likewise admits only confluent programs.
+% We show that \plang has a natural model-theoretic semantics corresponding to the stratified semantics for Datalog programs, and an equivalent operational semantics that echoes coordination protocols common in distributed systems.
+
+% This paper makes three principal contributions.  We begin by proposing a new model-theoretic semantics for the output of \dedalus 
+% programs based on the models of their \emph{eventual} outcomes.  
+% %%These \emph{ultimate models} represent an equivalence class with a finite (single in the case of confluent 
+% %%programs) number of members, among the infinite stable models of a \lang program.  
+% Any \lang program has only a finite number of \emph{ultimate models}---each representing an equivalence class among the program's infinite stable
+% models---and deterministic programs have only one.
+% We then show why \slang, the semipositive fragment of \lang, only admits confluent programs.  Finally, we propose \plang, a practical distributed logic language that likewise admits only confluent programs.
+% We show that \plang has a natural model-theoretic semantics corresponding to the stratified semantics for Datalog programs, and an equivalent operational semantics that echoes coordination protocols common in distributed systems.
