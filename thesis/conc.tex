@@ -2,28 +2,29 @@
 \label{ch:conclusion}
 
 
-Declarative programming allows programmers to focus on the high level properties of a
-computation without describing low level implementation details. We have found that 
-declarative programming not only simplifies a programmer's work it also focuses the
-programming task on appropriately high-level issues. The declarative networking project
-exemplified this through its declarative specifications of network protocols that could 
-execute on either wired or wireless physical networks. It was the responsibility of the
-compiler to take these simple high-level specifications and map them to an underlining
-technology. 
+Declarative programming allows programmers to focus on the high level
+properties of a computation without describing low level implementation
+details.  We have found that declarative programming not only simplifies a
+programmer's work it also focuses the programming task on the appropriate
+high-level issues.  The declarative networking project exemplified this through
+its declarative specifications of network protocols that could execute on
+either wired or wireless physical networks.  It was the responsibility of the
+compiler to take these simple high-level specifications and map them to an
+underlining technology.
 
 The Evita Raced meta-compilation framework takes declarative programming a step
 further by allowing \OVERLOG program transformations to be written in \OVERLOG
-and executed them in the P2 query processing engine.  The use of
-metacompilation allowed us to achieve significant code reuse from the core of
-P2, so that the mechanisms supporting query optimization are a small addition
-to the query processing functionality already in the system.  A particularly
-elegant aspect of this is the scheduling of independent optimization stages by
-expressing scheduling constraints as data, and having that data processed by a
-special dataflow element for scheduling.  Our hypothesis that a Datalog-style
-language was a good fit for typical query optimizations was largely borne out,
-despite some immaturity in the \OVERLOG language and P2 infrastructure.  We
-were able to express three of the most important optimizer frameworks --- System
-R, Cascades, and Magic-sets --- in only a few dozen rules each.
+and executed by the P2 query processing engine.  The use of metacompilation
+allowed us to achieve significant code reuse from the core of P2, so that the
+mechanisms supporting query optimization are a small addition to the query
+processing functionality already in the system.  A particularly elegant aspect
+of this is the scheduling of independent optimization stages by expressing
+scheduling constraints as data, and having that data processed by a special
+dataflow element for scheduling.  Our hypothesis that a Datalog-style language
+was a good fit for typical query optimizations was largely borne out, despite
+some immaturity in the \OVERLOG language and P2 infrastructure.  We were able
+to express three of the most important optimizer frameworks --- System R,
+Cascades, and Magic-sets --- in only a few dozen rules each.
 
 %Going forward, we hope to exploit the use of a declarative language for benefits beyond code 
 %compactness.  The tabularization of the optimizer state is particularly suggestive.  It can be used 

@@ -1,0 +1,103 @@
+
+%Designing system software is challenging in today's Internet environment.  In
+%terms of lines of code, production Internet systems number well into the
+%millions.  These systems require teams of programmers to create new features,
+%test and deploy them, and tune performance.  Learning the system implementation
+%can be excruciatingly painful too.  The code rarely resembles the system
+%specification, and it often requires the author to interpret the specification
+%from the code.  The development cycle is further complicated when large system
+%projects hire teams of programmers that span the globe.  In such cases, the
+%system specification becomes the primary means by which these distributed teams
+%coordinate on the system's evolution.
+
+%At the base of most modern Internet services are distributed systems, whose
+%development cycle usually consists of three phases: design and specification,
+%implementation, and testing.  The design and specification phase often begins
+%with a high-level view of the system modules and the relationships between
+%them.  From there, a specification is created describing the APIs, protocols,
+%and algorithms.  The specification is then shipped to the programmers to
+%develop an implementation.  Finally, the testing phase verifies the
+%specification from the code and ensures proper code coverage.  In this
+%idealized setting, the system evolves by iterating on these three phases.
+%However, in practice the design and specification phase is often overlooked in
+%system revisions: correcting prior design decisions or accomodating new
+%features.  This leads to the mismatch between what is stated in the
+%specification and what exists in the code.  What if the specification was the
+%code?
+
+%Designing system software is challenging in today's Internet environment.  At
+%the base of most modern Internet services are distributed systems, whose
+%implementations involve complex procedural code.  There is an increasing need
+%to separate the specification of these systems from physical and logical
+%changes to components underneath them: network fabrics and architectures are
+%being redesigned for the next generation of Internet
+%applications~\cite{geni05}.  Hence the lessons of {\em data independence} and
+%declarative approaches are very timely in this domain~\cite{networkind}, and
+%are reflected by recent interest in automatic network optimization and
+%adaptation~\cite{grace-eurosys08}.  A distributed system specification defines
+%invariants for interacting in a networked environment, maintaining a consistent
+%state, and ensuring forward progress.  For an implementation language to match
+%specifications well, it should be able to naturally specify constraints ---
+%even constraints that span software modules and machines.
+
+%We present both our language infrastructure, and the implementation of significant system components via declarative specifications.
+
+Building system software is a notoriously complex and arduous endeavor.
+Developing tools and methodologies for practical system software engineering
+has long been an active area of research.  This thesis explores system software
+development through the lens of a declarative, data-centric programming
+language that can succinctly express high-level system specifications and be
+directly compiled to executable code.  By unifying specification and
+implementation, our approach avoids the common problem of implementations
+diverging from specifications over time.  In addition, we show that using a
+declarative language often results in drastic reductions in code size
+($100\times$ and more) relative to procedural languages like Java and C++.  We
+demonstrate these advantages by implementing a host of functionalities at
+various levels of the system hierarchy, including network protocols, query
+optimizers, and scheduling policies.  In addition to providing a compact and
+optimized implementation, we demonstrate that our declarative implementations
+often map very naturally to traditional specifications: in many cases they are
+line-by-line translations of published pseudocode.
+
+We started this work with the hypothesis that declarative languages ---
+originally developed for the purposes of data management and querying --- could
+be fruitfully adapted to the specification and implementation of core system
+infrastructure.  A similar argument had been made for networking protocols a
+few years earlier~\cite{boon-thesis}.  However, our goals were quite different:
+we wanted to explore a broader range of algorithms and functionalities (dynamic
+programming, scheduling, program rewriting, and system auditing) that were part
+of complex, real-world software systems.  We identified two existing system
+components --- {\em query optimizers} in a DBMS and {\em task schedulers} in a
+cloud computing system --- that we felt would be better specified via a
+declarative language.  Given our interest in delivering real-world software, a
+key challenge was identifying the right system boundary that would permit
+meaningful declarative implementations to coexist within existing imperative
+system architectures.  We found that {\em relations} were a natural boundary for
+maintaining the ongoing system state on which the imperative and declarative
+code was based, and provided an elegant way to model system architectures.
+
+This thesis explores the boundaries of declarative systems via two projects.
+We begin with Evita Raced; an extensible compiler for the \OVERLOG language
+used in our declarative networking system, P2.  Evita Raced is a metacompiler
+--- an \OVERLOG compiler written in \OVERLOG\@ --- that integrates seamlessly
+with the P2 dataflow architecture.  We first describe the minimalist design of
+Evita Raced, including its extensibility interfaces and its reuse of the P2
+data model and runtime engine.  We then demonstrate that a declarative language
+like \OVERLOG is well-suited to expressing traditional and novel query
+optimizations as well as other program manipulations, in a compact and natural
+fashion.  Following Evita Raced, we describe the initial work in \BOOMA, which
+began as a large-scale experiment at building ``cloud'' software in a
+declarative language.  Specifically, we used the \OVERLOG language to implement
+a ``Big Data'' analytics stack that is API-compatible with the Hadoop MapReduce
+architecture and provides comparable performance.  We extended our declarative
+version of Hadoop with complex distributed features that remain absent in the
+stock Hadoop Java implementation, including alternative scheduling policies,
+online aggregation, continuous queries, and unique monitoring and debugging
+facilities.  We present quantitative and anecdotal results from our experience,
+providing concrete evidence that both data-centric design and declarative
+languages can substantially simplify systems programming.
+
+%The declarative specifications of these traditionally complex system
+%components are complied to dataflow runtime implementations reminiscent of
+%traditional database query plans.
+

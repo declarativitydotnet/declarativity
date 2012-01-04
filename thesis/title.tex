@@ -57,7 +57,7 @@ M.S. (Stanford University) }
 % It's left in here so you can print it on plain paper, and get the
 % signatures.  -- RCS 1-7-2010
 %
-\approvalpage
+%\approvalpage
 
 % ===============================================
 % Copyright Page
@@ -90,6 +90,8 @@ M.S. (Stanford University) }
 % Dedication Page
 % The dedication is optional. 
 % ===============================================
+%\setcounter{page}{1}
+
 \begin{dedication}
   \centering
 %% Prints the text of the file dedication.tex centered vertically on the page.
@@ -100,9 +102,10 @@ To Joe, Paul, and Lara.
 
 % ===============================================
 % TABLE OF CONTENTS
-\blankpage[\thispagestyle{empty}]
+%\blankpage[\thispagestyle{empty}]
 
-\setcounter{page}{1}
+\blankpage
+\setcounter{page}{3}
 \addcontentsline{toc}{chapter}{Contents}  % Put the table of contents in the table of contents
 \tableofcontents
 
@@ -119,6 +122,8 @@ To Joe, Paul, and Lara.
 %\addcontentsline{toc}{chapter}{List of Tables}
 %\listoftables
 
+\newpage
+\setcounter{page}{5}
 \addcontentsline{toc}{chapter}{Acknowledgements}
 \begin{acknowledgements}
 \input{ack}

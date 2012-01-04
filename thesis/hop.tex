@@ -1019,35 +1019,36 @@ tools, this economy of mechanism---reusing the MapReduce infrastructure for
 reflective monitoring---has benefits in software maintenance and system
 management.
 
-\section{\BOOM-MR port}
+\section{\BOOM-MR Port}
 \label{ch:hop:sec:boom}
 
 This chapter describes our port of the \BOOM-MR (Chapter~\ref{ch:boom}) to HOP.
 Using \BOOM-MR, we developed alternative scheduling policies, written in
 \OVERLOG, that made use of statistics provided by the monitoring system
 described in Chapter~\ref{ch:hop:sec:monitor}.  In
-Chapter~\ref{ch:hop:sec:jolport}, we describe the port of \JOL to the
-scheduling component of the HOP \JT.  Chapter~\ref{ch:hop:sec:jolmonitor}
-describes the interface between the monitoring system and \JOL, which enabled
-the use of the monitoring results in our declarative scheduling logic.  In
+Chapter~\ref{ch:hop:sec:jolport}, we describe the port of \JOL to the HOP \JT
+scheduling component.  Chapter~\ref{ch:hop:sec:jolmonitor} describes the
+interface between the monitoring system and \JOL, which enables the use of the
+monitoring results in our declarative scheduling logic.  In
 Chapter~\ref{ch:hop:sec:speculation}, we present an \OVERLOG rule that monitors
-tasks for anomalous behavior~\cite{hopdemo}, spawning a backup/speculative task
+tasks for anomalous behavior~\cite{hopdemo}; spawning a backup/speculative task
 when alerted to a potential issue.
 
 \subsection{Scheduling HOP with \JOL}
 \label{ch:hop:sec:jolport}
 
 HOP is based on Hadoop 19.2, which defines an extensible interface to the \JT
-scheduler component, allowing alternative scheduler implementations.  This made
-the port of \JOL to HOP trivial: the entire port consisted of $55$ lines of
-Java glue code that implemented the \JOL harness, and \OVERLOG code that
-performed the basic scheduling policy described in Chapter~\ref{ch:boom}.  We
-also altered the job relation (described in Table~\ref{ch:boom:tbl:hcatalog})
-to include an attribute for the job type: pipelining/blocking, online
-aggregation, or continuous.  We then added three scheduling policy rules that
-were specific to online aggregation and continuous jobs.
+scheduler component for alternative scheduler implementations.  This made the
+port of \JOL to HOP trivial: the entire port consisted of $55$ lines of Java
+glue code that implemented the \JOL harness, and \OVERLOG code that performed
+the basic FIFO policy described in Chapter~\ref{ch:boom}.  We altered the job
+relation (described in Table~\ref{ch:boom:tbl:hcatalog}) to include an
+attribute for the job type: pipelining/blocking, online aggregation, or
+continuous.  We also added three new scheduling rules (presented in
+Figure~\ref{ch:hop:fig:schedmaps}) specific to online aggregation and
+continuous jobs.
 
-\subsubsection{\JOL port}
+\subsubsection{\JOL Port}
 \begin{figure*}
 \ssp
 \begin{minipage}{\linewidth}
