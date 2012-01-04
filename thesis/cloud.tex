@@ -1,0 +1,104 @@
+\chapter[BOOM: A Cloudy Beginning]{BOOM: A Cloudy Beginning}
+\label{ch:cloud}
+
+The term ``cloud computing'' made its mainstream debut in $2007$ when companies
+like Amazon, Google, IBM and Yahoo!, as well as a number of universities,
+embarked on a large scale {\em cloud computing} research project~\cite{lohr}.
+Conceptually, cloud computing is similar to grid computing in terms of
+multiplexing massive computing resources among a diverse set of applications.
+The primary difference with cloud computing, over the grid computing model of
+the $1990$s, is its accessibility to the outside world.  Today, companies like
+Amazon, Google and Yahoo!\@ expose parts of their internal computing resources
+(data centers) to outside developers, using a cost model that is reminiscent of
+a traditional public utility (i.e., a pay-per-use model).  The most prominent
+example of cloud computing today is the Amazon Elastic Compute Cloud (EC2),
+which allows users to rent virtual computers to run their applications (e.g.,
+web-server, database).
+
+A challenge moving forward is identifying the right developer API to expose for
+these large distributed computing platforms.  Although today's cloud interfaces
+are convenient for launching multiple independent instances of traditional
+single-node services, writing truly distributed software remains a significant
+challenge.  Distributed applications still require a developer to orchestrate
+concurrent computation and communication across many machines, in a manner that
+is robust to delays and failures.  Writing and debugging distributed system
+code is extremely difficult even for experienced system architects, and drives
+away many creative software designers who might otherwise have innovative uses
+for these massive computing platforms.
+
+Although distributed programming remains hard today, one important subclass is
+relatively well-understood by programmers: data-parallel computations expressed
+using interfaces like MapReduce~\cite{mapreduce-osdi}, Dryad~\cite{dryad}, and
+SQL\@.  These programming models substantially raise the level of abstraction
+for programmers: they mask the coordination of threads and events, and instead
+ask programmers to focus on applying functional or logical expressions to
+collections of data.  These expressions are then auto-parallelized via a
+dataflow runtime that partitions and shuffles the data across machines in the
+network.  Although easy to learn, these programming models have traditionally
+been restricted to batch-oriented computations and data analysis tasks --- a
+rather specialized subset of distributed and parallel computing.
+
+The majority of computations that run in the cloud today are derived from
+MapReduce workloads.  High-level languages like Pig~\cite{pig-sigmod},
+Hive~\cite{hive-vldb}, Scope~\cite{scope} and Jaql~\cite{jaql}, all compile
+down to map and reduce operations.  In many regards, MapReduce is considered
+the programming interface for data-parallel workloads in the
+``cloud''~\cite{abovetheclouds}.  The importance of this new computing model
+led us to look at its most popular open source implementation --
+Hadoop~\cite{hadoop}.  We identified parts of the Hadoop system that we thought
+would benefit from a declarative perspective.  We focused on the Hadoop
+Distributed File System (HDFS), and the Hadoop MapReduce scheduler, which are
+large system components that support the distributed computation of MapReduce.
+
+The one thing that was rather surprising to us was the code complexity of these
+system components.  The Hadoop MapReduce component (under the
+\ol{org.apache.hadoop.mapred} package) as of version 18.2 was around $61,183$
+lines of Java code.  The sheer amount of code alone made it difficult to add
+new features; delaying many requests for new scheduling policies i.e.,
+LATE~\cite{zaharia-late}, fair share~\cite{jira-3746}, and capacity
+scheduler~\cite{jira-3445}.
+
+%Both the capacity and fair share scheduling
+%policies were introduced in version 19.0, and took many months of development
+%time; four months for the Capacity Scheduler and seven months for the Fair
+%Scheduler.  The LATE speculation policy was published in
+%$2008$~\cite{zaharia-late} to addressed the issue of ``stragglers'' in a
+%MapReduce environment.  The algorithm was elegantly captured in three lines of
+%pseudocode, yet its implementation was not released until version $21.0$ ($23$
+%August, 2010), after several months of development~\cite{jira-2141}.
+
+We explored the cause of such development complexities in the \BOOM project; by
+first developing a declarative implementation of Hadoop and then extending it
+with new features i.e., alternative scheduling policies.  The initial project
+members included Peter Alvaro, Tyson Condie, Neil Conway, Joseph M.
+Hellerstein, William Marczak, and Russell Sears.  \BOOM stands for the {\em
+Berkeley Orders Of Magnitude}, because its purpose was to enable the
+development of systems that were {\em orders of magnitude} bigger than the
+current status quo, with {\em orders of magnitude} less effort than traditional
+programming methodologies.  As a first step in this direction, we investigated
+the use of a declarative language for implementing scheduling policies in
+Hadoop.  The Hadoop scheduler assigns work to system components based on some
+policy (e.g., First-Come-First-Served).  In Chapter~\ref{ch:boom}, we specify
+Hadoop scheduling policies in \OVERLOG and evaluate the resulting code through
+informal metrics --- lines of code and development time.  As we have already
+witnessed in previous chapters, \OVERLOG has its own associated complexities,
+some of which we have addressed in a new implementation of the language called
+\JOL (Java \OVERLOG Library): described in Chapter~\ref{ch:boom}.
+
+The remainder of this thesis is organized as follows.  Chapter~\ref{ch:hadoop}
+provides an overview of MapReduce and its open source implementation Hadoop.
+We focus here on the Hadoop scheduling component and batch-oriented processing
+dataflow implemented by Hadoop version 18.2.  Readers familiar with these
+topics can skip to Chapter~\ref{ch:boom}, where we describe \BOOM-MR --- an
+API-compliant reimplementation of the Hadoop MapReduce scheduler written in the
+\OVERLOG declarative language.  The resulting declarative scheduler models the
+(basic) First-Come-First-Served (a.k.a., FIFO) Hadoop scheduling policy in a
+few dozen lines of code, which took a few weeks to implement.  We extended this
+baseline Hadoop policy with the LATE speculation policy, by adding a mere five
+extra rules ($12$ lines of code) to our FIFO policy, which required a few days
+of development time.  In Chapter~\ref{ch:hop}, we present a pipelined version
+of the Hadoop MapReduce engine, where {\em map} and {\em reduce} operators no
+longer need to complete before emitting output data.  This extension to the
+MapReduce model brings with it new scheduling requirements that we addressed in
+our declarative scheduler implementation.
+

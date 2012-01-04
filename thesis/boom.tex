@@ -3,9 +3,9 @@
 
 The Berkeley Orders Of Magnitude (BOOM) project began with an experiment in
 construction, by implementing a substantial piece of distributed software in a
-data-centric, declarative style.  Upon review of recent literature on
-data center infrastructure (e.g.,~\cite{chubby,gfs-sosp,dynamo,mapreduce-osdi}),
-we observed that most of the complexity in these systems related to the
+data-centric, declarative style.  Upon review of recent literature on data
+center infrastructure (e.g.,~\cite{chubby,gfs-sosp,dynamo,mapreduce-osdi}), we
+observed that most of the complexity in these systems were related to the
 management of various forms of asynchronously-updated state, including
 sessions, protocols and storage.  Although quite complex, few of these systems
 involved intricate, uninterrupted sequences of computational steps.  Hence, we
@@ -14,13 +14,13 @@ for our hypotheses about building distributed software.
 
 We evaluated this hypotheses in {\em \BOOMA}: an API-compliant reimplementation
 of the HDFS distributed file system and the Hadoop MapReduce
-engine~\cite{boom}.  Our declarative version of these two components were named
+engine~\cite{boom}.  Our declarative versions of these two components were named
 {\em \BOOM-FS} and {\em \BOOM-MR}, respectively.  In writing \BOOMA, we
 preserved the Java API ``skin'' of HDFS and Hadoop, but replaced complex
 internal state with relations, and implemented key system logic with code
 written in a declarative language.  In this thesis, we focus on declarative
 scheduling (\BOOM-MR), rather than \BOOM-FS which was led by other members of
-the \BOOMA team.  However, we do include some \BOOM-FS results --- showing its
+the \BOOM team.  However, we do include some \BOOM-FS results --- showing its
 performance is on par with HDFS --- to validate the \JOL implementation, which
 was a project within this thesis.
 
@@ -549,16 +549,15 @@ package.
 
 In the end, we found that scheduling policies were a good fit for a declarative
 language like \OVERLOG.  In retrospect, this is because scheduling can be
-decomposed into two tasks: {\em monitoring} the state of a system and applying
-{\em policies} for how to react to changes to that state.  Monitoring is
-well-handled by \OVERLOG: we found that the statistics about {\TT} state
-required by the LATE policy are naturally realized as aggregate functions, and
-\JOL took care of automatically updating those statistics as new messages from
-{\TT}s arrived.  In the next chapter, we will look at importing statistics
-taken from the output of a MapReduce job that is continuously monitoring
-machine and process level statistics.  Once these near real-time monitoring
-statistics have been imported into \JOL, we can build some very interesting
-scheduling policies around them.
+decomposed into two tasks: {\em monitoring} system state and applying {\em
+policies} for how to react to state changes.  Monitoring is well-handled by
+\OVERLOG: we found that the statistics about {\TT} state required by the LATE
+policy are naturally realized as aggregate functions, and \JOL took care of
+automatically updating those statistics as new messages from {\TT}s arrived.
+In the next chapter, we will look at importing statistics taken from the output
+of a MapReduce job that is continuously monitoring machine and process level
+statistics.  Once these near real-time monitoring statistics have been imported
+into \JOL, we can build some very interesting scheduling policies around them.
 
 It is also unsurprisingly that a logic language should be well-suited to
 specifying policy.  We found the \BOOM-MR scheduler much simpler to extend and
