@@ -16,51 +16,54 @@ consistency~\cite{Terry1995} or causal consistency~\cite{Lloyd2011}.
 We recently proposed the CALM theorem, which links distributed
 \emph{consistency} with \emph{logical
   monotonicity}~\cite{Alvaro2011,Hellerstein2010}. Intuitively, a logically
-monotonic program computes a set of facts that only grows over time; it never
+monotonic program computes a set of facts that only grows over time: it never
 ``retracts'' an earlier conclusion in the face of new information. Hence, a
 monotonic program can be executed in a coordination-free manner and still reach
-a consistent state: all monotonic programs are ``eventually consistent.'' Since
-synctactic monotonicity of a Datalog program is straightforward to detect, the
-CALM theorem provides a simple analysis technique for loosely consistent
-distributed programs. The CALM analysis is realized as part of Bloom, a
+a consistent state---all monotonic programs are ``eventually
+consistent''~\cite{Ameloot2011}. Since synctactic monotonicity of a Datalog
+program is straightforward to determine, the CALM theorem provides the basis for
+a simple analysis technique for loosely consistent distributed
+programs~\cite{Alvaro2011}. The CALM analysis is realized as part of Bloom, a
 Datalog-based DSL for distributed programming~\cite{bloom}.
-% XXX: cite Belgians
-% XXX: validate that 
 
 Our initial formulation of Bloom and CALM only considered programs that compute
 sets of facts that grow over time (``set monotonicity''). This limits the
-usefulness of the CALM analysis, because it makes several common distributed
-programming idioms non-monotonic. In particular, threshold tests (``$\textrm{count}(S) >
-k$'') and monotonically increasing counters are both non-monotonic in the
-original definition.
+usefulness of the CALM analysis because it makes several common distributed
+programming idioms non-monotonic. In particular, threshold tests
+(``$\textrm{count}(S) > k$'') and monotonically increasing counters are both
+non-monotonic in the original definition. In this paper, we extend our previous
+results to apply to a more general notion of monotonicity.
 
-In this paper, we extend our previous results to apply to a more general notion
-of monotonicity. We use lattices to describe any domain 
+ We use lattices to
+describe any domain
 
 % Explain how lattices generalize monotonic datalog
 In this paper, we extend our previous results in several directions:
 \begin{enumerate}
 \item
-  First, we introduce lattices, explain the algebraic properties that must be
-  satisfied by lattice implementations, and present \latlang, a generalization
-  of Dedalus to support both lattices and traditional relations.
+  We review the lattice concept and the algebraic properties that must be
+  satisfied by a valid lattice. We present \baselang, a variant of Datalog that
+  operates over both lattices and traditional relations, and show that \baselang
+  generalizes Datalog.
 
 \item
-  We prove that \latlang generalizes Datalog, and formally prove that a sub-class of
-  \latlang programs are confluent.
+  We introduce \lang, an extension of Bloom that supports user-defined
+  lattices. We introduce the syntax and semantics of \lang, and describe how we
+  extended the standard semi-na\"{i}ve Datalog evaluation
+  scheme~\cite{Balbin1987} to support both lattices and traditional database
+  relations. We describe the builtin lattice types provided by \lang and show
+  how users can define custom lattices.
 
 \item
-  We describe how we extended the Bloom DSL to support user-defined lattices. We
-  detail the API that lattice implementations must support, and describe how we
-  extended the standard semi-na\"{i}ve Datalog evaluation scheme~\cite{Balbin1987}
-  to support both lattices and traditional database relations.
+  Finally, we validate the effectiveness of lattices with two detailed case
+  studies. We revisit the simple e-commerce scenario presented in Alvaro et.\
+  al, in which a client program interacts with a replicated shopping cart
+  service. We use lattices to allow a more flexible and compact representation
+  of shopping cart state. Second, we show how lattices can make the ``checkout''
+  aggregation operation monotonic.
 
-\item
-  Finally, we examine the effectiveness of lattices as a practical programming
-  construct through the use of two case studies: a causally-consistent
-  point-to-point delivery protocol and a replicated shopping cart service. In
-  both cases, we show how lattices enable concise and intuitive implementations
-  of these designs. More importantly, we show how domain-specific correctness
-  criteria can be expressed in terms of lattice properties, giving us more
-  confidence in the correctness of our programs.
+  We also use lattices to implement a classical distributed protocol for
+  point-to-point causal delivery~\cite{Schiper1989}. We show that causal
+  delivery is monotonic and detail how domain-specific correctness criteria can
+  be proven more easily with the aid of the lattice properties.
 \end{enumerate}
