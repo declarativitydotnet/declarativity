@@ -1,31 +1,41 @@
 \section{Introduction}
-% Motivate the need for better tool support of distributed programs
-% TODO: rewrite, just stolen from CIDR
-Until fairly recently, distributed programming was the domain of a small group
-of experts. But recent technology trends have brought distributed programming to
-the mainstream of open source and commercial software.  The challenges of
-distribution---concurrency and asynchrony, performance variability, and partial
-failure---often translate into tricky data management challenges regarding task
-coordination and data consistency.  Given the growing need to wrestle with these
-challenges, there is increasing pressure on the data management community to
-help find solutions to the difficulty of distributed programming.
+\label{sec:intro}
+Although distributed programming has become an essential and commonplace task,
+it remains very challenging for most developers to write correct distributed
+programs. The inherent difficulties of distributed computing---concurrency,
+asynchrony, and partial failure---have been excaberated by the scale at which
+modern distributed systems must operate.
 
-% TODO: include "application-specific compensation logic"
-The inherent challenge of writing distributed code is exerbated by a recent
-trend away from traditional approaches to distributed consistency based on
-atomic commit protocols. Faced with the challenges of providing
-highly-available, geo-replicated online services, programmers are increasingly
-choosing to sacrifice sequential consistency for improved latency and
-availability. Although the design goal of these systems is typically to achieve
-a variant of ``eventual'' consistency, it 
+To allow their programs to gracefully tolerate network partitions and
+unpredictable messaging delays, many system designers have chosen to give up
+sequential consistency because it typically requires the use of heavyweight
+distributed commit and consensus protocols. Instead, many modern systems aim
+instead to provide a weaker degree of consistency, such as eventual
+consistency~\cite{Terry1995} or causal consistency~\cite{Lloyd2011}.
 
-% Explain CALM as a proposed program analysis
-Recently, we proposed the CALM principle, which links distributed
+We recently proposed the CALM theorem, which links distributed
 \emph{consistency} with \emph{logical
-  monotonicity}~\cite{Alvaro2011}. Intuitively, a logically monotonic program
-computes a set of facts that only grows over time; it never ``retracts'' an
-earlier conclusion in the face of new information. The CALM analysis is realized
-as part of Bloom, a Datalog-based DSL for distributed programming~\cite{bloom}.
+  monotonicity}~\cite{Alvaro2011,Hellerstein2010}. Intuitively, a logically
+monotonic program computes a set of facts that only grows over time; it never
+``retracts'' an earlier conclusion in the face of new information. Hence, a
+monotonic program can be executed in a coordination-free manner and still reach
+a consistent state: all monotonic programs are ``eventually consistent.'' Since
+synctactic monotonicity of a Datalog program is straightforward to detect, the
+CALM theorem provides a simple analysis technique for loosely consistent
+distributed programs. The CALM analysis is realized as part of Bloom, a
+Datalog-based DSL for distributed programming~\cite{bloom}.
+% XXX: cite Belgians
+% XXX: validate that 
+
+Our initial formulation of Bloom and CALM only considered programs that compute
+sets of facts that grow over time (``set monotonicity''). This limits the
+usefulness of the CALM analysis, because it makes several common distributed
+programming idioms non-monotonic. In particular, threshold tests (``$\textrm{count}(S) >
+k$'') and monotonically increasing counters are both non-monotonic in the
+original definition.
+
+In this paper, we extend our previous results to apply to a more general notion
+of monotonicity. We use lattices to describe any domain 
 
 % Explain how lattices generalize monotonic datalog
 In this paper, we extend our previous results in several directions:
