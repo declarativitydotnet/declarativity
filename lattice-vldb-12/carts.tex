@@ -1,2 +1,22 @@
 \section{Case Study: Shopping Carts}
 \label{sec:carts}
+
+\begin{figure}
+\label{fig:cart-system}
+\caption{Architecture of a simple shopping cart system.}
+\end{figure}
+
+In this section, we consider a simple e-commerce system in which clients
+interact with a shopping cart service, adding and removing items over the course
+of their browsing session (Figure~\ref{fig:cart-system}). Eventually, a client
+submits a ``checkout'' operation, at which point the cumulative effect of their
+shopping session should be tabulated and returned to the client. In a more
+complete system, the result of the checkout operation might be presented to the
+client for confirmation or submitted to a payment processor to complete the
+e-commerce transaction. This case study is based on the cart system from Alvaro
+et al.~\cite{Alvaro2011}, which was in turn inspired by the discussion of
+replicated shopping carts in the Dynamo paper~\cite{DeCandia2007}.
+
+\subsection{Multiset Lattice}
+
+\subsection{Monotonic Checkout}
