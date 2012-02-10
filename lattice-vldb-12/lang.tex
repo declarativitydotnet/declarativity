@@ -14,8 +14,48 @@
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
+class ShortestPaths
+  include Bud
+
+  state do
+    table :link, [:from, :to, :c]
+    table :path, [:from, :to, :next_hop] => [:c]
+    table :min_cost, [:from, :to] => [:c]
+  end
+
+  bloom do
+    path <= link {|l| [l.from, l.to, l.to, MinLattice.new(l.c)]}
+    path <= (link*path).pairs(:to => :from) do |l,p|
+      [l.from, p.to, l.to, p.c + l.c]
+    end
+    min_cost <= path {|p| [p.from, p.to, p.c]}
+  end
+end
 \end{lstlisting}
 \end{scriptsize}
 \caption{A simple \lang program to compute the shortest paths in a graph.}
 \label{fig:lattice-spaths}
 \end{figure}
+
+\begin{figure*}[t]
+\begin{tabular}{|l|l|l|l|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Merge} & \textbf{Morphisms} \\
+\hline
+\texttt{lbool} & Boolean lattice (false $\to$ true) & & \texttt{when\_true} \\
+\texttt{lmax} & Max over an ordered domain & &\texttt{gt},
+\texttt{gt\_eq}, \texttt{+}, \texttt{-} \\
+\texttt{lmin} & Min over an ordered domain & &\texttt{lt}, \texttt{lt\_eq},
+\texttt{+}, \texttt{-} \\
+\texttt{lset} & Set of values & &\texttt{size}, \texttt{intersect}, \texttt{project}
+\\
+\texttt{lbag} & Multiset of values & &\texttt{size}, \texttt{intersect},
+\texttt{project}, \texttt{mult(k)}\\
+\texttt{lmap} & Map from key to lattice values & &\texttt{size},
+\texttt{intersect}, \texttt{project}, \texttt{at(k)}, \texttt{key?(k)} \\
+\texttt{lsum} & Sum of non-negative numbers & &\\
+\hline
+\end{tabular}
+\caption{Builtin lattices provided by \lang.}
+\label{fig:builtin-lattices}
+\end{figure*}
