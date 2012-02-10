@@ -40,11 +40,21 @@ consistency/convergence of the cart system.
 
 \subsection{Monotonic Checkout}
 Alvaro et al.\ argue that processing a checkout request is non-monotonic because
-it requires performing an aggregation query over an asynchronously-computed data
-set; in general, coordination might be required to ensure that the entire data
-set has been received before the checkout request can be processed
-correctly. However, note that the client knows exactly which add/remove
-operations should be reflected in the result of the checkout; if that
-information can be propagated to the cart service, any chosen replica can decide
-if it has enough information to process the checkout operation without needing
-to coordinate.
+it requires aggregating over an asynchronously computed data set; in general,
+coordination might be required to ensure that the complete input has been
+received before the checkout request can be processed correctly. However, note
+that the client knows exactly which add/remove operations should be reflected in
+the result of the checkout; if that information can be propagated to the cart
+service, any chosen replica can decide if it has enough information to process
+the checkout operation without needing to coordinate.
+
+This can be done by assigning IDs to each message sent by the client. Each
+client has a session ID; within a session, operation IDs are assigned in
+increasing numeric order without gaps. Hence, if the client sends a ``lower
+bound'' operation ID along with the checkout message, any replica of the cart
+service can ensure that it only produces a response message once it has received
+all the operations in the ID range indicated by the client. This essentially
+requires a threshold test over the operation IDs received by a given replica,
+which can easily be implemented using lattices.
+
+\subsection{Performance Study}
