@@ -9,16 +9,16 @@
 
 In this section, we consider a simple e-commerce system in which clients
 interact with a shopping cart service, adding and removing items over the course
-of their browsing session (Figure~\ref{fig:cart-system}). The shopping cart
-service is replicated to improve fault tolerance; client requests can be
-submitted to any of the cart replicas. Eventually, a client submits a
-``checkout'' operation, at which point the cumulative effect of their shopping
-session should be summarized and returned to the client. In a more complete
-system, the result of the checkout operation might be presented to the client
-for confirmation or submitted to a payment processor to complete the e-commerce
-transaction. This case study is based on the cart system from Alvaro et
-al.~\cite{Alvaro2011}, which was in turn inspired by the discussion of
-replicated shopping carts in the Dynamo paper~\cite{DeCandia2007}.
+of a browsing session (Figure~\ref{fig:cart-system}). The shopping cart service
+is replicated to improve fault tolerance; client requests can be routed to any
+of the cart replicas. Eventually, a client submits a ``checkout'' operation, at
+which point the cumulative effect of their shopping session should be summarized
+and returned to the client. In a more complete system, the result of the
+checkout operation might be presented to the client for confirmation or
+submitted to a payment processor to complete the e-commerce transaction. This
+case study is based on the cart system from Alvaro et al.~\cite{Alvaro2011},
+which was in turn inspired by the discussion of replicated shopping carts in the
+Dynamo paper~\cite{DeCandia2007}.
 
 Alvaro et al.\ consider two different cart designs: a ``disorderly'' version in
 which the cart state is represented as a set (allowing monotonic accumulation of
@@ -30,7 +30,7 @@ applied to the cart. Non-monotonic operations are potentially expensive because
 they might require coordination to produce consistent results.
 
 In this section, we use \lang to make two improvements to the cart
-system. First, we improve the ``destructive'' design by using lattices to make
+service. First, we improve the ``destructive'' design by using lattices to make
 updates to the key-value store monotonic. Second, we show that lattices can be
 used to make the checkout process monotonic. In both cases, the result is a
 reduced need for coordination and more confidence in the eventual
