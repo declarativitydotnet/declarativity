@@ -3,7 +3,7 @@
 Although distributed programming has become an essential and commonplace task,
 it remains very challenging for most developers to write correct distributed
 programs. The inherent difficulties of distributed computing---concurrency,
-asynchrony, and partial failure---have been excaberated by the scale at which
+asynchrony, and partial failure---have been exacerbated by the scale at which
 modern distributed systems must operate.
 
 To allow their programs to gracefully tolerate network partitions and
@@ -15,12 +15,12 @@ consistency~\cite{Terry1995} or causal consistency~\cite{Lloyd2011}.
 
 We recently proposed the CALM theorem, which links distributed
 \emph{consistency} with \emph{logical
-  monotonicity}~\cite{Alvaro2011,Hellerstein2010}. Intuitively, a logically
-monotonic program computes a set of facts that only grows over time: it never
-``retracts'' an earlier conclusion in the face of new information. Hence, a
-monotonic program can be executed in a coordination-free manner and still reach
-a consistent state---all monotonic programs are ``eventually
-consistent''~\cite{Ameloot2011}. Since synctactic monotonicity of a Datalog
+  monotonicity}~\cite{Alvaro2011,Hellerstein2010}. Intuitively, a monotonic
+program computes a set of facts that only grows over time: it never ``retracts''
+an earlier conclusion in the face of new information. Hence, a monotonic program
+can be executed in a coordination-free manner and still reach a consistent
+state---all monotonic programs are ``eventually
+consistent''~\cite{Ameloot2011}. Since syntactic monotonicity of a Datalog
 program is straightforward to determine, the CALM theorem provides the basis for
 a simple analysis technique for loosely consistent distributed
 programs~\cite{Alvaro2011}. The CALM analysis is realized as part of Bloom, a
@@ -30,20 +30,22 @@ Our initial formulation of Bloom and CALM only considered programs that compute
 sets of facts that grow over time (``set monotonicity''). This limits the
 usefulness of the CALM analysis because it makes several common distributed
 programming idioms non-monotonic. In particular, threshold tests
-(``$\textrm{count}(S) > k$'') and monotonically increasing counters are both
-non-monotonic in the original definition. In this paper, we extend our previous
-results to apply to a more general notion of monotonicity.
+(``$\textrm{max}(S) > k$'') and upward-moving counters are both non-monotonic
+under set monotonicity.
 
- We use lattices to
-describe any domain
+In this paper, we extend our previous results by using a more general notion of
+monotonicity. We do this by introducing \emph{join semi-lattices} as a
+programming construct. A join semi-lattice consists of a partial order $\le$
+over a domain $S$ and a least upper bound (LUB) function $f$. For any two
+elements $a,b \in S$, $f(a, b) = c$, where $a \le c$ and $b \le c$. For the set
+lattice, $f$ is set union and $\le$ is set containment.
 
 % Explain how lattices generalize monotonic datalog
 In this paper, we extend our previous results in several directions:
 \begin{enumerate}
 \item
-  We review the lattice concept and the algebraic properties that must be
-  satisfied by a valid lattice. We present \baselang, a variant of Datalog that
-  operates over both lattices and traditional relations, and show that \baselang
+  We review the algebraic properties of lattices and present \baselang, a
+  variant of Datalog that is defined over lattices. We show that \baselang
   generalizes Datalog.
 
 \item
@@ -51,7 +53,8 @@ In this paper, we extend our previous results in several directions:
   the syntax and semantics of \lang and describe how we extended the standard
   semi-na\"{i}ve Datalog evaluation scheme~\cite{Balbin1987} to support both
   lattices and traditional database relations. We describe the builtin lattice
-  types provided by \lang and show how users can define custom lattices.
+  types provided by \lang, describe how developers can define custom lattices,
+  and illustrate how to compose lattices into more complex behaviors.
 
 \item
   Finally, we validate the effectiveness of lattices with two detailed case
