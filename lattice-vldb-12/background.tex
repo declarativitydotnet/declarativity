@@ -1,0 +1,84 @@
+\section{Background}
+\label{sec:background}
+\begin{figure}
+\begin{tabular}{|c|l|}
+\hline
+Name & Meaning \\
+\hline
+\verb|<=| &  \\
+\hline
+\verb|<+| &  \\
+\hline
+\verb|<-| &  \\
+\hline
+% XXX: crappy type setting
+\verb|<|$\sim$ &  \\
+\hline
+\end{tabular}
+\caption{Bloom operators.}
+\label{fig:bloom-ops}
+\end{figure}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+class AllPaths
+  include Bud
+
+  state do
+    table :link, [:from, :to, :cost]
+    table :path, [:from, :to, :next_hop, :cost]
+  end
+
+  bloom :make_paths do
+    path <= link {|l| [l.from, l.to, l.to, l.cost]}
+    path <= (link*path).pairs(:to => :from) do |l,p|
+      [l.from, p.to, l.to, l.cost+p.cost]
+    end
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A Bloom program to compute the transitive closure of the
+  \emph{link} relation.}
+\label{fig:bloom-spaths}
+\end{figure}
+
+Bloom is a Datalog-based domain-specific language (DSL) for distributed
+programming~\cite{Alvaro2011,bloom}. The current prototype implementation, Bud,
+allows logic written in Bloom to be embedded within Ruby programs. In Bloom,
+program state is represented using \emph{collections} and computation is
+expressed using declarative \emph{rules}. The original Bloom language assumes
+that collections are relations (as in traditional Datalog) and only allows
+Datalog-style conjunctive queries over those collections; in
+Section~\ref{sec:impl}, we will describe how \lang generalizes Bloom to allow
+storage and computation using arbitrary lattices.
+
+A Bloom program is a bundle of declarative rules. Each rule has the form:
+\begin{quotation}
+lhs op rhs
+\end{quotation}
+where \emph{lhs} is the name of a Bloom collection, \emph{rhs} is an expression
+that produces a collection, and \emph{op} is one of the operators listed in
+Figure~\ref{fig:bloom-ops}. Intuitively, when the \emph{rhs} becomes true, the
+\emph{op} indicates the time at which the \emph{rhs} facts will be added to the
+\emph{lhs} collection.
+% XXX: Discuss different operators
+% XXX: Discuss different collection types
+
+The \emph{rhs} expression is drawn from an expression language that is
+essentially a syntax sugar for Datalog queries (select, project, join,
+aggregation, and negation); the particular syntax adopted by Bloom resembles
+iteration over a collection, and is intended to be more familiar to imperative
+programmers than the traditional Datalog syntax. Note that, like Datalog
+predicates, Bloom rules can include recursion (e.g., the \emph{lhs} relation may
+appear in the \emph{rhs} expression, either directly or indirectly).
+
+Bloom has a \emph{purely declarative} semantics: the meaning of a Bloom program
+is defined in a model-theoretic fashion, without reference to a particular
+evaluation strategy~\cite{dedalus}. Operationally, the Bud interpreter follows a
+timestepped execution model. First, inbound events (network messages and timer
+interrupts) are merged into the local database. Then the consequences of those
+new facts are computed by computing to a fixpoint. Finally, any outbound
+messages are sent and state updates are applied.
+
