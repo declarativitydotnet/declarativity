@@ -1,9 +1,9 @@
 \section{Background}
 \label{sec:background}
-\begin{figure}
+\begin{table}
 \begin{tabular}{|c|l|}
 \hline
-Name & Meaning \\
+\textbf{Name} & \textbf{Meaning} \\
 \hline
 \verb|<=| &  \\
 \hline
@@ -16,8 +16,8 @@ Name & Meaning \\
 \hline
 \end{tabular}
 \caption{Bloom operators.}
-\label{fig:bloom-ops}
-\end{figure}
+\label{tbl:bloom-ops}
+\end{table}
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -33,7 +33,7 @@ class AllPaths
   bloom :make_paths do
     path <= link {|l| [l.from, l.to, l.to, l.cost]}
     path <= (link*path).pairs(:to => :from) do |l,p|
-      [l.from, p.to, l.to, l.cost+p.cost]
+      [l.from, p.to, l.to, l.cost + p.cost]
     end
   end
 end
@@ -60,7 +60,7 @@ lhs op rhs
 \end{quotation}
 where \emph{lhs} is the name of a Bloom collection, \emph{rhs} is an expression
 that produces a collection, and \emph{op} is one of the operators listed in
-Figure~\ref{fig:bloom-ops}. Intuitively, when the \emph{rhs} becomes true, the
+Table~\ref{tbl:bloom-ops}. Intuitively, when the \emph{rhs} becomes true, the
 \emph{op} indicates the time at which the \emph{rhs} facts will be added to the
 \emph{lhs} collection.
 % XXX: Discuss different operators
