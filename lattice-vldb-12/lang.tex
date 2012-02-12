@@ -80,18 +80,15 @@ class Bud::SetLattice < Bud::Lattice
     Bud::SetLattice.new((@v + i.reveal).uniq)
   end
 
-  morph :size
-  def size
+  morph :size do
     Bud::MaxLattice.new(@v.size)
   end
 
-  morph :intersect
-  def intersect(i)
+  morph :intersect do |i|
     Bud::SetLattice.new(@v & i.reveal)
   end
 
-  morph :pro
-  def pro(&blk)
+  morph :pro do |&blk|
     @v.map(&blk)
   end
 end
