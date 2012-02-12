@@ -29,8 +29,8 @@ Datalog-based DSL for distributed programming~\cite{bloom}.
 Our initial formulation of Bloom and CALM only considered programs that compute
 sets of facts that grow over time (``set monotonicity''). This limits the
 usefulness of the CALM analysis because it makes several common distributed
-programming idioms non-monotonic. In particular, threshold tests
-(``$\textrm{max}(S) > k$'') and upward-moving counters are both non-monotonic
+programming idioms non-monotonic. In particular, threshold tests (e.g.,
+``$\textrm{max}(S) > k$'') and upward-moving counters are both non-monotonic
 under set monotonicity.
 
 In this paper, we extend our previous results by using a more general notion of
