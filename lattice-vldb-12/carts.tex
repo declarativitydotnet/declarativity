@@ -52,9 +52,18 @@ This can be done by assigning IDs to each message sent by the client. Each
 client has a session ID; within a session, operation IDs are assigned in
 increasing numeric order without gaps. Hence, if the client sends a ``lower
 bound'' operation ID along with the checkout message, any replica of the cart
-service can ensure that it only produces a response message once it has received
-all the operations in the ID range indicated by the client. This essentially
-requires a threshold test over the operation IDs received by a given replica,
-which can easily be implemented using lattices.
+service can independently ensure that it only produces a response message once
+it has received all the operations in the ID range indicated by the client. This
+essentially requires a threshold test over the operation IDs received by a given
+replica, which can easily be implemented using lattices.
 
 \subsection{Performance Study}
+\begin{itemize}
+\item
+  goal: demonstrate that removing coordination from a distributed protocol can
+  significantly reduce its running time
+\item
+  benchmark: destructive cart w/ coordination on each action vs.\ destructive
+  cart in \lang without coordination, disorderly cart with coordination on
+  checkout vs.\ disorderly cart with monotonic checkout
+\end{itemize}
