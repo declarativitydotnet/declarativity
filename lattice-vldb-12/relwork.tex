@@ -1,6 +1,24 @@
 \section{Related Work}
 
+\subsection{Concurrency control}
+The importance of commutative operations has long been recognized by work in the
+distributed systems, data management, and groupware communities.
+
+\subsection{Non-monotonicity in deductive databases}
+Adding non-monotonic operators (e.g., aggregation and negation) to Datalog
+increases the expressiveness of the language but introduces significant
+complexities: care must be taken to ensure that the resulting language has a
+semantics that is well-defined, intuitive to the user, and amenable to efficient
+evaluation. A straightforward approach is to disallow recursion through
+aggregation or negation, which admits only the class of so-called ``stratified
+programs''~\cite{Apt1988}. Many attempts have been made to assign a semantics to
+larger classes of programs (e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
+
+The observation that many uses of aggregation and negation have a ``monotonic''
+flavor has been made before.
+
 % CRDTs
 % Work on semantics-aware concurrency control
+% Operational transformations
 % Ross & Sagiv on lattices
 % Kostler et al. on differential fixpoint + subsumption
