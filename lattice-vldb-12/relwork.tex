@@ -15,7 +15,16 @@ programs''~\cite{Apt1988}. Many attempts have been made to assign a semantics to
 larger classes of programs (e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
 
 The observation that many uses of aggregation and negation have a ``monotonic''
-flavor has been made before.
+flavor has been made before. Ross and Sagiv propose a semantics for a class of
+programs that includes min and max aggregates~\cite{Ross1992}. They propose a model theoretic
+semantics for this class of programs that is quite similar to our semantics for
+\baselang in Section~\ref{sec:foundation}. Our work differs from Ross and
+Sagiv's in several respects: most notably, they use lattices as a way to
+characterize the monotonicity of classes of Datalog programs, whereas we propose
+lattices as a practical programming model. Accordingly, they restrict the usage
+of monotone aggregates to a single ``cost'' argument in certain predicates, do
+not allow user-defined aggregates, and do not propose a framework for arbitrary
+lattices to be composed safely.
 
 % CRDTs
 % Work on semantics-aware concurrency control
