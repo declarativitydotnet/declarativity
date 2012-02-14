@@ -2,13 +2,14 @@
 \label{sec:foundation}
 
 \subsection{Definitions}
-
+\label{sec:found-defn}
 A \emph{join semi-lattice} is a pair $\langle S, \lor \rangle$, where $S$ is a
 poset and $\lor$ is a binary operator (called the ``join'' or ``least upper
 bound'') that is associative, commutative, and idempotent. For all $x, y \in S$,
 $x \lor y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \in S$ such
 that $z' <_S z$. For brevity, we use the term ``lattice'' to mean ``join
 semi-lattice'' in the rest of this paper.
+% XXX: talk about least element?
 
 A \emph{morphism} from lattice $\langle X, \lor_X\rangle$ to lattice $\langle Y,
 \lor_Y\rangle$ is a function $f$ such that, $\forall a,b \in X: f(a \lor_X b) =
