@@ -10,27 +10,38 @@
 % * discuss integration features
 % * implementation notes
 
-When designing \lang, our philosophy was to extend Bloom to allow the
-manipulation of lattices, rather than designing a new language from
-scratch. Thus, \lang is completely backward compatible with Bloom. This decision
-also required that we consider how 
+When designing \lang, we decided to extend Bloom to include support for
+lattices, rather than building a new language from scratch. Hence, \lang is
+backward compatible with Bloom, and was implemented with relatively minor
+changes to the Bud runtime. This design decision also required that we consider
+rules written over lattices should interoperate with rules that use traditional
+Bloom relations; we added several \lang features to ease this interoperability,
+which we describe in Section~\ref{sec:bloom-interop}.
 
-\subsection{Lattice values}
-In \lang, each lattice has an associated Ruby class that defines the behavior of
-the lattice. Every lattice class must define two methods:
+\subsection{Lattice types and values}
+In \lang, each lattice has an associated Ruby class, which we call the
+\emph{lattice class}. An instance of this class is called a \emph{lattice
+  value}. A lattice element represents a single point in the lattice---i.e., an
+element of the poset associated with the lattice.
+
+A lattice class is a normal Ruby class that meets a certain API contract. Every
+lattice class must define two methods:
 \begin{itemize}
 \item \texttt{initialize(i)}: given a Ruby object \emph{i}, this method
-  constructs a new instance of the lattice class that ``wraps'' \emph{i}
-  (\texttt{initialize} is just the normal Ruby syntax for a constructor).
-\item \texttt{merge(v)}: given another instance of the (same) lattice class,
-  this method returns an instance of the lattice class that is $\ge$ both of the
-  input values. That is, this method computes the least upper bound of the two
-  values; a legal \emph{merge} function implementation must satisfy the 
+  constructs a new lattice element that ``wraps'' \emph{i} (\texttt{initialize}
+  is just the normal Ruby syntax for defining a constructor). If $i$ is the null
+  reference, this method returns the least element of the lattice.
+\item \texttt{merge(e)}: given a lattice element \emph{e}, this method returns the
+  lattice element that is the least upper bound of $\{e, self\}$. This method must
+  satisfy the algebraic properties summarized in Section~\ref{sec:found-defn}---in
+  particular, it must be commutative, associative, and idempotent. Note that
+  \emph{e} must have the same lattice class as \emph{self}.
 \end{itemize}
-An instance of a lattice class represents a single point in the lattice space. A
-lattice value is \emph{immutable} (e.g., \texttt{merge} functions should
+A lattice value is \emph{immutable} (e.g., \texttt{merge} functions should
 construct new lattice values rather than modifying one of their input values
-in-place). 
+in-place). Efficient lattice implementations may \emph{share structure} on merge
+operations, as is common practice for immutable data structures in functional
+programming languages~\cite{Okasaki1999}.
 
 \subsection{Lattice wrappers}
 A \emph{lattice wrapper} manages the mapping from identifier names to lattice
@@ -99,6 +110,7 @@ end
 \end{figure}
 
 \subsection{Integration with set-oriented logic}
+\label{sec:bloom-interop}
 
 \subsection{Implementation}
 

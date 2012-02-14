@@ -37,6 +37,10 @@ reduced need for coordination and more confidence in the eventual
 consistency/convergence of the cart system.
 
 \subsection{Monotonic Destructive Cart}
+TODO: basic idea is that if we fix the set of replicas, we can do ``early
+summaries'' of cart actions---i.e., convert the operation log format into the
+format used by the naive destructive cart, once we know that a given operation
+has reached all replicas. Is this worth including?
 
 \subsection{Monotonic Checkout}
 Alvaro et al.\ argue that processing a checkout request is non-monotonic because
