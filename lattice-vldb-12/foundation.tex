@@ -6,35 +6,31 @@
 A \emph{join semi-lattice} is a pair $\langle S, \lor \rangle$, where $S$ is a
 poset and $\lor$ is a binary operator (called the ``join'' or ``least upper
 bound'') that is associative, commutative, and idempotent. For all $x, y \in S$,
-$x \lor y = z$, where $x \sqsubseteq z, y \sqsubseteq z$, and there is no $z'
-\in S$ such that $z' \neq z$ and $z' \sqsubseteq z$. For brevity, we use the
-term ``lattice'' to mean ``join semi-lattice'' in the rest of this paper. We use
-the term ``lattice value'' (or simply ``value'') to refer to elements of the
-poset associated with some lattice; e.g., $\{ 1,2 \}$ is a value of the set
-lattice.
+$x \lor y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \in S$ such
+that $z' <_S z$. For brevity, we use the term ``lattice'' to mean ``join
+semi-lattice'' in the rest of this paper.
 
 A \emph{morphism} from lattice $\langle X, \lor_X\rangle$ to lattice $\langle Y,
-\lor_Y\rangle$ is a function $f$ such that, $\forall a,b \in X: f(a \lor_X b)
-= f(a) \lor_Y f(b)$. That is, $f$ enables $X$ lattice values to be converted
-into $Y$ lattice values in a way that preserves the lattice properties.
+\lor_Y\rangle$ is a function $f$ such that, $\forall a,b \in X: f(a \lor_X b) =
+f(a) \lor_Y f(b)$. That is, $f$ allows $X$ lattice values to be converted into
+$Y$ lattice values in a way that preserves the lattice properties.
 
 A \emph{monotone function} (also called an ``order-preserving map'') from poset
-$S$ to poset $T$ is a function $g$ such that $\forall a,b \in S: a \leqslant_S b
-\Rightarrow g(a) \leqslant_T g(b)$. That is, $g$ maps elements of $S$ to elements
-of $T$ in a manner that is consistent with the partial orders of both sets. Note
+$S$ to poset $T$ is a function $g$ such that $\forall a,b \in S: a \leq_S b
+\Rightarrow g(a) \leq_T g(b)$. That is, $g$ maps elements of $S$ to elements of
+$T$ in a manner that is consistent with the partial orders of both sets. Note
 that morphisms are monotone functions but the converse is not true in general.
 
 \subsection{Fixed Point and Minimal Model}
 
-\begin{itemize}
-\item define lattices and merge functions/LUBs
-\item introduce \baselang, and give a model-theoretic semantics for it ($\to$
-  ``what does it mean to compute a fixpoint of a \baselang program?'')
-\item show that \baselang generalizes Datalog
-\item presumably proving confluence of \baselang would be too involved (e.g.,
-  would require introducing Dedalus, etc.)
-\end{itemize}
+TODO: introduce \baselang, and give a model-theoretic semantics for it ($\to$
+``what does it mean to compute a fixpoint of a \baselang program?'')
 
 \subsection{\baselang Generalizes Dedalus}
 
+TODO: show that \baselang generalizes Datalog (worth doing?)
+
 \subsection{Confluence in \baselang}
+
+TODO: presumably this would be too complicated, since it would require
+introducing Dedalus?
