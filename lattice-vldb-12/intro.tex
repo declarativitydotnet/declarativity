@@ -36,13 +36,15 @@ under set monotonicity.
 In this paper, we extend our previous results by using a more general notion of
 monotonicity. Instead of only allowing growth according to the set containment
 partial order, we allow any user-defined partial order to be used. We do this by
-introducing \emph{complete join semi-lattices} as a programming construct. We
-give a formal definition of this construct below, but the intuition is that the
-user must supply a commutative, idempotent merge function (``least upper
-bound'') that takes two input values and produces an output value that is not
-smaller than either of the input values (according to the user's partial
-order). This generalizes Bloom (and traditional Datalog), which assumes a fixed
-merge function (set union) and partial order (set containment).
+introducing \emph{join semi-lattices} as a programming construct. We give a
+formal definition of this construct below, but the intuition is that the user
+must supply a commutative, idempotent merge function (``least upper bound'')
+that takes two input values and produces an output value that is not smaller
+than either of the input values (according to the user's partial order). This
+generalizes Bloom (and traditional Datalog), which assumes a fixed merge
+function (set union) and partial order (set containment).
+% Relate user-defined merge functions to merge functions in other contexts?
+% (e.g., key-value store, COPS, Piccolo)
 
 % Explain how lattices generalize monotonic datalog
 In this paper, we make the following contributions:
