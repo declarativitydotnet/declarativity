@@ -44,13 +44,14 @@ end
 \label{fig:bloom-spaths}
 \end{figure}
 
+% Mention other host languages?
 Bloom is a Datalog-based domain-specific language (DSL) for distributed
-programming~\cite{Alvaro2011,bloom}. The current prototype implementation, Bud,
-allows logic written in Bloom to be embedded within Ruby programs. In Bloom,
-program state is represented using \emph{collections} and computation is
-expressed using declarative \emph{rules}. The original Bloom language assumes
-that collections are relations (as in traditional Datalog) and only allows
-Datalog-style conjunctive queries over those collections; in
+programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
+\emph{Bud}, allows logic written in Bloom to be embedded within Ruby
+programs. In Bloom, program state is represented using \emph{collections} and
+computation is expressed using declarative \emph{rules}. The original Bloom
+language assumes that collections are relations (as in traditional Datalog) and
+only allows Datalog-style conjunctive queries over those collections; in
 Section~\ref{sec:impl}, we will describe how \lang generalizes Bloom to allow
 storage and computation using arbitrary lattices.
 

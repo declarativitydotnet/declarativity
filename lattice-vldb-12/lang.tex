@@ -41,14 +41,14 @@ end
 
 % is this the right place for this?
 When designing \lang, we decided to extend Bloom to include support for
-lattices, rather than building a new language from scratch. Hence, \lang is
+lattices rather than building a new language from scratch. Hence, \lang is
 backward compatible with Bloom, and was implemented with relatively minor
 changes to the Bud runtime. This design decision also required that we consider
 rules written over lattices should interoperate with rules that use traditional
 Bloom relations; we added several \lang features to ease this interoperability,
 which we describe in Section~\ref{sec:bloom-interop}.
 
-\subsection{Lattice types and values}
+\subsection{Lattice classes and elements}
 In \lang, each lattice has an associated Ruby class, which we call the
 \emph{lattice class}. An instance of this class is called a \emph{lattice
   element}. A lattice element represents a single point in the lattice---i.e., an
@@ -71,8 +71,8 @@ must also define two methods:
   particular, it must be commutative, associative, and idempotent. Note that
   \emph{e} must have the same class as \emph{self}.
 \end{itemize}
-A lattice element is \emph{immutable} (e.g., \texttt{merge} functions should
-construct new lattice elements rather than modifying one of their inputs
+Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions should
+construct a new lattice element rather than modifying one of their inputs
 in-place). Efficient lattice implementations may \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
 programming languages~\cite{Okasaki1999}. % XXX: maybe not the right place for this
@@ -83,7 +83,7 @@ to be created via the composition of multiple lattices. In \lang, a morphism is
 akin to a Ruby method that satisfies the algebraic properties summarized in
 Section~\ref{sec:found-defn}.
 
-\subsection{Monotonicity analysis}
+\subsection{Program analysis}
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -130,13 +130,13 @@ traditional Bloom programs that manipulate set-oriented collections.
   easily used as input to lattices. If a \lang rule has a set-oriented
   collection on the rhs and a lattice on the lhs, the lattice merge function is
   used to ``fold over'' the elements of the collection. That is, each element of
-  the collection is converted to a lattice value (via the appropriate lattice
-  constructor); then the set of lattice values are merged together (via repeated
-  application of the \texttt{merge} method). In our experience, this is
+  the collection is converted to a lattice element (via the appropriate lattice
+  constructor); then the set of lattice elements are merged together (via
+  repeated application of the \texttt{merge} method). In our experience, this is
   typically the behavior intended by the user.
 
-\item[embedded lattice values:] It would be convenient to allow lattice values
-  to be stored as attributes of tuples that appear in set-oriented Bloom
+\item[lattice embedding:] It would be convenient to allow lattice elements to be
+  stored as attributes of tuples that appear in set-oriented Bloom
   collections. Furthermore, Bloom provides several facilities (e.g., network
   messaging, module interfaces) as collections with special semantics; utilizing
   those facilities in programs that use lattices is important. Naturally, these
