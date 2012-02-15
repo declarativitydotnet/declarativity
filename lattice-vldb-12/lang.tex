@@ -123,27 +123,34 @@ end
 \lang provides two features to ease integration of lattice-based code with
 traditional Bloom programs that manipulate set-oriented collections.
 
-\begin{description}
+\subsubsection{Implicit fold}
 % XXX: this ignores the fact that Bloom collections consist of sets of tuples,
 % whereas implicit fold works for sets of singleton values
-\item[implicit fold:] This feature enables set-oriented collections to be more
-  easily used as input to lattices. If a \lang rule has a set-oriented
-  collection on the rhs and a lattice on the lhs, the lattice merge function is
-  used to ``fold over'' the elements of the collection. That is, each element of
-  the collection is converted to a lattice element (via the appropriate lattice
-  constructor); then the set of lattice elements are merged together (via
-  repeated application of the \texttt{merge} method). In our experience, this is
-  typically the behavior intended by the user.
+% XXX: refer to shortest paths program as practical example
+This feature enables set-oriented collections to be more easily used as input to
+lattices. If a \lang rule has a set-oriented collection on the rhs and a lattice
+on the lhs, the lattice merge function is used to ``fold over'' the elements of
+the collection. That is, each element of the collection is converted to a
+lattice element (via the appropriate lattice constructor); then the set of
+lattice elements are merged together (via repeated application of the
+\texttt{merge} method). In our experience, this is typically the behavior
+intended by the user.
 
-\item[lattice embedding:] It would be convenient to allow lattice elements to be
-  stored as attributes of tuples that appear in set-oriented Bloom
-  collections. Furthermore, Bloom provides several facilities (e.g., network
-  messaging, module interfaces) as collections with special semantics; utilizing
-  those facilities in programs that use lattices is important. Naturally, these
-  goals could be achieved by extracting the underlying Ruby object from the
-  lattice (e.g., using the \texttt{reveal} method), but this introduces
-  non-monotonicity.
-\end{description}
+\subsubsection{Collections with embedded lattice values}
+It would be convenient to allow lattice elements to be stored as attributes of
+tuples that appear in set-oriented Bloom collections. Furthermore, Bloom
+provides several facilities (e.g., network communication, persistent storage,
+module interfaces) as collections with special semantics; it would be
+unfortunate if a redundant set of facilities would be necessary to support
+lattice-based code. Naturally, lattice-based \lang code could interact with
+set-oriented collections by extracting the underlying Ruby value from the
+lattice (e.g., using the \texttt{reveal} method), but this would needlessly
+introduce non-monotonicity into the program.
+
+Storing lattice elements as attributes of tuples in set-oriented collections
+introduces several challenges. Tuples in Bloom collections are traditionally
+immutable: once a fact is known to be true, it remains true until it has been
+explicitly retracted (which can only occur between fixpoints~\cite{dedalus}).
 
 \subsection{Implementation}
 
