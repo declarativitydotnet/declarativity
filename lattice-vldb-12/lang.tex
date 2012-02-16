@@ -152,7 +152,7 @@ introduces several challenges. Tuples in Bloom collections are traditionally
 immutable: once a fact is known to be true, its value remains the
 same.\footnote{Bloom facts can be explicitly deleted, but this is a
   non-monotonic operation that can only occur between timesteps. Conceptually,
-  Bloom models updates as the retraction of the previous version of a fact and
+  Bloom models update as the retraction of the previous version of a fact and
   the insertion of a new fact~\cite{dedalus}.}
 
 \subsection{Implementation}
@@ -171,7 +171,7 @@ elements.
 \texttt{gt\_eq}, \texttt{+}, \texttt{-} & \\
 \texttt{lmin} & Min over an ordered domain & &\texttt{lt}, \texttt{lt\_eq},
 \texttt{+}, \texttt{-} & \\
-\texttt{lset} & Set of values & & \texttt{intersect},
+\texttt{lset} & Set of values & & \texttt{intersect}, \texttt{product},
 \texttt{project} & \texttt{size} \\
 \texttt{lpset} & Set of non-negative numbers & &
 \texttt{intersect}, \texttt{project}& \texttt{size}, \texttt{sum} \\
