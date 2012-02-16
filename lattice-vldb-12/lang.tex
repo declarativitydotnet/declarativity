@@ -77,7 +77,7 @@ in-place). Efficient lattice implementations may \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
 programming languages~\cite{Okasaki1999}. % XXX: maybe not the right place for this
 
-\subsection{Morphisms}
+\subsection{Morphisms and OPMs}
 As described in Section~\ref{sec:foundation}, morphisms allow complex programs
 to be created via the composition of multiple lattices. In \lang, a morphism is
 akin to a Ruby method that satisfies the algebraic properties summarized in
@@ -149,8 +149,11 @@ introduce non-monotonicity into the program.
 
 Storing lattice elements as attributes of tuples in set-oriented collections
 introduces several challenges. Tuples in Bloom collections are traditionally
-immutable: once a fact is known to be true, it remains true until it has been
-explicitly retracted (which can only occur between fixpoints~\cite{dedalus}).
+immutable: once a fact is known to be true, its value remains the
+same.\footnote{Bloom facts can be explicitly deleted, but this is a
+  non-monotonic operation that can only occur between timesteps. Conceptually,
+  Bloom models updates as the retraction of the previous version of a fact and
+  the insertion of a new fact~\cite{dedalus}.}
 
 \subsection{Implementation}
 
@@ -159,24 +162,25 @@ A \emph{lattice wrapper} manages the mapping from identifier names to lattice
 elements.
 
 \begin{table*}[t]
-\begin{tabular}{|l|l|l|l|}
+\begin{tabular}{|l|l|l|l|l|}
 \hline
-\textbf{Name} & \textbf{Description} & \textbf{Merge} & \textbf{Morphisms} \\
+\textbf{Name} & \textbf{Description} & \textbf{Merge} & \textbf{Morphisms} & \textbf{OPMs}\\
 \hline
-\texttt{lbool} & Boolean lattice (false $\to$ true) & & \texttt{when\_true} \\
+\texttt{lbool} & Boolean lattice (false $\to$ true) & & \texttt{when\_true} & \\
 \texttt{lmax} & Max over an ordered domain & &\texttt{gt},
-\texttt{gt\_eq}, \texttt{+}, \texttt{-} \\
+\texttt{gt\_eq}, \texttt{+}, \texttt{-} & \\
 \texttt{lmin} & Min over an ordered domain & &\texttt{lt}, \texttt{lt\_eq},
-\texttt{+}, \texttt{-} \\
-\texttt{lset} & Set of values & &\texttt{size}, \texttt{intersect}, \texttt{project}
-\\
-\texttt{lbag} & Multiset of values & &\texttt{size}, \texttt{intersect},
-\texttt{project}, \texttt{mult(k)}\\
-\texttt{lmap} & Map from key to lattice values & &\texttt{size},
-\texttt{intersect}, \texttt{project}, \texttt{at(k)}, \texttt{key?(k)} \\
-\texttt{lsum} & Sum of non-negative numbers & &\\
+\texttt{+}, \texttt{-} & \\
+\texttt{lset} & Set of values & & \texttt{intersect},
+\texttt{project} & \texttt{size} \\
+\texttt{lpset} & Set of non-negative numbers & &
+\texttt{intersect}, \texttt{project}& \texttt{size}, \texttt{sum} \\
+\texttt{lbag} & Multiset of values & & \texttt{intersect},
+\texttt{project}, \texttt{mult(k)} & \texttt{size}\\
+\texttt{lmap} & Map from key to lattice values & &
+\texttt{intersect}, \texttt{project}, \texttt{at(k)}, \texttt{key?(k)} & \texttt{size}\\
 \hline
 \end{tabular}
-\caption{Builtin lattices provided by \lang.}
+\caption{The builtin lattice types in \lang.}
 \label{tbl:builtin-lattices}
 \end{table*}

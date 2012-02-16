@@ -13,16 +13,20 @@ semi-lattice'' in the rest of this paper.
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
+% XXX: mention that morphisms must be distributive with respect to the lub of
+% their domain, whereas monotone functions don't need to be?
 A \emph{morphism} from lattice $\langle X, \lor_X\rangle$ to lattice $\langle Y,
 \lor_Y\rangle$ is a function $f$ such that, $\forall a,b \in X: f(a \lor_X b) =
 f(a) \lor_Y f(b)$. That is, $f$ allows $X$ lattice elements to be converted into
 $Y$ lattice elements in a way that preserves the lattice properties.
 
-A \emph{monotone function} (also called an ``order-preserving map'') from poset
-$S$ to poset $T$ is a function $g$ such that $\forall a,b \in S: a \leq_S b
-\Rightarrow g(a) \leq_T g(b)$. That is, $g$ maps elements of $S$ to elements of
-$T$ in a manner that is consistent with the partial orders of both sets. Note
-that morphisms are monotone functions but the converse is not true in general.
+An \emph{order-preserving map} (OPM) from poset $S$ to poset $T$ is a function
+$g$ such that $\forall a,b \in S: a \leq_S b \Rightarrow g(a) \leq_T
+g(b)$.\footnote{Order-preserving maps are also called \emph{monotone functions}.
+  We avoid that term in this paper to avoid confusion with the normal meaning of
+  monotonicity in Datalog.} That is, $g$ maps elements of $S$ to elements of $T$
+in a manner that is consistent with the partial orders of both sets. Note that
+morphisms are OPMs but the converse is not true in general.
 
 \subsection{Fixed point and minimal model}
 
