@@ -4,6 +4,10 @@
 The importance of commutative operations has long been recognized by the
 distributed systems, data management, and groupware communities.
 
+% CRDTs
+% Work on semantics-aware concurrency control
+% Operational transformations
+
 \subsection{Non-monotonicity in deductive databases}
 Adding non-monotonic operators (e.g., aggregation and negation) to Datalog
 increases the expressiveness of the language but introduces significant
@@ -14,6 +18,7 @@ aggregation or negation, which admits only the class of so-called ``stratified
 programs''~\cite{Apt1988}. Many attempts have been made to assign a semantics to
 larger classes of programs (e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
 
+% XXX: cite Van Gelder's "foundations of agg" paper
 The observation that many uses of aggregation and negation have a ``monotonic''
 flavor has been made before. Ross and Sagiv study a class of programs that
 include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model theoretic
@@ -30,14 +35,18 @@ K\"{o}stler et al.\ consider Datalog extended with subsumption relations, which
 allows the user to indicate that certain deductions should be ``preferred'' over
 others~\cite{Kostler1995}. These preferences must form a lattice; K\"{o}stler et
 al.\ then propose a model-theoretic semantics and evaluation scheme based on the
-lattice's partial order. Like Ross and Sagiv, this work shares some technical
-similarities with this paper, but differs in its goals and problem domain:
-K\"{o}stler et al.\ use subsumption to add semantic knowledge to graph traversal
-and heuristic search programs, but do not propose a general-purpose programming
-framework.
+partial order of the lattice. Like Ross and Sagiv, this work shares some
+technical similarities with this paper, but differs in its goals and problem
+domain: K\"{o}stler et al.\ use subsumption to add semantic knowledge to graph
+traversal and heuristic search programs, but do not propose a general-purpose
+programming framework.
 
-% CRDTs
-% Work on semantics-aware concurrency control
-% Operational transformations
-% Ross & Sagiv on lattices
-% Kostler et al. on differential fixpoint + subsumption
+Zaniolo and Wang identify a class of ``monotone aggregates'' as part of their
+work on supporting advanced user-defined aggregates in the $\mathcal{LDL}$++
+system~\cite{Zaniolo1999}. Like us, they observe that aggregates with monotone
+behavior can easily be supported without restriction in a traditional Datalog
+system based on semi-na\"{i}ve fixpoint. Their characterization of monotone
+aggregates is different than ours, they do not distinguish between morphisms and
+order-preserving maps, and do not consider distribution or confluence---in fact,
+supporting order-dependent aggregates is an explicit goal of their work, whereas
+we seek to ensure that programs are confluent in the face of message reordering.
