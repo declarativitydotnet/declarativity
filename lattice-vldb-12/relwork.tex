@@ -1,12 +1,39 @@
 \section{Related Work}
+\label{sec:relwork}
 
-\subsection{Concurrency control}
-The importance of commutative operations has long been recognized by the
-distributed systems, data management, and groupware communities.
+% XXX: intro?
 
-% CRDTs
-% Work on semantics-aware concurrency control
+\subsection{Semantics-based concurrency control}
+In the absence of semantic knowledge about transactions, serializability is the
+main correctness criteria for concurrency control schemes. However, ensuring
+serializability can be prohibitively expensive, for instance when transactions
+are long-running or database replicas are intermittently connected. Thus, many
+schemes have been proposed to allow non-serializable transaction schedules that
+preserve some \emph{semantic} notion of correctness. In particular, several
+schemes have been proposed to allow users to specify that certain operations can
+safely be commuted with other operations; this enlarges the space of allowed
+transaction schedules, increasing the potential for
+concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
+
+% TODO: do we need to cite all 3 papers?
+%       the weihl paper claims to explicitly only allow serializable schedules
+%       do we need to say why our stuff is different?
+
+O'Neil describes a method for supporting for ``escrow'' transactions, which
+designate certain operations that can be commuted subject to a resource
+bound~\cite{O'Neil1986}. For example, credits and debits to a bank account might
+only commute with one another if the bank account balance can be guaranteed to
+be non-negative.
+
+% XXX: do we need to say how our stuff compares to escrow?
+
+% TODO: cite Helland and Campbell on the value of ACID 2.0 operations
+
+\subsection{Commutativity in distributed systems}
+
+% CRDTs, Wuu & Bernstein
 % Operational transformations
+% Merge functions in KVS
 
 \subsection{Non-monotonicity in deductive databases}
 Adding non-monotonic operators (e.g., aggregation and negation) to Datalog
