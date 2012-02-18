@@ -1,0 +1,83 @@
+require "rubygems"
+require "benchmark"
+require "bud"
+
+class AllPathsL
+  include Bud
+
+  state do
+    lset :link
+    lset :path
+  end
+
+  bloom do
+    path <= link
+    path <= path.product(link).pro do |p,l|
+      Bud::SetLattice.new([[p[0], l[1], p[2] + l[2]]]) if p[1] == l[0]
+    end
+  end
+end
+
+class AllPathsB
+  include Bud
+
+  state do
+    table :link, [:from, :to, :cost]
+    table :path, [:from, :to, :cost]
+  end
+
+  bloom do
+    path <= link
+    path <= (path * link).pairs do |l,p|
+      [p.from, l.to, p.cost + l.cost] if p.to == l.from
+    end
+  end
+end
+
+def log_base_2(n)
+  Math.log(n) / Math.log(2)
+end
+
+def gen_link_data(num_nodes)
+  nodes = 1.upto(num_nodes).map {|i| "n#{i}"}
+  links = []
+  layers = log_base_2(num_nodes).to_i
+  nodes.each_with_index do |n,i|
+    layers.times do |j|
+      dest = (2 ** j) + i
+      next if dest >= nodes.length
+      links << [n, nodes[dest], 1]
+    end
+  end
+  links
+end
+
+def lattice_bench(data)
+  l = AllPathsL.new
+  l.link <+ Bud::SetLattice.new(data)
+  t = Benchmark.realtime do
+    l.tick
+  end
+  puts "Lattice done; #{t} seconds. # of paths: #{l.path.current_value.reveal.length}"
+  l.stop
+end
+
+def bloom_bench(data)
+  b = AllPathsB.new
+  b.link <+ data
+  t = Benchmark.realtime do
+    b.tick
+  end
+  puts "Bloom done; #{t} seconds. # of paths: #{b.path.to_a.length}"
+  b.stop
+end
+
+def bench(n)
+  data = gen_link_data(n)
+  puts "Running bench for n = #{n}, # links = #{data.length}"
+
+  bloom_bench(data)
+  lattice_bench(data)
+end
+
+bench(30)
