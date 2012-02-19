@@ -89,7 +89,7 @@ Section~\ref{sec:found-defn}.
 \begin{scriptsize}
 \begin{lstlisting}
 class Bud::SetLattice < Bud::Lattice
-  lattice_name :lset
+  wrapper_name :lset
 
   def initialize(x=[])
     @v = x     # Reject invalid input (elided)
@@ -107,7 +107,7 @@ class Bud::SetLattice < Bud::Lattice
     @v.map(&blk)
   end
 
-  morph :size do
+  ord_map :size do
     Bud::MaxLattice.new(@v.size)
   end
 end
@@ -184,3 +184,5 @@ elements.
 \caption{The builtin lattice types in \lang.}
 \label{tbl:builtin-lattices}
 \end{table*}
+
+\subsection{Performance study}
