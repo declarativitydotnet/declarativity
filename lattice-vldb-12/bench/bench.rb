@@ -53,6 +53,19 @@ def gen_link_data(num_nodes)
   links
 end
 
+def gen_complete_graph(num_nodes)
+  nodes = 1.upto(num_nodes).map {|i| "n#{i}"}
+  links = []
+  nodes.each_with_index do |n, i|
+    j = i + 1
+    while j < num_nodes
+      links << [n, nodes[j], 1]
+      j = j + 1
+    end
+  end
+  links
+end
+
 def lattice_bench(data, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ Bud::SetLattice.new(data)
