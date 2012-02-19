@@ -53,19 +53,6 @@ def gen_link_data(num_nodes)
   links
 end
 
-def gen_complete_graph(num_nodes)
-  nodes = 1.upto(num_nodes).map {|i| "n#{i}"}
-  links = []
-  nodes.each_with_index do |n, i|
-    j = i + 1
-    while j < num_nodes
-      links << [n, nodes[j], 1]
-      j = j + 1
-    end
-  end
-  links
-end
-
 def lattice_bench(data, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ Bud::SetLattice.new(data)
@@ -86,12 +73,22 @@ def bloom_bench(data)
   b.stop
 end
 
-def bench(n)
-  data = gen_link_data(n)
-  puts "Running bench for n = #{n}, # links = #{data.length}"
-
-  bloom_bench(data)
-  lattice_bench(data)
+def report_mem
+  rss_size = `ps -o rss= -p #{Process.pid}`.to_i
+  puts "Process RSS (kB): #{rss_size}"
 end
 
-bench(12)
+def bench(size, nruns)
+  data = gen_link_data(size)
+  puts "Running bench for size = #{size}, # links = #{data.length} (avg links/node: #{data.length.to_f/size})"
+
+  nruns.times do
+    bloom_bench(data)
+    report_mem
+    lattice_bench(data)
+    report_mem
+    GC.start
+  end
+end
+
+bench(18, 4)
