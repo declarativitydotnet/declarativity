@@ -1,6 +1,7 @@
 require "rubygems"
 require "benchmark"
 require "bud"
+require "memprof"
 
 class AllPathsL
   include Bud
@@ -52,8 +53,8 @@ def gen_link_data(num_nodes)
   links
 end
 
-def lattice_bench(data)
-  l = AllPathsL.new
+def lattice_bench(data, use_naive=false)
+  l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ Bud::SetLattice.new(data)
   t = Benchmark.realtime do
     l.tick
@@ -80,4 +81,4 @@ def bench(n)
   lattice_bench(data)
 end
 
-bench(30)
+bench(12)
