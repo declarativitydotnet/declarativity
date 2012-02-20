@@ -99,7 +99,7 @@ def bench(size, nruns)
   GC.start
 
   # Don't try to use naive evaluation for large graphs
-  if size <= 14
+  if size <= 16
     t3 = lattice_bench(data, nruns, true)
   end
 
