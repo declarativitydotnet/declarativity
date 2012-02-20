@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require "rubygems"
 require "benchmark"
 require "bud"
@@ -7,7 +8,7 @@ class AllPathsL
 
   state do
     lset :link
-    lset :path, :scratch => false
+    lset :path, :scratch => true
   end
 
   bloom do
@@ -23,7 +24,7 @@ class AllPathsB
 
   state do
     table :link, [:from, :to, :cost]
-    table :path, [:from, :to, :cost]
+    scratch :path, [:from, :to, :cost]
   end
 
   bloom do
@@ -55,27 +56,33 @@ end
 def lattice_bench(data, nruns, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ [data]
+  total_time = 0.0
   nruns.times do
     t = Benchmark.realtime do
       l.tick
     end
+    total_time += t
     puts "Lattice done; #{t} seconds. # of paths: #{l.path.current_value.reveal.length}"
     report_mem
   end
   l.stop
+  total_time / nruns
 end
 
 def bloom_bench(data, nruns)
   b = AllPathsB.new
   b.link <+ data
+  total_time = 0.0
   nruns.times do
     t = Benchmark.realtime do
       b.tick
     end
+    total_time += t
     puts "Bloom done; #{t} seconds. # of paths: #{b.path.to_a.length}"
     report_mem
   end
   b.stop
+  total_time / nruns
 end
 
 def report_mem
@@ -85,12 +92,18 @@ end
 
 def bench(size, nruns)
   data = gen_link_data(size)
+  puts "****** #{Time.now} ******"
   puts "Running bench for size = #{size}, # links = #{data.length}"
   puts "(avg links/node: #{data.length.to_f/size})"
 
-  bloom_bench(data, nruns)
+  t1 = bloom_bench(data, nruns)
   GC.start
-  lattice_bench(data, nruns)
+  t2 = lattice_bench(data, nruns)
+
+  puts "Results: avg bloom = #{t1}, avg lattice = #{t2}"
+  $stderr.printf("%d %.6f %.6f\n", data.length, t1, t2)
 end
 
-bench(20, 4)
+raise ArgumentError, "Usage: bench.rb graph_size nruns" unless ARGV.length == 2
+size, nruns = ARGV
+bench(size.to_i, nruns.to_i)
