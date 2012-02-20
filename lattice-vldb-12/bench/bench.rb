@@ -57,13 +57,12 @@ def lattice_bench(data, nruns, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ [data]
   total_time = 0.0
-  nruns.times do
+  nruns.times do |i|
     t = Benchmark.realtime do
       l.tick
     end
     total_time += t
-    puts "Lattice done; #{t} seconds. # of paths: #{l.path.current_value.reveal.length}"
-    report_mem
+    puts "#{use_naive ? "Naive" : "SN"} lattice done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{l.path.current_value.reveal.length} (RSS size: #{report_mem})"
   end
   l.stop
   total_time / nruns
@@ -73,21 +72,19 @@ def bloom_bench(data, nruns)
   b = AllPathsB.new
   b.link <+ data
   total_time = 0.0
-  nruns.times do
+  nruns.times do |i|
     t = Benchmark.realtime do
       b.tick
     end
     total_time += t
-    puts "Bloom done; #{t} seconds. # of paths: #{b.path.to_a.length}"
-    report_mem
+    puts "Bloom done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{b.path.to_a.length} (RSS size: #{report_mem})"
   end
   b.stop
   total_time / nruns
 end
 
 def report_mem
-  rss_size = `ps -o rss= -p #{Process.pid}`.to_i
-  puts "Process RSS (kB): #{rss_size}"
+  `ps -o rss= -p #{Process.pid}`.to_i
 end
 
 def bench(size, nruns)
@@ -99,9 +96,19 @@ def bench(size, nruns)
   t1 = bloom_bench(data, nruns)
   GC.start
   t2 = lattice_bench(data, nruns)
+  GC.start
 
-  puts "Results: avg bloom = #{t1}, avg lattice = #{t2}"
-  $stderr.printf("%d %.6f %.6f\n", data.length, t1, t2)
+  # Don't try to use naive evaluation for large graphs
+  if size <= 14
+    t3 = lattice_bench(data, nruns, true)
+  end
+
+  puts "Results: avg bloom = #{t1}, avg sn lattice = #{t2}, avg naive lattice = #{t3}"
+  $stderr.printf("%d %.6f %.6f", data.length, t1, t2)
+  unless t3.nil?
+    $stderr.printf(" %0.6f", t3)
+  end
+  $stderr.printf("\n")
 end
 
 raise ArgumentError, "Usage: bench.rb graph_size nruns" unless ARGV.length == 2
