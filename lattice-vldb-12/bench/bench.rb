@@ -120,6 +120,9 @@ module Enumerable
 end
 
 def bench(size, nruns, variant)
+  # Don't try to use naive evaluation for large graphs
+  return if (variant == "naive-lat" && size > 18)
+
   data = gen_link_data(size)
   puts "****** #{Time.now} ******"
   puts "Running bench for size = #{size}, # links = #{data.length}, variant = #{variant}"
@@ -131,25 +134,22 @@ def bench(size, nruns, variant)
   when "seminaive-lat"
     times, npaths = lattice_bench(data, nruns)
   when "naive-lat"
-    # Don't try to use naive evaluation for large graphs
-    times, npaths = lattice_bench(data, nruns, true) if size <= 18
+    times, npaths = lattice_bench(data, nruns, true)
   else
     raise "Unrecognized variant: #{variant}"
   end
 
-  if times
-    raise unless times.length == nruns
-    mean_t = times.mean
-    if times.length > 1
-      stddev_t = times.standard_deviation
-      std_err = stddev_t / Math.sqrt(times.length.to_f)
-    else
-      stddev_t, std_err = [0, 0]
-    end
-    printf("Results: avg %s = %.6f (std dev: %.6f)\n", variant, mean_t, stddev_t)
-    $stderr.printf("%d %d %d %.6f %0.6f %0.6f\n",
-                   size, data.length, npaths, mean_t, stddev_t, std_err)
+  raise unless times.length == nruns
+  mean_t = times.mean
+  if times.length > 1
+    stddev_t = times.standard_deviation
+    std_err = stddev_t / Math.sqrt(times.length.to_f)
+  else
+    stddev_t, std_err = [0, 0]
   end
+  printf("Results: avg %s = %.6f (std dev: %.6f)\n", variant, mean_t, stddev_t)
+  $stderr.printf("%d %d %d %.6f %0.6f %0.6f\n",
+                 size, data.length, npaths, mean_t, stddev_t, std_err)
 end
 
 raise ArgumentError, "Usage: bench.rb graph_size nruns variant" unless ARGV.length == 3
