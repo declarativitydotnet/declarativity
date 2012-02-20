@@ -8,7 +8,7 @@ variants.each {|v| data_files[v] = "#{v}.data"}
 log_file = "exp_log"
 
 `rm -f #{log_file}`
-data_files.each {|v,f| `echo "#Variant: #{v}\n#NNodes NLinks NPaths Runtime" | cat > #{f}`}
+data_files.each {|v,f| `echo "#Variant: #{v}\n#NNodes NLinks NPaths MeanRuntime Stddev StdError" | cat > #{f}`}
 
 sizes.each do |s|
   puts "Running benchmark; size = #{s}..."
