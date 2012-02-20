@@ -57,30 +57,42 @@ def lattice_bench(data, nruns, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ [data]
   total_time = 0.0
+  npaths = nil
   nruns.times do |i|
     t = Benchmark.realtime do
       l.tick
     end
     total_time += t
-    puts "#{use_naive ? "Naive" : "SN"} lattice done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{l.path.current_value.reveal.length} (RSS size: #{report_mem})"
+    new_npaths = l.path.current_value.reveal.length
+    puts "#{use_naive ? "Naive" : "SN"} lattice done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{new_npaths} (RSS size: #{report_mem})"
+    if npaths != nil && npaths != new_npaths
+      raise "Non-deterministic results: old = #{npaths}, new = #{new_npaths}"
+    end
+    npaths = new_npaths
   end
   l.stop
-  total_time / nruns
+  [total_time / nruns, npaths]
 end
 
 def bloom_bench(data, nruns)
   b = AllPathsB.new
   b.link <+ data
   total_time = 0.0
+  npaths = nil
   nruns.times do |i|
     t = Benchmark.realtime do
       b.tick
     end
     total_time += t
     puts "Bloom done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{b.path.to_a.length} (RSS size: #{report_mem})"
+    if npaths != nil && npaths != b.path.to_a.length
+      raise "Non-deterministic results: old = #{npaths}, new = #{b.path.to_a.length}"
+    end
+    npaths = b.path.to_a.length
   end
+  
   b.stop
-  total_time / nruns
+  [total_time / nruns, npaths]
 end
 
 def report_mem
