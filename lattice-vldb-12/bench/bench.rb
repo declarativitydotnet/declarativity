@@ -93,18 +93,22 @@ def bench(size, nruns)
   puts "Running bench for size = #{size}, # links = #{data.length}"
   puts "(avg links/node: #{data.length.to_f/size})"
 
-  t1 = bloom_bench(data, nruns)
+  t1, npath1 = bloom_bench(data, nruns)
   GC.start
-  t2 = lattice_bench(data, nruns)
+  t2, npath2 = lattice_bench(data, nruns)
   GC.start
 
   # Don't try to use naive evaluation for large graphs
-  if size <= 16
-    t3 = lattice_bench(data, nruns, true)
+  if size <= 18
+    t3, npath3 = lattice_bench(data, nruns, true)
+  end
+
+  unless npath1 == npath2 && npath1 == npath3
+    raise "ERROR, path mismatch. #{npath1}, #{npath2}, #{npath3}"
   end
 
   puts "Results: avg bloom = #{t1}, avg sn lattice = #{t2}, avg naive lattice = #{t3}"
-  $stderr.printf("%d %.6f %.6f", data.length, t1, t2)
+  $stderr.printf("%d %.6f %.6f", npath1, t1, t2)
   unless t3.nil?
     $stderr.printf(" %0.6f", t3)
   end
