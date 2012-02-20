@@ -16,5 +16,5 @@ else
 endif
 
 # Regenerate perf graph if needed
-fig/sn_perf.pdf: bench/sn_perf.gp
+fig/sn_perf.pdf: bench/sn_perf.gp bench/perf.data
 	gnuplot -e "set output \"$@\"" $<
