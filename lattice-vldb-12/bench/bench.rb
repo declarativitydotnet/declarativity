@@ -13,7 +13,7 @@ class AllPathsL
   bloom do
     path <= link
     path <= path.product(link).pro do |p,l|
-      Bud::SetLattice.new([[p[0], l[1], p[2] + l[2]]]) if p[1] == l[0]
+      [[p[0], l[1], p[2] + l[2]]] if p[1] == l[0]
     end
   end
 end
@@ -54,7 +54,7 @@ end
 
 def lattice_bench(data, nruns, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
-  l.link <+ Bud::SetLattice.new(data)
+  l.link <+ [data]
   nruns.times do
     t = Benchmark.realtime do
       l.tick
