@@ -5,7 +5,7 @@ data_file = "perf.data"
 log_file = "exp_log"
 
 `rm -f #{log_file}`
-`echo "#NPaths Bloom LatticeSemi LatticeNaive" | cat > #{data_file}`
+`echo "#NNodes NLinks NPaths Bloom LatticeSemi LatticeNaive" | cat > #{data_file}`
 
 sizes.each do |s|
   puts "Running benchmark; size = #{s}..."
