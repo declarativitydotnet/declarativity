@@ -92,7 +92,8 @@ class Bud::SetLattice < Bud::Lattice
   wrapper_name :lset
 
   def initialize(x=[])
-    @v = x     # Reject invalid input (elided)
+    # Reject invalid input (elided)
+    @v = x.uniq # Remove duplicates from input
   end
 
   def merge(i)
