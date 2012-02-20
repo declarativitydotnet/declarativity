@@ -1,212 +1,120 @@
-****** Mon Feb 20 10:36:02 -0800 2012 ******
-Running bench for size = 10, # links = 23
-(avg links/node: 2.3)
-Bloom done 1/4; 0.0970420837402344 seconds. # of paths: 139 (RSS size: 23232)
-Bloom done 2/4; 0.132061004638672 seconds. # of paths: 139 (RSS size: 24256)
-Bloom done 3/4; 0.104035139083862 seconds. # of paths: 139 (RSS size: 24256)
-Bloom done 4/4; 0.132025003433228 seconds. # of paths: 139 (RSS size: 24256)
-SN lattice done 1/4; 0.0270872116088867 seconds. # of paths: 139 (RSS size: 24592)
-SN lattice done 2/4; 0.026965856552124 seconds. # of paths: 139 (RSS size: 24924)
-SN lattice done 3/4; 0.0597989559173584 seconds. # of paths: 139 (RSS size: 24984)
-SN lattice done 4/4; 0.0281059741973877 seconds. # of paths: 139 (RSS size: 24996)
-Naive lattice done 1/4; 0.592564105987549 seconds. # of paths: 139 (RSS size: 27836)
-Naive lattice done 2/4; 0.524386167526245 seconds. # of paths: 139 (RSS size: 27836)
-Naive lattice done 3/4; 0.522864103317261 seconds. # of paths: 139 (RSS size: 27836)
-Naive lattice done 4/4; 0.50484299659729 seconds. # of paths: 139 (RSS size: 27836)
-Results: avg bloom = 0.116290807723999, avg sn lattice = 0.0354894995689392, avg naive lattice = 0.536164343357086
-****** Mon Feb 20 10:36:06 -0800 2012 ******
-Running bench for size = 12, # links = 29
-(avg links/node: 2.41666666666667)
-Bloom done 1/4; 0.215911149978638 seconds. # of paths: 237 (RSS size: 24212)
-Bloom done 2/4; 0.265450000762939 seconds. # of paths: 237 (RSS size: 24212)
-Bloom done 3/4; 0.225351810455322 seconds. # of paths: 237 (RSS size: 24212)
-Bloom done 4/4; 0.244703054428101 seconds. # of paths: 237 (RSS size: 24224)
-SN lattice done 1/4; 0.0876519680023193 seconds. # of paths: 237 (RSS size: 25236)
-SN lattice done 2/4; 0.0658988952636719 seconds. # of paths: 237 (RSS size: 25236)
-SN lattice done 3/4; 0.0656001567840576 seconds. # of paths: 237 (RSS size: 26152)
-SN lattice done 4/4; 0.0857219696044922 seconds. # of paths: 237 (RSS size: 26316)
-Naive lattice done 1/4; 1.95439505577087 seconds. # of paths: 237 (RSS size: 29092)
-Naive lattice done 2/4; 1.98327898979187 seconds. # of paths: 237 (RSS size: 31012)
-Naive lattice done 3/4; 1.95906591415405 seconds. # of paths: 237 (RSS size: 31012)
-Naive lattice done 4/4; 1.95234394073486 seconds. # of paths: 237 (RSS size: 31012)
-Results: avg bloom = 0.23785400390625, avg sn lattice = 0.0762182474136353, avg naive lattice = 1.96227097511292
-****** Mon Feb 20 10:36:16 -0800 2012 ******
-Running bench for size = 14, # links = 35
-(avg links/node: 2.5)
-Bloom done 1/4; 0.353909015655518 seconds. # of paths: 373 (RSS size: 24244)
-Bloom done 2/4; 0.357435941696167 seconds. # of paths: 373 (RSS size: 24264)
-Bloom done 3/4; 0.35781192779541 seconds. # of paths: 373 (RSS size: 24268)
-Bloom done 4/4; 0.380520105361938 seconds. # of paths: 373 (RSS size: 24268)
-SN lattice done 1/4; 0.147339105606079 seconds. # of paths: 373 (RSS size: 25468)
-SN lattice done 2/4; 0.154510974884033 seconds. # of paths: 373 (RSS size: 26652)
-SN lattice done 3/4; 0.200674057006836 seconds. # of paths: 373 (RSS size: 26668)
-SN lattice done 4/4; 0.157178163528442 seconds. # of paths: 373 (RSS size: 26688)
-Naive lattice done 1/4; 6.88807415962219 seconds. # of paths: 373 (RSS size: 39780)
-Naive lattice done 2/4; 6.80474710464478 seconds. # of paths: 373 (RSS size: 39780)
-Naive lattice done 3/4; 6.78489899635315 seconds. # of paths: 373 (RSS size: 39780)
-Naive lattice done 4/4; 6.77421998977661 seconds. # of paths: 373 (RSS size: 39780)
-Results: avg bloom = 0.362419247627258, avg sn lattice = 0.164925575256348, avg naive lattice = 6.81298506259918
-****** Mon Feb 20 10:36:47 -0800 2012 ******
-Running bench for size = 16, # links = 49
-(avg links/node: 3.0625)
-Bloom done 1/4; 0.65592622756958 seconds. # of paths: 588 (RSS size: 24320)
-Bloom done 2/4; 0.686769962310791 seconds. # of paths: 588 (RSS size: 24332)
-Bloom done 3/4; 0.66920804977417 seconds. # of paths: 588 (RSS size: 24344)
-Bloom done 4/4; 0.682032108306885 seconds. # of paths: 588 (RSS size: 24344)
-SN lattice done 1/4; 0.316594839096069 seconds. # of paths: 588 (RSS size: 27208)
-SN lattice done 2/4; 0.338479042053223 seconds. # of paths: 588 (RSS size: 27604)
-SN lattice done 3/4; 0.321327924728394 seconds. # of paths: 588 (RSS size: 27996)
-SN lattice done 4/4; 0.338075160980225 seconds. # of paths: 588 (RSS size: 27996)
-Naive lattice done 1/4; 24.484060049057 seconds. # of paths: 588 (RSS size: 51124)
-Naive lattice done 2/4; 24.5634689331055 seconds. # of paths: 588 (RSS size: 51188)
-Naive lattice done 3/4; 24.5586309432983 seconds. # of paths: 588 (RSS size: 51208)
-Naive lattice done 4/4; 24.5439300537109 seconds. # of paths: 588 (RSS size: 51164)
-Results: avg bloom = 0.673484086990356, avg sn lattice = 0.328619241714478, avg naive lattice = 24.5375224947929
-****** Mon Feb 20 10:38:30 -0800 2012 ******
-Running bench for size = 18, # links = 57
-(avg links/node: 3.16666666666667)
-Bloom done 1/4; 1.04102993011475 seconds. # of paths: 839 (RSS size: 24404)
-Bloom done 2/4; 1.14188885688782 seconds. # of paths: 839 (RSS size: 24404)
-Bloom done 3/4; 1.06526708602905 seconds. # of paths: 839 (RSS size: 24404)
-Bloom done 4/4; 1.05862593650818 seconds. # of paths: 839 (RSS size: 24404)
-SN lattice done 1/4; 0.581847906112671 seconds. # of paths: 839 (RSS size: 28560)
-SN lattice done 2/4; 0.56749701499939 seconds. # of paths: 839 (RSS size: 28560)
-SN lattice done 3/4; 0.586049795150757 seconds. # of paths: 839 (RSS size: 28560)
-SN lattice done 4/4; 0.569791078567505 seconds. # of paths: 839 (RSS size: 28560)
-Naive lattice done 1/4; 64.3836629390717 seconds. # of paths: 839 (RSS size: 53760)
-Naive lattice done 2/4; 64.6110229492188 seconds. # of paths: 839 (RSS size: 53980)
-Naive lattice done 3/4; 64.7600150108337 seconds. # of paths: 839 (RSS size: 53996)
-Naive lattice done 4/4; 64.8389859199524 seconds. # of paths: 839 (RSS size: 53996)
-Results: avg bloom = 1.07670295238495, avg sn lattice = 0.576296448707581, avg naive lattice = 64.6484217047691
-****** Mon Feb 20 10:42:57 -0800 2012 ******
-Running bench for size = 20, # links = 65
-(avg links/node: 3.25)
-Bloom done 1/4; 1.61327695846558 seconds. # of paths: 1153 (RSS size: 24456)
-Bloom done 2/4; 1.70311594009399 seconds. # of paths: 1153 (RSS size: 25516)
-Bloom done 3/4; 1.64612913131714 seconds. # of paths: 1153 (RSS size: 25516)
-Bloom done 4/4; 1.65670800209045 seconds. # of paths: 1153 (RSS size: 25516)
-SN lattice done 1/4; 0.971871137619019 seconds. # of paths: 1153 (RSS size: 31000)
-SN lattice done 2/4; 0.977935075759888 seconds. # of paths: 1153 (RSS size: 31000)
-SN lattice done 3/4; 0.975093126296997 seconds. # of paths: 1153 (RSS size: 31000)
-SN lattice done 4/4; 0.973589181900024 seconds. # of paths: 1153 (RSS size: 31000)
-Results: avg bloom = 1.65480750799179, avg sn lattice = 0.974622130393982, avg naive lattice = 
-****** Mon Feb 20 10:43:08 -0800 2012 ******
-Running bench for size = 22, # links = 73
-(avg links/node: 3.31818181818182)
-Bloom done 1/4; 2.43347120285034 seconds. # of paths: 1537 (RSS size: 24644)
-Bloom done 2/4; 2.47193193435669 seconds. # of paths: 1537 (RSS size: 25684)
-Bloom done 3/4; 2.46828484535217 seconds. # of paths: 1537 (RSS size: 25704)
-Bloom done 4/4; 2.45476508140564 seconds. # of paths: 1537 (RSS size: 25704)
-SN lattice done 1/4; 1.63780498504639 seconds. # of paths: 1537 (RSS size: 32704)
-SN lattice done 2/4; 1.64488005638123 seconds. # of paths: 1537 (RSS size: 39980)
-SN lattice done 3/4; 1.63640022277832 seconds. # of paths: 1537 (RSS size: 40376)
-SN lattice done 4/4; 1.63617515563965 seconds. # of paths: 1537 (RSS size: 40580)
-Results: avg bloom = 2.45711326599121, avg sn lattice = 1.6388151049614, avg naive lattice = 
-****** Mon Feb 20 10:43:26 -0800 2012 ******
-Running bench for size = 24, # links = 81
-(avg links/node: 3.375)
-Bloom done 1/4; 3.40833616256714 seconds. # of paths: 1996 (RSS size: 24704)
-Bloom done 2/4; 3.62614798545837 seconds. # of paths: 1996 (RSS size: 25728)
-Bloom done 3/4; 3.58396983146667 seconds. # of paths: 1996 (RSS size: 25728)
-Bloom done 4/4; 3.58650612831116 seconds. # of paths: 1996 (RSS size: 25728)
-SN lattice done 1/4; 2.58513808250427 seconds. # of paths: 1996 (RSS size: 41932)
-SN lattice done 2/4; 2.56981897354126 seconds. # of paths: 1996 (RSS size: 42144)
-SN lattice done 3/4; 2.57132005691528 seconds. # of paths: 1996 (RSS size: 42260)
-SN lattice done 4/4; 2.56037306785583 seconds. # of paths: 1996 (RSS size: 42384)
-Results: avg bloom = 3.55124002695084, avg sn lattice = 2.57166254520416, avg naive lattice = 
-****** Mon Feb 20 10:43:51 -0800 2012 ******
-Running bench for size = 26, # links = 89
-(avg links/node: 3.42307692307692)
-Bloom done 1/4; 4.66126704216003 seconds. # of paths: 2540 (RSS size: 25932)
-Bloom done 2/4; 5.02140808105469 seconds. # of paths: 2540 (RSS size: 26956)
-Bloom done 3/4; 5.24303698539734 seconds. # of paths: 2540 (RSS size: 26956)
-Bloom done 4/4; 5.07443618774414 seconds. # of paths: 2540 (RSS size: 26260)
-SN lattice done 1/4; 3.89450907707214 seconds. # of paths: 2540 (RSS size: 42800)
-SN lattice done 2/4; 3.87315797805786 seconds. # of paths: 2540 (RSS size: 42964)
-SN lattice done 3/4; 3.89994812011719 seconds. # of paths: 2540 (RSS size: 43160)
-SN lattice done 4/4; 3.89819598197937 seconds. # of paths: 2540 (RSS size: 43152)
-Results: avg bloom = 5.00003707408905, avg sn lattice = 3.89145278930664, avg naive lattice = 
-****** Mon Feb 20 10:44:28 -0800 2012 ******
-Running bench for size = 28, # links = 97
-(avg links/node: 3.46428571428571)
-Bloom done 1/4; 6.54544186592102 seconds. # of paths: 3175 (RSS size: 25824)
-Bloom done 2/4; 7.00390696525574 seconds. # of paths: 3175 (RSS size: 26904)
-Bloom done 3/4; 7.11868596076965 seconds. # of paths: 3175 (RSS size: 27128)
-Bloom done 4/4; 7.11808013916016 seconds. # of paths: 3175 (RSS size: 27320)
-SN lattice done 1/4; 6.00344491004944 seconds. # of paths: 3175 (RSS size: 51704)
-SN lattice done 2/4; 6.00204396247864 seconds. # of paths: 3175 (RSS size: 51880)
-SN lattice done 3/4; 6.01506900787354 seconds. # of paths: 3175 (RSS size: 51996)
-SN lattice done 4/4; 6.01788806915283 seconds. # of paths: 3175 (RSS size: 51872)
-Results: avg bloom = 6.94652873277664, avg sn lattice = 6.00961148738861, avg naive lattice = 
-****** Mon Feb 20 10:45:21 -0800 2012 ******
-Running bench for size = 30, # links = 105
-(avg links/node: 3.5)
-Bloom done 1/4; 8.71368384361267 seconds. # of paths: 3908 (RSS size: 26256)
-Bloom done 2/4; 9.50450897216797 seconds. # of paths: 3908 (RSS size: 28432)
-Bloom done 3/4; 9.62303185462952 seconds. # of paths: 3908 (RSS size: 28432)
-Bloom done 4/4; 9.60170102119446 seconds. # of paths: 3908 (RSS size: 28544)
-SN lattice done 1/4; 8.801589012146 seconds. # of paths: 3908 (RSS size: 52804)
-SN lattice done 2/4; 8.80896520614624 seconds. # of paths: 3908 (RSS size: 53080)
-SN lattice done 3/4; 8.80185508728027 seconds. # of paths: 3908 (RSS size: 52860)
-SN lattice done 4/4; 8.81002902984619 seconds. # of paths: 3908 (RSS size: 53028)
-Results: avg bloom = 9.36073142290115, avg sn lattice = 8.80560958385468, avg naive lattice = 
-****** Mon Feb 20 10:46:35 -0800 2012 ******
-Running bench for size = 32, # links = 129
-(avg links/node: 4.03125)
-Bloom done 1/4; 12.2464959621429 seconds. # of paths: 4880 (RSS size: 27824)
-Bloom done 2/4; 13.997321844101 seconds. # of paths: 4880 (RSS size: 30228)
-Bloom done 3/4; 14.161465883255 seconds. # of paths: 4880 (RSS size: 30648)
-Bloom done 4/4; 14.0494651794434 seconds. # of paths: 4880 (RSS size: 31024)
-SN lattice done 1/4; 14.5309889316559 seconds. # of paths: 4880 (RSS size: 54104)
-SN lattice done 2/4; 14.5127589702606 seconds. # of paths: 4880 (RSS size: 54256)
-SN lattice done 3/4; 14.5219140052795 seconds. # of paths: 4880 (RSS size: 54276)
-SN lattice done 4/4; 14.4765908718109 seconds. # of paths: 4880 (RSS size: 54060)
-Results: avg bloom = 13.6136872172356, avg sn lattice = 14.5105631947517, avg naive lattice = 
-****** Mon Feb 20 10:48:29 -0800 2012 ******
-Running bench for size = 34, # links = 139
-(avg links/node: 4.08823529411765)
-Bloom done 1/4; 16.1798739433289 seconds. # of paths: 5867 (RSS size: 28344)
-Bloom done 2/4; 19.2155210971832 seconds. # of paths: 5867 (RSS size: 30452)
-Bloom done 3/4; 19.3193550109863 seconds. # of paths: 5867 (RSS size: 30792)
-Bloom done 4/4; 19.4455358982086 seconds. # of paths: 5867 (RSS size: 30276)
-SN lattice done 1/4; 21.0779459476471 seconds. # of paths: 5867 (RSS size: 46664)
-SN lattice done 2/4; 20.8049478530884 seconds. # of paths: 5867 (RSS size: 46512)
-SN lattice done 3/4; 20.8208250999451 seconds. # of paths: 5867 (RSS size: 46492)
-SN lattice done 4/4; 20.8152539730072 seconds. # of paths: 5867 (RSS size: 46492)
-Results: avg bloom = 18.5400714874268, avg sn lattice = 20.8797432184219, avg naive lattice = 
-****** Mon Feb 20 10:51:08 -0800 2012 ******
-Running bench for size = 36, # links = 149
-(avg links/node: 4.13888888888889)
-Bloom done 1/4; 21.1593561172485 seconds. # of paths: 6981 (RSS size: 28336)
-Bloom done 2/4; 25.655907869339 seconds. # of paths: 6981 (RSS size: 31832)
-Bloom done 3/4; 25.2658789157867 seconds. # of paths: 6981 (RSS size: 31848)
-Bloom done 4/4; 25.5781221389771 seconds. # of paths: 6981 (RSS size: 31860)
-SN lattice done 1/4; 29.1937999725342 seconds. # of paths: 6981 (RSS size: 47948)
-SN lattice done 2/4; 28.6524860858917 seconds. # of paths: 6981 (RSS size: 47368)
-SN lattice done 3/4; 28.7698650360107 seconds. # of paths: 6981 (RSS size: 47700)
-SN lattice done 4/4; 28.782408952713 seconds. # of paths: 6981 (RSS size: 47348)
-Results: avg bloom = 24.4148162603378, avg sn lattice = 28.8496400117874, avg naive lattice = 
-****** Mon Feb 20 10:54:42 -0800 2012 ******
-Running bench for size = 38, # links = 159
-(avg links/node: 4.18421052631579)
-Bloom done 1/4; 26.4987728595734 seconds. # of paths: 8229 (RSS size: 29732)
-Bloom done 2/4; 32.878585100174 seconds. # of paths: 8229 (RSS size: 40256)
-Bloom done 3/4; 32.6079051494598 seconds. # of paths: 8229 (RSS size: 41024)
-Bloom done 4/4; 33.0990250110626 seconds. # of paths: 8229 (RSS size: 41508)
-SN lattice done 1/4; 41.8395180702209 seconds. # of paths: 8229 (RSS size: 61368)
-SN lattice done 2/4; 42.2357811927795 seconds. # of paths: 8229 (RSS size: 61252)
-SN lattice done 3/4; 42.3007700443268 seconds. # of paths: 8229 (RSS size: 61380)
-SN lattice done 4/4; 42.3869090080261 seconds. # of paths: 8229 (RSS size: 61380)
-Results: avg bloom = 31.2710720300674, avg sn lattice = 42.1907445788383, avg naive lattice = 
-****** Mon Feb 20 10:59:37 -0800 2012 ******
-Running bench for size = 40, # links = 169
-(avg links/node: 4.225)
-Bloom done 1/4; 34.0586161613464 seconds. # of paths: 9616 (RSS size: 30492)
-Bloom done 2/4; 41.478569984436 seconds. # of paths: 9616 (RSS size: 42148)
-Bloom done 3/4; 42.4607300758362 seconds. # of paths: 9616 (RSS size: 42392)
-Bloom done 4/4; 43.1008780002594 seconds. # of paths: 9616 (RSS size: 42380)
-SN lattice done 1/4; 59.4872198104858 seconds. # of paths: 9616 (RSS size: 62680)
-SN lattice done 2/4; 59.1741859912872 seconds. # of paths: 9616 (RSS size: 62408)
-SN lattice done 3/4; 58.8161931037903 seconds. # of paths: 9616 (RSS size: 62320)
-SN lattice done 4/4; 58.9568951129913 seconds. # of paths: 9616 (RSS size: 62408)
-Results: avg bloom = 40.2746985554695, avg sn lattice = 59.1086235046387, avg naive lattice = 
+****** Mon Feb 20 13:59:41 -0800 2012 ******
+Running bench for size = 10, # links = 23, variant = bloom
+(avg links/node: 2.3, initial RSS: 22860)
+Bloom done 1/4; 0.0951259136199951 seconds. # of paths: 139 (RSS size: 23236)
+Bloom done 2/4; 0.139456987380981 seconds. # of paths: 139 (RSS size: 24260)
+Bloom done 3/4; 0.103239059448242 seconds. # of paths: 139 (RSS size: 24260)
+Bloom done 4/4; 0.132498979568481 seconds. # of paths: 139 (RSS size: 24260)
+Results: avg bloom = 0.117580235004425
+****** Mon Feb 20 13:59:42 -0800 2012 ******
+Running bench for size = 10, # links = 23, variant = seminaive-lat
+(avg links/node: 2.3, initial RSS: 22860)
+SN lattice done 1/4; 0.0259730815887451 seconds. # of paths: 139 (RSS size: 23576)
+SN lattice done 2/4; 0.0225999355316162 seconds. # of paths: 139 (RSS size: 23876)
+SN lattice done 3/4; 0.0531449317932129 seconds. # of paths: 139 (RSS size: 24192)
+SN lattice done 4/4; 0.026594877243042 seconds. # of paths: 139 (RSS size: 24192)
+Results: avg seminaive-lat = 0.0320782065391541
+****** Mon Feb 20 13:59:43 -0800 2012 ******
+Running bench for size = 10, # links = 23, variant = naive-lat
+(avg links/node: 2.3, initial RSS: 22860)
+Naive lattice done 1/4; 0.479300975799561 seconds. # of paths: 139 (RSS size: 26780)
+Naive lattice done 2/4; 0.45176100730896 seconds. # of paths: 139 (RSS size: 26780)
+Naive lattice done 3/4; 0.447185039520264 seconds. # of paths: 139 (RSS size: 26780)
+Naive lattice done 4/4; 0.45034384727478 seconds. # of paths: 139 (RSS size: 26780)
+Results: avg naive-lat = 0.457147717475891
+****** Mon Feb 20 13:59:46 -0800 2012 ******
+Running bench for size = 12, # links = 29, variant = bloom
+(avg links/node: 2.41666666666667, initial RSS: 22860)
+Bloom done 1/4; 0.209085941314697 seconds. # of paths: 237 (RSS size: 24220)
+Bloom done 2/4; 0.217922925949097 seconds. # of paths: 237 (RSS size: 24220)
+Bloom done 3/4; 0.225466012954712 seconds. # of paths: 237 (RSS size: 24220)
+Bloom done 4/4; 0.196635007858276 seconds. # of paths: 237 (RSS size: 24220)
+Results: avg bloom = 0.212277472019196
+****** Mon Feb 20 13:59:48 -0800 2012 ******
+Running bench for size = 12, # links = 29, variant = seminaive-lat
+(avg links/node: 2.41666666666667, initial RSS: 22860)
+SN lattice done 1/4; 0.0568060874938965 seconds. # of paths: 237 (RSS size: 24228)
+SN lattice done 2/4; 0.0774719715118408 seconds. # of paths: 237 (RSS size: 24504)
+SN lattice done 3/4; 0.0534820556640625 seconds. # of paths: 237 (RSS size: 24812)
+SN lattice done 4/4; 0.0820870399475098 seconds. # of paths: 237 (RSS size: 25236)
+Results: avg seminaive-lat = 0.0674617886543274
+****** Mon Feb 20 13:59:49 -0800 2012 ******
+Running bench for size = 12, # links = 29, variant = naive-lat
+(avg links/node: 2.41666666666667, initial RSS: 22860)
+Naive lattice done 1/4; 1.69676613807678 seconds. # of paths: 237 (RSS size: 28120)
+Naive lattice done 2/4; 1.70877814292908 seconds. # of paths: 237 (RSS size: 29812)
+Naive lattice done 3/4; 1.69342398643494 seconds. # of paths: 237 (RSS size: 29812)
+Naive lattice done 4/4; 1.78719902038574 seconds. # of paths: 237 (RSS size: 29812)
+Results: avg naive-lat = 1.72154182195663
+****** Mon Feb 20 13:59:57 -0800 2012 ******
+Running bench for size = 14, # links = 35, variant = bloom
+(avg links/node: 2.5, initial RSS: 22860)
+Bloom done 1/4; 0.3575119972229 seconds. # of paths: 373 (RSS size: 24232)
+Bloom done 2/4; 0.361021995544434 seconds. # of paths: 373 (RSS size: 24276)
+Bloom done 3/4; 0.390251874923706 seconds. # of paths: 373 (RSS size: 24276)
+Bloom done 4/4; 0.370512962341309 seconds. # of paths: 373 (RSS size: 24276)
+Results: avg bloom = 0.369824707508087
+****** Mon Feb 20 13:59:59 -0800 2012 ******
+Running bench for size = 14, # links = 35, variant = seminaive-lat
+(avg links/node: 2.5, initial RSS: 22860)
+SN lattice done 1/4; 0.129863023757935 seconds. # of paths: 373 (RSS size: 24868)
+SN lattice done 2/4; 0.135975122451782 seconds. # of paths: 373 (RSS size: 25488)
+SN lattice done 3/4; 0.132267951965332 seconds. # of paths: 373 (RSS size: 25488)
+SN lattice done 4/4; 0.130800008773804 seconds. # of paths: 373 (RSS size: 25488)
+Results: avg seminaive-lat = 0.132226526737213
+****** Mon Feb 20 14:00:01 -0800 2012 ******
+Running bench for size = 14, # links = 35, variant = naive-lat
+(avg links/node: 2.5, initial RSS: 22860)
+Naive lattice done 1/4; 6.15194892883301 seconds. # of paths: 373 (RSS size: 38512)
+Naive lattice done 2/4; 5.94189286231995 seconds. # of paths: 373 (RSS size: 38712)
+Naive lattice done 3/4; 5.96481418609619 seconds. # of paths: 373 (RSS size: 38712)
+Naive lattice done 4/4; 5.94559383392334 seconds. # of paths: 373 (RSS size: 38712)
+Results: avg naive-lat = 6.00106245279312
+****** Mon Feb 20 14:00:26 -0800 2012 ******
+Running bench for size = 16, # links = 49, variant = bloom
+(avg links/node: 3.0625, initial RSS: 22860)
+Bloom done 1/4; 0.669023036956787 seconds. # of paths: 588 (RSS size: 24328)
+Bloom done 2/4; 0.702913045883179 seconds. # of paths: 588 (RSS size: 24340)
+Bloom done 3/4; 0.669642925262451 seconds. # of paths: 588 (RSS size: 24348)
+Bloom done 4/4; 0.703097105026245 seconds. # of paths: 588 (RSS size: 24348)
+Results: avg bloom = 0.686169028282166
+****** Mon Feb 20 14:00:30 -0800 2012 ******
+Running bench for size = 16, # links = 49, variant = seminaive-lat
+(avg links/node: 3.0625, initial RSS: 22860)
+SN lattice done 1/4; 0.266463041305542 seconds. # of paths: 588 (RSS size: 26516)
+SN lattice done 2/4; 0.300045013427734 seconds. # of paths: 588 (RSS size: 26556)
+SN lattice done 3/4; 0.279627084732056 seconds. # of paths: 588 (RSS size: 26684)
+SN lattice done 4/4; 0.299440145492554 seconds. # of paths: 588 (RSS size: 26896)
+Results: avg seminaive-lat = 0.286393821239471
+****** Mon Feb 20 14:00:32 -0800 2012 ******
+Running bench for size = 16, # links = 49, variant = naive-lat
+(avg links/node: 3.0625, initial RSS: 22860)
+Naive lattice done 1/4; 21.4709899425507 seconds. # of paths: 588 (RSS size: 42724)
+Naive lattice done 2/4; 21.2853090763092 seconds. # of paths: 588 (RSS size: 42832)
+Naive lattice done 3/4; 21.2048280239105 seconds. # of paths: 588 (RSS size: 42832)
+Naive lattice done 4/4; 21.1479830741882 seconds. # of paths: 588 (RSS size: 43052)
+Results: avg naive-lat = 21.2772775292397
+****** Mon Feb 20 14:01:58 -0800 2012 ******
+Running bench for size = 18, # links = 57, variant = bloom
+(avg links/node: 3.16666666666667, initial RSS: 22860)
+Bloom done 1/4; 1.08575487136841 seconds. # of paths: 839 (RSS size: 24392)
+Bloom done 2/4; 1.10434699058533 seconds. # of paths: 839 (RSS size: 24484)
+Bloom done 3/4; 1.09828591346741 seconds. # of paths: 839 (RSS size: 24484)
+Bloom done 4/4; 1.1245219707489 seconds. # of paths: 839 (RSS size: 24484)
+Results: avg bloom = 1.10322743654251
+****** Mon Feb 20 14:02:03 -0800 2012 ******
+Running bench for size = 18, # links = 57, variant = seminaive-lat
+(avg links/node: 3.16666666666667, initial RSS: 22860)
+SN lattice done 1/4; 0.471890926361084 seconds. # of paths: 839 (RSS size: 27460)
+SN lattice done 2/4; 0.493365049362183 seconds. # of paths: 839 (RSS size: 27460)
+SN lattice done 3/4; 0.498661041259766 seconds. # of paths: 839 (RSS size: 27460)
+SN lattice done 4/4; 0.477399110794067 seconds. # of paths: 839 (RSS size: 27624)
+Results: avg seminaive-lat = 0.485329031944275
+****** Mon Feb 20 14:02:06 -0800 2012 ******
+Running bench for size = 18, # links = 57, variant = naive-lat
+(avg links/node: 3.16666666666667, initial RSS: 22860)
+Naive lattice done 1/4; 56.245344877243 seconds. # of paths: 839 (RSS size: 45408)
+Naive lattice done 2/4; 55.7402241230011 seconds. # of paths: 839 (RSS size: 45528)
+Naive lattice done 3/4; 57.8333640098572 seconds. # of paths: 839 (RSS size: 52912)
+Naive lattice done 4/4; 58.6205358505249 seconds. # of paths: 839 (RSS size: 52912)
+Results: avg naive-lat = 57.1098672151566
