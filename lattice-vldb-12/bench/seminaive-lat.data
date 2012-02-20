@@ -1,0 +1,7 @@
+#Variant: seminaive-lat
+#NNodes NLinks NPaths Runtime
+10 23 139 0.032078
+12 29 237 0.067462
+14 35 373 0.132227
+16 49 588 0.286394
+18 57 839 0.485329

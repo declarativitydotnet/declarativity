@@ -99,34 +99,30 @@ def report_mem
   `ps -o rss= -p #{Process.pid}`.to_i
 end
 
-def bench(size, nruns)
+def bench(size, nruns, variant)
   data = gen_link_data(size)
   puts "****** #{Time.now} ******"
-  puts "Running bench for size = #{size}, # links = #{data.length}"
-  puts "(avg links/node: #{data.length.to_f/size})"
+  puts "Running bench for size = #{size}, # links = #{data.length}, variant = #{variant}"
+  puts "(avg links/node: #{data.length.to_f/size}, initial RSS: #{report_mem})"
 
-  t1, npath1 = bloom_bench(data, nruns)
-  GC.start
-  t2, npath2 = lattice_bench(data, nruns)
-  GC.start
-
-  # Don't try to use naive evaluation for large graphs
-  if size <= 18
-    t3, npath3 = lattice_bench(data, nruns, true)
+  case variant
+  when "bloom"
+    t, npaths = bloom_bench(data, nruns)
+  when "seminaive-lat"
+    t, npaths = lattice_bench(data, nruns)
+  when "naive-lat"
+    # Don't try to use naive evaluation for large graphs
+    t, npaths = lattice_bench(data, nruns, true) if size <= 18
+  else
+    raise "Unrecognized variant: #{variant}"
   end
 
-  unless npath1 == npath2 && (npath1 == npath3 || npath3.nil?)
-    raise "ERROR, path mismatch. #{npath1}, #{npath2}, #{npath3}"
+  unless t.nil?
+    puts "Results: avg #{variant} = #{t}"
+    $stderr.printf("%d %d %d %.6f\n", size, data.length, npaths, t)
   end
-
-  puts "Results: avg bloom = #{t1}, avg sn lattice = #{t2}, avg naive lattice = #{t3}"
-  $stderr.printf("%d %d %d %.6f %.6f", size, data.length, npath1, t1, t2)
-  unless t3.nil?
-    $stderr.printf(" %0.6f", t3)
-  end
-  $stderr.printf("\n")
 end
 
-raise ArgumentError, "Usage: bench.rb graph_size nruns" unless ARGV.length == 2
-size, nruns = ARGV
-bench(size.to_i, nruns.to_i)
+raise ArgumentError, "Usage: bench.rb graph_size nruns variant" unless ARGV.length == 3
+size, nruns, variant = ARGV
+bench(size.to_i, nruns.to_i, variant)
