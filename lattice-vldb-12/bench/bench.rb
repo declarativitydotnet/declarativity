@@ -120,7 +120,7 @@ def bench(size, nruns)
   end
 
   puts "Results: avg bloom = #{t1}, avg sn lattice = #{t2}, avg naive lattice = #{t3}"
-  $stderr.printf("%d %.6f %.6f", npath1, t1, t2)
+  $stderr.printf("%d %d %d %.6f %.6f", size, data.length, npath1, t1, t2)
   unless t3.nil?
     $stderr.printf(" %0.6f", t3)
   end
