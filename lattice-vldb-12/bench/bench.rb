@@ -29,7 +29,7 @@ class AllPathsB
 
   bloom do
     path <= link
-    path <= (path * link).pairs do |l,p|
+    path <= (path * link).pairs do |p,l|
       [p.from, l.to, p.cost + l.cost] if p.to == l.from
     end
   end
@@ -115,7 +115,7 @@ def bench(size, nruns)
     t3, npath3 = lattice_bench(data, nruns, true)
   end
 
-  unless npath1 == npath2 && npath1 == npath3
+  unless npath1 == npath2 && (npath1 == npath3 || npath3.nil?)
     raise "ERROR, path mismatch. #{npath1}, #{npath2}, #{npath3}"
   end
 
