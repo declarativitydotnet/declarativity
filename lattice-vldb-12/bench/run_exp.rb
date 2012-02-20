@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
-nruns = 4
-#sizes = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]
-sizes = [10,12,14,16,18]
+nruns = 5
+sizes = [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40]
 variants = ["bloom", "seminaive-lat", "naive-lat"]
 data_files = {}
 variants.each {|v| data_files[v] = "#{v}.data"}
