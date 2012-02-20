@@ -6,10 +6,6 @@ BIBTEXSRCS=vldb.bib
 OTHER_PDF=$(wildcard fig/*.pdf)
 OTHER+=$(OTHER_PDF)
 
-# Regenerate perf graph if needed
-fig/sn_perf.pdf: bench/sn_perf.gp
-	gnuplot -e "set output \"$@\"" $<
-
 ifeq ($(shell uname), Linux)
   VIEWPDF=evince
   include /usr/share/latex-mk/latex.gmk
@@ -18,3 +14,7 @@ else
   VIEWPDF=open
   include /opt/local/share/latex-mk/latex.gmk
 endif
+
+# Regenerate perf graph if needed
+fig/sn_perf.pdf: bench/sn_perf.gp
+	gnuplot -e "set output \"$@\"" $<

@@ -1,14 +1,13 @@
 require "rubygems"
 require "benchmark"
 require "bud"
-require "memprof"
 
 class AllPathsL
   include Bud
 
   state do
     lset :link
-    lset :path
+    lset :path, :scratch => false
   end
 
   bloom do
@@ -53,23 +52,29 @@ def gen_link_data(num_nodes)
   links
 end
 
-def lattice_bench(data, use_naive=false)
+def lattice_bench(data, nruns, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ Bud::SetLattice.new(data)
-  t = Benchmark.realtime do
-    l.tick
+  nruns.times do
+    t = Benchmark.realtime do
+      l.tick
+    end
+    puts "Lattice done; #{t} seconds. # of paths: #{l.path.current_value.reveal.length}"
+    report_mem
   end
-  puts "Lattice done; #{t} seconds. # of paths: #{l.path.current_value.reveal.length}"
   l.stop
 end
 
-def bloom_bench(data)
+def bloom_bench(data, nruns)
   b = AllPathsB.new
   b.link <+ data
-  t = Benchmark.realtime do
-    b.tick
+  nruns.times do
+    t = Benchmark.realtime do
+      b.tick
+    end
+    puts "Bloom done; #{t} seconds. # of paths: #{b.path.to_a.length}"
+    report_mem
   end
-  puts "Bloom done; #{t} seconds. # of paths: #{b.path.to_a.length}"
   b.stop
 end
 
@@ -80,15 +85,12 @@ end
 
 def bench(size, nruns)
   data = gen_link_data(size)
-  puts "Running bench for size = #{size}, # links = #{data.length} (avg links/node: #{data.length.to_f/size})"
+  puts "Running bench for size = #{size}, # links = #{data.length}"
+  puts "(avg links/node: #{data.length.to_f/size})"
 
-  nruns.times do
-    bloom_bench(data)
-    report_mem
-    lattice_bench(data)
-    report_mem
-    GC.start
-  end
+  bloom_bench(data, nruns)
+  GC.start
+  lattice_bench(data, nruns)
 end
 
-bench(18, 4)
+bench(20, 4)
