@@ -1,33 +1,6 @@
 \section{Adding Lattices to Bloom}
 \label{sec:impl}
 
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-class ShortestPaths
-  include Bud
-
-  state do
-    table :link, [:from, :to, :c]
-    table :path, [:from, :to, :next_hop] => [:c]
-    table :min_cost, [:from, :to] => [:c]
-  end
-
-  bloom do
-    path <= link {|l| [l.from, l.to, l.to, MinLattice.new(l.c)]}
-    path <= (link*path).pairs(:to => :from) do |l,p|
-      [l.from, p.to, l.to, p.c + l.c]
-    end
-    min_cost <= path {|p| [p.from, p.to, p.c]}
-  end
-end
-\end{lstlisting}
-\end{scriptsize}
-\caption{A \lang program to compute the all-pairs shortest paths of a
-  graph.}
-\label{fig:lattice-spaths}
-\end{figure}
-
 % Outline:
 % * design philosophy, sign posting
 % * introduce lattice values
@@ -101,9 +74,6 @@ to be created via the composition of multiple lattices. In \lang, a morphism is
 akin to a Ruby method that satisfies the algebraic properties summarized in
 Section~\ref{sec:found-defn}.
 
-\subsection{Program analysis}
-\label{sec:lattice-analysis}
-
 \subsection{Lattice API}
 \label{sec:lattice-api}
 
@@ -170,6 +140,33 @@ end
 \subsection{Integration with set-oriented logic}
 \label{sec:bloom-interop}
 
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+class ShortestPaths
+  include Bud
+
+  state do
+    table :link, [:from, :to, :c]
+    table :path, [:from, :to, :next_hop] => [:c]
+    table :min_cost, [:from, :to] => [:c]
+  end
+
+  bloom do
+    path <= link {|l| [l.from, l.to, l.to, MinLattice.new(l.c)]}
+    path <= (link*path).pairs(:to => :from) do |l,p|
+      [l.from, p.to, l.to, p.c + l.c]
+    end
+    min_cost <= path {|p| [p.from, p.to, p.c]}
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A \lang program to compute the all-pairs shortest paths of a
+  graph.}
+\label{fig:lattice-spaths}
+\end{figure}
+
 \lang provides two features to ease integration of lattice-based code with
 traditional Bloom programs that manipulate set-oriented collections.
 
@@ -208,16 +205,17 @@ where \texttt{t1} and \texttt{t2} are Bloom relations and \texttt{lat\_foo}
 identifies a lattice; suppose that the first column of \texttt{t1} is the
 relation's key. The value associated with \texttt{lat\_foo} can change over the
 course of the fixpoint computation (specifically, it can grow ``upward''
-according to the lattice's partial order). Implemented naively, this might
-result in multiple \texttt{t1} tuples with different values for the second
-attribute, which would violate \texttt{t1}'s key (the first column of
-\texttt{t1} would not functionally determine a single value for the second
-column).
+according to the lattice's partial order, as more values are merged into the
+lattice). Implemented naively, this might result in multiple \texttt{t1} tuples
+with different values for the second attribute, which would violate
+\texttt{t1}'s key (the first column of \texttt{t1} would not functionally
+determine a single value for the second column).
 
-This problem could be avoided by requiring that lattice elements embedded into
-Bloom collections be computed exactly before the rule that performs the
-embedding is evaluated. This would effectively stratify the program according to
-lattice embedding rules, which would disallow cycles through lattice
+This problem could be avoided by placing constraints on the evaluation order of
+rules: for example, we could require that all potential changes to
+\texttt{lat\_foo} be completed before rules that embed \texttt{lat\_foo} could
+be evaluated. This would effectively stratify the program according to lattice
+embedding rules, which would disallow cycles through lattice
 embeddings~\cite{Apt1988}. This would reject intuitively reasonable programs; it
 also seems unsatisfying to require stratification of monotonic programs.
 
@@ -230,12 +228,18 @@ hence, any operators that might be applied to an embedded lattice value before
 it has been determined exactly must be monotonic. Nevertheless, this solution is
 somewhat counterintuitive because tuples in Datalog relations are traditionally
 immutable: once a fact is known to be true, its value remains the
-same.\footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
-  operation that can only occur between timesteps. Conceptually, Bloom models
-  update as the retraction of the previous version of a fact and the insertion
-  of a new fact~\cite{dedalus}.}
+same.% \footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
+  % operation that can only occur between timesteps. Conceptually, Bloom models
+  % update as the retraction of the previous version of a fact and the insertion
+  % of a new fact~\cite{dedalus}.}
 % Should we note that we might add an option to disable this behavior for
-% particular attributes?
+% particular attributes, or explain more about why this might be considered
+% weird?
+
+For similar reasons, we currently disallow lattice values from being used as
+keys in Bloom collections. It might be possible to relax this restriction in
+certain ``safe'' cases, but we have not found this limitation to be problematic
+to date.
 
 \subsection{Implementation}
 \label{sec:lattice-impl}
