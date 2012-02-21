@@ -36,6 +36,35 @@ semi-naive evaluation strategy ($\S \ref{sec:lattice-impl}$). We conclude this
 section by validating the effectiveness of \lang's semi-naive evaluation strategy
 ($\S \ref{sec:lattice-perf}$).
 
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+NOTIFY_ADDR = "..."
+NUM_VOTERS = 10
+
+class UnanimousVote
+  include Bud
+
+  state do
+    channel :input_chn, [:@addr, :vote_id]
+    lset    :votes
+    lbool   :vote_done
+    channel :output_chn, [:@addr]
+  end
+
+  bloom do
+    votes       <= input_chn {|c| c.vote_id}
+    vote_done   <= votes.size.gt_eq(NUM_VOTERS)
+    output_chan <~ vote_done.when_true { [NOTIFY_ADDR] }
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A simple monotonic \lang program that applies a threshold test to a
+  set.}
+\label{fig:lattice-ex1}
+\end{figure}
+
 \subsection{Lattice classes and elements}
 \label{sec:lattice-basics}
 
