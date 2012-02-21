@@ -151,10 +151,10 @@ introduce non-monotonicity into the program.
 Storing lattice elements as attributes of tuples in set-oriented collections
 introduces several challenges. Tuples in Bloom collections are traditionally
 immutable: once a fact is known to be true, its value remains the
-same.\footnote{Bloom facts can be explicitly deleted, but this is a
-  non-monotonic operation that can only occur between timesteps. Conceptually,
-  Bloom models update as the retraction of the previous version of a fact and
-  the insertion of a new fact~\cite{dedalus}.}
+same.\footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
+  operation that can only occur between timesteps. Conceptually, Bloom models
+  update as the retraction of the previous version of a fact and the insertion
+  of a new fact~\cite{dedalus}.}
 
 \subsection{Implementation}
 
@@ -187,6 +187,13 @@ elements.
 \end{table*}
 
 \subsection{Performance study}
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig/sn_perf}
+\caption{Performance comparison of three different methods for computing the
+  transitive closure of a graph.}
+\label{fig:tc-perf-graph}
+\end{figure}
+
 To validate the effectiveness of semi-naive evaluation for \lang programs, we
 wrote two versions of a program to compute the transitive closure of a directed
 acyclic graph. One version was written in Bloom and used traditional
@@ -210,10 +217,3 @@ length $n+1$ paths in the next step. Bloom and semi-naive \lang achieve similar
 results. These results suggest that our implementation of semi-naive evaluation
 for \lang is effective and performs comparably with semi-naive evaluation for a
 traditional Datalog system.
-
-\begin{figure}
-\includegraphics[width=\linewidth]{fig/sn_perf}
-\caption{Performance comparison of three different methods for computing the
-  transitive closure of a graph.}
-\label{fig:tc-perf-graph}
-\end{figure}
