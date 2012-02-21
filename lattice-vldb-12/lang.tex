@@ -33,7 +33,7 @@ simplify interoperability between lattices and set-oriented code ($\S
 \ref{sec:bloom-interop}$). We detail how we modified Bud to support \lang,
 including how \lang supports a generalization of the traditional Datalog
 semi-naive evaluation strategy ($\S \ref{sec:lattice-impl}$). We conclude this
-section by validating the effectivess of \lang's semi-naive evaluation strategy
+section by validating the effectiveness of \lang's semi-naive evaluation strategy
 ($\S \ref{sec:lattice-perf}$).
 
 \subsection{Lattice classes and elements}
@@ -248,7 +248,7 @@ We were able to extend Bud to support \lang with relatively minor changes. Bud
 initially had about 7200 lines of code (LOC). Supporting the core lattice
 features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
 to lattice values) required about 300 LOC. The builtin lattice classes
-consistituted an additional 300 LOC. Modifying Bud's fixpoint logic to include
+constituted an additional 300 LOC. Modifying Bud's fixpoint logic to include
 lattices required only 10 LOC, while the program rewriting required to enable
 seminaive evaluation required 100 LOC. Modifying Bud's collection classes to
 merge together embedded lattice values required modifying about 125 LOC. Along
