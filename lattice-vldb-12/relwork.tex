@@ -40,9 +40,9 @@ state (e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}). The
 user-defined merge functions typically rely on domain knowledge about the
 semantics of updates, which allows two conflicting writes to be safely commuted.
 
-Unfortunately, writing a correct merge function can be very difficult: not only
-must developers reason about the many possible interleavings of write
-operations, but they must also ensure that the application logic respects the
+Writing a correct merge function can be challenging, because developers must
+reason about the many possible interleavings of read and write operations. More
+difficult still, developers must also ensure that application logic respects the
 loose consistency provided by the storage system. For example, suppose an
 application reads a value from the storage system and computes a derived
 value. If the value that was originally read is changed (e.g., due to merging
@@ -76,7 +76,7 @@ permanently inconsistent (as discussed above).
 % XXX: cite statebox?
 
 % XXX: Wuu & Bernstein
-% Operational transformations
+% XXX: Operational transformations?
 
 \subsection{Non-monotonicity in deductive databases}
 Adding non-monotonic operators (e.g., aggregation and negation) to Datalog
