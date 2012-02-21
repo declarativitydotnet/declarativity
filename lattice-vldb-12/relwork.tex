@@ -36,9 +36,9 @@ systems scale and the cost of global serializability becomes increasingly
 prohibitive~\cite{Helland2009}. For example, many distributed storage systems
 allow users to provide ``merge functions'' that can resolve write-write
 conflicts between replicas, allowing the system to eventually reach a consistent
-state (e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}). The
-user-defined merge functions typically rely on domain knowledge about the
-semantics of updates, which allows two conflicting writes to be safely commuted.
+state (e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}). User-defined
+merge functions typically rely on domain knowledge about the semantics of
+updates, which allows two conflicting writes to be safely commuted.
 
 Writing a correct merge function can be challenging, because developers must
 reason about the many possible interleavings of read and write operations. More
@@ -48,8 +48,8 @@ application reads a value from the storage system and computes a derived
 value. If the value that was originally read is changed (e.g., due to merging
 the state of different replicas) but the application logic does not recompute
 the derived value, the overall application state may still be inconsistent. By
-analyzing the application logic in concert with the behavior of the storage
-layer, \lang and the CALM analysis provide a possible solution by ensuring that
+analyzing application logic in concert with the behavior of the storage layer,
+\lang and the CALM analysis provide a possible solution by ensuring that
 replicated values are only used in a ``safe'' (monotonic) fashion.
 
 % XXX: talk about how CALM solves this problem?
