@@ -59,7 +59,11 @@ bound'' operation ID along with the checkout message, any replica of the cart
 service can independently ensure that it only produces a response message once
 it has received all the operations in the ID range indicated by the client. This
 essentially requires a threshold test over the operation IDs received by a given
-replica, which can easily be implemented using lattices.
+replica, which can easily be implemented using \lang.
+
+% Note that because each replica determines when the cart is ``complete''
+% independently, multiple response messages may be produced. However, they will
+% all be consistent, because ...
 
 \subsection{Performance Study}
 \begin{itemize}
