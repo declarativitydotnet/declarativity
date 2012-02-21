@@ -29,20 +29,34 @@ for escrow operations to \lang.
 % XXX: do we need to say more about how our stuff compares to escrow?
 
 \subsection{Commutativity in distributed systems}
-Many distributed systems provide a means for users to specify which operations
-are commutative, associative, or idempotent. Helland and Campbell observe that
-this design pattern is particularly important as systems scale, and ensuring
-global serializability is increasingly infeasible~\cite{Helland2009}. For
-example, many distributed storage systems allow users to provide ``merge
-functions'' that can resolve write-write conflicts at different replicas to
-ensure the system eventually reaches a consistent state
-(e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).
+Many distributed systems allow users to specify that certain operations are
+commutative, associative, or idempotent. Helland and Campbell observe that using
+commutative, associative and idempotent operations is particularly valuable as
+systems scale and the cost of global serializability becomes increasingly
+prohibitive~\cite{Helland2009}. For example, many distributed storage systems
+allow users to provide ``merge functions'' that can resolve write-write
+conflicts between replicas, allowing the system to eventually reach a consistent
+state (e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}). Unfortunately,
+writing a correct merge function can be very difficult: not only must
+developers reason about the many possible interleavings of write operations, but
+they must also ensure that the application logic respects the loose consistency
+provided by the storage system. For example, suppose an application reads a
+value from the storage system and computes a derived value. If the value that
+was originally read is changed (e.g., due to merging the state of different
+replicas) but the application logic does not recompute the derived value, the
+overall application state will still be inconsistent. By analyzing the
+application logic in concert with the 
 
-% XXX: should probably cite statebox differently
+% XXX: talk about how CALM solves this problem?
+
+Shapiro et al.\ recently proposed ``Convergent or Commutative Replicated Data
+Types'' (CRDTs), a principled approach to the design of loosely consistent data
+values~\cite{Shapiro2011b}.
+
+% XXX: cite statebox?
 
 % CRDTs, Wuu & Bernstein
 % Operational transformations
-% Merge functions in KVS
 
 \subsection{Non-monotonicity in deductive databases}
 Adding non-monotonic operators (e.g., aggregation and negation) to Datalog
