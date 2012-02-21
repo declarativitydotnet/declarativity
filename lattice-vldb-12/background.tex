@@ -1,18 +1,21 @@
 \section{Background}
 \label{sec:background}
 \begin{table}
-\begin{tabular}{|c|l|}
+\begin{tabular}{|c|l|p{1.85in}|}
 \hline
-\textbf{Name} & \textbf{Meaning} \\
+\textbf{Op} & \textbf{Name} & \textbf{Meaning} \\
 \hline
-\verb|<=| &  \\
+\verb|<=| & \emph{merge} & lhs includes the content of rhs in the
+current timestep \\
 \hline
-\verb|<+| &  \\
+\verb|<+| & \emph{deferred merge} & lhs will include the content of rhs in the
+next timestep \\
 \hline
-\verb|<-| &  \\
+\verb|<-| & \emph{deferred delete} & lhs will not include the content of the rhs
+in the next timestep \\
 \hline
-% XXX: crappy type setting
-\verb|<|$\sim$ &  \\
+\verb|<|$\sim$ & \emph{async merge} & (remote) lhs will include the content of the
+rhs at some non-deterministic future timestep\\
 \hline
 \end{tabular}
 \caption{Bloom operators.}
