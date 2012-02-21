@@ -206,10 +206,10 @@ performance. The poor performance of naive evaluation is not surprising: after
 deriving all paths of length $n$, naive evaluation will then rederive all those
 paths at every subsequent ``step'' of the fixpoint computation. In contrast,
 after computing length $n$ paths, a semi-naive strategy will only generate
-length $n+1$ paths in the next step. Bloom and semi-naive \lang perform
-competitively, which suggests that our implementation of semi-naive evaluation
-for \lang is comparable with semi-naive evaluation for a traditional Datalog
-system.
+length $n+1$ paths in the next step. Bloom and semi-naive \lang achieve similar
+results. These results suggest that our implementation of semi-naive evaluation
+for \lang is effective and performs comparably with semi-naive evaluation for a
+traditional Datalog system.
 
 \begin{figure}
 \includegraphics[width=\linewidth]{fig/sn_perf}
