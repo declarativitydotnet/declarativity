@@ -225,9 +225,10 @@ also seems unsatisfying to require stratification of monotonic programs.
 Instead, \lang allows rules to produce multiple tuples that differ only in their
 embedded lattice values. During the course of the fixpoint computation, those
 values are merged together using the appropriate lattice merge function. This is
-safe because any functions that might be computed over the embedded lattice
-value must be monotonic. Nevertheless, this solution is somewhat
-counterintuitive, because tuples in Datalog relations are traditionally
+safe because Bud stratifies programs according to non-monotonic operators;
+hence, any operators that might be applied to an embedded lattice value before
+it has been determined exactly must be monotonic. Nevertheless, this solution is
+somewhat counterintuitive because tuples in Datalog relations are traditionally
 immutable: once a fact is known to be true, its value remains the
 same.\footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
   operation that can only occur between timesteps. Conceptually, Bloom models
@@ -239,9 +240,17 @@ same.\footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
 \subsection{Implementation}
 \label{sec:lattice-impl}
 
-\subsubsection{Lattice wrappers}
-A \emph{lattice wrapper} manages the mapping from identifier names to lattice
-elements.
+We were able to extend Bud to support \lang with relatively minor changes. Bud
+initially had about 7200 lines of code (LOC). Supporting the core lattice
+features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
+to lattice values) required about 300 LOC. The builtin lattice classes
+consistituted an additional 300 LOC. Modifying Bud's fixpoint logic to include
+lattices required only 10 LOC, while the program rewriting required to enable
+seminaive evaluation required 100 LOC. Modifying Bud's collection classes to
+merge together embedded lattice values required modifying about 125 LOC. Along
+with other miscellaneous changes, adding support for \lang required less than
+900 new lines of code. This experience suggests that support for lattices can be
+added to an existing Datalog engine in a relatively straightforward manner.
 
 \subsection{Performance study}
 \label{sec:lattice-perf}
