@@ -36,26 +36,46 @@ systems scale and the cost of global serializability becomes increasingly
 prohibitive~\cite{Helland2009}. For example, many distributed storage systems
 allow users to provide ``merge functions'' that can resolve write-write
 conflicts between replicas, allowing the system to eventually reach a consistent
-state (e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}). Unfortunately,
-writing a correct merge function can be very difficult: not only must
-developers reason about the many possible interleavings of write operations, but
-they must also ensure that the application logic respects the loose consistency
-provided by the storage system. For example, suppose an application reads a
-value from the storage system and computes a derived value. If the value that
-was originally read is changed (e.g., due to merging the state of different
-replicas) but the application logic does not recompute the derived value, the
-overall application state will still be inconsistent. By analyzing the
-application logic in concert with the 
+state (e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}). The
+user-defined merge functions typically rely on domain knowledge about the
+semantics of updates, which allows two conflicting writes to be safely commuted.
+
+Unfortunately, writing a correct merge function can be very difficult: not only
+must developers reason about the many possible interleavings of write
+operations, but they must also ensure that the application logic respects the
+loose consistency provided by the storage system. For example, suppose an
+application reads a value from the storage system and computes a derived
+value. If the value that was originally read is changed (e.g., due to merging
+the state of different replicas) but the application logic does not recompute
+the derived value, the overall application state may still be inconsistent. By
+analyzing the application logic in concert with the behavior of the storage
+layer, \lang and the CALM analysis provide a possible solution by ensuring that
+replicated values are only used in a ``safe'' (monotonic) fashion.
 
 % XXX: talk about how CALM solves this problem?
 
 Shapiro et al.\ recently proposed ``Convergent or Commutative Replicated Data
 Types'' (CRDTs), a principled approach to the design of loosely consistent data
-values~\cite{Shapiro2011b}.
+values~\cite{Shapiro2011b}. Shapiro et al.\ provide a formal model for
+convergence based on join semilattices and a catalog of practical CRDT
+designs~\cite{Shapiro2011a}. CRDTs and \lang lattices often follow similar
+design patterns. A major difference between \lang and CRDTs is that Shapiro et
+al.\ focus on the design of replicated data types in isolation, whereas we
+attempt to analyze the monotonicity of complete distributed systems. Hence, a
+legal and convergent CRDT might still allow application state to remain
+permanently inconsistent (as discussed above).
+
+% XXX: elaborate on specific CRDTs that might exhibit application-level
+% inconsistency?
+
+% XXX: explain why \lang wouldn't allow such application-specific inconsistency?
+
+% XXX: should we wager anything about the relative expressiveness of CRDTs and
+% \lang programs?
 
 % XXX: cite statebox?
 
-% CRDTs, Wuu & Bernstein
+% XXX: Wuu & Bernstein
 % Operational transformations
 
 \subsection{Non-monotonicity in deductive databases}
