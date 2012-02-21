@@ -20,16 +20,25 @@ potential for concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
 %       do we need to say why our stuff is different?
 
 O'Neil describes a method for supporting for ``escrow'' transactions, which
-designate certain operations that can be commuted subject to a resource
-bound~\cite{O'Neil1986}. For example, credits and debits to a bank account might
-only commute with one another if the bank account balance can be guaranteed to
-be non-negative.
+provide support for operations that are only commutative when a certain limited
+resource is available~\cite{O'Neil1986}. For example, credits and debits to a
+bank account might only commute with one another if the bank account balance can
+be guaranteed to be non-negative. We are currently exploring how to add support
+for escrow operations to \lang.
 
-% XXX: do we need to say how our stuff compares to escrow?
-
-% TODO: cite Helland and Campbell on the value of ACID 2.0 operations
+% XXX: do we need to say more about how our stuff compares to escrow?
 
 \subsection{Commutativity in distributed systems}
+Many distributed systems provide a means for users to specify which operations
+are commutative, associative, or idempotent. Helland and Campbell observe that
+this design pattern is particularly important as systems scale, and ensuring
+global serializability is increasingly infeasible~\cite{Helland2009}. For
+example, many distributed storage systems allow users to provide ``merge
+functions'' that can resolve write-write conflicts at different replicas to
+ensure the system eventually reaches a consistent state
+(e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).
+
+% XXX: should probably cite statebox differently
 
 % CRDTs, Wuu & Bernstein
 % Operational transformations
