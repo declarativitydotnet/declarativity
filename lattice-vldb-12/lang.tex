@@ -150,18 +150,13 @@ collection. Unfortunately, that would introduce needless non-monotonicity into
 the program.
 
 Storing lattice elements as attributes of tuples in set-oriented collections
-introduces several challenges. Tuples in Bloom collections are traditionally
-immutable: once a fact is known to be true, its value remains the
-same.\footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
-  operation that can only occur between timesteps. Conceptually, Bloom models
-  update as the retraction of the previous version of a fact and the insertion
-  of a new fact~\cite{dedalus}.} Consider a simple \lang rule that derives tuples
+introduces several challenges. Consider a simple \lang rule that derives tuples
 with a lattice element as an attribute value:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, lat_foo]}
 \end{verbatim}
 where \texttt{t1} and \texttt{t2} are Bloom relations and \texttt{lat\_foo}
-identifies a lattice, and suppose that the first column of \texttt{t1} is the
+identifies a lattice; suppose that the first column of \texttt{t1} is the
 relation's key. The value associated with \texttt{lat\_foo} can change over the
 course of the fixpoint computation (specifically, it can grow ``upward''
 according to the lattice's partial order). Implemented naively, this might
@@ -170,15 +165,27 @@ attribute, which would violate \texttt{t1}'s key (the first column of
 \texttt{t1} would not functionally determine a single value for the second
 column).
 
-One way to avoid this problem would be to require that lattice elements embedded
-into Bloom collections be computed exactly before the rule that performs the
+This problem could be avoided by requiring that lattice elements embedded into
+Bloom collections be computed exactly before the rule that performs the
 embedding is evaluated. This would effectively stratify the program according to
 lattice embedding rules, which would disallow cycles through lattice
 embeddings~\cite{Apt1988}. This would reject intuitively reasonable programs; it
-also seems unsatisfying to require stratification of a monotonic program.
+also seems unsatisfying to require stratification of monotonic programs.
 
-Instead, \lang allows lattice embeddings to produce multiple tuples and then
-merges those tuples together during the course of the fixpoint computation.
+% Clarify this
+Instead, \lang allows rules to produce multiple tuples that differ only in their
+embedded lattice values. During the course of the fixpoint computation, those
+values are merged together using the appropriate lattice merge function. This is
+safe because any functions that might be computed over the embedded lattice
+value must be monotonic. Nevertheless, this solution is somewhat
+counterintuitive, because tuples in Datalog relations are traditionally
+immutable: once a fact is known to be true, its value remains the
+same.\footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
+  operation that can only occur between timesteps. Conceptually, Bloom models
+  update as the retraction of the previous version of a fact and the insertion
+  of a new fact~\cite{dedalus}.}
+% Should we note that we might add an option to disable this behavior for
+% particular attributes?
 
 \subsection{Implementation}
 
