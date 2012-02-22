@@ -1,0 +1,148 @@
+\section{Background: Bloom and CALM}
+\label{sec:background}
+\begin{table}
+\begin{tabular}{|c|l|p{1.85in}|}
+\hline
+\textbf{Op} & \textbf{Name} & \textbf{Meaning} \\
+\hline
+\verb|<=| & \emph{merge} & lhs includes the content of rhs in the
+current timestep \\
+\hline
+\verb|<+| & \emph{deferred merge} & lhs will include the content of rhs in the
+next timestep \\
+\hline
+\verb|<-| & \emph{deferred delete} & lhs will not include the content of the rhs
+in the next timestep \\
+\hline
+\verb|<|$\sim$ & \emph{async merge} & (remote) lhs will include the content of the
+rhs at some non-deterministic future timestep\\
+\hline
+\end{tabular}
+\caption{Bloom operators.}
+\label{tbl:bloom-ops}
+\end{table}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+class AllPaths
+  include Bud
+
+  state do
+    table :link, [:from, :to, :cost]
+    table :path, [:from, :to, :next_hop, :cost]
+  end
+
+  bloom :make_paths do
+    path <= link {|l| [l.from, l.to, l.to, l.cost]}
+    path <= (link*path).pairs(:to => :from) do |l,p|
+      [l.from, p.to, l.to, l.cost + p.cost]
+    end
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A Bloom program to compute the transitive closure of the
+  \emph{link} relation.}
+\label{fig:bloom-spaths}
+\end{figure}
+
+In this section, we briefly review the Bloom programming language and the CALM
+program analysis technique.
+
+\subsection{Bloom}
+
+\subsection{CALM Analysis}
+
+Bloom is a variant of Datalog written as a domain-specific language (DSL) for distributed programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
+\emph{Bud}, allows logic written in Bloom to be embedded within Ruby
+programs.
+
+
+A {\em bloom collection} is a pair $(R,\bar{k_n} = [k_1,...,k_n],\bar{v_m} = [v_1,...,v_m])$ consisting of a {\em collection name} $R$, a list of named keys $k_1, \ldots, k_n$, and a list of named values $v_1, \ldots, v_m$.  A {\em fact} over a bloom collection $(R, \bar{k_n}, \bar{v_m})$ is an $n+m+1$ tuple of constants.  The additional argument is an integer {\em timestep} value.  If a fact has timestep value $t$, we say that the fact "`exists at time $t$."'  Note that this does not necessarily imply that the same fact exists at timestep value $t+1$.
+
+A {\em bloom program} consists of a set of {\em rules}, as well as a set of bloom collections partitioned into {\em input}, {\em output}, and {\em intermediate} collections.
+
+A {\em rule} is an expression of the form:
+\begin{quotation}
+lhs op rhs
+\end{quotation}
+where \emph{lhs} is the name of a Bloom collection, \emph{rhs} is an expression
+that produces set of facts over the collection, and \emph{op} is one of the operators listed in
+Table~\ref{tbl:bloom-ops}.  The expression {\em rhs} applies functions over collections to generate a set of facts over {\em lhs}.  Note that {\em lhs} may appear among the collections referenced by {\em rhs}.
+
+Bloom rules are defined with respect to atomic timesteps.
+%which can be implemented via successive rounds of evaluation.
+At each time, certain "`ground facts"' exist in collections.  These "`ground facts"' may be facts in input collections (input), facts persisted from previous timesteps, or facts received from another agent.
+Bloom rules
+specify the derivation of additional facts, which can be declared to
+exist either in the current timestep (using $<=$), at the very next timestep (using $<+$), or at
+some non-deterministic time in the future at a remote node (using $<~$).
+A Bloom program also specifies the way that facts persist (or do
+not persist) across consecutive timesteps on a single node. 
+%Bloom
+%is a side-eect free language with no “mutable state”: if a fact is
+%defined at a given timestep, its existence at that timestep cannot be
+%refuted by any expression in the language. This technicality is key
+%to avoiding many of the complexities involved in reasoning about
+%earlier “stateful” rule languages. The paper on Dedalus discusses
+%these points in more detail [3].
+
+\wrm{say something about Bloom collection types?}
+
+At a given time $t$, all Bloom rules are executed continuously, starting with the "`ground facts"' that exist at $t$.  Any facts derived at future times $s>t$ during the execution of the fixpoint are set aside and not used as input to the fixpoint at $t$..  One can devise a subset of Bloom that corresponds exactly to Datalog where Bloom collections have only keys and no values, the only permmitted {\em op} is $<=$, and the {\em rhs} expressions in rules may only consist of applications of the traditional selection, projection, and cross product operators of the relational algebra.  In this case, a fixpoint will be reached by Tarski's Fixpoint Theorem which guarantees the least fixpoint of a monotone operator is computed by this process.  Execution stops when a fixpoint is reached.
+
+Intuitively, when the \emph{rhs} becomes true, the
+\emph{op} indicates the time at which the \emph{rhs} facts will be added to the
+\emph{lhs} collection.
+
+Consider this subset of Bloom, and imagine that both keys and values were allowed in Bloom collections.  Since there is a functional dependency from keys to values, what should be the program result if the same key is derived with two different values?  Which value should be preferred?
+
+\wrm{TODO: show example, perhaps all pairs shortest paths that would cause a key conflict}
+
+\wrm{At some point, we should connect this to "`marking more stuff confluent"' in the CALM analysis}
+
+To preserve the nice declarative, order-free properties of the language, it is undesirable to use the ordering of the program or the input to decide.  This incomparability motivates the desire for some way to merge the conflicting values.  Such a merge should ideally be commutative.  If we desire recursive merges, such a merge should ideally be part of a lattice in order to ensure that we converge to a fixpoint.  This motivates the introduction of lattice values into value attributes of collections.
+
+How can we incorporate lattices into a Bloom program?  Note that a key-value mapping where the value arguments are all lattices is itself a lattice: the least upper bound contains all elements that do not conflict, and the merged values for key conflicts.  But we must still ensure that our mappings are monotone.
+
+Writing a monotone mapping for the lattice of key-value pairs may be daunting.  We can somewhat decompose this task.  For the key arguments, assume we restrict our attention to selection, projection, and joins.  We can define special selection and join operators that take an order-preserving mapping on the value lattice.  The special selection operator applies the order preserving mapping to each fact.  The special join operator applies the order preserving mapping to each matching pair of facts. \wrm{todo: show these are OPMs.}
+
+Others, such as Ross \& Sagiv have given a model-theoretic interpretation to similar languages. \wrm{expand this}
+
+\wrm{Thus, we can use the fixpoint at a given time as the meaning of that time.  Then, we can talk about the ultimate model (everything ever put into an output relation) and talk about confluence if necessary.}
+
+
+% Mention other host languages?
+Bloom is a Datalog-based domain-specific language (DSL) for distributed
+programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
+\emph{Bud}, allows logic written in Bloom to be embedded within Ruby
+programs. In Bloom, program state is represented using \emph{collections} and
+computation is expressed using declarative \emph{rules}. The original Bloom
+language assumes that collections are relations (as in traditional Datalog) and
+only allows Datalog-style conjunctive queries over those collections; in
+Section~\ref{sec:impl}, we will describe how \lang generalizes Bloom to allow
+storage and computation using arbitrary lattices.
+
+\nrc{TODO: Discuss different collection types}
+
+The \emph{rhs} expression is drawn from an expression language that is
+essentially a syntax sugar for Datalog queries (select, project, join,
+aggregation, and negation); the particular syntax adopted by Bloom resembles
+iteration over a collection, and is intended to be more familiar to imperative
+programmers than the traditional Datalog syntax. Note that, like Datalog
+predicates, Bloom rules can include recursion (e.g., the \emph{lhs} relation may
+appear in the \emph{rhs} expression, either directly or indirectly).
+
+Bloom has a \emph{purely declarative} semantics: the meaning of a Bloom program
+is defined in a model-theoretic fashion, without reference to a particular
+evaluation strategy~\cite{dedalus}. Operationally, the Bud interpreter follows a
+timestepped execution model. First, inbound events (network messages and timer
+interrupts) are merged into the local database. Then the consequences of those
+new facts are computed by computing to a fixpoint. Finally, any outbound
+messages are sent and state updates are applied.
+
+\subsection{CALM analysis in Bloom}
+\begin{itemize}
+\item TODO: Briefly recap CALM analysis: intuition + points of order
+\end{itemize}
