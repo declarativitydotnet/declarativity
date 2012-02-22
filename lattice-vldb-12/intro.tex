@@ -49,27 +49,36 @@ function (set union) and partial order (set containment).
 % Explain how lattices generalize monotonic datalog
 In this paper, we make the following contributions:
 \begin{enumerate}
-\item
-  We present \baselang, a variant of Datalog that is defined over lattices. We
-  define a model-theoretic semantics for \baselang, and show that \baselang
-  generalizes Datalog.
+% \item
+%   We present \baselang, a variant of Datalog that is defined over lattices. We
+%   define a model-theoretic semantics for \baselang, and show that \baselang
+%   generalizes Datalog.
 
 \item
-  We introduce \lang, an extension of Bloom that supports lattices. We introduce
-  the syntax and semantics of \lang and show how to extend the standard
-  semi-naive Datalog evaluation scheme~\cite{Balbin1987} to support both
-  lattices and traditional database relations. We detail the builtin lattice
-  types provided by \lang, describe how developers can define custom lattice
-  types, and illustrate how more complex programs can be constructed via the
-  composition of different lattices.
+  We introduce \lang, an extension of Bloom that supports lattices. We describe
+  how to express computation over lattices, detail the builtin lattice types
+  provided by \lang, and illustrate how developers can define new lattice
+  types.
+
+\item 
+  We generalize the CALM analysis to programs that contain both lattices and
+  set-oriented collections, and show how lattices can be used to prove the
+  confluence of several common distributed design patterns that were regarded as
+  non-monotonic in Bloom. % XXX: revisit this
 
 \item
-  Finally, we validate the effectiveness of lattices with two detailed case
-  studies. We revisit the simple e-commerce scenario presented in Alvaro et.\
-  al, in which clients interact with a replicated shopping cart
-  service~\cite{Alvaro2011}. We use lattices to allow a more flexible and
-  compact representation of shopping cart state. Second, we show how lattices
-  can make the ``checkout'' aggregation operation monotonic.
+  We show how to extend the standard Datalog semi-naive evaluation
+  scheme~\cite{Balbin1987} to support both lattices and traditional database
+  relations. We also describe how an existing Datalog engine can be extended to
+  support lattices with relatively minor changes.
+
+\item
+  Finally, we validate the effectiveness of lattices with two case studies. We
+  revisit the simple e-commerce scenario presented in Alvaro et al., in which
+  clients interact with a replicated shopping cart service~\cite{Alvaro2011}. We
+  use lattices to allow a more flexible and compact representation of shopping
+  cart state. Second, we show how lattices can make the ``checkout'' aggregation
+  operation monotonic.
 
   We also use lattices to implement a classical distributed protocol for
   point-to-point causal delivery~\cite{Schiper1989}. We show that causal
