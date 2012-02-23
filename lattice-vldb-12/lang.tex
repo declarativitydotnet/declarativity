@@ -301,19 +301,19 @@ set-oriented collections. The other version was written in \lang and used
 morphisms over the \texttt{lset} lattice. For the \lang version, we ran the
 program both with and without semi-naive evaluation enabled. As input, we used
 on synthetic graphs of various sizes---in a graph with $n$ nodes, each node had
-approximately $\log_2 n$ outgoing edges. We ran the experiment on a late 2010
+$O(\log_2 n)$ outgoing edges. We ran the experiment on a late 2010
 MacBook Air with a 2.13 Ghz Intel Core 2 Duo processor and 4GB of RAM, running
 Mac OS X 10.7.3 and Ruby 1.8.7-p352. We ran each program variant five times on
-each graph and report the mean wall-clock time.
+each graph and report the mean elapsed wall-clock time.
 
 Figure~\ref{fig:tc-perf-graph} shows how the runtime of each program varied with
 the size of the graph. Note that we only report results for the naive \lang
-strategy on small input sizes because this variant exhibited exponential
-performance. The poor performance of naive evaluation is not surprising: after
-deriving all paths of length $n$, naive evaluation will then rederive all those
-paths at every subsequent ``step'' of the fixpoint computation. In contrast,
-after computing length $n$ paths, a semi-naive strategy will only generate
-length $n+1$ paths in the next step. Bloom and semi-naive \lang achieve similar
-results. These results suggest that our implementation of semi-naive evaluation
-for \lang is effective and performs comparably with semi-naive evaluation for a
-traditional Datalog system.
+strategy on small input sizes because this variant ran very slowly as the graph
+size increased. The poor performance of naive evaluation is not surprising:
+after deriving all paths of length $n$, naive evaluation will then rederive all
+those paths at every subsequent ``step'' of the fixpoint computation. In
+contrast, after computing length $n$ paths, a semi-naive strategy will only
+generate length $n+1$ paths in the next step. Bloom and semi-naive \lang achieve
+similar results. These results suggest that our implementation of semi-naive
+evaluation for \lang is effective and performs comparably with a traditional
+Datalog system.
