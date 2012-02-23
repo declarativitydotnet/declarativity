@@ -4,19 +4,19 @@ require 'bud'
 QUORUM_SIZE = 5
 RESULT_ADDR = "example.org"
 
-class QuorumVote
+class QuorumVoteL
   include Bud
 
   state do
     channel :vote_chn, [:@addr, :voter_id]
     channel :result_chn, [:@addr]
-    table   :votes, [:voter_id]
-    scratch :vote_cnt, [] => [:cnt]
+    lset    :votes
+    lbool   :vote_done
   end
 
   bloom do
     votes      <= vote_chn {|v| v.voter_id}
-    vote_cnt   <= votes.group(nil, count(:voter_id))
-    result_chn <~ vote_cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE}
+    got_quorum <= votes.size.gt_eq(QUORUM_SIZE)
+    result_chn <~ got_quorum.when_true { [RESULT_ADDR] }
   end
 end
