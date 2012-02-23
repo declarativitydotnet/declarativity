@@ -18,6 +18,7 @@ Bloom relations; we added several \lang features to ease this interoperability,
 which we describe in Section~\ref{sec:bloom-interop}.
 
 \subsection{Definitions}
+\label{sec:lattice-defn}
 A \emph{join semi-lattice} is a pair $\langle S, \lor \rangle$, where $S$ is a
 poset and $\lor$ is a binary operator (called the ``join'' or ``least upper
 bound'') that is associative, commutative, and idempotent. For all $x, y \in S$,
@@ -44,6 +45,14 @@ in a manner that is consistent with the partial orders of both sets. Note that
 morphisms are OPMs but the converse is not true in general.
 
 \subsection{Language concepts}
+In \lang, state is represented using lattices and computation is expressed as
+functions over lattices. As described above, a lattice is a set of values
+equipped with a least upper bound operator (lub). To emphasize the intuition
+behind the lub operator, we refer to lubs as \emph{merge functions}: given two
+values that belong to the lattice, the merge function produces a single lattice
+value that is ``$\ge$'' either of the input values. For example, sets form a
+lattice with set union as the merge function (lub); this implies that the
+lattice's partial order is set inclusion.
 
 \subsection{Builtin lattice types}
 \label{sec:lattice-builtins}
@@ -92,7 +101,7 @@ must also define two methods:
 
 \item \texttt{merge(e)}: given a lattice element \emph{e}, this method returns the
   lattice element that is the least upper bound of $\{e, \textit{self}\}$. This method must
-  satisfy the algebraic properties summarized in Section~\ref{sec:found-defn}---in
+  satisfy the algebraic properties summarized in Section~\ref{sec:lattice-defn}---in
   particular, it must be commutative, associative, and idempotent. Note that
   \emph{e} must have the same class as \emph{self}.
 \end{itemize}
