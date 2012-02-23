@@ -166,20 +166,19 @@ allowed~\cite{dedalus}.
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
 
-Research on deductive databases has long distinguished between \emph{monotonic}
-and \emph{non-monotonic} logic programs. Intuitively, a monotonic program only
-computes more results over time---that is, it will never ``retract'' a previous
-conclusion in the face of new information. A non-monotonic program is any
-program that does not have this property. A simple conservative test for
-monotonicity is based on the syntax of the program: the selection, projection,
-and join operators are monotonic, while the aggregation and negation operators
-are not.
+Work on deductive databases has long drawn a distinction between
+\emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, a
+monotonic program only computes more results over time---that is, it will never
+``retract'' a previous conclusion in the face of new information. A simple
+conservative test for monotonicity is based on the syntax of the program: the
+selection, projection, and join operators are monotonic, while aggregation and
+negation are not.
 
 The CALM analysis connects the theory of monotonic logic with the practical
-problem of distributed consistency. In particular, it has been shown that all
-monotonic programs are \emph{confluent}: that is, given the same input,
-XXX~\cite{Ameloot2011}. Hence, monotonic programs are a useful building block
-for loosely consistent distributed programming.
+problem of distributed consistency~\cite{Alvaro2011}. In particular, it has been
+proven that all monotonic programs are \emph{confluent}: that is, given the same
+input, XXX~\cite{Ameloot2011}. Hence, monotonic programs are a useful building
+block for loosely consistent distributed programming.
 
 This result naturally suggests a program analysis technique that we have
 implemented in Bloom. According to the CALM principle, distributed inconsistency
@@ -191,18 +190,24 @@ order sensitive. Our analysis tool flags these program locations as \emph{points
 their program to introduce more monotonic logic, or introduce a coordination
 protocol to ensure that a consistent ordering is agreed upon.
 
+\subsubsection{Limitations of set monotonicity}
 Unfortunately, the original formulation of the CALM principle considered only
 programs that compute more facts over time---that is, programs whose output
-\emph{sets} grow over time. This makes programs that ``grow'' according to
-another partial order, even though they are perfectly consistent. For example,
-consider the program in Figure~\ref{fig:bloom-nm-quorum}. This program receives
-votes from another program (not shown) over the \texttt{vote\_chn} channel. Once
-at least \texttt{QUORUM\_SIZE} votes have been received, a message is sent to
-another remote node. Conceptually, this is a monotonic program: the set of
-received votes only grows and the \texttt{count} of the \texttt{votes}
-collection will only increase, so once the quorum threshold has been crossed it
-will not be retracted. However, Bloom would regard this program as non-monotonic
-because it contains aggregation (specifically, the grouping operation on
+\emph{sets} grow over time. Many distributed protocols make \emph{progress} over
+time but this notion of progress is often difficult to represent as a growing
+set of facts. For example, consider the program in
+Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from a client
+program (not shown) via the \texttt{vote\_chn} channel. Once at least
+\texttt{QUORUM\_SIZE} votes have been received, a message is sent to another
+remote node to indicate that a quorum has been reached. This program resembles a
+``quorum vote'' subroutine that might be required for an implementation of
+Paxos~\cite{Lamport1998} or a quorum replication protocol~\cite{Gifford1979}.
+
+It is easy to see that this program makes progress in a monotonic fashion: the
+set of received votes grows and the count of the \texttt{votes} collection can
+only increase, so once a quorum has been reached it will never be
+retracted. Unfortunately, the current CALM analysis would regard this program as
+non-monotonic because it contains aggregation (the grouping operation on
 line~\ref{line:bloom-nm-quorum}).
 
 To solve this problem, we need to introduce a notion of program outputs that
