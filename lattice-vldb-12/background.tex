@@ -8,7 +8,7 @@ class AllPaths
   include Bud
 
   state do
-    table :link, [:from, :to] => [:cost]
+    table :link, [:from, :to] => [:cost] (*\label{line:spaths-ddl}*)
     scratch :path, [:from, :to, :next_hop, :cost]
     scratch :min_cost, [:from, :to] => [:cost]
   end
@@ -37,47 +37,54 @@ which the CALM analysis produces unsatisfactory results.
 \label{sec:bg-bloom}
 
 Bloom is a Datalog-based domain-specific language (DSL) for distributed
-programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
-\emph{Bud}, allows Bloom logic to be embedded within Ruby
-programs. Figure~\ref{fig:bloom-spaths} contains an example Bloom program.
+programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
+using \emph{collections}: unordered sets of tuples, akin to relations in
+Datalog. Computation is expressed as a bundle of declarative
+\emph{statements}. An instance of a Bloom program evaluates its statements over
+its local database; Bloom instances communicate via message passing.
 
+An instance of a Bloom program proceeds through a series of
+\emph{timesteps}.\footnote{Note that there is a precise declarative semantics
+  for the interpretation of Bloom programs~\cite{dedalus}, but we describe
+  Bloom's semantics operationally for the sake of exposition.} At the beginning
+of a timestep, new inbound events are received (and represented as facts in
+collections). The program's statements are run over the local database to
+compute derived facts. Finally, any outbound messages are sent (typically
+network messages to other Bloom instances).
+
+\subsubsection{Collections}
 The state of a Bloom program is represented using \emph{collections}: unordered
-sets of tuples, akin to relations in Datalog. Each collection has a
-\emph{schema}, which declares the structure (column names) of the tuples in the
-collection. A subset of the columns in a collection form its \emph{key}: as in
-SQL, the key columns of a collection functionally determine the remaining
-columns. Bloom adopts the Ruby type system rather than inventing its own; hence,
-Bloom tuples are just Ruby arrays that contain Ruby values (e.g., strings,
-integers and booleans). Bloom provides five builtin collection types to
-represent different kinds of state (Table~\ref{tbl:bloom-collections}).
+sets of tuples, akin to relations in Datalog. Bloom adopts the Ruby type system
+rather than inventing its own; hence, Bloom tuples are just Ruby arrays that
+contain Ruby values (e.g., strings, integers and booleans). Each collection has
+a \emph{schema}, which declares the structure (column names) of the tuples in
+the collection. A subset of the columns in a collection form its \emph{key}: as
+in SQL, the key columns of a collection functionally determine the remaining
+columns. For example, line~\ref{line:spaths-ddl} of
+Figure~\ref{fig:bloom-spaths} declares a collection named \texttt{link} with
+three columns, two of which form the collection's key.
 
-In Bloom, computation is expressed as a bundle of declarative
-\emph{statements}. Each statement has one or more input collections and a single
-output collection. A statement defines how the contents of the input
-collections should be transformed before being included (via set union) in the
-output collection. Each statement takes the form: \\ \noindent
+Bloom provides five builtin collection types to represent different kinds of
+state (Table~\ref{tbl:bloom-collections}).
+
+\subsubsection{Statements}
+Each statement has one or more input collections and a single output
+collection. A statement defines how the contents of the input collections should
+be transformed before being included (via set union) in the output
+collection. Each statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$merge-op$>$
     $<$collection-expression$>$}}\\ \noindent
 The left-hand side (lhs) of the statement is the name of the output collection
 and the right-hand side (rhs) is an expression that produces a collection. Bloom
-allows the usual relational operators to be used on the rhs (selection, projection,
-join, grouping, aggregation, and negation), although it adopts a syntax intended
-to be more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
-line~\ref{line:spaths-proj} contains projection,
+allows the usual relational operators to be used on the rhs (selection,
+projection, join, grouping, aggregation, and negation), although it adopts a
+syntax intended to be more familiar to imperative programmers. In
+Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj} contains projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path}, and line~\ref{line:spaths-group}
 demonstrates grouping and aggregation. Note that, as in Datalog, Bloom allows
-statements to be recursive (either directly or indirectly). % Talk about stratification?
-
-The execution of a Bloom program proceeds through a series of
-\emph{timesteps}.\footnote{Note that there is a precise declarative semantics
-  for the interpretation of Bloom programs~\cite{dedalus}, but we describe
-  Bloom's semantics operationally for the sake of exposition.} At the start of a
-timestep, some of the collections contain ``ground facts''---these represent
-persisted data or newly received network messages. The Bloom runtime then
-computes a \emph{fixpoint}---that is, it evaluates the program's statements over
-all the facts in the local database, computing all the additional information
-that can be derived from the ground facts.
+statements to be recursive (either directly or
+indirectly). % Talk about stratification?
 
 In each statement, the \emph{merge-op} describes \emph{when} the rhs will be
 added to the expression on the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=|
@@ -116,6 +123,48 @@ rhs at some non-deterministic future timestep\\
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
 
+Research on deductive databases has long distinguished between \emph{monotonic}
+and \emph{non-monotonic} logic programs. Intuitively, a monotonic program only
+computes more results over time---that is, it will never ``retract'' a previous
+conclusion in the face of new information. A non-monotonic program is any
+program that does not have this property. A simple conservative test for
+monotonicity is based on the syntax of the program: the selection, projection,
+and join operators are monotonic, while the aggregation and negation operators
+are not.
+
+The CALM analysis connects the theory of monotonic logic with the practical
+problem of distributed consistency. In particular, it has been shown that all
+monotonic programs are \emph{confluent}: that is, given the same input,
+XXX~\cite{Ameloot2011}. Hence, monotonic programs are a useful building block
+for loosely consistent distributed programming.
+
+This result naturally suggests a program analysis technique that we have
+implemented in Bloom. According to the CALM principle, distributed inconsistency
+may occur when the output of an asynchronously derived value is consumed by a
+non-monotonic operator. This is problematic, because asynchronous messaging
+results in non-deterministic arrival order, and a non-monotonic operator may be
+order sensitive. Our analysis tool flags these program locations as \emph{points
+  of order}. To achieve consistency, the programmer either needs to rewrite
+their program to introduce more monotonic logic, or introduce a coordination
+protocol to ensure that a consistent ordering is agreed upon.
+
+Unfortunately, the original formulation of the CALM principle considered only
+programs that compute more facts over time---that is, programs whose output
+\emph{sets} grow over time. This makes programs that ``grow'' according to
+another partial order, even though they are perfectly consistent. For example,
+consider the program in Figure~\ref{fig:bloom-nm-quorum}. This program receives
+votes from another program (not shown) over the \texttt{vote\_chn} channel. Once
+at least \texttt{QUORUM\_SIZE} votes have been received, a message is sent to
+another remote node. Conceptually, this is a monotonic program: the set of
+received votes only grows and the \texttt{count} of the \texttt{votes}
+collection will only increase, so once the quorum threshold has been crossed it
+will not be retracted. However, Bloom would regard this program as non-monotonic
+because it contains aggregation (specifically, the grouping operation on
+line~\ref{line:bloom-nm-quorum}).
+
+To solve this problem, we need to introduce a notion of program outputs that
+``grow over time'' according to a partial order that is not set containment. We
+do this via lattices, as we describe in the next section.
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -135,7 +184,7 @@ class QuorumVote
 
   bloom do
     votes      <= vote_chn {|v| v.voter_id}
-    cnt        <= votes.group(nil, count(:voter_id))
+    cnt        <= votes.group(nil, count(:voter_id)) (*\label{line:bloom-nm-quorum}*)
     result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE}
   end
 end
