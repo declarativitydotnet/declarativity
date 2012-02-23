@@ -10,7 +10,7 @@ class AllPaths
   state do
     table :link, [:from, :to] => [:cost]
     scratch :path, [:from, :to, :next_hop, :cost]
-    scratch :min_cost, [:from, :to] => [:next, :cost]
+    scratch :min_cost, [:from, :to] => [:cost]
   end
 
   bloom do
@@ -41,7 +41,7 @@ programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
 \emph{Bud}, allows Bloom logic to be embedded within Ruby
 programs. Figure~\ref{fig:bloom-spaths} contains an example Bloom program.
 
-The state of a Bloom program is representing using \emph{collections}: unordered
+The state of a Bloom program is represented using \emph{collections}: unordered
 sets of tuples, akin to relations in Datalog. Each collection has a
 \emph{schema}, which declares the structure (column names) of the tuples in the
 collection. A subset of the columns in a collection form its \emph{key}: as in
@@ -56,19 +56,33 @@ In Bloom, computation is expressed as a bundle of declarative
 output collection. A statement defines how the contents of the input
 collections should be transformed before being included (via set union) in the
 output collection. Each statement takes the form: \\ \noindent
-\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
+\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$merge-op$>$
     $<$collection-expression$>$}}\\ \noindent
 The left-hand side (lhs) of the statement is the name of the output collection
 and the right-hand side (rhs) is an expression that produces a collection. Bloom
-allows the usual relational operators to be used on the rhs (select, project,
+allows the usual relational operators to be used on the rhs (selection, projection,
 join, grouping, aggregation, and negation), although it adopts a syntax intended
 to be more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
 line~\ref{line:spaths-proj} contains projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path}, and line~\ref{line:spaths-group}
 demonstrates grouping and aggregation. Note that, as in Datalog, Bloom allows
-statements to be recursive (either directly or
-indirectly). % Talk about stratification?
+statements to be recursive (either directly or indirectly). % Talk about stratification?
+
+The execution of a Bloom program proceeds through a series of
+\emph{timesteps}.\footnote{Note that there is a precise declarative semantics
+  for the interpretation of Bloom programs~\cite{dedalus}, but we describe
+  Bloom's semantics operationally for the sake of exposition.} At the start of a
+timestep, some of the collections contain ``ground facts''---these represent
+persisted data or newly received network messages. The Bloom runtime then
+computes a \emph{fixpoint}---that is, it evaluates the program's statements over
+all the facts in the local database, computing all the additional information
+that can be derived from the ground facts.
+
+In each statement, the \emph{merge-op} describes \emph{when} the rhs will be
+added to the expression on the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=|
+operator performs normal logical deduction: that is, the lhs and rhs are true at
+the ``same'' time.
 
 \begin{table}
 \begin{tabular}{|c|l|}
@@ -95,12 +109,13 @@ in the next timestep \\
 rhs at some non-deterministic future timestep\\
 \hline
 \end{tabular}
-\caption{Bloom operators.}
+\caption{Bloom merge operators.}
 \label{tbl:bloom-ops}
 \end{table}
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
+
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -115,13 +130,13 @@ class QuorumVote
     channel :vote_chn, [:@addr, :voter_id]
     channel :result_chn, [:@addr]
     table   :votes, [:voter_id]
-    scratch :vote_cnt, [] => [:cnt]
+    scratch :cnt, [] => [:cnt]
   end
 
   bloom do
     votes      <= vote_chn {|v| v.voter_id}
-    vote_cnt   <= votes.group(nil, count(:voter_id))
-    result_chn <~ vote_cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE}
+    cnt        <= votes.group(nil, count(:voter_id))
+    result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE}
   end
 end
 \end{lstlisting}
