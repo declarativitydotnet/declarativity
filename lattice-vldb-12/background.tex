@@ -193,26 +193,25 @@ protocol to ensure that a consistent ordering is agreed upon.
 \subsubsection{Limitations of set monotonicity}
 Unfortunately, the original formulation of the CALM principle considered only
 programs that compute more facts over time---that is, programs whose output
-\emph{sets} grow over time. Many distributed protocols make \emph{progress} over
-time but this notion of progress is often difficult to represent as a growing
-set of facts. For example, consider the program in
+\emph{sets} grow monotonically. Many distributed protocols make \emph{progress}
+over time but this notion of progress is often difficult to represent as a
+growing set of facts. For example, consider the Bloom program in
 Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from a client
 program (not shown) via the \texttt{vote\_chn} channel. Once at least
-\texttt{QUORUM\_SIZE} votes have been received, a message is sent to another
-remote node to indicate that a quorum has been reached. This program resembles a
-``quorum vote'' subroutine that might be required for an implementation of
-Paxos~\cite{Lamport1998} or a quorum replication protocol~\cite{Gifford1979}.
+\texttt{QUORUM\_SIZE} votes have been received, a message is sent to a remote
+node to indicate that quorum has been reached. This program resembles a ``quorum
+vote'' subroutine that might be used by an implementation of
+Paxos~\cite{Lamport1998} or quorum replication~\cite{Gifford1979}.
 
-It is easy to see that this program makes progress in a monotonic fashion: the
-set of received votes grows and the count of the \texttt{votes} collection can
-only increase, so once a quorum has been reached it will never be
+It is easy to see that this program makes progress in a semantically monotonic
+fashion: the set of received votes grows and the count of the \texttt{votes}
+collection can only increase, so once a quorum has been reached it will never be
 retracted. Unfortunately, the current CALM analysis would regard this program as
 non-monotonic because it contains aggregation (the grouping operation on
-line~\ref{line:bloom-nm-quorum}).
-
-To solve this problem, we need to introduce a notion of program outputs that
-``grow over time'' according to a partial order that is not set containment. We
-do this via lattices, as we describe in the next section.
+line~\ref{line:bloom-nm-quorum}). To solve this problem, we need to introduce a
+notion of program outputs that ``grow over time'' according to a partial order
+that is not set containment. We do this by extending Bloom to allow
+\emph{lattices}, as we describe in the next section.
 
 \begin{figure}[t]
 \begin{scriptsize}
