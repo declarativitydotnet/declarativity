@@ -1,5 +1,60 @@
 \section{Background}
 \label{sec:background}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+class AllPaths
+  include Bud
+
+  state do
+    table :link, [:from, :to] => [:cost]
+    scratch :path, [:from, :to, :next_hop, :cost]
+    scratch :min_cost, [:from, :to] => [:next, :cost]
+  end
+
+  bloom :make_paths do
+    path <= link {|l| [l.from, l.to, l.to, l.cost]}
+    path <= (link*path).pairs(:to => :from) do |l,p|
+      [l.from, p.to, l.to, l.cost + p.cost]
+
+    min_cost <= path.group([:from, :to], min(:cost))
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A Bloom program to compute the transitive closure of the
+  \emph{link} relation.}
+\label{fig:bloom-spaths}
+\end{figure}
+
+In this section, we briefly review the Bloom programming language and the CALM
+program analysis technique.  We highlight a simple distributed protocol for
+which the CALM analysis produces unsatisfactory results.
+
+\subsection{Bloom}
+\label{sec:bg-bloom}
+
+Bloom is a Datalog-based domain-specific language (DSL) for distributed
+programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
+\emph{Bud}, allows Bloom logic to be embedded within Ruby
+programs. Figure~\ref{fig:bloom-spaths} contains an example Bloom program.
+
+In Bloom, program state is representing using \emph{collections}: un-ordered
+sets of \emph{facts}, akin to relations in Datalog or tables in SQL. Each
+collection has a \emph{schema}, which declares the structure (column names) of
+the facts in the collection. A subset of the columns in a collection form its
+\emph{key}: as in SQL, the key columns of a collection functionally determine
+the remaining columns. Bloom provides five builtin collection types to represent
+different kinds of state (Table~\ref{tbl:bloom-collections}).
+
+\begin{table}
+\begin{tabular}{|c|l|}
+\end{tabular}
+\caption{Bloom collection types.}
+\label{tbl:bloom-collections}
+\end{table}
+
 \begin{table}
 \begin{tabular}{|c|l|p{1.85in}|}
 \hline
@@ -21,38 +76,6 @@ rhs at some non-deterministic future timestep\\
 \caption{Bloom operators.}
 \label{tbl:bloom-ops}
 \end{table}
-
-\begin{figure}[t]
-\begin{scriptsize}
-\begin{lstlisting}
-class AllPaths
-  include Bud
-
-  state do
-    table :link, [:from, :to, :cost]
-    table :path, [:from, :to, :next_hop, :cost]
-  end
-
-  bloom :make_paths do
-    path <= link {|l| [l.from, l.to, l.to, l.cost]}
-    path <= (link*path).pairs(:to => :from) do |l,p|
-      [l.from, p.to, l.to, l.cost + p.cost]
-    end
-  end
-end
-\end{lstlisting}
-\end{scriptsize}
-\caption{A Bloom program to compute the transitive closure of the
-  \emph{link} relation.}
-\label{fig:bloom-spaths}
-\end{figure}
-
-In this section, we briefly review the Bloom programming language and the CALM
-program analysis technique.  We highlight a simple distributed protocol for
-which the CALM analysis produces unsatisfactory results.
-
-\subsection{Bloom}
-\label{sec:bg-bloom}
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
