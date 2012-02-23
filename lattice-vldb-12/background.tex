@@ -13,12 +13,13 @@ class AllPaths
     scratch :min_cost, [:from, :to] => [:next, :cost]
   end
 
-  bloom :make_paths do
-    path <= link {|l| [l.from, l.to, l.to, l.cost]}
-    path <= (link*path).pairs(:to => :from) do |l,p|
+  bloom do
+    path <= link {|l| [l.from, l.to, l.to, l.cost]} (*\label{line:spaths-proj}*)
+    path <= (link*path).pairs(:to => :from) do |l,p| (*\label{line:spaths-join-start}*)
       [l.from, p.to, l.to, l.cost + p.cost]
+    end (*\label{line:spaths-join-end}*)
 
-    min_cost <= path.group([:from, :to], min(:cost))
+    min_cost <= path.group([:from, :to], min(:cost)) (*\label{line:spaths-group}*)
   end
 end
 \end{lstlisting}
@@ -40,27 +41,33 @@ programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
 \emph{Bud}, allows Bloom logic to be embedded within Ruby
 programs. Figure~\ref{fig:bloom-spaths} contains an example Bloom program.
 
-The state of a Bloom program is representing using \emph{collections}:
-un-ordered sets of \emph{facts}, akin to relations in Datalog. Each collection
-has a \emph{schema}, which declares the structure (column names) of the facts in
-the collection. A subset of the columns in a collection form its \emph{key}: as
-in SQL, the key columns of a collection functionally determine the remaining
-columns. Bloom provides five builtin collection types to represent different
-kinds of state (Table~\ref{tbl:bloom-collections}).
+The state of a Bloom program is representing using \emph{collections}: unordered
+sets of tuples, akin to relations in Datalog. Each collection has a
+\emph{schema}, which declares the structure (column names) of the tuples in the
+collection. A subset of the columns in a collection form its \emph{key}: as in
+SQL, the key columns of a collection functionally determine the remaining
+columns. Bloom adopts the Ruby type system rather than inventing its own; hence,
+Bloom tuples are just Ruby arrays that contain Ruby values (e.g., strings,
+integers and booleans). Bloom provides five builtin collection types to
+represent different kinds of state (Table~\ref{tbl:bloom-collections}).
 
-In Bloom, computation is expressed using declarative \emph{statements}. Each
-statement takes one or more input collections and produces a single output
-collection; the statement describes how the contents of the input collections
-should be transformed before being added (via set union) to the output
-collection. Each statement takes the form:
-\\ \noindent
+In Bloom, computation is expressed as a bundle of declarative
+\emph{statements}. Each statement has one or more input collections and a single
+output collection. The statement defines how the contents of the input
+collections should be transformed before being included (via set union) in the
+output collection. Each statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
-$<$collection-expression$>$}}\\ \noindent
-The left-hand side (lhs) of the statement is the name of a collection, and the
-right-hand side (rhs) is a collection-valued expression. Bloom allows the usual
-relational operators (select, project, join, grouping, aggregation, and
-negation), although it adopts a syntax inspired by the looping constructs found
-in Ruby and other imperative languages.
+    $<$collection-expression$>$}}\\ \noindent
+The left-hand side (lhs) of the statement is the name of the output collection
+and the right-hand side (rhs) is an expression that produces a collection. Bloom
+allows the usual relational operators to be used on the rhs (select, project,
+join, grouping, aggregation, and negation), although it adopts a syntax intended
+to be more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
+line~\ref{line:spaths-proj} contains projection,
+lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join,
+and line~\ref{line:spaths-group} demonstrates grouping and aggregation. Note
+that as in Datalog, Bloom allows statements to be recursive (either directly or
+indirectly). % Talk about stratification?
 
 \begin{table}
 \begin{tabular}{|c|l|}
