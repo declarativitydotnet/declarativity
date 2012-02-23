@@ -1,10 +1,11 @@
 \section{Background}
 \label{sec:background}
 
+% XXX: should this be a distributed example?
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
-class AllPaths
+class ShortestPaths
   include Bud
 
   state do
@@ -24,8 +25,7 @@ class AllPaths
 end
 \end{lstlisting}
 \end{scriptsize}
-\caption{A Bloom program to compute the transitive closure of the
-  \emph{link} relation.}
+\caption{All-pairs shortest paths of a directed graph in Bloom.}
 \label{fig:bloom-spaths}
 \end{figure}
 
@@ -41,8 +41,8 @@ programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
 using \emph{collections}---unordered sets of tuples, akin to relations in
 Datalog. Computation is expressed as a bundle of declarative \emph{statements}.
 An instance of a Bloom program performs computation by evaluating its statements
-over the contents of its local database; Bloom instances communicate via message
-passing.
+over the contents of its local database. Bloom instances communicate via
+asynchronous messaging, as described further below.
 
 An instance of a Bloom program proceeds through a series of
 \emph{timesteps}.\footnote{Note that there is a precise declarative semantics
@@ -56,17 +56,24 @@ into a collection results in emitting an outbound event such as a network
 message for another Bloom instance; those outbound events are emitted at the end
 of the timestep.
 
+The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to
+be embedded inside Ruby programs: observe that Figure~\ref{fig:bloom-spaths} is
+an annotated Ruby class. A small amount of imperative Ruby code is needed to
+instantiate the Bloom program and begin executing it; more details are available
+on the Bloom language website~\cite{bloom}.
+
 \subsubsection{Collections}
 \begin{table}[t]
-\begin{tabular}{|c|l|}
+\begin{tabular}{|l|p{2.32in}|}
 \hline
 \textbf{Name} & \textbf{Behavior }\\
 \hline
 \texttt{table} & Persistent storage.\\
 \texttt{scratch} & Transient storage.\\
-\texttt{channel} & A \texttt{scratch} collection with a \\
+\texttt{channel} & Asynchronous communication. A fact derived into a \texttt{channel} appears in the
+database of a remote Bloom instance at a non-deterministic future time.\\
 \texttt{periodic} & Interface to the system clock.\\
-\texttt{interface} & Interface point between Bloom software modules.\\
+\texttt{interface} & Interface point between software modules.\\
 \hline
 \end{tabular}
 \caption{Bloom collection types.}
@@ -79,43 +86,26 @@ rather than inventing its own; hence, Bloom tuples are just Ruby arrays that
 contain Ruby values (e.g., strings, integers and booleans). Each collection has
 a \emph{schema}, which declares the structure (column names) of the tuples in
 the collection. A subset of the columns in a collection form its \emph{key}: as
-in SQL, the key columns of a collection functionally determine the remaining
-columns. For example, line~\ref{line:spaths-ddl} of
-Figure~\ref{fig:bloom-spaths} declares a collection named \texttt{link} with
-three columns, two of which form the collection's key.
+in SQL, the key columns functionally determine the remaining columns. For
+example, line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
+collection named \texttt{link} with three columns, two of which form the
+collection's key.
 
-Bloom provides five builtin collection types to represent different kinds of
-state (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent
-data: if a fact appears in a table, it remains in the table in future timesteps
-(until it is explicitly removed). A \texttt{scratch} contains transient
-data---the content of scratch collections is emptied at the start of each
-timestep. Scratches are akin to SQL views: they are often useful as a way to
-name intermediate results or as a ``macro'' construct to enable code reuse.
+Bloom provides five collection types to represent different kinds of state
+(Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent data: if
+a fact appears in a table, it remains in the table in future timesteps (until it
+is explicitly removed). A \texttt{scratch} contains transient data---the content
+of scratch collections is emptied at the start of each timestep. Scratches are
+akin to SQL views: they are often useful as a way to name intermediate results
+or as a ``macro'' construct to enable code reuse. The \texttt{channel}
+collection type enables communication between Bloom instances. The schema of a
+channel has a distinguished \emph{location specifier} column (prefixed with
+``\texttt{@}''); when a fact is derived for a channel collection, it appears in
+the database of the Bloom instance at the address given by the location
+specifier. The \texttt{periodic} and \texttt{interface} collection types are not
+relevant for this paper.
 
 \subsubsection{Statements}
-Each statement has one or more input collections and a single output
-collection. A statement defines how the contents of the input collections should
-be transformed before being included (via set union) in the output
-collection. Each statement takes the form: \\ \noindent
-\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$merge-op$>$
-    $<$collection-expression$>$}}\\ \noindent
-The left-hand side (lhs) of the statement is the name of the output collection
-and the right-hand side (rhs) is an expression that produces a collection. Bloom
-allows the usual relational operators to be used on the rhs (selection,
-projection, join, grouping, aggregation, and negation), although it adopts a
-syntax intended to be more familiar to imperative programmers. In
-Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj} contains projection,
-lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
-between \texttt{link} and \texttt{path}, and line~\ref{line:spaths-group}
-demonstrates grouping and aggregation. Note that, as in Datalog, Bloom allows
-statements to be recursive (either directly or
-indirectly). % Talk about stratification?
-
-In each statement, the \emph{merge-op} describes \emph{when} the rhs will be
-added to the expression on the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=|
-operator performs normal logical deduction: that is, the lhs and rhs are true at
-the ``same'' time.
-
 \begin{table}
 \begin{tabular}{|c|l|p{1.85in}|}
 \hline
@@ -137,6 +127,41 @@ rhs at some non-deterministic future timestep\\
 \caption{Bloom merge operators.}
 \label{tbl:bloom-ops}
 \end{table}
+
+Each statement has one or more input collections and a single output
+collection. A statement defines how the contents of the input collections should
+be transformed before being included (via set union) in the output
+collection. Each statement takes the form: \\ \noindent
+\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$merge-op$>$
+    $<$collection-expression$>$}}\\ \noindent The left-hand side (lhs) of the
+statement is the name of the output collection and the right-hand side (rhs) is
+an expression that produces a collection. Bloom allows the usual relational
+operators to be used on the rhs (selection, projection, join, grouping,
+aggregation, and negation), although it adopts a syntax intended to be more
+familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
+line~\ref{line:spaths-proj} contains projection,
+lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
+between \texttt{link} and \texttt{path} using the join predicate
+\verb+link.to = path.from+, and line~\ref{line:spaths-group} demonstrates
+grouping and aggregation.
+
+The ``merge operator'' defines \emph{when} the rhs will be merged into the lhs
+(Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs normal logical
+deduction: that is, the lhs and rhs are true at the ``same'' timestep. The
+\verb|<+| and \verb|<-| operators indicate that facts will be added or removed,
+respectively, from the lhs collection at the beginning of the next timestep. The
+\verb+<~+ operator specifies that the rhs will be merged into the lhs collection
+at some non-deterministic future time. The lhs of a \verb+<~+ rule must be a
+channel; the \verb+<~+ operator models asynchronous messaging.
+
+% XXX: does this need to be said?
+Bloom allows recursive statements---i.e., the rhs of a statement can reference
+the statement's lhs collection, either directly or indirectly. As in Datalog,
+certain constraints must be adopted to ensure that programs with recursive
+statements have a sensible interpretation. For deductive rules (\verb+<=+
+operator), we require that programs be \emph{syntactically
+  stratified}~\cite{Apt1988}: cycles through negation or aggregation are not
+allowed~\cite{dedalus}.
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
