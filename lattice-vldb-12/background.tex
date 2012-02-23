@@ -53,7 +53,7 @@ represent different kinds of state (Table~\ref{tbl:bloom-collections}).
 
 In Bloom, computation is expressed as a bundle of declarative
 \emph{statements}. Each statement has one or more input collections and a single
-output collection. The statement defines how the contents of the input
+output collection. A statement defines how the contents of the input
 collections should be transformed before being included (via set union) in the
 output collection. Each statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
@@ -64,9 +64,10 @@ allows the usual relational operators to be used on the rhs (select, project,
 join, grouping, aggregation, and negation), although it adopts a syntax intended
 to be more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
 line~\ref{line:spaths-proj} contains projection,
-lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join,
-and line~\ref{line:spaths-group} demonstrates grouping and aggregation. Note
-that as in Datalog, Bloom allows statements to be recursive (either directly or
+lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
+between \texttt{link} and \texttt{path}, and line~\ref{line:spaths-group}
+demonstrates grouping and aggregation. Note that, as in Datalog, Bloom allows
+statements to be recursive (either directly or
 indirectly). % Talk about stratification?
 
 \begin{table}

@@ -78,6 +78,14 @@ Joseph M.\ Hellerstein\\
 \maketitle
 
 \begin{abstract}
+  Monotonic logic has recently been identified as a useful building block for
+  loosely consistent distributed programs because it allows eventual consistency
+  without the need for coordination. However, many common distributed protocols
+  cannot naturally be expressed as monotone programs over sets. We propose
+  \lang, a variant of Datalog that allows monotonic programs to use any lattice
+  structure, not just the set lattice. We extend a previous analysis technique
+  for monotonic Datalog to \lang and show how lattices can be used to implement
+  several distributed protocols in a monotonic fashion.
 \end{abstract}
 
 \input{intro}
