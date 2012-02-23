@@ -42,7 +42,7 @@ section by validating the effectiveness of \lang's semi-naive evaluation strateg
 NOTIFY_ADDR = "..."
 NUM_VOTERS = 10
 
-class UnanimousVote
+class QuorumVote
   include Bud
 
   state do
@@ -60,8 +60,7 @@ class UnanimousVote
 end
 \end{lstlisting}
 \end{scriptsize}
-\caption{A simple monotonic \lang program that applies a threshold test to a
-  set.}
+\caption{A monotonic \lang program that waits for a quorum of votes to be received.}
 \label{fig:lattice-ex1}
 \end{figure}
 

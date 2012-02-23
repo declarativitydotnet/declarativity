@@ -40,13 +40,27 @@ programming~\cite{Alvaro2011,bloom}. The current prototype implementation,
 \emph{Bud}, allows Bloom logic to be embedded within Ruby
 programs. Figure~\ref{fig:bloom-spaths} contains an example Bloom program.
 
-In Bloom, program state is representing using \emph{collections}: un-ordered
-sets of \emph{facts}, akin to relations in Datalog or tables in SQL. Each
-collection has a \emph{schema}, which declares the structure (column names) of
-the facts in the collection. A subset of the columns in a collection form its
-\emph{key}: as in SQL, the key columns of a collection functionally determine
-the remaining columns. Bloom provides five builtin collection types to represent
-different kinds of state (Table~\ref{tbl:bloom-collections}).
+The state of a Bloom program is representing using \emph{collections}:
+un-ordered sets of \emph{facts}, akin to relations in Datalog. Each collection
+has a \emph{schema}, which declares the structure (column names) of the facts in
+the collection. A subset of the columns in a collection form its \emph{key}: as
+in SQL, the key columns of a collection functionally determine the remaining
+columns. Bloom provides five builtin collection types to represent different
+kinds of state (Table~\ref{tbl:bloom-collections}).
+
+In Bloom, computation is expressed using declarative \emph{statements}. Each
+statement takes one or more input collections and produces a single output
+collection; the statement describes how the contents of the input collections
+should be transformed before being added (via set union) to the output
+collection. Each statement takes the form:
+\\ \noindent
+\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
+$<$collection-expression$>$}}\\ \noindent
+The left-hand side (lhs) of the statement is the name of a collection, and the
+right-hand side (rhs) is a collection-valued expression. Bloom allows the usual
+relational operators (select, project, join, grouping, aggregation, and
+negation), although it adopts a syntax inspired by the looping constructs found
+in Ruby and other imperative languages.
 
 \begin{table}
 \begin{tabular}{|c|l|}
@@ -79,3 +93,12 @@ rhs at some non-deterministic future timestep\\
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+\end{lstlisting}
+\end{scriptsize}
+\caption{A non-monotonic Bloom program that waits for a quorum of votes to be received.}
+\label{fig:bloom-nm-quorum}
+\end{figure}
