@@ -36,23 +36,43 @@ which the CALM analysis produces unsatisfactory results.
 \subsection{Bloom}
 \label{sec:bg-bloom}
 
-Bloom is a Datalog-based domain-specific language (DSL) for distributed
+Bloom is a Datalog-based domain-specific language (DSL) designed for distributed
 programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
-using \emph{collections}: unordered sets of tuples, akin to relations in
-Datalog. Computation is expressed as a bundle of declarative
-\emph{statements}. An instance of a Bloom program evaluates its statements over
-its local database; Bloom instances communicate via message passing.
+using \emph{collections}---unordered sets of tuples, akin to relations in
+Datalog. Computation is expressed as a bundle of declarative \emph{statements}.
+An instance of a Bloom program performs computation by evaluating its statements
+over the contents of its local database; Bloom instances communicate via message
+passing.
 
 An instance of a Bloom program proceeds through a series of
 \emph{timesteps}.\footnote{Note that there is a precise declarative semantics
   for the interpretation of Bloom programs~\cite{dedalus}, but we describe
   Bloom's semantics operationally for the sake of exposition.} At the beginning
-of a timestep, new inbound events are received (and represented as facts in
-collections). The program's statements are run over the local database to
-compute derived facts. Finally, any outbound messages are sent (typically
-network messages to other Bloom instances).
+of a timestep, inbound events (e.g., network messages) are received and
+represented as facts in collections. The program's statements are evaluated over
+local state to compute all the additional facts that can be derived from the
+current collection contents. In some cases (described below), deriving a fact
+into a collection results in emitting an outbound event such as a network
+message for another Bloom instance; those outbound events are emitted at the end
+of the timestep.
 
 \subsubsection{Collections}
+\begin{table}[t]
+\begin{tabular}{|c|l|}
+\hline
+\textbf{Name} & \textbf{Behavior }\\
+\hline
+\texttt{table} & Persistent storage.\\
+\texttt{scratch} & Transient storage.\\
+\texttt{channel} & A \texttt{scratch} collection with a \\
+\texttt{periodic} & Interface to the system clock.\\
+\texttt{interface} & Interface point between Bloom software modules.\\
+\hline
+\end{tabular}
+\caption{Bloom collection types.}
+\label{tbl:bloom-collections}
+\end{table}
+
 The state of a Bloom program is represented using \emph{collections}: unordered
 sets of tuples, akin to relations in Datalog. Bloom adopts the Ruby type system
 rather than inventing its own; hence, Bloom tuples are just Ruby arrays that
@@ -65,7 +85,12 @@ Figure~\ref{fig:bloom-spaths} declares a collection named \texttt{link} with
 three columns, two of which form the collection's key.
 
 Bloom provides five builtin collection types to represent different kinds of
-state (Table~\ref{tbl:bloom-collections}).
+state (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent
+data: if a fact appears in a table, it remains in the table in future timesteps
+(until it is explicitly removed). A \texttt{scratch} contains transient
+data---the content of scratch collections is emptied at the start of each
+timestep. Scratches are akin to SQL views: they are often useful as a way to
+name intermediate results or as a ``macro'' construct to enable code reuse.
 
 \subsubsection{Statements}
 Each statement has one or more input collections and a single output
@@ -90,13 +115,6 @@ In each statement, the \emph{merge-op} describes \emph{when} the rhs will be
 added to the expression on the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=|
 operator performs normal logical deduction: that is, the lhs and rhs are true at
 the ``same'' time.
-
-\begin{table}
-\begin{tabular}{|c|l|}
-\end{tabular}
-\caption{Bloom collection types.}
-\label{tbl:bloom-collections}
-\end{table}
 
 \begin{table}
 \begin{tabular}{|c|l|p{1.85in}|}
