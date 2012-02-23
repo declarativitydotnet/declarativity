@@ -39,23 +39,23 @@ section by validating the effectiveness of \lang's semi-naive evaluation strateg
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
-NOTIFY_ADDR = "..."
-NUM_VOTERS = 10
+QUORUM_SIZE = 5
+RESULT_ADDR = "example.org"
 
-class QuorumVote
+class QuorumVoteL
   include Bud
 
   state do
-    channel :input_chn, [:@addr, :vote_id]
+    channel :vote_chn, [:@addr, :voter_id]
+    channel :result_chn, [:@addr]
     lset    :votes
     lbool   :vote_done
-    channel :output_chn, [:@addr]
   end
 
   bloom do
-    votes       <= input_chn {|c| c.vote_id}
-    vote_done   <= votes.size.gt_eq(NUM_VOTERS)
-    output_chan <~ vote_done.when_true { [NOTIFY_ADDR] }
+    votes      <= vote_chn {|v| v.voter_id}
+    vote_done  <= votes.size.gt_eq(QUORUM_SIZE)
+    result_chn <~ vote_done.when_true { [RESULT_ADDR] }
   end
 end
 \end{lstlisting}
