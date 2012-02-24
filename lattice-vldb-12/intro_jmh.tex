@@ -6,15 +6,38 @@ programs. The inherent difficulties of distributed computing---concurrency,
 asynchrony, and partial failure---have been exacerbated by the scale at which
 modern distributed systems must operate.
 
-Much of the discussion about distributed programming today revolves around data management systems, and the tradeoffs between transactions and loose consistency.  Programmers using distributed transactions are relieved of consistency concerns but often face significant performance and operational challenges; programmers of loosely-consistent ``NoSQL'' systems can expect more predictable and low-latency performance, but must reason explicitly about program correctness over inconsistent distributed state.
+% remind reviewers that it's a database problem.  can remove if accepted!
+Much of the discussion about distributed programming today revolves around data management systems, and the tradeoffs between transactions and loose consistency.  Programmers using distributed transactions are relieved of consistency concerns but often face significant performance and operational challenges~\cite{birman-ladis}; programmers who use loosely-consistent ``NoSQL'' systems can expect more predictable and low-latency performance, but must reason explicitly about program correctness over inconsistent distributed state.
 
-There is a tradition of work that attempts to help the distributed programmer reason about correctness without recourse to transactional overheads. This goes back at least as far as work on semantic consistency for distributed transactions~\cite{Garcia-Molina1983,Farrag1989}.  In recent years this approach has been explored in two different frameworks: {\em Convergent Objects} and {\em Monotonic Logic}.
+In recent years there has been increased interest in techniques to help programmers achieve correct program behavior without requiring transactional storage.  This idea has been explored in two different frameworks, which we term {\em Convergent Objects} and {\em Monotonic Logic}.
 
-Convergent Objects: Exemplified by CRDTs and Semijoin Lattices.  Nice at the module level, captures practical design patterns like Statebox, etc. But still doesn't solve the big picture---no whole-program guarantees for the developer.  Move example from related work here.
+\subsection{Convergent Objects}
+In the Convergent Object approach, a programmer writes object classes whose methods are insensitive to reordering and delay of messages.  For example, Statebox is ...  Shapiro et al. recently developed a formal model for these approaches called {\em Convergent or Consistent Replicated Data Types (CRDTs)}, which provides formal guarantees based on well-known properties of lattices.   This approach has roots in research on transactions~\cite{Garcia-Molina1983,Farrag1989} and groupware~\cite{operational_transformations}).
 
+The main problem with the Convergent Object approach is that it focuses on the design of isolated classes, and any guarantees of correctness do not span classes or even instances.  For example...  This still leaves the programmer with the challenge of writing correct code and verifying its correctness.
 
-Monotonic Logic: Exemplified by Bloom and CALM.  Addresses the big picture, but analysis is frustratingly conservative on some very basic design constructs.
+\subsection{Monotonic Logic}
+In recent work, we observed that the database theory literature on Datalog and  non-monotonic logic provides an alternative starting point for reasoning about distributed consistency.
+We proposed the CALM theorem, which links distributed
+\emph{consistency} with \emph{logical
+  monotonicity}~\cite{Alvaro2011,Hellerstein2010}. Intuitively, a monotonic
+program computes more information over time---it never ``retracts'' an earlier
+conclusion in the face of new information. Hence, a monotonic program can be
+executed in a coordination-free manner and still reach a consistent state---all
+monotonic programs are eventually consistent~\cite{Ameloot2011}.  Since
+syntactic monotonicity of a Datalog program is straightforward to determine, the
+CALM theorem provides the basis for a simple analysis technique for loosely
+consistent distributed programs~\cite{Alvaro2011}. We realized the CALM analysis
+as part of Bloom, a Datalog-based DSL for distributed programming~\cite{bloom}.
 
+Our initial formulation of Bloom and CALM only considered programs that compute
+sets of facts that grow over time (``set monotonicity''); that is, ``growth'' is
+defined according to set containment. This limits the usefulness of the CALM
+analysis because it is overly conservative: several common distributed programming idioms that ``seem'' monotonic do not satisfy syntatic monotonicity tests. In particular, threshold tests over aggregate values (e.g.,
+``$\textrm{max}(S) > k$'') and upward-moving counters are both evaluated to be non-monotonic
+under set monotonicity.  Hence Bloom will advises a programmer using those constructs to protect them with heavyweight distributed coordination, which is not necessary.
+
+\subsection{A Hybrid Approach}
 
 
 We propose Bloom^L, an extension to Bloom that preserves its whole-program correctness analysis, while incorporating the benefits of CRDTs.  Specifically, Bloom^L has the following key features:
