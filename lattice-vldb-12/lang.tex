@@ -216,7 +216,7 @@ traditional Bloom programs that manipulate set-oriented collections.
 % whereas implicit fold works for sets of singleton values
 % XXX: refer to shortest paths program as practical example
 This feature enables set-oriented collections to be more easily used as input to
-lattices. If a \lang rule has a set-oriented collection on the rhs and a lattice
+lattices. If a \lang statement has a set-oriented collection on the rhs and a lattice
 on the lhs, the lattice merge function is used to ``fold over'' the elements of
 the collection. That is, each element of the collection is converted to a
 lattice element (via the appropriate lattice constructor); then the set of
@@ -237,7 +237,7 @@ collection. Unfortunately, that would introduce needless non-monotonicity into
 the program.
 
 Storing lattice elements as attributes of tuples in set-oriented collections
-introduces several challenges. Consider a simple \lang rule that derives tuples
+introduces several challenges. Consider a simple \lang statement that derives tuples
 with a lattice element as an attribute value:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, lat_foo]}
@@ -253,7 +253,7 @@ with different values for the second attribute, which would violate
 determine a single value for the second column).
 
 This problem could be avoided by placing constraints on the evaluation order of
-rules: for example, we could require that all potential changes to
+statements: for example, we could require that all potential changes to
 \texttt{lat\_foo} be completed before rules that embed \texttt{lat\_foo} could
 be evaluated. This would effectively stratify the program according to lattice
 embedding rules, which would disallow cycles through lattice
