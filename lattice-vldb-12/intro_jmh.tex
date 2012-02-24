@@ -1,0 +1,33 @@
+\section{Introduction}
+\label{sec:intro}
+Although distributed programming has become an essential and commonplace task,
+it remains very challenging for most developers to write correct distributed
+programs. The inherent difficulties of distributed computing---concurrency,
+asynchrony, and partial failure---have been exacerbated by the scale at which
+modern distributed systems must operate.
+
+Much of the discussion about distributed programming today revolves around data management systems, and the tradeoffs between transactions and loose consistency.  Programmers using distributed transactions are relieved of consistency concerns but often face significant performance and operational challenges; programmers of loosely-consistent ``NoSQL'' systems can expect more predictable and low-latency performance, but must reason explicitly about program correctness over inconsistent distributed state.
+
+There is a tradition of work that attempts to help the distributed programmer reason about correctness without recourse to transactional overheads. This goes back at least as far as work on semantic consistency for distributed transactions~\cite{Garcia-Molina1983,Farrag1989}.  In recent years this approach has been explored in two different frameworks: {\em Convergent Objects} and {\em Monotonic Logic}.
+
+Convergent Objects: Exemplified by CRDTs and Semijoin Lattices.  Nice at the module level, captures practical design patterns like Statebox, etc. But still doesn't solve the big picture---no whole-program guarantees for the developer.  Move example from related work here.
+
+
+Monotonic Logic: Exemplified by Bloom and CALM.  Addresses the big picture, but analysis is frustratingly conservative on some very basic design constructs.
+
+
+
+We propose Bloom^L, an extension to Bloom that preserves its whole-program correctness analysis, while incorporating the benefits of CRDTs.  Specifically, Bloom^L has the following key features:
+
+\begin{enumerate}
+\item Bloom^L enriches the data model of Bloom collections (sets) with user-defined CRDTs that encapsulate natural object classes used in distributed systems: e.g. counters, multisets, ...
+
+\item Going beyond CRDTs, Bloom^L defines ``safe'' mappings---morphisms and monotone functions---that allow composition of CRDTs in a principled way.
+
+\item Bloom^L enables CALM analysis to be extended to reason about the consistency of entire programs over (multiple) CRDTs.  This removes the key limitations of the earlier work.
+\end{enumerate}
+
+
+
+
+  
