@@ -32,19 +32,19 @@ implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the term
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
-A \emph{monotone function} from poset $S$ to poset $T$ is a function $g: S \to
-T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow g(a) \leq_T g(b)$. That
-is, $g$ maps elements of $S$ to elements of $T$ in a manner that is consistent
+A \emph{monotone function} from poset $S$ to poset $T$ is a function $f: S \to
+T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow f(a) \leq_T f(b)$. That
+is, $f$ maps elements of $S$ to elements of $T$ in a manner that is consistent
 with the partial orders of both posets.
 
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
 A \emph{morphism} from lattice $\langle X, \lor_X, \bot_X\rangle$ to lattice
-$\langle Y, \lor_Y, \bot_Y\rangle$ is a function $f$ such that, $\forall a,b \in
-X: f(a \lor_X b) = f(a) \lor_Y f(b)$. That is, $f$ allows elements of $X$ to be
-converted into elements of $Y$ in a way that preserves the lattice properties.
-Note that all morphisms are monotone functions but the converse is not true in
-general.
+$\langle Y, \lor_Y, \bot_Y\rangle$ is a function $g: X \to Y$ such that,
+$\forall a,b \in X: g(a \lor_X b) = g(a) \lor_Y g(b)$. That is, $g$ allows
+elements of $X$ to be converted into elements of $Y$ in a way that preserves the
+lattice properties.  Note that morphisms are monotone functions but the converse
+is not true in general.
 
 \subsection{Language concepts}
 In \lang, state is represented using lattices and computation is expressed as
@@ -103,7 +103,7 @@ described in Section~\ref{sec:bloom-interop}).
 \texttt{intersect}, \texttt{project}, \texttt{at(k)}, \texttt{key?(k)} & \texttt{size}\\
 \hline
 \end{tabular}
-\caption{The builtin lattices in \lang.}
+\caption{Builtin lattices in \lang.}
 \label{tbl:builtin-lattices}
 \end{table*}
 
