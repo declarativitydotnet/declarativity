@@ -2,9 +2,27 @@
 \label{sec:causal}
 A causal delivery protocol ensures that messages are delivered in an order that
 is consistent with the ``happens before'' relation between
-messages~\cite{Lamport1978}. Providing a causal order over events has been
+events~\cite{Lamport1978}. Providing a causal order over events has been
 identified as a useful building block for loosely consistent distributed
 applications~\cite{Lloyd2011}.
 
-We used Bloom to implement a well-known algorithm for point-to-point causal
+We used \lang to implement a classical algorithm for point-to-point causal
 delivery~\cite{Schiper1989}.
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+\end{lstlisting}
+\end{scriptsize}
+\caption{Sender-side logic in causal delivery.}
+\label{fig:causal-send}
+\end{figure}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+\end{lstlisting}
+\end{scriptsize}
+\caption{Receiver-side logic in causal delivery.}
+\label{fig:causal-recv}
+\end{figure}

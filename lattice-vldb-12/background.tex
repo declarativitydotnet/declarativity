@@ -147,20 +147,21 @@ grouping and aggregation.
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
-normal logical deduction: that is, the lhs and rhs are true at the ``same''
+standard logical deduction: that is, the lhs and rhs are true at the same
 timestep. The \verb|<+| and \verb|<-| operators indicate that facts will be
 added or removed, respectively, from the lhs collection at the beginning of the
 next timestep. The \verb+<~+ operator specifies that the rhs will be merged into
-the lhs collection at some non-deterministic future time. The lhs of a \verb+<~+
-rule must be a channel; the \verb+<~+ operator models asynchronous messaging.
+the lhs collection at some non-deterministic future time. The lhs of a statement
+that uses \verb+<~+ must be a channel; the \verb+<~+ operator models
+asynchronous messaging.
 
 % XXX: does this need to be said?
 Bloom allows recursive statements---i.e., the rhs of a statement can reference
 the lhs collection, either directly or indirectly. As in Datalog, certain
 constraints must be adopted to ensure that programs with recursive statements
-have a sensible interpretation. For deductive rules (\verb+<=+ operator), we
-require that programs be \emph{syntactically stratified}~\cite{Apt1988}: cycles
-through negation or aggregation are not allowed~\cite{dedalus}.
+have a sensible interpretation. For deductive statements (\verb+<=+ operator),
+we require that programs be \emph{syntactically stratified}~\cite{Apt1988}:
+cycles through negation or aggregation are not allowed~\cite{dedalus}.
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
