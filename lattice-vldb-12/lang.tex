@@ -47,24 +47,23 @@ lattice properties.  Note that morphisms are monotone functions but the converse
 is not true in general.
 
 \subsection{Language concepts}
-In \lang, state is represented using lattices and computation is expressed as
-functions over lattices. A lattice in \lang is analogous to a collection type in
-Bloom, while a lattice element corresponds to a particular collection value. For
-example, the \texttt{lset} lattice provides similar functionality to the
-set-oriented collections provided by Bloom; an element of the \texttt{lset}
-lattice is a particular set value. In the terminology of object-oriented
-programming, a lattice is a class that obeys a certain interface and an element
-of a lattice is an instance of that class.
+\lang extends Bloom to allow both lattices and collections to be used to
+represent state. A lattice is analogous to a collection type in Bloom, while a
+lattice element corresponds to a particular collection value. For example, the
+\texttt{lset} lattice is similar to the \texttt{table} collection type provided
+by Bloom; an element of the \texttt{lset} lattice is a particular set. In the
+terminology of object-oriented programming, a lattice is a class that obeys a
+certain interface and an element of a lattice is an instance of that class.
 
-As in Bloom, the lattices used by a \lang program are declared in a
-\texttt{state} block. More precisely, the declarations in the state block
-introduce identifiers that are associated with lattice elements; over time, the
-binding between identifiers and lattice elements is updated to reflect state
-changes in the program. For example, line~\ref{line:quorum-lset-decl} of
+The lattices used by a \lang program are declared in a \texttt{state}
+block. More precisely, a state block declaration introduces an identifier that
+is associated with a lattice elements; over time, the binding between
+identifiers and lattice elements is updated to reflect state changes in the
+program. For example, line~\ref{line:quorum-lset-decl} of
 Figure~\ref{fig:lattice-quorum} declares an identifier \texttt{votes} that is
 mapped to an element of the \texttt{lset} lattice. As more votes are received,
 the lattice element associated with the \texttt{votes} identifier
-changes---specifically, it moves upward in the \texttt{lset} lattice.
+changes---specifically, it moves ``upward'' in the \texttt{lset} lattice.
 
 \subsubsection{Computation in \lang}
 Statements take the same form in both Bloom and \lang. The identifier on the lhs
