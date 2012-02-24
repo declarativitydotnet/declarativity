@@ -260,7 +260,7 @@ class QuorumVoteL
   state do
     channel :vote_chn, [:@addr, :voter_id]
     channel :result_chn, [:@addr]
-    lset    :votes
+    lset    :votes (*\label{line:quorum-lset-decl}*)
     lmax    :cnt
     lbool   :quorum_done
   end

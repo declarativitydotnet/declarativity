@@ -49,13 +49,18 @@ morphisms are OPMs but the converse is not true in general.
 
 \subsection{Language concepts}
 In \lang, state is represented using lattices and computation is expressed as
-functions over lattices. As described above, a lattice is a set of values
-equipped with a least upper bound operator (lub). To emphasize the intuition
-behind the lub operator, we refer to lubs as \emph{merge functions}: given two
-values that belong to the lattice, the merge function produces a single lattice
-value that is ``$\ge$'' either of the input values. For example, sets form a
-lattice with set union as the merge function (lub); this implies that the
-lattice's partial order is set inclusion.
+functions over lattices. A lattice in \lang is analogous to a collection type in
+Bloom, while a lattice element corresponds to a particular collection value. For
+example, the \texttt{lset} lattice provides similar functionality to the
+set-oriented collections provided by Bloom; an element of the \texttt{lset}
+lattice is a particular set value. In the terminology of object-oriented
+programming, a lattice is a class that obeys a certain interface and a lattice
+element is an instance of that class.
+
+In \lang programs, lattices are used in a similar fashion to collections. For
+example, line~\ref{line:quorum-lset-decl} of Figure~\ref{fig:lattice-quorum}
+declares that the \texttt{votes} identifier will be associated with elements of
+the \texttt{lset} lattice.
 
 \subsection{Builtin lattice types}
 \label{sec:lattice-builtins}
