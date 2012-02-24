@@ -1,0 +1,28 @@
+\section{Monotonic Shortest Paths}
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+class ShortestPaths
+  include Bud
+
+  state do
+    table :link, [:from, :to, :c]
+    table :path, [:from, :to, :next_hop] => [:c]
+    table :min_cost, [:from, :to] => [:c]
+  end
+
+  bloom do
+    path <= link {|l| [l.from, l.to, l.to, MinLattice.new(l.c)]}
+    path <= (link*path).pairs(:to => :from) do |l,p|
+      [l.from, p.to, l.to, p.c + l.c]
+    end
+    min_cost <= path {|p| [p.from, p.to, p.c]}
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A \lang program to compute the all-pairs shortest paths of a
+  graph.}
+\label{fig:lattice-spaths}
+\end{figure}
