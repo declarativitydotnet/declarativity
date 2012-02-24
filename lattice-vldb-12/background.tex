@@ -45,16 +45,15 @@ over the contents of its local database. Bloom instances communicate via
 asynchronous messaging, as described further below.
 
 An instance of a Bloom program proceeds through a series of
-\emph{timesteps}.\footnote{Note that there is a precise declarative semantics
-  for the interpretation of Bloom programs~\cite{dedalus}, but we describe
-  Bloom's semantics operationally for the sake of exposition.} At the beginning
-of a timestep, inbound events (e.g., network messages) are received and
-represented as facts in collections. The program's statements are evaluated over
-local state to compute all the additional facts that can be derived from the
-current collection contents. In some cases (described below), deriving a fact
-into a collection results in emitting an outbound event such as a network
-message for another Bloom instance; those outbound events are emitted at the end
-of the timestep.
+\emph{timesteps}.\footnote{There is a precise declarative semantics for Bloom
+  programs~\cite{dedalus}, but we describe Bloom's semantics operationally for
+  the sake of exposition.} At the beginning of a timestep, inbound events (e.g.,
+network messages) are received and represented as facts in collections. The
+program's statements are evaluated over local state to compute all the
+additional facts that can be derived from the current collection contents. In
+some cases (described below), deriving a fact into a collection results in
+emitting an outbound event such as a network message for another Bloom instance;
+those outbound events are emitted at the end of the timestep.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to
 be embedded inside Ruby programs: observe that Figure~\ref{fig:bloom-spaths} is
@@ -80,14 +79,14 @@ database of a remote Bloom instance at a non-deterministic future time.\\
 \label{tbl:bloom-collections}
 \end{table}
 
-The state of a Bloom program is represented using \emph{collections}: unordered
-sets of tuples, akin to relations in Datalog. Bloom adopts the Ruby type system
-rather than inventing its own; hence, Bloom tuples are just Ruby arrays that
-contain Ruby values (e.g., strings, integers and booleans). Each collection has
-a \emph{schema}, which declares the structure (column names) of the tuples in
-the collection. A subset of the columns in a collection form its \emph{key}: as
-in SQL, the key columns functionally determine the remaining columns. For
-example, line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
+A Bloom collection is an unordered set of tuples, akin to a relation in
+Datalog. Bloom adopts the Ruby type system rather than inventing its own; hence,
+Bloom tuples are just Ruby arrays that contain Ruby values (e.g., strings,
+integers and booleans). Each collection has a \emph{schema}, which declares the
+structure (column names) of the tuples in the collection. A subset of the
+columns in a collection form its \emph{key}: as in SQL, the key columns
+functionally determine the remaining columns. For example,
+line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
 collection named \texttt{link} with three columns, two of which form the
 collection's key.
 
@@ -156,12 +155,11 @@ channel; the \verb+<~+ operator models asynchronous messaging.
 
 % XXX: does this need to be said?
 Bloom allows recursive statements---i.e., the rhs of a statement can reference
-the statement's lhs collection, either directly or indirectly. As in Datalog,
-certain constraints must be adopted to ensure that programs with recursive
-statements have a sensible interpretation. For deductive rules (\verb+<=+
-operator), we require that programs be \emph{syntactically
-  stratified}~\cite{Apt1988}: cycles through negation or aggregation are not
-allowed~\cite{dedalus}.
+the lhs collection, either directly or indirectly. As in Datalog, certain
+constraints must be adopted to ensure that programs with recursive statements
+have a sensible interpretation. For deductive rules (\verb+<=+ operator), we
+require that programs be \emph{syntactically stratified}~\cite{Apt1988}: cycles
+through negation or aggregation are not allowed~\cite{dedalus}.
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
