@@ -2,7 +2,7 @@
 \label{sec:lang}
 
 In this section, we introduce \lang, an extension of Bloom that allows monotonic
-programs to be implemented using arbitrary lattices. We begin by reviewing the
+programs to be written using arbitrary lattices. We begin by reviewing the
 algebraic properties of lattices, morphisms, and order-preserving mappings. We
 then introduce the basic concepts of \lang and detail the builtin lattices
 provided by the language. We also show how users can define their own lattice
@@ -19,25 +19,28 @@ which we describe in Section~\ref{sec:bloom-interop}.
 
 \subsection{Definitions}
 \label{sec:lattice-defn}
-A \emph{join semi-lattice} is a pair $\langle S, \lor \rangle$, where $S$ is a
-poset and $\lor$ is a binary operator (called the ``join'' or ``least upper
-bound'') that is associative, commutative, and idempotent. For all $x, y \in S$,
-$x \lor y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \in S$ such
-that $z' <_S z$. For brevity, we use the term ``lattice'' to mean ``join
-semi-lattice'' in the rest of this paper.
-% XXX: talk about least element?
+A \emph{bounded join semilattice} is a triple $\langle S, \lor, \bot\rangle$,
+where $S$ is a poset, $\lor$ is a binary operator (called ``join'' or ``least
+upper bound''), and $\bot \in S$. $\lor$ is associative, commutative, and
+idempotent. For all $x, y \in S$, $x \lor y = z$, where $x \leq_S z, y \leq_S
+z$, and there is no $z' \in S$ such that $z' <_S z$ (where $<_S$ is the partial
+order associated with the poset $S$). Note that although the underlying set only
+has a partial order $<_S$, the least upper bound is defined for all elements
+$x,y \in S$. The distinguished element $\bot$ is the smallest element in $S$;
+this implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the
+term ``lattice'' to mean ``bounded join semilattice'' in the rest of this paper.
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
-A \emph{morphism} from lattice $\langle X, \lor_X\rangle$ to lattice $\langle Y,
-\lor_Y\rangle$ is a function $f$ such that, $\forall a,b \in X: f(a \lor_X b) =
-f(a) \lor_Y f(b)$. That is, $f$ allows $X$ lattice elements to be converted into
-$Y$ lattice elements in a way that preserves the lattice properties.
+A \emph{morphism} from lattice $\langle X, \lor_X, \bot_X\rangle$ to lattice
+$\langle Y, \lor_Y, \bot_Y\rangle$ is a function $f$ such that, $\forall a,b \in
+X: f(a \lor_X b) = f(a) \lor_Y f(b)$. That is, $f$ allows elements of $X$ to be
+converted into elements of $Y$ in a way that preserves the lattice properties.
 
 An \emph{order-preserving map} (OPM) from poset $S$ to poset $T$ is a function
-$g$ such that $\forall a,b \in S: a \leq_S b \Rightarrow g(a) \leq_T
+$g: S \to T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow g(a) \leq_T
 g(b)$.\footnote{Order-preserving maps are also called \emph{monotone functions}.
   We avoid that term in this paper to avoid confusion with the normal meaning of
   monotonicity in Datalog.} That is, $g$ maps elements of $S$ to elements of $T$
@@ -249,4 +252,5 @@ certain ``safe'' cases, but we have not found this limitation to be problematic
 to date.
 
 \subsection{Confluence in \lang}
-\nrc{TODO: justify that CALM continues to hold for monotonic programs over lattices.}
+\nrc{TODO: justify that CALM continues to hold for monotonic programs over
+  lattices.}
