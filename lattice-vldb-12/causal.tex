@@ -9,20 +9,69 @@ applications~\cite{Lloyd2011}.
 We used \lang to implement a classical algorithm for point-to-point causal
 delivery~\cite{Schiper1989}.
 
+\subsection{Vector clocks}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
 \end{lstlisting}
 \end{scriptsize}
-\caption{Sender-side logic in causal delivery.}
-\label{fig:causal-send}
+\caption{Vector clocks in \lang.}
+\label{fig:vector-clock-src}
 \end{figure}
+
+\subsection{Causal delivery}
 
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
+module CausalDelivery
+  state do
+    channel :chn, [:@dst, :src, :ident] => [:payload, :clock, :ord_buf]
+
+    # Local vector clock: map from node_id => lmax
+    lmap :my_vc
+    lmap :next_vc
+
+    # Our knowledge of the vector clocks at other nodes:
+    # map from node_id => {map from node_id => lmax}
+    lmap :ord_buf
+
+    # Received messages that haven't yet been delivered
+    table :recv_buf, chn.schema
+    scratch :buf_chosen, recv_buf.schema
+  end
+
+  bootstrap do
+    my_vc <= [ {ip_port => Bud::MaxLattice.new(0)} ]
+  end
+
+  bloom :update_vc do
+    my_vc <+ next_vc
+    next_vc <= my_vc
+
+    # On outgoing messages:
+    next_vc <= pipe_in { {ip_port => my_vc.at(ip_port) + 1} }
+    # On incoming messages:
+    next_vc <= buf_chosen { {ip_port => my_vc.at(ip_port) + 1} }
+    next_vc <= buf_chosen {|m| m.clock}
+  end
+
+  bloom :outbound_msg do
+    chn <~ pipe_in {|p| [p.dst, p.src, p.ident, p.payload, next_vc, ord_buf]}
+    ord_buf <+ pipe_in {|p| {p.dst => next_vc} }
+  end
+
+  bloom :inbound_msg do
+    recv_buf <= chn
+    buf_chosen <= recv_buf {|m| m.ord_buf.at(ip_port, Bud::MapLattice).lt_eq(my_vc).when_true { m } }
+    recv_buf <- buf_chosen
+
+    pipe_out <= buf_chosen {|m| [m.dst, m.src, m.ident, m.payload]}
+    ord_buf <+ buf_chosen {|m| m.ord_buf}
+  end
+end
 \end{lstlisting}
 \end{scriptsize}
-\caption{Receiver-side logic in causal delivery.}
-\label{fig:causal-recv}
+\caption{Point-to-point causal delivery in \lang.}
+\label{fig:causal-delivery-src}
 \end{figure}
