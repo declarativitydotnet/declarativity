@@ -132,14 +132,14 @@ Each statement has one or more input collections and a single output
 collection. A statement defines how the contents of the input collections should
 be transformed before being included (via set union) in the output
 collection. Each statement takes the form: \\ \noindent
-\mbox{\hspace{0.25in}\emph{$<$collection-variable$>$ $<$op$>$
-    $<$collection-expression$>$}}\\ \noindent The left-hand side (lhs) of the
-statement is the name of the output collection and the right-hand side (rhs) is
-an expression that produces a collection. Bloom allows the usual relational
-operators to be used on the rhs (selection, projection, join, grouping,
-aggregation, and negation), although it adopts a syntax intended to be more
-familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
-line~\ref{line:spaths-proj} contains projection,
+\mbox{\hspace{0.25in}\emph{$<$collection-identifier$>$ $<$op$>$
+    $<$collection-expression$>$}}\\ \noindent
+The left-hand side (lhs) of the statement is the name of the output collection
+and the right-hand side (rhs) is an expression that produces a collection. Bloom
+allows the usual relational operators to be used on the rhs (selection,
+projection, join, grouping, aggregation, and negation), although it adopts a
+syntax intended to be more familiar to imperative programmers. In
+Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj} contains projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
 \verb+link.to = path.from+, and line~\ref{line:spaths-group} demonstrates
@@ -213,14 +213,16 @@ line~\ref{line:bloom-nm-quorum}).
 To solve this problem, we need to introduce a notion of program values that
 ``grow'' according to a partial order other than set inclusion. We do this by
 extending Bloom to operate over arbitrary \emph{lattices}, rather than just the
-set lattice that is supported by Bloom (and traditional Datalog). We present a
-complete language in the following section, but the intuition can be observed in
-Figure~\ref{fig:lattice-quorum}. Votes are accumulated into a set lattice
-(line~\ref{line:quorum-set-accum}), but the size of the set is represented as an
-\texttt{lmax} lattice (line~\ref{line:quorum-lmax}): that is, a number that
-never decreases. Hence, a threshold test ``$\ge k$'' on an \texttt{lmax} lattice
-is monotonic map onto the boolean lattice: that is, the \texttt{quorum\_done}
-predicate goes from false to true (and then remains true).
+set lattice that is supported by Bloom.
+
+%  We present a
+% complete language in the following section, but the intuition can be observed in
+% Figure~\ref{fig:lattice-quorum}. Votes are accumulated into a set lattice
+% (line~\ref{line:quorum-set-accum}), but the size of the set is represented as an
+% \texttt{lmax} lattice (line~\ref{line:quorum-lmax}): that is, a number that
+% never decreases. Hence, a threshold test ``$\ge k$'' on an \texttt{lmax} lattice
+% is monotonic map onto the boolean lattice: that is, the \texttt{quorum\_done}
+% predicate goes from false to true (and then remains true).
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -248,34 +250,4 @@ end
 \end{scriptsize}
 \caption{A non-monotonic Bloom program that waits for a quorum of votes to be received.}
 \label{fig:bloom-nm-quorum}
-\end{figure}
-
-\begin{figure}
-\begin{scriptsize}
-\begin{lstlisting}
-QUORUM_SIZE = 5
-RESULT_ADDR = "example.org"
-
-class QuorumVoteL
-  include Bud
-
-  state do
-    channel :vote_chn, [:@addr, :voter_id]
-    channel :result_chn, [:@addr]
-    lset    :votes (*\label{line:quorum-lset-decl}*)
-    lmax    :cnt
-    lbool   :quorum_done
-  end
-
-  bloom do
-    votes       <= vote_chn {|v| v.voter_id} (*\label{line:quorum-set-accum}*)
-    cnt         <= votes.size (*\label{line:quorum-lmax}*)
-    quorum_done <= cnt.gt_eq(QUORUM_SIZE) (*\label{line:quorum-threshold}*)
-    result_chn  <~ quorum_done.when_true { [RESULT_ADDR] }
-  end
-end
-\end{lstlisting}
-\end{scriptsize}
-\caption{A monotonic \lang program that waits for a quorum of votes to be received.}
-\label{fig:lattice-quorum}
 \end{figure}
