@@ -168,7 +168,7 @@ class Bud::SetLattice < Bud::Lattice
     @v.map(&blk)
   end
 
-  ord_map :size do
+  monotone :size do
     Bud::MaxLattice.new(@v.size)
   end
 end

@@ -1,23 +1,91 @@
-\section{Case Study: Causal Delivery}
+\section{Case Study: Vector Clocks and Causal Delivery}
 \label{sec:causal}
+Understanding the causal relationship between events in a distributed system has
+many applications.
+
 A causal delivery protocol ensures that messages are delivered in an order that
 is consistent with the ``happens before'' relation between
 events~\cite{Lamport1978}. Providing a causal order over events has been
 identified as a useful building block for loosely consistent distributed
 applications~\cite{Lloyd2011}.
 
-We used \lang to implement a classical algorithm for point-to-point causal
-delivery~\cite{Schiper1989}.
+In this section, we first show how \lang can be used to build vector
+clocks~\cite{Fidge1988,Mattern1989}, a common tool for tracking causal
+relationships in a distributed system. We then use \lang to implement a
+classical algorithm for point-to-point causal delivery~\cite{Schiper1989}. The
+implementation of both protocols in \lang is concise and readable; perhaps more
+significantly, both protocols are monotonic. Since this agrees with the
+intuitive notion that both protocols make ``progress'' over time, this gives us
+more confidence in the correctness of our designs.
 
 \subsection{Vector clocks}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
+class VectorClock
+  include Bud
+
+  state do
+    lmap :my_vc
+    lmap :next_vc
+    interface input, :in_msg, [:addr, :payload, :clock]
+    interface input, :out_msg, [:addr, :payload]
+    interface output, :out_msg_vc, [:addr, :payload, :clock]
+  end
+
+  bootstrap do
+    my_vc <= [ {ip_port => Bud::MaxLattice.new(0)} ]
+  end
+
+  bloom do
+    next_vc <= my_vc
+    next_vc <= out_msg { {ip_port => my_vc.at(ip_port) + 1} } (*\label{line:vc-out-increment}*)
+    next_vc <= in_msg  { {ip_port => my_vc.at(ip_port) + 1} } (*\label{line:vc-in-increment}*)
+    next_vc <= in_msg  {|m| m.clock} (*\label{line:vc-in-merge}*)
+    my_vc <+ next_vc
+
+    out_msg_vc <= out_msg {|m| [m.addr, m.payload, next_vc]} (*\label{line:vc-out-stamp}*)
+  end
+end
 \end{lstlisting}
 \end{scriptsize}
 \caption{Vector clocks in \lang.}
 \label{fig:vector-clock-src}
 \end{figure}
+
+In a distributed system with $n$ nodes, a \emph{vector clock} is an array of $n$
+logical clock values. Each node keeps a local vector clock and updates it as it
+processes events; the node's vector clock reflects how up-to-date its local
+state is with respect to the other nodes in the system. Vector clocks can be
+used to assign a partial order over the events in the system that agrees with
+the causal relationship between events. A vector clock can be implemented with
+three simple rules that are followed when sending and receiving events:
+\begin{enumerate}
+\item
+  Each node $n$ initializes its vector clock to $\{n \rightarrow 0\}$.
+\item
+  Before sending a message, $n$ increments the value in the vector clock
+  associated with its own 
+\end{enumerate}
+
+Figure~\ref{fig:vector-clock-src} contains a complete \lang implementation of
+vector clocks. A vector clock is represented as a map lattice that associates
+node IDs with \texttt{lmax} values; each \texttt{lmax} value represents the
+logical clock of a single node (which can only increase over
+time). \texttt{ip\_port} returns the IP address and port number of the current
+\lang instance; we use that as a node ID. Incoming messages are represented as
+tuples in the \texttt{in\_msg} collection. Outbound messages begin as tuples in
+\texttt{out\_msg}; outbound messages that have been stamped with the local clock
+value appear in \texttt{out\_msg\_vc}.
+
+The key vector clock logic appears in lines \ref{line:vc-out-increment},
+\ref{line:vc-in-increment}, and \ref{line:vc-in-merge}---each \lang statement is
+a direct translation of the three rules for updating a vector clock described
+above. Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated
+vector clock value.
+
+Note that Figure~\ref{fig:vector-clock-src} is a monotonic \lang program. Hence,
+the statements can be executed in any order.
 
 \subsection{Causal delivery}
 
