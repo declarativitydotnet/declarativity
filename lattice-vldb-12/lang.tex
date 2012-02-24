@@ -3,10 +3,10 @@
 
 In this section, we introduce \lang, an extension of Bloom that allows monotonic
 programs to be written using arbitrary lattices. We begin by reviewing the
-algebraic properties of lattices, morphisms, and order-preserving mappings. We
-then introduce the basic concepts of \lang and detail the builtin lattices
-provided by the language. We also show how users can define their own lattice
-types using a simple Ruby API.
+algebraic properties of lattices, monotone functions, and morphisms. We then
+introduce the basic concepts of \lang and detail the builtin lattices provided
+by the language. We also show how users can define their own lattice types using
+a simple Ruby API.
 
 % is this the right place for this?
 When designing \lang, we decided to extend Bloom to include support for
@@ -25,27 +25,26 @@ upper bound''), and $\bot \in S$. $\lor$ is associative, commutative, and
 idempotent. For all $x, y \in S$, $x \lor y = z$, where $x \leq_S z, y \leq_S
 z$, and there is no $z' \in S$ such that $z' <_S z$ (where $<_S$ is the partial
 order associated with the poset $S$). Note that although the underlying set only
-has a partial order $<_S$, the least upper bound is defined for all elements
-$x,y \in S$. The distinguished element $\bot$ is the smallest element in $S$;
-this implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the
-term ``lattice'' to mean ``bounded join semilattice'' in the rest of this paper.
+has a partial order, the least upper bound is defined for all elements $x,y \in
+S$. The distinguished element $\bot$ is the smallest element in $S$; this
+implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the term
+``lattice'' to mean ``bounded join semilattice'' in the rest of this paper.
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
+A \emph{monotone function} from poset $S$ to poset $T$ is a function $g: S \to
+T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow g(a) \leq_T g(b)$. That
+is, $g$ maps elements of $S$ to elements of $T$ in a manner that is consistent
+with the partial orders of both posets.
+
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
 A \emph{morphism} from lattice $\langle X, \lor_X, \bot_X\rangle$ to lattice
 $\langle Y, \lor_Y, \bot_Y\rangle$ is a function $f$ such that, $\forall a,b \in
 X: f(a \lor_X b) = f(a) \lor_Y f(b)$. That is, $f$ allows elements of $X$ to be
 converted into elements of $Y$ in a way that preserves the lattice properties.
-
-An \emph{order-preserving map} (OPM) from poset $S$ to poset $T$ is a function
-$g: S \to T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow g(a) \leq_T
-g(b)$.\footnote{Order-preserving maps are also called \emph{monotone functions}.
-  We avoid that term in this paper to avoid confusion with the normal meaning of
-  monotonicity in Datalog.} That is, $g$ maps elements of $S$ to elements of $T$
-in a manner that is consistent with the partial orders of both sets. Note that
-morphisms are OPMs but the converse is not true in general.
+Note that all morphisms are monotone functions but the converse is not true in
+general.
 
 \subsection{Language concepts}
 In \lang, state is represented using lattices and computation is expressed as
@@ -54,13 +53,31 @@ Bloom, while a lattice element corresponds to a particular collection value. For
 example, the \texttt{lset} lattice provides similar functionality to the
 set-oriented collections provided by Bloom; an element of the \texttt{lset}
 lattice is a particular set value. In the terminology of object-oriented
-programming, a lattice is a class that obeys a certain interface and a lattice
-element is an instance of that class.
+programming, a lattice is a class that obeys a certain interface and an element
+of a lattice is an instance of that class.
 
-In \lang programs, lattices are used in a similar fashion to collections. For
-example, line~\ref{line:quorum-lset-decl} of Figure~\ref{fig:lattice-quorum}
-declares that the \texttt{votes} identifier will be associated with elements of
-the \texttt{lset} lattice.
+As in Bloom, the lattices used by a \lang program are declared in a
+\texttt{state} block. More precisely, the declarations in the state block
+introduce identifiers that are associated with lattice elements; over time, the
+binding between identifiers and lattice elements is updated to reflect state
+changes in the program. For example, line~\ref{line:quorum-lset-decl} of
+Figure~\ref{fig:lattice-quorum} declares an identifier \texttt{votes} that is
+mapped to an element of the \texttt{lset} lattice. As more votes are received,
+the lattice element associated with the \texttt{votes} identifier
+changes---specifically, it moves upward in the \texttt{lset} lattice.
+
+\subsubsection{Computation in \lang}
+Statements take the same form in both Bloom and \lang. The identifier on the lhs
+of a statement can refer to either a set-oriented collection or a lattice. The
+expression on the rhs can contain both traditional relational operators (applied
+to Bloom collections) and method invocations (applied to lattice elements).
+
+Note that if the lhs of a statement refers to a lattice, the statement's
+operator must be either \verb|<=| or \verb|<+|, denoting instaneous or deferred
+deduction. \lang does not currently support a notion of ``deletion'' for
+lattices. Lattices do not directly support asynchronous communication (via the
+\verb|<~| operator), but lattice elements can be embedded into channels (as
+described in Section~\ref{sec:bloom-interop}).
 
 \subsection{Builtin lattice types}
 \label{sec:lattice-builtins}
@@ -68,7 +85,8 @@ the \texttt{lset} lattice.
 \begin{table*}[t]
 \begin{tabular}{|l|l|l|l|l|}
 \hline
-\textbf{Name} & \textbf{Description} & \textbf{Merge} & \textbf{Morphisms} & \textbf{OPMs}\\
+\textbf{Name} & \textbf{Description} & \textbf{Merge} & \textbf{Morphisms} &
+\textbf{Monotone functions}\\
 \hline
 \texttt{lbool} & Boolean lattice (false $\to$ true) & & \texttt{when\_true} & \\
 \texttt{lmax} & Max over an ordered domain & &\texttt{gt},
@@ -85,9 +103,17 @@ the \texttt{lset} lattice.
 \texttt{intersect}, \texttt{project}, \texttt{at(k)}, \texttt{key?(k)} & \texttt{size}\\
 \hline
 \end{tabular}
-\caption{The builtin lattice types in \lang.}
+\caption{The builtin lattices in \lang.}
 \label{tbl:builtin-lattices}
 \end{table*}
+
+Table~\ref{tbl:builtin-lattices} lists the builtin lattices provided by
+\lang. Many common distributed protocols can be expressed using these lattices
+(e.g., the causal delivery protocol described in Section~\ref{sec:causal}).
+
+Note that \emph{size} is a monotone function provided by several lattices, but
+it is not a morphism. This is because \texttt{size} cannot be distributed over
+the merge functions of those lattices. For example, \ldots
 
 \subsection{Lattice API}
 \label{sec:lattice-api}

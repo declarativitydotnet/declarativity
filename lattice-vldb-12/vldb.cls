@@ -334,7 +334,9 @@
 
 \def\email#1{{{\eaddfnt{\vskip 4pt#1}}}}
 
-\def\addauthorsection{\ifnum\originalaucount>3
+% XXX: modified to disable bizarre insertion of "additional authors" section if
+% the number of authors is greater than 3
+\def\addauthorsection{\ifnum\originalaucount>4
     \section{Additional Authors}\the\addauthors
   \fi}
 
