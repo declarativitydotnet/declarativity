@@ -1,2 +1,23 @@
-\section{Discussion}
+\section{Discussion and Future Work}
 \label{sec:discussion}
+
+% XXX: awkward wording
+A challenge to the adoption of our work is that programmers must still reason
+about the monotonicity properties of their programs. Specifically, the
+programmer must understand how to express their design as a collection of
+lattices and monotone functions. They must also ensure that their lattice
+implementations obey the appropriate algebraic properties (e.g., merge functions
+must be commutative, associative, and idempotent). We believe that \lang is
+still a valuable tool for several reasons. First, we provide a library of
+lattices that are suitable building blocks for many common distributed
+programs. Second, \lang allows programmers to reason about the monotonicity of
+program components \emph{in isolation}. For example, if the programmer is able
+to write a merge function that satisfies a few simple algebraic properties, the
+CALM analysis ensures that the rest of the program will use the lattice in a
+safe (convergent) manner. This simplifies the programmer's task: rather than
+needing to reason about the consistency of their entire application state, they
+can instead focus on ensuring that a \emph{local} correctness property holds for
+a small part of their program. Finally, as future work we plan to consider
+methods to provide programmers with more confidence in the correctness of the
+merge functions and morphisms that they implement. For example, test data
+generation and bounded model checking would both be useful.
