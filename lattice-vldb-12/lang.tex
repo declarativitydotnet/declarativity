@@ -115,6 +115,21 @@ communication (via the \verb|<~| operator) but lattice elements can be embedded
 into tuples that appear channels (Section~\ref{sec:bloom-interop}).
 
 \subsubsection{Lattice methods}
+\lang statements compute values over lattices by invoking methods on lattice
+elements. Just like a subset of the relational operators (selection, projection,
+and join) are monotonic, some lattice methods are monotone functions (as defined
+in Section~\ref{sec:lattice-defn}). The input to a monotone lattice method is
+the receiver of the method invocation; the output is the result of the method
+invocation. A monotone method guarantees that, if the input to the method grows
+(according to the input's lattice type), the output will grow (according to the
+output's lattice type).
+
+Lattices are free to provide non-monotonic methods. Invoking a non-monotonic
+lattice method in a statement is analogous to using a non-monotonic relational
+operator (aggregation and negation) in Bloom: the Bud interpreter stratifies the
+program to ensure that the input value is computed exactly before allowing a
+non-monotonic operator to be applied to it. This implies that statements that
+invoke non-monotonic methods on lattice values cannot be recursive.
 
 \subsection{Builtin lattice types}
 \label{sec:lattice-builtins}

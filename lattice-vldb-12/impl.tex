@@ -46,6 +46,13 @@ after deriving all paths of length $n$, naive evaluation will then rederive all
 those paths at every subsequent ``step'' of the fixpoint computation. In
 contrast, after computing length $n$ paths, a semi-naive strategy will only
 generate length $n+1$ paths in the next step. Bloom and semi-naive \lang achieve
-similar results. These results suggest that our implementation of semi-naive
-evaluation for \lang is effective and performs comparably with a traditional
-Datalog system.
+similar results. We instrumented Bud to count the number of derivations made by
+the Bloom and seminaive lattice variants---as expected, both programs made about
+the same number of derivations. These results suggest that our implementation of
+semi-naive evaluation for \lang is effective and performs comparably with a
+traditional Datalog system.
+
+For large inputs, Bloom begins to outperform the seminaive lattice variant. This
+is because the current lattice implementation copies more data: lattices are
+immutable, so the \texttt{lset} merge function allocates a new set to hold the
+result of the merge. In contrast, Bloom collections are modified in-place.
