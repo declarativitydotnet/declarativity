@@ -13,7 +13,25 @@ distributed commit and consensus protocols. Instead, many modern systems aim
 instead to provide a weaker degree of consistency, such as eventual
 consistency~\cite{Terry1995,vogels} or causal consistency~\cite{Lloyd2011}.
 
+We recently proposed the CALM theorem, which links distributed
+\emph{consistency} with \emph{logical
+  monotonicity}~\cite{Alvaro2011,Hellerstein2010}. Intuitively, a monotonic
+program computes more information over time---it never ``retracts'' an earlier
+conclusion in the face of new information. Hence, a monotonic program can be
+executed in a coordination-free manner and still reach a consistent state---all
+monotonic programs are eventually consistent~\cite{Ameloot2011}.  Since
+syntactic monotonicity of a Datalog program is straightforward to determine, the
+CALM theorem provides the basis for a simple analysis technique for loosely
+consistent distributed programs~\cite{Alvaro2011}. The CALM analysis is realized
+as part of Bloom, a Datalog-based DSL for distributed programming~\cite{bloom}.
 
+Our initial formulation of Bloom and CALM only considered programs that compute
+sets of facts that grow over time (``set monotonicity''); that is, ``growth'' is
+defined according to set containment. This limits the usefulness of the CALM
+analysis because it makes several common distributed programming idioms
+non-monotonic. In particular, threshold tests over aggregate values (e.g.,
+``$\textrm{max}(S) > k$'') and upward-moving counters are both non-monotonic
+under set monotonicity.
 
 In this paper, we extend our previous results by using a more general notion of
 monotonicity. Instead of only allowing growth according to the set containment
