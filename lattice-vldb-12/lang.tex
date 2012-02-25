@@ -194,8 +194,7 @@ Table~\ref{tbl:builtin-lattices} lists the builtin lattices provided by
 \lang. Many common distributed protocols can be expressed using these lattices
 (e.g., the causal delivery protocol described in Section~\ref{sec:causal}). The
 behavior of most of the lattice methods should be unsurprising, so we do not
-exhaustively describe every method in this section; rather, we highlight a few
-lattices that deserve further comment.
+exhaustively describe every method in this section.
 
 The \texttt{lbool} lattice is useful for representing conditions that, once
 satisfied, remain satisfied. For example, the \texttt{gt} morphism on the
@@ -205,7 +204,7 @@ once the maximum of a set is $>k$, it will remain $>k$ as the set grows. The
 the value \texttt{true}, the block is evaluated. For example, see
 line~\ref{line:quorum-when-true} in Figure~\ref{fig:lattice-quorum}.
 
-Note that \emph{size} is a monotone function provided by several lattices but it
+Note that \texttt{size} is a monotone function provided by several lattices but it
 is not a morphism. This is because \texttt{size} cannot be distributed over the
 merge functions of those lattices. For example, consider two elements of the
 \texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$. For \texttt{size} to be a
@@ -370,8 +369,8 @@ statements: for example, we could require that all potential changes to
 \texttt{lat\_foo} be completed before statements that embed \texttt{lat\_foo}
 could be evaluated. This would effectively stratify the program according to
 lattice embedding statements, which would disallow cycles through lattice
-embeddings~\cite{Apt1988}. This would reject intuitively reasonable programs; it
-also seems unsatisfying to require stratification of monotonic programs.
+embeddings~\cite{Apt1988}. This would reduce the expressiveness of the language;
+it also seems unsatisfying to require stratification of monotonic programs.
 
 % Clarify this
 Instead, \lang allows statements to produce multiple tuples that differ only in
