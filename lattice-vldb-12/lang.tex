@@ -161,7 +161,7 @@ containing the elements in the set. This is non-monotonic because once the
 underlying Ruby value has been extracted from the set, \lang cannot ensure that
 subsequent code uses the value in a monotonic fashion.
 
-\subsection{Builtin lattice types}
+\subsection{Builtin lattices}
 \label{sec:lattice-builtins}
 
 \begin{table*}[t]
@@ -197,10 +197,10 @@ Note that \emph{size} is a monotone function provided by several lattices, but
 it is not a morphism. This is because \texttt{size} cannot be distributed over
 the merge functions of those lattices. For example, \ldots
 
-\subsection{User-defined lattice types}
+\subsection{User-defined lattices}
 \begin{figure}[t]
 \begin{scriptsize}
-\begin{lstlisting}
+\begin{lstlisting}[deletekeywords={lset}]
 class Bud::SetLattice < Bud::Lattice
   wrapper_name :lset
 
