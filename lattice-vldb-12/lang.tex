@@ -165,23 +165,23 @@ subsequent code uses the value in a monotonic fashion.
 \label{sec:lattice-builtins}
 
 \begin{table*}[t]
-\begin{tabular}{|l|l|l|l|l|}
+\begin{tabular}{|l|l|l|l|l|l|}
 \hline
-\textbf{Name} & \textbf{Description} & \textbf{Merge} & \textbf{Morphisms} &
+\textbf{Name} & \textbf{Description} & $\bot$ & \textbf{Merge$(a,b)$} & \textbf{Morphisms} &
 \textbf{Monotone functions}\\
 \hline
-\texttt{lbool} & Boolean lattice (false $\to$ true) & & \texttt{when\_true} & \\
-\texttt{lmax} & Max over an ordered domain & &\texttt{gt},
+\texttt{lbool} & Boolean lattice (false $\to$ true) & \texttt{false} & $a \lor b$ & \texttt{when\_true} & \\
+\texttt{lmax} & Max over an ordered domain & $-\infty$ & $max(a, b)$ &\texttt{gt},
 \texttt{gt\_eq}, \texttt{+}, \texttt{-} & \\
-\texttt{lmin} & Min over an ordered domain & &\texttt{lt}, \texttt{lt\_eq},
+\texttt{lmin} & Min over an ordered domain & $\infty$ & $min(a, b)$ &\texttt{lt}, \texttt{lt\_eq},
 \texttt{+}, \texttt{-} & \\
-\texttt{lset} & Set of values & & \texttt{intersect}, \texttt{product},
+\texttt{lset} & Set of values & $\emptyset$ & $a \cup b$ & \texttt{intersect}, \texttt{product},
 \texttt{project}, \texttt{contains?} & \texttt{size} \\
-\texttt{lpset} & Set of non-negative numbers & &
+\texttt{lpset} & Set of non-negative numbers & $\emptyset$ & $a \cup b$ &
 \texttt{intersect}, \texttt{product}, \texttt{project}, \texttt{contains?} & \texttt{size}, \texttt{sum} \\
-\texttt{lbag} & Multiset of values & & \texttt{intersect},
+\texttt{lbag} & Multiset of values && $a \cup b$ & \texttt{intersect},
 \texttt{project}, \texttt{mult}, \texttt{contains?}, \texttt{+} & \texttt{size}\\
-\texttt{lmap} & Map from key to lattice values & &
+\texttt{lmap} & Map from key to lattice values & & &
 \texttt{intersect}, \texttt{project}, \texttt{at}, \texttt{key?} & \texttt{size}\\
 \hline
 \end{tabular}
@@ -198,6 +198,7 @@ it is not a morphism. This is because \texttt{size} cannot be distributed over
 the merge functions of those lattices. For example, \ldots
 
 \subsection{User-defined lattices}
+% XXX: note that we omit some methods from lset
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}[deletekeywords={lset}]
