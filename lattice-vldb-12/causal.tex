@@ -95,10 +95,11 @@ messages are concurrent.
 
 Note that Figure~\ref{fig:vector-clock-src} is a monotonic program. Hence, its
 statements can be executed in any order. The ``lattice embedding'' feature
-ensures that the \texttt{out\_msg\_vc} tuple contains a single vector clock that
-reflects all the updates made during the current timestep. The monotonicity of
-the vector clock protocol reflects our intuition that the vector clock at a node
-grows over time.% Although vector clocks could be implemented in Bloom, they
+described in Section~\ref{sec:lattice-embedding} ensures that the
+\texttt{out\_msg\_vc} tuple contains a single vector clock that reflects all the
+updates made during the current timestep. The monotonicity of the vector clock
+protocol reflects our intuition that the vector clock at a node grows over
+time.% Although vector clocks could be implemented in Bloom, they
 %would not be monotonic, because ...
 
 \subsection{Causal delivery}
