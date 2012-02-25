@@ -281,12 +281,13 @@ inputs). Efficient lattice implementations may \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
 programming languages~\cite{Okasaki1999}. % XXX: maybe not the right place for % this
 
-Finally, the \texttt{Bud::Lattice} class provides a class method
-\texttt{wrapper\_name}. This is used to declare the keyword that is used to
-introduce a lattice identifier in state blocks. For example,
-line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} declares that
-the \texttt{lset} keyword can be used to introduce a set lattice in \lang state
-blocks.
+% XXX: awkward placement for this paragraph
+Finally, custom lattices must define a keyword that can be used in \lang state
+blocks. This is done using the \texttt{wrapper\_name} class method. For example,
+line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} means that
+``\texttt{lset :foo}'' in a \lang state block will introduce an identifier
+\texttt{foo} that is mapped to an instance of the \texttt{Bud::SetLattice}
+class.
 
 \subsection{Integration with set-oriented logic}
 \label{sec:bloom-interop}
