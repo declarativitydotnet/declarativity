@@ -176,13 +176,13 @@ subsequent code uses the value in a monotonic fashion.
 \texttt{lmin} & Min over an ordered domain & &\texttt{lt}, \texttt{lt\_eq},
 \texttt{+}, \texttt{-} & \\
 \texttt{lset} & Set of values & & \texttt{intersect}, \texttt{product},
-\texttt{project} & \texttt{size} \\
+\texttt{project}, \texttt{contains?} & \texttt{size} \\
 \texttt{lpset} & Set of non-negative numbers & &
-\texttt{intersect}, \texttt{product}, \texttt{project}& \texttt{size}, \texttt{sum} \\
+\texttt{intersect}, \texttt{product}, \texttt{project}, \texttt{contains?} & \texttt{size}, \texttt{sum} \\
 \texttt{lbag} & Multiset of values & & \texttt{intersect},
-\texttt{project}, \texttt{mult(k)}, \texttt{+} & \texttt{size}\\
+\texttt{project}, \texttt{mult}, \texttt{contains?}, \texttt{+} & \texttt{size}\\
 \texttt{lmap} & Map from key to lattice values & &
-\texttt{intersect}, \texttt{project}, \texttt{at(k)}, \texttt{key?(k)} & \texttt{size}\\
+\texttt{intersect}, \texttt{project}, \texttt{at}, \texttt{key?} & \texttt{size}\\
 \hline
 \end{tabular}
 \caption{Builtin lattices in \lang.}
@@ -214,11 +214,11 @@ class Bud::SetLattice < Bud::Lattice
   end
 
   morph :intersect do |i| (*\label{line:lset-morph-begin}*)
-    self.class.new(@v & i.reveal)
+    self.class.new(@v & i.reveal) (*\label{line:lset-reveal}*)
   end (*\label{line:lset-morph-end}*)
 
-  morph :pro do |&blk|
-    @v.map(&blk)
+  morph :contains? do |i|
+    Bud::BoolLattice.new(@v.member? i)
   end
 
   monotone :size do (*\label{line:lset-monotone-begin}*)
@@ -260,7 +260,16 @@ any number of monotone functions, morphisms, and non-monotonic methods. The
 syntax for declaring morphisms and monotone function can be seen in
 lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
 \ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
-Figure~\ref{fig:lattice-lset}, respectively.
+Figure~\ref{fig:lattice-lset}, respectively. Because the implementation of
+lattice methods contains Ruby arbitrary code, the lattice developer should be
+careful to ensure that lattice methods satisfy the appropriate algebraic
+properties. For example, implementing a lattice method might require examining
+the underlying Ruby value contained in another lattice element. This can be done
+using the \texttt{reveal} method (e.g., line~\ref{line:lset-reveal} in
+Figure~\ref{fig:lattice-lset}). Since \texttt{reveal} is non-monotonic, lattice
+developers should use it carefully when implementing monotone functions and
+morphisms.
+% Tweak this text
 
 Because Ruby is dynamically typed, there will often be constraints on the legal
 inputs to these functions that cannot be enforced until runtime. For example,
