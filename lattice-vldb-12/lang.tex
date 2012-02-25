@@ -203,7 +203,7 @@ the merge functions of those lattices. For example, \ldots
 \begin{scriptsize}
 \begin{lstlisting}[deletekeywords={lset}]
 class Bud::SetLattice < Bud::Lattice
-  wrapper_name :lset
+  wrapper_name :lset (*\label{line:lset-wrapper-name}*)
 
   def initialize(x=[])
     # Reject invalid input (elided)
@@ -241,7 +241,6 @@ Ruby code that implements the \texttt{lset} lattice.
 
 A lattice class must inherit from the builtin \texttt{Bud::Lattice} class and
 must also define two methods:
-
 \begin{itemize}
 \item \texttt{initialize(i)}: given a Ruby object $i$, this method constructs a
   new lattice element that ``wraps'' $i$ (\texttt{initialize} is the standard
@@ -255,21 +254,19 @@ must also define two methods:
   associative, and idempotent. Note that \emph{e} and \emph{self} must be
   instances of the same class.
 \end{itemize}
-
 In addition to the constructor and the merge method, lattices can also define
 any number of monotone functions, morphisms, and non-monotonic methods. The
-syntax for declaring morphisms and monotone function can be seen in
+syntax for declaring morphisms and monotone functions can be seen in
 lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
 \ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
-Figure~\ref{fig:lattice-lset}, respectively. Because the implementation of
-lattice methods contains Ruby arbitrary code, the lattice developer should be
-careful to ensure that lattice methods satisfy the appropriate algebraic
-properties. For example, implementing a lattice method might require examining
-the underlying Ruby value contained in another lattice element. This can be done
-using the \texttt{reveal} method (e.g., line~\ref{line:lset-reveal} in
-Figure~\ref{fig:lattice-lset}). Since \texttt{reveal} is non-monotonic, lattice
-developers should use it carefully when implementing monotone functions and
-morphisms.
+Figure~\ref{fig:lattice-lset}, respectively. Because lattice methods can contain
+arbitrary Ruby code, the lattice developer should be careful to ensure that
+lattice methods satisfy the appropriate algebraic properties. For example,
+implementing a lattice method might require examining the underlying Ruby value
+contained in another lattice element. This can be done using the \texttt{reveal}
+method (e.g., line~\ref{line:lset-reveal} in Figure~\ref{fig:lattice-lset}).
+Since \texttt{reveal} is non-monotonic, lattice developers should use it
+carefully when implementing monotone functions and morphisms.
 % Tweak this text
 
 Because Ruby is dynamically typed, there will often be constraints on the legal
@@ -282,26 +279,39 @@ Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions should
 construct a new lattice element rather than destructively modifying one of their
 inputs). Efficient lattice implementations may \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
-programming
-languages~\cite{Okasaki1999}. % XXX: maybe not the right place for this
+programming languages~\cite{Okasaki1999}. % XXX: maybe not the right place for % this
+
+Finally, the \texttt{Bud::Lattice} class provides a class method
+\texttt{wrapper\_name}. This is used to declare the keyword that is used to
+introduce a lattice identifier in state blocks. For example,
+line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} declares that
+the \texttt{lset} keyword can be used to introduce a set lattice in \lang state
+blocks.
 
 \subsection{Integration with set-oriented logic}
 \label{sec:bloom-interop}
 \lang provides two features to ease integration of lattice-based code with
 traditional Bloom programs that manipulate set-oriented collections.
 
-\subsubsection{Implicit fold}
+\subsubsection{Converting collections into lattices}
 % XXX: this ignores the fact that Bloom collections consist of sets of tuples,
 % whereas implicit fold works for sets of singleton values
 % XXX: refer to shortest paths program as practical example
-This feature enables set-oriented collections to be more easily used as input to
-lattices. If a \lang statement has a set-oriented collection on the rhs and a lattice
-on the lhs, the lattice merge function is used to ``fold over'' the elements of
-the collection. That is, each element of the collection is converted to a
-lattice element (via the appropriate lattice constructor); then the set of
-lattice elements are merged together (via repeated application of the
-\texttt{merge} method). In our experience, this is typically the behavior
-intended by the user.
+This feature enables an intuitive syntax for merging the contents of a
+set-oriented collection into a lattice. If a statement has a Bloom collection on
+the rhs and a lattice on the lhs, the collection is converted into a lattice
+element by ``folding'' the lattice's merge function over the collection. That
+is, each element of the collection is converted to a lattice element (by
+invoking the lattice constructor), and then the set of lattice elements are
+merged together via repeated application of the lattice's \texttt{merge}
+method. In our experience, this is usually the behavior intended by the user.
+
+For example, line~\ref{line:quorum-set-accum} of Figure~\ref{fig:lattice-quorum}
+contains a Bloom collection on the rhs and an \texttt{lset} lattice on the
+lhs. This statement is implemented by constructing a singleton \texttt{lset} for
+each element of the rhs collection and then merging the sets together. The
+resulting \texttt{lset} is then merged with the \texttt{votes} lattice
+referenced by the lhs.
 
 \subsubsection{Collections with embedded lattice values}
 \label{sec:lattice-embedding}
