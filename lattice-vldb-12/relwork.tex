@@ -74,7 +74,7 @@ application reads a version of the set and computes a value derived from that
 version (e.g., conditional on element \emph{x} being in the set). Concurrently,
 \emph{x} is removed from the set by another replica. While the CRDT ensures that
 the replicas will eventually agree that \emph{x} is absent from the set, the
-application state may be inconsistent unless the derived value is updated to
+application state may remain inconsistent unless the derived value is updated to
 reflect the removal of \emph{x}. \lang and the CALM analysis provide a possible
 solution to this problem by requiring that replicated values are only used in a
 ``safe'' (monotonic) fashion.

@@ -1,4 +1,4 @@
-\section{Case Study: Vector Clocks and Causal Delivery}
+\section{Case Study: Causal Delivery}
 \label{sec:causal}
 Understanding the causal relationship between events in a distributed system has
 many applications.
@@ -54,11 +54,11 @@ end
 \end{figure}
 
 A \emph{vector clock} is an array containing a logical clock for each node in
-the distributed system. Each node keeps a local vector clock and updates it as
-it processes events; the node's vector clock reflects how up-to-date its local
-knowledge is with respect to the other nodes in the system. Vector clocks can be
-used to assign a partial order over the events in the system that agrees with
-the causal relationship between events.
+the distributed system. Each node keeps a local vector clock that it updates
+when it sends and receives messages; the node's vector clock reflects how
+up-to-date its local knowledge is with respect to the other nodes in the
+system. Vector clocks can be used to assign a partial order over the events in
+the system that agrees with the causal relationship between events.
 
 Each node $n$ initializes its vector clock to $\{n \rightarrow 0\}$. A node can
 update their vector clock $v$ by following three simple rules when sending and
@@ -89,7 +89,7 @@ The key vector clock logic appears in lines \ref{line:vc-out-increment},
 are a direct translation of the three rules for updating a vector clock given
 above. Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated
 vector clock value.  Note that if multiple outgoing messages are sent in the
-same timestep, they will contain the same embedded vector clock (and
+same \lang timestep, they will contain the same embedded vector clock (and
 \texttt{my\_vc} will only be incremented once). This is reasonable, since those
 messages are concurrent.
 
