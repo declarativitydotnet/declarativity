@@ -28,7 +28,8 @@ the partial order of poset $S$). Note that although the underlying set only has
 a partial order, the least upper bound is defined for all elements $x,y \in
 S$. The distinguished element $\bot$ is the smallest element in $S$; this
 implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the term
-``lattice'' to mean ``bounded join semilattice'' in the rest of this paper.
+``lattice'' to mean ``bounded join semilattice'' in the rest of this paper. We
+also use ``merge function'' to mean ``least upper bound.''
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
@@ -68,7 +69,7 @@ class QuorumVoteL
     votes       <= vote_chn {|v| v.voter_id} (*\label{line:quorum-set-accum}*)
     cnt         <= votes.size (*\label{line:quorum-size}*)
     quorum_done <= cnt.gt_eq(QUORUM_SIZE) (*\label{line:quorum-threshold}*)
-    result_chn  <~ quorum_done.when_true { [RESULT_ADDR] }
+    result_chn  <~ quorum_done.when_true { [RESULT_ADDR] } (*\label{line:quorum-when-true}*)
   end
 end
 \end{lstlisting}
@@ -191,11 +192,33 @@ subsequent code uses the value in a monotonic fashion.
 
 Table~\ref{tbl:builtin-lattices} lists the builtin lattices provided by
 \lang. Many common distributed protocols can be expressed using these lattices
-(e.g., the causal delivery protocol described in Section~\ref{sec:causal}).
+(e.g., the causal delivery protocol described in Section~\ref{sec:causal}). The
+behavior of most of the lattice methods should be unsurprising, so we do not
+exhaustively describe every method in this section; rather, we highlight a few
+lattices that deserve further comment.
 
-Note that \emph{size} is a monotone function provided by several lattices, but
-it is not a morphism. This is because \texttt{size} cannot be distributed over
-the merge functions of those lattices. For example, \ldots
+The \texttt{lbool} lattice is useful for representing conditions that, once
+satisfied, remain satisfied. For example, the \texttt{gt} morphism on the
+\texttt{lmax} lattice returns an element of the \texttt{lbool} lattice because
+once the maximum of a set is $>k$, it will remain $>k$ as the set grows. The
+\texttt{when\_true} morphism takes a Ruby block; when the lattice element has
+the value \texttt{true}, the block is evaluated. For example, see
+line~\ref{line:quorum-when-true} in Figure~\ref{fig:lattice-quorum}.
+
+Note that \emph{size} is a monotone function provided by several lattices but it
+is not a morphism. This is because \texttt{size} cannot be distributed over the
+merge functions of those lattices. For example, consider two elements of the
+\texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$. For \texttt{size} to be a
+morphism, this equivalence would need to hold: $size(\{1,2\} \lor_{lset}
+\{2,3\}) = size(\{1,2\}) \lor_{lmax} size(\{2,3\})$. \nrc{Finish this}
+
+The \texttt{lpset} lattice is an example of how \lang can be used to encode
+domain-specific knowledge about an application. If the developer knows that a
+set will contain only non-negative numbers, the sum of those numbers increases
+monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
+\texttt{lpset}. Inserting a negative value (or a non-number) into an
+\texttt{lpset} results in a Ruby exception.
+% Explain why sum is a monotone function?
 
 \subsection{User-defined lattices}
 % XXX: note that we omit some methods from lset
@@ -275,11 +298,11 @@ initializing a \texttt{lbool} lattice with a non-boolean value is not
 supported. The developer of a lattice implementation should check for invalid
 inputs and signal errors by raising a Ruby exception.
 
-Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions should
-construct a new lattice element rather than destructively modifying one of their
+Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions construct
+a new lattice element rather than destructively modifying one of their
 inputs). Efficient lattice implementations may \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
-programming languages~\cite{Okasaki1999}. % XXX: maybe not the right place for % this
+programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
 
 % XXX: awkward placement for this paragraph
 Finally, custom lattices must define a keyword that can be used in \lang state
