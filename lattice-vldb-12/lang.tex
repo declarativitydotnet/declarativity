@@ -278,25 +278,23 @@ determine a single value for the second column).
 
 This problem could be avoided by placing constraints on the evaluation order of
 statements: for example, we could require that all potential changes to
-\texttt{lat\_foo} be completed before rules that embed \texttt{lat\_foo} could
-be evaluated. This would effectively stratify the program according to lattice
-embedding rules, which would disallow cycles through lattice
+\texttt{lat\_foo} be completed before statements that embed \texttt{lat\_foo}
+could be evaluated. This would effectively stratify the program according to
+lattice embedding statements, which would disallow cycles through lattice
 embeddings~\cite{Apt1988}. This would reject intuitively reasonable programs; it
 also seems unsatisfying to require stratification of monotonic programs.
 
 % Clarify this
-Instead, \lang allows rules to produce multiple tuples that differ only in their
-embedded lattice values. During the course of the fixpoint computation, those
-values are merged together using the appropriate lattice merge function. This is
-safe because Bud stratifies programs according to non-monotonic operators;
-hence, any operators that might be applied to an embedded lattice value before
-it has been determined exactly must be monotonic. Nevertheless, this solution is
-somewhat counterintuitive because tuples in Datalog relations are traditionally
-immutable: once a fact is known to be true, its value remains the
-same.% \footnote{Bloom facts can be deleted, but this is an explicit non-monotonic
-  % operation that can only occur between timesteps. Conceptually, Bloom models
-  % update as the retraction of the previous version of a fact and the insertion
-  % of a new fact~\cite{dedalus}.}
+Instead, \lang allows statements to produce multiple tuples that differ only in
+their embedded lattice values. During the course of the fixpoint computation,
+those values are merged together using the appropriate lattice merge
+function. This is safe because Bud stratifies programs according to
+non-monotonic operators; hence, any operators that might be applied to an
+embedded lattice value before it has been determined exactly must be
+monotonic. Nevertheless, this solution is somewhat counterintuitive because
+tuples in Datalog relations are traditionally immutable: once a fact is known to
+be true, its value remains the same.
+
 % Should we note that we might add an option to disable this behavior for
 % particular attributes, or explain more about why this might be considered
 % weird?
