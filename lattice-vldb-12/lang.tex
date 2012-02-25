@@ -23,12 +23,12 @@ A \emph{bounded join semilattice} is a triple $\langle S, \lor, \bot\rangle$,
 where $S$ is a poset, $\lor$ is a binary operator (called ``join'' or ``least
 upper bound''), and $\bot \in S$. $\lor$ is associative, commutative, and
 idempotent. For all $x, y \in S$, $x \lor y = z$, where $x \leq_S z, y \leq_S
-z$, and there is no $z' \in S$ such that $z' <_S z$ (where $<_S$ is the partial
-order of poset $S$). Note that although the underlying set only has a partial
-order, the least upper bound is defined for all elements $x,y \in S$. The
-distinguished element $\bot$ is the smallest element in $S$; this implies that
-$x \lor \bot = x$ for all $x \in S$. For brevity, we use the term ``lattice'' to
-mean ``bounded join semilattice'' in the rest of this paper.
+z$, and there is no $z' \ne z \in S$ such that $z' \leq_S z$ (where $\leq_S$ is
+the partial order of poset $S$). Note that although the underlying set only has
+a partial order, the least upper bound is defined for all elements $x,y \in
+S$. The distinguished element $\bot$ is the smallest element in $S$; this
+implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the term
+``lattice'' to mean ``bounded join semilattice'' in the rest of this paper.
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
@@ -66,7 +66,7 @@ class QuorumVoteL
 
   bloom do
     votes       <= vote_chn {|v| v.voter_id} (*\label{line:quorum-set-accum}*)
-    cnt         <= votes.size (*\label{line:quorum-lmax}*)
+    cnt         <= votes.size (*\label{line:quorum-size}*)
     quorum_done <= cnt.gt_eq(QUORUM_SIZE) (*\label{line:quorum-threshold}*)
     result_chn  <~ quorum_done.when_true { [RESULT_ADDR] }
   end
@@ -97,15 +97,22 @@ the lattice element associated with the \texttt{votes} identifier
 changes---specifically, it moves ``upward'' in the \texttt{lset} lattice.
 
 \subsubsection{Statements in \lang}
-Statements take the same form in both Bloom and \lang:
- \\ \noindent
+Statements take the same form in both Bloom and \lang: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
     $<$expression$>$}}\\ \noindent
 The identifier on the lhs can refer to either a set-oriented collection or a
 lattice. The expression on the rhs can contain both traditional relational
 operators (applied to Bloom collections) and methods invoked on lattices.
 Lattice methods are similar to methods in an object-oriented language and are
-invoked using the standard method invocation syntax.
+invoked using the standard method invocation syntax. For example,
+line~\ref{line:quorum-size} of Figure~\ref{fig:lattice-quorum} invokes the
+\texttt{size} method on an element of the \texttt{lset} lattice.
+
+\nrc{TODO}
+In a statement where the rhs and lhs are both lattice elements, the
+interpretation of the statement is that the rhs element should be ``merged
+into'' the lhs element using the least upper bound operator ($\lor$) provided by
+the lattice.
 
 Note that if the lhs of a statement refers to a lattice, the statement's
 operator must be either \verb|<=| or \verb|<+| (instantaneous or deferred
@@ -117,12 +124,20 @@ into tuples that appear channels (Section~\ref{sec:bloom-interop}).
 \subsubsection{Lattice methods}
 \lang statements compute values over lattices by invoking methods on lattice
 elements. Just like a subset of the relational operators (selection, projection,
-and join) are monotonic, some lattice methods are monotone functions (as defined
-in Section~\ref{sec:lattice-defn}). The input to a monotone lattice method is
-the receiver of the method invocation; the output is the result of the method
-invocation. A monotone method guarantees that, if the input to the method grows
-(according to the input's lattice type), the output will grow (according to the
-output's lattice type).
+and join) are monotonic, some lattice methods are monotone functions as defined
+in Section~\ref{sec:lattice-defn}. The input to a monotone lattice method is the
+receiver of the method invocation. A monotone method guarantees that, if the
+input to the method grows (according to the input's lattice type), the value
+returned by the function will grow (according to the result value's lattice
+type).
+
+A method's signature indicates its monotonicity properties. More precisely,
+\lang distinguishes between methods that are monotone and a subset of those
+methods that are \emph{morphisms}. The properties a morphism must satisfy are
+given formally in Section~\ref{sec:lattice-defn}, but the intuition is that
+morphism on lattice $t$ can be distributed over $t$'s least upper bound
+operator. This allows a variant of semi-naive evaluation for lattice programs,
+as we detail further in Section~\ref{sec:lattice-eval-strat}.
 
 Lattices are free to provide non-monotonic methods. Invoking a non-monotonic
 lattice method in a statement is analogous to using a non-monotonic relational
@@ -130,6 +145,11 @@ operator (aggregation and negation) in Bloom: the Bud interpreter stratifies the
 program to ensure that the input value is computed exactly before allowing a
 non-monotonic operator to be applied to it. This implies that statements that
 invoke non-monotonic methods on lattice values cannot be recursive.
+
+Every lattice defines a non-monotonic method named \texttt{reveal} which returns
+a representation of the lattice element as a plain Ruby value. For example, the
+\texttt{reveal} method on a \texttt{lset} lattice returns a representation of
+the set as a Ruby array. This is non-monotonic because \nrc{TODO}
 
 \subsection{Builtin lattice types}
 \label{sec:lattice-builtins}

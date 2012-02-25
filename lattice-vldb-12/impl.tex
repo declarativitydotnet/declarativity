@@ -7,14 +7,15 @@ features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
 to lattice values) required about 300 LOC. The builtin lattice classes
 constituted an additional 300 LOC. Modifying Bud's fixpoint logic to include
 lattices required only 10 LOC, while the program rewriting required to enable
-seminaive evaluation required 100 LOC. Modifying Bud's collection classes to
+semi-naive evaluation required 100 LOC. Modifying Bud's collection classes to
 merge together embedded lattice values required modifying about 125 LOC. Along
 with other miscellaneous changes, adding support for \lang required less than
 900 new lines of code. This experience suggests that support for lattices can be
 added to an existing Datalog engine in a relatively straightforward manner.
 
 \subsection{Evaluation strategy}
-\nrc{TODO: describe how we generalize seminaive to \lang, justify why it is correct.}
+\label{sec:lattice-eval-strat}
+\nrc{TODO: describe how we generalize semi-naive to \lang, justify why it is correct.}
 
 \subsection{Performance validation}
 \label{sec:lattice-perf}
@@ -47,12 +48,12 @@ those paths at every subsequent ``step'' of the fixpoint computation. In
 contrast, after computing length $n$ paths, a semi-naive strategy will only
 generate length $n+1$ paths in the next step. Bloom and semi-naive \lang achieve
 similar results. We instrumented Bud to count the number of derivations made by
-the Bloom and seminaive lattice variants---as expected, both programs made about
+the Bloom and semi-naive lattice variants---as expected, both programs made about
 the same number of derivations. These results suggest that our implementation of
 semi-naive evaluation for \lang is effective and performs comparably with a
 traditional Datalog system.
 
-For large inputs, Bloom begins to outperform the seminaive lattice variant. This
+For large inputs, Bloom begins to outperform the semi-naive lattice variant. This
 is because the current lattice implementation copies more data: lattices are
 immutable, so the \texttt{lset} merge function allocates a new set to hold the
 result of the merge. In contrast, Bloom collections are modified in-place.

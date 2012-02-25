@@ -8,12 +8,12 @@ In the absence of semantic knowledge about transactions, serializability is the
 main correctness criteria for concurrency control schemes. However, ensuring
 serializability can be prohibitively expensive, for instance when transactions
 are long-running or the nodes of a distributed database are connected via an
-unreliable network. Thus, many schemes have been proposed to allow
+unreliable network. Thus, many methods have been proposed to allow
 non-serializable transaction schedules that preserve some \emph{semantic} notion
-of correctness. In particular, several schemes have been proposed to allow users
-to specify that certain operations can safely be commuted with other operations;
-this enlarges the space of allowed transaction schedules, increasing the
-potential for concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
+of correctness. In particular, several schemes allow users to specify that
+certain operations can safely be commuted with other operations; this enlarges
+the space of allowed transaction schedules, increasing the potential for
+concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
 
 % TODO: do we need to cite all 3 papers?
 %       the weihl paper claims to explicitly only allow serializable schedules
