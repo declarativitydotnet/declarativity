@@ -213,17 +213,17 @@ class Bud::SetLattice < Bud::Lattice
     self.class.new(@v | i.reveal)
   end
 
-  morph :intersect do |i|
+  morph :intersect do |i| (*\label{line:lset-morph-begin}*)
     self.class.new(@v & i.reveal)
-  end
+  end (*\label{line:lset-morph-end}*)
 
   morph :pro do |&blk|
     @v.map(&blk)
   end
 
-  monotone :size do
+  monotone :size do (*\label{line:lset-monotone-begin}*)
     Bud::MaxLattice.new(@v.size)
-  end
+  end (*\label{line:lset-monotone-end}*)
 end
 \end{lstlisting}
 \end{scriptsize}
@@ -232,11 +232,11 @@ end
 \end{figure}
 
 \label{sec:lattice-api}
-While the builtin lattice types provided by \lang will suffice for many
+While the builtin lattice types provided by \lang are suitable for many
 applications, developers can also create custom lattice definitions to capture
-domain-specific behavior. To define a new lattice, a developer creates a Ruby
-class that meets a certain API contract. The Ruby class that defines the
-\texttt{lset} lattice can be seen in Figure~\ref{fig:lattice-lset}.
+domain-specific behavior. To define a lattice, a developer creates a Ruby class
+that meets a certain API contract. Figure~\ref{fig:lattice-lset} contains the
+Ruby code that implements the \texttt{lset} lattice.
 
 A lattice class must inherit from the builtin \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -248,24 +248,29 @@ must also define two methods:
   reference), this method returns $\bot$, the least element of the lattice.
 
 \item \texttt{merge(e)}: given a lattice element $e$, this method returns the
-  least upper bound of \emph{self} and \emph{e}.  This method must satisfy the
-  algebraic properties summarized in Section~\ref{sec:lattice-defn}---in
-  particular, it must be commutative, associative, and idempotent. Note that
-  \emph{e} must have the same class as \emph{self}.
+  least upper bound of \emph{self} and \emph{e}. This method must satisfy the
+  algebraic properties of least upper bound as summarized in
+  Section~\ref{sec:lattice-defn}---in particular, it must be commutative,
+  associative, and idempotent. Note that \emph{e} and \emph{self} must be
+  instances of the same class.
 \end{itemize}
 
 In addition to the constructor and the merge method, lattices can also define
-any number of monotone functions, morphisms, and non-monotonic methods.
+any number of monotone functions, morphisms, and non-monotonic methods. The
+syntax for declaring morphisms and monotone function can be seen in
+lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
+\ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
+Figure~\ref{fig:lattice-lset}, respectively.
 
-Because Ruby is dynamically typed, there will typically be constraints on the
-legal inputs to these functions that cannot be enforced until runtime. For
-example, initializing a \texttt{lbool} lattice with a non-boolean value is not
+Because Ruby is dynamically typed, there will often be constraints on the legal
+inputs to these functions that cannot be enforced until runtime. For example,
+initializing a \texttt{lbool} lattice with a non-boolean value is not
 supported. The developer of a lattice implementation should check for invalid
 inputs and signal errors by raising a Ruby exception.
 
 Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions should
-construct a new lattice element rather than modifying one of their inputs
-in-place). Efficient lattice implementations may \emph{share structure} on merge
+construct a new lattice element rather than destructively modifying one of their
+inputs). Efficient lattice implementations may \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
 programming
 languages~\cite{Okasaki1999}. % XXX: maybe not the right place for this
