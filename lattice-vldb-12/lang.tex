@@ -419,7 +419,7 @@ This problem could be avoided by placing constraints on the evaluation order of
 statements: for example, we could require that all potential changes to
 \texttt{lat\_foo} be completed before statements that embed \texttt{lat\_foo}
 could be evaluated. This would effectively stratify the program according to
-lattice embedding statements, which would disallow cycles through lattice
+lattice embedding statements and disallow cycles through lattice
 embeddings~\cite{Apt1988}. This would reduce the expressiveness of the language;
 it also seems unsatisfying to require stratification of monotonic programs.
 
