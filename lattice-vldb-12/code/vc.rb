@@ -7,9 +7,9 @@ class VectorClock
   state do
     lmap :my_vc
     lmap :next_vc
-    interface input, :in_msg, [:addr, :payload, :clock]
+    interface input, :in_msg, [:addr, :payload] => [:clock]
     interface input, :out_msg, [:addr, :payload]
-    interface output, :out_msg_vc, [:addr, :payload, :clock]
+    interface output, :out_msg_vc, [:addr, :payload] => [:clock]
   end
 
   bootstrap do

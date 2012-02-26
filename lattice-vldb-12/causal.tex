@@ -17,9 +17,9 @@ clocks~\cite{Fidge1988,Mattern1989}, a common tool for tracking causal
 relationships in a distributed system. We then use \lang to implement a
 classical algorithm for point-to-point causal delivery~\cite{Schiper1989}. The
 implementation of both protocols in \lang is concise and readable; perhaps more
-significantly, both protocols are monotonic. Since this agrees with the
-intuitive notion that both protocols make ``progress'' over time, this gives us
-more confidence in the correctness of our designs.
+significantly, both protocols are monotonic. Since this agrees with our
+intuition that these protocols make ``progress'' over time, this gives us more
+confidence in the correctness of our designs.
 
 \subsection{Vector clocks}
 \begin{figure}[t]
@@ -31,9 +31,9 @@ class VectorClock
   state do
     lmap :my_vc
     lmap :next_vc
-    interface input, :in_msg, [:addr, :payload, :clock]
+    interface input, :in_msg, [:addr, :payload] => [:clock]
     interface input, :out_msg, [:addr, :payload]
-    interface output, :out_msg_vc, [:addr, :payload, :clock]
+    interface output, :out_msg_vc, [:addr, :payload] => [:clock]
   end
 
   bootstrap do
@@ -66,7 +66,7 @@ the system that agrees with the causal relationship between events.
 Each node $n$ initializes its vector clock to $\{n \rightarrow 0\}$. A node can
 update their vector clock $v$ by following three simple rules when sending and
 receiving events:
-\begin{enumerate}
+\begin{compactenum}
 \item
   Before sending a message, $n$ increments $v[n]$ and includes $v$ in the
   outgoing message.
@@ -75,7 +75,8 @@ receiving events:
 \item
   Upon receipt of a message, $n$ merges the vector clock in the message with its
   own vector clock by taking the element-wise max of the logical clock values.
-\end{enumerate}
+\end{compactenum}
+
 Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
 clocks in \lang. A vector clock is represented as a map lattice that associates
 node IDs with \texttt{lmax} values. Each \texttt{lmax} value represents a single
