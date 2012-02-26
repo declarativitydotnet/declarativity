@@ -42,9 +42,6 @@ consider how we might compute the \texttt{size} monotone function over an
 
 \subsection{Performance validation}
 \label{sec:lattice-perf}
-
-\jmh{Didn't you say you got less embarrassing numbers?}
-
 \begin{figure}[t]
 \includegraphics[width=\linewidth]{fig/sn_perf}
 \caption{Performance comparison of three different methods for computing the
@@ -55,14 +52,14 @@ consider how we might compute the \texttt{size} monotone function over an
 To validate the effectiveness of semi-naive evaluation for \lang programs, we
 wrote two versions of a program to compute the transitive closure of a directed
 acyclic graph. One version was written in Bloom and used traditional
-set-oriented collections. The other version was written in \lang and used
-morphisms over the \texttt{lset} lattice. For the \lang version, we ran the
-program both with and without semi-naive evaluation enabled. As input, we used
-synthetic graphs of various sizes---in a graph with $n$ nodes, each node had
-$O(\log_2 n)$ outgoing edges. We ran the experiment on a late 2010 MacBook Air
-with a 2.13 Ghz Intel Core 2 Duo processor and 4GB of RAM, running Mac OS X
-10.7.3 and Ruby 1.8.7-p352. We ran each program variant five times on each graph
-and report the mean elapsed wall-clock time.
+set-oriented collections. The other version was written in \lang using morphisms
+over the \texttt{lset} lattice. For the \lang version, we ran the program both
+with and without semi-naive evaluation enabled. As input, we used synthetic
+graphs of various sizes---in a graph with $n$ nodes, each node had $O(\log_2 n)$
+outgoing edges. We ran the experiment on a late 2010 MacBook Air with a 2.13 Ghz
+Intel Core 2 Duo processor and 4GB of RAM, running Mac OS X 10.7.3 and Ruby
+1.8.7-p352. We ran each program variant five times on each graph and report the
+mean elapsed wall-clock time.
 
 Figure~\ref{fig:tc-perf-graph} shows how the runtime of each program varied with
 the size of the graph. Note that we only report results for the naive \lang
@@ -78,13 +75,13 @@ the same number of derivations. These results suggest that our implementation of
 semi-naive evaluation for \lang is effective and performs comparably with a
 traditional Datalog system.
 
-For large inputs, Bloom begins to outperform the semi-naive lattice variant. We
+For large inputs, Bloom began to outperform the semi-naive lattice variant. We
 suspect this is because our current implementation of lattices requires more
 data copies. Lattices are immutable, so the \texttt{lset} merge function
-allocates a new set to hold the result of the merge. In contrast, Bloom
-collections are modified in-place. We plan to improve our lattice implementation
-to avoid copying lattice values when the interpreter can prove that in-place
-updates are safe.
+allocates a new object to hold the result of the merge. In contrast, Bloom
+collections are modified in-place. We plan to address this by allowing the
+lattice runtime to avoid copies when it can determine that in-place updates are
+safe.
 
 \subsection{Modifying Bud}
 We were able to extend Bud to support \lang with relatively minor changes. Bud
