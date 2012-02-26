@@ -7,15 +7,19 @@ class AllPathsL
   include Bud
 
   state do
-    lset :link
-    lset :path, :scratch => true
+    lhset :link
+    lhset :path, :scratch => true
   end
 
   bloom do
     path <= link
-    path <= path.product(link).pro do |p,l|
-      [[p[0], l[1], p[2] + l[2]]] if p[1] == l[0]
-    end
+    # path <= path.product(link).pro do |p,l|
+    #   [[p[0], l[1], p[2] + l[2]]] if p[1] == l[0]
+    # end
+    # path <= path.theta(link, 1, 0).pro do |p,l|
+    #   [[p[0], l[1], p[2] + l[2]]]
+    # end
+    path <= path.tc(link)
   end
 end
 
@@ -29,8 +33,8 @@ class AllPathsB
 
   bloom do
     path <= link
-    path <= (path * link).pairs do |p,l|
-      [p.from, l.to, p.cost + l.cost] if p.to == l.from
+    path <= (path * link).pairs(:to => :from) do |p,l|
+      [p.from, l.to, p.cost + l.cost]
     end
   end
 end
@@ -40,7 +44,13 @@ def log_base_2(n)
 end
 
 def gen_link_data(num_nodes)
-  nodes = 1.upto(num_nodes).map {|i| "n#{i}"}
+  # Note that we represent node IDs using symbols. This actually makes a huge
+  # performance difference because Ruby Strings are mutable, whereas Symbols are
+  # not. Hence copying strings is much more expensive, as is comparing them
+  # (comparing symbols can just look at the addresses, not the symbol
+  # content). This change improves the performance of both Bloom and the
+  # lattice-based approach, but it helps a LOT more for lattices.
+  nodes = 1.upto(num_nodes).map {|i| "n#{i}".to_sym}
   links = []
   layers = log_base_2(num_nodes).to_i
   nodes.each_with_index do |n,i|
@@ -121,7 +131,7 @@ end
 
 def bench(size, nruns, variant)
   # Don't try to use naive evaluation for large graphs
-  return if (variant == "naive-lat" && size > 18)
+  return if (variant == "naive-lat" && size > 64)
 
   data = gen_link_data(size)
   puts "****** #{Time.now} ******"
