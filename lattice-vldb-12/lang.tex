@@ -3,10 +3,10 @@
 
 In this section, we introduce \lang, an extension to Bloom that allows monotonic
 programs to be written using arbitrary lattices. We begin by reviewing the
-algebraic properties of lattices used in CRDTs, and note the applicability of  monotone functions and morphisms in that context. We then
-introduce the basic concepts of \lang and detail the builtin lattices provided
-by the language. We also show how users can define their own lattice types using
-a simple API.
+algebraic properties of lattices used in CRDTs and note the applicability of
+monotone functions and morphisms in that context. We then introduce the basic
+concepts of \lang and detail the builtin lattices provided by the language. We
+also show how users can define their own lattice types.
 
 % is this the right place for this?
 When designing \lang, we decided to extend Bloom to include support for lattices
@@ -243,7 +243,7 @@ satisfied, remain satisfied. For example, the \texttt{gt} morphism on the
 has the value \texttt{true}, \texttt{when\_true} returns the result of
 evaluating the block. For example, see line~\ref{line:quorum-when-true} in
 Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
-statement\footnote{Observe that an ``else'' clause would test for an upper bound on the final lattice value, which is a non-monotonic property!}.
+statement.\footnote{Observe that an ``else'' clause would test for an upper bound on the final lattice value, which is a non-monotonic property!}
 
 The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
 objects and values are lattice elements. For example, a web application could
