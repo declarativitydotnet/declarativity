@@ -41,13 +41,14 @@ It is attractive to incorporate join semi-lattices into logic programming,  but 
 %   generalizes Datalog.
 
 \item
-  We introduce \lang, an extension of Bloom that supports lattices. We describe
-  how to express computation over lattices, detail the builtin lattice types
-  provided by \lang, and illustrate how developers can define new lattice
-  types.
+  We introduce \lang, an extension of Bloom that supports lattices. We detail
+  the builtin lattice types provided by \lang and illustrate how developers can
+  define new lattice types.
   
 \item 
-  We provide interfaces for consistency-preserving mappings across lattices via \emph{morphisms} and \emph{monotonic functions}.  This is critical for \lang, and forms a useful extension to the CRDT framework as well.
+  We provide interfaces for consistency-preserving mappings across lattices via
+  \emph{morphisms} and \emph{monotonic functions}.  This is critical for \lang
+  and forms a useful extension to the CRDT framework as well.
 
 \item 
   We generalize the CALM analysis to programs that contain both lattices and
@@ -56,10 +57,10 @@ It is attractive to incorporate join semi-lattices into logic programming,  but 
   non-monotonic in Bloom. % XXX: revisit this
 
 \item
-  For efficient execution, we show how to extend the standard Datalog semi-naive evaluation
-  scheme~\cite{Balbin1987} to support both lattices and traditional database
-  relations. We also describe how an existing Datalog engine can be extended to
-  support lattices with relatively minor changes.
+  For efficient execution, we show how to extend the standard Datalog semi-naive
+  evaluation scheme~\cite{Balbin1987} to support both lattices and traditional
+  database relations. We also describe how an existing Datalog engine can be
+  extended to support lattices with relatively minor changes.
 
 \item
   Finally, we validate the effectiveness of lattices with two case studies. First we
