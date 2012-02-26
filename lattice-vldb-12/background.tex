@@ -47,20 +47,21 @@ asynchronous messaging, as described further below.
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
 each containing three phases.\footnote{There is a precise declarative semantics
   for Bloom programs~\cite{dedalus}, but we describe Bloom operationally for the
-  sake of exposition.} In the first phase of a timestep, inbound events (e.g.,
-network messages) are received and represented as facts in collections. In the
-second phase, the program's statements are evaluated over local state to compute
-all the additional facts that can be derived from the current collection
+  sake of exposition.} In the first phase, inbound events (e.g., network
+messages) are received and represented as facts in collections. In the second
+phase, the program's statements are evaluated over local state to compute all
+the additional facts that can be derived from the current collection
 contents. In some cases (described below), the new facts that are derived are
-intended to achieve a ``side effect'' by modifying local state, or by emitting
-an outbound event such as a network message for another Bloom instance.  These
-those effects are deferred in the second phase of the timestep; the third phase
-is devoted to carrying them out.
+intended to achieve ``side effects,'' such as modifying local state or sending a
+network message to another Bloom instance.  These effects are deferred during
+the second phase of the timestep; the third phase is devoted to carrying them
+out.
 
-The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to
-be embedded inside Ruby programs. Figure~\ref{fig:bloom-spaths} shows a Bloom program represented as an annotated Ruby class. A small amount of imperative Ruby code is needed to
-instantiate the Bloom program and begin executing it; more details are available
-on the Bloom language website~\cite{bloom}.
+The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
+embedded inside Ruby programs. Figure~\ref{fig:bloom-spaths} shows a Bloom
+program represented as an annotated Ruby class. A small amount of imperative
+Ruby code is needed to instantiate the Bloom program and begin executing it;
+more details are available on the Bloom language website~\cite{bloom}.
 
 \subsubsection{Data Model}
 \begin{table}[t]
@@ -80,14 +81,18 @@ database of a remote Bloom instance at a non-deterministic future time.\\
 \label{tbl:bloom-collections}
 \end{table}
 
-Bloom is based on a data model of \emph{collections} of {\em items}.  A collection is an unordered sets of tuples, akin to a relation in Datalog. The Bud prototype adopts the Ruby type system rather than inventing its own; hence, collection items in Bud are just arrays of Ruby objects. Each collection has a \emph{schema}, which declares the
-structure (column names) of the tuples in the collection. A subset of the
-columns in a collection form its \emph{key}: as in the relational model, the key columns
-functionally determine the remaining columns. The collections used by a Bloom
-program are declared in a \texttt{state} block. For example,
-line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
-collection named \texttt{link} with three columns, two of which form the
-collection's key.  By default, if the state block does not specify a schema for a Bloom collection, it is assumed to have the schema \texttt{(\underline{key}, value)}.  Ruby is a dynamically-typed language, so the keys and values in Bud can hold arbitrary Ruby objects.
+Bloom is based on a data model of \emph{collections} of {\em items}.  A
+collection is an unordered sets of tuples, akin to a relation in Datalog. The
+Bud prototype adopts the Ruby type system rather than inventing its own; hence,
+collection items in Bud are just arrays of Ruby objects. Each collection has a
+\emph{schema}, which declares the structure (column names) of the tuples in the
+collection. A subset of the columns in a collection form its \emph{key}: as in
+the relational model, the key columns functionally determine the remaining
+columns. The collections used by a Bloom program are declared in a
+\texttt{state} block. For example, line~\ref{line:spaths-ddl} of
+Figure~\ref{fig:bloom-spaths} declares a collection named \texttt{link} with
+three columns, two of which form the collection's key. Ruby is a dynamically
+typed language, so the keys and values in Bud can hold arbitrary Ruby objects.
 
 Bloom provides five collection types to represent different kinds of state
 (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent data: if
@@ -100,7 +105,9 @@ collection type enables communication between Bloom instances. The schema of a
 channel has a distinguished \emph{location specifier} column (prefixed with
 ``\texttt{@}''); when a fact is derived for a channel collection, it appears in
 the database of the Bloom instance at the address given by the location
-specifier. The \texttt{periodic} and \texttt{interface} collection types do not arise in our discussion in this paper; the interested reader is referred to the Bloom language website~\cite{bloom}.
+specifier. The \texttt{periodic} and \texttt{interface} collection types do not
+arise in our discussion in this paper; the interested reader is referred to the
+Bloom website~\cite{bloom}.
 
 \subsubsection{Statements}
 \begin{table}
@@ -114,7 +121,7 @@ current timestep \\
 \verb|<+| & \emph{deferred merge} & lhs will include the content of rhs in the
 next timestep \\
 \hline
-\verb|<-| & \emph{deferred delete} & lhs will not include the content of the rhs
+\verb|<-| & \emph{deferred delete} & lhs will not include the content of rhs
 in the next timestep \\
 \hline
 \verb|<|$\sim$ & \emph{async merge} & (remote) lhs will include the content of the

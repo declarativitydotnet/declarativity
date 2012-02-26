@@ -36,7 +36,7 @@ systems scale and guaranteeing global serializability becomes increasingly
 expensive~\cite{Helland2009}. Many distributed storage systems allow users to
 provide ``merge functions'' that are used to resolve write-write conflicts
 between replicas, allowing the system to eventually reach a consistent state
-(e.g.,~\cite{DeCandia2007,Ippolito2011,Lloyd2011,Power2010,Terry1995}).%  User-defined merge
+(e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).%  User-defined merge
 % functions typically rely on domain knowledge about the semantics of updates to
 % allow conflicting writes to be safely commuted.
 Writing a correct merge function can be difficult because the developer must
