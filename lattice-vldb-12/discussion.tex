@@ -1,37 +1,24 @@
 \section{Discussion and Future Work}
 \label{sec:discussion}
 
-\jmh{Cheer up, dude.}
+\lang simplifies the design of loosely consistent distributed systems by
+enabling \emph{composability}. Rather than reasoning about the consistency of an
+entire application, the programmer can instead ensure that individual lattices
+satisfy \emph{local} correctness properties (e.g., commutativity, associativity,
+and idempotence). The CALM analysis then verifies that when these modules are
+composed to form an application, the complete program satisfies the desired
+consistency properties.
 
-% XXX: awkward wording
-A challenge to the adoption of our work is that programmers must still reason
-about the monotonicity properties of their programs. Specifically, the
-programmer must understand how to express their design as a collection of
-lattices and monotone functions. They must also ensure that their lattice
-implementations obey the appropriate algebraic properties (e.g., merge functions
-must be commutative, associative, and idempotent). We believe that \lang is
-still a valuable tool for several reasons. First, we provide a library of
-lattices that are suitable building blocks for many common distributed
-programs. Second, \lang allows programmers to reason about the monotonicity of
-program components \emph{in isolation}. For example, if the programmer is able
-to write a merge function that satisfies a few simple algebraic properties, the
-CALM analysis ensures that the rest of the program will use the lattice in a
-safe (convergent) manner. This simplifies the programmer's task: rather than
-needing to reason about the consistency of their entire application state, they
-can instead focus on ensuring that a \emph{local} correctness property holds for
-a small part of their program. Finally, as future work we plan to consider
-methods to provide programmers with more confidence in the correctness of the
-merge functions and morphisms that they implement. For example, test data
-generation and bounded model checking would both be useful.
+Nevertheless, designing a correct lattice can still be difficult. To address
+this, we plan to develop tools to give programmers more confidence in the
+correctness of lattice implementations. For example, we plan to build a test
+data generation framework that can efficiently cover the space of possible
+inputs to lattice merge functions. We also plan to explore a restricted DSL for
+writing lattice methods, which would make formal verification of correctness an
+easier task.
 
-\begin{itemize}
-\item
-  Represent ``sealing'' as a lattice with a top element?
-\item 
-  Role of idempotence?
-\item
-  Escrow?
-\item 
-  What about an object where operations $x$ and $y$ commute, operations $a$ and
-  $b$ commute, but $x/y$ and $a/b$ do not?
-\end{itemize}
+\lang significantly increases the number of distributed protocols that can be
+expressed in a monotonic fashion. Nevertheless, we expect that some programs
+will remain non-monotonic, or at least contain a mix of monotonic and
+non-monotonic modules. We are investigating how non-monotonicity might be
+represented within the lattice framework.
