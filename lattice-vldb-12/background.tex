@@ -38,30 +38,28 @@ which the CALM analysis produces unsatisfactory results.
 
 Bloom is a Datalog-based domain-specific language (DSL) designed for distributed
 programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
-using \emph{collections}---unordered sets of tuples, akin to relations in
+using \emph{collections}---unordered sets of objects, akin to relations in
 Datalog. Computation is expressed as a bundle of declarative \emph{statements}.
 An instance of a Bloom program performs computation by evaluating its statements
 over the contents of its local database. Bloom instances communicate via
 asynchronous messaging, as described further below.
 
 An instance of a Bloom program proceeds through a series of
-\emph{timesteps}.\footnote{There is a precise declarative semantics for Bloom
+\emph{timesteps}, each containing three phases.\footnote{There is a precise declarative semantics for Bloom
   programs~\cite{dedalus}, but we describe Bloom's semantics operationally for
-  the sake of exposition.} At the beginning of a timestep, inbound events (e.g.,
-network messages) are received and represented as facts in collections. The
+  the sake of exposition.} In the first phase of a timestep, inbound events (e.g.,
+network messages) are received and represented as facts in collections. In the second phase, the
 program's statements are evaluated over local state to compute all the
 additional facts that can be derived from the current collection contents. In
-some cases (described below), deriving a fact into a collection results in
-emitting an outbound event such as a network message for another Bloom instance;
-those outbound events are emitted at the end of the timestep.
+some cases (described below), the new facts that are derived are intended to achieve a ``side effect'' by modifying local state, or by emitting an outbound event such as a network message for another Bloom instance.  These
+those effects are deferred in the second phase of the timestep; the third phase is devoted to carrying them out.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to
-be embedded inside Ruby programs: observe that Figure~\ref{fig:bloom-spaths} is
-an annotated Ruby class. A small amount of imperative Ruby code is needed to
+be embedded inside Ruby programs. Figure~\ref{fig:bloom-spaths} shows a Bloom program represented as an annotated Ruby class. A small amount of imperative Ruby code is needed to
 instantiate the Bloom program and begin executing it; more details are available
 on the Bloom language website~\cite{bloom}.
 
-\subsubsection{Collections}
+\subsubsection{Data Model}
 \begin{table}[t]
 \begin{tabular}{|l|p{2.32in}|}
 \hline
@@ -79,17 +77,14 @@ database of a remote Bloom instance at a non-deterministic future time.\\
 \label{tbl:bloom-collections}
 \end{table}
 
-A Bloom collection is an unordered set of tuples, akin to a relation in
-Datalog. Bloom adopts the Ruby type system rather than inventing its own; hence,
-Bloom tuples are just Ruby arrays that contain Ruby values (e.g., strings,
-integers and booleans). Each collection has a \emph{schema}, which declares the
+Bloom is based on a data model of \emph{collections} of {\em items}.  A collection is an unordered sets of tuples, akin to a relation in Datalog. The Bud prototype adopts the Ruby type system rather than inventing its own; hence, collection items in Bud are just arrays of Ruby objects. Each collection has a \emph{schema}, which declares the
 structure (column names) of the tuples in the collection. A subset of the
-columns in a collection form its \emph{key}: as in SQL, the key columns
+columns in a collection form its \emph{key}: as in the relational model, the key columns
 functionally determine the remaining columns. The collections used by a Bloom
 program are declared in a \texttt{state} block. For example,
 line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
 collection named \texttt{link} with three columns, two of which form the
-collection's key.
+collection's key.  By default, if the state block does not specify a schema for a Bloom collection, it is assumed to have the schema \texttt{(\underline{key}, value)}.  Ruby is a dynamically-typed language, so the keys and values in Bud can hold arbitrary Ruby objects.
 
 Bloom provides five collection types to represent different kinds of state
 (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent data: if
@@ -102,8 +97,7 @@ collection type enables communication between Bloom instances. The schema of a
 channel has a distinguished \emph{location specifier} column (prefixed with
 ``\texttt{@}''); when a fact is derived for a channel collection, it appears in
 the database of the Bloom instance at the address given by the location
-specifier. The \texttt{periodic} and \texttt{interface} collection types are not
-relevant for this paper.
+specifier. The \texttt{periodic} and \texttt{interface} collection types do not arise in our discussion in this paper; the interested reader is referred to the Bloom language website~\cite{bloom}.
 
 \subsubsection{Statements}
 \begin{table}
@@ -129,30 +123,31 @@ rhs at some non-deterministic future timestep\\
 \end{table}
 
 Each statement has one or more input collections and a single output
-collection. A statement defines how the contents of the input collections should
-be transformed before being included (via set union) in the output
-collection. Each statement takes the form: \\ \noindent
+collection.  Each statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-identifier$>$ $<$op$>$
     $<$collection-expression$>$}}\\ \noindent
 The left-hand side (lhs) of the statement is the name of the output collection
-and the right-hand side (rhs) is an expression that produces a collection. Bloom
+and the right-hand side (rhs) is an expression that produces a collection.
+A statement defines how the contents of the input collections should
+be transformed before being accounted for in the output
+collection. Bloom
 allows the usual relational operators to be used on the rhs (selection,
 projection, join, grouping, aggregation, and negation), although it adopts a
 syntax intended to be more familiar to imperative programmers. In
-Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj} contains projection,
+Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj} demonstrates projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
-\verb+link.to = path.from+, and line~\ref{line:spaths-group} demonstrates
-grouping and aggregation.
+\verb+link.to = path.from+ followed by a projection to four attributes, and line~\ref{line:spaths-group} demonstrates
+grouping and aggregation, followed by projection to three attributes.
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
 standard logical deduction: that is, the lhs and rhs are true at the same
 timestep. The \verb|<+| and \verb|<-| operators indicate that facts will be
 added or removed, respectively, from the lhs collection at the beginning of the
-next timestep. The \verb+<~+ operator specifies that the rhs will be merged into
+{\em next} timestep. The \verb+<~+ operator specifies that the rhs will be merged into
 the lhs collection at some non-deterministic future time. The lhs of a statement
-that uses \verb+<~+ must be a channel; the \verb+<~+ operator models
+that uses \verb+<~+ must be a channel; the \verb+<~+ operator captures
 asynchronous messaging.
 
 % XXX: does this need to be said?
@@ -161,7 +156,7 @@ the lhs collection, either directly or indirectly. As in Datalog, certain
 constraints must be adopted to ensure that programs with recursive statements
 have a sensible interpretation. For deductive statements (\verb+<=+ operator),
 we require that programs be \emph{syntactically stratified}~\cite{Apt1988}:
-cycles through negation or aggregation are not allowed~\cite{dedalus}.
+cycles through negation or aggregation are not allowed (unless they contain a deferred or asynchronous operator)~\cite{dedalus}.
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
@@ -187,14 +182,14 @@ non-monotonic operator. This is problematic, because asynchronous messaging
 results in non-deterministic arrival order, and a non-monotonic operator may be
 order sensitive. Our analysis tool flags these program locations as \emph{points
   of order}. To achieve consistency, the programmer either needs to rewrite
-their program to introduce more monotonic logic, or introduce a coordination
+their program to replace the non-monotonic logic with a monotonic alternative, or introduce a coordination
 protocol to ensure that a consistent ordering is agreed upon.
 
 \subsubsection{Limitations of set monotonicity}
 Unfortunately, the original formulation of the CALM principle considered only
 programs that compute more facts over time---that is, programs whose output
-\emph{sets} grow monotonically. Many distributed protocols make \emph{progress}
-over time but this notion of progress is often difficult to represent as a
+\emph{sets} grow monotonically. Many distributed protocols make progress
+over time, but their notion of ``progress'' is often difficult to represent as a
 growing set of facts. For example, consider the Bloom program in
 Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from a client
 program (not shown) via the \texttt{vote\_chn} channel. Once at least
