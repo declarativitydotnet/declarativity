@@ -1,25 +1,15 @@
 \section{Case Study: Causal Delivery}
 \label{sec:causal}
 
-\jmh{Make more of the fact that vector clocks are a standard/classic mechanism in distributed systems.}
-
-Understanding the causal relationship between events in a distributed system has
-many applications.
-
-A causal delivery protocol ensures that messages are delivered in an order that
-is consistent with the ``happens before'' relation between
-events~\cite{Lamport1978}. Providing a causal order over events has been
-identified as a useful building block for loosely consistent distributed
-applications~\cite{Lloyd2011}.
-
-In this section, we first show how \lang can be used to build vector
-clocks~\cite{Fidge1988,Mattern1989}, a common tool for tracking causal
-relationships in a distributed system. We then use \lang to implement a
-classical algorithm for point-to-point causal delivery~\cite{Schiper1989}. The
-implementation of both protocols in \lang is concise and readable; perhaps more
-significantly, both protocols are monotonic. Since this agrees with our
-intuition that these protocols make ``progress'' over time, this gives us more
-confidence in the correctness of our designs.
+Vector clocks are a classical mechanism for recording the causal relationships
+between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
+section, we first show how vector clocks can be implemented in a monotonic
+fashion using \lang. We then use \lang to implement a classical algorithm for
+point-to-point causal message delivery~\cite{Schiper1989}. The implementation of
+both protocols in \lang is concise and readable; perhaps more significantly,
+both protocols are monotonic. Since this agrees with our intuition that these
+protocols make ``progress'' over time, this gives us more confidence in the
+correctness of our designs.
 
 \subsection{Vector clocks}
 \begin{figure}[t]
@@ -96,6 +86,13 @@ same \lang timestep, they will contain the same embedded vector clock (and
 \texttt{my\_vc} will only be incremented once). This is reasonable, since those
 messages are concurrent.
 
+Figure~\ref{fig:vector-clock-src} is both concise and readable, and requires
+only six \lang statements. This compares favorably with implementations of
+vector clocks in traditional programming languages. For example, the
+\texttt{VectorClock} class included with the Voldemort key-value store consists
+of 216 lines of Java source code, not including whitespace or
+comments~\cite{voldemort-vector-clock}.
+
 Note that Figure~\ref{fig:vector-clock-src} is a monotonic program. Hence, its
 statements can be executed in any order. The ``lattice embedding'' feature
 described in Section~\ref{sec:lattice-embedding} ensures that the
@@ -106,6 +103,11 @@ time.% Although vector clocks could be implemented in Bloom, they
 %would not be monotonic, because ...
 
 \subsection{Causal delivery}
+A causal delivery protocol ensures that messages are delivered in an order that
+is consistent with the ``happens before'' relation between
+events~\cite{Lamport1978}. Providing a causal order over events has been
+identified as a useful building block for loosely consistent distributed
+applications~\cite{Lloyd2011}.
 
 \begin{figure}[t]
 \begin{scriptsize}
