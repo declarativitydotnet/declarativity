@@ -1,21 +1,19 @@
 \section{Implementation}
 \label{sec:impl}
 
-We were able to extend Bud to support \lang with relatively minor changes. Bud
-initially had about 7200 lines of code (LOC). Supporting the core lattice
-features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
-to lattice values) required about 300 LOC. The builtin lattice classes
-constituted an additional 300 LOC. Modifying Bud's fixpoint logic to include
-lattices required only 10 LOC, while the program rewriting required to enable
-semi-naive evaluation required 100 LOC. Modifying Bud's collection classes to
-merge together embedded lattice values required modifying about 125 LOC. Along
-with other miscellaneous changes, adding support for \lang required less than
-900 new lines of code. This experience suggests that support for lattices can be
-added to an existing Datalog engine in a relatively straightforward manner.
+In this section, we describe how \lang programs can be evaluated. First, we
+detail a variant of semi-naive evaluation that supports lattices. We validate
+that our implementation of semi-naive evaluation results in significant
+performance gains and is competitive with a traditional set-oriented version of
+semi-naive evaluation. We also detail the engineering effort required to extend
+Bud to support \lang. % XXX: last sentence is weak
 
 \subsection{Evaluation strategy}
 \label{sec:lattice-eval-strat}
-\nrc{TODO: describe how we generalize semi-naive to \lang, justify why it is correct.}
+\nrc{TODO: describe how we generalize semi-naive to \lang, justify why it is
+  correct.}
+
+
 
 \subsection{Performance validation}
 \label{sec:lattice-perf}
@@ -53,7 +51,24 @@ the same number of derivations. These results suggest that our implementation of
 semi-naive evaluation for \lang is effective and performs comparably with a
 traditional Datalog system.
 
-For large inputs, Bloom begins to outperform the semi-naive lattice variant. This
-is because the current lattice implementation copies more data: lattices are
-immutable, so the \texttt{lset} merge function allocates a new set to hold the
-result of the merge. In contrast, Bloom collections are modified in-place.
+For large inputs, Bloom begins to outperform the semi-naive lattice variant. We
+suspect this is because our current implementation of lattices requires more
+data copies. Lattices are immutable, so the \texttt{lset} merge function
+allocates a new set to hold the result of the merge. In contrast, Bloom
+collections are modified in-place. We plan to improve our lattice implementation
+to avoid copying lattice values when the interpreter can prove that in-place
+updates are safe.
+
+\subsection{Modifying Bud}
+We were able to extend Bud to support \lang with relatively minor changes. Bud
+initially had about 7200 lines of Ruby source code (LOC). The core lattice
+features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
+to lattice elements) required about 300 LOC. Modifying Bud's fixpoint logic to
+include lattices required only 10 LOC, while the program rewriting required to
+enable semi-naive evaluation required 100 LOC. Modifying Bud's collection
+classes to support merging of embedded lattice values required modifying about
+125 LOC. The builtin lattice classes constituted an additional 300 LOC. In
+total, adding support for \lang required less than 900 lines of added or
+modified code, and took about two man-months of engineering time. This
+experience suggests that support for lattices can be added to an existing
+Datalog engine in a relatively straightforward manner.
