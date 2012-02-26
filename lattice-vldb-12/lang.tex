@@ -3,7 +3,7 @@
 
 In this section, we introduce \lang, an extension to Bloom that allows monotonic
 programs to be written using arbitrary lattices. We begin by reviewing the
-algebraic properties of lattices, monotone functions, and morphisms. We then
+algebraic properties of lattices used in CRDTs, and note the applicability of  monotone functions and morphisms in that context. We then
 introduce the basic concepts of \lang and detail the builtin lattices provided
 by the language. We also show how users can define their own lattice types using
 a simple API.
@@ -80,7 +80,7 @@ end
 
 \lang allows both lattices and collections to be used to represent state. A
 lattice is analogous to a collection type in Bloom, while a lattice element
-corresponds to a collection with a particular value. For example, the
+corresponds to the particular contents of a collection. For example, the
 \texttt{lset} lattice is similar to the \texttt{table} collection type provided
 by Bloom; an element of the \texttt{lset} lattice is a particular set. In the
 terminology of object-oriented programming, a lattice is a class that obeys a
@@ -131,7 +131,9 @@ channels (Section~\ref{sec:bloom-interop}).
 \lang statements compute values over lattices by invoking methods on lattice
 elements. Just as a subset of the relational operators are monotonic, some
 lattice methods are monotone functions (as defined in
-Section~\ref{sec:lattice-defn}). The input to a monotone lattice method is the
+Section~\ref{sec:lattice-defn}). 
+\jmh{I cannot parse the following sentence.}
+The input to a monotone lattice method is the
 receiver of the method invocation. A monotone method guarantees that, if the
 input to the method grows (according to the input's lattice type), the value
 returned by the method will grow (according to the result value's lattice
@@ -148,13 +150,13 @@ as we detail further in Section~\ref{sec:lattice-eval-strat}.
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
 Bud interpreter stratifies the program to ensure that the input value is
-computed exactly before allowing the non-monotonic operator to be invoked. This
+computed to completion before allowing the non-monotonic operator to be invoked. This
 implies that programs with cycles through non-monotonic lattice methods will be
 rejected. \lang encourages developers to minimize the use of non-monotonic
 constructs: as the CALM analysis suggests, non-monotonic reasoning may need to
 be augmented with coordination to ensure consistent results.
 
-Every lattice defines a non-monotonic \texttt{reveal} method which returns a
+Every lattice defines a non-monotonic \texttt{reveal} method that returns a
 representation of the lattice element as a plain Ruby value. For example, the
 \texttt{reveal} method on a \texttt{lset} lattice returns a Ruby array
 containing the contents of the set. This is non-monotonic because once the
@@ -241,8 +243,7 @@ satisfied, remain satisfied. For example, the \texttt{gt} morphism on the
 has the value \texttt{true}, \texttt{when\_true} returns the result of
 evaluating the block. For example, see line~\ref{line:quorum-when-true} in
 Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
-statement---observe that supporting an ``if-else'' statement would require
-non-monotonicity.
+statement\footnote{Observe that an ``else'' clause would test for an upper bound on the final lattice value, which is a non-monotonic property!}.
 
 The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
 objects and values are lattice elements. For example, a web application could
@@ -254,9 +255,8 @@ corresponding values are merged using the appropriate lattice merge function.
 Several lattices provide \texttt{size}, a monotone function that is not a
 morphism. This is because \texttt{size} cannot be distributed over the merge
 functions of those lattices. For example, consider two elements of the
-\texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$. For \texttt{size} to be a
-morphism, this equality would need to hold: $size(\{1,2\} \lor_{\mathtt{lset}}
-\{2,3\}) = size(\{1,2\}) \lor_{\mathtt{lmax}} size(\{2,3\})$.
+\texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$.  We can see that \texttt{size} is not a morphism because $size(\{1,2\} \lor_{\mathtt{lset}}
+\{2,3\}) \ne size(\{1,2\}) \lor_{\mathtt{lmax}} size(\{2,3\})$.
 
 The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
@@ -275,7 +275,7 @@ class Bud::SetLattice < Bud::Lattice
   wrapper_name :lset (*\label{line:lset-wrapper-name}*)
 
   def initialize(x=[])
-    # Reject invalid input (elided)
+    # Test for valid input removed for brevity
     @v = x.uniq # Remove duplicates from input
   end
 
@@ -297,14 +297,14 @@ class Bud::SetLattice < Bud::Lattice
 end
 \end{lstlisting}
 \end{scriptsize}
-\caption{The implementation of the \texttt{lset} lattice in Ruby.}
+\caption{The implementation of the \texttt{lset} lattice in Bud.}
 \label{fig:lattice-lset}
 \end{figure}
 
 \label{sec:lattice-api}
 The builtin lattices provided by \lang are sufficient to express many
-distributed protocols (for example, the causal delivery protocol described in
-Section~\ref{sec:causal}). However, \lang also allows developers to create
+distributed protocols---for example, the causal delivery protocol described in
+Section~\ref{sec:causal}. However, \lang also allows developers to create
 custom lattices to capture domain-specific behavior. To define a lattice, a
 developer creates a Ruby class that meets a certain API
 contract. Figure~\ref{fig:lattice-lset} contains the Ruby code that implements
@@ -336,7 +336,7 @@ lattice methods satisfy the appropriate algebraic properties. For example,
 implementing a lattice method might require examining the underlying Ruby value
 contained in another lattice element. This can be done using the \texttt{reveal}
 method (e.g., line~\ref{line:lset-reveal} in Figure~\ref{fig:lattice-lset}).
-Since \texttt{reveal} is non-monotonic, lattice developers should use it
+Since \texttt{reveal} is not itself monotonic, lattice developers should use it
 carefully when implementing monotone functions and morphisms.
 % Tweak this text
 
@@ -348,7 +348,7 @@ inputs and signal errors by raising a Ruby exception.
 
 Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions construct
 a new lattice element rather than destructively modifying one of their
-inputs). Efficient lattice implementations may \emph{share structure} on merge
+inputs). Efficient lattice implementations will often \emph{share structure} on merge
 operations, as is common practice for immutable data structures in functional
 programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
 
@@ -388,10 +388,12 @@ referenced by the lhs.
 \subsubsection{Collections with embedded lattice values}
 \label{sec:lattice-embedding}
 
+\jmh{You know my gripes here.}
+
 It would be convenient to allow lattice elements to be used as attributes of
 tuples in Bloom collections. In addition to easing interoperability, Bloom
 provides several facilities (e.g., network communication, persistent storage,
-module interfaces) as collections with special semantics---it would be
+module interfaces) as collections with special semantics.  It would be
 unfortunate if a redundant set of facilities was required to support
 lattice-based code. A simple solution would be to extract the underlying Ruby
 value from the lattice element (e.g., using the \texttt{reveal} method).

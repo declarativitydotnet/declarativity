@@ -34,9 +34,9 @@ commutative, associative, or idempotent. Helland and Campbell observe that using
 commutative, associative and idempotent operations is particularly valuable as
 systems scale and guaranteeing global serializability becomes increasingly
 expensive~\cite{Helland2009}. Many distributed storage systems allow users to
-provide ``merge functions'' which are used to resolve write-write conflicts
+provide ``merge functions'' that are used to resolve write-write conflicts
 between replicas, allowing the system to eventually reach a consistent state
-(e.g.,~\cite{DeCandia2007,Lloyd2011,Power2010,Terry1995}).%  User-defined merge
+(e.g.,~\cite{DeCandia2007,Ippolito2011,Lloyd2011,Power2010,Terry1995}).%  User-defined merge
 % functions typically rely on domain knowledge about the semantics of updates to
 % allow conflicting writes to be safely commuted.
 Writing a correct merge function can be difficult because the developer must
@@ -59,6 +59,7 @@ replica convergence.
 
 % XXX: talk about how CALM solves this problem?
 
+\jmh{Can shorten this given new intro.}
 Shapiro et al.\ recently proposed ``Convergent or Commutative Replicated Data
 Types'' (CRDTs), a principled approach to the design of loosely consistent data
 values~\cite{Shapiro2011b}. Shapiro et al.\ provide a formal model for
@@ -104,7 +105,7 @@ The observation that many uses of aggregation and negation have a ``monotonic''
 flavor has been made before. Ross and Sagiv study a class of programs that
 include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model theoretic
 semantics for this class of programs that is similar to our semantics for
-\baselang in Section~\ref{sec:foundation}. Our work differs from Ross and
+\lang in Section~\ref{sec:lang}. Our work differs from Ross and
 Sagiv's in several respects: most notably, they use lattices as a way to
 characterize the monotonicity of classes of Datalog programs, whereas we propose
 \lang as a practical programming language. Accordingly, Ross and Sagiv restrict
@@ -127,7 +128,7 @@ work on supporting advanced user-defined aggregates in the $\mathcal{LDL}$++
 system~\cite{Zaniolo1999}. Like us, they observe that aggregates with monotone
 behavior can easily be supported without stratification in a traditional Datalog
 system based on semi-naive fixpoint. Their characterization of monotone
-aggregates is different than ours, they do not distinguish between morphisms and
-order-preserving maps, and do not consider distribution or confluence---in fact,
+aggregates is different than ours: they do not distinguish between morphisms and
+monotone functions, and do not consider distribution or confluence.  In fact,
 supporting order-dependent aggregates is an explicit goal of their work, whereas
 we seek to ensure that programs are confluent in the face of message reordering.
