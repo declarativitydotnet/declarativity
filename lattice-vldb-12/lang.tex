@@ -209,12 +209,20 @@ line~\ref{line:quorum-when-true} in Figure~\ref{fig:lattice-quorum}. The
 \texttt{when\_true} operator is similar to an ``if'' statement---observe that
 supporting an ``if-else'' statement would require non-monotonicity.
 
+The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
+objects and values are lattice elements. For example, a web application could
+use an \texttt{lmap} to associate each session ID with an \texttt{lset}
+containing the webpages visited by that session. The \texttt{lmap} merge
+function takes the union of the key sets of the two input maps. If a key occurs
+in both maps, the two corresponding values are merged using the appropriate
+lattice merge function.
+
 Several lattices provide \texttt{size}, a monotone function that is not a
 morphism. This is because \texttt{size} cannot be distributed over the merge
 functions of those lattices. For example, consider two elements of the
 \texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$. For \texttt{size} to be a
-morphism, this equivalence would need to hold: $size(\{1,2\} \lor_{lset}
-\{2,3\}) = size(\{1,2\}) \lor_{lmax} size(\{2,3\})$. \nrc{Finish this}
+morphism, this equality would need to hold: $size(\{1,2\} \lor_{\mathtt{lset}}
+\{2,3\}) = size(\{1,2\}) \lor_{\mathtt{lmax}} size(\{2,3\})$.
 
 The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
