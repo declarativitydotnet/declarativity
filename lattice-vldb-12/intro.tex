@@ -45,7 +45,7 @@ It is attractive to incorporate join semi-lattices into logic programming,  but 
 
 \item
   We introduce \lang, an extension of Bloom that supports lattices. We detail
-  the builtin lattice types provided by \lang and illustrate how developers can
+  the builtin lattice types provided by \lang and show how developers can
   define new lattice types.
   
 \item 
@@ -73,8 +73,8 @@ It is attractive to incorporate join semi-lattices into logic programming,  but 
   cart state. We also show how lattices can make the ``checkout'' aggregation
   operation monotonic.
 
-  Second, we use lattices to implement a classical distributed protocol for
-  point-to-point causal delivery~\cite{Schiper1989}. We show that causal
-  delivery is monotonic and detail how domain-specific correctness criteria can
-  be proven more easily with the aid of the lattice properties.
+  Second, we use \lang to implement vector clocks and causal delivery, two
+  standard building blocks for distributed programming. We show how both
+  algorithms can be realized as monotonic \lang programs that are concise and
+  readable.
 \end{enumerate}

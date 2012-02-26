@@ -173,17 +173,19 @@ cycles through negation or aggregation are not allowed (unless they contain a de
 
 Work on deductive databases has long drawn a distinction between
 \emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, a
-monotonic program only computes more results over time---that is, it will never
-``retract'' a previous conclusion in the face of new information. A simple
-conservative test for monotonicity is based on the syntax of the program: the
-selection, projection, and join operators are monotonic, while aggregation and
-negation are not.
+monotonic program only computes more information over time---that is, it will
+never ``retract'' a previous conclusion in the face of new evidence. A simple
+conservative test for monotonicity is based on the syntax of the program:
+selection, projection, and join are monotonic, while aggregation and negation
+are not.
 
-The CALM analysis connects the theory of monotonic logic with the practical
-problem of distributed consistency~\cite{Alvaro2011}. In particular, it has been
-proven that all monotonic programs are \emph{confluent}: that is, given the same
-input, XXX~\cite{Ameloot2011}. Hence, monotonic programs are a useful building
-block for loosely consistent distributed programming.
+The CALM theorem connects the theory of monotonic logic with the practical
+problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}. In
+particular, it has been proven that all monotonic programs are \emph{confluent}:
+that is, for any set of program inputs, all executions of the program eventually
+produce the same final state regardless of network
+non-determinism~\cite{Ameloot2011}. Hence, monotonic programs are a useful
+building block for loosely consistent distributed programming.
 
 This result naturally suggests a program analysis technique that we have
 implemented in Bloom. According to the CALM principle, distributed inconsistency
@@ -192,8 +194,9 @@ non-monotonic operator. This is problematic, because asynchronous messaging
 results in non-deterministic arrival order, and a non-monotonic operator may be
 order sensitive. Our analysis tool flags these program locations as \emph{points
   of order}. To achieve consistency, the programmer either needs to rewrite
-their program to replace the non-monotonic logic with a monotonic alternative, or introduce a coordination
-protocol to ensure that a consistent ordering is agreed upon.
+their program to replace the non-monotonic logic with a monotonic alternative,
+or introduce a coordination protocol to ensure that a consistent ordering is
+agreed upon.
 
 \subsubsection{Limitations of set monotonicity}
 Unfortunately, the original formulation of the CALM principle considered only
