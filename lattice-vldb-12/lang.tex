@@ -168,32 +168,33 @@ subsequent code uses the value in a monotonic fashion.
 \begin{center}
 \begin{tabular}{|l|l|l|l|p{1.59in}|p{1.09in}|}
 \hline
-\textbf{Name} & \textbf{Description} & $\bot$ & \textbf{Merge$(a,b)$} & \textbf{Morphisms} &
+\textbf{Name} & \textbf{Description} & \textbf{Least element} & \textbf{Merge$(a,b)$} & \textbf{Morphisms} &
 \textbf{Monotone functions}\\
+\hline
 \hline
 \texttt{lbool} & Boolean lattice (false $\to$ true) & \texttt{false} & $a \lor
 b$ & \texttt{when\_true}() $\to$ \texttt{v} & \\
 \hline
 \texttt{lmax} & Max over an ordered domain & $-\infty$ & $max(a, b)$ &
-\texttt{gt(i)} $\to$ \texttt{lbool}\newline
-\texttt{gt\_eq(i)} $\to$ \texttt{lbool}\newline
+\texttt{gt(n)} $\to$ \texttt{lbool}\newline
+\texttt{gt\_eq(n)} $\to$ \texttt{lbool}\newline
 \texttt{$\mathtt{+}$(lmax)} $\to$ \texttt{lmax}\newline
 \texttt{$\mathtt{-}{}$(lmax)} $\to$ \texttt{lmax} & \\
 \hline
 \texttt{lmin} & Min over an ordered domain & $\infty$ & $min(a, b)$ &
-\texttt{lt(i)} $\to$ \texttt{lbool}\newline
-\texttt{lt\_eq(i)} $\to$ \texttt{lbool}\newline
+\texttt{lt(n)} $\to$ \texttt{lbool}\newline
+\texttt{lt\_eq(n)} $\to$ \texttt{lbool}\newline
 \texttt{$\mathtt{+}$(lmin)} $\to$ \texttt{lmin}\newline
 \texttt{$\mathtt{-}{}$(lmin)} $\to$ \texttt{lmin} & \\
 \hline
-\texttt{lset} & Set of values & $\emptyset$ & $a \cup b$ &
+\texttt{lset} & Set of values & empty set & $a \cup b$ &
 \texttt{intersect(lset)} $\to$ \texttt{lset}\newline
 \texttt{product(lset)} $\to$ \texttt{lset}\newline
 \texttt{project(lset)} $\to$ \texttt{lset}\newline
 \texttt{contains?(v)} $\to$ \texttt{lbool}
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
-\texttt{lpset} & Set of non-negative numbers & $\emptyset$ & $a \cup b$ &
+\texttt{lpset} & Set of non-negative numbers & empty set & $a \cup b$ &
 \texttt{intersect(lpset)} $\to$ \texttt{lpset}\newline
 \texttt{product(lpset)} $\to$ \texttt{lpset}\newline
 \texttt{project(lpset)} $\to$ \texttt{lpset}\newline
@@ -201,7 +202,7 @@ b$ & \texttt{when\_true}() $\to$ \texttt{v} & \\
 & \texttt{size()} $\to$ \texttt{lmax}\newline
 \texttt{sum()} $\to$ \texttt{lmax} \\
 \hline
-\texttt{lbag} & Multiset of values && $a \cup b$ &
+\texttt{lbag} & Multiset of values & empty multiset & $a \cup b$ &
 \texttt{intersect(lbag)} $\to$ \texttt{lbag}\newline
 \texttt{project(lbag)} $\to$ \texttt{lbag}\newline
 \texttt{mult(v)} $\to$ \texttt{lmax}\newline
@@ -209,7 +210,7 @@ b$ & \texttt{when\_true}() $\to$ \texttt{v} & \\
 \texttt{$\mathtt{+}$(lbag)} $\to$ \texttt{lbag}
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
-\texttt{lmap} & Map from key to lattice values & & &
+\texttt{lmap} & Map from key to lattice values & empty map & see text&
 \texttt{intersect(lmap)} $\to$ \texttt{lmap}\newline
 \texttt{key\_set(lmap)} $\to$ \texttt{lset}\newline
 \texttt{at(v)} $\to$ \texttt{any-lattice}\newline
@@ -217,7 +218,8 @@ b$ & \texttt{when\_true}() $\to$ \texttt{v} & \\
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
 \end{tabular}
-\caption{Builtin lattices in \lang.}
+\caption{Builtin lattices in \lang. \texttt{v} denotes a Ruby value and
+  \texttt{n} denotes a number.}
 \label{tbl:builtin-lattices}
 \end{center}
 \end{table*}
@@ -232,24 +234,22 @@ various kinds of collections that grow over time (\texttt{lset}, \texttt{lpset},
 should be unsurprising, so we do not describe every method in this section.
 
 The \texttt{lbool} lattice is useful for representing conditions that, once
-satisfied, remain satisfied. An \texttt{lbool} instance is returned by several
-of the morphisms provided by the builtin lattices. For example, the \texttt{gt}
-morphism on the \texttt{lmax} lattice returns an \texttt{lbool}
-value. \texttt{gt} takes a constant integer argument $k$; once an \texttt{lmax}
-value exceeds $k$, it will remain $>k$ as the set grows. The \texttt{when\_true}
-morphism takes a Ruby block; when the lattice element has the value
-\texttt{true}, the block is evaluated. For example, see
-line~\ref{line:quorum-when-true} in Figure~\ref{fig:lattice-quorum}. The
-\texttt{when\_true} operator is similar to an ``if'' statement---observe that
-supporting an ``if-else'' statement would require non-monotonicity.
+satisfied, remain satisfied. For example, the \texttt{gt} morphism on the
+\texttt{lmax} lattice takes a numeric argument $n$ and returns an
+\texttt{lbool}; once the \texttt{lmax} exceeds $n$, it will remain $>n$. The
+\texttt{when\_true} morphism takes a Ruby block; if the \texttt{lbool} element
+has the value \texttt{true}, \texttt{when\_true} returns the result of
+evaluating the block. For example, see line~\ref{line:quorum-when-true} in
+Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
+statement---observe that supporting an ``if-else'' statement would require
+non-monotonicity.
 
 The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
 objects and values are lattice elements. For example, a web application could
-use an \texttt{lmap} to associate each session ID with an \texttt{lset}
-containing the webpages visited by that session. The \texttt{lmap} merge
-function takes the union of the key sets of the two input maps. If a key occurs
-in both maps, the two corresponding values are merged using the appropriate
-lattice merge function.
+use an \texttt{lmap} to associate session IDs with an \texttt{lset} containing
+the pages visited by that session. The \texttt{lmap} merge function takes the
+union of the key sets of its input maps. If a key occurs in both inputs, the two
+corresponding values are merged using the appropriate lattice merge function.
 
 Several lattices provide \texttt{size}, a monotone function that is not a
 morphism. This is because \texttt{size} cannot be distributed over the merge
