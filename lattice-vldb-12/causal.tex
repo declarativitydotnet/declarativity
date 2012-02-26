@@ -76,7 +76,6 @@ receiving events:
   Upon receipt of a message, $n$ merges the vector clock in the message with its
   own vector clock by taking the element-wise max of the logical clock values.
 \end{enumerate}
-
 Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
 clocks in \lang. A vector clock is represented as a map lattice that associates
 node IDs with \texttt{lmax} values. Each \texttt{lmax} value represents a single
@@ -84,10 +83,10 @@ logical clock, which can only increase over time. \texttt{ip\_port} returns the
 IP address and port number of the current \lang instance, which is used as a
 node ID. Incoming messages appear in the \texttt{in\_msg} collection. Messages
 that are intended to be sent begin as tuples in \texttt{out\_msg}; once a
-message has been stamped with the local vector clock, it appears in
+message has been stamped with the local node's vector clock, it appears in
 \texttt{out\_msg\_vc}.
 
-The key vector clock logic appears in lines \ref{line:vc-out-increment},
+The key logic appears in lines \ref{line:vc-out-increment},
 \ref{line:vc-in-increment}, and \ref{line:vc-in-merge}: these three statements
 are a direct translation of the three rules for updating a vector clock given
 above. Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated
