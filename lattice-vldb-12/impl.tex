@@ -22,7 +22,26 @@ derivations: once a fact has been derived in round $i$, it is rederived in every
 subsequent round.
 
 \emph{Semi-naive} evaluation improves upon naive evaluation by making fewer
-redundant derivations~\cite{Balbin1987}.
+redundant derivations~\cite{Balbin1987}. Let $\delta_0$ represent the initial
+database state. In the first round, all the rules are evaluated over $\delta_0$;
+let $\delta_1$ represent the new facts derived in this round. In the second
+round, we only need to compute derivations that are dependent on
+$\delta_1$---everything that can be derived purely from $\delta_0$ has already
+been computed.
+
+A similar idea can be applied to \lang programs that apply morphisms to
+lattices. However, semi-naive evaluation \emph{cannot} be used for \lang
+statements that invoke monotone functions. This is because seminaive evaluation
+requires the ability to split the input into pieces (``deltas''), and apply the
+function to each piece, then merge together the output of the function over the
+pieces. Morphisms allow this, but monotone functions do not. For example,
+consider how we might compute the \texttt{size} monotone function over an
+\texttt{lset} lattice.
+
+% The basic insight is that if a fact is derived for the first time in round $i$,
+% it must somehow depend on a fact that was derived for the first time in round
+% $i-1$; otherwise, $f$ would have been derived earlier. Hence, we can rewrite the
+% program to evaluate
 
 \subsection{Performance validation}
 \label{sec:lattice-perf}
