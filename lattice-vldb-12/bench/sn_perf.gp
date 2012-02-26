@@ -1,6 +1,6 @@
 set terminal pdfcairo font "Helvetica,9" linewidth 4 rounded
 set ylabel "Runtime (sec)"
-set xlabel "Graph size (1000s of paths)"
+set xlabel "Graph size (number of paths, 1000s)"
 set key top right
 
 set style line 1 lt rgb "#A00000" lw 2 pt 1
