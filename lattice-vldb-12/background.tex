@@ -174,7 +174,10 @@ cycles through negation or aggregation are not allowed (unless they contain a de
 Work on deductive databases has long drawn a distinction between
 \emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, a
 monotonic program only computes more information over time---that is, it will
-never ``retract'' a previous conclusion in the face of new evidence. A simple
+never ``retract'' a previous conclusion in the face of new evidence. A
+non-monotonic operator does not have this property. For example, consider
+computing the difference between two growing sets: $C = A - B$. As $A$ and $B$
+grow, $C$ can both grow and shrink. In Bloom (and Datalog), a simple
 conservative test for monotonicity is based on the syntax of the program:
 selection, projection, and join are monotonic, while aggregation and negation
 are not.
