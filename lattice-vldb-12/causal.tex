@@ -6,9 +6,10 @@ between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
 section, we first show how vector clocks can be implemented in a monotonic
 fashion using \lang. We then use \lang to implement a classical algorithm for
 point-to-point causal message delivery~\cite{Schiper1989}. The implementation of
-both protocols in \lang is concise and readable; perhaps more significantly,
-both protocols are monotonic. Since this agrees with our intuition that these
-protocols make ``progress'' over time, this gives us more confidence in the
+both protocols in \lang is concise and readable---this suggests that \lang is
+suitable for typical distributed programming tasks. Perhaps more significantly,
+both protocols are monotonic. This agrees with our intuition that these
+protocols make ``progress'' over time, and hence gives us more confidence in the
 correctness of our designs.
 
 \subsection{Vector clocks}
