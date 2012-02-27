@@ -23,12 +23,12 @@ which was in turn inspired by the discussion of replicated shopping carts in the
 Dynamo paper~\cite{DeCandia2007}.
 
 Alvaro et al.\ consider two different cart designs: a ``disorderly'' version in
-which the cart state is represented as a set of operations (allowing monotonic accumulation of adds and removes) and a ``destructive'' version in which the cart state is
-managed by a key-value store, which requires a non-monotonic update on each cart
-action. In both designs, Alvaro et al.\ argue that the checkout operation is
-non-monotonic, because it requires aggregating over all previous operations
-applied to the cart. Non-monotonic operations are potentially expensive because
-they might require coordination to produce consistent results.
+which the cart state is represented as a set of operations (allowing monotonic
+accumulation of adds and removes) and a ``destructive'' version in which the
+cart state is managed by a key-value store, which requires a non-monotonic
+update on each cart action. In both designs, Alvaro et al.\ argue that the
+checkout operation is non-monotonic because it requires aggregating over all
+previous operations applied to the cart.
 
 In this section, we use \lang to make two improvements to the cart
 service. First, we improve the ``destructive'' design by using lattices to make
