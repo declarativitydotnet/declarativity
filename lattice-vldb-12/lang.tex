@@ -461,8 +461,8 @@ of input values between the nodes.  The {\em ultimate model}, or eventual state
 of the program, is defined to be the eventual contents of a union across all
 nodes of a set of special {\em output} relations or lattices, which are
 inflationary over time, regardless of whether the \lang program is
-monotonic~\cite{dedalus-pods-12-tr}.  These special lattices may only appear in
-a rule's body.  Like the input, information about the partitioning of the output
+monotonic~\cite{dedalus-pods12-tr}.  These special lattices may only appear in a
+rule's body.  Like the input, information about the partitioning of the output
 between the nodes is included in the output.
 
 A Bloom program is {\em confluent} if, for each input to the program, there is a
@@ -470,7 +470,7 @@ unique ultimate model.  The existence of a unique ultimate model implies that
 non-determinism in message ordering does not affect the program result, which is
 sometimes a desirable correctness criterion for distributed programs.  If a
 Bloom program is monotonic, and does not exhibit message loss, then it is
-confluent~\cite{dedalus-pods-12-tr}.  Similarly, if a \lang program is monotonic
+confluent~\cite{dedalus-pods12-tr}.  Similarly, if a \lang program is monotonic
 and has no message loss, then it is confluent because local fixpoints of
 monotonic operators are being computed over lattices that are inflating over
 time.
