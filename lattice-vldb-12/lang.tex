@@ -119,13 +119,13 @@ timestep, the lhs identifier will take on the result of applying the lattice's
 least upper bound to the lhs and rhs lattice elements. The intuition remains the
 same as in Bloom: the rhs value is ``merged into'' the lhs lattice, except that
 the semantics of the merge operation are defined by the lattice's least upper
-bound operator. We also require that the lhs and rhs refer to a lattice of the
-same type.
+bound operator. We require that the lhs and rhs refer to a lattice of the same
+type.
 
 \lang does not currently support a notion of deletion (\verb|<-| operator) for
 lattices. Lattices do not directly support asynchronous communication (via the
 \verb|<~| operator) but lattice elements can be embedded into tuples that appear
-channels (Section~\ref{sec:bloom-interop}).
+in channels (Section~\ref{sec:bloom-interop}).
 
 \subsubsection{Lattice methods}
 \lang statements compute values over lattices by invoking methods on lattice
