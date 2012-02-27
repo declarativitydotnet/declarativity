@@ -1,15 +1,20 @@
 \section{Case Study: Shopping Carts}
 \label{sec:carts}
-
-\jmh{All the above is only interesting if it helps programmers write intuitive code with a minimum of coordination.  Say something to motivate the case studies as a critical part of the paper.  Two plausible goals: (1) show that the use of lattices lets us remove apparent points of order from previous Bloom programs.  (2) show that the use of \lang and its lattices is a good match to distributed systems programming.}
-
 \begin{figure}[t]
 \includegraphics[width=\linewidth]{fig/cart_arch.pdf}
 \label{fig:cart-system}
 \caption{Architecture of a simple shopping cart system.}
 \end{figure}
 
-In this section, we consider a simple e-commerce system in which clients
+The next two sections contain case studies that demonstrate how \lang can be
+used to build practical distributed programs. Our goal is to demonstrate that
+non-trivial distributed protocols can be expressed using lattices and monotone
+functions. These programs would be considered non-monotonic in Bloom because
+they contain aggregation---presenting monotonic implementations in \lang is
+equivalent to showing that the use of aggregation in these protocols is ``safe''
+and produces consistent results without needing additional coordination.
+
+In the first case study, we consider a simple e-commerce system in which clients
 interact with a shopping cart service, adding and removing items over the course
 of a browsing session (Figure~\ref{fig:cart-system}). The shopping cart service
 is replicated to improve fault tolerance; client requests can be routed to any
@@ -30,27 +35,14 @@ update on each cart action. In both designs, Alvaro et al.\ argue that the
 checkout operation is non-monotonic because it requires aggregating over all
 previous operations applied to the cart.
 
-In this section, we use \lang to make two improvements to the cart
-service. First, we improve the ``destructive'' design by using lattices to make
-updates to the key-value store monotonic. Second, we show that lattices can be
-used to make the checkout process monotonic. In both cases, the result is a
-reduced need for coordination and more confidence in the eventual
-consistency/convergence of the cart system.
-
-\subsection{Monotonic Destructive Cart}
-TODO: basic idea is that if we fix the set of replicas, we can do ``early
-summaries'' of cart actions---i.e., convert the operation log format into the
-format used by the naive destructive cart, once we know that a given operation
-has reached all replicas. Is this worth including?
-
 \subsection{Monotonic Checkout}
 Alvaro et al.\ argue that processing a checkout request is non-monotonic because
 it requires aggregating over an asynchronously computed data set; in general,
 coordination might be required to ensure that the complete input has been
-received before the checkout request can be processed correctly. However, note
+received before the checkout request can be processed correctly. However, observe
 that the client knows exactly which add/remove operations should be reflected in
-the result of the checkout; if that information can be propagated to the cart
-service, any chosen replica can decide if it has enough information to process
+the result of the checkout. If that information can be propagated to the cart
+service, any server replica can decide if it has enough information to process
 the checkout operation without needing to coordinate.
 
 This can be done by assigning IDs to each message sent by the client. Each
