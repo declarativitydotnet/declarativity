@@ -73,12 +73,12 @@ It is attractive to incorporate join semi-lattices into logic programming,  but 
   extended to support lattices with relatively minor changes.
 
 \item
-  Finally, we validate the effectiveness of lattices with two case studies. First we
-  revisit the simple e-commerce scenario presented in Alvaro et al., in which
-  clients interact with a replicated shopping cart service~\cite{Alvaro2011}. We
-  use lattices to allow a more flexible and compact representation of shopping
-  cart state. We also show how lattices can make the ``checkout'' aggregation
-  operation monotonic.
+  Finally, we demonstrate the usefulness of lattices with two case studies.
+  First we revisit the simple e-commerce scenario presented in Alvaro et al., in
+  which clients interact with a replicated shopping cart
+  service~\cite{Alvaro2011}. We show how \lang can be used to make the
+  ``checkout'' operation monotonic, despite the fact that it requires
+  aggregating over a distributed data set.
 
   Second, we use \lang to implement vector clocks and causal delivery, two
   standard building blocks for distributed programming. We show how both
