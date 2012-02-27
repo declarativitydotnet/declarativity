@@ -444,18 +444,18 @@ to date.
 
 \subsection{Confluence in \lang}
 In this section, we describe how the notion of \emph{confluence} (invariance to
-message reordering) can be generalized from Bloom to \lang programs.  Recall that
-Bloom follows a timestepped execution model, where a local fixpoint is computed
-at each timestep.  The fixpoint is computed over the program input and received
-network messages.  The existence of this fixpoint is guaranteed by the
-Knaster-Tarski theorem, assuming all \lang operators are
-monotone~\cite{Tarski1955}.  The state of a program at a given timestamp is
-defined to be its fixpoint at that timestep.
+message reordering) can be generalized from Bloom to \lang programs.  Recall
+that Bloom follows a timestepped execution model, where a local fixpoint is
+computed at each timestep.  The fixpoint is computed over node's local database,
+including any newly received network messages. The existence of this fixpoint is
+guaranteed by the Knaster-Tarski theorem~\cite{Tarski1955}, assuming all \lang
+operators are monotone.  The state of a program at a given timestamp is defined
+to be its fixpoint at that timestep.
 
 We can also define notions of input and output to capture the {\em initial} and
 {\em eventual} states of the program.  The {\em input} to a \lang program is
 defined to be the initial contents of a set of special {\em input} relations or
-lattices, which are inflationary over time, and may not occur in the lhs of
+lattices---these are inflationary over time and may not occur on the lhs of
 statements.  The input to a program contains information about the partitioning
 of input values between the nodes.  The {\em ultimate model}, or eventual state
 of the program, is defined to be the eventual contents of a union across all
