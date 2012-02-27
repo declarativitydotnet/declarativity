@@ -80,46 +80,45 @@ module MonotoneReplica
 end
 \end{lstlisting}
 \end{scriptsize}
-\caption{The implementation of the \texttt{lset} lattice in Bud.}
+\caption{\lang program for a server replica that allows monotonic checkout.}
 \label{fig:monotone-cart}
 \end{figure}
 
 Alvaro et al.\ argue that processing a checkout request is non-monotonic because
-it requires aggregating over an asynchronously computed data set; in general,
+it requires aggregating over an asynchronously computed data set---in general,
 coordination might be required to ensure that all inputs have been received
-before the checkout request can be processed correctly. However, observe that
-the client knows exactly which add/remove operations should be reflected in the
-result of the checkout. If that information can be propagated to the cart
+before the checkout response can be returned to the client. However, observe
+that the client knows exactly which add/remove operations should be reflected in
+the result of the checkout. If that information can be propagated to the cart
 service, any server replica can decide if it has enough information to process
-the checkout operation without needing additional coordination. Conceptually,
-this design is monotonic---once a checkout response is produced, it will never
-change or be retracted. Hence, our goal is to translate this design into a
-monotonic \lang program.
+the checkout operation without needing additional coordination. This design is
+monotonic---once a checkout response is produced, it will never change or be
+retracted. Hence, our goal is to translate this design into a monotonic \lang
+program.
 
-This can be done by assigning IDs to each message sent by the client. Each
-client has a session ID; within a session, operation IDs are assigned in
-increasing numeric order without gaps. Hence, if the client sends a ``lower
-bound'' message ID along with the checkout message, any replica of the cart
-service can independently ensure that it only produces a response message once
-it has received all the operations in the ID range indicated by the client. This
-essentially requires a threshold test over the operation IDs received by a given
-replica, which can easily be implemented using \lang.
+% This can be done by assigning IDs to each message sent by the client. Each
+% client has a session ID; within a session, operation IDs are assigned in
+% increasing numeric order without gaps. Hence, if the client sends a ``lower
+% bound'' message ID along with the checkout message, any replica of the cart
+% service can independently ensure that it only produces a response message once
+% it has received all the operations in the ID range indicated by the client. This
+% essentially requires a threshold test over the operation IDs received by a given
+% replica, which can easily be implemented using \lang.
 
 We represent the state of a server replica using an \texttt{lmap} lattice that
 associates session IDs with \texttt{lcart} lattice elements. \texttt{lcart} is a
 custom lattice that represents the state of a single shopping cart. An
-\texttt{lcart} contains a set of client operations; each operation has a unique
-``request ID,'' which is assigned by the client as described above. We
-distinguish between two kinds of client operations: ``action ops,'' which
-describe adding or removing an item from the cart, and ``checkout ops,'' which
-contain a lower bound on the ID range that should be reflected in the
-checkout. If the user attempts to include multiple checkout ops to an \texttt{lcart}
-or adds action ops that fall outside the ID range given in the checkout, this
-indicates an error in the user's program, so a Ruby exception is raised.
+\texttt{lcart} contains a set of client operations. Each operation has a unique
+ID; operation IDs are assigned by the client in increasing numeric order without
+gaps. An \texttt{lcart} contains two kinds of operations: ``actions'' and
+``checkouts.'' An action describes adding or removing an item from the cart. An
+\texttt{lcart} contains at most one checkout operation, which defines the
+smallest operation ID that be reflected in the result of the checkout.
 
-A cart is \emph{sealed} when it contains a checkout op along with all the action
-ops in the ID range identified by the checkout. Hence, testing for whether an
-\texttt{lcart} is sealed is a monotone function.
+An \texttt{lcart} is \emph{sealed} if it contains a checkout operation along
+with all the actions in the ID range identified by the checkout. Hence, testing
+for whether an \texttt{lcart} is sealed is a monotone function: it is equivalent
+to testing whether an accumulating set has crossed a threshold.
 
 % Note that because each replica determines when the cart is ``complete''
 % independently, multiple response messages may be produced. However, they will
