@@ -18,13 +18,44 @@ new derivations. Naive evaluation is inefficient because it makes many redundant
 derivations: once a fact has been derived in round $i$, it is rederived in every
 subsequent round.
 
+\nrc{NOT DONE!}
 \emph{Semi-naive} evaluation improves upon naive evaluation by making fewer
-redundant derivations~\cite{Balbin1987}. Let $\delta_0$ represent the initial
-database state. In the first round, all the rules are evaluated over $\delta_0$;
-let $\delta_1$ represent the new facts derived in this round. In the second
+redundant derivations~\cite{Balbin1987}. Let $\Delta_0$ represent the initial
+database state. In the first round, all the rules are evaluated over $\Delta_0$;
+let $\Delta_1$ represent the new facts derived in this round. In the second
 round, we only need to compute derivations that are dependent on
-$\delta_1$---everything that can be derived purely from $\delta_0$ has already
+$\Delta_1$---everything that can be derived purely from $\Delta_0$ has already
 been computed.
+
+A similar evaluation strategy works for \lang statements that invoke lattice
+morphisms. For each lattice identifier $i$, we record two lattice elements:
+$v_i$ and $\Delta^r_i$. $v_i$ is the least upper bound of all the lattice
+elements ever produced by any statement with $i$ on the lhs---that is, it is the
+current lattice element associated with $i$. $\Delta^r_i$ represents the new
+derivations for $i$ that have been made in evaluation round $r$. During round
+one, the program's statements are evaluated and $i$ is mapped to $v_i$; this
+computes $\Delta^1_i$. In round two, $i$ is now mapped to $\Delta^1_i$ and
+evaluating the program's statements yields $\Delta^2_i$. This process continues
+until $\Delta^j_i = \Delta^{j+1}_i$ for all identifiers $i$.
+
+This optimization can be used for morphisms, but not ordinary monotone
+functions. This is because seminaive evaluation requires the ability to invoke a
+method on two different lattice values $\Delta^j_i$ and $\Delta^k_i$
+
+ relies on the ability to apply a
+method to $\Delta^r_i$, and then later merge $\Delta^r_i$ with $v_i$ to obtain
+the final value for $i$. This is safe for morphisms:
+
+ During the first round, the program's statements are evaluated and
+lattice identifiers are mapped to lattice elements in the normal way. At the end
+of the round, each identifier also has a ``delta'' value that represents new
+derivations made for statements with that identifier on the lhs. In round 2, the
+lattice identifier is mapped to the ``delta'' value from round 1, rather than
+the lattice identifiers are mapped to the delta element of the respective la
+
+ over
+the current value associated with each lattice element. Rather than merging rhs
+values directly into the lhs lattice, 
 
 A similar idea can be applied to \lang programs that apply morphisms to
 lattices. However, semi-naive evaluation \emph{cannot} be used for \lang
