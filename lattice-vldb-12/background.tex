@@ -182,8 +182,8 @@ are not.
 The CALM theorem connects the theory of monotonic logic with the practical
 problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}. In
 particular, it has been proven that all monotonic programs are \emph{confluent}:
-that is, for any set of program inputs, all executions of the program eventually
-produce the same final state regardless of network
+for any set of program inputs, all executions of the program eventually produce
+the same final state regardless of network
 non-determinism~\cite{Ameloot2011}. Hence, monotonic programs are a useful
 building block for loosely consistent distributed programming.
 
@@ -196,10 +196,13 @@ order sensitive. Our analysis tool flags these program locations as \emph{points
   of order}. To achieve consistency, the programmer either needs to rewrite
 their program to replace the non-monotonic logic with a monotonic alternative,
 or introduce a coordination protocol to ensure that a consistent ordering is
-agreed upon.
+agreed upon. Coordination protocols incur additional latency and decrease
+availability in the event of network partitions, so in this paper we focus on
+designs that can be implemented without coordination---that is, monotonic
+programs.
 
 \subsubsection{Limitations of set monotonicity}
-Unfortunately, the original formulation of the CALM principle considered only
+Unfortunately, the original formulation of the CALM theorem considered only
 programs that compute more facts over time---that is, programs whose output
 \emph{sets} grow monotonically. Many distributed protocols make progress
 over time, but their notion of ``progress'' is often difficult to represent as a
