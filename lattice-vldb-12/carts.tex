@@ -9,19 +9,20 @@
 The next two sections contain case studies that demonstrate how \lang can be
 used to build practical distributed programs. Our goal is to demonstrate that
 non-trivial distributed protocols can be expressed using lattices and monotone
-functions. These programs would be considered non-monotonic in Bloom because
-they contain aggregation---presenting monotonic implementations in \lang is
-equivalent to showing that the use of aggregation in these protocols is ``safe''
-and produces consistent results without needing additional coordination.
+functions. If written in Bloom, these programs would be considered non-monotonic
+because they contain aggregation. Presenting monotonic implementations in \lang
+is equivalent to showing that the use of aggregation in these protocols is
+``safe'' and produces consistent results without needing additional
+coordination.
 
 In the first case study, we consider a simple e-commerce system in which clients
-interact with a shopping cart service, adding and removing items over the course
-of a browsing session (Figure~\ref{fig:cart-system}). The shopping cart service
-is replicated to improve fault tolerance; client requests can be routed to any
-of the cart replicas. Eventually, a client submits a ``checkout'' operation, at
-which point the cumulative effect of their shopping session should be summarized
-and returned to the client. In a more complete system, the result of the
-checkout operation might be presented to the client for confirmation or
+interact with a shopping cart service by adding and removing items over the
+course of a shopping session (Figure~\ref{fig:cart-system}). The shopping cart
+service is replicated to improve fault tolerance; client requests can be routed
+to any of the cart replicas. Eventually, a client submits a ``checkout''
+operation, at which point the cumulative effect of their shopping session should
+be summarized and returned to the client. In a practical system, the result
+of the checkout operation might be presented to the client for confirmation or
 submitted to a payment processor to complete the e-commerce transaction. This
 case study is based on the cart system from Alvaro et al.~\cite{Alvaro2011},
 which was in turn inspired by the discussion of replicated shopping carts in the
@@ -43,7 +44,7 @@ received before the checkout request can be processed correctly. However, observ
 that the client knows exactly which add/remove operations should be reflected in
 the result of the checkout. If that information can be propagated to the cart
 service, any server replica can decide if it has enough information to process
-the checkout operation without needing to coordinate.
+the checkout operation without needing additional coordination.
 
 This can be done by assigning IDs to each message sent by the client. Each
 client has a session ID; within a session, operation IDs are assigned in
