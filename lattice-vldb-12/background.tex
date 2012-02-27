@@ -187,19 +187,18 @@ the same final state regardless of network
 non-determinism~\cite{Ameloot2011}. Hence, monotonic programs are a useful
 building block for loosely consistent distributed programming.
 
-This result naturally suggests a program analysis technique that we have
-implemented in Bloom. According to the CALM principle, distributed inconsistency
-may occur when the output of an asynchronously derived value is consumed by a
-non-monotonic operator. This is problematic, because asynchronous messaging
-results in non-deterministic arrival order, and a non-monotonic operator may be
-order sensitive. Our analysis tool flags these program locations as \emph{points
-  of order}. To achieve consistency, the programmer either needs to rewrite
-their program to replace the non-monotonic logic with a monotonic alternative,
-or introduce a coordination protocol to ensure that a consistent ordering is
-agreed upon. Coordination protocols incur additional latency and decrease
-availability in the event of network partitions, so in this paper we focus on
-designs that can be implemented without coordination---that is, monotonic
-programs.
+This result naturally suggests a program analysis that we have implemented in
+Bloom. According to the CALM theorem, distributed inconsistency may occur when
+the output of an asynchronously derived value is consumed by a non-monotonic
+operator. This is problematic because asynchronous messaging results in
+non-deterministic arrival order, and a non-monotonic operator may be order
+sensitive. Our analysis tool flags these program locations as \emph{points of
+  order}. To achieve consistency, the programmer either needs to rewrite their
+program to replace the non-monotonic logic with a monotonic alternative, or
+introduce a coordination protocol to ensure that a consistent ordering is agreed
+upon. Coordination protocols incur additional latency and decrease availability
+in the event of network partitions, so in this paper we focus on
+coordination-free designs---that is, monotonic programs.
 
 \subsubsection{Limitations of set monotonicity}
 Unfortunately, the original formulation of the CALM theorem considered only
