@@ -29,7 +29,7 @@ a partial order, the least upper bound is defined for all elements $x,y \in
 S$. The distinguished element $\bot$ is the smallest element in $S$; this
 implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the term
 ``lattice'' to mean ``bounded join semilattice'' in the rest of this paper. We
-also use ``merge function'' to mean ``least upper bound.''
+also use the informal term ``merge function'' to mean ``least upper bound.''
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
@@ -131,21 +131,20 @@ channels (Section~\ref{sec:bloom-interop}).
 \lang statements compute values over lattices by invoking methods on lattice
 elements. Just as a subset of the relational operators are monotonic, some
 lattice methods are monotone functions (as defined in
-Section~\ref{sec:lattice-defn}). 
-\jmh{I cannot parse the following sentence.}
-The input to a monotone lattice method is the
-receiver of the method invocation. A monotone method guarantees that, if the
-input to the method grows (according to the input's lattice type), the value
-returned by the method will grow (according to the result value's lattice
-type).
+Section~\ref{sec:lattice-defn}). A monotone lattice method guarantees that, if
+the lattice on which the method is invoked grows (according to the lattice's
+partial order), the value returned by the method will grow (according to the
+return value's lattice type). From a CRDT perspective, a lattice's monotone
+methods provide a ``safe'' set of operations that can be invoked in a
+distributed setting without risk of inconsistency.
 
 A lattice method's signature indicates its monotonicity properties. More
 precisely, \lang distinguishes between methods that are monotone and a subset of
 monotone methods that are \emph{morphisms}. The properties that a morphism must
 satisfy are given formally in Section~\ref{sec:lattice-defn}, but the intuition
-is that morphism on lattice $t$ can be distributed over $t$'s least upper bound
-operator. This allows a variant of semi-naive evaluation for lattice programs,
-as we detail further in Section~\ref{sec:lattice-eval-strat}.
+is that a morphism on lattice $T$ can be distributed over $T$'s least upper
+bound operator. This allows a variant of semi-naive evaluation for lattice
+programs, as we discuss further in Section~\ref{sec:lattice-eval-strat}.
 
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
@@ -168,9 +167,9 @@ subsequent code uses the value in a monotonic fashion.
 
 \begin{table*}[t]
 \begin{center}
-\begin{tabular}{|l|l|l|l|p{1.59in}|p{1.09in}|}
+\begin{tabular}{|l|l|l|l|p{1.57in}|p{1.09in}|}
 \hline
-\textbf{Name} & \textbf{Description} & \textbf{Least element} & \textbf{Merge$(a,b)$} & \textbf{Morphisms} &
+\textbf{Name} & \textbf{Description} & \textbf{Least element ($\bot$)} & \textbf{Merge($a,b$)} & \textbf{Morphisms} &
 \textbf{Monotone functions}\\
 \hline
 \hline
