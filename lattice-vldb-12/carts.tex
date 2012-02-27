@@ -92,7 +92,7 @@ that the client knows exactly which add/remove operations should be reflected in
 the result of the checkout. If that information can be propagated to the cart
 service, any server replica can decide if it has enough information to process
 the checkout operation without needing additional coordination. This design is
-monotonic---once a checkout response is produced, it will never change or be
+monotonic: once a checkout response is produced, it will never change or be
 retracted. Hence, our goal is to translate this design into a monotonic \lang
 program.
 
@@ -110,15 +110,20 @@ associates session IDs with \texttt{lcart} lattice elements. \texttt{lcart} is a
 custom lattice that represents the state of a single shopping cart. An
 \texttt{lcart} contains a set of client operations. Each operation has a unique
 ID; operation IDs are assigned by the client in increasing numeric order without
-gaps. An \texttt{lcart} contains two kinds of operations: ``actions'' and
-``checkouts.'' An action describes adding or removing an item from the cart. An
-\texttt{lcart} contains at most one checkout operation, which defines the
-smallest operation ID that be reflected in the result of the checkout.
+gaps. An \texttt{lcart} contains two kinds of operations: \emph{actions} and
+\emph{checkouts}. An action describes the addition or removal of an item from
+the cart. An \texttt{lcart} contains at most one checkout operation---the
+checkout specifies the smallest operation ID that must be reflected in the
+result of the checkout, along with the address where the checkout response
+should be sent.
 
-An \texttt{lcart} is \emph{sealed} if it contains a checkout operation along
+An \texttt{lcart} is \emph{complete} if it contains a checkout operation along
 with all the actions in the ID range identified by the checkout. Hence, testing
-for whether an \texttt{lcart} is sealed is a monotone function: it is equivalent
-to testing whether an accumulating set has crossed a threshold.
+whether an \texttt{lcart} is complete is a monotone function: it is equivalent
+to testing whether an accumulating set has crossed a threshold. Hence, different
+server replicas can check if they have a complete cart and send a response to
+the client without risking either inconsistent results or requiring coordination
+between server replicas.
 
 % Note that because each replica determines when the cart is ``complete''
 % independently, multiple response messages may be produced. However, they will
