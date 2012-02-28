@@ -126,9 +126,9 @@ the client code for the sake of brevity). Note that the statement that produces
 a response to the client
 (lines~\ref{line:cart-response-start}--\ref{line:cart-response-end}) is
 contingent on having a complete cart. The \texttt{summary} method returns a
-summary of the actions in the cart---if \texttt{summary} is called before the
-cart is complete, an exception is raised. Implementing the \texttt{lcart}
-lattice required 58 lines of Ruby using the lattice API described in
+summary of the actions in the cart---an exception is raised if \texttt{summary}
+is called before the cart is complete. Implementing the \texttt{lcart} lattice
+required 58 lines of Ruby using the lattice API described in
 Section~\ref{sec:lattice-api}.
 
 % Note that because each replica determines when the cart is ``complete''
