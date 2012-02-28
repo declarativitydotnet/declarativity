@@ -139,10 +139,10 @@ collection.  Each statement takes the form: \\ \noindent
 The left-hand side (lhs) is the name of the output collection and the right-hand
 side (rhs) is an expression that produces a collection.  A statement defines how
 the contents of the input collections should be transformed before being
-accounted for in the output collection. Bloom allows the usual relational
-operators to be used on the rhs (selection, projection, join, grouping,
-aggregation, and negation), although it adopts a syntax intended to be more
-familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
+included (via set union) in the output collection. Bloom allows the usual
+relational operators to be used on the rhs (selection, projection, join,
+grouping, aggregation, and negation), although it adopts a syntax intended to be
+more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
 line~\ref{line:spaths-proj} demonstrates projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
