@@ -218,17 +218,18 @@ in the event of network partitions, so in this paper we focus on
 coordination-free designs---that is, monotonic programs.
 
 \subsubsection{Limitations of set monotonicity}
-Unfortunately, the original formulation of the CALM theorem considered only
-programs that compute more facts over time---that is, programs whose output
-\emph{sets} grow monotonically. Many distributed protocols make progress
-over time, but their notion of ``progress'' is often difficult to represent as a
-growing set of facts. For example, consider the Bloom program in
+The original formulation of the CALM theorem considered only programs that
+compute more facts over time---that is, programs whose output \emph{sets} grow
+monotonically. Many distributed protocols make progress over time, but their
+notion of ``progress'' is often difficult to represent as a growing set of
+facts. For example, consider the Bloom program in
 Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from a client
 program (not shown) via the \texttt{vote\_chn} channel. Once at least
 \texttt{QUORUM\_SIZE} votes have been received, a message is sent to a remote
-node to indicate that quorum has been reached. This program resembles a ``quorum
-vote'' subroutine that might be used by an implementation of
-Paxos~\cite{Lamport1998} or quorum replication~\cite{Gifford1979}.
+node to indicate that quorum has been reached
+(line~\ref{line:bloom-quorum-msg}). This program resembles a ``quorum vote''
+subroutine that might be used by an implementation of Paxos~\cite{Lamport1998}
+or quorum replication~\cite{Gifford1979}.
 
 It is easy to see that this program makes progress in a semantically monotonic
 fashion: the set of received votes grows and the size of the \texttt{votes}
@@ -270,7 +271,7 @@ class QuorumVote
   bloom do
     votes      <= vote_chn {|v| v.voter_id}
     cnt        <= votes.group(nil, count(:voter_id)) (*\label{line:bloom-nm-quorum}*)
-    result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE}
+    result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE} (*\label{line:bloom-quorum-msg}*)
   end
 end
 \end{lstlisting}
