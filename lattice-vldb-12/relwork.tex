@@ -98,11 +98,11 @@ a CRDT is correct, application-level state may remain inconsistent.
 \vspace{0.5em}\noindent
 \textbf{Non-monotonicity in deductive databases:} Adding non-monotonic operators
 to Datalog increases the expressiveness of the language but introduces
-significant complexities---unrestricted use of non-monotonicity would allow
+significant complexities: unrestricted use of non-monotonicity would allow
 programs that imply logical contradictions (e.g., ``$p$ if $\lnot p$''). A
 simple solution is to disallow recursion through aggregation or negation, which
-admits only the class of so-called ``stratified programs''~\cite{Apt1988}. Many
-attempts have been made to assign a semantics to larger classes of programs
+admits only the class of ``stratified programs''~\cite{Apt1988}. Many attempts
+have been made to assign a semantics to larger classes of programs
 (e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
 
 % XXX: cite Van Gelder's "foundations of agg" paper
