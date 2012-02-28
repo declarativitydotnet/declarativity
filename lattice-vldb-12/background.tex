@@ -150,9 +150,9 @@ between \texttt{link} and \texttt{path} using the join predicate
 line~\ref{line:spaths-group} demonstrates grouping and aggregation, followed by
 projection to three attributes. Bloom statements appear in one or more
 \texttt{bloom} blocks. A Bloom program can also include a \texttt{bootstrap}
-block, which contains statements that are run only once when a Bloom instance
-starts executing (\texttt{bootstrap} blocks are typically used for
-initialization or configuration data).
+block, which contains statements that are evaluated only once when a Bloom
+instance starts executing. \texttt{bootstrap} blocks are typically used for
+initialization or configuration data.
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
