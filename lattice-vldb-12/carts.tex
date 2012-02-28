@@ -44,34 +44,32 @@ previous operations applied to the cart.
 module CartProtocol
   state do
     channel :action_msg,
-      [:@server, :session, :reqid] => [:item, :action]
+      [:@server, :session, :reqid] => [:item, :cnt]
     channel :checkout_msg,
       [:@server, :session, :reqid] => [:lbound, :addr]
     channel :response_msg,
-      [:@client, :server, :session] => [:summary]
+      [:@client, :session] => [:summary]
   end
 end
 
 module MonotoneReplica
   include CartProtocol
 
-  state do
-    lmap :sessions
-  end
+  state { lmap :sessions }
 
   bloom do
     sessions <= action_msg do |m|
-      c = LCart.new({m.reqid => [ACTION, m.item, m.action]})
+      c = LCart.new({m.reqid => [ACTION, m.item, m.cnt]})
       { m.session => c }
     }
     sessions <= checkout_msg do |m|
       c = LCart.new({m.reqid => [CHECKOUT, m.lbound, m.addr]})
-      { c.session => c }
+      { m.session => c }
     }
 
     response_msg <~ sessions do |session, c| (*\label{line:cart-response-start}*)
       c.is_complete.when_true {
-        [c.checkout_addr, ip_port, session, c.summary]
+        [c.checkout_addr, session, c.summary]
       }
     end (*\label{line:cart-response-end}*)
   end
@@ -115,8 +113,8 @@ checkout specifies the smallest operation ID that must be reflected in the
 result of the checkout, along with the address where the checkout response
 should be sent.
 
-An \texttt{lcart} is \emph{complete} if it contains a checkout operation along
-with all the actions in the ID range identified by the checkout. Hence, testing
+An \texttt{lcart} is \emph{complete} if it contains a checkout operation as well
+as the actions in the ID range identified by the checkout. Hence, testing
 whether an \texttt{lcart} is complete is a monotone function: it is equivalent
 to testing whether an accumulating set has crossed a threshold. Hence, if a
 server replica determines that it has a complete cart, it can send a response to
@@ -127,10 +125,10 @@ Figure~\ref{fig:monotone-cart} contains the server code for this design (we omit
 the client code for the sake of brevity). Note that the statement that produces
 a response to the client
 (lines~\ref{line:cart-response-start}--\ref{line:cart-response-end}) is
-contingent on having a complete cart. The \texttt{summary} function returns the
-summarized state of the cart---if \texttt{summary} is called before the cart is
-complete, an exception is raised. Implementing the \texttt{lcart} lattice
-required 58 lines of Ruby using the lattice API described in
+contingent on having a complete cart. The \texttt{summary} method returns a
+summary of the actions in the cart---if \texttt{summary} is called before the
+cart is complete, an exception is raised. Implementing the \texttt{lcart}
+lattice required 58 lines of Ruby using the lattice API described in
 Section~\ref{sec:lattice-api}.
 
 % Note that because each replica determines when the cart is ``complete''
