@@ -176,46 +176,37 @@ cycles through negation or aggregation are not allowed (unless they contain a de
 \label{sec:bg-calm}
 
 Work on deductive databases has long drawn a distinction between
-\emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, 
-%a monotonic program only computes more information over time
-the information computed by a monotonic program can only grow as time passes
-%%---that is, it will
-%%never ``retract'' a previous conclusion in the face of new evidence. 
----none of the conclusions the program has made will ever be ``retracted'' in
-the face of new evidence.
-In Bloom
-(and Datalog), a simple conservative test for monotonicity is based on the
-syntax of the program: selection, projection, and join are monotonic, while
-aggregation and negation are not.
+\emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, a
+monotonic program only computes more information over time---it will never
+``retract'' a previous conclusion in the face of new evidence.  In Bloom (and
+Datalog), a simple conservative test for monotonicity is based on program
+syntax: selection, projection, and join are monotonic, while aggregation and
+negation are not.
 
 The CALM theorem connects the theory of monotonic logic with the practical
-problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}. 
-All monotonic distributed programs are ``eventually consistent'' or 
-\emph{confluent}: given a fixed input, all program executions result in the
-same final state regardless of network non-determinism~\cite{Ameloot2011,dedalus-pods12-tr}.
-Hence, monotonic logic a useful
-building block for loosely consistent distributed programming.
+problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  All
+monotonic distributed programs are ``eventually consistent'' or
+\emph{confluent}: given a fixed input, all program executions result in the same
+final state regardless of network
+non-determinism~\cite{Ameloot2011,dedalus-pods12-tr}.  Hence, monotonic logic is
+a useful building block for loosely consistent distributed programming.
 
-We have implemented a conservative static program analysis in Bloom
-that follows directly from the CALM Theorem.  
-Programs that are free from non-monotonic 
-constructs are ``blessed'' as confluent, producing the same output 
-on different 
+We have implemented a conservative static program analysis in Bloom that follows
+directly from the CALM Theorem.  Programs that are free from non-monotonic
+constructs are ``blessed'' as confluent: producing the same output on different
 runs or converging to the same state on multiple distributed replicas.
-According to the CALM theorem, distributed inconsistency may \emph{only}
-occur at \emph{points of order}, or program locations at which
-the output of an asynchronously derived value is consumed by a non-monotonic
-operator. 
-This is because asynchronous messaging results in
-non-deterministic arrival order, and non-monotonic operators may be
-sensitive to the order in which their inputs arrive, producing different
-conclusions when evaluated over different subsets of their inputs.
-To achieve consistency, the programmer either needs to rewrite their
-program to avoid the non-monotonic construct, or
-introduce a coordination protocol to ensure that a consistent ordering is agreed
-upon. Coordination protocols incur additional latency and decrease availability
-in the event of network partitions, so in this paper we focus on
-coordination-free designs---that is, monotonic programs.
+According to the CALM theorem, distributed inconsistency may only occur at
+\emph{points of order}: program locations at which the output of an
+asynchronously derived value is consumed by a non-monotonic operator.  This is
+because asynchronous messaging results in non-deterministic arrival order, and
+non-monotonic operators may be sensitive to the order in which their inputs
+arrive, producing different conclusions when evaluated over different subsets of
+their inputs.  To achieve consistency, the programmer either needs to rewrite
+their program to avoid the use of non-monotonicity, or introduce a coordination
+protocol to ensure that a consistent ordering is agreed upon. Coordination
+protocols incur additional latency and decrease availability in the event of
+network partitions, so in this paper we focus on coordination-free
+designs---that is, monotonic programs.
 
 \subsubsection{Limitations of set monotonicity}
 The original formulation of the CALM theorem considered only programs that
