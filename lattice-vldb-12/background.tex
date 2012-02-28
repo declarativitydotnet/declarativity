@@ -136,19 +136,23 @@ Each statement has one or more input collections and a single output
 collection.  Each statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-identifier$>$ $<$op$>$
     $<$collection-expression$>$}}\\ \noindent
-The left-hand side (lhs) of the statement is the name of the output collection
-and the right-hand side (rhs) is an expression that produces a collection.
-A statement defines how the contents of the input collections should
-be transformed before being accounted for in the output
-collection. Bloom
-allows the usual relational operators to be used on the rhs (selection,
-projection, join, grouping, aggregation, and negation), although it adopts a
-syntax intended to be more familiar to imperative programmers. In
-Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj} demonstrates projection,
+The left-hand side (lhs) is the name of the output collection and the right-hand
+side (rhs) is an expression that produces a collection.  A statement defines how
+the contents of the input collections should be transformed before being
+accounted for in the output collection. Bloom allows the usual relational
+operators to be used on the rhs (selection, projection, join, grouping,
+aggregation, and negation), although it adopts a syntax intended to be more
+familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
+line~\ref{line:spaths-proj} demonstrates projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
-\verb+link.to = path.from+ followed by a projection to four attributes, and line~\ref{line:spaths-group} demonstrates
-grouping and aggregation, followed by projection to three attributes.
+\verb+link.to = path.from+ followed by a projection to four attributes, and
+line~\ref{line:spaths-group} demonstrates grouping and aggregation, followed by
+projection to three attributes. Bloom statements appear in one or more
+\texttt{bloom} blocks. A Bloom program can also include a \texttt{bootstrap}
+block, which contains statements that are run only once when a Bloom instance
+starts executing (\texttt{bootstrap} blocks are typically used for
+initialization or configuration data).
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
