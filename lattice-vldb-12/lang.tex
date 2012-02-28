@@ -135,7 +135,7 @@ Section~\ref{sec:lattice-defn}). A monotone lattice method guarantees that, if
 the lattice on which the method is invoked grows (according to the lattice's
 partial order), the value returned by the method will grow (according to the
 return value's lattice type). From a CRDT perspective, a lattice's monotone
-methods are a ``safe'' set of operations that can be invoked in a distributed
+methods are a set of ``safe'' operations that can be invoked in a distributed
 setting without risk of inconsistency.
 
 A lattice method's signature indicates its monotonicity properties. More
@@ -143,8 +143,8 @@ precisely, \lang distinguishes between methods that are monotone and a subset of
 monotone methods that are \emph{morphisms}. The properties that a morphism must
 satisfy are given formally in Section~\ref{sec:lattice-defn}, but the intuition
 is that a morphism on lattice $T$ can be distributed over $T$'s least upper
-bound operator. This allows a variant of semi-naive evaluation for lattice
-programs, as we discuss further in Section~\ref{sec:lattice-eval-strat}.
+bound operator. Morphisms can be evaluated more efficiently than monotone
+functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
 
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
@@ -261,8 +261,8 @@ The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
 set will contain only non-negative numbers, the sum of those numbers increases
 monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
-\texttt{lpset}. Inserting a negative value (or a non-number) into an
-\texttt{lpset} results in a Ruby exception.
+\texttt{lpset}.%  Inserting a negative value (or a non-number) into an
+% \texttt{lpset} results in a Ruby exception.
 % Explain why sum is a monotone function?
 
 \subsection{User-defined lattices}
