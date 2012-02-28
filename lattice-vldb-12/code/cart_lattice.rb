@@ -1,6 +1,3 @@
-require 'rubygems'
-require 'bud'
-
 ACTION_OP = 0
 CHECKOUT_OP = 1
 
@@ -101,9 +98,7 @@ class CartLattice < Bud::Lattice
     return false unless checkout
 
     ubound, _, lbound, _ = checkout.flatten
-    (lbound..ubound).each do |n|
-      return false unless @v.has_key? n
-    end
+    (lbound..ubound).each {|n| return false unless @v.has_key? n }
 
     return true
   end
