@@ -108,19 +108,18 @@ The identifier on the lhs can refer to either a set-oriented collection or a
 lattice. The expression on the rhs can contain both traditional relational
 operators (applied to Bloom collections) and methods invoked on lattices.
 Lattice methods are similar to methods in an object-oriented language and are
-invoked using the standard method invocation syntax. For example,
+invoked using the standard Ruby method invocation syntax. For example,
 line~\ref{line:quorum-size} of Figure~\ref{fig:lattice-quorum} invokes the
 \texttt{size} method on an element of the \texttt{lset} lattice.
 
-If the lhs of a statement is a lattice, the statement's operator must be either
-\verb|<=| or \verb|<+| (instantaneous or deferred deduction, respectively). The
-meaning of this operator is that, at either the current or the following
-timestep, the lhs identifier will take on the result of applying the lattice's
-least upper bound to the lhs and rhs lattice elements. The intuition remains the
-same as in Bloom: the rhs value is ``merged into'' the lhs lattice, except that
-the semantics of the merge operation are defined by the lattice's least upper
-bound operator. We require that the lhs and rhs refer to a lattice of the same
-type.
+If the lhs is a lattice, the statement's operator must be either \verb|<=| or
+\verb|<+| (instantaneous or deferred deduction, respectively). The meaning of
+this operator is that, at either the current or the following timestep, the lhs
+identifier will take on the result of applying the lattice's least upper bound
+to the lhs and rhs lattice elements. The intuition remains the same as in Bloom:
+the rhs value is ``merged into'' the lhs lattice, except that the semantics of
+the merge operation are defined by the lattice's least upper bound operator. We
+require that the lhs and rhs refer to a lattice of the same type.
 
 \lang does not currently support a notion of deletion (\verb|<-| operator) for
 lattices. Lattices do not directly support asynchronous communication (via the
@@ -140,11 +139,11 @@ setting without risk of inconsistency.
 
 A lattice method's signature indicates its monotonicity properties. More
 precisely, \lang distinguishes between methods that are monotone and a subset of
-monotone methods that are \emph{morphisms}. The properties that a morphism must
-satisfy are given formally in Section~\ref{sec:lattice-defn}, but the intuition
-is that a morphism on lattice $T$ can be distributed over $T$'s least upper
-bound operator. Morphisms can be evaluated more efficiently than monotone
-functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
+monotone methods that are \emph{morphisms}. Section~\ref{sec:lattice-defn}
+defines the properties that a morphism must satisfy, but the intuition is that a
+morphism on lattice $T$ can be distributed over $T$'s least upper bound
+operator. Morphisms can be evaluated more efficiently than monotone functions,
+as we discuss in Section~\ref{sec:lattice-eval-strat}.
 
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
