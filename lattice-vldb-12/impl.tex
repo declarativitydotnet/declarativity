@@ -28,16 +28,18 @@ $\Delta_1$---everything that can be derived purely from $\Delta_0$ has already
 been computed.
 
 A similar evaluation strategy works for \lang statements that use lattice
-morphisms. For each lattice identifier $i$, we record two lattice elements:
-$v_i$ and $\Delta^r_i$. $v_i$ is the least upper bound of all the lattice
-elements ever produced by any statement with $i$ on the lhs---that is, it is the
-current lattice element associated with $i$. $\Delta^r_i$ represents the new
-derivations for $i$ that have been made in evaluation round $r$. During round
-one, the program's statements are evaluated and $i$ is mapped to $v_i$; this
-computes $\Delta^1_i$. In round two, $i$ is now mapped to $\Delta^1_i$ and
-evaluating the program's statements yields $\Delta^2_i$. This process continues
-until $\Delta^j_i = \Delta^{j+1}_i$ for all identifiers $i$. The final value of
-$i$ is given by $v_i \lor \lor_{k=1}1^j \Delta^k_i$.
+morphisms. For a given lattice identifier $l$, 
+let $\Delta_l^0$ represent the least upper bound of all the lattice
+elements ever produced by any statement with $l$ on the lhs---that is, it is the
+current lattice element associated with $l$. 
+Let $\Delta^r_l$ represent the new
+derivations for $l$ that have been made in evaluation round $r$. During round
+one, the program's statements are evaluated and $l$ is mapped to $\Delta_l^0$; this
+computes $\Delta^1_l$. In round two, $l$ is now mapped to $\Delta^1_l$ and
+evaluating the program's statements yields $\Delta^2_l$. This process continues
+until $\Delta^i_l = \Delta^{i+1}_l$ for all identifiers $l$. 
+The final value for $l$ is given by $\bigvee_{j=0}^i \Delta^j_l$.
+
 
 This optimization can be used for morphisms but not ordinary monotone
 functions. This is because seminaive evaluation requires the ability\ldots
