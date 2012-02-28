@@ -12,6 +12,8 @@ both protocols are monotonic. This agrees with our intuition that these
 protocols make ``progress'' over time, and hence gives us more confidence in the
 correctness of our designs.
 
+% Concede that confluence is not an appropriate correctness criteria
+
 \subsection{Vector clocks}
 \begin{figure}[t]
 \begin{scriptsize}
@@ -69,7 +71,7 @@ events:
 \end{compactenum}
 Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
 clocks in \lang. A vector clock is represented as a map lattice that associates
-node IDs with \texttt{lmax} values. Each \texttt{lmax} value represents a single
+node IDs with \texttt{lmax} values. Each \texttt{lmax} represents a single
 logical clock, which can only increase over time. \texttt{ip\_port} returns the
 IP address and port number of the current \lang instance, which is used as a
 node ID. Incoming messages appear in the \texttt{in\_msg} collection. Messages
