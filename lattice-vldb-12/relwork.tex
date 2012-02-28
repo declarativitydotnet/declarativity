@@ -11,10 +11,9 @@ prohibitively expensive, for instance when transactions are long-running or the
 nodes of a distributed database are connected via an unreliable network. Thus,
 many methods have been proposed to allow non-serializable transaction schedules
 that preserve some \emph{semantic} notion of correctness. In particular, several
-schemes allow users to specify that certain operations can be commuted
-with other operations; this enlarges the space of allowed transaction schedules,
-increasing the potential for
-concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
+schemes allow users to specify that certain operations can be commuted with
+other operations; this enlarges the space of legal schedules, increasing the
+potential for concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
 
 % TODO: do we need to cite all 3 papers?
 %       the weihl paper claims to explicitly only allow serializable schedules
@@ -26,6 +25,15 @@ available~\cite{O'Neil1986}. For example, credits and debits to a bank account
 might only commute if the bank account balance can be guaranteed to be
 non-negative. We are currently exploring how to add support for escrow
 operations to \lang.
+
+To support concurrent editing of shared documents, the groupware community has
+studied a family of algorithms known as \emph{Operational Transformations}
+(OT)~\cite{Ellis1989,Sun1998}. Many OT algorithms have been proposed but the
+correctness criteria is typically familiar: after quiesence, all replicas of the
+document should converge to the same final state, the causal relationship
+between operations should be preserved, and the final state of the document
+should reflect the semantic intent of each user's editing
+operations~\cite{Sun1998a}.
 
 % XXX: do we need to say more about how our stuff compares to escrow?
 
