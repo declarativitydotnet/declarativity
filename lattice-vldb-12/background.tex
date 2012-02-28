@@ -51,11 +51,10 @@ each containing three phases.\footnote{There is a precise declarative semantics
 messages) are received and represented as facts in collections. In the second
 phase, the program's statements are evaluated over local state to compute all
 the additional facts that can be derived from the current collection
-contents. In some cases (described below), the new facts that are derived are
-intended to achieve ``side effects,'' such as modifying local state or sending a
-network message to another Bloom instance.  These effects are deferred during
-the second phase of the timestep; the third phase is devoted to carrying them
-out.
+contents. In some cases (described below), a derived fact is intended to achieve
+a ``side effect,'' such as modifying local state or sending a network message to
+another Bloom instance.  These effects are deferred during the second phase of
+the timestep; the third phase is devoted to carrying them out.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside Ruby programs. Figure~\ref{fig:bloom-spaths} shows a Bloom
