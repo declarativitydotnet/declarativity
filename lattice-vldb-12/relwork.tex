@@ -3,16 +3,17 @@
 
 % XXX: intro?
 
-\subsection{Semantics-based concurrency control}
-In the absence of semantic knowledge about transactions, serializability is the
-main correctness criteria for concurrency control schemes. However, ensuring
-serializability can be prohibitively expensive, for instance when transactions
-are long-running or the nodes of a distributed database are connected via an
-unreliable network. Thus, many methods have been proposed to allow
-non-serializable transaction schedules that preserve some \emph{semantic} notion
-of correctness. In particular, several schemes allow users to specify that
-certain operations can safely be commuted with other operations; this enlarges
-the space of allowed transaction schedules, increasing the potential for
+\vspace{0.5em}\noindent
+\textbf{Semantics-based concurrency control:} In the absence of semantic
+knowledge about transactions, serializability is the main correctness criteria
+for concurrency control schemes. However, ensuring serializability can be
+prohibitively expensive, for instance when transactions are long-running or the
+nodes of a distributed database are connected via an unreliable network. Thus,
+many methods have been proposed to allow non-serializable transaction schedules
+that preserve some \emph{semantic} notion of correctness. In particular, several
+schemes allow users to specify that certain operations can safely be commuted
+with other operations; this enlarges the space of allowed transaction schedules,
+increasing the potential for
 concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
 
 % TODO: do we need to cite all 3 papers?
@@ -28,15 +29,16 @@ operations to \lang.
 
 % XXX: do we need to say more about how our stuff compares to escrow?
 
-\subsection{Commutativity in distributed systems}
-Many distributed systems allow users to specify that certain operations are
-commutative, associative, or idempotent. Helland and Campbell observe that using
-commutative, associative and idempotent operations is particularly valuable as
-systems scale and guaranteeing global serializability becomes increasingly
-expensive~\cite{Helland2009}. Many distributed storage systems allow users to
-provide ``merge functions'' that are used to resolve write-write conflicts
-between replicas, allowing the system to eventually reach a consistent state
-(e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).%  User-defined merge
+\vspace{0.5em}\noindent
+\textbf{Commutativity in distributed systems:} Many distributed systems allow
+users to specify that certain operations are commutative, associative, or
+idempotent. Helland and Campbell observe that using commutative, associative and
+idempotent operations is particularly valuable as systems scale and guaranteeing
+global serializability becomes increasingly expensive~\cite{Helland2009}. Many
+distributed storage systems allow users to provide ``merge functions'' that are
+used to resolve write-write conflicts between replicas, allowing the system to
+eventually reach a consistent state
+(e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).% User-defined merge
 % functions typically rely on domain knowledge about the semantics of updates to
 % allow conflicting writes to be safely commuted.
 Writing a correct merge function can be difficult because the developer must
@@ -92,13 +94,13 @@ solution to this problem by requiring that replicated values are only used in a
 % XXX: Wuu & Bernstein
 % XXX: Operational transformations?
 
-\subsection{Non-monotonicity in deductive databases}
-Adding non-monotonic operators (e.g., aggregation and negation) to Datalog
-increases the expressiveness of the language but introduces significant
-complexities---unrestricted use of non-monotonicity would allow programs that
-imply logical contradictions (e.g., ``$p$ if and only if $\lnot p$''). A simple
-solution is to disallow recursion through aggregation or negation, which admits
-only the class of so-called ``stratified programs''~\cite{Apt1988}. Many
+\vspace{0.5em}\noindent
+\textbf{Non-monotonicity in deductive databases:} Adding non-monotonic operators
+to Datalog increases the expressiveness of the language but introduces
+significant complexities---unrestricted use of non-monotonicity would allow
+programs that imply logical contradictions (e.g., ``$p$ if $\lnot p$''). A
+simple solution is to disallow recursion through aggregation or negation, which
+admits only the class of so-called ``stratified programs''~\cite{Apt1988}. Many
 attempts have been made to assign a semantics to larger classes of programs
 (e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
 
@@ -127,10 +129,9 @@ framework.
 
 Zaniolo and Wang identify a class of ``monotone aggregates'' as part of their
 work on supporting advanced user-defined aggregates in the $\mathcal{LDL}$++
-system~\cite{Zaniolo1999}. Like us, they observe that aggregates with monotone
-behavior can easily be supported without stratification in a traditional Datalog
-system based on semi-naive fixpoint. Their characterization of monotone
-aggregates is different than ours: they do not distinguish between morphisms and
-monotone functions, and do not consider distribution or confluence.  In fact,
+system~\cite{Zaniolo1999}. Like us, they observe that monotone aggregates can
+easily be supported without stratification in a Datalog system based on
+semi-naive fixpoint. Their characterization of monotone aggregates is different
+than ours, and they do not consider asynchrony or distribution.  In fact,
 supporting order-dependent aggregates is an explicit goal of their work, whereas
 we seek to ensure that programs are confluent in the face of message reordering.
