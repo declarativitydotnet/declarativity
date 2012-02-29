@@ -105,18 +105,6 @@ non-monotonic state update using $\verb|<+|$ and $\verb|<-|$, and merging the
 clock values in inbound messages requires a \texttt{max} aggregate).
 
 \subsection{Causal delivery}
-Next, we use \lang to build a more complex distributed protocol that makes use
-of vector clocks. A \emph{causal delivery} protocol ensures that messages are
-delivered in an order that is consistent with the ``happens before'' relation
-between events~\cite{Lamport1978}. Avoiding causal anomolies is a common
-building block for distributed protocols.
-
-Figure~\ref{fig:causal-delivery-src} contains a \lang program that implements a
-classical algorithm for point-to-point (unicast) causal delivery proposed by
-Schiper et al.~\cite{Schiper1989}. Note the Ruby \texttt{import} statement on
-line~\ref{line:causal-d-import}, which loads the \lang state declarations and
-statements from the \texttt{VectorClock} module.
-
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
@@ -130,18 +118,18 @@ module CausalDelivery
   end
 
   bloom :outbound_msg do
-    chn <~ out_msg {|m| [m.addr, m.payload, next_vc, ord_buf]}
-    ord_buf <+ out_msg {|m| {m.addr => next_vc} }
+    chn <~ out_msg {|m| [m.addr, m.payload, next_vc, ord_buf]} (*\label{line:out-msg-embed}*)
+    ord_buf <+ out_msg {|m| {m.addr => next_vc} } (*\label{line:ord-buf-out-msg}*)
   end
 
   bloom :inbound_msg do
     recv_buf <= chn
-    in_msg <= recv_buf do |m|
-      m.ord_buf.at(ip_port).lt_eq(my_vc).when_true {
+    in_msg <= recv_buf do |m| (*\label{line:deliver-msg-start}*)
+      m.ord_buf.at(ip_port).lt_eq(my_vc).when_true { (*\label{line:deliver-msg-lt-eq}*)
         [m.addr, m.payload, m.clock]
       }
-    end
-    ord_buf <+ in_msg {|m| m.ord_buf}
+    end (*\label{line:deliver-msg-end}*)
+    ord_buf <+ in_msg {|m| m.ord_buf} (*\label{line:ord-buf-in-msg}*)
   end
 end
 \end{lstlisting}
@@ -150,3 +138,39 @@ end
 \texttt{out\_msg} are defined by the \texttt{VectorClock} module.}
 \label{fig:causal-delivery-src}
 \end{figure}
+
+Next, we use \lang to build a more complex distributed protocol that makes use
+of vector clocks. A \emph{causal delivery} protocol ensures that messages are
+delivered in an order that is consistent with the ``happens before'' relation
+between events~\cite{Lamport1978}. Avoiding causal anomolies is a common
+building block for distributed protocols.
+
+Figure~\ref{fig:causal-delivery-src} contains a \lang program that implements a
+classical algorithm for point-to-point (unicast) causal delivery proposed by
+Schiper et al.~\cite{Schiper1989}. Note the Ruby \texttt{import} statement on
+line~\ref{line:causal-d-import}, which loads the \lang state declarations and
+statements from the \texttt{VectorClock} module.
+
+In the Schiper et al.\ protocol, each node records its knowledge about the state
+of the vector clocks at every other node. In
+Figure~\ref{fig:causal-delivery-src}, this knowledge is represented as
+\texttt{ord\_buf} an \texttt{lmap} that associates node IDs with vector
+clocks. A node's \texttt{ord\_buf} is updated when messages are sent or
+delivered (lines~\ref{line:ord-buf-out-msg} and \ref{line:ord-buf-in-msg},
+respectively). A node also embeds both its vector clock and \texttt{ord\_buf} in
+outgoing messages (line~\ref{line:out-msg-embed}). Finally, the protocol ensures
+that a node will delay delivering a message $m$ until it can be sure that it
+will never receive a message that causally predeces $m$. This is done by
+comparing the knowledge the sender had about the recipient's vector clock with
+the recipient's current vector clock; once the recipient's vector clock passes
+the sender's knowledge, the message can be safely delivered
+(lines~\ref{line:deliver-msg-start}--\ref{line:deliver-msg-end}, respectively).
+
+Note that checking whether a message has been delivered requires testing whether
+one vector clock (in the \texttt{ord\_buf} embedded in the message) is smaller
+than the node's vector clock (line~\ref{line:deliver-msg-lt-eq}). In general,
+this is not monotonic, because either vector clock might subsequently
+increase. In this case, the message's vector clock is immutable (because it is
+embedded as a column of a collection that does not allow ``lattice merges''), so
+the predicate can be determined to be monotonic.
+
