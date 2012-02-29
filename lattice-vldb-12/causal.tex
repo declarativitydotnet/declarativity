@@ -105,42 +105,46 @@ non-monotonic state update using $\verb|<+|$ and $\verb|<-|$, and merging the
 clock values in inbound messages requires a \texttt{max} aggregate).
 
 \subsection{Causal delivery}
-A causal delivery protocol ensures that messages are delivered in an order that
-is consistent with the ``happens before'' relation between
-events~\cite{Lamport1978}. Providing a causal order over events has been
-identified as a useful building block for loosely consistent distributed
-applications~\cite{Lloyd2011}.
+Next, we use \lang to build a more complex distributed protocol that makes use
+of vector clocks. A \emph{causal delivery} protocol ensures that messages are
+delivered in an order that is consistent with the ``happens before'' relation
+between events~\cite{Lamport1978}. Avoiding causal anomolies is a common
+building block for distributed protocols.
+
+Figure~\ref{fig:causal-delivery-src} contains a \lang program that implements a
+classical algorithm for point-to-point (unicast) causal
+delivery~\cite{Schiper1989}. Note the Ruby \texttt{import} statement on
+line~\ref{line:causal-d-import}, which loads the \lang state declarations and
+statements from the vector clock module.
 
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
 module CausalDelivery
-  include VectorClock
+  include VectorClock (*\label{line:causal-d-import}*)
 
   state do
-    channel :chn,
-      [:@dst, :src, :ident] => [:payload, :clock, :ord_buf]
+    channel :chn, [:@dst, :payload] => [:clock, :ord_buf]
+
     # Our knowledge of the vector clocks at other nodes
     lmap :ord_buf
     # Received messages that haven't yet been delivered
     table :recv_buf, chn.schema
-    scratch :buf_chosen, recv_buf.schema
   end
 
   bloom :outbound_msg do
-    chn <~ out_msg {|p| [p.dst, p.src, p.ident,
-                         p.payload, next_vc, ord_buf]}
-    ord_buf <+ out_msg {|p| {p.dst => next_vc} }
+    chn <~ out_msg {|m| [m.addr, m.payload, next_vc, ord_buf]}
+    ord_buf <+ out_msg {|m| {m.addr => next_vc} }
   end
 
   bloom :inbound_msg do
     recv_buf <= chn
-    buf_chosen <= recv_buf do |m|
-      m.ord_buf.at(ip_port).lt_eq(my_vc).when_true { m }
+    in_msg <= recv_buf do |m|
+      m.ord_buf.at(ip_port).lt_eq(my_vc).when_true {
+        [m.addr, m.payload, m.clock]
+      }
     end
-    recv_buf <- buf_chosen
-
-    ord_buf <+ buf_chosen {|m| m.ord_buf}
+    ord_buf <+ in_msg {|m| m.ord_buf}
   end
 end
 \end{lstlisting}
