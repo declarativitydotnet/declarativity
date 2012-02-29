@@ -38,11 +38,10 @@ yields unsatisfactory results.
 
 Bloom is a Datalog-based domain-specific language (DSL) designed for distributed
 programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
-using \emph{collections}---unordered sets of objects, akin to relations in
-Datalog. Computation is expressed as a bundle of declarative \emph{statements}.
-An instance of a Bloom program performs computation by evaluating its statements
-over the contents of its local database. Bloom instances communicate via
-asynchronous messaging, as described further below.
+using \emph{collections} and computation is expressed as a bundle of declarative
+\emph{statements}.  An instance of a Bloom program performs computation by
+evaluating its statements over the contents of its local database. Bloom
+instances communicate via asynchronous messaging, as described further below.
 
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
 each containing three phases.\footnote{There is a precise declarative semantics
@@ -80,22 +79,22 @@ database of a remote Bloom instance at a non-deterministic future time.\\
 \label{tbl:bloom-collections}
 \end{table}
 
-Bloom is based on a data model of \emph{collections} of {\em items}.  A
-collection is an unordered sets of tuples, akin to a relation in Datalog. The
-Bud prototype adopts the Ruby type system rather than inventing its own; hence,
-collection items in Bud are just arrays of Ruby objects. Each collection has a
-\emph{schema}, which declares the structure (column names) of the tuples in the
-collection. A subset of the columns in a collection form its \emph{key}: as in
-the relational model, the key columns functionally determine the remaining
-columns. The collections used by a Bloom program are declared in a
-\texttt{state} block. For example, line~\ref{line:spaths-ddl} of
-Figure~\ref{fig:bloom-spaths} declares a collection named \texttt{link} with
-three columns, two of which form the collection's key. Ruby is a dynamically
-typed language, so the keys and values in Bud can hold arbitrary Ruby objects.
+Bloom is based on a data model of \emph{collections}.  A collection is an
+unordered set of \emph{facts}, akin to a relation in Datalog. The Bud prototype
+adopts the Ruby type system rather than inventing its own; hence, a fact in Bud
+is just an array of Ruby objects. Each collection has a \emph{schema}, which
+declares the structure (column names) of the facts in the collection. A subset
+of the columns in a collection form its \emph{key}: as in the relational model,
+the key columns functionally determine the remaining columns. The collections
+used by a Bloom program are declared in a \texttt{state} block. For example,
+line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
+collection named \texttt{link} with three columns, two of which form the
+collection's key. Ruby is a dynamically typed language, so keys and values in
+Bud can hold arbitrary Ruby objects.
 
 Bloom provides five collection types to represent different kinds of state
 (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent data: if
-a fact appears in a table, it remains in the table in future timesteps (until it
+a fact appears in a table, it remains in the table in future timesteps (unless it
 is explicitly removed). A \texttt{scratch} contains transient data---the content
 of scratch collections is emptied at the start of each timestep. Scratches are
 akin to SQL views: they are often useful as a way to name intermediate results
@@ -164,12 +163,13 @@ that uses \verb+<~+ must be a channel; the \verb+<~+ operator captures
 asynchronous messaging.
 
 % XXX: does this need to be said?
-Bloom allows recursive statements---i.e., the rhs of a statement can reference
-the lhs collection, either directly or indirectly. As in Datalog, certain
-constraints must be adopted to ensure that programs with recursive statements
-have a sensible interpretation. For deductive statements (\verb+<=+ operator),
-we require that programs be \emph{syntactically stratified}~\cite{Apt1988}:
-cycles through negation or aggregation are not allowed (unless they contain a deferred or asynchronous operator)~\cite{dedalus}.
+Bloom allows recursion---i.e., the rhs of a statement can reference the lhs
+collection, either directly or indirectly. As in Datalog, certain constraints
+must be adopted to ensure that programs with recursive statements have a
+sensible interpretation. For deductive statements (\verb+<=+ operator), we
+require that programs be \emph{syntactically stratified}~\cite{Apt1988}: cycles
+through negation or aggregation are not allowed (unless they contain a deferred
+or asynchronous operator)~\cite{dedalus}.
 
 \subsection{CALM analysis}
 \label{sec:bg-calm}
@@ -191,13 +191,13 @@ non-determinism~\cite{Ameloot2011,dedalus-pods12-tr}.  Hence, monotonic logic is
 a useful building block for loosely consistent distributed programming.
 
 We have implemented a conservative static program analysis in Bloom that follows
-directly from the CALM Theorem.  Programs that are free from non-monotonic
+directly from the CALM theorem.  Programs that are free from non-monotonic
 constructs are ``blessed'' as confluent: producing the same output on different
 runs or converging to the same state on multiple distributed replicas.
 According to the CALM theorem, distributed inconsistency may only occur at
-\emph{points of order}: program locations at which the output of an
-asynchronously derived value is consumed by a non-monotonic operator.  This is
-because asynchronous messaging results in non-deterministic arrival order, and
+\emph{points of order}: program locations where the output of an asynchronously
+derived value is consumed by a non-monotonic operator.  This is because
+asynchronous messaging results in non-deterministic arrival order, and
 non-monotonic operators may be sensitive to the order in which their inputs
 arrive, producing different conclusions when evaluated over different subsets of
 their inputs.  To achieve consistency, the programmer either needs to rewrite
