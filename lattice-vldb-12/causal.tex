@@ -7,7 +7,7 @@ section, we first show how vector clocks can be implemented in a monotonic
 fashion using \lang. We then use \lang to implement a classical algorithm for
 point-to-point causal message delivery~\cite{Schiper1989}. The implementation of
 both protocols in \lang is concise and readable---this suggests that \lang is
-suitable for typical distributed programming tasks. Perhaps more significantly,
+suitable for common distributed programming tasks. Perhaps more significantly,
 both protocols are monotonic. This agrees with our intuition that these
 protocols make ``progress'' over time, and hence gives us more confidence in the
 correctness of our designs.
@@ -70,12 +70,12 @@ events:
 Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
 clocks in \lang. A vector clock is represented as a map lattice that associates
 node IDs with \texttt{lmax} values. Each \texttt{lmax} represents a single
-logical clock, which can only increase over time. \texttt{ip\_port} returns the
-IP address and port number of the current \lang instance, which is used as a
-node ID. Incoming messages appear in the \texttt{in\_msg} collection. Messages
-that are intended to be sent begin as tuples in \texttt{out\_msg}; once a
-message has been stamped with the local node's vector clock, it appears in
-\texttt{out\_msg\_vc}.
+logical clock---naturally, a clock can only increase over time.
+\texttt{ip\_port} returns the IP address and port number of the current \lang
+instance, which is used as a node ID. Incoming messages appear in the
+\texttt{in\_msg} collection. Messages that are intended to be sent begin as
+tuples in \texttt{out\_msg}; once a message has been stamped with the local
+node's vector clock, it appears in \texttt{out\_msg\_vc}.
 
 The key logic appears in lines \ref{line:vc-out-increment},
 \ref{line:vc-in-increment}, and \ref{line:vc-in-merge}: these three statements

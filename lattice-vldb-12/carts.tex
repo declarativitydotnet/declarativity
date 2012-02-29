@@ -33,9 +33,7 @@ Alvaro et al.\ discuss two different designs: a ``disorderly'' version in which
 the cart state is represented as a set of operations (allowing monotonic
 accumulation of adds and removes) and a ``destructive'' version in which the
 cart state is managed by a key-value store, which requires a non-monotonic
-update on each cart action. In both designs, Alvaro et al.\ argue that the
-checkout operation is non-monotonic because it requires aggregating over all
-previous operations applied to the cart.
+update on each cart action.
 
 \subsection{Monotonic checkout}
 \begin{figure}[t]
@@ -82,17 +80,17 @@ end
 \label{fig:monotone-cart}
 \end{figure}
 
-Alvaro et al.\ argue that processing a checkout request is non-monotonic because
-it requires aggregating over an asynchronously computed data set---in general,
-coordination might be required to ensure that all inputs have been received
-before the checkout response can be returned to the client. However, observe
-that the client knows exactly which add/remove operations should be reflected in
-the result of the checkout. If that information can be propagated to the cart
+For both the ``disorderly'' and ``destructive'' designs, Alvaro et al.\ argue
+that processing a checkout request is non-monotonic because it requires
+aggregating over an asynchronously computed data set---in general, coordination
+might be required to ensure that all inputs have been received before the
+checkout response can be returned to the client. However, observe that the
+client knows exactly which add/remove operations should be reflected in the
+result of the checkout. If that information can be propagated to the cart
 service, any server replica can decide if it has enough information to process
 the checkout operation without needing additional coordination. This design is
 monotonic: once a checkout response is produced, it will never change or be
-retracted. Hence, our goal is to translate this design into a monotonic \lang
-program.
+retracted. Our goal is to translate this design into a monotonic \lang program.
 
 % This can be done by assigning IDs to each message sent by the client. Each
 % client has a session ID; within a session, operation IDs are assigned in
@@ -104,29 +102,30 @@ program.
 % replica, which can easily be implemented using \lang.
 
 Figure~\ref{fig:monotone-cart} contains the server code for this design (we omit
-the client code for the sake of brevity). We represent the state of a server
-replica using an \texttt{lmap} lattice that associates session IDs with
-\texttt{lcart} lattice elements. \texttt{lcart} is a custom lattice that
-represents the state of a single shopping cart. An \texttt{lcart} contains a set
-of client operations. Each operation has a unique ID; operation IDs are assigned
-by the client in increasing numeric order without gaps. An \texttt{lcart}
-contains two kinds of operations, \emph{actions} and \emph{checkouts}. An action
-describes the addition or removal of an item from the cart. An \texttt{lcart}
-contains at most one checkout operation---the checkout specifies the smallest
-operation ID that must be reflected in the result of the checkout, along with
-the address where the checkout response should be sent.
-Lines~\ref{line:cart-action-op} and \ref{line:cart-checkout-op} construct
-\texttt{lcart} elements that contain a single action or checkout operation,
-respectively. These singleton carts are then merged with the previous cart state
-associated with the client's session, if any.
+the client code for the sake of brevity). Communication with the client occurs
+via the channels declared in the \texttt{CartProtocol} module. We represent the
+state of a server replica using an \texttt{lmap} lattice that associates session
+IDs with \texttt{lcart} lattice elements. \texttt{lcart} is a custom lattice
+that represents the state of a single shopping cart. An \texttt{lcart} contains
+a set of client operations. Each operation has a unique ID; operation IDs are
+assigned by the client in increasing numeric order without gaps. An
+\texttt{lcart} contains two kinds of operations, \emph{actions} and
+\emph{checkouts}. An action describes the addition or removal of an item from
+the cart. An \texttt{lcart} contains at most one checkout operation---the
+checkout specifies the smallest operation ID that must be reflected in the
+result of the checkout, along with the address where the checkout response
+should be sent.  Lines~\ref{line:cart-action-op} and \ref{line:cart-checkout-op}
+construct \texttt{lcart} elements that contain a single action or checkout
+operation, respectively. These singleton carts are then merged with the previous
+cart state associated with the client's session, if any.
 
 An \texttt{lcart} is \emph{complete} if it contains a checkout operation as well
-as the actions in the ID range identified by the checkout. Hence, testing
-whether an \texttt{lcart} is complete is a monotone function: it is equivalent
-to testing whether an accumulating set has crossed a threshold. Hence, if any
+as all the actions in the ID range identified by the checkout. Hence, testing
+whether an \texttt{lcart} is complete is a monotone function: it is similar to
+testing whether an accumulating set has crossed a threshold. Hence, if any
 server replica determines that it has a complete cart, it can send a response to
-the client without risking inconsistency. Note that the client might receive
-multiple responses, but they will all reflect the same cart contents.
+the client without risking inconsistency. Without coordination, the client might
+receive multiple responses but they will all reflect the same cart contents.
 
 Note that the statement that produces a response to the client
 (lines~\ref{line:cart-response-start}--\ref{line:cart-response-end}) is
