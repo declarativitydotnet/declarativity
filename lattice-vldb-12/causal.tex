@@ -169,7 +169,7 @@ the sender's knowledge, the message can be safely delivered
 Note that checking whether a message has been delivered requires testing whether
 one vector clock (in the \texttt{ord\_buf} embedded in the message) is smaller
 than the node's vector clock (line~\ref{line:deliver-msg-lt-eq}). In general,
-this is not monotonic, because either vector clock might subsequently
+this is not monotonic because either vector clock might subsequently
 increase. In this case, the message's vector clock is immutable (because it is
 embedded as a column of a collection that does not allow ``lattice merges''), so
 the predicate can be determined to be monotonic.
