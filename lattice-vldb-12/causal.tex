@@ -115,7 +115,7 @@ Figure~\ref{fig:causal-delivery-src} contains a \lang program that implements a
 classical algorithm for point-to-point (unicast) causal
 delivery~\cite{Schiper1989}. Note the Ruby \texttt{import} statement on
 line~\ref{line:causal-d-import}, which loads the \lang state declarations and
-statements from the vector clock module.
+statements from the \texttt{VectorClock} module.
 
 \begin{figure}[t]
 \begin{scriptsize}
@@ -133,15 +133,18 @@ module CausalDelivery
   end
 
   bloom :outbound_msg do
-    chn <~ out_msg {|m| [m.addr, m.payload, next_vc, ord_buf]}
+    chn <~ out_msg {|m| [m.addr, m.payload, next_vc,
+                         ImmutableLattice.new(ord_buf)]}
     ord_buf <+ out_msg {|m| {m.addr => next_vc} }
   end
 
   bloom :inbound_msg do
     recv_buf <= chn
     in_msg <= recv_buf do |m|
-      m.ord_buf.at(ip_port).lt_eq(my_vc).when_true {
-        [m.addr, m.payload, m.clock]
+      m.ord_buf.with_immutable {|b|
+        b.at(ip_port).lt_eq(my_vc).when_true {
+          [m.addr, m.payload, m.clock]
+        }
       }
     end
     ord_buf <+ in_msg {|m| m.ord_buf}
