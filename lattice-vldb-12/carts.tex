@@ -2,12 +2,12 @@
 \label{sec:carts}
 \begin{figure}[t]
 \includegraphics[width=\linewidth]{fig/cart_arch.pdf}
-\label{fig:cart-system}
+\label{fig:cart-system-arch}
 \caption{Architecture of a simple shopping cart system.}
 \end{figure}
 
-The next two sections contain case studies that demonstrate how \lang can be
-used to build practical distributed programs. Our goal is to demonstrate that
+The next two sections contain case studies that show how \lang can be used to
+build practical distributed programs. Our goal is to demonstrate that
 non-trivial distributed protocols can be expressed using lattices and monotone
 functions. If written in Bloom, these programs would be considered non-monotonic
 because they contain aggregation. Presenting monotonic implementations in \lang
@@ -17,7 +17,7 @@ coordination.
 
 In the first case study, we consider a simple e-commerce system in which clients
 interact with a shopping cart service by adding and removing items over the
-course of a shopping session (Figure~\ref{fig:cart-system}). The cart service is
+course of a shopping session (Figure~\ref{fig:cart-system-arch}). The cart service is
 replicated to improve fault tolerance; client requests can be routed to any of
 the cart replicas. Eventually, a client submits a ``checkout'' operation, at
 which point the cumulative effect of their shopping session should be summarized
