@@ -15,38 +15,43 @@ distributed systems operate.
 % consistent systems can expect more predictable and low-latency performance, but
 % must reason explicitly about program correctness over inconsistent distributed
 % state.
-The coordination protocols that provide strongly consistent storage are widely believed to raise unacceptable challenges in performance and operational overhead for modern systems~\cite{Birman2009}. As a result, 
-there has been increased interest in techniques for achieving correct program behavior without requiring coordination. 
-Two different frameworks for these techniques have received significant attention in recent research:
-\emph{Convergent Modules} and \emph{Monotonic Logic}.  
+
+The coordination protocols that provide strongly consistent storage are widely
+believed to raise unacceptable challenges in performance and operational
+overhead for modern systems~\cite{Birman2009}. As a result, there has been
+increased interest in techniques for achieving correct program behavior without
+requiring coordination.  Two different frameworks for these techniques have
+received significant attention in recent research: \emph{Convergent Modules} and
+\emph{Monotonic Logic}.
 %Both of these frameworks guarantee confluence: eventually deterministic outcomes in the face of message reordering and delay.
 
 \vspace{0.5em}\noindent
 \textbf{Convergent Modules}: In this approach, a programmer writes encapsulated
-modules whose public methods guarantee certain properties regarding
-message reordering and/or retry. For example, Statebox is an open-source library
-that merges conflicting updates to data items in a key-value store; the user of
-the library need only register commutative, idempotent merge
+modules whose public methods guarantee certain properties regarding message
+reordering and/or retry. For example, Statebox is an open-source library that
+merges conflicting updates to data items in a key-value store; the user of the
+library need only register commutative, idempotent merge
 functions~\cite{statebox}. This approach has roots in research in
 databases~\cite{Farrag1989,Garcia-Molina1983,Helland2009} and
 groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a model
 for these approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs),
-which formalizes these ideas in the algebraic framework of {\em join semi-lattices}~\cite{Shapiro2011b}.
+which formalizes these ideas in the algebraic framework of {\em join
+  semi-lattices}~\cite{Shapiro2011b}.
 
-The main problem with the CRDT approach is that it provides guarantees at per-module granularity: arguments about correctness apply only to an individual replicated data value, not to application logic in
-general. For example, consider a distributed algorithmic trading service that
-uses a CRDT to represent a mutable set \texttt{Portfolio} of stock symbols. Suppose one server
-$S$ reads a local version of the set containing the symbol \texttt{PEAR} and
-constructs an expected portfolio value $v = f(\mbox{\texttt{Portfolio}})$
-derived from that version. Concurrently, \texttt{PEAR} is removed from the local
-version of \texttt{Portfolio} at another server $T$. The CRDT ensures that
-$S$ and $T$ will eventually agree that \texttt{PEAR} is absent from the set. But
-the application state at $S$ and $T$ may remain inconsistent unless the value
-$v$ at $S$ is updated to reflect the removal of \texttt{PEAR}. Although the CRDT
-maintains its local invariants, the programmer still bears the burden of ensuring
-the consistency semantics of the whole program.
+The main problem with the CRDT approach is that it provides guarantees only
+about individual data values, not to application logic in general. For example,
+consider an application that uses the ``2P-Set'' CRDT to represent a mutable
+set~\cite{Shapiro2011a}. Suppose the application reads a version of the set and
+computes a derived value $y$ that is conditional on $x$ being present in the
+set. Concurrently, $x$ is removed from the set by another replica. While the
+CRDT ensures that the replicas will eventually agree that $x$ is absent from the
+set, application-level state may remain inconsistent unless $y$ is updated to
+reflect the removal of $x$. Although the CRDT maintains its own invariants, the
+programmer still bears the burden of ensuring the consistency semantics of the
+entire program.
 
 \vspace{0.5em} \noindent
+
 \textbf{Monotonic Logic}: In recent work, we observed that the database theory
 literature on non-monotonic logic provides a promising starting point for
 reasoning about distributed consistency. Intuitively, a \emph{monotonic} program
@@ -60,7 +65,21 @@ for verifying the consistency of distributed programs. We
 realized CALM analysis as part of Bloom, a Datalog-based DSL for distributed
 programming~\cite{Alvaro2011,bloom}.
 
-The original formulation of Bloom and CALM only validated consistency for programs that compute sets of facts that grow over time (``set monotonicity''); that is, ``growth'' is defined according to set containment. As a practical matter, this is overly conservative.  Consider extending our algorithmic trading system example by maintaining counter variables recording each stock's daily trade volume. The trading policy chooses to sell a portfolio if the MAX counter in the portfolio exceeds a certain threshold.  This is monotonic in the broad sense: the counter values grow monotonically, and the threshold test (\texttt{max(counters) $> k$}) also grows monotonically from False to True.  But both of these constructs (upward-moving mutable variables and aggregates) are considered to be non-monotonic by the original CALM analysis.  As a result, the initial Bloom prototype would advise the programmer to guard those constructs with strong consistency methods like Paxos~\cite{Lamport1998} or Two-Phase Commit~\cite{Gray1978}. 
+The original formulation of Bloom and CALM only verified the consistency of
+programs that compute sets of facts that grow over time (``set monotonicity'');
+that is, ``growth'' is defined according to set containment. As a practical
+matter, this is overly conservative because it precludes the use of common
+constructs such as timestamps and sequence numbers. For example, consider a
+simple quorum voting program where a coordinator counts the number of votes
+received from participant nodes. A quorum is reached once the number of votes
+exceeds a threshold. This is monotonic in the broad sense: the vote counter
+increases monotonically and the threshold test ($\mathtt{count(votes)} > k$)
+also grows monotonically from False to True. But both of these constructs
+(upward-moving mutable variables and aggregates) are considered to be
+non-monotonic by the original CALM analysis.  As a result, the initial Bloom
+prototype would mistakenly suggest that the voting program would need to be
+augmented with a coordination protocol such as Paxos~\cite{Lamport1998} to
+ensure consistent results.
 
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 
