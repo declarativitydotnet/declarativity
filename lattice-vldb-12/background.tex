@@ -194,28 +194,24 @@ According to the CALM theorem, distributed inconsistency may only occur at
 \emph{points of order}: program locations where the output of an asynchronously
 derived value is consumed by a non-monotonic operator.  This is because
 asynchronous messaging results in non-deterministic arrival order, and
-non-monotonic operators may be sensitive to the order in which their inputs
-arrive, producing different conclusions when evaluated over different subsets of
-their inputs.  Consider a Bloom program in which two collections $A$ and $B$
-are fed by asynchronous message deliveries.  If we define a collection $C$ as
-the elements of $A$ that are not in $B$, the contents of $C$
-will be different on different executions because the arrival timing of the 
-elements of $A$ and $B$ is undetermined.
-In each execution, the contents of $C$ will reflect, 
-for each element of $A$, if that element arrived before its matching element in
-$B$---effectively witnessing the outcome of a message race.
+non-monotonic operators may be produce different conclusions when evaluated over
+different subsets of their inputs.  For example, consider a Bloom program in
+which collections $A$ and $B$ are fed by asynchronous channels, and the program
+sends a message whenever an element of $A$ arrives that is not in $B$. This
+program is non-monotonic and hence exhibits non-confluent behavior: the messages
+sent by the program will depend on the order in which the elements of $A$ and
+$B$ arrive.
 
 We have implemented a conservative static program analysis in Bloom that follows
 directly from the CALM theorem.  Programs that are free from non-monotonic
 constructs are ``blessed'' as confluent: producing the same output on different
 runs or converging to the same state on multiple distributed replicas.
-Otherwise, programs are flagged as potentially inconsistent.
-To achieve consistency, the programmer either needs to rewrite
-their program to avoid the use of non-monotonicity or introduce a coordination
-protocol to ensure that a consistent ordering is agreed upon. Coordination
-protocols incur additional latency and decrease availability in the event of
-network partitions, so in this paper we focus on coordination-free
-designs---that is, monotonic programs.
+Otherwise, programs are flagged as potentially inconsistent.  To achieve
+consistency, the programmer either needs to rewrite their program to avoid the
+use of non-monotonicity or introduce a coordination protocol to ensure that a
+consistent ordering is agreed upon. Coordination protocols incur additional
+latency and decrease availability in the event of network partitions, so in this
+paper we focus on coordination-free designs---that is, monotonic programs.
 
 \subsubsection{Limitations of set monotonicity}
 The original formulation of the CALM theorem considered only programs that
