@@ -153,8 +153,8 @@ statements from the \texttt{VectorClock} module.
 
 In the Schiper et al.\ protocol, each node records its knowledge about the state
 of the vector clocks at every other node. In
-Figure~\ref{fig:causal-delivery-src}, this knowledge is represented as
-\texttt{ord\_buf} an \texttt{lmap} that associates node IDs with vector
+Figure~\ref{fig:causal-delivery-src}, this knowledge is kept in
+\texttt{ord\_buf}, an \texttt{lmap} that associates node IDs with vector
 clocks. A node's \texttt{ord\_buf} is updated when messages are sent or
 delivered (lines~\ref{line:ord-buf-out-msg} and \ref{line:ord-buf-in-msg},
 respectively). A node also embeds both its vector clock and \texttt{ord\_buf} in
