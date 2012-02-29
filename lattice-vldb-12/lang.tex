@@ -310,7 +310,7 @@ the \texttt{lset} lattice.
 
 A lattice class must inherit from the builtin \texttt{Bud::Lattice} class and
 must also define two methods:
-\begin{itemize}
+\begin{compactitem}
 \item \texttt{initialize(i)}: given a Ruby object $i$, this method constructs a
   new lattice element that ``wraps'' $i$ (\texttt{initialize} is the standard
   Ruby syntax for defining a constructor). If $i$ is \texttt{nil} (the null
@@ -322,7 +322,7 @@ must also define two methods:
   Section~\ref{sec:lattice-defn}---in particular, it must be commutative,
   associative, and idempotent. Note that \emph{e} and \emph{self} must be
   instances of the same class.
-\end{itemize}
+\end{compactitem}
 In addition to the constructor and the merge method, lattices can also define
 any number of monotone functions, morphisms, and non-monotonic methods. The
 syntax for declaring morphisms and monotone functions can be seen in
