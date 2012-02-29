@@ -112,8 +112,8 @@ between events~\cite{Lamport1978}. Avoiding causal anomolies is a common
 building block for distributed protocols.
 
 Figure~\ref{fig:causal-delivery-src} contains a \lang program that implements a
-classical algorithm for point-to-point (unicast) causal
-delivery~\cite{Schiper1989}. Note the Ruby \texttt{import} statement on
+classical algorithm for point-to-point (unicast) causal delivery proposed by
+Schiper et al.~\cite{Schiper1989}. Note the Ruby \texttt{import} statement on
 line~\ref{line:causal-d-import}, which loads the \lang state declarations and
 statements from the \texttt{VectorClock} module.
 

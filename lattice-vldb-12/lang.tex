@@ -385,17 +385,14 @@ referenced by the lhs.
 
 \subsubsection{Collections with embedded lattice values}
 \label{sec:lattice-embedding}
-
-\jmh{You know my gripes here.}
-
 It would be convenient to allow lattice elements to be used as attributes of
 tuples in Bloom collections. In addition to easing interoperability, Bloom
 provides several facilities (e.g., network communication, persistent storage,
-module interfaces) as collections with special semantics.  It would be
+module interfaces) as collections with special semantics, and it would be
 unfortunate if a redundant set of facilities was required to support
 lattice-based code. A simple solution would be to extract the underlying Ruby
-value from the lattice element (e.g., using the \texttt{reveal} method).
-However, that would introduce needless non-monotonicity into the program.
+value from the lattice element (via the \texttt{reveal} method).  However, that
+would introduce needless non-monotonicity into the program.
 
 Storing lattice elements as attributes of tuples in set-oriented collections
 introduces several challenges. Consider a simple \lang statement that derives
@@ -403,15 +400,14 @@ tuples with a lattice element as an attribute:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, lat_foo]}
 \end{verbatim}
-where \texttt{t1} and \texttt{t2} are Bloom relations and \texttt{lat\_foo}
-identifies a lattice; suppose that the first column of \texttt{t1} is the
-relation's key. The value associated with \texttt{lat\_foo} can change over the
-course of the fixpoint computation (specifically, it can grow ``upward''
-according to the lattice's partial order, as more values are merged into the
-lattice). Implemented naively, this might result in multiple \texttt{t1} tuples
-with different values for the second attribute, which would violate
-\texttt{t1}'s key (the first column of \texttt{t1} would not functionally
-determine a single value for the second column).
+where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{lat\_foo}
+identifies a lattice, and the first column of \texttt{t1} is the collection's
+key. The value associated with \texttt{lat\_foo} can change over the course of a
+single timestep (specifically, \texttt{lat\_foo} can grow ``upward'' according
+to the lattice's partial order). Implemented naively, this might result in
+multiple \texttt{t1} tuples with different values for the second attribute,
+which would violate \texttt{t1}'s key (the first column of \texttt{t1} would not
+functionally determine a single value for the second column).
 
 This problem could be avoided by placing constraints on the evaluation order of
 statements: for example, we could require that all potential changes to
