@@ -2,8 +2,8 @@
 \label{sec:intro} 
 Although distributed programming has become an essential and commonplace task,
 it remains very challenging for most developers to write correct distributed
-programs. The inherent difficulties of distributed computing---concurrency,
-asynchrony, and partial failure---are exacerbated by the scale at which modern
+programs. The inherent difficulties of distributed computing---asynchrony,
+concurrency, and partial failure---are exacerbated by the scale at which modern
 distributed systems operate.
 
 % remind reviewers that it's a database problem. can remove if accepted! 
@@ -54,7 +54,7 @@ reasoning about distributed consistency. Intuitively, a \emph{monotonic} program
 computes more information over time---it never ``retracts'' an earlier
 conclusion in the face of new information. We proposed the CALM
 theorem, which established that all monotonic programs
-are eventually consistent~\cite{Hellerstein2010,Ameloot2011,dedalus-pods12-tr}. Monotonicity of
+are eventually consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-pods12-tr}. Monotonicity of
 a Datalog-style program is straightforward to determine conservatively from
 syntax, so the CALM theorem provides the basis for a simple analysis technique
 for verifying the consistency of distributed programs. We
@@ -92,22 +92,31 @@ database relations. We also describe how an existing Datalog engine can be
 extended to support lattices with relatively minor changes.
 \end{enumerate}
 
-\subsection{Beyond Confluence}
+\subsection{Beyond confluence}
 Both Convergent Objects and Monotonic Logic provide eventual consistency in the face of message delay and reordering.  In fact they provide an even stronger guarantee than consistency: {\em confluent} (i.e., deterministic) outcomes.  However, many distributed applications are not intended to be confluent.  Instead, they use coordination to achieve {\em controlled non-determinism}: the ability for timing conditions to affect the choice of one among many acceptable outcomes. This includes applications that require serializability or causal consistency, both of which employ coordination to stay within a ``family'' of acceptable timing schedules.  
 
 The coordination protocols used for controlled non-determinism are expressible in Bloom, but typical implementations are not syntactically monotonic~\cite{Alvaro2011}.  In many cases, however, these protocols work in a monotonic fashion, providing distributed barriers in computation by using constructs like arrays of mutable counters.  These protocols can be quite directly mapped to \lang using lattices.  This further improves the fit between Bloom's logic programming roots and standard practice in distributed programming.  On a more concrete basis, \lang can provide strong monotonicity guarantees for these coordination constructs.  This can ensure, for example, that a barrier-inducing protocol does indeed ``coordinate'' correctly: it monotonically transitions from ``Wait'' to ``Go''.
 
 \subsection{Outline}
 % Explain how lattices generalize monotonic datalog
-The remainder of the paper proceeds as follows.  Section~\ref{sec:background} provides background on Bloom and CALM.  In Section~\ref{sec:lang} we introduce \lang, an extension of Bloom that supports lattices, including cross-lattice morphisms and monotonic functions. We detail the built-in lattice types provided by \lang and show how developers can define new lattices (Section~\ref{sec:lattice-builtins}).  We also describe how the CALM analysis extends to \lang (\ref{sec:calmL}).  In Section~\ref{sec:impl}, we describe the modifications we made to our previous Bloom runtime to support \lang, including our extension to semi-naive evaluation that supports both lattices and relations.  In Sections~\ref{sec:carts} and~\ref{sec:causal}, we consider two case studies from the literature.  
-First we revisit the simple e-commerce scenario presented in Alvaro et al., in
-which clients interact with a replicated shopping cart
-service~\cite{Alvaro2011}. We show how \lang can be used to make the
-``checkout'' operation monotonic, despite the fact that it requires
-aggregating over a distributed data set.
-Second, we use \lang to implement vector clocks and causal delivery, two
-standard building blocks for distributed programming that are used in non-confluent settings. We show how both
-algorithms can be realized as concise, provably monotonic \lang programs.
+The remainder of the paper proceeds as follows.  Section~\ref{sec:background}
+provides background on Bloom and CALM.  In Section~\ref{sec:lang} we introduce
+\lang, an extension of Bloom that supports lattices, including cross-lattice
+morphisms and monotonic functions. We detail the built-in lattice types provided
+by \lang (Section~\ref{sec:lattice-builtins}) and show how developers can define
+new lattices (Section~\ref{sec:lattice-api}).  We also describe how the
+CALM analysis extends to \lang (\ref{sec:calmL}).  In Section~\ref{sec:impl}, we
+describe the modifications we made to our previous Bloom runtime to support
+\lang, including our extension to semi-naive evaluation that supports both
+lattices and relations.  In Sections~\ref{sec:carts} and~\ref{sec:causal}, we
+consider two case studies from the literature.  First we revisit the simple
+e-commerce scenario presented in Alvaro et al., in which clients interact with a
+replicated shopping cart service~\cite{Alvaro2011}. We show how \lang can be
+used to make the ``checkout'' operation monotonic, despite the fact that it
+requires aggregating over a distributed data set.  Second, we use \lang to
+implement vector clocks and causal delivery, two standard building blocks for
+distributed programming that are used in non-confluent settings. We show how
+both algorithms can be realized as concise, provably monotonic \lang programs.
 The paper concludes with discussion of related and future work.
 
   % We generalize the CALM analysis to programs that contain both lattices and
