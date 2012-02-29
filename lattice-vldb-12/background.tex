@@ -52,9 +52,9 @@ messages) are received and represented as facts in collections. In the second
 phase, the program's statements are evaluated over local state to compute all
 the additional facts that can be derived from the current collection
 contents. In some cases (described below), a derived fact is intended to achieve
-a ``side effect,'' such as modifying local state or sending a network message to
-another Bloom instance.  These effects are deferred during the second phase of
-the timestep; the third phase is devoted to carrying them out.
+a ``side effect,'' such as modifying local state or sending a network message.
+These effects are deferred during the second phase of the timestep; the third
+phase is devoted to carrying them out.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside Ruby programs. Figure~\ref{fig:bloom-spaths} shows a Bloom
@@ -62,7 +62,7 @@ program represented as an annotated Ruby class. A small amount of imperative
 Ruby code is needed to instantiate the Bloom program and begin executing it;
 more details are available on the Bloom language website~\cite{bloom}.
 
-\subsubsection{Data Model}
+\subsubsection{Data model}
 \begin{table}[t]
 \begin{tabular}{|l|p{2.32in}|}
 \hline
