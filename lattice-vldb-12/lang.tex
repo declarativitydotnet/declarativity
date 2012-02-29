@@ -257,7 +257,7 @@ functions of those lattices. For example, consider two elements of the
 
 The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
-set will contain only non-negative numbers, the sum of those numbers increases
+set will only contain non-negative numbers, the sum of those numbers increases
 monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
 \texttt{lpset}.%  Inserting a negative value (or a non-number) into an
 % \texttt{lpset} results in a Ruby exception.
@@ -299,13 +299,12 @@ end
 \end{figure}
 
 \label{sec:lattice-api}
-The builtin lattices provided by \lang are sufficient to express many
-distributed protocols---for example, the causal delivery protocol described in
-Section~\ref{sec:causal}. However, \lang also allows developers to create
-custom lattices to capture domain-specific behavior. To define a lattice, a
-developer creates a Ruby class that meets a certain API
-contract. Figure~\ref{fig:lattice-lset} contains the Ruby code that implements
-the \texttt{lset} lattice.
+The builtin lattices are sufficient to express many distributed protocols, such
+as the causal delivery protocol described in Section~\ref{sec:causal}. However,
+\lang also allows developers to create custom lattices to capture
+domain-specific behavior. To define a lattice in Bud, a developer creates a Ruby
+class that meets a certain API contract. Figure~\ref{fig:lattice-lset} contains
+the Ruby code for the the \texttt{lset} lattice.
 
 A lattice class must inherit from the builtin \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -322,10 +321,9 @@ must also define two methods:
   associative, and idempotent. Note that \emph{e} and \emph{self} must be
   instances of the same class.
 \end{compactitem}
-In addition to the constructor and the merge method, lattices can also define
-any number of monotone functions, morphisms, and non-monotonic methods. The
-syntax for declaring morphisms and monotone functions can be seen in
-lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
+Lattices can also define any number of monotone functions, morphisms, and
+non-monotonic methods. The syntax for declaring morphisms and monotone functions
+can be seen in lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
 \ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
 Figure~\ref{fig:lattice-lset}, respectively. Because lattice methods can contain
 arbitrary Ruby code, the lattice developer should be careful to ensure that
@@ -333,12 +331,12 @@ lattice methods satisfy the appropriate algebraic properties. For example,
 implementing a lattice method might require examining the underlying Ruby value
 contained in another lattice element. This can be done using the \texttt{reveal}
 method (e.g., line~\ref{line:lset-reveal} in Figure~\ref{fig:lattice-lset}).
-Since \texttt{reveal} is not itself monotonic, lattice developers should use it
-carefully when implementing monotone functions and morphisms.
+Since \texttt{reveal} is not itself monotonic, developers should use it
+carefully when implementing monotonic lattice methods.
 % Tweak this text
 
 Because Ruby is dynamically typed, there will often be constraints on the legal
-inputs to these functions that cannot be enforced until runtime. For example,
+inputs to lattice methods that cannot be enforced until runtime. For example,
 initializing a \texttt{lbool} lattice with a non-boolean value is not
 supported. The developer of a lattice implementation should check for invalid
 inputs and signal errors by raising a Ruby exception.
@@ -359,8 +357,8 @@ class.
 
 \subsection{Integration with set-oriented logic}
 \label{sec:bloom-interop}
-\lang provides two features to ease integration of lattice-based code with
-traditional Bloom programs that manipulate set-oriented collections.
+\lang provides two features to ease integration of lattice-based code with Bloom
+programs that manipulate set-oriented collections.
 
 \subsubsection{Converting collections into lattices}
 % XXX: this ignores the fact that Bloom collections consist of sets of tuples,
@@ -398,14 +396,14 @@ tuples with a lattice element as a column:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, cnt]}
 \end{verbatim}
-where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is
-a lattice, and the first column of \texttt{t1} is the collection's key. The
-value associated with \texttt{cnt} can change over the course of a single
-timestep (specifically, \texttt{cnt} can move ``upward'' according to the
-lattice's partial order). This might result in multiple \texttt{t1} tuples with
-different values for the second column, which would violate \texttt{t1}'s
-key: the first column of \texttt{t1} would not functionally determine a single
-value for the second column.
+where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
+lattice, and the first column of \texttt{t1} is the collection's key. The value
+associated with \texttt{cnt} can change over the course of a single timestep
+(\texttt{cnt} can move ``upward'' according to the lattice's partial
+order). This might result in multiple \texttt{t1} tuples with different values
+for the second column, which would violate \texttt{t1}'s key: the first column
+of \texttt{t1} would not functionally determine a single value for the second
+column.
 
 This problem could be avoided by placing constraints on the evaluation order of
 statements: for example, we could require that all potential changes to
@@ -425,17 +423,15 @@ merge procedure is guaranteed by the lattice properties: the final value is
 deterministic and is the least upper bound of all the merged
 values. Nevertheless, we felt this behavior should be manifest in the program
 syntax because tuples in Datalog relations are traditionally immutable. Hence,
-this ``lattice merge'' feature is only enabled for columns that are prefixed
-with ``\texttt{!}'' in collection declarations
-(e.g.,line~\ref{line:ddl-lattice-merge} in
-Figure~\ref{fig:vector-clock-src}). If the annotation is not specified, lattice
-values can still be embedded in Bloom collections, but it is up to the
-programmer to avoid key constraint violations.
+this ``lattice merge'' behavior is only enabled for columns that are prefixed
+with ``\texttt{!}'' in collection declarations (e.g.,
+line~\ref{line:ddl-lattice-merge} in Figure~\ref{fig:vector-clock-src}). If the
+annotation is not specified, lattice elements embedded in Bloom collections
+cannot change; it is up to the programmer to avoid key constraint violations.
 
-For similar reasons, we currently disallow lattice values from being used as
-keys in Bloom collections. It might be possible to relax this restriction in
-certain ``safe'' cases, but we have not found this limitation to be problematic
-to date.
+For similar reasons, lattice elements cannot be used as keys in Bloom
+collections. It might be possible to relax this restriction in certain ``safe''
+cases, but we have not found this limitation to be problematic to date.
 
 \subsection{Confluence in \lang}
 \label{sec:calmL}
