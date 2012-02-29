@@ -13,7 +13,7 @@ When designing \lang, we decided to extend Bloom to include support for lattices
 rather than building a new language from scratch. Hence, \lang is backward
 compatible with Bloom and was implemented with relatively minor changes to the
 Bud runtime. This design decision also required that we consider how code
-written using lattices should interoperate with traditional Bloom relations; we
+written using lattices should interoperate with traditional Bloom collections. We
 added several \lang features to ease this interoperability, which we describe in
 Section~\ref{sec:bloom-interop}.
 
@@ -24,12 +24,12 @@ where $S$ is a poset, $\lor$ is a binary operator (called ``join'' or ``least
 upper bound''), and $\bot \in S$. $\lor$ is associative, commutative, and
 idempotent. For all $x, y \in S$, $x \lor y = z$, where $x \leq_S z, y \leq_S
 z$, and there is no $z' \ne z \in S$ such that $z' \leq_S z$ (where $\leq_S$ is
-the partial order of poset $S$). Note that although the underlying set only has
-a partial order, the least upper bound is defined for all elements $x,y \in
-S$. The distinguished element $\bot$ is the smallest element in $S$; this
-implies that $x \lor \bot = x$ for all $x \in S$. For brevity, we use the term
-``lattice'' to mean ``bounded join semilattice'' in the rest of this paper. We
-also use the informal term ``merge function'' to mean ``least upper bound.''
+the partial order of poset $S$). Note that although $S$ only has a partial
+order, the least upper bound is defined for all elements $x,y \in S$. The
+distinguished element $\bot$ is the smallest element in $S$; this implies that
+$x \lor \bot = x$ for all $x \in S$. For brevity, we use the term ``lattice'' to
+mean ``bounded join semilattice'' in the rest of this paper. We also use the
+informal term ``merge function'' to mean ``least upper bound.''
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
@@ -79,8 +79,8 @@ end
 \end{figure}
 
 \lang allows both lattices and collections to be used to represent state. A
-lattice is analogous to a collection type in Bloom, while a lattice element
-corresponds to the particular contents of a collection. For example, the
+lattice is analogous to a collection type in Bloom, while a \emph{lattice
+  element} corresponds to a particular collection. For example, the
 \texttt{lset} lattice is similar to the \texttt{table} collection type provided
 by Bloom; an element of the \texttt{lset} lattice is a particular set. In the
 terminology of object-oriented programming, a lattice is a class that obeys a
@@ -128,22 +128,21 @@ in channels (Section~\ref{sec:bloom-interop}).
 
 \subsubsection{Lattice methods}
 \lang statements compute values over lattices by invoking methods on lattice
-elements. Just as a subset of the relational operators are monotonic, some
-lattice methods are monotone functions (as defined in
-Section~\ref{sec:lattice-defn}). A monotone lattice method guarantees that, if
-the lattice on which the method is invoked grows (according to the lattice's
-partial order), the value returned by the method will grow (according to the
-return value's lattice type). From a CRDT perspective, a lattice's monotone
-methods are a set of ``safe'' operations that can be invoked in a distributed
-setting without risk of inconsistency.
+elements. Just as a subset of the relational algebra is monotonic, some lattice
+methods are monotone functions (as defined in Section~\ref{sec:lattice-defn}). A
+monotone lattice method guarantees that, if the lattice on which the method is
+invoked grows (according to the lattice's partial order), the value returned by
+the method will grow (according to the return value's lattice type). From a CRDT
+perspective, a lattice's monotone methods are a set of ``safe'' operations that
+can be invoked in a distributed setting without risk of inconsistency.
 
-A lattice method's signature indicates its monotonicity properties. More
-precisely, \lang distinguishes between methods that are monotone and a subset of
-monotone methods that are \emph{morphisms}. Section~\ref{sec:lattice-defn}
-defines the properties that a morphism must satisfy, but the intuition is that a
-morphism on lattice $T$ can be distributed over $T$'s least upper bound
-operator. Morphisms can be evaluated more efficiently than monotone functions,
-as we discuss in Section~\ref{sec:lattice-eval-strat}.
+A lattice method's signature indicates its monotonicity properties. \lang
+distinguishes between methods that are monotone and a subset of monotone methods
+that are \emph{morphisms}. Section~\ref{sec:lattice-defn} defines the properties
+that a morphism must satisfy, but the intuition is that a morphism on lattice
+$T$ can be distributed over $T$'s least upper bound operator. Morphisms can be
+evaluated more efficiently than monotone functions, as we discuss in
+Section~\ref{sec:lattice-eval-strat}.
 
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
