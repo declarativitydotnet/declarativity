@@ -17,16 +17,22 @@ inputs to lattice merge functions. We also plan to explore a restricted DSL for
 writing lattice methods, which would make formal verification of correctness an
 easier task.
 
-\lang significantly increases the number of distributed protocols that can be
-expressed in a monotonic fashion. Nevertheless, we expect that some programs
-will remain non-monotonic, or at least contain a mix of monotonic and
-non-monotonic components. We are investigating how non-monotonicity might be
-represented within the lattice framework. An interesting observation is that the
-dangers of distributed non-monotonicity can be tamed by using a coordination
-protocol, but many coordination protocols (such as Paxos and two-phase commit)
-are monotonic!
-% say more here?
+Each lattice includes $\bot$, a distinguished ``smallest element.'' In many
+programs there is also a notion of a ``largest element'': a value that, once
+reached, will never be exceeded. \texttt{lbool} has a largest value
+(\texttt{true}), as does the \texttt{lcart} lattice presented in
+Section~\ref{sec:monotone-checkout}. We are investigating how our analysis
+techniques could be improved by introducing more direct support for $\top$
+values into \lang. For example, a lattice that has reached $\top$ is immutable,
+and hence any function can safely be applied to it, whether monotone or not.
 
-% Support for correctness criteria other than confluence
+By allowing a more general notion of monotonicity, \lang significantly increases
+the number of programs that can be shown to be confluent. However, many
+distributed protocols are not intended to be confluent---rather, they exhibit
+\emph{controlled non-determinism}, in which timing conditions affect the choice
+of one among several acceptable outcomes. Vector clocks and causal delivery are
+both examples of this kind of behavior. Although \lang is still useful---the
+local correctness properties of lattices help programmers to reason about the
+behavior of individual program values---we are also investigating\ldots
 
 % Support a notion of sealing?
