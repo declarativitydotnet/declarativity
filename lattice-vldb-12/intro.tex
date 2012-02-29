@@ -85,11 +85,15 @@ function (set union) and partial order (set containment).
   significantly more liberal in identifying monotonic code that is confluent
   without the need for coordination.  This enables the coordination-free use of
   widely used monotonic constructs, including timestamps and sequence numbers.
-\item {\lang}'s lattice framework provides consistency-preserving mappings between lattices via \emph{morphisms} and \emph{monotonic functions}.  As a result, monotonicity guarantees---and hence consistency guarantees---can be established on code that spans multiple lattices.  This forms a useful extension to the CRDT framework, independent of \lang.
-\item For efficient execution, we can extend the standard Datalog semi-naive
-evaluation scheme~\cite{Balbin1987} to support both lattices and traditional
-database relations. We also describe how an existing Datalog engine can be
-extended to support lattices with relatively minor changes.
+\item {\lang}'s lattice framework provides consistency-preserving mappings
+  between lattices via \emph{morphisms} and \emph{monotonic functions}.  As a
+  result, monotonicity guarantees---and hence consistency guarantees---can be
+  established on code that spans multiple lattices.  This forms a useful
+  extension to the CRDT framework, independent of \lang.
+\item For efficient execution, we extend the standard Datalog semi-naive
+  evaluation scheme~\cite{Balbin1987} to support both lattices and traditional
+  database relations. We also describe how an existing Datalog engine can be
+  extended to support lattices with relatively minor changes.
 \end{enumerate}
 
 \subsection{Beyond confluence}
