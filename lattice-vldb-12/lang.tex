@@ -372,14 +372,14 @@ set-oriented collection into a lattice. If a statement has a Bloom collection on
 the rhs and a lattice on the lhs, the collection is converted into a lattice
 element by ``folding'' the lattice's merge function over the collection. That
 is, each element of the collection is converted to a lattice element (by
-invoking the lattice constructor), and then the set of lattice elements are
+invoking the lattice constructor) and then the resulting lattice elements are
 merged together via repeated application of the lattice's \texttt{merge}
 method. In our experience, this is usually the behavior intended by the user.
 
 For example, line~\ref{line:quorum-set-accum} of Figure~\ref{fig:lattice-quorum}
 contains a Bloom collection on the rhs and an \texttt{lset} lattice on the
 lhs. This statement is implemented by constructing a singleton \texttt{lset} for
-each element of the rhs collection and then merging the sets together. The
+each fact in the rhs collection and then merging the sets together. The
 resulting \texttt{lset} is then merged with the \texttt{votes} lattice
 referenced by the lhs.
 
