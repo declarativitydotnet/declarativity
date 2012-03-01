@@ -1,12 +1,13 @@
 \section{Conclusion}
 
-In this paper, we proposed \lang, a variant of Datalog that allows programs to
-be written using arbitrary lattices. \lang is particularly valuable for
-confluent distributed programming---by expanding the space of monotonic
-programs, \lang enables more programs to be verified as confluent by the CALM
-analysis. By allowing application-specific notions of ``progress'' to be
-represented as lattices and by enabling safe mappings between lattices, \lang
-allows concise distributed programs that have clear semantic properties.
+In this paper, we proposed \lang, a distributed variant of Datalog that extends logic programming with join semi-lattices. \lang is particularly valuable for enabling
+coordination-free, consistent distributed programming, overcoming key hurdles in prior work.  Like convergent module proposals, it allows application-specific notions of ``progress'' to be
+represented as lattices, and goes further to enabling safe mappings between lattices.  
+\lang improves upon our own earlier work by expanding the space of recognizably monotonic
+programs, enabling more programs to be verified as confluent by the CALM
+analysis.  Based on our experience to date, we feel that \lang provides developers with a mixture of conciseness and program analysis that are significantly richer than earlier approaches to distributed programming.
+
+\input{discussion}
 
 \begin{comment}
 \jmh{Some thoughts here to start.  More work this afternoon.}
