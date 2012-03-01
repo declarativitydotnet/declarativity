@@ -100,6 +100,67 @@ declared, it is initially bound to the value $\bot$, the ``least element'' in
 the lattice's underlying poset. For example, an \texttt{lset} lattice initially
 contains the empty set.
 
+\begin{table*}[t]
+\begin{center}
+\begin{tabular}{|l|l|l|l|p{1.57in}|p{1.09in}|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Least element ($\bot$)} & \textbf{Merge($a,b$)} & \textbf{Morphisms} &
+\textbf{Monotone functions}\\
+\hline
+\hline
+\texttt{lbool} & Boolean lattice (false $\to$ true) & \texttt{false} & $a \lor
+b$ & \texttt{when\_true}() $\to$ \texttt{v} & \\
+\hline
+\texttt{lmax} & Max over an ordered domain & $-\infty$ & $max(a, b)$ &
+\texttt{gt(n)} $\to$ \texttt{lbool}\newline
+\texttt{gt\_eq(n)} $\to$ \texttt{lbool}\newline
+\texttt{$\mathtt{+}$(lmax)} $\to$ \texttt{lmax}\newline
+\texttt{$\mathtt{-}{}$(lmax)} $\to$ \texttt{lmax} & \\
+\hline
+\texttt{lmin} & Min over an ordered domain & $\infty$ & $min(a, b)$ &
+\texttt{lt(n)} $\to$ \texttt{lbool}\newline
+\texttt{lt\_eq(n)} $\to$ \texttt{lbool}\newline
+\texttt{$\mathtt{+}$(lmin)} $\to$ \texttt{lmin}\newline
+\texttt{$\mathtt{-}{}$(lmin)} $\to$ \texttt{lmin} & \\
+\hline
+\texttt{lset} & Set of values & empty set & $a \cup b$ &
+\texttt{intersect(lset)} $\to$ \texttt{lset}\newline
+\texttt{product(lset)} $\to$ \texttt{lset}\newline
+\texttt{project(lset)} $\to$ \texttt{lset}\newline
+\texttt{contains?(v)} $\to$ \texttt{lbool}
+& \texttt{size()} $\to$ \texttt{lmax}\\
+\hline
+\texttt{lpset} & Set of non-negative numbers & empty set & $a \cup b$ &
+\texttt{intersect(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{product(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{project(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{contains?(v)} $\to$ \texttt{lbool}
+& \texttt{size()} $\to$ \texttt{lmax}\newline
+\texttt{sum()} $\to$ \texttt{lmax} \\
+\hline
+\texttt{lbag} & Multiset of values & empty multiset & $a \cup b$ &
+\texttt{intersect(lbag)} $\to$ \texttt{lbag}\newline
+\texttt{project(lbag)} $\to$ \texttt{lbag}\newline
+\texttt{mult(v)} $\to$ \texttt{lmax}\newline
+\texttt{contains?(v)} $\to$ \texttt{lbool}\newline
+\texttt{$\mathtt{+}$(lbag)} $\to$ \texttt{lbag}
+& \texttt{size()} $\to$ \texttt{lmax}\\
+\hline
+\texttt{lmap} & Map from key to lattice values & empty map & see text&
+\texttt{intersect(lmap)} $\to$ \texttt{lmap}\newline
+\texttt{key\_set(lmap)} $\to$ \texttt{lset}\newline
+\texttt{at(v)} $\to$ \texttt{any-lattice}\newline
+\texttt{key?(v)} $\to$ \texttt{lbool}
+& \texttt{size()} $\to$ \texttt{lmax}\\
+\hline
+\end{tabular}
+\caption{Builtin lattices in \lang. \texttt{v} denotes a Ruby value and
+  \texttt{n} denotes a number.}
+\label{tbl:builtin-lattices}
+\end{center}
+\end{table*}
+
+
 \subsubsection{Statements in \lang}
 Statements take the same form in both Bloom and \lang: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
@@ -170,67 +231,6 @@ subsequent code uses the value in a monotonic fashion.
 
 \subsection{Builtin lattices}
 \label{sec:lattice-builtins}
-
-\begin{table*}[t]
-\begin{center}
-\begin{tabular}{|l|l|l|l|p{1.57in}|p{1.09in}|}
-\hline
-\textbf{Name} & \textbf{Description} & \textbf{Least element ($\bot$)} & \textbf{Merge($a,b$)} & \textbf{Morphisms} &
-\textbf{Monotone functions}\\
-\hline
-\hline
-\texttt{lbool} & Boolean lattice (false $\to$ true) & \texttt{false} & $a \lor
-b$ & \texttt{when\_true}() $\to$ \texttt{v} & \\
-\hline
-\texttt{lmax} & Max over an ordered domain & $-\infty$ & $max(a, b)$ &
-\texttt{gt(n)} $\to$ \texttt{lbool}\newline
-\texttt{gt\_eq(n)} $\to$ \texttt{lbool}\newline
-\texttt{$\mathtt{+}$(lmax)} $\to$ \texttt{lmax}\newline
-\texttt{$\mathtt{-}{}$(lmax)} $\to$ \texttt{lmax} & \\
-\hline
-\texttt{lmin} & Min over an ordered domain & $\infty$ & $min(a, b)$ &
-\texttt{lt(n)} $\to$ \texttt{lbool}\newline
-\texttt{lt\_eq(n)} $\to$ \texttt{lbool}\newline
-\texttt{$\mathtt{+}$(lmin)} $\to$ \texttt{lmin}\newline
-\texttt{$\mathtt{-}{}$(lmin)} $\to$ \texttt{lmin} & \\
-\hline
-\texttt{lset} & Set of values & empty set & $a \cup b$ &
-\texttt{intersect(lset)} $\to$ \texttt{lset}\newline
-\texttt{product(lset)} $\to$ \texttt{lset}\newline
-\texttt{project(lset)} $\to$ \texttt{lset}\newline
-\texttt{contains?(v)} $\to$ \texttt{lbool}
-& \texttt{size()} $\to$ \texttt{lmax}\\
-\hline
-\texttt{lpset} & Set of non-negative numbers & empty set & $a \cup b$ &
-\texttt{intersect(lpset)} $\to$ \texttt{lpset}\newline
-\texttt{product(lpset)} $\to$ \texttt{lpset}\newline
-\texttt{project(lpset)} $\to$ \texttt{lpset}\newline
-\texttt{contains?(v)} $\to$ \texttt{lbool}
-& \texttt{size()} $\to$ \texttt{lmax}\newline
-\texttt{sum()} $\to$ \texttt{lmax} \\
-\hline
-\texttt{lbag} & Multiset of values & empty multiset & $a \cup b$ &
-\texttt{intersect(lbag)} $\to$ \texttt{lbag}\newline
-\texttt{project(lbag)} $\to$ \texttt{lbag}\newline
-\texttt{mult(v)} $\to$ \texttt{lmax}\newline
-\texttt{contains?(v)} $\to$ \texttt{lbool}\newline
-\texttt{$\mathtt{+}$(lbag)} $\to$ \texttt{lbag}
-& \texttt{size()} $\to$ \texttt{lmax}\\
-\hline
-\texttt{lmap} & Map from key to lattice values & empty map & see text&
-\texttt{intersect(lmap)} $\to$ \texttt{lmap}\newline
-\texttt{key\_set(lmap)} $\to$ \texttt{lset}\newline
-\texttt{at(v)} $\to$ \texttt{any-lattice}\newline
-\texttt{key?(v)} $\to$ \texttt{lbool}
-& \texttt{size()} $\to$ \texttt{lmax}\\
-\hline
-\end{tabular}
-\caption{Builtin lattices in \lang. \texttt{v} denotes a Ruby value and
-  \texttt{n} denotes a number.}
-\label{tbl:builtin-lattices}
-\end{center}
-\end{table*}
-
 
 Table~\ref{tbl:builtin-lattices} lists the lattices provided by \lang. The
 builtin lattices provide support for several different notions of ``progress'':
