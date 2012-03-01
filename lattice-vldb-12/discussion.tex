@@ -17,7 +17,7 @@ inputs to lattice merge functions. We also plan to explore a restricted DSL for
 writing lattice methods, which would make formal verification of correctness an
 easier task.
 
-Each lattice includes $\bot$, a distinguished ``smallest element.'' A natural
+Every lattice includes $\bot$, a distinguished ``smallest element.'' A natural
 extension is to consider whether any lattices would support $\top$, a ``greatest
 element.'' In fact, such a value is already supported by \texttt{lbool} ($\top =
 \mathtt{true}$), in addition to the \texttt{lcart} lattice discussed in
@@ -27,8 +27,8 @@ it (whether monotone or not), without risking inconsistency. Since the merge
 function for $\top$ will always yield $\top$, this might allow a more efficient
 representation (e.g., in a complete \texttt{lcart}, we need only store the
 ``summarized'' cart state, not the log of client operations). We are
-investigating how our program analysis could be enhanced to provide special
-support for lattices with $\top$ values.
+investigating how \lang could be enhanced to provide special support for
+lattices with $\top$ values.
 
 As discussed in Section~\ref{sec:causal}, \lang is still useful even when
 confluence is not an appropriate correctness criteria. Nevertheless, a global
