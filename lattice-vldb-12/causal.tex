@@ -52,7 +52,7 @@ module VectorClock
   end
 
   bootstrap do
-    my_vc <= {ip_port => Bud::MaxLattice.new(0)}
+    my_vc <= {ip_port => Bud::MaxLattice.new(0)} (*\label{line:vc-init-clock}*)
   end
 
   bloom do
@@ -77,13 +77,11 @@ system~\cite{Fidge1988,Mattern1989}.  A vector clock is an array containing a
 logical clock for each node in the distributed system. Each node keeps a local
 vector clock that it updates when it sends and receives messages; the node's
 vector clock reflects how up-to-date its local knowledge is with respect to the
-other nodes in the system. Vector clocks can be used to assign a partial order
-over the events in the system that agrees with the causal relationship between
-events.
+other nodes in the system.
 
-Each node $n$ initializes its vector clock to $\{n \rightarrow 0\}$. A node
-updates its vector clock $v$ by following three rules when sending and receiving
-events:
+In a system that uses vector clocks, each node $n$ initializes its local vector
+clock $v[n] = 0$. A node updates $v$ by following three rules when sending and
+receiving events:
 \begin{compactenum}
 \item
   Before sending a message, $n$ increments $v[n]$ and includes $v$ in the
@@ -92,7 +90,9 @@ events:
   Upon receipt of a message, $n$ increments $v[n]$.
 \item
   Upon receipt of a message, $n$ merges the vector clock in the message with its
-  own vector clock by taking the element-wise max of the logical clock values.
+  own vector clock by taking the element-wise max of the logical clock
+  values.\footnote{If a clock value for a node occurs in one vector clock but
+    not the other, the missing clock value is assumed to be $0$.}
 \end{compactenum}
 Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
 clocks in \lang. A vector clock is represented as a map lattice that associates
@@ -107,7 +107,8 @@ node's vector clock, it appears in \texttt{out\_msg\_vc}.
 The key logic appears in lines \ref{line:vc-out-increment},
 \ref{line:vc-in-increment}, and \ref{line:vc-in-merge}: these three statements
 are a direct translation of the three rules for updating a vector clock given
-above. Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated
+above. Line~\ref{line:vc-init-clock} initializes each node's local vector clock
+and line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated
 vector clock value.  Note that if multiple outgoing messages are sent in the
 same \lang timestep, they will contain the same embedded vector clock (and
 \texttt{my\_vc} will only be incremented once). This is reasonable, since those
@@ -120,23 +121,22 @@ vector clocks in traditional programming languages. For example, the
 of 216 lines of Java source code, not including whitespace or
 comments~\cite{voldemort-vector-clock}.
 
-We would not expect an implementation of vector clocks to be confluent;
-accordingly, Figure~\ref{fig:vector-clock-src} is not a monotonic \lang program
-because of the use of \texttt{scratch} collections
+As noted above, we would not expect an implementation of vector clocks to be
+confluent; accordingly, Figure~\ref{fig:vector-clock-src} is not a monotonic
+\lang program because of the use of \texttt{scratch} collections
 (lines~\ref{line:ddl-scratch-start}--\ref{line:ddl-scratch-end}). Scratch
 collections are not monotonic because they are emptied at the start of each
-timestamp. Although the vector clock program is not confluent, all the
-statements in the program apply monotone lattice methods. Hence, \texttt{my\_vc}
-increases monotonically and \texttt{next\_vc} is at least as large as
+timestamp. Although the vector clock program is not confluent, the statements in
+the program only invoke monotone lattice methods. Hence, \texttt{my\_vc}
+increases monotonically, and \texttt{next\_vc} is greater than or equal to both
 \texttt{my\_vc} and all the messages received in the current timestep. Both of
 these facts reflect our intuition about how vector clocks change over time.
 
-Note that because none of the statements in Figure~\ref{fig:vector-clock-src}
-invokes a non-monotonic operator, the statements can be executed in any
-order. The ``lattice embedding'' feature described in
-Section~\ref{sec:lattice-embedding} ensures that the \texttt{out\_msg\_vc} tuple
-contains a single vector clock that reflects all the messages received in the
-current timestep.
+Note that because the statements in Figure~\ref{fig:vector-clock-src} involve
+only monotonic operations, the statements can be executed in any order. The
+``lattice embedding'' feature described in Section~\ref{sec:lattice-embedding}
+ensures that the \texttt{out\_msg\_vc} tuple contains a single vector clock that
+reflects all the messages received in the current timestep.
 
 %  Vector clocks can also
 % be implemented in Bloom but they require the use of non-monotonic operators
@@ -214,3 +214,7 @@ increase. In this case, the message's vector clock is immutable (because it is
 embedded as a column of a collection that does not allow ``lattice merges''), so
 the predicate can be determined to be monotonic.
 
+Because causal delivery builds upon vector clocks, it is also not
+confluent. However, because the statements in
+Figure~\ref{fig:causal-delivery-src} only invoke monotone methods, we can see
+that a node's \texttt{ord\_buf} strictly increases over time.
