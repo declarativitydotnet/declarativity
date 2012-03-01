@@ -51,18 +51,19 @@ programmer still bears the burden of ensuring the consistency semantics of the
 entire program.
 
 \vspace{0.5em} \noindent
-
-\textbf{Monotonic Logic}: In recent work, we observed that the database theory
-literature on non-monotonic logic provides a promising starting point for
-reasoning about distributed consistency. Intuitively, a \emph{monotonic} program
-computes more information over time---it never ``retracts'' an earlier
-conclusion in the face of new information. We proposed the CALM
-theorem, which established that all monotonic programs
-are eventually consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-pods12-tr}. Monotonicity of
+\textbf{Monotonic Logic}: Many researchers have proposed the use of deductive
+database languages to enable declarative implementations of distributed systems
+(e.g.,~\cite{Abiteboul2011,Alvaro2010,Field2009}). In recent work, we observed
+that the database theory literature on non-monotonic logic provides a promising
+starting point for reasoning about distributed consistency. Intuitively, a
+\emph{monotonic} program computes more information over time---it never
+``retracts'' an earlier conclusion in the face of new information. We proposed
+the CALM theorem, which established that all monotonic programs are eventually
+consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-pods12-tr}. Monotonicity of
 a Datalog-style program is straightforward to determine conservatively from
 syntax, so the CALM theorem provides the basis for a simple analysis technique
-for verifying the consistency of distributed programs. We
-realized CALM analysis as part of Bloom, a Datalog-based DSL for distributed
+for verifying the consistency of distributed programs. We realized CALM analysis
+as part of Bloom, a Datalog-based DSL for distributed
 programming~\cite{Alvaro2011,bloom}.
 
 The original formulation of Bloom and CALM only verified the consistency of
@@ -77,9 +78,8 @@ increases monotonically and the threshold test ($\mathtt{count(votes)} > k$)
 also grows monotonically from False to True. But both of these constructs
 (upward-moving mutable variables and aggregates) are considered to be
 non-monotonic by the original CALM analysis.  As a result, the initial Bloom
-prototype would mistakenly suggest that the voting program would need to be
-augmented with a coordination protocol such as Paxos~\cite{Lamport1998} to
-ensure consistent results.
+prototype would mistakenly suggest that the voting program needs additional
+coordination logic to ensure consistent results.
 
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 
