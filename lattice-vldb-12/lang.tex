@@ -435,34 +435,30 @@ cases, but we have not found this limitation to be problematic to date.
 
 \subsection{Confluence in \lang}
 \label{sec:calmL}
+
 In this section, we describe how the notion of \emph{confluence} (invariance to
-message reordering) can be generalized from Bloom to \lang programs.  Recall
-that Bloom follows a timestepped execution model, where a local fixpoint is
-computed at each timestep.  The fixpoint is computed over node's local database,
-including any newly received network messages. The existence of this fixpoint is
-guaranteed by the Knaster-Tarski theorem~\cite{Tarski1955}, assuming all \lang
-operators are monotone.  The state of a program at a given timestamp is defined
-to be its fixpoint at that timestep.
+message reordering) can be generalized from Bloom to \lang programs.
+In prior work, we provided a rigorous model-theoretic characterization of confluence 
+for programs written in Dedalus~\cite{dedalus-pods12-tr}.  These results apply directly 
+to Bloom, whose semantics
+are identical to those of Dedalus.  The result of a distributed computation performed in
+Bloom may be viewed as the set of \emph{ultimate models} or eventual states of the program,
+given a fixed input and sufficient time for messages to be delivered.  
 
-We can also define notions of input and output to capture the {\em initial} and
-{\em eventual} states of the program.  The {\em input} to a \lang program is
-defined to be the initial contents of a set of special {\em input} relations or
-lattices---these are inflationary over time and may not occur on the lhs of
-statements.  The input to a program contains information about the partitioning
-of input values between the nodes.  The {\em ultimate model}, or eventual state
-of the program, is defined to be the eventual contents of a union across all
-nodes of a set of special {\em output} relations or lattices, which are
-inflationary over time, regardless of whether the \lang program is
-monotonic~\cite{dedalus-pods12-tr}.  These special lattices may not appear in a
-rule's body.  Like the input, information about the partitioning of the output
-between the nodes is included in the output.
+If a program has exactly one ultimate model for every fixed set of inputs, 
+we say that it is confluent: all message delivery orders result in
+the same eventual state.  Monotonicity and confluence are global properties of a 
+program, and a critical feature of Bloom is its ability to compose individual units
+of functionality while preserving the ability to characterize the consistency 
+state of the resulting composition.  
 
-A Bloom program is {\em confluent} if, for each input to the program, there is a
-unique ultimate model.  The existence of a unique ultimate model implies that
-non-determinism in message ordering does not affect the program result, which is
-sometimes a desirable correctness criterion for distributed programs.  If a
-Bloom program is monotonic, and does not exhibit message loss, then it is
-confluent~\cite{dedalus-pods12-tr}.  Similarly, if a \lang program is monotonic
-and has no message loss, then it is confluent because local fixpoints of
-monotonic operators are being computed over lattices that are inflating over
-time.
+To reason about confluence in \lang, we first observe that lattices are guaranteed 
+(as are CRDTs) to
+have inflationary behavior over time: a lattice value only increases.  Hence if we
+include lattices in the output of an otherwise confluent \lang program, 
+they will not increase the multiplicity of ultimate models.  It is not enough, 
+however, that this local property of lattice objects holds: we must also show that 
+anything a \lang program \emph{does} with a lattice value is monotonic.  Morphisms
+provide a mechanism for reasoning about compositions among lattices or between lattices
+and sets.  By including lattice morphisms among the ``safe,'' monotonic constructs provided
+by the Bloom language, we can easily extend our CALM analysis to \lang.
