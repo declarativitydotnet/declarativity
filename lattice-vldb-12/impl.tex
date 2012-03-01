@@ -49,13 +49,14 @@ the sizes of the incremental results produced in each round.  Thus it produces a
 different result than naive evaluation, which evaluates the \texttt{size}
 function against the complete database state in each round.
 
-Implementing semi-naive style evaluation for lattices was straightforward. For each lattice identifier $l$,
-we record two values: a ``total'' value (the least upper bound of the
-derivations made for $l$ in all previous rounds), and a ``delta'' value (the
-least upper bound of the derivations made for $l$ in the last round). We
-implemented a program rewrite that examines each \lang statement. If the
-statement only applies morphisms to lattice elements, the rewrite adjusts the
-statement to reference the lattice's delta value rather than its total value.
+Implementing semi-naive style evaluation for lattices was straightforward. For
+each lattice identifier $l$, we record two values: a ``total'' value (the least
+upper bound of the derivations made for $l$ in all previous rounds) and a
+``delta'' value (the least upper bound of the derivations made for $l$ in the
+last round). We implemented a program rewrite that examines each \lang
+statement. If a statement only applies morphisms to lattice elements, the
+rewrite adjusts the statement to use the lattice's delta value rather than its
+total value.
 
 % The basic insight is that if a fact is derived for the first time in round $i$,
 % it must somehow depend on a fact that was derived for the first time in round
