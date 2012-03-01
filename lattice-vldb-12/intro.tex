@@ -19,7 +19,7 @@ modern distributed systems operate.
 Much of the discussion about distributed programming today revolves around data
 management, and the tradeoffs between transactions and weak
 consistency. Programmers using distributed transactions are relieved of
-consistency concerns but the coordination protocols that are needed to achieve
+consistency concerns, but the coordination protocols that are needed to achieve
 strong consistency are widely believed to raise unacceptable challenges in
 performance and operational overhead for modern
 systems~\cite{Birman2009,Helland2009}. As a result, there has been increased
@@ -51,7 +51,7 @@ which formalizes these ideas in the algebraic framework of {\em join
   semi-lattices}~\cite{Shapiro2011b}.
 
 The main problem with the CRDT approach is that it provides guarantees only
-about individual data values, not to application logic in general. For example,
+for individual data values, not for application logic in general. For example,
 consider an application that uses a CRDT to represent a mutable set. Suppose the
 application reads a version of the set and computes a derived value~$y$ that is
 conditional on $x$ being present in the set. Concurrently, $x$ is removed from
@@ -78,7 +78,7 @@ consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-pods12-tr}. Monotonicity of
 a Datalog-style program is straightforward to determine conservatively from
 syntax, so the CALM theorem provides the basis for a simple analysis technique
 for verifying the consistency of distributed programs. We realized CALM analysis
-as part of Bloom, a Datalog-based DSL for distributed
+as part of Bloom, a Datalog-based domain-specific language for distributed
 programming~\cite{Alvaro2011,bloom}.
 
 The original formulation of Bloom and CALM only verified the consistency of
