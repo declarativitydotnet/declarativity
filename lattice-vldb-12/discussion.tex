@@ -17,22 +17,38 @@ inputs to lattice merge functions. We also plan to explore a restricted DSL for
 writing lattice methods, which would make formal verification of correctness an
 easier task.
 
-Each lattice includes $\bot$, a distinguished ``smallest element.'' In many
-programs there is also a notion of a ``largest element'': a value that, once
-reached, will never be exceeded. \texttt{lbool} has a largest value
-(\texttt{true}), as does the \texttt{lcart} lattice presented in
-Section~\ref{sec:monotone-checkout}. We are investigating how our analysis
-techniques could be improved by introducing more direct support for $\top$
-values into \lang. For example, a lattice that has reached $\top$ is immutable,
-and hence any function can safely be applied to it, whether monotone or not.
+Each lattice includes $\bot$, a distinguished ``smallest element.'' A natural
+extension is to consider whether any lattices would support $\top$, a ``greatest
+element.'' In fact, such a value is already supported by \texttt{lbool} ($\top =
+\mathtt{true}$), in addition to the \texttt{lcart} lattice discussed in
+Section~\ref{sec:monotone-checkout}. $\top$ behaves differently than other
+lattice elements: because it is immutable, any function can safely be applied to
+it (whether monotone or not), without risking inconsistency. Since the merge
+function for $\top$ will always yield $\top$, this might allow a more efficient
+representation (e.g., in a complete \texttt{lcart}, we need only store the
+``summarized'' cart state, not the log of client operations). We are
+investigating how our program analysis could be enhanced to provide special
+support for lattices with $\top$ values.
 
-By allowing a more general notion of monotonicity, \lang significantly increases
-the number of programs that can be shown to be confluent. However, many
-distributed protocols are not intended to be confluent---rather, they exhibit
-\emph{controlled non-determinism}, in which timing conditions affect the choice
-of one among several acceptable outcomes. Vector clocks and causal delivery are
-both examples of this kind of behavior. Although \lang is still useful---the
-local correctness properties of lattices help programmers to reason about the
-behavior of individual program values---we are also investigating\ldots
+As discussed in Section~\ref{sec:causal}, \lang is still useful even when
+confluence is not an appropriate correctness criteria. Nevertheless, a global
+program analysis for classes of non-confluent programs would be very useful. For
+example, we can show that each node's local vector clock increases over
+time. However, we would like to show something stronger for programs that use
+causal delivery: whenever a new message is delivered, it should contain ``new''
+information. If not, the newly delivered message ``happens before'' the previous
+state of the recipient, which means causality has been violated (assuming
+at-most-once delivery). A program analysis to prove that this situation never
+occurs would require reasoning about intermediate states of the program, rather
+than considering only final states (as in confluence).
+
+% By allowing a more general notion of monotonicity, \lang significantly increases
+% the number of programs that can be shown to be confluent. However, many
+% distributed protocols are not intended to be confluent---rather, they exhibit
+% \emph{controlled non-determinism}, in which timing conditions affect the choice
+% of one among several acceptable outcomes. Vector clocks and causal delivery are
+% both examples of this kind of behavior. Although \lang is still useful---the
+% local correctness properties of lattices help programmers to reason about the
+% behavior of individual program values---we are also investigating\ldots
 
 % Support a notion of sealing?
