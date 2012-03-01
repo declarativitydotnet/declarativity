@@ -256,7 +256,9 @@ objects and values are lattice elements. For example, a web application could
 use an \texttt{lmap} to associate session IDs with an \texttt{lset} containing
 the pages visited by that session. The \texttt{lmap} merge function takes the
 union of the key sets of its input maps. If a key occurs in both inputs, the two
-corresponding values are merged using the appropriate lattice merge function.
+corresponding values are merged using the appropriate lattice merge
+function. Note that the \texttt{at} morphism returns the lattice element
+associated with the given key.
 
 The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
