@@ -159,7 +159,7 @@ module CausalDelivery
 
   state do
     channel :chn, [:@dst, :payload] => [:clock, :ord_buf]
-    table :recv_buf, chn.schema
+    table :recv_buf, [:@dst, :payload] => [:clock, :ord_buf] (*\label{line:recv-buf-ddl}*)
     lmap :ord_buf
   end
 
@@ -215,9 +215,14 @@ the sender's knowledge, the message can be safely delivered
 Note that checking whether a message has been delivered requires testing whether
 one vector clock (in the \texttt{ord\_buf} embedded in the message) is smaller
 than the node's vector clock (line~\ref{line:deliver-msg-lt-eq}). In general,
-this is not monotonic: the truth value of an inequality between two monotonically increasing counters can oscillate over time.  In this case, however, the message's \texttt{ord\_buf} vector clock is \emph{immutable}, because it is
-embedded as a column of a collection that does not allow ``lattice merges''. \jmh{Justify the preceding sentence via the program syntax!} So
-the inequality predicate can be determined to be monotonic.
+this is not monotonic: the truth value of an inequality between two
+monotonically increasing counters can oscillate over time.  In this case,
+however, the message's \texttt{ord\_buf} vector clock is \emph{immutable},
+because it is embedded as a column of a collection that does not allow ``lattice
+merges'' (i.e., the \texttt{ord\_buf} column in the \texttt{recv\_buf} state
+declaration on line~\ref{line:recv-buf-ddl} does not use the ``\texttt{!}''
+annotation described in Section~\ref{sec:lattice-embedding}). Therefore the
+inequality predicate can be determined to be monotonic.
 
 Because causal delivery builds upon vector clocks, it is also not
 confluent. However, because the statements in
