@@ -21,12 +21,11 @@ management, and the tradeoffs between transactions and weak
 consistency. Programmers using distributed transactions are relieved of
 consistency concerns, but the coordination protocols that are needed to achieve
 strong consistency are widely believed to raise unacceptable challenges in
-performance and operational overhead for modern
-systems~\cite{Birman2009,Helland2009}. As a result, there has been increased
-interest in techniques for achieving correct program behavior without requiring
-coordination.  Two different frameworks for these techniques have received
-significant attention in recent research: \emph{Convergent Modules} and
-\emph{Monotonic Logic}.
+performance and operational overhead~\cite{Birman2009,Helland2009}. As a result,
+there has been increased interest in techniques for achieving correct program
+behavior without requiring coordination.  Two different frameworks for these
+techniques have received significant attention in recent research:
+\emph{Convergent Modules} and \emph{Monotonic Logic}.
 
 % The coordination protocols that provide strong consistency are widely believed
 % to raise unacceptable challenges in performance and operational overhead for
@@ -161,7 +160,10 @@ service~\cite{Alvaro2011}. We show how \lang can be used to make the
 ``checkout'' operation monotonic and therefore confluent, despite the fact that
 it requires aggregating over a distributed data set.  Second, we use \lang to
 implement vector clocks and causal delivery, two standard building blocks for
-non-confluent distributed programming.  In the case of vector clocks, we show that our implementation is nearly a line-for-line match to the pseudocode on Wikipedia---anecdotal evidence that \lang is a good fit for distributed programming.
+non-confluent distributed programming.  In the case of vector clocks, we show
+that our implementation is a line-for-line match to the algorithm
+pseudocode---anecdotal evidence that \lang is a good fit for distributed
+programming.
 
   % We generalize the CALM analysis to programs that contain both lattices and
   % set-oriented collections, and show how lattices can be used to prove the
