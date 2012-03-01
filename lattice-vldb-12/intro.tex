@@ -50,15 +50,18 @@ reflect the removal of $x$. Although the CRDT maintains its own invariants, the
 programmer still bears the burden of ensuring the consistency semantics of the
 entire program.
 
+% Many researchers have proposed the use of deductive database languages to enable
+% high-level declarative implementations of distributed systems
+% (e.g.,~\cite{Abiteboul2011,Alvaro2010,Field2009}).
+
 \vspace{0.5em} \noindent
-\textbf{Monotonic Logic}: Many researchers have proposed the use of deductive
-database languages to enable declarative implementations of distributed systems
-(e.g.,~\cite{Abiteboul2011,Alvaro2010,Field2009}). In recent work, we observed
-that the database theory literature on non-monotonic logic provides a promising
-starting point for reasoning about distributed consistency. Intuitively, a
-\emph{monotonic} program computes more information over time---it never
-``retracts'' an earlier conclusion in the face of new information. We proposed
-the CALM theorem, which established that all monotonic programs are eventually
+\textbf{Monotonic Logic}: In recent work, we observed that the database theory
+literature on non-monotonic logic provides a promising starting point for
+reasoning about distributed consistency. Intuitively, a \emph{monotonic} program
+computes more information over time---it never ``retracts'' an earlier
+conclusion in the face of new information. We proposed the CALM theorem, which
+established that all monotonic programs are \emph{confluent} (invariant to
+message reordering) and hence eventually
 consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-pods12-tr}. Monotonicity of
 a Datalog-style program is straightforward to determine conservatively from
 syntax, so the CALM theorem provides the basis for a simple analysis technique
@@ -71,15 +74,15 @@ programs that compute sets of facts that grow over time (``set monotonicity'');
 that is, ``growth'' is defined according to set containment. As a practical
 matter, this is overly conservative because it precludes the use of common
 constructs such as timestamps and sequence numbers. For example, consider a
-simple quorum voting program where a coordinator counts the number of votes
-received from participant nodes. A quorum is reached once the number of votes
-exceeds a threshold. This is monotonic in the broad sense: the vote counter
-increases monotonically and the threshold test ($\mathtt{count(votes)} > k$)
-also grows monotonically from False to True. But both of these constructs
-(upward-moving mutable variables and aggregates) are considered to be
-non-monotonic by the original CALM analysis.  As a result, the initial Bloom
-prototype would mistakenly suggest that the voting program needs additional
-coordination logic to ensure consistent results.
+quorum voting scheme where a coordinator counts the number of votes received
+from participant nodes. A quorum is reached once the number of votes exceeds a
+threshold. This is monotonic in the broad sense: the vote counter increases
+monotonically and the threshold test ($\mathtt{count(votes)} > k$) also grows
+monotonically from False to True. But both of these constructs (upward-moving
+mutable variables and aggregates) are considered to be non-monotonic by the
+original CALM analysis.  As a result, the initial Bloom prototype would
+mistakenly suggest that the voting program needs additional coordination logic
+to ensure consistent results.
 
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 
@@ -87,7 +90,7 @@ coordination logic to ensure consistent results.
 % The strengths and weaknesses of these two approaches appear complementary. CRDTs provide synchronization-free consistent objects, but cannot guarantee whole-program consistency. Bloom's CALM analysis guarantees whole-program consistency but is unable to verify a number of natural coordination-free mechanisms.
 Instead of only allowing growth according to the set containment
 partial order, we would like to allow any user-defined partial order to be used.  
-To this end, we introduce a new language extension \lang, which provides a programming construct for defining join semi-lattices like CRDTs.
+To this end, we introduce a \lang, an extension to Bloom which provides a programming construct for defining join semi-lattices like CRDTs.
 We give a
 formal definition of this construct below, but the intuition is that the programmer provides a commutative, idempotent merge function (``least upper bound'')
 that takes two input values and produces an output value that is not smaller
@@ -104,7 +107,7 @@ function (set union) and partial order (set containment).
   without the need for coordination.  This enables the coordination-free use of
   common monotonic constructs, including timestamps and sequence numbers.
 \item {\lang}'s lattice framework provides monotonicity-preserving mappings
-  between lattices via \emph{morphisms} and \emph{monotonic functions}.  By using such mappings, the per-component monotonicity guarantees offered by CRDTs can be extended across multiple lattice-based components.  This is key to the CALM analysis of monotonic \lang programs described above.  It is also useful for establishing the monotonicity of sub-programs even when the whole program is not designed to be monotonic.
+  between lattices via \emph{morphisms} and \emph{monotone functions}.  By using such mappings, the per-component monotonicity guarantees offered by CRDTs can be extended across multiple lattice-based components.  This is key to the CALM analysis of monotonic \lang programs described above.  It is also useful for establishing the monotonicity of sub-programs even when the whole program is not designed to be monotonic.
 \item For efficient execution, we extend the standard Datalog semi-naive
   evaluation scheme~\cite{Balbin1987} to support both lattices and traditional
   database relations. We also describe how an existing Datalog engine can be
@@ -117,22 +120,21 @@ function (set union) and partial order (set containment).
 % The coordination protocols used for controlled non-determinism are expressible in Bloom, but typical implementations are not syntactically monotonic~\cite{Alvaro2011}.  In many cases, however, these protocols work in a monotonic fashion, providing distributed barriers in computation by using constructs like arrays of mutable counters.  These protocols can be quite directly mapped to \lang using lattices.  This further improves the fit between Bloom's logic programming roots and standard practice in distributed programming.  On a more concrete basis, \lang can provide strong monotonicity guarantees for these coordination constructs.  This can ensure, for example, that a barrier-inducing protocol does indeed ``coordinate'' correctly: it monotonically transitions from ``Wait'' to ``Go''.
 
 \subsection{Outline}
-% Explain how lattices generalize monotonic datalog
 The remainder of the paper proceeds as follows.  Section~\ref{sec:background}
 provides background on Bloom and CALM.  In Section~\ref{sec:lang} we introduce
-\lang, including cross-lattice morphisms and monotonic functions. We detail \lang's built-in lattice types and show how developers can define new lattices.  We also describe how
-the CALM analysis extends to \lang (Section~\ref{sec:calmL}).  In
+\lang, including cross-lattice morphisms and monotonic functions. We detail
+\lang's built-in lattice types and show how developers can define new lattices.
+We also describe how the CALM analysis extends to \lang.  In
 Section~\ref{sec:impl}, we describe how we modified the Bloom runtime to support
 \lang, including our extension to semi-naive evaluation that supports both
 lattices and relations.  In Sections~\ref{sec:carts} and~\ref{sec:causal}, we
 consider two case studies from the literature.  First we revisit the simple
 e-commerce scenario presented in Alvaro et al.\ in which clients interact with a
 replicated shopping cart service~\cite{Alvaro2011}. We show how \lang can be
-used to make the ``checkout'' operation monotonic and confluent, despite the
-fact that it requires aggregating over a distributed data set.  Second, we use
-\lang to implement vector clocks and causal delivery, two standard building
-blocks for non-confluent distributed programming. We show how both techniques
-can be realized as concise, monotonic \lang programs.
+used to make the ``checkout'' operation monotonic and therefore confluent,
+despite the fact that it requires aggregating over a distributed data set.
+Second, we use \lang to implement vector clocks and causal delivery, two
+standard building blocks for non-confluent distributed programming.
 
   % We generalize the CALM analysis to programs that contain both lattices and
   % set-oriented collections, and show how lattices can be used to prove the
