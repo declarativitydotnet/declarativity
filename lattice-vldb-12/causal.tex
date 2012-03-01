@@ -206,7 +206,7 @@ delivered (lines~\ref{line:ord-buf-out-msg} and \ref{line:ord-buf-in-msg},
 respectively). A node also embeds both its vector clock and \texttt{ord\_buf} in
 outgoing messages (line~\ref{line:out-msg-embed}). Finally, the protocol ensures
 that a node will delay delivering a message $m$ until it can be sure that it
-will never receive a message that causally predeces $m$. This is done by
+will never receive a message that causally precedes $m$. This is done by
 comparing the knowledge the sender had about the recipient's vector clock with
 the recipient's current vector clock; once the recipient's vector clock passes
 the sender's knowledge, the message can be safely delivered
