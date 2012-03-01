@@ -81,13 +81,15 @@ Joseph M.\ Hellerstein\\
 
 \begin{abstract}
   Monotonic logic has recently been identified as a useful building block for
-   consistent distributed programs, because it allows eventual consistency
-  without the need for coordination. However, many common distributed programs
-  cannot naturally be expressed as monotonic programs over sets. We present
-  \lang, a variant of Datalog that allows monotonic programs to use arbitrary lattice
-  structures, not just the set lattice. The ability to use multiple lattices allows \lang to verify a much wider range of programs as monotonic and hence eventually consistent.
-Weshow how to implement lattice-based code efficiently, in the style of semi-naive evaluation. Finally, we show how lattices can be
-  used to implement practical distributed programs and protocols.
+  consistent distributed programs because it allows eventual consistency without
+  the need for coordination. However, many common distributed programs cannot
+  naturally be expressed as monotonic programs over sets. We present \lang, a
+  variant of Datalog that allows monotonic programs to use arbitrary lattice
+  structures, not just the set lattice. The ability to use multiple lattices
+  allows \lang to verify a much wider range of programs as monotonic and hence
+  eventually consistent.  We show how to implement lattice-based code
+  efficiently, in the style of semi-naive evaluation. Finally, we show how \lang
+  can be used to implement practical distributed programs.
 \end{abstract}
 
 \input{intro}
