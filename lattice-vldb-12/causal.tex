@@ -216,10 +216,10 @@ Note that checking whether a message has been delivered requires testing whether
 one vector clock (in the \texttt{ord\_buf} embedded in the message) is smaller
 than the node's vector clock (line~\ref{line:deliver-msg-lt-eq}). In general,
 this is not monotonic: the truth value of an inequality between two monotonically increasing counters can oscillate over time.  In this case, however, the message's \texttt{ord\_buf} vector clock is \emph{immutable}, because it is
-embedded as a column of a collection that does not allow ``lattice merges''. So
+embedded as a column of a collection that does not allow ``lattice merges''. \jmh{Justify the preceding sentence via the program syntax!} So
 the inequality predicate can be determined to be monotonic.
 
 Because causal delivery builds upon vector clocks, it is also not
 confluent. However, because the statements in
 Figure~\ref{fig:causal-delivery-src} only invoke monotone methods, we can see
-that a node's \texttt{ord\_buf} strictly increases over time.
+that a node's \texttt{ord\_buf} strictly increases over time.  \jmh{Can't you say that the ord\_buf in in\_msg grows monotonically, which implies that delivery does indeed respect the causal constraint?)}
