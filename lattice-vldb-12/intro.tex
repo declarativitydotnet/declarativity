@@ -8,21 +8,33 @@ modern distributed systems operate.
 
 % remind reviewers that it's a database problem. can remove if accepted! 
 % Much of the discussion about distributed programming today revolves around data
-% management systems, and the tradeoffs between transactions and loose
+% management, and the tradeoffs between transactions and weak
 % consistency. Programmers using distributed transactions are relieved of
 % consistency concerns but often face significant performance and operational
-% challenges~\cite{Birman2009}. By contrast, programmers who use loosely
+% challenges~\cite{Birman2009,Helland2009}. By contrast, programmers who use loosely
 % consistent systems can expect more predictable and low-latency performance, but
 % must reason explicitly about program correctness over inconsistent distributed
 % state.
 
-The coordination protocols that provide strong consistency are widely believed
-to raise unacceptable challenges in performance and operational overhead for
-modern systems~\cite{Birman2009,Helland2009}. As a result, there has been
-increased interest in techniques for achieving correct program behavior without
-requiring coordination.  Two different frameworks for these techniques have
-received significant attention in recent research: \emph{Convergent Modules} and
+Much of the discussion about distributed programming today revolves around data
+management, and the tradeoffs between transactions and weak
+consistency. Programmers using distributed transactions are relieved of
+consistency concerns but the the coordination protocols that are needed to
+achieve strong consistency are widely believed to raise unacceptable challenges
+in performance and operational overhead for modern
+systems~\cite{Birman2009,Helland2009}. As a result, there has been increased
+interest in techniques for achieving correct program behavior without requiring
+coordination.  Two different frameworks for these techniques have received
+significant attention in recent research: \emph{Convergent Modules} and
 \emph{Monotonic Logic}.
+
+% The coordination protocols that provide strong consistency are widely believed
+% to raise unacceptable challenges in performance and operational overhead for
+% modern systems~\cite{Birman2009,Helland2009}. As a result, there has been
+% increased interest in techniques for achieving correct program behavior without
+% requiring coordination.  Two different frameworks for these techniques have
+% received significant attention in recent research: \emph{Convergent Modules} and
+% \emph{Monotonic Logic}.
 %Both of these frameworks guarantee confluence: eventually deterministic outcomes in the face of message reordering and delay.
 
 \vspace{0.5em}\noindent
