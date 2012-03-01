@@ -185,8 +185,8 @@ negation are not.
 The CALM theorem connects the theory of monotonic logic with the practical
 problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  All
 monotonic distributed programs are ``eventually consistent'' or
-\emph{confluent}: given any given input, all program executions result in the
-same final state regardless of network
+\emph{confluent}: for any given input, all program executions result in the same
+final state regardless of network
 non-determinism~\cite{Ameloot2011,dedalus-pods12-tr}.  Hence, monotonic logic is
 a useful building block for loosely consistent distributed programming.
 
@@ -198,7 +198,7 @@ non-monotonic operators may be produce different conclusions when evaluated over
 different subsets of their inputs.  For example, consider a Bloom program in
 which collections $A$ and $B$ are fed by asynchronous channels, and the program
 sends a message whenever an element of $A$ arrives that is not in $B$. This
-program is non-monotonic and hence exhibits non-confluent behavior: the messages
+program is non-monotonic and exhibits non-confluent behavior: the messages
 sent by the program will depend on the order in which the elements of $A$ and
 $B$ arrive.
 
