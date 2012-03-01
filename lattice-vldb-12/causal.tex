@@ -11,17 +11,20 @@ non-determinism: for example, the clock at each node should move upward over tim
 
 In this section, we show how \lang can be used to implement two non-confluent
 protocols: vector clocks and causal delivery. Although we cannot guarantee a
-global correctness property like confluence, lattices can still provide strong local
-guarantees. For example, we can ensure that vector clock entries increase monotonically,
-which agrees with our intuitive notion that these protocols make progress over
-time. These guarantees are similar to the interface guarantees provided by
-CRDTs, with the notable difference that they are not confined to individual modules: monotone functions allow safe mappings
-between lattice values.
+global correctness property like confluence, lattices can still provide strong
+local guarantees. For example, we can ensure that vector clock entries increase
+monotonically, which agrees with our intuitive notion that these protocols make
+progress over time. These guarantees are similar to the interface guarantees
+provided by CRDTs, with the notable difference that they are not confined to
+individual modules: monotone functions allow safe mappings between lattice
+values.
 
-As a secondary benefit, we observe that our programs are concise and natural.  In the case of vector clocks,
-our code is \textasciitilde{}20$\times$ shorter than a comparable Java program, and exhibits a
-direct visual correspondence to Wikipedia's protocol pseudocode. This
-increases our confidence in \lang as a language that is well suited to common distributed programming tasks.
+As a secondary benefit, we observe that our programs are concise and natural.
+In the case of vector clocks, our code is \textasciitilde{}20$\times$ shorter
+than a comparable Java program and exhibits a direct visual correspondence to a
+textual description of the vector clock protocol. This increases our confidence
+in \lang as a language that is well suited to common distributed programming
+tasks.
 
 % Vector clocks are a classical mechanism for recording the causal relationships
 % between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
@@ -77,31 +80,21 @@ vector clock that it updates when it sends and receives messages; the node's
 vector clock reflects how up-to-date its local knowledge is with respect to the
 other nodes in the system.
 
-To quote directly from Wikipedia, a vector clock observes the following rules for clock updates:
-\emph{
-\begin{compactitem}
-\item Initially all clocks are zero.
-\item Each time a process experiences an internal event, it increments its own logical clock in the vector by one.
-\item Each time a process prepares to send a message, it increments its own logical clock in the vector by one and then sends its entire vector along with the message being sent.
-\item Each time a process receives a message, it increments its own logical clock in the vector by one and updates each element in its vector by taking the maximum of the value in its own vector clock and the value in the vector in the received message (for every element).''~\cite{vcwikipedia}
-\end{compactitem}}
-\jmh{The correspondence isn't perfect.  But the Wikipedia echo would be awesome if we can do it.}
-
-% In a system that uses vector clocks, each node $n$ initializes its local vector
-% clock $v[n] = 0$. A node updates $v$ by following three rules when sending and
-% receiving events:
-% \begin{compactenum}
-% \item
-%   Before sending a message, $n$ increments $v[n]$ and includes $v$ in the
-%   outgoing message.
-% \item
-%   Upon receipt of a message, $n$ increments $v[n]$.
-% \item
-%   Upon receipt of a message, $n$ merges the vector clock in the message with its
-%   own vector clock by taking the element-wise max of the logical clock
-%   values.\footnote{If a clock value for a node occurs in one vector clock but
-%     not the other, the missing clock value is assumed to be $0$.}
-% \end{compactenum}
+In a system that uses vector clocks, each node $n$ initializes its local vector
+clock $v[n] = 0$. A node updates $v$ by following three rules when sending and
+receiving messages:
+\begin{compactenum}
+\item
+  Before sending a message, $n$ increments $v[n]$ and includes $v$ in the
+  outgoing message.
+\item
+  Upon receipt of a message, $n$ increments $v[n]$.
+\item
+  Upon receipt of a message, $n$ merges the vector clock in the message with its
+  own vector clock by taking the element-wise max of the logical clock
+  values.\footnote{If a clock value for a node occurs in one vector clock but
+    not the other, the missing clock value is assumed to be $0$.}
+\end{compactenum}
 Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
 clocks in \lang. A vector clock is represented as a map lattice that associates
 node IDs with \texttt{lmax} values. Each \texttt{lmax} represents a single
@@ -112,17 +105,19 @@ instance, which is used as a node ID. Incoming messages appear in the
 tuples in \texttt{out\_msg}; once a message has been stamped with the local
 node's vector clock, it appears in \texttt{out\_msg\_vc}.
 
-The key logic appears in lines~\ref{line:vc-init-clock}, \ref{line:vc-out-increment},
-\ref{line:vc-in-increment}, and \ref{line:vc-in-merge}: these four statements
-are a direct translation of the four rules \jmh{not quite!} given in the Wikipedia pseudocode. Line~\ref{line:vc-init-clock} initializes each node's local vector clock.
-Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated
-vector clock value.  Note that if multiple outgoing messages are sent in the
-same \lang timestep, they will contain the same embedded vector clock (and
-\texttt{my\_vc} will only be incremented once). This is reasonable, since those
+The key logic appears in lines~\ref{line:vc-out-increment},
+\ref{line:vc-in-increment}, and \ref{line:vc-in-merge}: these three statements
+are a direct translation of the three rules given
+above. Line~\ref{line:vc-init-clock} initializes the node's local vector clock.
+Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated vector
+clock value.  Note that if multiple outgoing messages are sent in the same \lang
+timestep, they will all be stamped with the same clock value (and the local
+vector clock will only be incremented once). This is reasonable, since those
 messages are concurrent.
 
-We argue that Figure~\ref{fig:vector-clock-src} is about as readable as the pseudocode from Wikipedia, requiring
-only six \lang statements. This compares favorably with implementations of
+We argue that Figure~\ref{fig:vector-clock-src} is about as readable as the
+update rules given above. The six \lang statements in
+Figure~\ref{fig:vector-clock-src} compares favorably with implementations of
 vector clocks in traditional programming languages. For example, the
 \texttt{VectorClock} class included with the Voldemort key-value store consists
 of 216 lines of Java source code, not including whitespace or
@@ -136,7 +131,9 @@ collections are not monotonic because they are emptied at the start of each
 timestamp. Although the vector clock program is not confluent, the statements in
 the program only invoke monotone lattice methods. Hence, \texttt{my\_vc}
 increases monotonically, and \texttt{next\_vc} is greater than or equal to both
-\texttt{my\_vc} and all the messages received in the current timestep. These program properties formally guarantee our intuition about how vector clocks change over time.
+\texttt{my\_vc} and all the messages received in the current timestep. These
+program properties formally guarantee our intuition about how vector clocks
+change over time.
 
 Note that because the statements in Figure~\ref{fig:vector-clock-src} involve
 only monotonic operations, the statements can be executed in any order. The
