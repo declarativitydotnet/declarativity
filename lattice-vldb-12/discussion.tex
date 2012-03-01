@@ -29,9 +29,8 @@ investigating how \lang could be enhanced to provide special support for
 bounded lattices with $\top$ values.
 
 As discussed in Section~\ref{sec:causal}, \lang is still useful even when
-confluence is not an appropriate correctness criteria. Nevertheless, a global
-program analysis for classes of non-confluent programs would be very useful. As discussed, we can show that each node's local vector clock increases over
-time. However, we would like to show something stronger for programs that use
+confluence is not an appropriate correctness criteria. Nevertheless, we would like to extend our \lang program analyses beyond monotonicity and confluence tests.  Our vector clock example illustrates some issues that merit further exploration.  As discussed, we can show that each node's local vector clock increases over
+time. However, we would like to show something stronger to establish correctness of
 causal delivery: whenever a message is delivered, merging the message's clock
 into the local vector clock should result in moving the local vector clock
 ``upward.'' If delivering a message does not change the local clock, the newly
@@ -39,7 +38,7 @@ delivered message ``happens before'' the state of the recipient, which implies
 that causality has been violated (assuming at-most-once delivery). A program
 analysis to prove that this situation never occurs would require reasoning about
 intermediate states of the program, rather than only final states (as in
-confluence).
+confluence).  
 
 % By allowing a more general notion of monotonicity, \lang significantly increases
 % the number of programs that can be shown to be confluent. However, many
