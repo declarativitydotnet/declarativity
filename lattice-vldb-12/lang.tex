@@ -268,7 +268,6 @@ monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
 % Explain why sum is a monotone function?
 
 \subsection{User-defined lattices}
-% XXX: note that we omit some methods from lset
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}[deletekeywords={lset}]
@@ -308,7 +307,8 @@ as the causal delivery protocol described in Section~\ref{sec:causal}. However,
 \lang also allows developers to create custom lattices to capture
 domain-specific behavior. To define a lattice in Bud, a developer creates a Ruby
 class that meets a certain API contract. Figure~\ref{fig:lattice-lset} contains
-the Ruby code for the the \texttt{lset} lattice.
+the Ruby code for the \texttt{lset} lattice (note that we omit the
+implementation of a few \texttt{lset} methods for brevity).
 
 A lattice class must inherit from the builtin \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -405,9 +405,9 @@ lattice, and the first column of \texttt{t1} is the collection's key. The value
 associated with \texttt{cnt} can change over the course of a single timestep
 (\texttt{cnt} can move ``upward'' according to the lattice's partial
 order). This might result in multiple \texttt{t1} tuples with different values
-for the second column, which would violate \texttt{t1}'s key: the first column
+for the second column, which would violate \texttt{t1}'s key (the first column
 of \texttt{t1} would not functionally determine a single value for the second
-column.
+column).
 
 This problem could be avoided by placing constraints on the evaluation order of
 statements: for example, we could require that all potential changes to
