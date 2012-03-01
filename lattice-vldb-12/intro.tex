@@ -42,7 +42,7 @@ The main problem with the CRDT approach is that it provides guarantees only
 about individual data values, not to application logic in general. For example,
 consider an application that uses the ``2P-Set'' CRDT to represent a mutable
 set~\cite{Shapiro2011a}. Suppose the application reads a version of the set and
-computes a derived value $y$ that is conditional on $x$ being present in the
+computes a derived value~$y$ that is conditional on $x$ being present in the
 set. Concurrently, $x$ is removed from the set by another replica. While the
 CRDT ensures that the replicas will eventually agree that $x$ is absent from the
 set, application-level state may remain inconsistent unless $y$ is updated to
