@@ -132,9 +132,12 @@ elements. Just as a subset of the relational algebra is monotonic, some lattice
 methods are monotone functions (as defined in Section~\ref{sec:lattice-defn}). A
 monotone lattice method guarantees that, if the lattice on which the method is
 invoked grows (according to the lattice's partial order), the value returned by
-the method will grow (according to the return value's lattice type). From a CRDT
-perspective, a lattice's monotone methods are a set of ``safe'' operations that
-can be invoked in a distributed setting without risk of inconsistency.
+the method will grow (according to the return value's lattice type). For
+example, the \texttt{size} method provided by the \texttt{lset} lattice is
+monotone, because as more elements are added to the set, the size of the set
+increases. From a CRDT perspective, a lattice's monotone methods constitute a
+``safe'' interface of operations that can be invoked in a distributed setting
+without risk of inconsistency.
 
 A lattice method's signature indicates its monotonicity properties. \lang
 distinguishes between methods that are monotone and a subset of monotone methods
