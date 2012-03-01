@@ -143,9 +143,13 @@ A lattice method's signature indicates its monotonicity properties. \lang
 distinguishes between methods that are monotone and a subset of monotone methods
 that are \emph{morphisms}. Section~\ref{sec:lattice-defn} defines the properties
 that a morphism must satisfy, but the intuition is that a morphism on lattice
-$T$ can be distributed over $T$'s least upper bound operator. Morphisms can be
-evaluated more efficiently than monotone functions, as we discuss in
-Section~\ref{sec:lattice-eval-strat}.
+$T$ can be distributed over $T$'s least upper bound operator. For example, the
+\texttt{size} method provided by the \texttt{lset} lattice is not a morphism. To
+see why, consider two elements of the \texttt{lset} lattice, $\{1,2\}$ and
+$\{2,3\}$.  \texttt{size} is not a morphism because $size(\{1,2\}
+\lor_{\mathtt{lset}} \{2,3\}) \ne size(\{1,2\}) \lor_{\mathtt{lmax}}
+size(\{2,3\})$. Morphisms can be evaluated more efficiently than monotone
+functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
 
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
@@ -236,15 +240,16 @@ various kinds of collections that grow over time (\texttt{lset}, \texttt{lpset},
 \texttt{lbag}, and \texttt{lmap}). The behavior of most of the lattice methods
 should be unsurprising, so we do not describe every method in this section.
 
-The \texttt{lbool} lattice is useful for representing conditions that, once
-satisfied, remain satisfied. For example, the \texttt{gt} morphism on the
-\texttt{lmax} lattice takes a numeric argument $n$ and returns an
-\texttt{lbool}; once the \texttt{lmax} exceeds $n$, it will remain $>n$. The
-\texttt{when\_true} morphism takes a Ruby block; if the \texttt{lbool} element
-has the value \texttt{true}, \texttt{when\_true} returns the result of
-evaluating the block. For example, see line~\ref{line:quorum-when-true} in
+The \texttt{lbool} lattice represents conditions that, once satisfied, remain
+satisfied. For example, the \texttt{gt} morphism on the \texttt{lmax} lattice
+takes a numeric argument $n$ and returns an \texttt{lbool}; once the
+\texttt{lmax} exceeds $n$, it will remain $>n$. The \texttt{when\_true} morphism
+takes a Ruby block; if the \texttt{lbool} element has the value \texttt{true},
+\texttt{when\_true} returns the result of evaluating the block. For example, see
+line~\ref{line:quorum-when-true} in
 Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
-statement.\footnote{Observe that an ``else'' clause would test for an upper bound on the final lattice value, which is a non-monotonic property!}
+statement.\footnote{Observe that an ``else'' clause would test for an upper
+  bound on the final lattice value, which is a non-monotonic property!}
 
 The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
 objects and values are lattice elements. For example, a web application could
@@ -252,12 +257,6 @@ use an \texttt{lmap} to associate session IDs with an \texttt{lset} containing
 the pages visited by that session. The \texttt{lmap} merge function takes the
 union of the key sets of its input maps. If a key occurs in both inputs, the two
 corresponding values are merged using the appropriate lattice merge function.
-
-Several lattices provide \texttt{size}, a monotone function that is not a
-morphism. This is because \texttt{size} cannot be distributed over the merge
-functions of those lattices. For example, consider two elements of the
-\texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$.  We can see that \texttt{size} is not a morphism because $size(\{1,2\} \lor_{\mathtt{lset}}
-\{2,3\}) \ne size(\{1,2\}) \lor_{\mathtt{lmax}} size(\{2,3\})$.
 
 The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
