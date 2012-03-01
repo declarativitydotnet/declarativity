@@ -1,10 +1,10 @@
 \section{Introduction} 
-\label{sec:intro} 
+\label{sec:intro}
 Although distributed programming has become an essential and commonplace task,
-it remains very challenging for most developers to write correct distributed
+it remains challenging for most developers to write correct distributed
 programs. The inherent difficulties of distributed computing---asynchrony,
-concurrency, and partial failure---are exacerbated by the scale at which modern
-distributed systems operate.
+concurrency, and partial failure---are exacerbated by the scale at which many
+modern distributed systems operate.
 
 % remind reviewers that it's a database problem. can remove if accepted! 
 % Much of the discussion about distributed programming today revolves around data
@@ -16,9 +16,9 @@ distributed systems operate.
 % must reason explicitly about program correctness over inconsistent distributed
 % state.
 
-The coordination protocols that provide strongly consistent storage are widely
-believed to raise unacceptable challenges in performance and operational
-overhead for modern systems~\cite{Birman2009}. As a result, there has been
+The coordination protocols that provide strong consistency are widely believed
+to raise unacceptable challenges in performance and operational overhead for
+modern systems~\cite{Birman2009,Helland2009}. As a result, there has been
 increased interest in techniques for achieving correct program behavior without
 requiring coordination.  Two different frameworks for these techniques have
 received significant attention in recent research: \emph{Convergent Modules} and
@@ -40,15 +40,15 @@ which formalizes these ideas in the algebraic framework of {\em join
 
 The main problem with the CRDT approach is that it provides guarantees only
 about individual data values, not to application logic in general. For example,
-consider an application that uses the ``2P-Set'' CRDT to represent a mutable
-set~\cite{Shapiro2011a}. Suppose the application reads a version of the set and
-computes a derived value~$y$ that is conditional on $x$ being present in the
-set. Concurrently, $x$ is removed from the set by another replica. While the
-CRDT ensures that all replicas will eventually agree that $x$ is absent from the
-set, application-level state may remain inconsistent unless $y$ is updated to
-reflect the removal of $x$. Although the CRDT maintains its own invariants, the
-programmer still bears the burden of ensuring the consistency semantics of the
-entire program.
+consider an application that uses a CRDT to represent a mutable set. Suppose the
+application reads a version of the set and computes a derived value~$y$ that is
+conditional on $x$ being present in the set. Concurrently, $x$ is removed from
+the set by another replica. While the CRDT ensures that all replicas will
+eventually agree that $x$ is absent from the set, application-level state may
+remain inconsistent unless the derived value $y$ is updated to reflect the
+removal of $x$. Although the CRDT maintains its own invariants, the programmer
+still bears the burden of ensuring the consistency semantics of the entire
+program.
 
 % Many researchers have proposed the use of deductive database languages to enable
 % high-level declarative implementations of distributed systems
@@ -71,7 +71,7 @@ programming~\cite{Alvaro2011,bloom}.
 
 The original formulation of Bloom and CALM only verified the consistency of
 programs that compute sets of facts that grow over time (``set monotonicity'');
-that is, ``growth'' is defined according to set containment. As a practical
+that is, ``growth'' was defined according to set containment. As a practical
 matter, this is overly conservative because it precludes the use of common
 constructs such as timestamps and sequence numbers. For example, consider a
 quorum voting scheme where a coordinator counts the number of votes received
@@ -127,14 +127,16 @@ provides background on Bloom and CALM.  In Section~\ref{sec:lang} we introduce
 We also describe how the CALM analysis extends to \lang.  In
 Section~\ref{sec:impl}, we describe how we modified the Bloom runtime to support
 \lang, including our extension to semi-naive evaluation that supports both
-lattices and relations.  In Sections~\ref{sec:carts} and~\ref{sec:causal}, we
-consider two case studies from the literature.  First we revisit the simple
-e-commerce scenario presented in Alvaro et al.\ in which clients interact with a
-replicated shopping cart service~\cite{Alvaro2011}. We show how \lang can be
-used to make the ``checkout'' operation monotonic and therefore confluent,
-despite the fact that it requires aggregating over a distributed data set.
-Second, we use \lang to implement vector clocks and causal delivery, two
-standard building blocks for non-confluent distributed programming.
+lattices and relations.
+
+In Sections~\ref{sec:carts} and~\ref{sec:causal}, we consider two case studies
+from the literature.  First we revisit the simple e-commerce scenario presented
+in Alvaro et al.\ in which clients interact with a replicated shopping cart
+service~\cite{Alvaro2011}. We show how \lang can be used to make the
+``checkout'' operation monotonic and therefore confluent, despite the fact that
+it requires aggregating over a distributed data set.  Second, we use \lang to
+implement vector clocks and causal delivery, two standard building blocks for
+non-confluent distributed programming.
 
   % We generalize the CALM analysis to programs that contain both lattices and
   % set-oriented collections, and show how lattices can be used to prove the
