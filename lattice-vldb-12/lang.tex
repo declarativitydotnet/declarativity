@@ -447,13 +447,8 @@ whose semantics are identical to those of Dedalus.  The result of a distributed
 computation performed in Bloom may be viewed as the set of \emph{ultimate
   models} or eventual states of the program, given a fixed input and sufficient
 time for messages to be delivered.
-
 If a program has exactly one ultimate model for every input, we say that it is
 confluent: all message delivery orders result in the same eventual state.
-Monotonicity and confluence are global properties of a program, and a critical
-feature of Bloom is its ability to compose individual units of functionality
-while preserving the ability to characterize the consistency state of the
-resulting composition.
 
 To reason about confluence in \lang, we first observe that lattices are
 guaranteed (as are CRDTs) to have inflationary behavior over time: a lattice
