@@ -1,16 +1,39 @@
 \section{Case Study: Causal Delivery}
 \label{sec:causal}
 
-Vector clocks are a classical mechanism for recording the causal relationships
-between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
-section, we first show how vector clocks can be implemented in a monotonic
-fashion using \lang. We then use \lang to implement a classical algorithm for
-point-to-point causal message delivery~\cite{Schiper1989}. The implementation of
-both protocols in \lang is concise and readable---this suggests that \lang is
-suitable for common distributed programming tasks. Perhaps more significantly,
-both protocols are monotonic. This agrees with our intuition that these
-protocols make ``progress'' over time, and hence gives us more confidence in the
-correctness of our designs.
+In the previous section, we showed how \lang increases the space of programs
+that can be shown to be confluent. However, many distributed protocols are not
+\emph{intended} to be confluent. Rather than insisting on a single outcome
+despite message delays, these protocols allow timing conditions to affect the
+choice among several acceptable outcomes. For example, in a vector clock system,
+the particular clock values assigned to messages differ depending on network
+non-determinism. Nevertheless, the system does not exhibit arbitrary
+non-determinism: the clock at each node should move upward over time, for
+example.
+
+In this section, we show how \lang can be used to implement two non-confluent
+protocols, vector clocks and causal delivery. Although we cannot guarantee a
+global correctness property like confluence, lattices still provide strong local
+guarantees: for example, a vector clock lattice will strictly move ``upward,''
+which maps to our intuitive notion these protocols make ``progress'' over
+time. These are similar to the interface guarantees provided by CRDTs, with the
+additional benefit that monotone functions allow safe mappings between lattice
+values.
+
+As a secondary benefit, we observe that our programs are readable and concise
+(e.g., 20x shorter than a comparable Java program). This suggests that \lang is
+suitable for common distributed programming tasks.
+
+% Vector clocks are a classical mechanism for recording the causal relationships
+% between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
+% section, we first show how vector clocks can be implemented in a monotonic
+% fashion using \lang. We then use \lang to implement a classical algorithm for
+% point-to-point causal message delivery~\cite{Schiper1989}. The implementation of
+% both protocols in \lang is concise and readable---this suggests that \lang is
+% suitable for common distributed programming tasks. Perhaps more significantly,
+% both protocols are monotonic. This agrees with our intuition that these
+% protocols make ``progress'' over time, and hence gives us more confidence in the
+% correctness of our designs.
 
 % Concede that confluence is not an appropriate correctness criteria
 
