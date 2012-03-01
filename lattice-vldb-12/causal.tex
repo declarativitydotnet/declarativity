@@ -227,4 +227,4 @@ inequality predicate can be determined to be monotonic.
 Because causal delivery builds upon vector clocks, it is also not
 confluent. However, because the statements in
 Figure~\ref{fig:causal-delivery-src} only invoke monotone methods, we can see
-that a node's \texttt{ord\_buf} strictly increases over time.  \jmh{Can't you say that the ord\_buf in in\_msg grows monotonically, which implies that delivery does indeed respect the causal constraint?)}
+that a node's \texttt{ord\_buf} strictly increases over time.
