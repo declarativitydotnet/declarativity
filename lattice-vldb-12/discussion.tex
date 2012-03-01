@@ -1,8 +1,6 @@
-\section{Discussion and Future Work}
-\label{sec:discussion}
-
-\lang simplifies the design of loosely consistent distributed systems by
-enabling \emph{composability}. Rather than reasoning about the consistency of an
+% \section{Discussion and Future Work}
+% \label{sec:discussion}
+One key aspect of \lang is the way that it enables the \emph{composition} of consistent components. Rather than reasoning about the consistency of an
 entire application, the programmer can instead ensure that individual lattices
 satisfy \emph{local} correctness properties (e.g., commutativity, associativity,
 and idempotence). The CALM analysis then verifies that when these modules are
@@ -17,23 +15,22 @@ inputs to lattice merge functions. We also plan to explore a restricted DSL for
 writing lattice methods, which would make formal verification of correctness an
 easier task.
 
-Every lattice includes $\bot$, a distinguished ``smallest element.'' A natural
-extension is to consider whether any lattices would support $\top$, a ``greatest
-element.'' In fact, such a value is already supported by \texttt{lbool} ($\top =
+Every join semi-lattice includes $\bot$, a distinguished ``smallest element.'' A natural
+extension is to consider providing \emph{bounded lattices} that also contain   $\top$, a ``greatest
+element.'' Such a value is already supported by \texttt{lbool} ($\top =
 \mathtt{true}$), in addition to the \texttt{lcart} lattice discussed in
 Section~\ref{sec:monotone-checkout}. $\top$ behaves differently than other
 lattice elements: because it is immutable, any function can safely be applied to
 it (whether monotone or not), without risking inconsistency. Since the merge
 function for $\top$ will always yield $\top$, this might allow a more efficient
-representation (e.g., in a complete \texttt{lcart}, we need only store the
-``summarized'' cart state, not the log of client operations). We are
+representation.  For example, in a complete \texttt{lcart}, we need only store the
+``summarized'' cart state, not the log of client operations. We are
 investigating how \lang could be enhanced to provide special support for
-lattices with $\top$ values.
+bounded lattices with $\top$ values.
 
 As discussed in Section~\ref{sec:causal}, \lang is still useful even when
 confluence is not an appropriate correctness criteria. Nevertheless, a global
-program analysis for classes of non-confluent programs would be very useful. For
-example, we can show that each node's local vector clock increases over
+program analysis for classes of non-confluent programs would be very useful. As discussed, we can show that each node's local vector clock increases over
 time. However, we would like to show something stronger for programs that use
 causal delivery: whenever a message is delivered, merging the message's clock
 into the local vector clock should result in moving the local vector clock
