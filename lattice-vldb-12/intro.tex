@@ -28,7 +28,7 @@ received significant attention in recent research: \emph{Convergent Modules} and
 \vspace{0.5em}\noindent
 \textbf{Convergent Modules}: In this approach, a programmer writes encapsulated
 modules whose public methods guarantee certain properties regarding message
-reordering and/or retry. For example, Statebox is an open-source library that
+reordering and retry. For example, Statebox is an open-source library that
 merges conflicting updates to data items in a key-value store; the user of the
 library need only register commutative, idempotent merge
 functions~\cite{statebox}. This approach has roots in research in
@@ -87,16 +87,22 @@ to ensure consistent results.
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 
 \subsection{\lang: Logic and Lattices}
-% The strengths and weaknesses of these two approaches appear complementary. CRDTs provide synchronization-free consistent objects, but cannot guarantee whole-program consistency. Bloom's CALM analysis guarantees whole-program consistency but is unable to verify a number of natural coordination-free mechanisms.
-Instead of only allowing growth according to the set containment
-partial order, we would like to allow any user-defined partial order to be used.  
-To this end, we introduce a \lang, an extension to Bloom which provides a programming construct for defining join semi-lattices like CRDTs.
-We give a
-formal definition of this construct below, but the intuition is that the programmer provides a commutative, idempotent merge function (``least upper bound'')
-that takes two input values and produces an output value that is not smaller
-than either of the input values, according to the user's partial order. This
+% The strengths and weaknesses of these two approaches appear
+% complementary. CRDTs provide synchronization-free consistent objects, but
+% cannot guarantee whole-program consistency. Bloom's CALM analysis guarantees
+% whole-program consistency but is unable to verify a number of natural
+% coordination-free mechanisms.
+Instead of only allowing growth according to the set containment partial order,
+we would like to allow any user-defined partial order to be used.  To this end,
+we introduce a \lang, an extension to Bloom which provides a programming
+construct for defining join semi-lattices like CRDTs.  We give a formal
+definition of this construct below, but the intuition is that the programmer
+provides a commutative, idempotent merge function (``least upper bound'') that
+takes two input values and produces an output value that is greater than or
+equal to both input values, according to the user's partial order. This
 generalizes Bloom (and traditional Datalog), which assumes a fixed merge
 function (set union) and partial order (set containment).
+
 % Relate user-defined merge functions to merge functions in other contexts?
 % (e.g., key-value store, COPS, Piccolo)
 
@@ -106,8 +112,15 @@ function (set union) and partial order (set containment).
   significantly more liberal in identifying monotonic code that is confluent
   without the need for coordination.  This enables the coordination-free use of
   common monotonic constructs, including timestamps and sequence numbers.
+
 \item {\lang}'s lattice framework provides monotonicity-preserving mappings
-  between lattices via \emph{morphisms} and \emph{monotone functions}.  By using such mappings, the per-component monotonicity guarantees offered by CRDTs can be extended across multiple lattice-based components.  This is key to the CALM analysis of monotonic \lang programs described above.  It is also useful for establishing the monotonicity of sub-programs even when the whole program is not designed to be monotonic.
+  between lattices via \emph{morphisms} and \emph{monotone functions}.  By using
+  such mappings, the per-component monotonicity guarantees offered by CRDTs can
+  be extended across multiple lattice-based components.  This capability is key
+  to the CALM analysis of monotonic \lang programs described above.  It is also
+  useful for establishing the monotonicity of sub-programs even when the whole
+  program is not designed to be monotonic.
+
 \item For efficient execution, we extend the standard Datalog semi-naive
   evaluation scheme~\cite{Balbin1987} to support both lattices and traditional
   database relations. We also describe how an existing Datalog engine can be

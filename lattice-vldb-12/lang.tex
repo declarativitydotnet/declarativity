@@ -21,14 +21,14 @@ Section~\ref{sec:bloom-interop}.
 \label{sec:lattice-defn}
 A \emph{bounded join semilattice} is a triple $\langle S, \lor, \bot\rangle$,
 where $S$ is a poset, $\lor$ is a binary operator (called ``join'' or ``least
-upper bound''), and $\bot \in S$. $\lor$ is associative, commutative, and
-idempotent. For all $x, y \in S$, $x \lor y = z$, where $x \leq_S z, y \leq_S
-z$, and there is no $z' \ne z \in S$ such that $z' \leq_S z$ (where $\leq_S$ is
-the partial order of poset $S$). Note that although $S$ only has a partial
-order, the least upper bound is defined for all elements $x,y \in S$. The
-distinguished element $\bot$ is the smallest element in $S$; this implies that
-$x \lor \bot = x$ for all $x \in S$. For brevity, we use the term ``lattice'' to
-mean ``bounded join semilattice'' in the rest of this paper. We also use the
+upper bound''), and $\bot \in S$. The operator $\lor$ is associative,
+commutative, and idempotent. For all $x, y \in S$, $x \lor y = z$, where $x
+\leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$ such that $z' \leq_S z$
+(where $\leq_S$ is the partial order of poset $S$). Note that although $S$ only
+has a partial order, the least upper bound is defined for all elements $x,y \in
+S$. The distinguished element $\bot$ is the smallest element in $S$; therefore,
+$x \lor \bot = x$ for every $x \in S$. For brevity, we use the term ``lattice''
+to mean ``bounded join semilattice'' in the rest of this paper. We also use the
 informal term ``merge function'' to mean ``least upper bound.''
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
@@ -105,10 +105,10 @@ Statements take the same form in both Bloom and \lang: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
     $<$expression$>$}}\\ \noindent
 The identifier on the lhs can refer to either a set-oriented collection or a
-lattice. The expression on the rhs can contain both traditional relational
-operators (applied to Bloom collections) and methods invoked on lattices.
-Lattice methods are similar to methods in an object-oriented language and are
-invoked using the standard Ruby method invocation syntax. For example,
+lattice element. The expression on the rhs can contain both traditional
+relational operators (applied to Bloom collections) and methods invoked on
+lattices.  Lattice methods are similar to methods in an object-oriented language
+and are invoked using the standard Ruby method invocation syntax. For example,
 line~\ref{line:quorum-size} of Figure~\ref{fig:lattice-quorum} invokes the
 \texttt{size} method on an element of the \texttt{lset} lattice.
 
@@ -150,16 +150,17 @@ Section~\ref{sec:lattice-eval-strat}.
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
 Bud interpreter stratifies the program to ensure that the input value is
-computed to completion before allowing the non-monotonic operator to be invoked. This
-implies that programs with cycles through non-monotonic lattice methods will be
-rejected. \lang encourages developers to minimize the use of non-monotonic
-constructs: as the CALM analysis suggests, non-monotonic reasoning may need to
-be augmented with coordination to ensure consistent results.
+computed to completion before allowing the non-monotonic operator to be
+invoked. Stratification implies that programs with cycles through non-monotonic
+lattice methods will be rejected. \lang encourages developers to minimize the
+use of non-monotonic constructs: as the CALM analysis suggests, non-monotonic
+reasoning may need to be augmented with coordination to ensure consistent
+results.
 
 Every lattice defines a non-monotonic \texttt{reveal} method that returns a
 representation of the lattice element as a plain Ruby value. For example, the
 \texttt{reveal} method on a \texttt{lset} lattice returns a Ruby array
-containing the contents of the set. This is non-monotonic because once the
+containing the contents of the set. This method is non-monotonic because once the
 underlying Ruby value has been extracted from the set, \lang cannot ensure that
 subsequent code uses the value in a monotonic fashion.
 

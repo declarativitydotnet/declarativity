@@ -36,7 +36,7 @@ yields unsatisfactory results.
 \subsection{Bloom}
 \label{sec:bg-bloom}
 
-Bloom is a Datalog-based domain-specific language (DSL) designed for distributed
+Bloom is a Datalog-based domain-specific language (DSL) for distributed
 programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
 using \emph{collections} and computation is expressed as a bundle of declarative
 \emph{statements}.  An instance of a Bloom program performs computation by
@@ -56,7 +56,7 @@ These effects are deferred during the second phase of the timestep; the third
 phase is devoted to carrying them out.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
-embedded inside Ruby programs. Figure~\ref{fig:bloom-spaths} shows a Bloom
+embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
 program represented as an annotated Ruby class. A small amount of imperative
 Ruby code is needed to instantiate the Bloom program and begin executing it;
 more details are available on the Bloom language website~\cite{bloom}.
@@ -130,8 +130,8 @@ rhs at some non-deterministic future timestep\\
 \label{tbl:bloom-ops}
 \end{table}
 
-Each statement has one or more input collections and a single output
-collection.  Each statement takes the form: \\ \noindent
+Each Bloom statement has one or more input collections and a single output
+collection.  A statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-identifier$>$ $<$op$>$
     $<$collection-expression$>$}}\\ \noindent
 The left-hand side (lhs) is the name of the output collection and the right-hand
@@ -145,12 +145,11 @@ line~\ref{line:spaths-proj} demonstrates projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
 \verb+link.to = path.from+ followed by a projection to four attributes, and
-line~\ref{line:spaths-group} demonstrates grouping and aggregation, followed by
-projection to three attributes. Bloom statements appear in one or more
-\texttt{bloom} blocks. A Bloom program can also include a \texttt{bootstrap}
-block, which contains statements that are evaluated only once when a Bloom
-instance starts executing. \texttt{bootstrap} blocks are typically used for
-initialization or configuration data.
+line~\ref{line:spaths-group} demonstrates grouping and aggregation. Bloom
+statements appear in one or more \texttt{bloom} blocks. A Bloom program can also
+include a \texttt{bootstrap} block, which contains statements that are evaluated
+only once when a Bloom instance starts executing. \texttt{bootstrap} blocks are
+typically used for initialization or configuration data.
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
@@ -236,7 +235,7 @@ line~\ref{line:bloom-nm-quorum}).
 
 To solve this problem, we need to introduce a notion of program values that
 ``grow'' according to a partial order other than set containment. We do this by
-extending Bloom to operate over arbitrary \emph{lattices}, rather than just the
+extending Bloom to operate over arbitrary lattices, rather than just the
 set lattice.
 
 %  We present a
