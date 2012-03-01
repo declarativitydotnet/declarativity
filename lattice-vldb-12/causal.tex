@@ -3,11 +3,11 @@
 
 In the previous section, we showed how \lang increases the space of programs
 that can be shown to be confluent. However, many distributed protocols are not
-\emph{intended} to be confluent. Rather than insisting on a single outcome
-despite message delays, these protocols allow timing conditions to affect the
-choice among several acceptable outcomes. For example, in a vector clock system,
-the particular clock values assigned to messages differ depending on network
-non-determinism. Nevertheless, the system does not exhibit arbitrary
+\emph{intended} to be confluent. Rather than requiring a single outcome
+regardless of message delays, these protocols allow timing conditions to affect
+the choice among several acceptable outcomes. For example, in a vector clock
+system, the particular clock values assigned to messages differ depending on
+message ordering. Nevertheless, the system does not exhibit arbitrary
 non-determinism: the clock at each node should move upward over time, for
 example.
 
@@ -15,14 +15,15 @@ In this section, we show how \lang can be used to implement two non-confluent
 protocols, vector clocks and causal delivery. Although we cannot guarantee a
 global correctness property like confluence, lattices still provide strong local
 guarantees: for example, a vector clock lattice will strictly move ``upward,''
-which maps to our intuitive notion these protocols make ``progress'' over
-time. These are similar to the interface guarantees provided by CRDTs, with the
-additional benefit that monotone functions allow safe mappings between lattice
-values.
+which agrees with our intuitive notion that these protocols make progress over
+time. These guarantees are similar to the interface guarantees provided by
+CRDTs, with the notable difference that monotone functions allow safe mappings
+between lattice values.
 
-As a secondary benefit, we observe that our programs are readable and concise
-(e.g., 20x shorter than a comparable Java program). This suggests that \lang is
-suitable for common distributed programming tasks.
+As a secondary benefit, we observe that our programs are concise---in one case,
+\textasciitilde{}20x shorter than a comparable Java program---and exhibit a
+visual correspondence between algorithm pseudocode and program structure. This
+suggests that \lang is suitable for common distributed programming tasks.
 
 % Vector clocks are a classical mechanism for recording the causal relationships
 % between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
@@ -70,12 +71,15 @@ end
 \label{fig:vector-clock-src}
 \end{figure}
 
-A \emph{vector clock} is an array containing a logical clock for each node in
-the distributed system. Each node keeps a local vector clock that it updates
-when it sends and receives messages; the node's vector clock reflects how
-up-to-date its local knowledge is with respect to the other nodes in the
-system. Vector clocks can be used to assign a partial order over the events in
-the system that agrees with the causal relationship between events.
+\emph{Vector clocks} are a classical mechanism for recording the causal
+relationships between events in a distributed
+system~\cite{Fidge1988,Mattern1989}.  A vector clock is an array containing a
+logical clock for each node in the distributed system. Each node keeps a local
+vector clock that it updates when it sends and receives messages; the node's
+vector clock reflects how up-to-date its local knowledge is with respect to the
+other nodes in the system. Vector clocks can be used to assign a partial order
+over the events in the system that agrees with the causal relationship between
+events.
 
 Each node $n$ initializes its vector clock to $\{n \rightarrow 0\}$. A node
 updates its vector clock $v$ by following three rules when sending and receiving
