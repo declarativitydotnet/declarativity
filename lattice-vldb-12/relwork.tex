@@ -73,10 +73,13 @@ Shapiro et al.\ recently proposed \emph{Conflict-free Replicated Data Types}
 (CRDTs), a principled approach to the design of loosely consistent data
 values~\cite{Shapiro2011b}. Shapiro et al.\ provide a formal model for
 convergence based on join semilattices and a catalog of practical CRDT
-designs~\cite{Shapiro2011a}. CRDTs and \lang lattices often employ similar
-design patterns. As noted in Section~\ref{sec:intro}, the CRDT approach
-considers the correctness of replicated data types in isolation. Hence, even if
-a CRDT is correct, application-level state may remain inconsistent.
+designs~\cite{Shapiro2011a}. CRDTs and \lang lattice types often follow similar
+design patterns to achieve coordination-free convergence. Unlike \lang, the CRDT
+approach considers the correctness of replicated values in isolation. This
+allows CRDTs to be more easily adapted into standalone libraries (e.g.,
+Statebox~\cite{statebox}). However, the narrow focus of CRDTs means that, even
+if a CRDT is correct, application state may remain inconsistent (as noted in
+Section~\ref{sec:intro}).
 
 % . A major difference between \lang and CRDTs is that Shapiro et
 % al.\ focus on the design of replicated data types in isolation, whereas we

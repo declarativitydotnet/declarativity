@@ -36,8 +36,8 @@ program analysis for classes of non-confluent programs would be very useful. For
 example, we can show that each node's local vector clock increases over
 time. However, we would like to show something stronger for programs that use
 causal delivery: whenever a new message is delivered, it should contain ``new''
-information. If not, the newly delivered message ``happens before'' the previous
-state of the recipient, which means causality has been violated (assuming
+information. If not, the newly delivered message ``happens before'' the state of
+the recipient, which implies that causality has been violated (assuming
 at-most-once delivery). A program analysis to prove that this situation never
 occurs would require reasoning about intermediate states of the program, rather
 than considering only final states (as in confluence).
