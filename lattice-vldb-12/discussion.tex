@@ -4,9 +4,9 @@ One key aspect of \lang is the way that it enables the \emph{composition} of
 consistent components. Rather than reasoning about the consistency of an entire
 application, the programmer can instead ensure that individual lattices satisfy
 \emph{local} correctness properties (e.g., commutativity, associativity, and
-idempotence). The CALM analysis then verifies that when these modules are
-composed to form an application, the complete program satisfies the desired
-consistency properties.
+idempotence). The CALM analysis verifies that when these modules are composed to
+form an application, the complete program satisfies the desired consistency
+properties.
 
 Nevertheless, designing a correct lattice can still be difficult. To address
 this, we plan to develop tools to give programmers more confidence in the
@@ -30,16 +30,19 @@ investigating how \lang could be enhanced to provide special support for
 bounded lattices with $\top$ values.
 
 As discussed in Section~\ref{sec:causal}, \lang is still useful even when
-confluence is not an appropriate correctness criteria. Nevertheless, we would like to extend our \lang program analyses beyond monotonicity and confluence tests.  Our vector clock example illustrates some issues that merit further exploration.  As discussed, we can show that each node's local vector clock increases over
-time. However, we would like to show something stronger to establish correctness of
-causal delivery: whenever a message is delivered, merging the message's clock
+confluence is not an appropriate correctness criteria. Nevertheless, we would
+like to extend our program analyses beyond monotonicity and confluence tests.
+Our vector clock example illustrates some issues that merit further exploration.
+As discussed, we can show that each node's local vector clock increases over
+time. However, we would like to show something stronger to establish correctness
+of causal delivery: when a message is delivered, merging the message's clock
 into the local vector clock should result in moving the local vector clock
 ``upward.'' If delivering a message does not change the local clock, the newly
 delivered message ``happens before'' the state of the recipient, which implies
 that causality has been violated (assuming at-most-once delivery). A program
 analysis to prove that this situation never occurs would require reasoning about
 intermediate states of the program, rather than only final states (as in
-confluence).  
+confluence).
 
 % By allowing a more general notion of monotonicity, \lang significantly increases
 % the number of programs that can be shown to be confluent. However, many
