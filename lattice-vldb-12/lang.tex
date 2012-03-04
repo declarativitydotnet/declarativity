@@ -215,7 +215,7 @@ functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
 Bud interpreter stratifies the program to ensure that the input value is
-computed to completion before allowing the non-monotonic operator to be
+computed to completion before allowing the non-monotonic method to be
 invoked. Stratification implies that programs with cycles through non-monotonic
 lattice methods will be rejected. \lang encourages developers to minimize the
 use of non-monotonic constructs: as the CALM analysis suggests, non-monotonic
