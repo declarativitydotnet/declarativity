@@ -196,11 +196,11 @@ derived value is consumed by a non-monotonic operator.  This is because
 asynchronous messaging results in non-deterministic arrival order, and
 non-monotonic operators may be produce different conclusions when evaluated over
 different subsets of their inputs.  For example, consider a Bloom program in
-which collections $A$ and $B$ are fed by asynchronous channels, and the program
+which collections $A$ and $B$ are fed by asynchronous channels and the program
 sends a message whenever an element of $A$ arrives that is not in $B$. This
-program is non-monotonic and exhibits non-confluent behavior: the messages
-sent by the program will depend on the order in which the elements of $A$ and
-$B$ arrive.
+program is non-monotonic and exhibits non-confluent behavior: the messages sent
+by the program will depend on the order in which the elements of $A$ and $B$
+arrive.
 
 We have implemented a conservative static program analysis in Bloom that follows
 directly from the CALM theorem.  Programs that are free from non-monotonic

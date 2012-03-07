@@ -4,14 +4,16 @@
 \usepackage{url}
 \usepackage{balance}  % for  \balance command ON LAST PAGE  (only there!)
 \usepackage{xspace}
-\usepackage{textcomp}
 \usepackage[T1]{fontenc}
 \usepackage{times}
+%\usepackage{mathptmx}    % use "times" font, including for math mode
+\usepackage{txfonts}  % apparently needed to fixup the formatting of lstlistings
+\usepackage{textcomp}
 \usepackage[protrusion=true,expansion=true]{microtype}
-% "txfonts" is apparently needed to fixup the formatting of lstlistings
-\usepackage{txfonts}
 \usepackage{paralist}
 \usepackage{comment}
+
+\frenchspacing
 
 \usepackage{listings}
 \lstset{
