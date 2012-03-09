@@ -19,7 +19,9 @@ class AllPathsL
     # path <= path.eqjoin(link, 1, 0).pro do |p,l|
     #   [[p[0], l[1], p[2] + l[2]]]
     # end
-    path <= path.eqjoin(link, 1, 0).simplify_paths
+    path <= path.eqjoin(link, 1, 0) do |p,l|
+      [p[0], l[1], p[2] + l[2]]
+    end
 #    path <= path.tc(link)
   end
 end
