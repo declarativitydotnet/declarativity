@@ -16,10 +16,11 @@ class AllPathsL
     # path <= path.product(link).pro do |p,l|
     #   [[p[0], l[1], p[2] + l[2]]] if p[1] == l[0]
     # end
-    # path <= path.theta(link, 1, 0).pro do |p,l|
+    # path <= path.eqjoin(link, 1, 0).pro do |p,l|
     #   [[p[0], l[1], p[2] + l[2]]]
     # end
-    path <= path.tc(link)
+    path <= path.eqjoin(link, 1, 0).simplify_paths
+#    path <= path.tc(link)
   end
 end
 
