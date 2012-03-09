@@ -96,14 +96,14 @@ results. We instrumented Bud to count the number of derivations made by the
 Bloom and semi-naive lattice variants---as expected, both programs made a
 similar number of derivations. These results suggest that our implementation of
 semi-naive evaluation for \lang is effective and performs comparably with
-semi-naive evaluation for traditional sets.
+a traditional implementation of semi-naive evaluation for sets.
 
 For large inputs, Bloom began to outperform the semi-naive lattice variant. We
-suspect this is because our current implementation of lattices requires more
-data copies. Lattices are immutable, so the \texttt{lset} merge function
-allocates a new object to hold the result of the merge. In contrast, Bloom
-collections are modified in-place. We plan to address this by improving the
-lattice runtime to avoid copies when it can determine that in-place updates are
+suspect this is because the lattice implementation copies more data than Bloom
+does for this benchmark. Lattice elements are immutable, so the \texttt{lset}
+merge function allocates a new object to hold the result of the merge. In
+contrast, Bloom collections are modified in-place. We plan to improve the
+lattice code to avoid copies when it can determine that in-place updates are
 safe.
 
 \subsection{Modifying Bud}
