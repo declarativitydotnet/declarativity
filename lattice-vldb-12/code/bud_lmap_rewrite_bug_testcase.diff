@@ -1,0 +1,13 @@
+diff --git a/test/tc_lattice.rb b/test/tc_lattice.rb
+index 9ee4e5a..1f78d46 100644
+--- a/test/tc_lattice.rb
++++ b/test/tc_lattice.rb
+@@ -506,7 +506,7 @@ class SimpleMap
+   end
+ 
+   bloom do
+-    h <= [{"x" => m1, "y" => m1}]
++    h <= {"x" => m1, "y" => m1}
+     h <= in_t {|t| {t.v => m2}}
+     hkeys <= h.key_set
+   end
