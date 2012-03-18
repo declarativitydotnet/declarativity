@@ -1,0 +1,2270 @@
+Output of:
+
+    git diff 13b81aabcca553d4dc2f3c25ff005682c8943c9b 26f55c10831bc3d23951f78e1c7a177f0324aa95
+
+i.e., diff between final (likely) state of v2 lattice implementation
+against the latest version of the old runtime (just prior to merge of
+new push-based runtime).
+
+diff --git a/lib/bud.rb b/lib/bud.rb
+index 5b961d5..7e2d5a8 100644
+--- a/lib/bud.rb
++++ b/lib/bud.rb
+@@ -19,6 +19,7 @@ require 'bud/deploy/forkdeploy'
+ require 'bud/deploy/threaddeploy'
+ require 'bud/errors'
+ require 'bud/joins'
++require 'bud/lattices'
+ require 'bud/metrics'
+ require 'bud/meta_algebra'
+ require 'bud/rtrace'
+@@ -66,7 +67,7 @@ $bud_instances = {}        # Map from instance id => Bud instance
+ module Bud
+   attr_reader :strata, :budtime, :inbound, :options, :meta_parser, :viz, :rtracer
+   attr_reader :dsock
+-  attr_reader :builtin_tables, :tables
++  attr_reader :builtin_tables, :tables, :lattices
+   attr_reader :channels, :tc_tables, :zk_tables, :dbm_tables, :sources, :sinks
+   attr_reader :stratum_first_iter, :joinstate
+   attr_reader :this_stratum, :this_rule, :rule_orig_src
+@@ -113,6 +114,7 @@ module Bud
+   def initialize(options={})
+     @builtin_tables = {}
+     @tables = {}
++    @lattices = {}
+     @rewritten_strata = []
+     @channels = {}
+     @tc_tables = {}
+@@ -243,6 +245,7 @@ module Bud
+ 
+   # Invoke all the user-defined state blocks and initialize builtin state.
+   def init_state
++    load_lattice_defs
+     builtin_state
+     call_state_methods
+   end
+@@ -712,6 +715,7 @@ module Bud
+       @inside_tick = true
+ 
+       @tables.each_value {|t| t.tick}
++      @lattices.each_value {|l| l.tick}
+ 
+       @joinstate = {}
+ 
+@@ -859,7 +863,7 @@ module Bud
+       fixpoint = true
+       # tick collections in this stratum; if we don't have info on that, tick all collections
+       colls = @stratum_collection_map[strat_num] if @stratum_collection_map
+-      colls ||= @tables.keys
++      colls ||= @tables.keys + @lattices.keys
+       colls.each do |name|
+         coll = @tables[name]
+         # ignore missing tables; rebl for example deletes them mid-stream
+@@ -868,6 +872,11 @@ module Bud
+             fixpoint = false unless coll.new_delta.empty?
+             coll.tick_deltas
+           end
++        elsif @lattices.has_key? name
++          lat = @lattices[name]
++          if lat.tick_deltas
++            fixpoint = false
++          end
+         end
+       end
+     end while not fixpoint
+diff --git a/lib/bud/bud_meta.rb b/lib/bud/bud_meta.rb
+index c19a2e2..ae1c3e3 100644
+--- a/lib/bud/bud_meta.rb
++++ b/lib/bud/bud_meta.rb
+@@ -149,7 +149,8 @@ class BudMeta #:nodoc: all
+       # Check that LHS references a named collection
+       return n if lhs.nil? or lhs.sexp_type != :call
+       lhs_name = lhs[2].to_sym
+-      unless @bud_instance.tables.has_key? lhs_name
++      unless @bud_instance.tables.has_key? lhs_name or
++             @bud_instance.lattices.has_key? lhs_name
+         return [n, "collection does not exist: '#{lhs_name}'"]
+       end
+ 
+diff --git a/lib/bud/collections.rb b/lib/bud/collections.rb
+index 44f157b..05b6fc7 100644
+--- a/lib/bud/collections.rb
++++ b/lib/bud/collections.rb
+@@ -50,6 +50,7 @@ module Bud
+       @given_schema = given_schema
+       @cols, @key_cols = parse_schema(given_schema)
+       @key_colnums = key_cols.map {|k| @cols.index(k)}
++      @val_colnums = val_cols.map {|v| @cols.index(v)}
+       setup_accessors
+     end
+ 
+@@ -312,22 +313,17 @@ module Bud
+     private
+     def get_key_vals(t)
+       @key_colnums.map do |i|
++        if is_lattice_val(t[i])
++          raise Bud::TypeError, "lattice value cannot be a key for #{tabname}: #{t[i].inspect}"
++        end
+         t[i]
+       end
+     end
+ 
+     private
+     def do_insert(o, store)
+-      return if o.nil? # silently ignore nils resulting from map predicates failing
+-      o = prep_tuple(o)
+-      key = get_key_vals(o)
+-
+-      old = store[key]
+-      if old.nil?
+-        store[key] = tuple_accessors(o)
+-      else
+-        raise_pk_error(o, old) unless old == o
+-      end
++      return if o.nil?
++      merge_into_buf(o, store, [store])
+     end
+ 
+     public
+@@ -382,18 +378,71 @@ module Bud
+     end
+ 
+     private
+-    def include_any_buf?(t, key)
+-      bufs = [self, @delta, @new_delta]
++    def find_match(key, bufs)
++      bufs ||= [@new_delta, @delta, self]
+       bufs.each do |b|
+         old = b[key]
+-        next if old.nil?
+-        if old != t
++        return old if old
++      end
++      return nil
++    end
++
++    private
++    def is_lattice_val(t)
++      t.class <= Bud::Lattice
++    end
++
++    private
++    def merge_into_buf(t, buf, search_bufs=nil)
++      t = prep_tuple(t)
++      key = get_key_vals(t)
++      new_t = merge_tuple(t, key, search_bufs)
++      buf[key] = tuple_accessors(new_t) unless new_t.nil?
++    end
++
++    private
++    def merge_tuple(t, key, search_bufs)
++      # We depend on an important property of find_match: by default, it will
++      # search @new_delta, @delta, and then @storage, in that order (and return
++      # the first match). Hence, if a conflicting tuple is found, we merge with
++      # the "newest" conflicting version. This ensures that we don't throw away
++      # updated tuple versions, since we merge @new_delta => @delta => @storage.
++      old = find_match(key, search_bufs)
++      if old.nil?
++        return t        # No matches found
++      elsif old == t
++        return nil      # Duplicate value
++      end
++
++      # Check if it is a PK violation
++      @val_colnums.each do |i|
++        old_v = old[i]
++        new_v = t[i]
++
++        unless old_v == new_v || (is_lattice_val(old_v) && is_lattice_val(new_v))
+           raise_pk_error(t, old)
++        end
++      end
++
++      # Construct new version of tuple via lattice merge functions. We can skip
++      # producing a delta tuple if merging in every lattice value doesn't yield
++      # a new lattice value.
++      new_t = Array.new(old.length)
++      saw_change = false
++      @val_colnums.each do |i|
++        if old[i] == t[i]
++          new_t[i] = old[i]
+         else
+-          return true
++          new_t[i] = old[i].merge(t[i])
++          saw_change = true if new_t[i].reveal != old[i].reveal
+         end
+       end
+-      return false
++      if saw_change
++        @key_colnums.each {|k| new_t[k] = old[k]}
++        return new_t
++      else
++        return nil      # Duplicate
++      end
+     end
+ 
+     public
+@@ -405,9 +454,7 @@ module Bud
+         # it's a pity that we are massaging tuples that may be dups
+         o.each do |t|
+           next if t.nil? or t == []
+-          t = prep_tuple(t)
+-          key = get_key_vals(t)
+-          buf[key] = tuple_accessors(t) unless include_any_buf?(t, key)
++          merge_into_buf(t, buf)
+         end
+       end
+       return self
+@@ -462,8 +509,17 @@ module Bud
+     # move deltas to storage, and new_deltas to deltas.
+     public
+     def tick_deltas # :nodoc: all
+-      # assertion: intersect(@storage, @delta) == nil
+-      @storage.merge!(@delta)
++      @storage.merge!(@delta) do |k, old, new|
++        @val_colnums.each do |i|
++          next if old[i] == new[i]
++          unless is_lattice_val(old[i]) && is_lattice_val(new[i])
++            raise Bud::TypeError, "lattice value mismatch: #{old.inspect}, #{new.inspect}"
++          end
++          old[i] = old[i].merge(new[i])
++        end
++        old
++      end
++
+       @delta = @new_delta
+       @new_delta = {}
+     end
+@@ -764,7 +820,25 @@ module Bud
+           the_locspec = split_locspec(t, @locspec_idx)
+           raise Bud::Error, "'#{t[@locspec_idx]}', channel '#{@tabname}'" if the_locspec[0].nil? or the_locspec[1].nil? or the_locspec[0] == '' or the_locspec[1] == ''
+         end
+-        @bud_instance.dsock.send_datagram([@tabname, t].to_msgpack, the_locspec[0], the_locspec[1])
++
++        # Convert the tuple into a suitable wire format. Because MsgPack cannot
++        # marshal arbitrary Ruby objects (namely lattice values), we first
++        # encode nested lattice values using the Marshal, and then encode the
++        # entire tuple with MsgPack (obviously, this is gross). The wire format
++        # also includes an array of indices, indicating which fields hold
++        # Marshall'd objects.
++        lat_indexes = []
++        wire_tuple = Array.new(t.length)
++        t.each_with_index do |f, i|
++          if f.class <= Bud::Lattice
++            lat_indexes << i
++            wire_tuple[i] = Marshal.dump(f)
++          else
++            wire_tuple[i] = f
++          end
++        end
++        wire_str = [@tabname, wire_tuple, lat_indexes].to_msgpack
++        @bud_instance.dsock.send_datagram(wire_str, the_locspec[0], the_locspec[1])
+       end
+       @pending.clear
+     end
+@@ -829,7 +903,7 @@ module Bud
+             port = @bud_instance.port
+             EventMachine::schedule do
+               socket = EventMachine::open_datagram_socket("127.0.0.1", 0)
+-              socket.send_datagram([tabname, tup].to_msgpack, ip, port)
++              socket.send_datagram([tabname, tup, []].to_msgpack, ip, port)
+             end
+           end
+         rescue Exception
+@@ -909,12 +983,7 @@ module Bud
+         end
+       end
+       @pending.each do |key, tuple|
+-        old = @storage[key]
+-        if old.nil?
+-          @storage[key] = tuple
+-        else
+-          raise_pk_error(tuple, old) unless tuple == old
+-        end
++        merge_into_buf(tuple, @storage, [@storage])
+       end
+       @to_delete = []
+       @pending = {}
+diff --git a/lib/bud/lattices.rb b/lib/bud/lattices.rb
+new file mode 100644
+index 0000000..f73488d
+--- /dev/null
++++ b/lib/bud/lattices.rb
+@@ -0,0 +1,653 @@
++require 'set'
++
++class Bud::Lattice
++  @@lattice_kinds = {}
++  @@global_morphs = {}
++  @@global_mfuncs = {}
++
++  def self.wrapper_name(name)
++    if @wrapper_name
++      raise Bud::CompileError, "lattice #{self.class} has multiple names"
++    end
++    if @@lattice_kinds.has_key? name
++      raise Bud::CompileError, "duplicate lattice definition: #{name}"
++    end
++    @@lattice_kinds[name] = self
++    @wrapper_name = name
++  end
++
++  def self.lattice_kinds
++    @@lattice_kinds
++  end
++
++  def self.wrapper
++    @wrapper_name
++  end
++
++  def self.morph(name, &block)
++    if mfuncs.has_key?(name) || @@global_mfuncs.has_key?(name)
++      raise Bud::CompileError, "#{name} declared as both monotone and morph"
++    end
++    @morphs ||= {}
++    @morphs[name] = true
++    @@global_morphs[name] = true
++    define_method(name, &block)
++  end
++
++  def self.morphs
++    @morphs || {}
++  end
++
++  def self.global_morphs
++    @@global_morphs
++  end
++
++  def self.monotone(name, &block)
++    if morphs.has_key?(name) || @@global_morphs.has_key?(name)
++      raise Bud::CompileError, "#{name} declared as both monotone and morph"
++    end
++    @mfuncs ||= {}
++    @mfuncs[name] = true
++    @@global_mfuncs[name] = true
++    define_method(name, &block)
++  end
++
++  def self.mfuncs
++    @mfuncs || {}
++  end
++
++  def self.global_mfuncs
++    @@global_mfuncs
++  end
++
++  def reject_input(i, meth="initialize")
++    site = "#{self.class.wrapper}\##{meth}"
++    raise Bud::TypeError, "illegal input to #{site}: #{i.inspect}"
++  end
++
++  # Return the state valued associated with a lattice instance. Note that this
++  # is non-monotonic when invoked from user code; it should be used with care by
++  # framework code.
++  def reveal
++    @v
++  end
++
++  def inspect
++    "<#{self.class.wrapper}: #{reveal.inspect}>"
++  end
++
++  # Construct a new instance of the current class that wraps "new_v". We assume
++  # that new_v is already a legal input value for the class, so we can bypass
++  # the class's normal initializer -- this avoids redundant error checks.
++  def wrap_unsafe(new_v)
++    rv = self.class.new
++    rv.instance_variable_set('@v', new_v)
++    rv
++  end
++
++  def seal
++    Bud::SealedLattice.new(self)
++  end
++end
++
++class Bud::LatticeWrapper
++  attr_reader :tabname, :is_scratch
++
++  def initialize(tabname, klass, is_scratch, bud_i)
++    @tabname = tabname
++    @klass = klass
++    @is_scratch = is_scratch
++    @bud_instance = bud_i
++  end
++
++  def current_value(&blk)
++    @storage ||= @klass.new
++    if blk.nil?
++      @storage
++    else
++      @storage.pro(&blk)        # NB: not all lattices implement this method
++    end
++  end
++
++  # This returns a value for the lattice that is suitable as input to a
++  # morphism. On the first iteration, we use the "complete" current value of the
++  # lattice; in subsequent iterations, we use the delta value for the lattice
++  # (if any).
++  def current_morph_value(&blk)
++    if @bud_instance.stratum_first_iter
++      current_value(&blk)
++    else
++      current_delta(&blk)
++    end
++  end
++
++  def current_new_delta
++    @new_delta ||= @klass.new
++    @new_delta
++  end
++
++  private
++  def current_delta(&blk)
++    @delta ||= @klass.new
++    if blk.nil?
++      @delta
++    else
++      @delta.pro(&blk)          # NB: not all lattices implement this method
++    end
++  end
++
++  def current_pending
++    @pending ||= @klass.new
++    @pending
++  end
++
++  def scalar_merge(lhs, rhs)
++    unless rhs.class <= @klass
++      rhs = @klass.new(rhs)
++    end
++    rv = lhs.merge(rhs)
++    unless rv.class <= Bud::Lattice
++      raise Bud::Error, "merge for #{lhs.class} does not return lattice value: #{rv.inspect}"
++    end
++    rv
++  end
++
++  def do_merge(lhs, rhs)
++    raise Bud::Error unless lhs.class <= Bud::Lattice
++    return lhs if rhs.nil?
++
++    # NB: we assume that all lattices are content with the default set =>
++    # lattice homomorphism: we convert each element of the set into a lattice
++    # value, and then fold over those lattice values using the merge function.
++    if rhs.class <= Enumerable && !(rhs.class <= Hash)
++      rhs.each do |r|
++        next if r.nil?
++        lhs = scalar_merge(lhs, r)
++      end
++      return lhs
++    end
++
++    scalar_merge(lhs, rhs)
++  end
++
++  public
++  def <=(i)
++    return if i.nil?
++    @new_delta = do_merge(current_new_delta, i)
++  end
++
++  superator "<+" do |i|
++    return if i.nil?
++    @pending = do_merge(current_pending, i)
++  end
++
++  def tick
++    if @new_delta
++      raise Bud::Error, "orphaned delta value for lattice #{@tabname}: #{@new_delta.inspect}"
++    end
++    @storage = nil if @is_scratch
++    @storage = do_merge(current_value, @pending)
++    @pending = nil
++    @delta = nil
++  end
++
++  def tick_deltas
++    result = false
++
++    if @new_delta
++      m = do_merge(current_value, @new_delta)
++      if m.reveal != current_value.reveal
++        @storage = m
++        result = true
++      end
++    end
++
++    @delta = @new_delta
++    @new_delta = nil
++
++    return result
++  end
++
++  def inspect
++    "lat = #{@tabname}, #{current_value.inspect}"
++  end
++end
++
++class Bud::MaxLattice < Bud::Lattice
++  wrapper_name :lmax
++
++  def initialize(i=nil)
++    unless i.nil? || i.class <= Comparable
++      reject_input(i)
++    end
++    @v = i
++  end
++
++  def merge(i)
++    i_val = i.reveal
++    (@v.nil? || (i_val != nil && i_val > @v)) ? i : self
++  end
++
++  morph :gt do |k|
++    Bud::BoolLattice.new(!!(@v && @v > k))
++  end
++
++  morph :gt_eq do |k|
++    Bud::BoolLattice.new(!!(@v && @v >= k))
++  end
++
++  # XXX: support MaxLattice input?
++  morph :+ do |i|
++    raise Bud::Error, "cannot apply + to empty MaxLattice"  if @v.nil?
++    reject_input(i, "+") unless i.class <= Numeric
++    self.class.new(@v + i)
++  end
++
++  morph :min_of do |i|
++    reject_input(i, "min_of") unless i.class <= Numeric
++    (@v.nil? || i < @v) ? self.class.new(i) : self
++  end
++
++  def lt_eq(k)
++    Bud::BoolLattice.new(!!(@v && @v <= k))
++  end
++end
++
++class Bud::MinLattice < Bud::Lattice
++  wrapper_name :lmin
++
++  def initialize(i=nil)
++    unless i.nil? || i.class <= Comparable
++      reject_input(i)
++    end
++    @v = i
++  end
++
++  def merge(i)
++    i_val = i.reveal
++    (@v.nil? || (i_val != nil && i_val < @v)) ? i : self
++  end
++
++  morph :lt do |k|
++    Bud::BoolLattice.new(!!(@v && @v < k))
++  end
++
++  # XXX: support MinLattice input
++  morph :+ do |i|
++    raise Bud::Error if @v.nil?
++    reject_input(i, "+") unless i.class <= Numeric
++    self.class.new(@v + i)
++  end
++end
++
++# XXX: consider creating two fixed ("interned") values for true and false.
++class Bud::BoolLattice < Bud::Lattice
++  wrapper_name :lbool
++
++  def initialize(i=false)
++    reject_input(i) unless [true, false].include? i
++    @v = i
++  end
++
++  def merge(i)
++    self.class.new(@v || i.reveal)
++  end
++
++  # XXX: ugly syntax
++  morph :when_true do |&blk|
++    blk.call if @v
++  end
++end
++
++class Bud::MapLattice < Bud::Lattice
++  wrapper_name :lmap
++
++  def initialize(i={})
++    reject_input(i) unless i.class == Hash
++    i.keys.each {|k| reject_input(i) if k.class <= Bud::Lattice}
++    i.values.each {|v| reject_input(i) unless v.class <= Bud::Lattice}
++    @v = i
++  end
++
++  def merge(i)
++    rv = @v.merge(i.reveal) do |k, lhs_v, rhs_v|
++      lhs_v.merge(rhs_v)
++    end
++    wrap_unsafe(rv)
++  end
++
++  def inspect
++    "<#{self.class.wrapper}: #{@v.inspect}>"
++  end
++
++  # XXX: If the key is not in the map, we would like to return some generic
++  # "bottom" value that is shared by all lattice values. Unfortunately, such a
++  # value does not exist, so we need the caller to tell us which value to use if
++  # they care. Another alternative is to wire the types of the lattice value
++  # into the definition of the map lattice.
++  morph :at do |k, *args|
++    if @v.has_key? k
++      @v[k]
++    else
++      raise Bud::Error if args.empty?
++      default = args.first
++      default.new
++    end
++  end
++
++  morph :key? do |k|
++    Bud::BoolLattice.new(@v.has_key? k)
++  end
++
++  morph :key_set do
++    Bud::SetLattice.new(@v.keys)
++  end
++
++  monotone :size do
++    Bud::MaxLattice.new(@v.size)
++  end
++
++  morph :pro do |&blk|
++    @v.map(&blk)
++  end
++
++  morph :intersect do |i|
++    i_tbl = i.reveal
++    # Scan the smaller map, probe the larger one
++    scan, probe = (@v.size < i_tbl.size ? [@v, i_tbl] : [i_tbl, @v])
++    rv = {}
++    scan.each do |k,val|
++      rv[k] = val.merge(probe[k]) if probe.has_key? k
++    end
++    wrap_unsafe(rv)
++  end
++
++  # Return true if this map is strictly smaller than or equal to the given
++  # map. "x" is strictly smaller than or equal to "y" if:
++  #     (a) every key in "x"  also appears in "y"
++  #     (b) for every key k in "x", x[k] <= y[k]
++  #
++  # NB: For this to be a morphism, we require that (a) "self" is deflationary
++  # (or fixed) (b) the input lattice value is inflationary (or fixed). We
++  # currently don't have a way to express (a) in the type system.
++  def lt_eq(i)
++    reject_input(i, "lt_eq") unless i.class <= self.class
++
++    @v.each do |k, v|
++      unless i.key?(k).reveal == true
++        return Bud::BoolLattice.new(false)
++      end
++      unless v.lt_eq(i.at(k).reveal).reveal == true
++        return Bud::BoolLattice.new(false)
++      end
++    end
++
++    return Bud::BoolLattice.new(true)
++  end
++end
++
++class Bud::SetLattice < Bud::Lattice
++  wrapper_name :lset
++
++  # XXX: We take an Enumerable as input. When converting a set-valued expression
++  # into a set lattice value, this is a little awkward: because of the "implicit
++  # fold" behavior, our input is an array of singleton arrays. It would be a bit
++  # nicer to allow the input to be an array of atoms; not clear the best way to
++  # achieve that.
++  def initialize(i=[])
++    reject_input(i) unless i.class <= Enumerable
++    i.each do |e|
++      reject_input(i) if e.class <= Bud::Lattice
++    end
++    @v = i.uniq
++  end
++
++  def merge(i)
++    wrap_unsafe(@v | i.reveal)
++  end
++
++  morph :intersect do |i|
++    wrap_unsafe(@v & i.reveal)
++  end
++
++  morph :product do |i|
++    rv = []
++    @v.each do |a|
++      rv += i.pro {|b| [a,b]}
++    end
++    wrap_unsafe(rv)
++  end
++
++  morph :contains? do |i|
++    Bud::BoolLattice.new(@v.member? i)
++  end
++
++  morph :pro do |&blk|
++    @v.map(&blk)
++  end
++
++  monotone :size do
++    Bud::MaxLattice.new(@v.size)
++  end
++
++  # Assuming that this set contains tuples (arrays) as elements, this performs
++  # an equijoin between the current lattice and i. The join predicate is
++  # "self_t[lhs_idx] == i_t[rhs_idx]", for all tuples self_t and i_t in self and
++  # i, respectively. The return value is the result of passing pairs of join
++  # tuples to the user-supplied block.
++  morph :eqjoin do |i, lhs_idx, rhs_idx, &blk|
++    rv = []
++    @v.each do |a|
++      rv += i.probe(rhs_idx, a[lhs_idx]).map {|b| blk.call(a, b)}
++    end
++    wrap_unsafe(rv)
++  end
++
++  # Assuming that this set contains tuples (arrays) as elements, this returns a
++  # list of tuples (possibly) empty whose idx'th column has the value "v".
++  def probe(idx, v)
++    @ht ||= build_ht(idx)
++    return @ht[v] || []
++  end
++
++  private
++  def build_ht(idx)
++    rv = {}
++    @v.each do |i|
++      rv[i[idx]] ||= []
++      rv[i[idx]] << i
++    end
++    rv
++  end
++end
++
++# A set that admits only non-negative numbers. This allows "sum" to be an
++# order-preserving map.  Note that this does duplicate elimination on its input,
++# so it actually computes "SUM(DISTINCT ...)" in SQL.
++class Bud::PositiveSetLattice < Bud::SetLattice
++  wrapper_name :lpset
++
++  def initialize(i=[])
++    super
++    @v.each do |n|
++      reject_input(i) unless n.class <= Numeric
++      reject_input(i) if n < 0
++    end
++  end
++
++  monotone :pos_sum do
++    @sum = @v.reduce(0) {|sum,i| sum + i} if @sum.nil?
++    Bud::MaxLattice.new(@sum)
++  end
++end
++
++# Similar to SetLattice, except that we implement the lattice using a hash table
++# rather than an array. This makes merge() much cheaper but incurs somewhat more
++# overhead for small sets.
++class Bud::HashSetLattice < Bud::Lattice
++  wrapper_name :lhset
++
++  def initialize(i=[])
++    reject_input(i) unless i.class <= Enumerable
++    i.each do |e|
++      reject_input(i) if e.class <= Bud::Lattice
++    end
++
++    i = Set.new(i) unless i.class <= Set
++    @v = i
++  end
++
++  def merge(i)
++    wrap_unsafe(@v | i.reveal)
++  end
++
++  morph :intersect do |i|
++    wrap_unsafe(@v & i.reveal)
++  end
++
++  morph :product do |i|
++    rv = Set.new
++    @v.each do |a|
++      rv.merge(i.pro {|b| [a,b]})
++    end
++    wrap_unsafe(rv)
++  end
++
++  morph :contains? do |i|
++    Bud::BoolLattice.new(@v.member? i)
++  end
++
++  morph :pro do |&blk|
++    @v.map(&blk)
++  end
++
++  monotone :size do
++    Bud::MaxLattice.new(@v.size)
++  end
++
++  # Assuming that this hashset contains tuples (arrays) as elements, this
++  # performs an equijoin between the current lattice and i. The join predicate
++  # is "self_t[lhs_idx] == i_t[rhs_idx]", for all tuples self_t and i_t in self
++  # and i, respectively. The return value is the result of passing pairs of join
++  # tuples to the user-supplied block.
++  morph :eqjoin do |i, lhs_idx, rhs_idx, &blk|
++    rv = Set.new
++    @v.each do |a|
++      i.probe(rhs_idx, a[lhs_idx]).each do |b|
++        rv << blk.call(a, b)
++      end
++    end
++    wrap_unsafe(rv)
++  end
++
++  # Assuming that this hashset contains tuples (arrays) as elements, this
++  # returns a list of tuples (possibly) empty whose idx'th column has the value
++  # "v".
++  def probe(idx, v)
++    @ht ||= build_ht(idx)
++    return @ht[v] || []
++  end
++
++  private
++  def build_ht(idx)
++    rv = {}
++    @v.each do |i|
++      rv[i[idx]] ||= []
++      rv[i[idx]] << i
++    end
++    rv
++  end
++end
++
++# XXX: Should this be just syntax sugar for a map lattice instead?
++class Bud::BagLattice < Bud::Lattice
++  wrapper_name :lbag
++
++  def initialize(i={})
++    reject_input(i) unless i.class <= Hash
++    i.each do |k, mult|
++      reject_input(i) if k.class <= Bud::Lattice
++      reject_input(i) unless (mult.class <= Integer && mult > 0)
++    end
++    @v = i
++  end
++
++  # Note that for merge to be idempotent, we need to use the traditional
++  # definition of multiset union (per-element max of multiplicities, rather than
++  # sum of multiplicities).
++  def merge(i)
++    rv = @v.merge(i.reveal) do |k, lhs_v, rhs_v|
++      [lhs_v, rhs_v].max
++    end
++    wrap_unsafe(rv)
++  end
++
++  morph :intersect do |i|
++    i_tbl = i.reveal
++    # Scan the smaller one, probe the larger one
++    scan, probe = (@v.size < i_tbl.size ? [@v, i_tbl] : [i_tbl, @v])
++    rv = {}
++    scan.each do |k,val|
++      rv[k] = [val, probe[k]].min if probe.has_key? k
++    end
++    wrap_unsafe(rv)
++  end
++
++  morph :mult do |k|
++    rv = @v[k]
++    rv ||= 0
++    Bud::MaxLattice.new(rv)
++  end
++
++  morph :+ do |i|
++    rv = @v.merge(i.reveal) do |k, lhs_v, rhs_v|
++      lhs_v + rhs_v
++    end
++    self.class.new(rv)
++  end
++
++  morph :contains? do |i|
++    Bud::BoolLattice.new(@v.has_key? i)
++  end
++
++  monotone :size do
++    Bud::MaxLattice.new(@v.size)
++  end
++end
++
++# A SealedLattice wraps another lattice value and does not allow that wrapped
++# value to change.
++class Bud::SealedLattice < Bud::Lattice
++  wrapper_name :lseal
++
++  def initialize(i=nil)
++    unless i.nil? || i.class <= Bud::Lattice
++      reject_input(i)
++    end
++    @v = i
++  end
++
++  def merge(i)
++    # If either operand to merge is nil, return the non-nil operand. This
++    # strictly violates the "sealed" behavior of the lattice.
++    i_val = i.reveal
++    return self if i_val.nil?
++    return self.class.new(i_val) if @v.nil?
++
++    # If the merge doesn't result in a change to the lattice value, allow it
++    m = @v.merge(i_val)
++    return self if m == @v
++
++    raise Bud::Error, "cannot merge a sealed lattice value: #{self.inspect}, input = #{i.inspect}"
++  end
++
++  # XXX: should this be a monotone func or a morphism?
++  monotone :safely do |f, *args|
++    # Since this is monotone, we might be placed in the same strata as the rule
++    # that defines the sealed value. Hence, the sealed value might initially be
++    # nil, but should be defined before the end of this strata, by which time
++    # this method *should* have been invoked again. This is a little dubious,
++    # but seems hard to avoid.
++    @v.send(f, *args) unless @v.nil?
++  end
++end
+diff --git a/lib/bud/rewrite.rb b/lib/bud/rewrite.rb
+index 78eb98b..88ee3e1 100644
+--- a/lib/bud/rewrite.rb
++++ b/lib/bud/rewrite.rb
+@@ -3,16 +3,18 @@ require 'rubygems'
+ class RuleRewriter < Ruby2Ruby # :nodoc: all
+   attr_accessor :rule_indx, :rules, :depends
+ 
++  MONOTONE_WHITELIST = {
++    :== => 1, :+ => 1, :<= => 1, :- => 1, :< => 1, :> => 1, :~ => 1,
++    :* => 1, :pairs => 1, :matches => 1, :combos => 1, :flatten => 1,
++    :lefts => 1, :rights => 1, :map => 1, :flat_map => 1, :pro => 1,
++    :schema => 1, :cols => 1, :key_cols => 1, :val_cols => 1,
++    :payloads => 1, :tabname => 1, :+@ => 1,
++    :current_value => 1, :current_morph_value => 1
++  }
++
+   def initialize(seed, bud_instance)
+     @bud_instance = bud_instance
+     @ops = {:<< => 1, :< => 1, :<= => 1}
+-    @monotonic_whitelist = {
+-      :== => 1, :+ => 1, :<= => 1, :- => 1, :< => 1, :> => 1, :~ => 1,
+-      :* => 1, :pairs => 1, :matches => 1, :combos => 1, :flatten => 1,
+-      :lefts => 1, :rights => 1, :map => 1, :flat_map => 1, :pro => 1,
+-      :schema => 1, :cols => 1, :key_cols => 1, :val_cols => 1,
+-      :payloads => 1, :tabname => 1, :+@ => 1
+-    }
+     @temp_ops = {:-@ => 1, :~ => 1, :+@ => 1}
+     @tables = {}
+     @nm = false
+@@ -48,8 +50,10 @@ class RuleRewriter < Ruby2Ruby # :nodoc: all
+       elsif recv and recv.class == Sexp
+         # for CALM analysis, mark deletion rules as non-monotonic
+         @nm = true if op == :-@
+-        # don't worry about monotone ops, table names, table.attr calls, or accessors of iterator variables
+-        unless @monotonic_whitelist[op] or @bud_instance.tables.has_key? op or call_is_attr_deref?(recv, op) or recv.first == :lvar
++        # don't worry about monotone ops, table names, table.attr calls, lattice
++        # names, lattice morphisms, or accessors of iterator variables
++        unless RuleRewriter.is_monotone(op) or is_collection_name(op) or
++               call_is_attr_deref?(recv, op) or recv.first == :lvar
+           @nm = true
+         end
+       end
+@@ -60,6 +64,20 @@ class RuleRewriter < Ruby2Ruby # :nodoc: all
+     end
+   end
+ 
++  def self.is_monotone(op)
++    is_morphism(op) ||
++      MONOTONE_WHITELIST.has_key?(op) ||
++      Bud::Lattice.global_mfuncs.has_key?(op)
++  end
++
++  def self.is_morphism(op)
++    Bud::Lattice.global_morphs.has_key? op
++  end
++
++  def is_collection_name(op)
++    @bud_instance.tables.has_key?(op) || @bud_instance.lattices.has_key?(op)
++  end
++
+   def collect_rhs(exp)
+     @collect = true
+     rhs = process exp
+@@ -94,8 +112,9 @@ class RuleRewriter < Ruby2Ruby # :nodoc: all
+   def do_table(exp)
+     t = exp[1].to_s
+     # If we're called on a "table-like" part of the AST that doesn't correspond
+-    # to an extant table, ignore it.
+-    @tables[t] = @nm if @bud_instance.tables.has_key? t.to_sym and not @tables[t]
++    # to an extant collection or lattice, ignore it.
++    @tables[t] = @nm if (@bud_instance.tables.has_key? t.to_sym or
++                         @bud_instance.lattices.has_key? t.to_sym) and not @tables[t]
+     drain(exp)
+     return t
+   end
+@@ -103,17 +122,29 @@ class RuleRewriter < Ruby2Ruby # :nodoc: all
+   def do_rule(exp)
+     lhs = process exp[0]
+     op = exp[1]
+-    pro_rules = map2pro(exp[2])
++    rhs_ast = map2pro(exp[2])
++
++    # Remove the outer s(:arglist) from the rhs AST. An AST subtree rooted with
++    # s(:arglist) is not really sensible and it causes Ruby2Ruby < 1.3.1 to
++    # misbehave (for example, s(:arglist, s(:hash, ...)) is misparsed.
++    raise Bud::CompileError unless rhs_ast.sexp_type == :arglist
++    rhs_ast = rhs_ast[1]
++
++    unless @bud_instance.options[:disable_lattice_semi_naive]
++      LatticeDeltaRewrite.new(@bud_instance).rewrite(rhs_ast)
++    end
++    rhs_ast = LatticeRefRewriter.new(@bud_instance).process(rhs_ast)
++
+     if @bud_instance.options[:no_attr_rewrite]
+-      rhs = collect_rhs(pro_rules)
++      rhs = collect_rhs(rhs_ast)
+       rhs_pos = rhs
+     else
+       # need a deep copy of the rules so we can keep a version without AttrName
+       # Rewrite
+-      pro_rules2 = Marshal.load(Marshal.dump(pro_rules))
+-      rhs = collect_rhs(pro_rules)
++      rhs_ast_dup = Marshal.load(Marshal.dump(rhs_ast))
++      rhs = collect_rhs(rhs_ast)
+       reset_instance_vars
+-      rhs_pos = collect_rhs(AttrNameRewriter.new(@bud_instance).process(pro_rules2))
++      rhs_pos = collect_rhs(AttrNameRewriter.new(@bud_instance).process(rhs_ast_dup))
+     end
+     record_rule(lhs, op, rhs_pos, rhs)
+     drain(exp)
+@@ -138,6 +169,80 @@ class RuleRewriter < Ruby2Ruby # :nodoc: all
+   end
+ end
+ 
++# Identify situations in which the lattice delta rewrite can safely be applied
++# (see LatticeRefRewriter below for more).
++class LatticeDeltaRewrite
++  def initialize(bud_instance)
++    @bud_instance = bud_instance
++  end
++
++  def rewrite(exp)
++    if exp.sexp_type != :call
++      rewrite(exp[1]) if exp[1].class <= Sexp
++    else
++      tag, recv, op, args = exp
++      if recv.nil? and args == s(:arglist)
++        # We've found a context where it is safe to use the lattice's delta
++        # value instead of its current value. As a gross hack, we identify this
++        # location in the AST by appending "___delta" to the name of the lattice
++        # in the AST; LatticeRefRewriter will then strip off the suffix and do
++        # the actual delta rewrite.
++        exp[2] = "#{op.to_s}___delta".to_sym if @bud_instance.lattices.has_key?(op)
++      else
++        return unless RuleRewriter.is_morphism(op)
++        rewrite(recv)
++      end
++    end
++  end
++end
++
++# Rewrite references to lattice identifiers on the RHS of rules. Invoking the
++# lattice identifier will return the lattice wrapper; we want to invoke a method
++# on the wrapper to get the current value associated with the wrapper.
++#
++# If the lattice identifier is used in a "safe" context, we can return the
++# current "delta" value; otherwise, we return the current value. "Safe" means
++# that the lattice is referenced at the top level of a Bloom rule, and that all
++# the methods chained after this invocation are morphisms, not order-preserving
++# mappings.
++class LatticeRefRewriter < SexpProcessor
++  def initialize(bud_instance)
++    super()
++    self.require_empty = false
++    self.expected = Sexp
++    @bud_instance = bud_instance
++  end
++
++  def process_call(exp)
++    tag, recv, op, args = exp
++    proper_name = remove_delta_tag(op)
++
++    if recv.nil? and args == s(:arglist) and is_lattice?(proper_name)
++      if op == proper_name
++        func = :current_value
++      else
++        exp = s(tag, recv, proper_name, args)
++        func = :current_morph_value
++      end
++      return s(:call, exp, func, s(:arglist))
++    else
++      return s(tag, process(recv), op, process(args))
++    end
++  end
++
++  def is_lattice?(op)
++    @bud_instance.lattices.has_key? op.to_sym
++  end
++
++  def remove_delta_tag(op)
++    if op.to_s.end_with? "___delta"
++      op.to_s[0..-9].to_sym
++    else
++      op
++    end
++  end
++end
++
+ # Rewrite named-column refs to positional refs
+ class AttrNameRewriter < SexpProcessor # :nodoc: all
+   def initialize(bud_instance)
+@@ -647,7 +752,7 @@ module ModuleRewriter # :nodoc: all
+   def self.get_raw_parse_tree(klass)
+     pt = RawParseTree.new(false)
+     klassname = klass.name
+-    klassname = klass.to_s if klassname.empty? #("anon_" + Process.pid.to_s + "_" + klass.object_id.to_s) if klassname.empty
++    klassname = klass.to_s if klassname.empty?
+     klassname = klassname.to_sym
+ 
+     code = if Class === klass then
+diff --git a/lib/bud/server.rb b/lib/bud/server.rb
+index 719ed20..5b1df28 100644
+--- a/lib/bud/server.rb
++++ b/lib/bud/server.rb
+@@ -54,11 +54,21 @@ class Bud::BudServer < EM::Connection #:nodoc: all
+   end
+ 
+   def message_received(obj)
+-    unless (obj.class <= Array and obj.length == 2 and
++    unless (obj.class <= Array and obj.length == 3 and
+             @bud.tables.include?(obj[0].to_sym) and obj[1].class <= Array)
+       raise Bud::Error, "bad inbound message of class #{obj.class}: #{obj.inspect}"
+     end
+ 
++    # Deserialize any nested lattice values
++    tbl_name, tuple, lat_indexes = obj
++    lat_indexes.each do |i|
++      if i < 0 || i >= tuple.length
++        raise Bud::Error, "bad inbound message: lattice at index #{i}, #{obj.inspect}"
++      end
++      tuple[i] = Marshal.load(tuple[i])
++    end
++
++    obj = [tbl_name, tuple]
+     @bud.rtracer.recv(obj) if @bud.options[:rtrace]
+     @filter_buf[obj[0].to_sym] ||= []
+     @filter_buf[obj[0].to_sym] << obj[1]
+diff --git a/lib/bud/state.rb b/lib/bud/state.rb
+index 62e4f28..fe6df39 100644
+--- a/lib/bud/state.rb
++++ b/lib/bud/state.rb
+@@ -1,8 +1,8 @@
+ module Bud
+   ######## methods for registering collection types
+   private
+-  def define_collection(name)
+-    if @tables.has_key? name
++  def check_collection_name(name)
++    if @tables.has_key? name or @lattices.has_key? name
+       raise Bud::CompileError, "collection already exists: #{name}"
+     end
+ 
+@@ -12,6 +12,11 @@ module Bud
+     unless reserved.nil?
+       raise Bud::CompileError, "symbol :#{name} reserved, cannot be used as collection name"
+     end
++  end
++
++  def define_collection(name)
++    check_collection_name(name)
++
+     self.singleton_class.send(:define_method, name) do |*args, &blk|
+       if blk.nil?
+         return @tables[name]
+@@ -21,6 +26,14 @@ module Bud
+     end
+   end
+ 
++  def define_lattice(name)
++    check_collection_name(name)
++
++    self.singleton_class.send(:define_method, name) do |*args|
++      return @lattices[name]
++    end
++  end
++
+   public
+ 
+   def input # :nodoc: all
+@@ -132,4 +145,71 @@ module Bud
+     @tables[name] = Bud::BudTerminal.new(name, [:line], self)
+     @channels[name] = @tables[name]
+   end
++
++  # Define methods to implement the state declarations for every registered kind
++  # of lattice.
++  def load_lattice_defs
++    Bud::Lattice.global_mfuncs.each_key do |m|
++      next if RuleRewriter::MONOTONE_WHITELIST.has_key? m
++      if Bud::BudCollection.instance_methods.include? m.to_s
++        puts "monotone method #{m} conflicts with non-monotonic method in BudCollection"
++      end
++    end
++
++    Bud::Lattice.global_morphs.each_key do |m|
++      next if RuleRewriter::MONOTONE_WHITELIST.has_key? m
++      if Bud::BudCollection.instance_methods.include? m.to_s
++        puts "morphism #{m} conflicts with non-monotonic method in BudCollection"
++      end
++    end
++
++    # Sanity-check lattice definitions
++    # XXX: We should do this only once per lattice
++    Bud::Lattice.lattice_kinds.each do |wrap_name, klass|
++      unless klass.method_defined? :merge
++        raise Bud::CompileError, "lattice #{wrap_name} does not define a merge function"
++      end
++
++      # If a method is marked as monotone in any lattice, every lattice that
++      # declares a method of that name must also mark it as monotone.
++      meth_list = klass.instance_methods(false)
++      Bud::Lattice.global_mfuncs.each_key do |m|
++        next unless meth_list.include? m.to_s
++        unless klass.mfuncs.has_key? m
++          raise Bud::CompileError, "method #{m} in #{wrap_name} must be monotone"
++        end
++      end
++
++      # Apply a similar check for morphs
++      Bud::Lattice.global_morphs.each_key do |m|
++        next unless meth_list.include? m.to_s
++        unless klass.morphs.has_key? m
++          raise Bud::CompileError, "method #{m} in #{wrap_name} must be a morph"
++        end
++      end
++
++      # Similarly, check for non-monotone methods that are found in the builtin
++      # list of monotone operators
++      meth_list.each do |m_str|
++        m = m_str.to_sym
++        next unless RuleRewriter::MONOTONE_WHITELIST.has_key? m
++        unless klass.mfuncs.has_key?(m) || klass.morphs.has_key?(m)
++          raise Bud::CompileError, "method #{m} in #{wrap_name} must be monotone"
++        end
++      end
++
++      # We want to define the lattice state declaration function and give it a
++      # default parameter; in Ruby 1.8, that can only be done using "*args"
++      self.singleton_class.send(:define_method, wrap_name) do |*args|
++        collection_name, opts = args
++        opts ||= {}
++        opts = opts.clone       # Be paranoid
++        opts[:scratch] ||= false
++
++        define_lattice(collection_name)
++        @lattices[collection_name] = Bud::LatticeWrapper.new(collection_name, klass,
++                                                             opts[:scratch], self)
++      end
++    end
++  end
+ end
+diff --git a/lib/bud/storage/dbm.rb b/lib/bud/storage/dbm.rb
+index b04816f..08b7ef0 100644
+--- a/lib/bud/storage/dbm.rb
++++ b/lib/bud/storage/dbm.rb
+@@ -117,7 +117,7 @@ module Bud
+     end
+ 
+     def merge_tuple_to_db(key, tuple)
+-      val = val_cols.map{|c| tuple[cols.index(c)]}
++      val = @val_colnums.map {|c| tuple[c]}
+       key_s = MessagePack.pack(key)
+       val_s = MessagePack.pack(val)
+       if @dbm.has_key?(key_s)
+diff --git a/lib/bud/storage/tokyocabinet.rb b/lib/bud/storage/tokyocabinet.rb
+index 82775bf..75b320b 100644
+--- a/lib/bud/storage/tokyocabinet.rb
++++ b/lib/bud/storage/tokyocabinet.rb
+@@ -123,7 +123,7 @@ module Bud
+     end
+ 
+     def merge_tuple_to_hdb(key, tuple)
+-      val = val_cols.map{|c| tuple[cols.index(c)]}
++      val = @val_colnums.map {|c| tuple[c]}
+       key_s = MessagePack.pack(key)
+       val_s = MessagePack.pack(val)
+       if @hdb.putkeep(key_s, val_s) == false
+diff --git a/test/tc_lattice.rb b/test/tc_lattice.rb
+new file mode 100644
+index 0000000..a4fa052
+--- /dev/null
++++ b/test/tc_lattice.rb
+@@ -0,0 +1,938 @@
++require 'test_common'
++
++class SimpleMax
++  include Bud
++
++  state do
++    lmax :m
++    lbool :done
++  end
++
++  bloom do
++    done <= m.gt(12)
++  end
++end
++
++class MaxOfMax
++  include Bud
++
++  state do
++    scratch :in_t, [:v]
++    lmax :m1
++    lmax :m2
++    lmax :m3
++    lbool :done
++  end
++
++  bloom do
++    m1 <= in_t {|t| t[0] if t[0] % 2 == 0}
++    m2 <= in_t {|t| t[0] if t[0] % 2 == 1}
++    m3 <= m1
++    m3 <= m2
++    done <= m3.gt(20)
++  end
++end
++
++class EmbedMax
++  include Bud
++
++  state do
++    table :t
++    scratch :in_t, [:v]
++    lmax :m1
++    lmax :m2
++  end
++
++  bloom do
++    t <= [["m1", m1]]
++    t <= [["m2", m2]]
++
++    m1 <= in_t {|t| t[0] if t[0] % 2 == 0}
++    m2 <= in_t {|t| t[0] if t[0] % 2 == 1}
++  end
++end
++
++class EmptyMaxMerge
++  include Bud
++
++  state do
++    lmax :m1
++    lmax :m2
++  end
++
++  bootstrap do
++    m1 <= Bud::MaxLattice.new(5)
++  end
++
++  bloom do
++    m1 <= m2
++  end
++end
++
++class MaxOverChannel
++  include Bud
++
++  state do
++    scratch :do_send, [:addr]
++    scratch :in_t, [:v]
++    channel :chn, [:@addr] => [:v]
++    table :chn_log, [] => [:v]
++    lmax :m
++  end
++
++  bloom do
++    chn <~ do_send {|t| [t.addr, m]}
++    chn_log <= chn {|c| [c.v]}
++    m <= in_t {|t| t[0]}
++  end
++end
++
++class MaxErrors
++  include Bud
++
++  state do
++    table :t
++    lmax :m
++  end
++
++  bloom do
++    m <= t {|t| t.val}
++  end
++end
++
++class TestMax < Test::Unit::TestCase
++  def test_simple
++    i = SimpleMax.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:m, :done].each {|r| assert(strat_zero.include? r) }
++    i.m <+ [5, 10]
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++    i.m <+ [15]
++    i.tick
++    assert_equal(true, i.done.current_value.reveal)
++  end
++
++  def test_max_of_max
++    i = MaxOfMax.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:in_t, :m1, :m2, :m3, :done].each {|r| assert(strat_zero.include? r) }
++    i.in_t <+ [[4], [6], [7]]
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++    i.in_t <+ [[22], [19]]
++    i.tick
++    assert_equal(true, i.done.current_value.reveal)
++    i.in_t <+ [[2], [3], [23]]
++    i.tick
++    assert_equal(true, i.done.current_value.reveal)
++  end
++
++  def test_embed_max
++    i = EmbedMax.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:in_t, :t, :m1, :m2].each {|r| assert(strat_zero.include? r) }
++    i.tick
++    i.in_t <+ [[5], [10], [7], [2], [13]]
++    i.tick
++    assert_equal(10, i.t[["m1"]].val.reveal)
++    assert_equal(13, i.t[["m2"]].val.reveal)
++    i.in_t <+ [[1], [2]]
++    i.tick
++    assert_equal(10, i.t[["m1"]].val.reveal)
++    assert_equal(13, i.t[["m2"]].val.reveal)
++    i.in_t <+ [[15], [16], [17]]
++    i.tick
++    assert_equal(16, i.t[["m1"]].val.reveal)
++    assert_equal(17, i.t[["m2"]].val.reveal)
++  end
++
++  def test_max_over_chn
++    src, dst = Array.new(2) { MaxOverChannel.new }
++    [src, dst].each {|n| n.run_bg }
++
++    expected_val = nil
++    q = Queue.new
++    dst.register_callback(:chn) do |t|
++      assert_equal(1, t.length)
++      assert_equal(expected_val, t.first.v.reveal)
++      q.push(true)
++    end
++
++    src.sync_do {
++      src.do_send <+ [[dst.ip_port]]
++    }
++    q.pop
++    dst.sync_do {
++      assert_equal(1, dst.chn_log.length)
++      assert_equal(nil, dst.chn_log.first.v.reveal)
++    }
++
++    expected_val = 30
++    src.sync_do {
++      src.m <+ [2, 15, 0, 10, 7, 20]
++      src.in_t <+ [[16], [30]]
++      src.do_send <+ [[dst.ip_port]]
++    }
++    q.pop
++    dst.sync_do {
++      assert_equal(1, dst.chn_log.length)
++      assert_equal(30, dst.chn_log.first.v.reveal)
++    }
++
++    [src, dst].each {|n| n.stop }
++  end
++
++  def test_key_error
++    i = MaxErrors.new
++    assert_raise(Bud::TypeError) do
++      i.t <+ [[Bud::MaxLattice.new(5), "v"]]
++    end
++  end
++
++  def test_merge_type_error
++    i = MaxErrors.new
++    i.t <+ [["y", self.class]]
++    assert_raise(Bud::TypeError) do
++      i.tick
++    end
++  end
++
++  def test_empty_max
++    i = EmptyMaxMerge.new
++    assert_nothing_raised { i.tick }
++  end
++end
++
++# Based on Example 3.1 in "Monotonic Aggregation in Deductive Databases" (Ross
++# and Sagiv, PODS'92). Unlike in R&S, we don't need to compute min_cost as a
++# separate relation, although we do so for testing purposes.
++class ShortestPathsL
++  include Bud
++
++  state do
++    table :link, [:from, :to, :c]
++    table :path, [:from, :to, :next] => [:c]
++    table :min_cost, [:from, :to] => [:c]
++  end
++
++  bloom do
++    path <= link {|l| [l.from, l.to, "direct", Bud::MinLattice.new(l.c)]}
++    path <= (link * path).pairs(:to => :from) do |l,p|
++      [l.from, p.to, l.to, p.c + l.c]
++    end
++    min_cost <= path {|p| [p.from, p.to, p.c]}
++  end
++end
++
++# Compute shortest paths in a slightly different manner (closer to R&S): add
++# links to the end of a previously-discovered path, rather than prepending them
++# to the beginning; this means the "next" field actually points backward from
++# the end of the path.
++class ShortestPathsVariant
++  include Bud
++
++  state do
++    table :link, [:from, :to, :c]
++    table :path, [:from, :to, :next] => [:c]
++    table :min_cost, [:from, :to] => [:c]
++  end
++
++  bloom do
++    path <= link {|l| [l.from, l.to, "direct", Bud::MinLattice.new(l.c)]}
++    path <= (path * link).pairs(:to => :from) do |p,l|
++      [p.from, l.to, l.from, p.c + l.c]
++    end
++    min_cost <= path {|p| [p.from, p.to, p.c]}
++  end
++end
++
++# Find the maximum capacity path ("widest path") between each pair of nodes;
++# that is, the path that maximizes the cost of the minimum-cost link in the path.
++# Note that while the shortest path programs are actually defined over
++# multigraphs, we require only a single edge between nodes (mostly for
++# convenience).
++class MaxCapacityPaths
++  include Bud
++
++  state do
++    table :link, [:from, :to] => [:c]
++    table :path, [:from, :to, :next] => [:c]
++    table :max_cap, [:from, :to] => [:c]
++  end
++
++  bloom do
++    path <= link {|l| [l.from, l.to, "direct", Bud::MaxLattice.new(l.c)]}
++    path <= (link * path).pairs(:to => :from) do |l,p|
++      [l.from, p.to, l.to, p.c.min_of(l.c)]
++    end
++    max_cap <= path {|p| [p.from, p.to, p.c]}
++  end
++end
++
++# Compute all paths (transitive closure). This is done entirely using set
++# lattices, rather than via a combination of lattices and set-oriented
++# collections.
++class AllPathsL
++  include Bud
++
++  state do
++    lset :link
++    lset :path
++  end
++
++  bootstrap do
++    link <= [[['a', 'b', 1], ['a', 'b', 4],
++              ['b', 'c', 1], ['c', 'd', 1],
++              ['d', 'e', 1]]]
++  end
++
++  bloom do
++    path <= link
++    path <= path.product(link).pro do |p,l|
++      [[p[0], l[1], p[2] + l[2]]] if p[1] == l[0]
++    end
++  end
++end
++
++class TestGraphPrograms < Test::Unit::TestCase
++  def test_spath_simple
++    i = ShortestPathsL.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:link, :path, :min_cost].each {|r| assert(strat_zero.include? r) }
++    i.link <+ [["a", "b", 11],
++               ["a", "b", 10],
++               ["a", "c", 15],
++               ["b", "c", 20],
++               ["b", "c", 21],
++               ["b", "d", 30],
++               ["c", "d", 5],
++               ["d", "e", 10]]
++    i.tick
++    path_r = i.path.to_a.map {|t| [t.from, t.to, t.next, t.c.reveal]}
++    assert_equal([["a", "b", "direct", 10],
++                  ["a", "c", "b", 30],
++                  ["a", "c", "direct", 15],
++                  ["a", "d", "b", 35],
++                  ["a", "d", "c", 20],
++                  ["a", "e", "b", 45],
++                  ["a", "e", "c", 30],
++                  ["b", "c", "direct", 20],
++                  ["b", "d", "c", 25],
++                  ["b", "d", "direct", 30],
++                  ["b", "e", "c", 35],
++                  ["b", "e", "d", 40],
++                  ["c", "d", "direct", 5],
++                  ["c", "e", "d", 15],
++                  ["d", "e", "direct", 10]], path_r.sort)
++
++    min_cost_r = i.min_cost.to_a.map {|t| [t.from, t.to, t.c.reveal]}
++    assert_equal([["a", "b", 10],
++                  ["a", "c", 15],
++                  ["a", "d", 20],
++                  ["a", "e", 30],
++                  ["b", "c", 20],
++                  ["b", "d", 25],
++                  ["b", "e", 35],
++                  ["c", "d", 5],
++                  ["c", "e", 15],
++                  ["d", "e", 10]], min_cost_r.sort)
++  end
++
++  def test_spath_cyclic
++    i = ShortestPathsL.new
++    i.link <+ [["a", "b", 20],
++               ["a", "b", 21],
++               ["b", "a", 5],
++               ["b", "a", 8],
++               ["b", "c", 10],
++               ["b", "c", 12],
++               ["a", "c", 35],
++               ["d", "a", 15],
++               ["d", "b", 5]]
++    i.tick
++
++    path_r = i.path.to_a.map {|t| [t.from, t.to, t.next, t.c.reveal]}
++    assert_equal([["a", "a", "b", 25],
++                  ["a", "b", "b", 45],
++                  ["a", "b", "direct", 20],
++                  ["a", "c", "b", 30],
++                  ["a", "c", "direct", 35],
++                  ["b", "a", "a", 30],
++                  ["b", "a", "direct", 5],
++                  ["b", "b", "a", 25],
++                  ["b", "c", "a", 35],
++                  ["b", "c", "direct", 10],
++                  ["d", "a", "a", 40],
++                  ["d", "a", "b", 10],
++                  ["d", "a", "direct", 15],
++                  ["d", "b", "a", 35],
++                  ["d", "b", "b", 30],
++                  ["d", "b", "direct", 5],
++                  ["d", "c", "a", 45],
++                  ["d", "c", "b", 15]], path_r.sort)
++
++    min_cost_r = i.min_cost.to_a.map {|t| [t.from, t.to, t.c.reveal]}
++    assert_equal([["a", "a", 25],
++                  ["a", "b", 20],
++                  ["a", "c", 30],
++                  ["b", "a", 5],
++                  ["b", "b", 25],
++                  ["b", "c", 10],
++                  ["d", "a", 10],
++                  ["d", "b", 5],
++                  ["d", "c", 15]], min_cost_r.sort)
++  end
++
++  def test_spath_cyclic_variant
++    i = ShortestPathsVariant.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:link, :path, :min_cost].each {|r| assert(strat_zero.include? r) }
++    i.link <+ [["a", "b", 20],
++               ["a", "b", 24],
++               ["b", "a", 5],
++               ["b", "a", 8],
++               ["b", "c", 10],
++               ["b", "c", 11],
++               ["a", "c", 35],
++               ["d", "a", 15],
++               ["d", "b", 5]]
++    i.tick
++
++    path_r = i.path.to_a.map {|t| [t.from, t.to, t.next, t.c.reveal]}
++    assert_equal([["a", "a", "b", 25],
++                  ["a", "b", "a", 45],
++                  ["a", "b", "direct", 20],
++                  ["a", "c", "a", 60],
++                  ["a", "c", "b", 30],
++                  ["a", "c", "direct", 35],
++                  ["b", "a", "b", 30],
++                  ["b", "a", "direct", 5],
++                  ["b", "b", "a", 25],
++                  ["b", "c", "a", 40],
++                  ["b", "c", "b", 35],
++                  ["b", "c", "direct", 10],
++                  ["d", "a", "b", 10],
++                  ["d", "a", "direct", 15],
++                  ["d", "b", "a", 30],
++                  ["d", "b", "direct", 5],
++                  ["d", "c", "a", 45],
++                  ["d", "c", "b", 15]], path_r.sort)
++
++    min_cost_r = i.min_cost.to_a.map {|t| [t.from, t.to, t.c.reveal]}
++    assert_equal([["a", "a", 25],
++                  ["a", "b", 20],
++                  ["a", "c", 30],
++                  ["b", "a", 5],
++                  ["b", "b", 25],
++                  ["b", "c", 10],
++                  ["d", "a", 10],
++                  ["d", "b", 5],
++                  ["d", "c", 15]], min_cost_r.sort)
++  end
++
++  def test_maxcap_simple
++    i = MaxCapacityPaths.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:link, :path, :max_cap].each {|r| assert(strat_zero.include? r) }
++
++    i.link <+ [["a", "b", 5], ["b", "c", 7]]
++    i.tick
++    res = i.max_cap.to_a.sort.map {|t| [t.from, t.to, t.c.reveal]}
++    assert_equal([["a", "b", 5], ["a", "c", 5], ["b", "c", 7]], res)
++
++    i.link <+ [["a", "d", 8], ["d", "b", 9]]
++    i.tick
++    res = i.max_cap.to_a.sort.map {|t| [t.from, t.to, t.c.reveal]}
++    assert_equal([["a", "b", 8],
++                  ["a", "c", 7],
++                  ["a", "d", 8],
++                  ["b", "c", 7],
++                  ["d", "b", 9],
++                  ["d", "c", 7]], res)
++
++    i.link <+ [["a", "e", 1], ["e", "b", 2]]
++    i.tick
++    res = i.max_cap.to_a.sort.map {|t| [t.from, t.to, t.c.reveal]}
++    assert_equal([["a", "b", 8],
++                  ["a", "c", 7],
++                  ["a", "d", 8],
++                  ["a", "e", 1],
++                  ["b", "c", 7],
++                  ["d", "b", 9],
++                  ["d", "c", 7],
++                  ["e", "b", 2],
++                  ["e", "c", 2]], res)
++  end
++
++  def test_all_paths
++    i = AllPathsL.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:link, :path].each {|r| assert(strat_zero.include? r) }
++
++    i.tick
++    assert_equal([["a", "b", 1], ["a", "b", 4], ["a", "c", 2], ["a", "c", 5],
++                  ["a", "d", 3], ["a", "d", 6], ["a", "e", 4], ["a", "e", 7],
++                  ["b", "c", 1], ["b", "d", 2], ["b", "e", 3], ["c", "d", 1],
++                  ["c", "e", 2], ["d", "e", 1]], i.path.current_value.reveal.sort)
++
++    i.link <+ [[['e', 'f', 1]]]
++    i.tick
++    assert_equal([["a", "b", 1], ["a", "b", 4], ["a", "c", 2], ["a", "c", 5],
++                  ["a", "d", 3], ["a", "d", 6], ["a", "e", 4], ["a", "e", 7],
++                  ["a", "f", 5], ["a", "f", 8], ["b", "c", 1], ["b", "d", 2],
++                  ["b", "e", 3], ["b", "f", 4], ["c", "d", 1], ["c", "e", 2],
++                  ["c", "f", 3], ["d", "e", 1], ["d", "f", 2], ["e", "f", 1]],
++                 i.path.current_value.reveal.sort)
++  end
++end
++
++class SimpleMap
++  include Bud
++
++  state do
++    lmap :h
++    lmax :m1
++    lmax :m2
++    lset :hkeys
++    scratch :in_t, [:v]
++  end
++
++  bloom do
++    h <= {"x" => m1, "y" => m1}
++    h <= in_t {|t| {t.v => m2}}
++    hkeys <= h.key_set
++  end
++end
++
++class MapWithPro < SimpleMap
++  state do
++    scratch :out_t
++  end
++
++  bloom do
++    out_t <= h {|k,v| v.gt(10).when_true {
++        [k, v + 1] if k != "x"
++      }
++    }
++  end
++end
++
++class MapIntersect
++  include Bud
++
++  state do
++    lmap :m1
++    lmap :m2
++    lmap :m3
++    lmap :m4
++    lbool :done_m3
++    lbool :done_m4
++  end
++
++  bloom do
++    m3 <= m1.intersect(m2)
++    m4 <= m2.intersect(m1)
++
++    done_m3 <= m3.size.gt_eq(2)
++    done_m4 <= m4.size.gt_eq(2)
++  end
++end
++
++class MapBareHashLiteral
++  include Bud
++
++  state do
++    lmap :m1
++  end
++
++  bootstrap do
++    m1 <= { "j" => Bud::MaxLattice.new(10),
++            "k" => Bud::MaxLattice.new(15) }
++  end
++
++  bloom do
++    m1 <= { "j" => Bud::MaxLattice.new(20) }
++  end
++end
++
++class TestMap < Test::Unit::TestCase
++  def get_val_for_map(i, r)
++    i.send(r).current_value.reveal.map {|k,v| [k, v.reveal]}.sort
++  end
++
++  def test_map_simple
++    i = SimpleMap.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:h, :m1, :m2, :in_t].each {|r| assert(strat_zero.include? r) }
++
++    i.m1 <+ [5, 12, 3]
++    i.m2 <+ [3, 4, 5]
++    i.in_t <+ [["y"], ["z"]]
++    i.tick
++    assert_equal([["x", 12], ["y", 12], ["z", 5]], get_val_for_map(i, :h))
++    assert_equal(["x", "y", "z"], i.hkeys.current_value.reveal.sort)
++
++    i.m2 <+ [15]
++    i.tick
++    assert_equal([["x", 12], ["y", 12], ["z", 5]], get_val_for_map(i, :h))
++    assert_equal(15, i.m2.current_value.reveal)
++    assert_equal(["x", "y", "z"], i.hkeys.current_value.reveal.sort)
++
++    i.m2 <+ [13]
++    i.in_t <+ [["y"], ["z"]]
++    i.tick
++    assert_equal([["x", 12], ["y", 15], ["z", 15]], get_val_for_map(i, :h))
++    assert_equal(15, i.m2.current_value.reveal)
++    assert_equal(["x", "y", "z"], i.hkeys.current_value.reveal.sort)
++  end
++
++  def test_map_pro
++    i = MapWithPro.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:h, :m1, :m2, :in_t, :out_t].each {|r| assert(strat_zero.include? r) }
++
++    i.m1 <+ [1, 2, 12]
++    i.m2 <+ [3, 4, 5]
++    i.in_t <+ [["z"]]
++    i.tick
++
++    out_val = i.out_t.to_a.map {|k,v| [k, v.reveal]}
++    assert_equal([["y", 13]], out_val.sort)
++    assert_equal(["x", "y", "z"], i.hkeys.current_value.reveal.sort)
++  end
++
++  def test_map_intersect
++    i = MapIntersect.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:m1, :m2, :m3, :m4, :done_m3, :done_m4].each {|r| assert(strat_zero.include? r) }
++    i.tick
++    assert_equal([], get_val_for_map(i, :m3))
++    assert_equal([], get_val_for_map(i, :m4))
++
++    i.m1 <+ [{"x" => Bud::MaxLattice.new(15)}]
++    i.m2 <+ [{"y" => Bud::MaxLattice.new(20)}]
++    i.tick
++    assert_equal([], get_val_for_map(i, :m3))
++    assert_equal([], get_val_for_map(i, :m4))
++    assert_equal(false, i.done_m3.current_value.reveal)
++    assert_equal(false, i.done_m4.current_value.reveal)
++
++    i.m1 <+ [{"y" => Bud::MaxLattice.new(25)}]
++    i.m2 <+ [{"z" => Bud::MaxLattice.new(30)}]
++    i.tick
++    assert_equal([["y", 25]], get_val_for_map(i, :m3))
++    assert_equal([["y", 25]], get_val_for_map(i, :m4))
++    assert_equal(false, i.done_m3.current_value.reveal)
++    assert_equal(false, i.done_m4.current_value.reveal)
++
++    i.m1 <+ [{"y" => Bud::MaxLattice.new(31)}, {"z" => Bud::MaxLattice.new(32)}]
++    i.tick
++    assert_equal([["y", 31], ["z", 32]], get_val_for_map(i, :m3))
++    assert_equal([["y", 31], ["z", 32]], get_val_for_map(i, :m4))
++    assert_equal(true, i.done_m3.current_value.reveal)
++    assert_equal(true, i.done_m4.current_value.reveal)
++  end
++
++  def test_hash_lit
++    i = MapBareHashLiteral.new
++    i.tick
++    assert_equal([["j", 20], ["k", 15]], get_val_for_map(i, :m1))
++  end
++end
++
++class SimpleSet
++  include Bud
++
++  state do
++    lset :s1
++    lset :s2
++    lset :s3
++    lbool :done
++    scratch :in_t, [:v]
++  end
++
++  bloom do
++    s1 <= in_t {|t| [t.v]}
++    s3 <= s1.intersect(s2)
++    done <= s3.size.gt(3)
++  end
++end
++
++class SetWithPro < SimpleSet
++  state do
++    scratch :out_t, [:v]
++  end
++
++  bloom do
++    out_t <= s3 {|s| [s + 10] unless s == 3}
++  end
++end
++
++class SetProduct
++  include Bud
++
++  state do
++    lset :s1
++    lset :s2
++    lset :s3
++  end
++
++  bloom do
++    s3 <= s1.product(s2)
++  end
++end
++
++class TestSet < Test::Unit::TestCase
++  def test_set_simple
++    i = SimpleSet.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:s1, :done, :in_t].each do |r|
++      assert(strat_zero.include? r)
++    end
++
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++    i.in_t <+ [[2], [3]]
++    i.s2 <+ [[5], [6], [7]]
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++    i.in_t <+ [[3], [5], [6]]
++    i.s2 <+ [[12]]
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++    i.in_t <+ [[12]]
++    i.s2 <+ [[2], [14]]
++    i.tick
++    assert_equal(true, i.done.current_value.reveal)
++  end
++
++  def test_set_pro
++    i = SetWithPro.new
++    i.tick
++    assert_equal([], i.out_t.to_a.sort)
++
++    i.in_t <+ [[5], [6]]
++    i.s2 <+ [[3], [6]]
++    i.tick
++    assert_equal([[16]], i.out_t.to_a.sort)
++    i.in_t <+ [[3], [7]]
++    i.s2 <+ [[8]]
++    i.tick
++    assert_equal([[16]], i.out_t.to_a.sort)
++    i.s2 <+ [[7]]
++    i.tick
++    assert_equal([[16], [17]], i.out_t.to_a.sort)
++  end
++
++  def test_set_product
++    i = SetProduct.new
++    i.tick
++    assert_equal([], i.s3.current_value.reveal)
++
++    i.s1 <+ [[1], [2]]
++    i.tick
++    assert_equal([], i.s3.current_value.reveal)
++
++    i.s2 <+ [[3]]
++    i.tick
++    assert_equal([[1,3], [2,3]], i.s3.current_value.reveal.sort)
++
++    i.s1 <+ [[3]]
++    i.s2 <+ [[7]]
++    i.tick
++    assert_equal([[1,3], [1,7], [2,3], [2,7], [3,3], [3,7]],
++                 i.s3.current_value.reveal.sort)
++  end
++
++  # We want to check that the set lattice eliminates duplicates from its input,
++  # not just after application of the merge function. Since merges are called
++  # repeatedly during actual query execution, we need to test the set lattice's
++  # behavior outside the runtime.
++  def test_set_dup_elim
++    s = Bud::SetLattice.new([1,1,1,2,2])
++    assert_equal(false, s.size.gt(2).reveal)
++
++    s = s.merge(Bud::SetLattice.new([1,2]))
++    assert_equal(false, s.size.gt(2).reveal)
++
++    s = s.merge(Bud::SetLattice.new([3]))
++    assert_equal(true, s.size.gt(2).reveal)
++  end
++end
++
++class SimpleSum
++  include Bud
++
++  state do
++    scratch :in_t, [:which, :v]
++    lpset :s1
++    lpset :s2
++    lpset :s3
++    lbool :done
++  end
++
++  bloom do
++    s1 <= in_t {|t| [t.v] if t.which == "s1" }
++    s2 <= in_t {|t| [t.v] if t.which == "s2" }
++    s3 <= s1
++    s3 <= s2
++    done <= (s3.pos_sum + 5).gt(25)
++  end
++end
++
++class TestSum < Test::Unit::TestCase
++  def test_sum_simple
++    i = SimpleSum.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:in_t, :s1, :s2, :s3, :done].each do |r|
++      assert(strat_zero.include? r)
++    end
++    i.in_t <+ [["s1", 5], ["s1", 3], ["s1", 7],
++               ["s2", 5], ["s2", 2]]
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++
++    i.in_t <+ [["s2", 7]]
++    i.tick
++    assert_equal(false, i.done.current_value.reveal)
++
++    i.in_t <+ [["s2", 6]]
++    i.tick
++    assert_equal(true, i.done.current_value.reveal)
++  end
++end
++
++class SimpleBag
++  include Bud
++
++  state do
++    lbag :b1
++    lbag :b2
++    lbag :b_union
++    lbag :b_intersect
++    lbag :b_sum
++    lbool :has_foo
++    lbool :done
++  end
++
++  bloom do
++    b_union <= b1
++    b_union <= b2
++    b_intersect <= b1.intersect(b2)
++    b_intersect <= b2.intersect(b1)
++    b_sum <= b1 + b2
++    b_sum <= b2 + b1
++    has_foo <= b_sum.contains?("foo")
++    done <= b_intersect.mult("foo").gt(2)
++  end
++end
++
++class TestBag < Test::Unit::TestCase
++  def test_bag_simple
++    i = SimpleBag.new
++    assert_equal(2, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    [:b1, :b2, :b_union, :b_intersect, :done].each do |r|
++      assert(strat_zero.include? r)
++    end
++
++    i.b1 <+ [{"abc" => 2, "def" => 1}, {"abc" => 1}]
++    i.tick
++    assert_equal([["abc", 2], ["def", 1]],
++                 i.b_union.current_value.reveal.to_a.sort)
++    assert_equal([], i.b_intersect.current_value.reveal.to_a.sort)
++    assert_equal([["abc", 2], ["def", 1]],
++                 i.b_sum.current_value.reveal.to_a.sort)
++    assert_equal(false, i.has_foo.current_value.reveal)
++    assert_equal(false, i.done.current_value.reveal)
++
++    i.b2 <+ [{"foo" => 1, "def" => 1}]
++    i.tick
++    assert_equal([["abc", 2], ["def", 1], ["foo", 1]],
++                 i.b_union.current_value.reveal.to_a.sort)
++    assert_equal([["def", 1]], i.b_intersect.current_value.reveal.to_a.sort)
++    assert_equal([["abc", 2], ["def", 2], ["foo", 1]],
++                 i.b_sum.current_value.reveal.to_a.sort)
++    assert_equal(true, i.has_foo.current_value.reveal)
++    assert_equal(false, i.done.current_value.reveal)
++
++    i.b1 <+ [{"foo" => 2}, {"abc" => 2}]
++    i.tick
++    assert_equal([["abc", 2], ["def", 1], ["foo", 2]],
++                 i.b_union.current_value.reveal.to_a.sort)
++    assert_equal([["def", 1], ["foo", 1]],
++                 i.b_intersect.current_value.reveal.to_a.sort)
++    assert_equal([["abc", 2], ["def", 2], ["foo", 3]],
++                 i.b_sum.current_value.reveal.to_a.sort)
++    assert_equal(true, i.has_foo.current_value.reveal)
++    assert_equal(false, i.done.current_value.reveal)
++
++    i.b1 <+ [{"foo" => 3}]
++    i.b2 <+ [{"foo" => 4}]
++    i.tick
++    assert_equal([["abc", 2], ["def", 1], ["foo", 4]],
++                 i.b_union.current_value.reveal.to_a.sort)
++    assert_equal([["def", 1], ["foo", 3]],
++                 i.b_intersect.current_value.reveal.to_a.sort)
++    assert_equal([["abc", 2], ["def", 2], ["foo", 7]],
++                 i.b_sum.current_value.reveal.to_a.sort)
++    assert_equal(true, i.has_foo.current_value.reveal)
++    assert_equal(true, i.done.current_value.reveal)
++  end
++end
++
++class SimpleSeal
++  include Bud
++
++  state do
++    lseal :sl
++    lmax :m
++    lbool :nm_p
++    table :foo, [:v]
++    table :bar, [:v]
++  end
++
++  bootstrap do
++    foo <= [[1], [2], [3]]
++    bar <= [[4], [5], [6]]
++  end
++
++  bloom do
++    m <= foo {|t| t.v}
++    m <= bar {|t| t.v}
++    sl <= m.seal
++    nm_p <= sl.safely(:lt_eq, 6)
++  end
++end
++
++class TestSeal < Test::Unit::TestCase
++  def test_seal
++    i = SimpleSeal.new
++    assert_equal(3, i.strata.length)
++    strat_zero = i.stratum_collection_map[0]
++    strat_one = i.stratum_collection_map[1]
++    [:foo, :bar].each {|r| assert(strat_zero.include? r) }
++    [:sl, :nm_p].each {|r| assert(strat_one.include? r) }
++    i.tick
++    assert(true, i.nm_p.current_value.reveal)
++    i.sl <+ Bud::MaxLattice.new(6)
++    i.tick
++    i.foo <+ [[7]]
++    assert_raise(Bud::Error) do
++      i.tick
++    end
++  end
++end
+diff --git a/test/ts_bud.rb b/test/ts_bud.rb
+index 44f956a..5e50491 100644
+--- a/test/ts_bud.rb
++++ b/test/ts_bud.rb
+@@ -21,6 +21,7 @@ require 'tc_halt'
+ require 'tc_inheritance'
+ require 'tc_interface'
+ require 'tc_joins'
++require 'tc_lattice'
+ require 'tc_mapvariants'
+ require 'tc_meta'
+ require 'tc_metrics'
