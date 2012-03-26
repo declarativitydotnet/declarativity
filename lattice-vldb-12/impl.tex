@@ -34,7 +34,7 @@ evaluation round $r$. During round one, the program's statements are evaluated
 and $l$ is mapped to $\Delta_l^0$; this computes $\Delta^1_l$. In round two, $l$
 is now mapped to $\Delta^1_l$ and evaluating the program's statements yields
 $\Delta^2_l$. This process continues until $\Delta^i_l = \Delta^{i+1}_l$ for all
-identifiers $l$.  The final value for $l$ is given by $\bigvee_{l: j=0}^i
+identifiers $l$.  The final value for $l$ is given by $\bigsqcup_{l: j=0}^i
 \Delta^j_l$.
 
 This optimization cannot be used for monotone functions that are not
@@ -44,7 +44,7 @@ and later combine them using the lattice's merge operation---effectively
 distributing the function across the merge.  For example, consider computing the
 \texttt{lset} lattice's \texttt{size} method, which returns an \texttt{lmax}
 lattice. The semi-naive strategy would compute
-$\bigvee_{\mathtt{lmax}:j=0}^i size(\Delta^j_{\mathtt{lset}})$---the maximum of
+$\bigsqcup_{\mathtt{lmax}:j=0}^i size(\Delta^j_{\mathtt{lset}})$---the maximum of
 the sizes of the incremental results produced in each round.  Thus it produces a
 different result than naive evaluation, which evaluates the \texttt{size}
 function against the complete database state in each round.
