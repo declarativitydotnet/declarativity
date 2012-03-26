@@ -19,17 +19,18 @@ Section~\ref{sec:bloom-interop}.
 
 \subsection{Definitions}
 \label{sec:lattice-defn}
-A \emph{bounded join semilattice} is a triple $\langle S, \lor, \bot\rangle$,
-where $S$ is a poset, $\lor$ is a binary operator (called ``join'' or ``least
-upper bound''), and $\bot \in S$. The operator $\lor$ is associative,
-commutative, and idempotent. For all $x, y \in S$, $x \lor y = z$, where $x
-\leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$ such that $z' \leq_S z$
-(where $\leq_S$ is the partial order of poset $S$). Note that although $S$ only
-has a partial order, the least upper bound is defined for all elements $x,y \in
-S$. The distinguished element $\bot$ is the smallest element in $S$; therefore,
-$x \lor \bot = x$ for every $x \in S$. For brevity, we use the term ``lattice''
-to mean ``bounded join semilattice'' in the rest of this paper. We also use the
-informal term ``merge function'' to mean ``least upper bound.''
+A \emph{bounded join semilattice} is a triple $\langle S, \sqcup, \bot\rangle$,
+where $S$ is a partially ordered set (poset), $\sqcup$ is a binary operator
+(called ``join'' or ``least upper bound''), and $\bot \in S$. The operator
+$\sqcup$ is associative, commutative, and idempotent. For all $x, y \in S$, $x
+\sqcup y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$
+such that $z' \leq_S z$ (where $\leq_S$ is the partial order of poset $S$). Note
+that although $S$ only has a partial order, the least upper bound is defined for
+all elements $x,y \in S$. The distinguished element $\bot$ is the smallest
+element in $S$; therefore, $x \sqcup \bot = x$ for every $x \in S$. For brevity,
+we use the term ``lattice'' to mean ``bounded join semilattice'' in the rest of
+this paper. We also use the informal term ``merge function'' to mean ``least
+upper bound.''
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
@@ -40,9 +41,9 @@ with the partial orders of both posets.
 
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
-A \emph{morphism} from lattice $\langle X, \lor_X, \bot_X\rangle$ to lattice
-$\langle Y, \lor_Y, \bot_Y\rangle$ is a function $g: X \to Y$ such that,
-$\forall a,b \in X: g(a \lor_X b) = g(a) \lor_Y g(b)$. That is, $g$ allows
+A \emph{morphism} from lattice $\langle X, \sqcup_X, \bot_X\rangle$ to lattice
+$\langle Y, \sqcup_Y, \bot_Y\rangle$ is a function $g: X \to Y$ such that,
+$\forall a,b \in X: g(a \sqcup_X b) = g(a) \sqcup_Y g(b)$. That is, $g$ allows
 elements of $X$ to be converted into elements of $Y$ in a way that preserves the
 lattice properties.  Note that morphisms are monotone functions but the converse
 is not true in general.
@@ -96,9 +97,8 @@ Figure~\ref{fig:lattice-quorum} declares an identifier \texttt{votes} that is
 mapped to an element of the \texttt{lset} lattice. As more votes are received,
 the lattice element associated with the \texttt{votes} identifier changes (it
 moves ``upward'' in the \texttt{lset} lattice). When a lattice identifier is
-declared, it is initially bound to the value $\bot$, the ``least element'' in
-the lattice's underlying poset. For example, an \texttt{lset} lattice initially
-contains the empty set.
+declared, it is initially bound to the value $\bot$, the smallest element in the
+lattice. For example, an \texttt{lset} lattice initially contains the empty set.
 
 \begin{table*}[t]
 \begin{center}
@@ -208,7 +208,7 @@ $T$ can be distributed over $T$'s least upper bound operator. For example, the
 \texttt{size} method provided by the \texttt{lset} lattice is not a morphism. To
 see why, consider two elements of the \texttt{lset} lattice, $\{1,2\}$ and
 $\{2,3\}$.  \texttt{size} is not a morphism because $size(\{1,2\}
-\lor_{\mathtt{lset}} \{2,3\}) \ne size(\{1,2\}) \lor_{\mathtt{lmax}}
+\sqcup_{\mathtt{lset}} \{2,3\}) \ne size(\{1,2\}) \sqcup_{\mathtt{lmax}}
 size(\{2,3\})$. Morphisms can be evaluated more efficiently than monotone
 functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
 
