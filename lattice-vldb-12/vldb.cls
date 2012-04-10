@@ -336,7 +336,7 @@
 
 % XXX: modified to disable bizarre insertion of "additional authors" section if
 % the number of authors is greater than 3
-\def\addauthorsection{\ifnum\originalaucount>4
+\def\addauthorsection{\ifnum\originalaucount>5
     \section{Additional Authors}\the\addauthors
   \fi}
 
