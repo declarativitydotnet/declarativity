@@ -15,7 +15,7 @@ class QuorumVote
   end
 
   bloom do
-    votes      <= vote_chn {|v| v.voter_id}
+    votes      <= vote_chn {|v| [v.voter_id]}
     cnt        <= votes.group(nil, count(:voter_id))
     result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE}
   end
