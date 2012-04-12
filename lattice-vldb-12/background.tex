@@ -265,7 +265,7 @@ class QuorumVote
   end
 
   bloom do
-    votes      <= vote_chn {|v| v.voter_id}
+    votes      <= vote_chn {|v| [v.voter_id]}
     cnt        <= votes.group(nil, count(:voter_id)) (*\label{line:bloom-nm-quorum}*)
     result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE} (*\label{line:bloom-quorum-msg}*)
   end
