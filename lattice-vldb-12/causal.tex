@@ -157,7 +157,7 @@ module CausalDelivery
 
   state do
     channel :chn, [:@dst, :payload] => [:clock, :ord_buf]
-    table :recv_buf, [:@dst, :payload] => [:clock, :ord_buf] (*\label{line:recv-buf-ddl}*)
+    table :recv_buf, [:dst, :payload] => [:clock, :ord_buf] (*\label{line:recv-buf-ddl}*)
     lmap :ord_buf
   end
 
