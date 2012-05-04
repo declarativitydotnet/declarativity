@@ -47,7 +47,7 @@ databases~\cite{Farrag1989,Garcia-Molina1983,Helland2009} and
 groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a model
 for these approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs),
 which formalizes these ideas in the algebraic framework of {\em join
-  semi-lattices}~\cite{Shapiro2011b}.
+  semilattices}~\cite{Shapiro2011b}.
 
 The main problem with the CRDT approach is that it provides guarantees only
 for individual data values, not for application logic in general. For example,
@@ -106,7 +106,7 @@ to ensure consistent results.
 Instead of only allowing growth according to the set containment partial order,
 we would like to allow any user-defined partial order to be used.  To this end,
 we introduce \lang, an extension to Bloom which provides a programming
-construct for defining join semi-lattices like CRDTs.  We give a formal
+construct for defining join semilattices like CRDTs.  We give a formal
 definition of this construct below, but the intuition is that the programmer
 provides a commutative, idempotent merge function (``least upper bound'') that
 takes two input values and produces an output value that is greater than or

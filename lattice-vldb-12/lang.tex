@@ -5,7 +5,7 @@ In this section, we introduce \lang, an extension to Bloom that allows monotonic
 programs to be written using arbitrary lattices. We begin by reviewing the
 algebraic properties of lattices used in CRDTs and note the applicability of
 monotone functions and morphisms in that context. We then introduce the basic
-concepts of \lang and detail the builtin lattices provided by the language. We
+concepts of \lang and detail the built-in lattices provided by the language. We
 also show how users can define their own lattice types.
 
 % is this the right place for this?
@@ -154,9 +154,9 @@ b$ & \texttt{when\_true()} $\to$ \texttt{v} & \\
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
 \end{tabular}
-\caption{Builtin lattices in \lang. Note that \texttt{v} denotes a Ruby value
+\caption{Built-in lattices in \lang. Note that \texttt{v} denotes a Ruby value
   and \texttt{n} denotes a number.}
-\label{tbl:builtin-lattices}
+\label{tbl:built-in-lattices}
 \end{center}
 \end{table*}
 
@@ -229,11 +229,11 @@ containing the contents of the set. This method is non-monotonic because once th
 underlying Ruby value has been extracted from the set, \lang cannot ensure that
 subsequent code uses the value in a monotonic fashion.
 
-\subsection{Builtin lattices}
-\label{sec:lattice-builtins}
+\subsection{Built-in lattices}
+\label{sec:lattice-built-ins}
 
-Table~\ref{tbl:builtin-lattices} lists the lattices provided by \lang. The
-builtin lattices provide support for several different notions of ``progress'':
+Table~\ref{tbl:built-in-lattices} lists the lattices provided by \lang. The
+built-in lattices provide support for several different notions of ``progress'':
 a predicate that moves from false to true (\texttt{lbool}), a numeric value that
 increases or decreases (\texttt{lmax} and \texttt{lmin}, respectively), and
 various kinds of collections that grow over time (\texttt{lset}, \texttt{lpset},
@@ -303,7 +303,7 @@ end
 \end{figure}
 
 \label{sec:lattice-api}
-The builtin lattices are sufficient to express many distributed protocols, such
+The built-in lattices are sufficient to express many distributed protocols, such
 as the causal delivery protocol described in Section~\ref{sec:causal}. However,
 \lang also allows developers to create custom lattices to capture
 domain-specific behavior. To define a lattice in Bud, a developer creates a Ruby
@@ -311,7 +311,7 @@ class that meets a certain API contract. Figure~\ref{fig:lattice-lset} contains
 the Ruby code for the \texttt{lset} lattice (note that we omit the
 implementation of a few \texttt{lset} methods for brevity).
 
-A lattice class must inherit from the builtin \texttt{Bud::Lattice} class and
+A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
 \begin{compactitem}
 \item \texttt{initialize(i)}: given a Ruby object $i$, this method constructs a
