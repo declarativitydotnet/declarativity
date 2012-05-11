@@ -1,0 +1,150 @@
+\section{Related Work}
+\label{sec:relwork}
+
+This paper relates to work on concurrency control, groupware, distributed
+storage, and non-monotonic logic programming.
+
+\vspace{0.5em}\noindent
+\textbf{Semantics-based concurrency control:} In the absence of semantic
+knowledge about transactions, serializability is the main correctness criteria
+for concurrency control schemes. However, ensuring serializability can be
+prohibitively expensive, for instance when transactions are long-running or the
+nodes of a distributed database are connected via an unreliable network. Thus,
+many methods have been proposed to allow non-serializable transaction schedules
+that preserve some \emph{semantic} notion of correctness. In particular, several
+schemes allow users to specify that certain operations can be commuted with
+other operations; this enlarges the space of legal schedules, increasing the
+potential for concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
+
+% TODO: do we need to cite all 3 papers?
+%       the weihl paper claims to explicitly only allow serializable schedules
+%       do we need to say why our stuff is different?
+
+O'Neil describes a method for supporting ``escrow'' transactions, which allow
+operations that are only commutative when a certain limited resource is
+available~\cite{O'Neil1986}. For example, credits and debits to a bank account
+might only commute if the bank account balance can be guaranteed to be
+non-negative. We are currently exploring how to add support for escrow
+operations to \lang.
+
+To support concurrent editing of shared documents, the groupware community has
+studied a family of algorithms known as \emph{Operational Transformations}
+(OT)~\cite{Ellis1989,Sun1998}. Many OT algorithms have been proposed but the
+correctness criteria is typically familiar: after quiesence, all replicas of the
+document should converge to the same final state, the causal relationship
+between operations should be preserved, and the final state of the document
+should reflect the semantic intent of each user's editing
+operations~\cite{Sun1998a}.
+
+% XXX: do we need to say more about how our stuff compares to escrow?
+
+\vspace{0.5em}\noindent
+\textbf{Commutativity in distributed systems:} Many distributed systems allow
+users to specify that certain operations are commutative, associative, or
+idempotent. Helland and Campbell observe that using commutative, associative and
+idempotent operations is particularly valuable as systems scale and guaranteeing
+global serializability becomes increasingly expensive~\cite{Helland2009}. Many
+distributed storage systems allow users to provide ``merge functions'' that are
+used to resolve write-write conflicts between replicas, allowing the system to
+eventually reach a consistent state
+(e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).% User-defined merge
+% functions typically rely on domain knowledge about the semantics of updates to
+% allow conflicting writes to be safely commuted.
+Writing a correct merge function can be difficult because the developer must
+reason about all the possible interleavings of read and write operations at
+different replicas. This challenge is exacerbated because these systems rarely
+provide tool support or analysis techniques to help developers reason about
+replica convergence.
+
+% Writing a correct merge function can be challenging, because developers must
+% reason about the many possible interleavings of read and write operations. More
+% difficult still, developers must also ensure that application logic respects the
+% loose consistency provided by the storage system. For example, suppose an
+% application reads a value from the storage system and computes a derived
+% value. If the value that was originally read is changed (e.g., due to merging
+% the state of different replicas) but the application logic does not recompute
+% the derived value, the overall application state may still be inconsistent. By
+% analyzing application logic in concert with the behavior of the storage layer,
+% \lang and the CALM analysis provide a possible solution by ensuring that
+% replicated values are only used in a ``safe'' (monotonic) fashion.
+
+% XXX: talk about how CALM solves this problem?
+
+Shapiro et al.\ recently proposed \emph{Conflict-free Replicated Data Types}
+(CRDTs), a principled approach to the design of loosely consistent data
+values~\cite{Shapiro2011b}. Shapiro et al.\ provide a formal model for
+convergence based on join semilattices and a catalog of practical CRDT
+designs~\cite{Shapiro2011a}. CRDTs and \lang lattice types often follow similar
+design patterns to achieve coordination-free convergence. Unlike \lang, the CRDT
+approach considers the correctness of replicated values in isolation. This
+allows CRDTs to be more easily adapted into standalone libraries (e.g.,
+Statebox~\cite{statebox}). However, the narrow focus of CRDTs means that, even
+if a CRDT is correct, application state may remain inconsistent (as noted in
+Section~\ref{sec:intro}).
+
+% . A major difference between \lang and CRDTs is that Shapiro et
+% al.\ focus on the design of replicated data types in isolation, whereas we
+% attempt to analyze the consistency of complete distributed systems. As a result,
+% a correct CRDT might still be used by application logic in a way that results in
+% application-level inconsistency. For example, consider an application that uses
+% the ``2P-Set'' CRDT to represent a mutable set~\cite{Shapiro2011a}. Suppose the
+% application reads a version of the set and computes a value derived from that
+% version (e.g., conditional on element \emph{x} being in the set). Concurrently,
+% \emph{x} is removed from the set by another replica. While the CRDT ensures that
+% the replicas will eventually agree that \emph{x} is absent from the set, the
+% application state may remain inconsistent unless the derived value is updated to
+% reflect the removal of \emph{x}. \lang and the CALM analysis provide a possible
+% solution to this problem by requiring that replicated values are only used in a
+% ``safe'' (monotonic) fashion.
+
+% XXX: comment on the conservative nature of CALM?
+
+% XXX: should we wager anything about the relative expressiveness of CRDTs and
+% \lang programs?
+
+% XXX: cite statebox?
+
+% XXX: Wuu & Bernstein
+% XXX: Operational transformations?
+
+\vspace{0.5em}\noindent
+\textbf{Non-monotonicity in deductive databases:} Adding non-monotonic operators
+to Datalog increases the expressiveness of the language but introduces
+significant complexities: unrestricted use of non-monotonicity would allow
+programs that imply logical contradictions (e.g., ``$p$ if $\lnot p$''). A
+simple solution is to disallow recursion through aggregation or negation, which
+admits only the class of ``stratified programs''~\cite{Apt1988}. Many attempts
+have been made to assign a semantics to larger classes of programs
+(e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
+
+% XXX: cite Van Gelder's "foundations of agg" paper
+The observation that many uses of aggregation and negation have a ``monotonic''
+flavor has been made before. Ross and Sagiv study a class of programs that
+include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model theoretic
+semantics for this class of programs that is similar to our semantics for
+\lang in Section~\ref{sec:lang}. Our work differs from Ross and
+Sagiv's in several respects: most notably, they use lattices as a way to
+characterize the monotonicity of classes of Datalog programs, whereas we propose
+\lang as a practical programming language. Accordingly, Ross and Sagiv restrict
+the usage of monotone aggregates to a single ``cost'' argument in certain
+predicates, do not allow user-defined lattices, and do not propose a framework
+for arbitrary lattices to be composed safely.
+
+K\"{o}stler et al.\ consider Datalog extended with subsumption relations, which
+allows the user to indicate that certain deductions should be ``preferred'' over
+others~\cite{Kostler1995}. These preferences must form a lattice; K\"{o}stler et
+al.\ then propose a model-theoretic semantics and evaluation scheme based on the
+lattice's partial order. Like Ross and Sagiv, this work shares some technical
+similarities with this paper, but differs in its goals and problem domain:
+K\"{o}stler et al.\ use subsumption to add semantic knowledge to graph traversal
+and heuristic search programs, but do not propose a general-purpose programming
+framework.
+
+Zaniolo and Wang identify a class of ``monotone aggregates'' as part of their
+work on supporting advanced user-defined aggregates in the $\mathcal{LDL}$++
+system~\cite{Zaniolo1999}. Like us, they observe that monotone aggregates can
+easily be supported without stratification in a Datalog system based on
+semi-naive fixpoint. Their characterization of monotone aggregates is different
+than ours, and they do not consider asynchrony or distribution.  In fact,
+supporting order-dependent aggregates is an explicit goal of their work, whereas
+we seek to ensure that programs are confluent in the face of message reordering.
