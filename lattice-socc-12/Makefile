@@ -1,7 +1,7 @@
-NAME=vldb
+NAME=socc
 USE_PDFLATEX=1
-TEXSRCS=vldb.tex intro.tex causal.tex lang.tex relwork.tex carts.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex
-BIBTEXSRCS=vldb.bib
+TEXSRCS=socc.tex intro.tex causal.tex lang.tex relwork.tex carts.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex
+BIBTEXSRCS=socc.bib
 
 OTHER_PDF=$(wildcard fig/*.pdf)
 OTHER+=$(OTHER_PDF)
