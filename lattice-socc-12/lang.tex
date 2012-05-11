@@ -1,0 +1,464 @@
+\section{Adding Lattices to Bloom}
+\label{sec:lang}
+
+In this section, we introduce \lang, an extension to Bloom that allows monotonic
+programs to be written using arbitrary lattices. We begin by reviewing the
+algebraic properties of lattices used in CRDTs and note the applicability of
+monotone functions and morphisms in that context. We then introduce the basic
+concepts of \lang and detail the built-in lattices provided by the language. We
+also show how users can define their own lattice types.
+
+% is this the right place for this?
+When designing \lang, we decided to extend Bloom to include support for lattices
+rather than building a new language from scratch. Hence, \lang is backward
+compatible with Bloom and was implemented with relatively minor changes to the
+Bud runtime. This design decision also required that we consider how code
+written using lattices should interoperate with traditional Bloom collections. We
+added several \lang features to ease this interoperability, which we describe in
+Section~\ref{sec:bloom-interop}.
+
+\subsection{Definitions}
+\label{sec:lattice-defn}
+A \emph{bounded join semilattice} is a triple $\langle S, \sqcup, \bot\rangle$,
+where $S$ is a partially ordered set (poset), $\sqcup$ is a binary operator
+(called ``join'' or ``least upper bound''), and $\bot \in S$. The operator
+$\sqcup$ is associative, commutative, and idempotent. For all $x, y \in S$, $x
+\sqcup y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$
+such that $z' \leq_S z$ (where $\leq_S$ is the partial order of poset $S$). Note
+that although $S$ only has a partial order, the least upper bound is defined for
+all elements $x,y \in S$. The distinguished element $\bot$ is the smallest
+element in $S$; therefore, $x \sqcup \bot = x$ for every $x \in S$. For brevity,
+we use the term ``lattice'' to mean ``bounded join semilattice'' in the rest of
+this paper. We also use the informal term ``merge function'' to mean ``least
+upper bound.''
+
+% XXX: note that algebraic properties that must be satisfied by morphisms and
+% monotone functions
+A \emph{monotone function} from poset $S$ to poset $T$ is a function $f: S \to
+T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow f(a) \leq_T f(b)$. That
+is, $f$ maps elements of $S$ to elements of $T$ in a manner that is consistent
+with the partial orders of both posets.
+
+% XXX: mention that morphisms must be distributive with respect to the lub of
+% their domain, whereas monotone functions don't need to be?
+A \emph{morphism} from lattice $\langle X, \sqcup_X, \bot_X\rangle$ to lattice
+$\langle Y, \sqcup_Y, \bot_Y\rangle$ is a function $g: X \to Y$ such that,
+$\forall a,b \in X: g(a \sqcup_X b) = g(a) \sqcup_Y g(b)$. That is, $g$ allows
+elements of $X$ to be converted into elements of $Y$ in a way that preserves the
+lattice properties.  Note that morphisms are monotone functions but the converse
+is not true in general.
+
+\subsection{Language concepts}
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+QUORUM_SIZE = 5
+RESULT_ADDR = "example.org"
+
+class QuorumVoteL
+  include Bud
+
+  state do
+    channel :vote_chn, [:@addr, :voter_id]
+    channel :result_chn, [:@addr]
+    lset    :votes (*\label{line:quorum-lset-decl}*)
+    lmax    :cnt
+    lbool   :quorum_done
+  end
+
+  bloom do
+    votes       <= vote_chn {|v| v.voter_id} (*\label{line:quorum-set-accum}*)
+    cnt         <= votes.size (*\label{line:quorum-size}*)
+    quorum_done <= cnt.gt_eq(QUORUM_SIZE) (*\label{line:quorum-threshold}*)
+    result_chn  <~ quorum_done.when_true { [RESULT_ADDR] } (*\label{line:quorum-when-true}*)
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A monotonic \lang program that waits for a quorum of votes to be received.}
+\label{fig:lattice-quorum}
+\end{figure}
+
+\lang allows both lattices and collections to be used to represent state. A
+lattice is analogous to a collection type in Bloom, while a \emph{lattice
+  element} corresponds to a particular collection. For example, the
+\texttt{lset} lattice is similar to the \texttt{table} collection type provided
+by Bloom; an element of the \texttt{lset} lattice is a particular set. In the
+terminology of object-oriented programming, a lattice is a class that obeys a
+certain interface and an element of a lattice is an instance of that
+class. Figure~\ref{fig:lattice-quorum} contains an example \lang program.
+
+As with collections, the lattices used by a \lang program are declared in a
+\texttt{state} block. More precisely, a state block declaration introduces an
+identifier that is associated with a lattice element; over time, the binding
+between identifiers and lattice elements is updated to reflect state changes in
+the program. For example, line~\ref{line:quorum-lset-decl} of
+Figure~\ref{fig:lattice-quorum} declares an identifier \texttt{votes} that is
+mapped to an element of the \texttt{lset} lattice. As more votes are received,
+the lattice element associated with the \texttt{votes} identifier changes (it
+moves ``upward'' in the \texttt{lset} lattice). When a lattice identifier is
+declared, it is initially bound to the value $\bot$, the smallest element in the
+lattice. For example, an \texttt{lset} lattice initially contains the empty set.
+
+\begin{table*}[t]
+\begin{center}
+\begin{tabular}{|l|l|l|l|p{1.57in}|p{1.09in}|}
+\hline
+\textbf{Name} & \textbf{Description} & \textbf{Least element ($\bot$)} & \textbf{Merge($a,b$)} & \textbf{Morphisms} &
+\textbf{Monotone functions}\\
+\hline
+\hline
+\texttt{lbool} & Boolean lattice (false $\to$ true) & \texttt{false} & $a \lor
+b$ & \texttt{when\_true()} $\to$ \texttt{v} & \\
+\hline
+\texttt{lmax} & Max over an ordered domain & $-\infty$ & $max(a, b)$ &
+\texttt{gt(n)} $\to$ \texttt{lbool}\newline
+\texttt{gt\_eq(n)} $\to$ \texttt{lbool}\newline
+\texttt{$\mathtt{+}$(lmax)} $\to$ \texttt{lmax}\newline
+\texttt{$\mathtt{-}{}$(lmax)} $\to$ \texttt{lmax} & \\
+\hline
+\texttt{lmin} & Min over an ordered domain & $\infty$ & $min(a, b)$ &
+\texttt{lt(n)} $\to$ \texttt{lbool}\newline
+\texttt{lt\_eq(n)} $\to$ \texttt{lbool}\newline
+\texttt{$\mathtt{+}$(lmin)} $\to$ \texttt{lmin}\newline
+\texttt{$\mathtt{-}{}$(lmin)} $\to$ \texttt{lmin} & \\
+\hline
+\texttt{lset} & Set of values & empty set & $a \cup b$ &
+\texttt{intersect(lset)} $\to$ \texttt{lset}\newline
+\texttt{product(lset)} $\to$ \texttt{lset}\newline
+\texttt{project(lset)} $\to$ \texttt{lset}\newline
+\texttt{contains?(v)} $\to$ \texttt{lbool}
+& \texttt{size()} $\to$ \texttt{lmax}\\
+\hline
+\texttt{lpset} & Set of non-negative numbers & empty set & $a \cup b$ &
+\texttt{intersect(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{product(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{project(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{contains?(v)} $\to$ \texttt{lbool}
+& \texttt{size()} $\to$ \texttt{lmax}\newline
+\texttt{sum()} $\to$ \texttt{lmax} \\
+\hline
+\texttt{lbag} & Multiset of values & empty multiset & $a \cup b$ &
+\texttt{intersect(lbag)} $\to$ \texttt{lbag}\newline
+\texttt{project(lbag)} $\to$ \texttt{lbag}\newline
+\texttt{mult(v)} $\to$ \texttt{lmax}\newline
+\texttt{contains?(v)} $\to$ \texttt{lbool}\newline
+\texttt{$\mathtt{+}$(lbag)} $\to$ \texttt{lbag}
+& \texttt{size()} $\to$ \texttt{lmax}\\
+\hline
+\texttt{lmap} & Map from key to lattice values & empty map & see text&
+\texttt{intersect(lmap)} $\to$ \texttt{lmap}\newline
+\texttt{key\_set(lmap)} $\to$ \texttt{lset}\newline
+\texttt{at(v)} $\to$ \texttt{any-lattice}\newline
+\texttt{key?(v)} $\to$ \texttt{lbool}
+& \texttt{size()} $\to$ \texttt{lmax}\\
+\hline
+\end{tabular}
+\caption{Built-in lattices in \lang. Note that \texttt{v} denotes a Ruby value
+  and \texttt{n} denotes a number.}
+\label{tbl:built-in-lattices}
+\end{center}
+\end{table*}
+
+
+\subsubsection{Statements in \lang}
+Statements take the same form in both Bloom and \lang: \\ \noindent
+\mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
+    $<$expression$>$}}\\ \noindent
+The identifier on the lhs can refer to either a set-oriented collection or a
+lattice element. The expression on the rhs can contain both traditional
+relational operators (applied to Bloom collections) and methods invoked on
+lattices.  Lattice methods are similar to methods in an object-oriented language
+and are invoked using the standard Ruby method invocation syntax. For example,
+line~\ref{line:quorum-size} of Figure~\ref{fig:lattice-quorum} invokes the
+\texttt{size} method on an element of the \texttt{lset} lattice.
+
+If the lhs is a lattice, the statement's operator must be either \verb|<=| or
+\verb|<+| (instantaneous or deferred deduction, respectively). The meaning of
+this operator is that, at either the current or the following timestep, the lhs
+identifier will take on the result of applying the lattice's least upper bound
+to the lhs and rhs lattice elements. The intuition remains the same as in Bloom:
+the rhs value is ``merged into'' the lhs lattice, except that the semantics of
+the merge operation are defined by the lattice's least upper bound operator. We
+require that the lhs and rhs refer to a lattice of the same type.
+
+\lang does not currently support a notion of deletion (\verb|<-| operator) for
+lattices. Lattices do not directly support asynchronous communication (via the
+\verb|<~| operator) but lattice elements can be embedded into tuples that appear
+in channels (Section~\ref{sec:bloom-interop}).
+
+\subsubsection{Lattice methods}
+\lang statements compute values over lattices by invoking methods on lattice
+elements. Just as a subset of the relational algebra is monotonic, some lattice
+methods are monotone functions (as defined in Section~\ref{sec:lattice-defn}). A
+monotone lattice method guarantees that, if the lattice on which the method is
+invoked grows (according to the lattice's partial order), the value returned by
+the method will grow (according to the return value's lattice type). For
+example, the \texttt{size} method provided by the \texttt{lset} lattice is
+monotone, because as more elements are added to the set, the size of the set
+increases. From a CRDT perspective, a lattice's monotone methods constitute a
+``safe'' interface of operations that can be invoked in a distributed setting
+without risk of inconsistency.
+
+A lattice method's signature indicates its monotonicity properties. \lang
+distinguishes between methods that are monotone and a subset of monotone methods
+that are \emph{morphisms}. Section~\ref{sec:lattice-defn} defines the properties
+that a morphism must satisfy, but the intuition is that a morphism on lattice
+$T$ can be distributed over $T$'s least upper bound operator. For example, the
+\texttt{size} method provided by the \texttt{lset} lattice is not a morphism. To
+see why, consider two elements of the \texttt{lset} lattice, $\{1,2\}$ and
+$\{2,3\}$.  \texttt{size} is not a morphism because $size(\{1,2\}
+\sqcup_{\mathtt{lset}} \{2,3\}) \ne size(\{1,2\}) \sqcup_{\mathtt{lmax}}
+size(\{2,3\})$. Morphisms can be evaluated more efficiently than monotone
+functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
+
+Lattices can also define non-monotonic methods. Using a non-monotonic lattice
+method is analogous to using a non-monotonic relational operator in Bloom: the
+Bud interpreter stratifies the program to ensure that the input value is
+computed to completion before allowing the non-monotonic method to be
+invoked. Stratification implies that programs with cycles through non-monotonic
+lattice methods will be rejected. \lang encourages developers to minimize the
+use of non-monotonic constructs: as the CALM analysis suggests, non-monotonic
+reasoning may need to be augmented with coordination to ensure consistent
+results.
+
+Every lattice defines a non-monotonic \texttt{reveal} method that returns a
+representation of the lattice element as a plain Ruby value. For example, the
+\texttt{reveal} method on a \texttt{lset} lattice returns a Ruby array
+containing the contents of the set. This method is non-monotonic because once the
+underlying Ruby value has been extracted from the set, \lang cannot ensure that
+subsequent code uses the value in a monotonic fashion.
+
+\subsection{Built-in lattices}
+\label{sec:lattice-built-ins}
+
+Table~\ref{tbl:built-in-lattices} lists the lattices provided by \lang. The
+built-in lattices provide support for several different notions of ``progress'':
+a predicate that moves from false to true (\texttt{lbool}), a numeric value that
+increases or decreases (\texttt{lmax} and \texttt{lmin}, respectively), and
+various kinds of collections that grow over time (\texttt{lset}, \texttt{lpset},
+\texttt{lbag}, and \texttt{lmap}). The behavior of most of the lattice methods
+should be unsurprising, so we do not describe every method in this section.
+
+The \texttt{lbool} lattice represents conditions that, once satisfied, remain
+satisfied. For example, the \texttt{gt} morphism on the \texttt{lmax} lattice
+takes a numeric argument $n$ and returns an \texttt{lbool}; once the
+\texttt{lmax} exceeds $n$, it will remain $>n$. The \texttt{when\_true} morphism
+takes a Ruby block; if the \texttt{lbool} element has the value \texttt{true},
+\texttt{when\_true} returns the result of evaluating the block. For example, see
+line~\ref{line:quorum-when-true} in
+Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
+statement.\footnote{Observe that an ``else'' clause would test for an upper
+  bound on the final lattice value, which is a non-monotonic property!}
+
+The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
+objects and values are lattice elements. For example, a web application could
+use an \texttt{lmap} to associate session IDs with an \texttt{lset} containing
+the pages visited by that session. The \texttt{lmap} merge function takes the
+union of the key sets of its input maps. If a key occurs in both inputs, the two
+corresponding values are merged using the appropriate lattice merge
+function. Note that the \texttt{at} morphism returns the lattice element
+associated with the given key.
+
+The \texttt{lpset} lattice is an example of how \lang can be used to encode
+domain-specific knowledge about an application. If the developer knows that a
+set will only contain non-negative numbers, the sum of those numbers increases
+monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
+\texttt{lpset}.%  Inserting a negative value (or a non-number) into an
+% \texttt{lpset} results in a Ruby exception.
+% Explain why sum is a monotone function?
+
+\subsection{User-defined lattices}
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}[deletekeywords={lset}]
+class Bud::SetLattice < Bud::Lattice
+  wrapper_name :lset (*\label{line:lset-wrapper-name}*)
+
+  def initialize(x=[])
+    # Test for valid input removed for brevity
+    @v = x.uniq # Remove duplicates from input
+  end
+
+  def merge(i)
+    self.class.new(@v | i.reveal)
+  end
+
+  morph :intersect do |i| (*\label{line:lset-morph-begin}*)
+    self.class.new(@v & i.reveal) (*\label{line:lset-reveal}*)
+  end (*\label{line:lset-morph-end}*)
+
+  morph :contains? do |i|
+    Bud::BoolLattice.new(@v.member? i)
+  end
+
+  monotone :size do (*\label{line:lset-monotone-begin}*)
+    Bud::MaxLattice.new(@v.size)
+  end (*\label{line:lset-monotone-end}*)
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{The implementation of the \texttt{lset} lattice in Bud.}
+\label{fig:lattice-lset}
+\end{figure}
+
+\label{sec:lattice-api}
+The built-in lattices are sufficient to express many distributed protocols, such
+as the causal delivery protocol described in Section~\ref{sec:causal}. However,
+\lang also allows developers to create custom lattices to capture
+domain-specific behavior. To define a lattice in Bud, a developer creates a Ruby
+class that meets a certain API contract. Figure~\ref{fig:lattice-lset} contains
+the Ruby code for the \texttt{lset} lattice (note that we omit the
+implementation of a few \texttt{lset} methods for brevity).
+
+A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
+must also define two methods:
+\begin{compactitem}
+\item \texttt{initialize(i)}: given a Ruby object $i$, this method constructs a
+  new lattice element that ``wraps'' $i$ (\texttt{initialize} is the standard
+  Ruby syntax for defining a constructor). If $i$ is \texttt{nil} (the null
+  reference), this method returns $\bot$, the least element of the lattice.
+
+\item \texttt{merge(e)}: given a lattice element $e$, this method returns the
+  least upper bound of \emph{self} and \emph{e}. This method must satisfy the
+  algebraic properties of least upper bound as summarized in
+  Section~\ref{sec:lattice-defn}---in particular, it must be commutative,
+  associative, and idempotent. Note that \emph{e} and \emph{self} must be
+  instances of the same class.
+\end{compactitem}
+Lattices can also define any number of monotone functions, morphisms, and
+non-monotonic methods. The syntax for declaring morphisms and monotone functions
+can be seen in lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
+\ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
+Figure~\ref{fig:lattice-lset}, respectively. Because lattice methods can contain
+arbitrary Ruby code, the lattice developer should be careful to ensure that
+lattice methods satisfy the appropriate algebraic properties. For example,
+implementing a lattice method might require examining the underlying Ruby value
+contained in another lattice element. This can be done using the \texttt{reveal}
+method (e.g., line~\ref{line:lset-reveal} in Figure~\ref{fig:lattice-lset}).
+Since \texttt{reveal} is not itself monotonic, developers should use it
+carefully when implementing monotonic lattice methods.
+% Tweak this text
+
+Because Ruby is dynamically typed, there will often be constraints on the legal
+inputs to lattice methods that cannot be enforced until runtime. For example,
+initializing a \texttt{lbool} lattice with a non-boolean value is not
+supported. The developer of a lattice implementation should check for invalid
+inputs and signal errors by raising a Ruby exception.
+
+Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions construct
+a new lattice element rather than destructively modifying one of their
+inputs). Efficient lattice implementations will often \emph{share structure} on merge
+operations, as is common practice for immutable data structures in functional
+programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
+
+% XXX: awkward placement for this paragraph
+Finally, custom lattices must define a keyword that can be used in \lang state
+blocks. This is done using the \texttt{wrapper\_name} class method. For example,
+line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} means that
+``\texttt{lset :foo}'' in a \lang state block will introduce an identifier
+\texttt{foo} that is associated with an instance of the \texttt{Bud::SetLattice}
+class.
+
+\subsection{Integration with set-oriented logic}
+\label{sec:bloom-interop}
+\lang provides two features to ease integration of lattice-based code with Bloom
+programs that manipulate set-oriented collections.
+
+\subsubsection{Converting collections into lattices}
+% XXX: this ignores the fact that Bloom collections consist of sets of tuples,
+% whereas implicit fold works for sets of singleton values
+% XXX: refer to shortest paths program as practical example
+This feature enables an intuitive syntax for merging the contents of a
+set-oriented collection into a lattice. If a statement has a Bloom collection on
+the rhs and a lattice on the lhs, the collection is converted into a lattice
+element by ``folding'' the lattice's merge function over the collection. That
+is, each element of the collection is converted to a lattice element (by
+invoking the lattice constructor) and then the resulting lattice elements are
+merged together via repeated application of the lattice's \texttt{merge}
+method. In our experience, this is usually the behavior intended by the user.
+
+For example, line~\ref{line:quorum-set-accum} of Figure~\ref{fig:lattice-quorum}
+contains a Bloom collection on the rhs and an \texttt{lset} lattice on the
+lhs. This statement is implemented by constructing a singleton \texttt{lset} for
+each fact in the rhs collection and then merging the sets together. The
+resulting \texttt{lset} is then merged with the \texttt{votes} lattice
+referenced by the lhs.
+
+\subsubsection{Collections with embedded lattice values}
+\label{sec:lattice-embedding}
+It would be convenient to allow lattice elements to be used as columns of
+tuples in Bloom collections. In addition to easing interoperability, Bloom
+provides several facilities (e.g., network communication, persistent storage) as
+collections with special semantics, and we wanted to avoid providing a redundant
+set of facilities for lattices. A simple solution would be to extract the
+underlying Ruby value from the lattice element (via the \texttt{reveal} method).
+However, that would introduce needless non-monotonicity into the program.
+
+Storing lattice elements as columns of tuples in set-oriented collections
+introduces several challenges. Consider a simple \lang statement that derives
+tuples with a lattice element as a column:
+\begin{verbatim}
+    t1 <= t2 {|t| [t.x, cnt]}
+\end{verbatim}
+where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
+lattice, and the first column of \texttt{t1} is the collection's key. The value
+associated with \texttt{cnt} can change over the course of a single timestep
+(\texttt{cnt} can move ``upward'' according to the lattice's partial
+order). This might result in multiple \texttt{t1} tuples with different values
+for the second column, which would violate \texttt{t1}'s key (the first column
+of \texttt{t1} would not functionally determine a single value for the second
+column).
+
+This problem could be avoided by placing constraints on the evaluation order of
+statements: for example, we could require that all potential changes to
+\texttt{cnt} be completed before statements that embed \texttt{cnt} could be
+evaluated. This would effectively stratify the program according to lattice
+embedding statements and disallow cycles through lattice
+embeddings~\cite{Apt1988}.  This would reduce the expressiveness of the
+language; it also seems unsatisfying to require stratification of monotonic
+programs.
+
+Instead, \lang allows multiple facts to be derived that differ only in their
+embedded lattice values; those facts are merged into a single fact using the
+lattice's merge function. This is similar to specifying a procedure for how to
+resolve key constraint violations, a feature supported by some
+databases~\cite{oracle-conflict,sqlite-on-conflict}. Note that the safety of the
+merge procedure is guaranteed by the lattice properties: the final value is
+deterministic and is the least upper bound of all the merged
+values. Nevertheless, we felt this behavior should be manifest in the program
+syntax because tuples in Datalog relations are traditionally immutable. Hence,
+this ``lattice merge'' behavior is only enabled for columns that are prefixed
+with ``\texttt{!}'' in collection declarations (e.g.,
+line~\ref{line:ddl-lattice-merge} in Figure~\ref{fig:vector-clock-src}). If the
+annotation is not specified, lattice elements embedded in Bloom collections
+cannot change; it is up to the programmer to avoid key constraint violations.
+
+For similar reasons, lattice elements cannot be used as keys in Bloom
+collections. It might be possible to relax this restriction in certain ``safe''
+cases, but we have not found this limitation to be problematic to date.
+
+\subsection{Confluence in \lang}
+\label{sec:calmL}
+
+We now describe how the notion of \emph{confluence} (invariance to message
+reordering) can be generalized from Bloom to \lang programs. In recent work, we
+provided a model-theoretic characterization of confluence for programs written
+in Dedalus, the formal language on which Bloom is based~\cite{dedalus-pods12-tr}.  These results apply directly to Bloom,
+whose semantics are grounded in those of Dedalus.  The result of a distributed
+computation performed in Bloom may be viewed as the set of \emph{ultimate
+  models} or eventual states of the program, given a fixed input and sufficient
+time for messages to be delivered.  If a program has exactly one ultimate model
+for every input, we say that it is confluent: all message delivery orders result
+in the same eventual state.
+
+To reason about confluence in \lang, we first observe that lattices are
+guaranteed (as are CRDTs) to have inflationary behavior over time: a lattice
+value only increases.  Hence if we include lattices in the output of an
+otherwise confluent \lang program, they will not increase the number of ultimate
+models.  It is not enough, however, that this local property of lattice objects
+holds: we must also show that anything a \lang program \emph{does} with a
+lattice value is monotonic.  Morphisms provide a mechanism for reasoning about
+compositions among lattices or between lattices and collections.  By including
+lattice morphisms among the ``safe,'' monotonic constructs provided by the Bloom
+language, we can easily extend our CALM analysis to \lang.

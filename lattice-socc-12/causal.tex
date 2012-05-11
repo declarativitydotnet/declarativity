@@ -1,0 +1,228 @@
+\section{Case Study: Causal Delivery}
+\label{sec:causal}
+
+In the previous section, we showed how \lang increases the space of programs
+that can be shown to be confluent. However, many distributed protocols are not
+\emph{intended} to have a single deterministic outcome. Instead, these protocols
+allow timing conditions to drive the choice of one among several acceptable
+outcomes. For example, in a vector clock system, the assignment of clock values
+to messages differs depending on message ordering. Nevertheless, the system does
+not exhibit arbitrary non-determinism: for example, the clock at each node
+should move upward over time.
+
+In this section, we show how \lang can be used to implement two non-confluent
+protocols: vector clocks and causal delivery. Although we cannot guarantee a
+global correctness property like confluence, lattices can still provide strong
+local guarantees. For example, we can ensure that vector clock entries increase
+monotonically, which agrees with our intuitive notion that these protocols make
+progress over time. These guarantees are similar to the interface guarantees
+provided by CRDTs, with the notable difference that they are not confined to
+individual modules: monotone functions allow safe mappings between lattice
+values.
+
+As a secondary benefit, we observe that our programs are concise and natural.
+In the case of vector clocks, our code is \textasciitilde{}20$\times$ shorter
+than a comparable Java program and exhibits a direct visual correspondence to a
+textual description of the vector clock protocol. This increases our confidence
+in \lang as a language that is well suited to common distributed programming
+tasks.
+
+% Vector clocks are a classical mechanism for recording the causal relationships
+% between events in a distributed system~\cite{Fidge1988,Mattern1989}. In this
+% section, we first show how vector clocks can be implemented in a monotonic
+% fashion using \lang. We then use \lang to implement a classical algorithm for
+% point-to-point causal message delivery~\cite{Schiper1989}. The implementation of
+% both protocols in \lang is concise and readable---this suggests that \lang is
+% suitable for common distributed programming tasks. Perhaps more significantly,
+% both protocols are monotonic. This agrees with our intuition that these
+% protocols make ``progress'' over time, and hence gives us more confidence in the
+% correctness of our designs.
+
+% Concede that confluence is not an appropriate correctness criteria
+
+\subsection{Vector clocks}
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module VectorClock
+  state do
+    lmap :my_vc
+    lmap :next_vc
+    scratch :in_msg, [:addr, :payload] => [:clock] (*\label{line:ddl-scratch-start}*)
+    scratch :out_msg, [:addr, :payload]
+    scratch :out_msg_vc, [:addr, :payload] => [:!clock] (*\label{line:ddl-lattice-merge}*)(*\label{line:ddl-scratch-end}*)
+  end
+
+  bootstrap do
+    my_vc <= {ip_port => Bud::MaxLattice.new(0)} (*\label{line:vc-init-clock}*)
+  end
+
+  bloom do
+    next_vc <= my_vc
+    next_vc <= out_msg { {ip_port => my_vc.at(ip_port) + 1} } (*\label{line:vc-out-increment}*)
+    next_vc <= in_msg  { {ip_port => my_vc.at(ip_port) + 1} } (*\label{line:vc-in-increment}*)
+    next_vc <= in_msg  {|m| m.clock} (*\label{line:vc-in-merge}*)
+    my_vc <+ next_vc
+
+    out_msg_vc <= out_msg {|m| [m.addr, m.payload, next_vc]} (*\label{line:vc-out-stamp}*)
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{Vector clocks in \lang.}
+\label{fig:vector-clock-src}
+\end{figure}
+
+\emph{Vector clocks} are a classical mechanism for recording the causal
+relationships between events in a distributed
+system~\cite{Fidge1988,Mattern1989}.  A vector clock is an array containing a
+logical clock for each node in the distributed system. Each node keeps a local
+vector clock that it updates whenever it sends or receives messages; the node's
+vector clock reflects how current its local knowledge is with respect to the
+other nodes in the system.
+
+In a system that uses vector clocks, each node $n$ initializes its local vector
+clock $v[n] = 0$. A node updates $v$ by following three rules when sending and
+receiving messages:
+\begin{compactenum}
+\item
+  Before sending a message, $n$ increments $v[n]$ and includes $v$ in the
+  outgoing message.
+\item
+  Upon receipt of a message, $n$ increments $v[n]$.
+\item
+  Upon receipt of a message, $n$ merges the vector clock in the message with its
+  own vector clock by taking the element-wise max of the logical clock
+  values.\footnote{If a clock value for a node occurs in one vector clock but
+    not the other, the missing clock value is assumed to be $0$.}
+\end{compactenum}
+Figure~\ref{fig:vector-clock-src} contains a complete implementation of vector
+clocks in \lang. A vector clock is represented as a map lattice that associates
+node IDs with \texttt{lmax} values. Each \texttt{lmax} represents a single
+logical clock---naturally, a clock can only increase over time.
+\texttt{ip\_port} returns the IP address and port number of the current \lang
+instance, which is used as a node ID. Incoming messages appear in the
+\texttt{in\_msg} collection. Messages that are intended to be sent begin as
+tuples in \texttt{out\_msg}; once a message has been stamped with the local
+node's vector clock, it appears in \texttt{out\_msg\_vc}.
+
+The key logic appears in lines~\ref{line:vc-out-increment},
+\ref{line:vc-in-increment}, and \ref{line:vc-in-merge}: these three statements
+are a direct translation of the three rules given
+above. Line~\ref{line:vc-init-clock} initializes the node's local vector clock.
+Line~\ref{line:vc-out-stamp} stamps outgoing messages with the updated vector
+clock value.  Note that if multiple outgoing messages are sent in the same \lang
+timestep, they will all be stamped with the same clock value (and the local
+vector clock will only be incremented once). This is reasonable, since those
+messages are concurrent.
+
+We argue that Figure~\ref{fig:vector-clock-src} is about as readable as the
+update rules given above. The six \lang statements in
+Figure~\ref{fig:vector-clock-src} compares favorably with implementations of
+vector clocks in traditional programming languages. For example, the
+\texttt{VectorClock} class included with the Voldemort key-value store consists
+of 216 lines of Java source code, not including whitespace or
+comments~\cite{voldemort-vector-clock}.
+
+As noted above, we would not expect an implementation of vector clocks to be
+confluent; accordingly, Figure~\ref{fig:vector-clock-src} is not a monotonic
+\lang program because of the use of \texttt{scratch} collections
+(lines~\ref{line:ddl-scratch-start}--\ref{line:ddl-scratch-end}). Scratch
+collections are not monotonic because they are emptied at the start of each
+timestamp. Although the vector clock program is not confluent, the statements in
+the program only invoke monotone lattice methods. Hence, \texttt{my\_vc}
+increases monotonically, and \texttt{next\_vc} is greater than or equal to both
+\texttt{my\_vc} and all the messages received in the current timestep. These
+program properties formally guarantee our intuition about how vector clocks
+change over time.
+
+Note that because the statements in Figure~\ref{fig:vector-clock-src} involve
+only monotonic operations, the statements can be executed in any order. The
+``lattice embedding'' feature described in Section~\ref{sec:lattice-embedding}
+ensures that the \texttt{out\_msg\_vc} tuple contains a single vector clock that
+reflects all the messages received in the current timestep.
+
+%  Vector clocks can also
+% be implemented in Bloom but they require the use of non-monotonic operators
+% (e.g., incrementing a node's clock requires non-monotonic state update using
+% $\verb|<+|$ and $\verb|<-|$, and merging the clock values in inbound messages
+% requires a \texttt{max} aggregate).
+
+\subsection{Causal delivery}
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module CausalDelivery
+  include VectorClock (*\label{line:causal-d-include}*)
+
+  state do
+    channel :chn, [:@dst, :payload] => [:clock, :ord_buf]
+    table :recv_buf, [:dst, :payload] => [:clock, :ord_buf] (*\label{line:recv-buf-ddl}*)
+    lmap :ord_buf
+  end
+
+  bloom :outbound_msg do
+    chn <~ out_msg {|m| [m.addr, m.payload, next_vc, ord_buf]} (*\label{line:out-msg-embed}*)
+    ord_buf <+ out_msg {|m| {m.addr => next_vc} } (*\label{line:ord-buf-out-msg}*)
+  end
+
+  bloom :inbound_msg do
+    recv_buf <= chn
+    in_msg <= recv_buf do |m| (*\label{line:deliver-msg-start}*)
+      m.ord_buf.at(ip_port).lt_eq(my_vc).when_true { (*\label{line:deliver-msg-lt-eq}*)
+        [m.addr, m.payload, m.clock]
+      }
+    end (*\label{line:deliver-msg-end}*)
+    ord_buf <+ in_msg {|m| m.ord_buf} (*\label{line:ord-buf-in-msg}*)
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{Point-to-point causal delivery in \lang. Note that \texttt{in\_msg} and
+\texttt{out\_msg} are defined by the \texttt{VectorClock} module.}
+\label{fig:causal-delivery-src}
+\end{figure}
+
+Next, we use \lang to build a more complex distributed protocol that makes use
+of vector clocks. A \emph{causal delivery} protocol ensures that messages are
+delivered in an order that is consistent with the ``happens before'' relation
+between events~\cite{Lamport1978}. Causal delivery is a common
+building block for distributed protocols.
+
+Figure~\ref{fig:causal-delivery-src} contains a \lang program that implements a
+classical algorithm for point-to-point (unicast) causal delivery proposed by
+Schiper et al.~\cite{Schiper1989}. Note the Ruby \texttt{include} statement on
+line~\ref{line:causal-d-include}, which loads the \lang state declarations and
+statements from the \texttt{VectorClock} module.
+
+In the Schiper et al.\ protocol, each node records its knowledge about the state
+of the vector clocks at every other node. In
+Figure~\ref{fig:causal-delivery-src}, this knowledge is kept in
+\texttt{ord\_buf}, an \texttt{lmap} that associates node IDs with vector
+clocks. A node's \texttt{ord\_buf} is updated when messages are sent or
+delivered (lines~\ref{line:ord-buf-out-msg} and \ref{line:ord-buf-in-msg},
+respectively). A node also embeds both its vector clock and \texttt{ord\_buf} in
+outgoing messages (line~\ref{line:out-msg-embed}). Finally, the protocol ensures
+that a node will delay delivering a message $m$ until it can be sure that it
+will never receive a message that causally precedes $m$. This is done by
+comparing the knowledge the sender had about the recipient's vector clock with
+the recipient's current vector clock; once the recipient's vector clock passes
+the sender's knowledge, the message can be safely delivered
+(lines~\ref{line:deliver-msg-start}--\ref{line:deliver-msg-end}, respectively).
+
+Note that checking whether a message has been delivered requires testing whether
+one vector clock (in the \texttt{ord\_buf} embedded in the message) is smaller
+than the node's vector clock (line~\ref{line:deliver-msg-lt-eq}). In general,
+this is not monotonic: the truth value of an inequality between two
+monotonically increasing counters can oscillate over time.  In this case,
+however, the message's \texttt{ord\_buf} vector clock is \emph{immutable},
+because it is embedded as a column of a collection that does not allow ``lattice
+merges'' (i.e., the \texttt{ord\_buf} column in the \texttt{recv\_buf} state
+declaration on line~\ref{line:recv-buf-ddl} does not use the ``\texttt{!}''
+annotation described in Section~\ref{sec:lattice-embedding}). Therefore the
+inequality predicate can be determined to be monotonic.
+
+Because causal delivery builds upon vector clocks, it is also not
+confluent. However, because the statements in
+Figure~\ref{fig:causal-delivery-src} only invoke monotone methods, we can see
+that a node's \texttt{ord\_buf} strictly increases over time.
