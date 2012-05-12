@@ -102,22 +102,22 @@ lattice. For example, an \texttt{lset} lattice initially contains the empty set.
 
 \begin{table*}[t]
 \begin{center}
-\begin{tabular}{|l|l|l|l|p{1.57in}|p{1.09in}|}
+\begin{tabular}{|l|p{0.98in}|l|l|p{1.72in}|p{1.18in}|}
 \hline
 \textbf{Name} & \textbf{Description} & \textbf{Least element ($\bot$)} & \textbf{Merge($a,b$)} & \textbf{Morphisms} &
 \textbf{Monotone functions}\\
 \hline
 \hline
-\texttt{lbool} & Boolean lattice (false $\to$ true) & \texttt{false} & $a \lor
+\texttt{lbool} & Boolean lattice \newline (false $\to$ true) & \texttt{false} & $a \lor
 b$ & \texttt{when\_true()} $\to$ \texttt{v} & \\
 \hline
-\texttt{lmax} & Max over an ordered domain & $-\infty$ & $max(a, b)$ &
+\texttt{lmax} & Max over an \newline ordered domain & $-\infty$ & $max(a, b)$ &
 \texttt{gt(n)} $\to$ \texttt{lbool}\newline
 \texttt{gt\_eq(n)} $\to$ \texttt{lbool}\newline
 \texttt{$\mathtt{+}$(lmax)} $\to$ \texttt{lmax}\newline
 \texttt{$\mathtt{-}{}$(lmax)} $\to$ \texttt{lmax} & \\
 \hline
-\texttt{lmin} & Min over an ordered domain & $\infty$ & $min(a, b)$ &
+\texttt{lmin} & Min over an \newline ordered domain & $\infty$ & $min(a, b)$ &
 \texttt{lt(n)} $\to$ \texttt{lbool}\newline
 \texttt{lt\_eq(n)} $\to$ \texttt{lbool}\newline
 \texttt{$\mathtt{+}$(lmin)} $\to$ \texttt{lmin}\newline
@@ -130,7 +130,7 @@ b$ & \texttt{when\_true()} $\to$ \texttt{v} & \\
 \texttt{contains?(v)} $\to$ \texttt{lbool}
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
-\texttt{lpset} & Set of non-negative numbers & empty set & $a \cup b$ &
+\texttt{lpset} & Set of non-\newline{}negative numbers & empty set & $a \cup b$ &
 \texttt{intersect(lpset)} $\to$ \texttt{lpset}\newline
 \texttt{product(lpset)} $\to$ \texttt{lpset}\newline
 \texttt{project(lpset)} $\to$ \texttt{lpset}\newline
@@ -315,9 +315,9 @@ A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
 \begin{compactitem}
 \item \texttt{initialize(i)}: given a Ruby object $i$, this method constructs a
-  new lattice element that ``wraps'' $i$ (\texttt{initialize} is the standard
-  Ruby syntax for defining a constructor). If $i$ is \texttt{nil} (the null
-  reference), this method returns $\bot$, the least element of the lattice.
+  new lattice element that ``wraps'' $i$ (this is the standard Ruby syntax for
+  defining a constructor). If $i$ is \texttt{nil} (the null reference), this
+  method returns $\bot$, the least element of the lattice.
 
 \item \texttt{merge(e)}: given a lattice element $e$, this method returns the
   least upper bound of \emph{self} and \emph{e}. This method must satisfy the
@@ -342,7 +342,7 @@ carefully when implementing monotonic lattice methods.
 
 Because Ruby is dynamically typed, there will often be constraints on the legal
 inputs to lattice methods that cannot be enforced until runtime. For example,
-initializing a \texttt{lbool} lattice with a non-boolean value is not
+initializing an \texttt{lbool} lattice with a non-boolean value is not
 supported. The developer of a lattice implementation should check for invalid
 inputs and signal errors by raising a Ruby exception.
 
