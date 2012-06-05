@@ -8,21 +8,14 @@ class AllPathsL
 
   state do
     lhset :link
-    lhset :path, :scratch => true
+    lhset :path
   end
 
   bloom do
     path <= link
-    # path <= path.product(link).pro do |p,l|
-    #   [[p[0], l[1], p[2] + l[2]]] if p[1] == l[0]
-    # end
-    # path <= path.eqjoin(link, 1, 0).pro do |p,l|
-    #   [[p[0], l[1], p[2] + l[2]]]
-    # end
     path <= path.eqjoin(link, 1, 0) do |p,l|
       [p[0], l[1], p[2] + l[2]]
     end
-#    path <= path.tc(link)
   end
 end
 
@@ -31,7 +24,7 @@ class AllPathsB
 
   state do
     table :link, [:from, :to, :cost]
-    scratch :path, [:from, :to, :cost]
+    table :path, [:from, :to, :cost]
   end
 
   bloom do
@@ -66,105 +59,56 @@ def gen_link_data(num_nodes)
   links
 end
 
-def lattice_bench(data, nruns, use_naive=false)
+def lattice_bench(data, use_naive=false)
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
   l.link <+ [data]
-  times = []
-  npaths = nil
-  nruns.times do |i|
-    t = Benchmark.realtime do
-      l.tick
-    end
-    times << t
-    new_npaths = l.path.current_value.reveal.length
-    puts "#{use_naive ? "Naive" : "SN"} lattice done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{new_npaths} (RSS size: #{report_mem})"
-    if npaths != nil && npaths != new_npaths
-      raise "Non-deterministic results: old = #{npaths}, new = #{new_npaths}"
-    end
-    npaths = new_npaths
+  t = Benchmark.realtime do
+    l.tick
   end
+  npaths = l.path.current_value.reveal.length
   l.stop
-  [times, npaths]
+  [t, npaths]
 end
 
-def bloom_bench(data, nruns)
+def bloom_bench(data)
   b = AllPathsB.new
   b.link <+ data
-  times = []
-  npaths = nil
-  nruns.times do |i|
-    t = Benchmark.realtime do
-      b.tick
-    end
-    times << t
-    puts "Bloom done #{i+1}/#{nruns}; #{t} seconds. # of paths: #{b.path.to_a.length} (RSS size: #{report_mem})"
-    if npaths != nil && npaths != b.path.to_a.length
-      raise "Non-deterministic results: old = #{npaths}, new = #{b.path.to_a.length}"
-    end
-    npaths = b.path.to_a.length
+  t = Benchmark.realtime do
+    b.tick
   end
-
+  npaths = b.path.to_a.length
   b.stop
-  [times, npaths]
+  [t, npaths]
 end
 
 def report_mem
   `ps -o rss= -p #{Process.pid}`.to_i
 end
 
-module Enumerable
-  def sum
-    self.inject(0){|accum, i| accum + i }
-  end
-
-  def mean
-    self.sum/self.length.to_f
-  end
-
-  def sample_variance
-    m = self.mean
-    sum = self.inject(0){|accum, i| accum +(i-m)**2 }
-    sum/(self.length - 1).to_f
-  end
-
-  def standard_deviation
-    return Math.sqrt(self.sample_variance)
-  end
-end
-
-def bench(size, nruns, variant)
+def bench(size, run_idx, variant)
   # Don't try to use naive evaluation for large graphs
   return if (variant == "naive-lat" && size > 64)
 
   data = gen_link_data(size)
   puts "****** #{Time.now} ******"
-  puts "Running bench for size = #{size}, # links = #{data.length}, variant = #{variant}"
-  puts "(avg links/node: #{data.length.to_f/size}, initial RSS: #{report_mem})"
+  puts "Run #: #{run_idx}, size = #{size}, # links = #{data.length}, variant = #{variant}"
 
   case variant
   when "bloom"
-    times, npaths = bloom_bench(data, nruns)
+    elapsed_t, npaths = bloom_bench(data)
   when "seminaive-lat"
-    times, npaths = lattice_bench(data, nruns)
+    elapsed_t, npaths = lattice_bench(data)
   when "naive-lat"
-    times, npaths = lattice_bench(data, nruns, true)
+    elapsed_t, npaths = lattice_bench(data, true)
   else
     raise "Unrecognized variant: #{variant}"
   end
 
-  raise unless times.length == nruns
-  mean_t = times.mean
-  if times.length > 1
-    stddev_t = times.standard_deviation
-    std_err = stddev_t / Math.sqrt(times.length.to_f)
-  else
-    stddev_t, std_err = [0, 0]
-  end
-  printf("Results: avg %s = %.6f (std dev: %.6f)\n", variant, mean_t, stddev_t)
-  $stderr.printf("%d %d %d %.6f %0.6f %0.6f\n",
-                 size, data.length, npaths, mean_t, stddev_t, std_err)
+  puts "Elapsed time: #{elapsed_t}, # of paths: #{npaths}"
+  $stderr.printf("%d %d %d %.6f\n",
+                 size, data.length, npaths, elapsed_t)
 end
 
-raise ArgumentError, "Usage: bench.rb graph_size nruns variant" unless ARGV.length == 3
-size, nruns, variant = ARGV
-bench(size.to_i, nruns.to_i, variant)
+raise ArgumentError, "Usage: bench.rb graph_size run_idx variant" unless ARGV.length == 3
+size, run_idx, variant = ARGV
+bench(size.to_i, run_idx.to_i, variant)
