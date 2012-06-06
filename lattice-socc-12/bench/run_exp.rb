@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
-nruns = 5
-#sizes = [32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112]
-sizes = [32]
-variants = ["bloom", "seminaive-lat"]#, "naive-lat"]
+nruns = 1
+#sizes = (32..112).select {|i| i % 4 == 0}
+sizes = [100]
+#variants = ["bloom", "seminaive-lat", "naive-lat"]
+variants = ["seminaive-lat", "bloom"]
 data_files = {}
 variants.each {|v| data_files[v] = "#{v}.data"}
 log_file = "exp_log"
@@ -15,9 +16,10 @@ end
 sizes.each do |s|
   puts "Running benchmark; size = #{s}"
   variants.each do |v|
-    print "  #{v}"
+    print "  #{v} "
     nruns.times do |t|
       `ruby bench.rb #{s} #{t} #{v} >> #{log_file} 2>>#{data_files[v]}`
+      raise "Error: #{$?}" unless $?.success?
       print "."
     end
     print "\n"
