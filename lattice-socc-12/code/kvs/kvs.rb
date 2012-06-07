@@ -32,14 +32,15 @@ class KvsClient
   include Bud
   include KvsProtocol
 
-  def initialize
+  def initialize(addr)
     @req_id = 0
-    super
+    @addr = addr
+    super()
   end
 
-  def read(key, addr)
+  def read(key)
     req_id = make_req_id
-    r = sync_callback(:kvget, [[req_id, addr, key, ip_port]], :kvget_response)
+    r = sync_callback(:kvget, [[req_id, @addr, key, ip_port]], :kvget_response)
     r.each do |t|
       if t[0] == req_id
         return t.value
@@ -48,9 +49,9 @@ class KvsClient
     raise
   end
 
-  def write(key, val, addr)
+  def write(key, val)
     sync_do {
-      kvput <~ [[make_req_id, addr, key, val]]
+      kvput <~ [[make_req_id, @addr, key, val]]
     }
   end
 
@@ -65,11 +66,11 @@ end
 r = MergeMapKvsReplica.new
 r.run_bg
 
-c = KvsClient.new
+c = KvsClient.new(r.ip_port)
 c.run_bg
-c.write('foo', Bud::MaxLattice.new(5), r.ip_port)
-c.write('foo', Bud::MaxLattice.new(10), r.ip_port)
-res = c.read('foo', r.ip_port)
+c.write('foo', Bud::MaxLattice.new(5))
+c.write('foo', Bud::MaxLattice.new(10))
+res = c.read('foo')
 puts "res = #{res.inspect}"
 
 r.stop_bg
