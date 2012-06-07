@@ -1,0 +1,60 @@
+diff --git a/lib/bud/lattices.rb b/lib/bud/lattices.rb
+index 4543d3b..be54d8b 100644
+--- a/lib/bud/lattices.rb
++++ b/lib/bud/lattices.rb
+@@ -409,6 +409,10 @@ class Bud::LatticeWrapper
+     scalar_merge(lhs, rhs)
+   end
+ 
++  def do_unsafe_merge(lhs, rhs)
++    lhs.merge_unsafe(rhs)
++  end
++
+   def setup_wiring(input, kind)
+     if input.class <= Bud::LatticeWrapper
+       add_merge_target
+@@ -424,7 +428,8 @@ class Bud::LatticeWrapper
+   # Merge "i" into @new_delta
+   public
+   def insert(i, source)
+-    @new_delta = do_merge(current_new_delta, i)
++#    @new_delta = do_merge(current_new_delta, i)
++    @new_delta = do_unsafe_merge(current_new_delta, i)
+   end
+ 
+   def <=(i)
+@@ -498,10 +503,18 @@ class Bud::LatticeWrapper
+     result = false
+ 
+     if @new_delta
+-      m = do_merge(current_value, @new_delta)
+-      if m.reveal != current_value.reveal
+-        @storage = m
+-        result = true
++      if @klass <= Bud::HashSetLattice
++        old_size = current_value.reveal.size
++        @storage = do_unsafe_merge(current_value, @new_delta)
++        if @storage.reveal.size != old_size
++          result = true
++        end
++      else
++        m = do_merge(current_value, @new_delta)
++        if m.reveal != current_value.reveal
++          @storage = m
++          result = true
++        end
+       end
+     end
+ 
+@@ -812,6 +825,11 @@ class Bud::HashSetLattice < Bud::Lattice
+     wrap_unsafe(@v | i.reveal)
+   end
+ 
++  def merge_unsafe(i)
++    @v.merge(i.reveal)
++    self
++  end
++
+   morph :intersect do |i|
+     wrap_unsafe(@v & i.reveal)
+   end
