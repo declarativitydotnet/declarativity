@@ -35,10 +35,8 @@ tabsize=2,  		% sets default tabsize to 2 spaces
 captionpos=b,   		% sets the caption-position to bottom
 breaklines=false,    	% sets automatic line breaking
 breakatwhitespace=true,    % sets if automatic breaks should only happen at whitespace
-%escapeinside={\%}{)}          % if you want to add a comment within your code
 columns=fixed,
 basewidth=0.52em,
-% are you fucking kidding me lstlistings?  who puts the line numbers outside the margin?
 xleftmargin=6mm,
 xrightmargin=-6mm,
 numberblanklines=false,
@@ -86,16 +84,67 @@ David Maier\\
 \maketitle
 
 \begin{abstract}
-  Monotonic logic has recently been identified as a useful building block for
-  consistent distributed programs because it allows eventual consistency without
-  the need for coordination. However, many common distributed programs cannot
-  naturally be expressed as monotonic programs over sets. We present \lang, a
-  variant of Datalog that allows monotonic programs to use arbitrary lattice
-  structures, not just the set lattice. The ability to use multiple lattices
-  allows \lang to verify a much wider range of programs as monotonic and hence
-  eventually consistent.  We show how to implement lattice-based code
-  efficiently, in the style of semi-naive evaluation. Finally, we show how \lang
-  can be used to implement practical distributed programs.
+  In recent years there has been interest in achieving application-level
+  consistency criteria without the latency and availability costs of strongly
+  consistent storage infrastructure. A standard technique, found in designs
+  including such as Bayou, Escrow Transactions, and CRDTs, is to adopt a
+  vocabulary of commutative operations; this eliminates concerns about message
+  ordering.  A more powerful approach was recently captured by the \emph{CALM
+    Theorem}, which proves that logically monotonic programs are guaranteed to
+  be eventually consistent. The CALM Theorem can be used to verify the
+  correctness of coordination-free programs in logic-based distributed languages
+  such as Bloom.
+
+  In this paper we present \lang, an extension to Bloom that takes inspiration
+  from both these traditions.  Drawing on systems that use commutative
+  operations, \lang guarantees convergence for user-defined objects by adopting
+  the notion of extensible \emph{lattice} data types: classes with a commutative
+  and associative merge function.  \lang generalizes Bloom to support lattices,
+  which brings the power of CALM analysis to whole programs containing arbitrary
+  lattices. We show how the Bloom interpreter can be generalized to support
+  efficient evaluation of lattice-based code using well-known strategies from
+  logic programming.  Finally, we use \lang to develop several practical
+  distributed programs, including a key-value store similar to Amazon Dynamo,
+  and show how \lang encourages the safe composition of small, easy-to-analyze
+  lattices into larger programs.
+
+
+  % At large scale, protocols for achieving strong consistency are increasingly
+  % avoided because of their perceived latency and availability costs. Hence,
+  % several approaches for simplifying the development of weakly consistent
+  % programs have recently been proposed---in particular, Conflict-free Replicated
+  % Data Types (CRDTs) and monotonic logic.
+
+  % In the CRDT approach, programmers develop abstract data types whose public
+  % methods are commutative. While this ensures that individual values converge to
+  % a consistent final state, it does not address the mutual consistency of
+  % different replicated values.
+
+  % In monotonic logic, developers write declarative rules that compute sets of
+  % facts that grow over time. This enables a simple whole-program analysis: if
+  % the program consists only of monotonic logic, the final state of the program
+  % will be invariant to message reordering. However, this analysis is very
+  % conservative---many useful constructs, including counters, timestamps, and
+  % sequence numbers, cannot be represented as monotonically increasing sets.
+
+  % In this paper, we combine these two approaches to allow monotonic programs to
+  % be written over arbitrary lattices, rather than only over the set lattice. We
+  % realize this approach in \lang, a distributed Datalog variant that allows both
+  % set-oriented and lattice-oriented computations. We show how to implement
+  % lattice-based code efficiently, in the style of semi-naive evaluation.
+  % Finally, we use \lang to develop several practical distributed programs,
+  % including a key-value store similar to Amazon Dynamo.
+
+  % Monotonic logic has recently been identified as a useful building block for
+  % consistent distributed programs because it allows eventual consistency without
+  % the need for coordination. However, many common distributed programs cannot
+  % naturally be expressed as monotonic programs over sets. We present \lang, a
+  % variant of Datalog that allows monotonic programs to use arbitrary lattice
+  % structures, not just the set lattice. The ability to use multiple lattices
+  % allows \lang to verify a much wider range of programs as monotonic and hence
+  % eventually consistent.  We show how to implement lattice-based code
+  % efficiently, in the style of semi-naive evaluation. Finally, we show how \lang
+  % can be used to implement practical distributed programs.
 \end{abstract}
 
 \input{intro}
