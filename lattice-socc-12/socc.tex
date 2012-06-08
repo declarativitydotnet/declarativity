@@ -86,14 +86,13 @@ David Maier\\
 \begin{abstract}
   In recent years there has been interest in achieving application-level
   consistency criteria without the latency and availability costs of strongly
-  consistent storage infrastructure. A standard technique, found in designs
-  including such as Bayou, Escrow Transactions, and CRDTs, is to adopt a
-  vocabulary of commutative operations; this eliminates concerns about message
-  ordering.  A more powerful approach was recently captured by the \emph{CALM
-    Theorem}, which proves that logically monotonic programs are guaranteed to
-  be eventually consistent. The CALM Theorem can be used to verify the
-  correctness of coordination-free programs in logic-based distributed languages
-  such as Bloom.
+  consistent storage infrastructure. A standard technique, found in designs such
+  as Bayou, Escrow Transactions, and CRDTs, is to adopt a vocabulary of
+  commutative operations; this avoids inconsistency due to message reordering.
+  A more powerful approach was recently captured by the \emph{CALM Theorem},
+  which proves that logically monotonic programs are guaranteed to be eventually
+  consistent. The CALM Theorem can be used to verify the correctness of
+  coordination-free programs in logic-based distributed languages such as Bloom.
 
   In this paper we present \lang, an extension to Bloom that takes inspiration
   from both these traditions.  Drawing on systems that use commutative
