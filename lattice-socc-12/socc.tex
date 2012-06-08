@@ -88,18 +88,19 @@ David Maier\\
   consistency criteria without the latency and availability costs of strongly
   consistent storage infrastructure. A standard technique, found in designs such
   as Bayou, Escrow Transactions, and CRDTs, is to adopt a vocabulary of
-  commutative operations; this avoids inconsistency due to message reordering.
-  A more powerful approach was recently captured by the \emph{CALM Theorem},
-  which proves that logically monotonic programs are guaranteed to be eventually
-  consistent. The CALM Theorem can be used to verify the correctness of
-  coordination-free programs in logic-based distributed languages such as Bloom.
+  commutative operations; this avoids the risk of inconsistency due to message
+  reordering.  A more powerful approach was recently captured by the \emph{CALM
+    Theorem}, which proves that logically monotonic programs are guaranteed to
+  be eventually consistent. The CALM Theorem can be used to verify the
+  correctness of coordination-free programs in logic-based distributed languages
+  such as Bloom.
 
   In this paper we present \lang, an extension to Bloom that takes inspiration
   from both these traditions.  Drawing on systems that use commutative
   operations, \lang guarantees convergence for user-defined objects by adopting
   the notion of extensible \emph{lattice} data types: classes with a commutative
-  and associative merge function.  \lang generalizes Bloom to support lattices,
-  which brings the power of CALM analysis to whole programs containing arbitrary
+  and associative merge function.  \lang generalizes Bloom to support lattices
+  and extends the power of CALM analysis to whole programs containing arbitrary
   lattices. We show how the Bloom interpreter can be generalized to support
   efficient evaluation of lattice-based code using well-known strategies from
   logic programming.  Finally, we use \lang to develop several practical
