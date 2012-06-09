@@ -107,44 +107,6 @@ David Maier\\
   distributed programs, including a key-value store similar to Amazon Dynamo,
   and show how \lang encourages the safe composition of small, easy-to-analyze
   lattices into larger programs.
-
-
-  % At large scale, protocols for achieving strong consistency are increasingly
-  % avoided because of their perceived latency and availability costs. Hence,
-  % several approaches for simplifying the development of weakly consistent
-  % programs have recently been proposed---in particular, Conflict-free Replicated
-  % Data Types (CRDTs) and monotonic logic.
-
-  % In the CRDT approach, programmers develop abstract data types whose public
-  % methods are commutative. While this ensures that individual values converge to
-  % a consistent final state, it does not address the mutual consistency of
-  % different replicated values.
-
-  % In monotonic logic, developers write declarative rules that compute sets of
-  % facts that grow over time. This enables a simple whole-program analysis: if
-  % the program consists only of monotonic logic, the final state of the program
-  % will be invariant to message reordering. However, this analysis is very
-  % conservative---many useful constructs, including counters, timestamps, and
-  % sequence numbers, cannot be represented as monotonically increasing sets.
-
-  % In this paper, we combine these two approaches to allow monotonic programs to
-  % be written over arbitrary lattices, rather than only over the set lattice. We
-  % realize this approach in \lang, a distributed Datalog variant that allows both
-  % set-oriented and lattice-oriented computations. We show how to implement
-  % lattice-based code efficiently, in the style of semi-naive evaluation.
-  % Finally, we use \lang to develop several practical distributed programs,
-  % including a key-value store similar to Amazon Dynamo.
-
-  % Monotonic logic has recently been identified as a useful building block for
-  % consistent distributed programs because it allows eventual consistency without
-  % the need for coordination. However, many common distributed programs cannot
-  % naturally be expressed as monotonic programs over sets. We present \lang, a
-  % variant of Datalog that allows monotonic programs to use arbitrary lattice
-  % structures, not just the set lattice. The ability to use multiple lattices
-  % allows \lang to verify a much wider range of programs as monotonic and hence
-  % eventually consistent.  We show how to implement lattice-based code
-  % efficiently, in the style of semi-naive evaluation. Finally, we show how \lang
-  % can be used to implement practical distributed programs.
 \end{abstract}
 
 \input{intro}
