@@ -17,6 +17,11 @@ class PairLattice < Bud::Lattice
     return i if @v.nil?
     return self if i_val.nil?
 
+    # Sanity check: if the first element is equal, the second element should be
+    # as well
+    raise if @v.first.reveal == i_val.first.reveal &&
+             @v.last.reveal != i_val.last.reveal
+
     # The lattice API does not currently include a way to tell if one lattice
     # value is \lt another value. Hence, we instead use the merge method as
     # follows: if a.merge(b) == a, then a \gt_eq b must hold.  Similarly, if

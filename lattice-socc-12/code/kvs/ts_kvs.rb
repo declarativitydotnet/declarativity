@@ -50,16 +50,22 @@ class TestPair < MiniTest::Unit::TestCase
     assert_equal([1, 2, 3], first.sort)
     assert_equal([4, 5, 6], last.sort)
 
-    i.p3 <+ PairLattice.new([set(1, 2, 3, 4), set(10)])
+    i.p2 <+ PairLattice.new([set(4), set(4, 25)])
     i.tick
     first, last = unwrap_pair(i, :p1)
     assert_equal([1, 2, 3, 4], first.sort)
-    assert_equal([10], last.sort)
+    assert_equal([4, 5, 6, 25], last.sort)
 
-    i.p3 <+ PairLattice.new([set(1, 2, 3, 4, 5), set()])
+    i.p3 <+ PairLattice.new([set(1, 2, 3, 4, 5), set(10)])
     i.tick
     first, last = unwrap_pair(i, :p1)
     assert_equal([1, 2, 3, 4, 5], first.sort)
+    assert_equal([10], last.sort)
+
+    i.p3 <+ PairLattice.new([set(1, 2, 3, 4, 5, 6), set()])
+    i.tick
+    first, last = unwrap_pair(i, :p1)
+    assert_equal([1, 2, 3, 4, 5, 6], first.sort)
     assert_equal([], last.sort)
   end
 end
