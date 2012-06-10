@@ -9,6 +9,28 @@ module KvsProtocol
   end
 end
 
+# Simple KVS replica in which we just merge together all the proposed values for
+# a given key. This is reasonable when the intent is to store a monotonically
+# increasing lmap of keys.
+class MergeMapKvsReplica
+  include Bud
+  include KvsProtocol
+
+  state do
+    lmap :kv_store
+  end
+
+  bloom do
+    kv_store <= kvput {|c| {c.key => c.value}}
+    kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
+  end
+
+  bloom :logging do
+    stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
+    stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
+  end
+end
+
 # Design notes:
 #
 # Inspired by Dynamo. Each key is associated with a <vector-clock, value>
@@ -28,27 +50,38 @@ end
 # stores at most one <vector-clock, value> associated with any key (unlike in
 # Dynamo).
 #
-# Writes are propagated to between replicas via the same logic, except that a
-# replica accepting a write from another replica does not need to bump its own
-# position in the write's vector clock. Write progagation could either be done
-# actively (coordinator doesn't return "success" to the client until W replicas
-# have been written) or passively (replicas perioidically merge their databases).
-class MergeMapKvsReplica
+# Writes are propagated between replicas via the same logic, except that a
+# replica accepting a write from another replica does not bump its own position
+# in the write's vector clock. Write progagation could either be done actively
+# (coordinator doesn't return success to the client until W replicas have been
+# written) or passively (replicas perioidically merge their databases).
+class VectorClockKvsReplica
   include Bud
   include KvsProtocol
 
   state do
     lmap :kv_store
+    scratch :put_client_vc, [:reqid] => [:key, :value]
+    scratch :put_new_vc, put_client_vc.schema
   end
 
   bloom do
-    kv_store <= kvput {|c| {c.key => c.value}}
-    kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
-  end
+    # When we accept a write from the client, increment this node's position in
+    # the vector clock associated with the write.
 
-  bloom :logging do
-    stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
-    stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
+    put_client_vc <= kvput {|m| [m.reqid, m.key, m.value]}
+    put_client_vc <= kvput {|m| [m.reqid, m.key,
+                                 Bud::PairLattice.new([Bud::MapLattice.new({ip_port => Bud::MaxLattice.new(0)}), nil])]}
+    put_new_vc <= put_client_vc {|p| [p.reqid, p.key, 
+
+    # Map request IDs => submitted VCs
+    in_progress_write <= kvput {|c| {c.reqid => c.value.fst}}
+    # Default clock value is 0
+    in_progress_write <= kvput {|c| {c.reqid => {ip_port => Bud::MaxLattice.new(0)}}}
+
+    new_write_vc <= in_progress_write {|k,v| { k => v.at(ip_port) + 1 } }
+
+    kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
   end
 end
 
