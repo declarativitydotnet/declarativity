@@ -28,9 +28,18 @@ class TestPair < MiniTest::Unit::TestCase
     Bud::SetLattice.new(x)
   end
 
+  def map(x={})
+    raise unless x.kind_of? Hash
+    Bud::MapLattice.new(x)
+  end
+
   def unwrap_pair(i, sym)
     val = i.send(sym).current_value.reveal
     [val.first.reveal, val.last.reveal]
+  end
+
+  def unwrap_map(m)
+    m.merge(m) {|k,v| v.reveal}
   end
 
   def test_pair_max
@@ -67,5 +76,17 @@ class TestPair < MiniTest::Unit::TestCase
     first, last = unwrap_pair(i, :p1)
     assert_equal([1, 2, 3, 4, 5, 6], first.sort)
     assert_equal([], last.sort)
+  end
+
+  def test_pair_vc
+    i = SimplePair.new
+    i.p2 <+ PairLattice.new([map(:k => max(1)), set(1)])
+    i.p3 <+ PairLattice.new([map(), set(1, 2, 3)])
+    i.tick
+    i.tick
+    first, last = unwrap_pair(i, :p1)
+    first_plain = unwrap_map(first)
+    assert_equal({:k => 1}, first_plain)
+    assert_equal([1], last.sort)
   end
 end
