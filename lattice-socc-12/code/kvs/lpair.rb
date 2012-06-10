@@ -35,4 +35,12 @@ class PairLattice < Bud::Lattice
       return self.class.new([merge_first, @v.last.merge(i_val.last)])
     end
   end
+
+  morph :fst do
+    @v.first
+  end
+
+  def snd
+    @v.last
+  end
 end
