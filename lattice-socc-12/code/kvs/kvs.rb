@@ -1,6 +1,8 @@
 require 'rubygems'
 require 'bud'
 
+require './lpair'
+
 module KvsProtocol
   state do
     channel :kvput, [:reqid] => [:@addr, :key, :value]
@@ -61,27 +63,33 @@ class VectorClockKvsReplica
 
   state do
     lmap :kv_store
-    scratch :put_client_vc, [:reqid] => [:key, :value]
-    scratch :put_new_vc, put_client_vc.schema
+    lmap :my_vc
+    lmap :next_vc
+    scratch :put_new_vc, [:reqid] => [:key, :value]
+  end
+
+  bootstrap do
+    my_vc <= { ip_port => Bud::MaxLattice.new(0) }
   end
 
   bloom do
-    # When we accept a write from the client, increment this node's position in
-    # the vector clock associated with the write.
+    # Increment our VC whenever we accept a kvput
+    next_vc <= my_vc
+    next_vc <= kvput { {ip_port => my_vc.at(ip_port) + 1} }
+    my_vc <+ next_vc
 
-    put_client_vc <= kvput {|m| [m.reqid, m.key, m.value]}
-    put_client_vc <= kvput {|m| [m.reqid, m.key,
-                                 Bud::PairLattice.new([Bud::MapLattice.new({ip_port => Bud::MaxLattice.new(0)}), nil])]}
-    put_new_vc <= put_client_vc {|p| [p.reqid, p.key, 
-
-    # Map request IDs => submitted VCs
-    in_progress_write <= kvput {|c| {c.reqid => c.value.fst}}
-    # Default clock value is 0
-    in_progress_write <= kvput {|c| {c.reqid => {ip_port => Bud::MaxLattice.new(0)}}}
-
-    new_write_vc <= in_progress_write {|k,v| { k => v.at(ip_port) + 1 } }
+    # When we accept a kvput, increment this node's position in the kvput's
+    # vector clock
+    put_new_vc <= kvput {|m| [m.reqid, m.key, m.value]}
+    put_new_vc <= kvput {|m| [m.reqid, m.key, PairLattice.new([next_vc, m.value.snd])]}
+    kv_store <= put_new_vc {|m| puts "m.key = #{m.key.inspect}, m.value = #{m.value.inspect}"; {m.key => m.value}}
 
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
+  end
+
+  bloom :logging do
+    stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
+    stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
   end
 end
 
@@ -120,13 +128,20 @@ class KvsClient
 end
 
 # Simple test scenario
-r = MergeMapKvsReplica.new
+r = VectorClockKvsReplica.new
 r.run_bg
 
 c = KvsClient.new(r.ip_port)
 c.run_bg
-c.write('foo', Bud::MaxLattice.new(5))
-c.write('foo', Bud::MaxLattice.new(10))
+c.write('foo', PairLattice.new([Bud::MapLattice.new, Bud::MaxLattice.new(5)]))
+c.write('bar', PairLattice.new([Bud::MapLattice.new, Bud::MaxLattice.new(10)]))
+res = c.read('foo')
+puts "res = #{res.inspect}"
+res = c.read('bar')
+puts "res = #{res.inspect}"
+
+# XXX: should the VC be at 1 here?
+c.write('foo', PairLattice.new([Bud::MapLattice.new, Bud::MaxLattice.new(7)]))
 res = c.read('foo')
 puts "res = #{res.inspect}"
 
