@@ -22,8 +22,11 @@ class MergeMapKvsReplica
     lmap :kv_store
   end
 
-  bloom do
+  bloom :write do
     kv_store <= kvput {|c| {c.key => c.value}}
+  end
+
+  bloom :read do
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
   end
 
@@ -57,12 +60,8 @@ end
 # in the write's vector clock. Write progagation could either be done actively
 # (coordinator doesn't return success to the client until W replicas have been
 # written) or passively (replicas perioidically merge their databases).
-class VectorClockKvsReplica
-  include Bud
-  include KvsProtocol
-
+class VectorClockKvsReplica < MergeMapKvsReplica
   state do
-    lmap :kv_store
     lmap :my_vc
     lmap :next_vc
     scratch :put_new_vc, [:reqid] => [:key, :value]
@@ -72,7 +71,7 @@ class VectorClockKvsReplica
     my_vc <= { ip_port => Bud::MaxLattice.new(0) }
   end
 
-  bloom do
+  bloom :write do
     # Increment our VC whenever we accept a kvput
     next_vc <= my_vc
     next_vc <= kvput { {ip_port => my_vc.at(ip_port) + 1} }
@@ -83,13 +82,6 @@ class VectorClockKvsReplica
     put_new_vc <= kvput {|m| [m.reqid, m.key, m.value]}
     put_new_vc <= kvput {|m| [m.reqid, m.key, PairLattice.new([next_vc, m.value.snd])]}
     kv_store <= put_new_vc {|m| puts "m.key = #{m.key.inspect}, m.value = #{m.value.inspect}"; {m.key => m.value}}
-
-    kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
-  end
-
-  bloom :logging do
-    stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
-    stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
   end
 end
 
