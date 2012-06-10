@@ -80,13 +80,28 @@ class TestPair < MiniTest::Unit::TestCase
 
   def test_pair_vc
     i = SimplePair.new
-    i.p2 <+ PairLattice.new([map(:k => max(1)), set(1)])
+    i.p2 <+ PairLattice.new([map("k" => max(1)), set(20)])
     i.p3 <+ PairLattice.new([map(), set(1, 2, 3)])
-    i.tick
     i.tick
     first, last = unwrap_pair(i, :p1)
     first_plain = unwrap_map(first)
-    assert_equal({:k => 1}, first_plain)
-    assert_equal([1], last.sort)
+    assert_equal({"k" => 1}, first_plain)
+    assert_equal([20], last.sort)
+
+    i.p2 <+ PairLattice.new([map("l" => max(2)), set(21, 22)])
+    i.p3 <+ PairLattice.new([map("j" => max(3)), set(23)])
+    i.tick
+    first, last = unwrap_pair(i, :p1)
+    first_plain = unwrap_map(first)
+    assert_equal([["j", 3], ["k", 1], ["l", 2]], first_plain.sort)
+    assert_equal([20, 21, 22, 23], last.sort)
+
+    i.p2 <+ PairLattice.new([map("k" => max(1), "l" => max(2), "j" => max(4)),
+                             set(9, 99)])
+    i.tick
+    first, last = unwrap_pair(i, :p1)
+    first_plain = unwrap_map(first)
+    assert_equal([["j", 4], ["k", 1], ["l", 2]], first_plain.sort)
+    assert_equal([9, 99], last.sort)
   end
 end

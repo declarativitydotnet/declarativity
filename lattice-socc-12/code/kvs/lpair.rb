@@ -19,8 +19,7 @@ class PairLattice < Bud::Lattice
 
     # Sanity check: if the first element is equal, the second element should be
     # as well
-    raise if @v.first.reveal == i_val.first.reveal &&
-             @v.last.reveal != i_val.last.reveal
+    raise if @v.first == i_val.first && @v.last != i_val.last
 
     # The lattice API does not currently include a way to tell if one lattice
     # value is \lt another value. Hence, we instead use the merge method as
@@ -28,9 +27,9 @@ class PairLattice < Bud::Lattice
     # a.merge(b) == b, we have a \lt_eq b. If neither is the case, the two
     # values must be incomparable, so we fall back to merging the second field.
     merge_first = @v.first.merge(i_val.first)
-    if merge_first.reveal == @v.first.reveal
+    if merge_first == @v.first
       return self
-    elsif merge_first.reveal == i_val.first.reveal
+    elsif merge_first == i_val.first
       return i
     else
       return self.class.new([merge_first, @v.last.merge(i_val.last)])
