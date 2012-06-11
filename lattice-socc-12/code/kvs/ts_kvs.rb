@@ -154,6 +154,11 @@ class TestVectorClockKvs < MiniTest::Unit::TestCase
     assert_equal({r.ip_port => 1}, unwrap_map(res.fst.reveal))
     assert_equal([1], res.snd.reveal)
 
+    c.write('foo', pair(res.fst, set(2)))
+    res = c.read('foo')
+    assert_equal({r.ip_port => 2}, unwrap_map(res.fst.reveal))
+    assert_equal([2], res.snd.reveal)
+
     c.stop_bg
     r.stop_bg
   end
