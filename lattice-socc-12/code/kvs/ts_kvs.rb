@@ -117,7 +117,7 @@ end
 class TestMergeMapKvs < MiniTest::Unit::TestCase
   include LatticeTestSugar
 
-  def test_simple
+  def test_merge_simple
     r = MergeMapKvsReplica.new
     r.run_bg
     c = KvsClient.new(r.ip_port)
@@ -143,7 +143,7 @@ end
 class TestVectorClockKvs < MiniTest::Unit::TestCase
   include LatticeTestSugar
 
-  def test_simple
+  def test_vc_simple
     r = VectorClockKvsReplica.new
     r.run_bg
     c = KvsClient.new(r.ip_port)
@@ -151,8 +151,7 @@ class TestVectorClockKvs < MiniTest::Unit::TestCase
 
     c.write('foo', pair(map, set(1)))
     res = c.read('foo')
-    # XXX: seems wrong
-    assert_equal({r.ip_port => 0}, unwrap_map(res.fst.reveal))
+    assert_equal({r.ip_port => 1}, unwrap_map(res.fst.reveal))
     assert_equal([1], res.snd.reveal)
 
     c.stop_bg

@@ -45,7 +45,15 @@ class PairLattice < Bud::Lattice
   # the pair. This is akin to map, except we don't let the user code explicitly
   # manipulate the second element of the pair (since it might change
   # non-monotonically).
-  morph :apply_fst do |sym, *args|
+  # 
+  # XXX: UGLY HACK. This should be monotone (that is basically the whole
+  # point). However, there's a bug in the v2 lattice runtime that results in
+  # incorrect behavior: when we read from a lattice wrapper in a rule body and
+  # update that wrapper in the same strata, deltas for the wrapper update do not
+  # always result in deltas for rules that reference the wrapper. Hence, as a
+  # short-term hack we make this non-monotonic, which inserts a strata barrier
+  # and avoids the problem.
+  def apply_fst(sym, *args)
     raise Bud::Error unless RuleRewriter.is_monotone(sym)
     self.class.new([@v.first.send(sym, *args), @v.last]) unless @v.nil?
   end
