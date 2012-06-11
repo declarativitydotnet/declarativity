@@ -64,7 +64,6 @@ class VectorClockKvsReplica < MergeMapKvsReplica
   state do
     lmap :my_vc
     lmap :next_vc
-    scratch :put_new_vc, [:reqid] => [:key, :value]
   end
 
   bootstrap do
@@ -79,9 +78,7 @@ class VectorClockKvsReplica < MergeMapKvsReplica
 
     # When we accept a kvput, increment this node's position in the kvput's
     # vector clock
-    put_new_vc <= kvput {|m| [m.reqid, m.key, m.value]}
-    put_new_vc <= kvput {|m| [m.reqid, m.key, PairLattice.new([next_vc, m.value.snd])]}
-    kv_store <= put_new_vc {|m| puts "m.key = #{m.key.inspect}, m.value = #{m.value.inspect}"; {m.key => m.value}}
+    kv_store <= kvput {|m| {m.key => m.value.apply_fst(:merge, next_vc)}}
   end
 end
 
