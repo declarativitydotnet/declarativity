@@ -60,6 +60,12 @@ end
 # in the write's vector clock. Write progagation could either be done actively
 # (coordinator doesn't return success to the client until W replicas have been
 # written) or passively (replicas perioidically merge their databases).
+#
+# Note that we maintain a vector clock at each node and increment it for _every_
+# kvput; it is this clock that we use to stamp inbound kvputs. An alternative
+# approach would be to just increment the previous logical clock for the
+# originating node found in the kvput's VC. Unclear which approach is better;
+# the current approach provides a hint about cross-key causality.
 class VectorClockKvsReplica < MergeMapKvsReplica
   state do
     lmap :my_vc
@@ -71,13 +77,12 @@ class VectorClockKvsReplica < MergeMapKvsReplica
   end
 
   bloom :write do
-    # Increment our VC whenever we accept a kvput
+    # Increment our VC on every kvput
     next_vc <= my_vc
     next_vc <= kvput { {ip_port => my_vc.at(ip_port) + 1} }
     my_vc <+ next_vc
 
-    # When we accept a kvput, increment this node's position in the kvput's
-    # vector clock
+    # On every kvput, merge incremented VC with kvput's VC
     kv_store <= kvput {|m| {m.key => m.value.apply_fst(:merge, next_vc)}}
   end
 end
