@@ -77,7 +77,7 @@ class VectorClockKvsReplica < MergeMapKvsReplica
   end
 
   bloom :write do
-    # Increment our VC on every kvput
+    # Increment local VC on every kvput
     next_vc <= my_vc
     next_vc <= kvput { {ip_port => my_vc.at(ip_port) + 1} }
     my_vc <+ next_vc
