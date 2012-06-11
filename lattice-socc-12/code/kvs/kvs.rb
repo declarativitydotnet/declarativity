@@ -30,10 +30,10 @@ class MergeMapKvsReplica
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
   end
 
-  bloom :logging do
-    stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
-    stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
-  end
+  # bloom :logging do
+  #   stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
+  #   stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
+  # end
 end
 
 # Design notes:
@@ -97,6 +97,7 @@ class KvsClient
     super()
   end
 
+  # XXX: Probably not thread-safe.
   def read(key)
     req_id = make_req_id
     r = sync_callback(:kvget, [[req_id, @addr, key, ip_port]], :kvget_response)
@@ -120,24 +121,3 @@ class KvsClient
     "#{ip_port}_#{@req_id}"
   end
 end
-
-# Simple test scenario
-r = VectorClockKvsReplica.new
-r.run_bg
-
-c = KvsClient.new(r.ip_port)
-c.run_bg
-c.write('foo', PairLattice.new([Bud::MapLattice.new, Bud::MaxLattice.new(5)]))
-c.write('bar', PairLattice.new([Bud::MapLattice.new, Bud::MaxLattice.new(10)]))
-res = c.read('foo')
-puts "res = #{res.inspect}"
-res = c.read('bar')
-puts "res = #{res.inspect}"
-
-# XXX: should the VC be at 1 here?
-c.write('foo', PairLattice.new([Bud::MapLattice.new, Bud::MaxLattice.new(7)]))
-res = c.read('foo')
-puts "res = #{res.inspect}"
-
-r.stop_bg
-c.stop_bg
