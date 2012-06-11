@@ -37,10 +37,20 @@ class PairLattice < Bud::Lattice
   end
 
   morph :fst do
-    @v.first
+    @v.first unless @v.nil?
+  end
+
+  # Call "sym" (passing "args") on the first element of the pair; returns a pair
+  # with the return value of sym() along with the unmodified second element of
+  # the pair. This is akin to map, except we don't let the user code explicitly
+  # manipulate the second element of the pair (since it might change
+  # non-monotonically).
+  morph :apply_fst do |sym, *args|
+    raise Bud::Error unless RuleRewriter.is_monotone(sym)
+    self.class.new([@v.first.send(sym, *args), @v.last]) unless @v.nil?
   end
 
   def snd
-    @v.last
+    @v.last unless @v.nil?
   end
 end
