@@ -1,8 +1,8 @@
 diff --git a/lib/bud/lattices.rb b/lib/bud/lattices.rb
-index 4543d3b..be54d8b 100644
+index ceb46cb..0c9c73a 100644
 --- a/lib/bud/lattices.rb
 +++ b/lib/bud/lattices.rb
-@@ -409,6 +409,10 @@ class Bud::LatticeWrapper
+@@ -417,6 +417,10 @@ class Bud::LatticeWrapper
      scalar_merge(lhs, rhs)
    end
  
@@ -13,7 +13,7 @@ index 4543d3b..be54d8b 100644
    def setup_wiring(input, kind)
      if input.class <= Bud::LatticeWrapper
        add_merge_target
-@@ -424,7 +428,8 @@ class Bud::LatticeWrapper
+@@ -432,7 +436,8 @@ class Bud::LatticeWrapper
    # Merge "i" into @new_delta
    public
    def insert(i, source)
@@ -23,12 +23,12 @@ index 4543d3b..be54d8b 100644
    end
  
    def <=(i)
-@@ -498,10 +503,18 @@ class Bud::LatticeWrapper
+@@ -506,10 +511,18 @@ class Bud::LatticeWrapper
      result = false
  
      if @new_delta
 -      m = do_merge(current_value, @new_delta)
--      if m.reveal != current_value.reveal
+-      if m != current_value
 -        @storage = m
 -        result = true
 +      if @klass <= Bud::HashSetLattice
@@ -39,14 +39,14 @@ index 4543d3b..be54d8b 100644
 +        end
 +      else
 +        m = do_merge(current_value, @new_delta)
-+        if m.reveal != current_value.reveal
++        if m != current_value
 +          @storage = m
 +          result = true
 +        end
        end
      end
  
-@@ -812,6 +825,11 @@ class Bud::HashSetLattice < Bud::Lattice
+@@ -827,6 +840,11 @@ class Bud::HashSetLattice < Bud::Lattice
      wrap_unsafe(@v | i.reveal)
    end
  
