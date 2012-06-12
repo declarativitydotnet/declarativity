@@ -27,6 +27,8 @@ class MergeMapKvsReplica
   end
 
   bloom :read do
+    # XXX: if the key does not exist in the KVS, we want to return some bottom
+    # value. For now, ignore this case.
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
   end
 
