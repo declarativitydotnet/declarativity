@@ -1,0 +1,3 @@
+#Variant: naive-lat
+#NNodes NLinks NPaths MeanRuntime StdDev StdError
+8 17 72 0.024982 NaN NaN
