@@ -140,7 +140,8 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
   end
 
   def bump_vc(vc, node_id)
-    vc.merge(map(node_id => vc.at(node_id) + 1))
+    tmp = vc.merge(map(node_id => max(0)))
+    tmp.merge(map(node_id => tmp.at(node_id) + 1))
   end
 
   def test_vc_simple
@@ -151,12 +152,14 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     c2 = KvsClient.new(r.ip_port)
     c2.run_bg
 
-    c.write('foo', pair(map(c.ip_port => max(1)), set(5)))
+    new_vc = bump_vc(map, c.ip_port)
+    c.write('foo', pair(new_vc, set(5)))
     res = c.read('foo')
     assert_equal({c.ip_port => 1}, unwrap_map(res.fst.reveal))
     assert_equal([5], res.snd.reveal)
 
-    c2.write('foo', pair(map(c2.ip_port => max(1)), set(3)))
+    new_vc = bump_vc(map, c2.ip_port)
+    c2.write('foo', pair(new_vc, set(3)))
     c2_res = c2.read('foo')
     assert_equal({c.ip_port => 1, c2.ip_port => 1},
                  unwrap_map(c2_res.fst.reveal))
@@ -177,5 +180,57 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     assert_equal([9], res.snd.reveal.sort)
 
     [c, c2, r].each {|n| n.stop_bg}
+  end
+
+  def test_repl
+    nodes = Array.new(3) { ReplicatedKvsReplica.new }
+    nodes.each {|n| n.run_bg}
+    clients = nodes.map {|n| KvsClient.new(n.ip_port)}
+    clients.each {|c| c.run_bg}
+
+    c0, c1, c2 = clients
+    new_vc = bump_vc(map, c0.ip_port)
+    c0.write('foo', pair(new_vc, set(4)))
+    res = c0.read('foo')
+    assert_equal({c0.ip_port => 1}, unwrap_map(res.fst.reveal))
+    assert_equal([4], res.snd.reveal)
+
+    c0.cause_repl(nodes[1])
+    res = c1.read('foo')
+    assert_equal({c0.ip_port => 1}, unwrap_map(res.fst.reveal))
+    assert_equal([4], res.snd.reveal)
+
+    new_vc = bump_vc(res.fst, c1.ip_port)
+    c1.write('foo', pair(new_vc, set(12)))
+    res = c1.read('foo')
+    assert_equal({c0.ip_port => 1, c1.ip_port => 1},
+                 unwrap_map(res.fst.reveal))
+    assert_equal([12], res.snd.reveal)
+
+    new_vc = bump_vc(map, c2.ip_port)
+    c2.write('foo', pair(new_vc, set(13)))
+    res = c2.read('foo')
+    assert_equal({c2.ip_port => 1}, unwrap_map(res.fst.reveal))
+    assert_equal([13], res.snd.reveal)
+
+    c1.cause_repl(nodes[2])
+    res = c2.read('foo')
+    assert_equal({c0.ip_port => 1, c1.ip_port => 1, c2.ip_port => 1},
+                 unwrap_map(res.fst.reveal))
+    assert_equal([12,13], res.snd.reveal.sort)
+
+    c2.cause_repl(nodes[1])
+    res = c1.read('foo')
+    assert_equal({c0.ip_port => 1, c1.ip_port => 1, c2.ip_port => 1},
+                 unwrap_map(res.fst.reveal))
+    assert_equal([12,13], res.snd.reveal.sort)
+
+    c1.cause_repl(nodes[0])
+    res = c0.read('foo')
+    assert_equal({c0.ip_port => 1, c1.ip_port => 1, c2.ip_port => 1},
+                 unwrap_map(res.fst.reveal))
+    assert_equal([12,13], res.snd.reveal.sort)
+
+    (nodes + clients).each {|n| n.stop_bg}
   end
 end
