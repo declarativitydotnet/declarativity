@@ -139,6 +139,10 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     r.stop_bg
   end
 
+  def bump_vc(vc, node_id)
+    vc.merge(map(node_id => vc.at(node_id) + 1))
+  end
+
   def test_vc_simple
     r = MergeMapKvsReplica.new
     r.run_bg
@@ -153,10 +157,24 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     assert_equal([5], res.snd.reveal)
 
     c2.write('foo', pair(map(c2.ip_port => max(1)), set(3)))
-    res = c2.read('foo')
+    c2_res = c2.read('foo')
     assert_equal({c.ip_port => 1, c2.ip_port => 1},
+                 unwrap_map(c2_res.fst.reveal))
+    assert_equal([3,5], c2_res.snd.reveal.sort)
+
+    new_vc = bump_vc(res.fst, c.ip_port)
+    c.write('foo', pair(new_vc, set(7)))
+    res = c.read('foo')
+    assert_equal({c.ip_port => 2, c2.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([3,5], res.snd.reveal.sort)
+    assert_equal([3,5,7], res.snd.reveal.sort)
+
+    new_vc = bump_vc(res.fst, c.ip_port)
+    c.write('foo', pair(new_vc, set(9)))
+    res = c.read('foo')
+    assert_equal({c.ip_port => 3, c2.ip_port => 1},
+                 unwrap_map(res.fst.reveal))
+    assert_equal([9], res.snd.reveal.sort)
 
     [c, c2, r].each {|n| n.stop_bg}
   end
