@@ -1,9 +1,9 @@
 #!/usr/bin/env ruby
-nruns = 1
-#sizes = (32..112).select {|i| i % 4 == 0}
-sizes = [100]
+nruns = 4
+#sizes = (32..120).select {|i| i % 4 == 0}
+sizes = (32..40).select {|i| i % 4 == 0}
 #variants = ["bloom", "seminaive-lat", "naive-lat"]
-variants = ["seminaive-lat", "bloom"]
+variants = ["naive-lat"]
 data_files = {}
 variants.each {|v| data_files[v] = "#{v}.data"}
 log_file = "exp_log"
