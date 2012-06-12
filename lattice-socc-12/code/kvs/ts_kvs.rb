@@ -138,6 +138,28 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     c.stop_bg
     r.stop_bg
   end
+
+  def test_vc_simple
+    r = MergeMapKvsReplica.new
+    r.run_bg
+    c = KvsClient.new(r.ip_port)
+    c.run_bg
+    c2 = KvsClient.new(r.ip_port)
+    c2.run_bg
+
+    c.write('foo', pair(map(c.ip_port => max(1)), set(5)))
+    res = c.read('foo')
+    assert_equal({c.ip_port => 1}, unwrap_map(res.fst.reveal))
+    assert_equal([5], res.snd.reveal)
+
+    c2.write('foo', pair(map(c2.ip_port => max(1)), set(3)))
+    res = c2.read('foo')
+    assert_equal({c.ip_port => 1, c2.ip_port => 1},
+                 unwrap_map(res.fst.reveal))
+    assert_equal([3,5], res.snd.reveal.sort)
+
+    [c, c2, r].each {|n| n.stop_bg}
+  end
 end
 
 class TestVectorClockKvs < MiniTest::Unit::TestCase
@@ -151,6 +173,7 @@ class TestVectorClockKvs < MiniTest::Unit::TestCase
 
     c.write('foo', pair(map, set(1)))
     res = c.read('foo')
+    old_res = res
     assert_equal({r.ip_port => 1}, unwrap_map(res.fst.reveal))
     assert_equal([1], res.snd.reveal)
 
@@ -158,6 +181,12 @@ class TestVectorClockKvs < MiniTest::Unit::TestCase
     res = c.read('foo')
     assert_equal({r.ip_port => 2}, unwrap_map(res.fst.reveal))
     assert_equal([2], res.snd.reveal)
+
+    dummy_vc = old_res.fst.merge(map('xyz' => max(1)))
+    c.write('foo', pair(dummy_vc, set(5)))
+    res = c.read('foo')
+    assert_equal({'xyz' => 1, r.ip_port => 3}, unwrap_map(res.fst.reveal))
+    assert_equal([2, 5], res.snd.reveal.sort)
 
     c.stop_bg
     r.stop_bg
