@@ -107,7 +107,6 @@ class QuorumKvsClient
 
   state do
     table :quorum_reqs, [:req_id] => [:acks, :val]
-    scratch :quorum_sizes, [:req_id] => [:sz, :val]
     scratch :quorum_tests, [:req_id] => [:ready, :val]
     scratch :got_quorum, [:req_id]
   end
@@ -115,8 +114,7 @@ class QuorumKvsClient
   bloom do
     quorum_reqs  <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr]), nil]}
     quorum_reqs  <= kvget_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr]), r.value]}
-    quorum_sizes <= quorum_reqs {|o| [o.req_id, o.acks.size, o.val]}
-    quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(@quorum_size), s.val]}
+    quorum_tests <= quorum_reqs {|r| [r.req_id, r.acks.size.gt_eq(@quorum_size), r.val]}
     got_quorum   <= quorum_tests {|t|
       t.ready.when_true {
         [t.req_id]
