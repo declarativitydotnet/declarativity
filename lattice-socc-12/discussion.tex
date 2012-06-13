@@ -16,33 +16,34 @@ inputs to lattice merge functions. We also plan to explore a restricted DSL for
 writing lattice methods, which would make formal verification of correctness an
 easier task.
 
-Every join semilattice includes $\bot$, a distinguished ``smallest element.'' A natural
-extension is to consider providing \emph{bounded lattices} that also contain   $\top$, a ``greatest
-element.'' Such a value is already supported by \texttt{lbool} ($\top =
-\mathtt{true}$), in addition to the \texttt{lcart} lattice discussed in
-Section~\ref{sec:monotone-checkout}. $\top$ behaves differently than other
-lattice elements: because it is immutable, any function can safely be applied to
-it (whether monotone or not), without risking inconsistency. Since the merge
-function for $\top$ will always yield $\top$, this might allow a more efficient
-representation.  For example, in a complete \texttt{lcart}, we need only store the
-``summarized'' cart state, not the log of client operations. We are
-investigating how \lang could be enhanced to provide special support for
-bounded lattices with $\top$ values.
+Every join semilattice includes $\bot$, a distinguished ``smallest element.'' A
+natural extension is to consider providing \emph{bounded lattices} that also
+contain $\top$, a ``greatest element.'' Such a value is already supported by
+\texttt{lbool} ($\top = \mathtt{true}$), in addition to the \texttt{lcart}
+lattice discussed in Section~\ref{sec:monotone-checkout}. $\top$ behaves
+differently than other lattice elements: because it is immutable, any function
+can safely be applied to it (whether monotone or not), without risking
+inconsistency. Since the merge function for $\top$ will always yield $\top$,
+this might allow a more efficient representation.  For example, in a complete
+\texttt{lcart}, we need only store the ``summarized'' cart state, not the log of
+client operations. We are investigating how \lang could be enhanced to provide
+special support for bounded lattices with $\top$ values.
 
-As discussed in Section~\ref{sec:causal}, \lang is still useful even when
+As discussed in Section~\ref{sec:kvs}, \lang is still useful even when
 confluence is not an appropriate correctness criteria. Nevertheless, we would
 like to extend our program analyses beyond monotonicity and confluence tests.
-Our vector clock example illustrates some issues that merit further exploration.
-As discussed, we can show that each node's local vector clock increases over
-time. However, we would like to show something stronger to establish correctness
-of causal delivery: when a message is delivered, merging the message's clock
-into the local vector clock should result in moving the local vector clock
-``upward.'' If delivering a message does not change the local clock, the newly
-delivered message ``happens before'' the state of the recipient, which implies
-that causality has been violated (assuming at-most-once delivery). A program
-analysis to prove that this situation never occurs would require reasoning about
-intermediate states of the program, rather than only final states (as in
-confluence).
+
+% Our vector clock example illustrates some issues that merit further exploration.
+% As discussed, we can show that each node's local vector clock increases over
+% time. However, we would like to show something stronger to establish correctness
+% of causal delivery: when a message is delivered, merging the message's clock
+% into the local vector clock should result in moving the local vector clock
+% ``upward.'' If delivering a message does not change the local clock, the newly
+% delivered message ``happens before'' the state of the recipient, which implies
+% that causality has been violated (assuming at-most-once delivery). A program
+% analysis to prove that this situation never occurs would require reasoning about
+% intermediate states of the program, rather than only final states (as in
+% confluence).
 
 % By allowing a more general notion of monotonicity, \lang significantly increases
 % the number of programs that can be shown to be confluent. However, many
