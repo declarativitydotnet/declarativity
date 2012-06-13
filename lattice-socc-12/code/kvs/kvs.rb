@@ -5,9 +5,9 @@ require './lpair'
 
 module KvsProtocol
   state do
-    channel :kvput, [:reqid] => [:@addr, :key, :value, :client_addr]
+    channel :kvput, [:reqid, :@addr] => [:key, :value, :client_addr]
     channel :kvput_response, [:req_id] => [:@addr, :replica_addr]
-    channel :kvget, [:reqid] => [:@addr, :key, :client_addr]
+    channel :kvget, [:reqid, :@addr] => [:key, :client_addr]
     channel :kvget_response, [:reqid] => [:@addr, :value]
 
     channel :kv_do_repl, [:@addr, :target_addr]
@@ -135,6 +135,17 @@ class QuorumKvsClient
     r = sync_callback(:kvput, put_reqs, :got_quorum)
     r.each do |t|
       return if t[0] == req_id
+    end
+    raise
+  end
+
+  # XXX: not quorum-aware yet
+  def read(key)
+    req_id = make_req_id
+    r = sync_callback(:kvget, [[req_id, @addrs.first, key, ip_port]],
+                      :kvget_response)
+    r.each do |t|
+      return t.value if t[0] == req_id
     end
     raise
   end
