@@ -6,7 +6,7 @@ require './lpair'
 module KvsProtocol
   state do
     channel :kvput, [:reqid] => [:@addr, :key, :value, :client_addr]
-    channel :kvput_response, [:req_id] => [:@addr]
+    channel :kvput_response, [:req_id] => [:@addr, :replica_addr]
     channel :kvget, [:reqid] => [:@addr, :key, :client_addr]
     channel :kvget_response, [:reqid] => [:@addr, :value]
 
@@ -27,7 +27,7 @@ class MergeMapKvsReplica
 
   bloom do
     kv_store <= kvput {|c| {c.key => c.value}}
-    kvput_response <~ kvput {|c| [c.reqid, c.client_addr]}
+    kvput_response <~ kvput {|c| [c.reqid, c.client_addr, ip_port]}
     # XXX: if the key does not exist in the KVS, we want to return some bottom
     # value. For now, ignore this case.
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
@@ -104,45 +104,39 @@ class QuorumKvsClient
   include Bud
   include KvsProtocol
 
-  QUORUM_SIZE = 3
-
   state do
     table :quorum_ops, [:req_id] => [:acks]
     scratch :quorum_sizes, [:req_id] => [:sz]
     scratch :quorum_tests, [:req_id] => [:ready]
-    lmap :quorum_ops    # Request ID => lset
-    lmap :quorum_sizes  # Request ID => lmax
-    lmap :quorum_test   # Request ID => lbool
     scratch :got_quorum, [:req_id]
   end
 
   bloom do
     quorum_ops <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
     quorum_sizes <= quorum_ops {|o| [o.req_id, o.acks.size]}
-    quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(QUORUM_SIZE)]}
+    quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(@quorum_size)]}
     got_quorum <= quorum_tests {|t|
       t.ready.when_true {
         [t.req_id]
       }
     }
-    # quorum_ops <+ kvput_response {|r| {r.req_id => Bud::SetLattice.new([r.replica_addr])}}
-    # quorum_sizes <= quorum_ops.project {|k,v| v.size}
-    # quorum_tests <= quorum_sizes.filter {|k,v| v.gt_eq(QUORUM_SIZE)}
-    # got_quorum <= quorum_tests.project {|k,v|
-    #   v.when_true {
-    #     [k]
-    #   }
-    # }
   end
 
-  def initialize(*addrs)
+  def initialize(quorum_size, *addrs)
+    @quorum_size = quorum_size
     @req_id = 0
     @addrs = addrs
     super()
   end
 
-  def read(key)
+  def write(key, val)
     req_id = make_req_id
+    put_reqs = @addrs.map {|a| [req_id, a, key, val, ip_port]}
+    r = sync_callback(:kvput, put_reqs, :got_quorum)
+    r.each do |t|
+      return if t[0] == req_id
+    end
+    raise
   end
 
   private
