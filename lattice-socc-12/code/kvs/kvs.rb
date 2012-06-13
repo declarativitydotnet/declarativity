@@ -5,10 +5,10 @@ require './lpair'
 
 module KvsProtocol
   state do
-    channel :kvput, [:reqid, :@addr] => [:key, :value, :client_addr]
+    channel :kvput, [:req_id, :@addr] => [:key, :value, :client_addr]
     channel :kvput_response, [:req_id] => [:@addr, :replica_addr]
-    channel :kvget, [:reqid, :@addr] => [:key, :client_addr]
-    channel :kvget_response, [:reqid] => [:@addr, :value]
+    channel :kvget, [:req_id, :@addr] => [:key, :client_addr]
+    channel :kvget_response, [:req_id] => [:@addr, :value, :replica_addr]
 
     channel :kv_do_repl, [:@addr, :target_addr]
   end
@@ -27,10 +27,11 @@ class MergeMapKvsReplica
 
   bloom do
     kv_store <= kvput {|c| {c.key => c.value}}
-    kvput_response <~ kvput {|c| [c.reqid, c.client_addr, ip_port]}
+    kvput_response <~ kvput {|c| [c.req_id, c.client_addr, ip_port]}
     # XXX: if the key does not exist in the KVS, we want to return some bottom
     # value. For now, ignore this case.
-    kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
+    kvget_response <~ kvget {|c| [c.req_id, c.client_addr,
+                                  kv_store.at(c.key), ip_port]}
   end
 end
 
@@ -105,16 +106,17 @@ class QuorumKvsClient
   include KvsProtocol
 
   state do
-    table :quorum_reqs, [:req_id] => [:acks]
-    scratch :quorum_sizes, [:req_id] => [:sz]
-    scratch :quorum_tests, [:req_id] => [:ready]
+    table :quorum_reqs, [:req_id] => [:acks, :val]
+    scratch :quorum_sizes, [:req_id] => [:sz, :val]
+    scratch :quorum_tests, [:req_id] => [:ready, :val]
     scratch :got_quorum, [:req_id]
   end
 
   bloom do
-    quorum_reqs  <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
-    quorum_sizes <= quorum_reqs {|o| [o.req_id, o.acks.size]}
-    quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(@quorum_size)]}
+    quorum_reqs  <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr]), nil]}
+    quorum_reqs  <= kvget_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr]), r.value]}
+    quorum_sizes <= quorum_reqs {|o| [o.req_id, o.acks.size, o.val]}
+    quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(@quorum_size), s.val]}
     got_quorum   <= quorum_tests {|t|
       t.ready.when_true {
         [t.req_id]
