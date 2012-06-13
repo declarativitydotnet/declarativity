@@ -1,9 +1,7 @@
 #!/usr/bin/env ruby
-nruns = 4
-#sizes = (32..120).select {|i| i % 4 == 0}
-sizes = (32..40).select {|i| i % 4 == 0}
-#variants = ["bloom", "seminaive-lat", "naive-lat"]
-variants = ["naive-lat"]
+nruns = 5
+sizes = (36..120).select {|i| i % 4 == 0}
+variants = ["bloom", "seminaive-lat", "naive-lat"]
 data_files = {}
 variants.each {|v| data_files[v] = "#{v}.data"}
 log_file = "exp_log"
@@ -16,6 +14,11 @@ end
 sizes.each do |s|
   puts "Running benchmark; size = #{s}"
   variants.each do |v|
+    # Skip naive evaluation for large inputs
+    if v == "naive-lat" && s >= 60
+      puts "Skipping #{v}"
+      next
+    end
     print "  #{v} "
     nruns.times do |t|
       `ruby bench.rb #{s} #{t} #{v} >> #{log_file} 2>>#{data_files[v]}`
