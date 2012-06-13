@@ -123,13 +123,13 @@ function (set union) and partial order (set containment).
   without the need for coordination.  This enables the coordination-free use of
   common monotonic constructs, including timestamps and sequence numbers.
 
-\item {\lang}'s lattice framework provides monotonicity-preserving mappings
-  between lattices via \emph{morphisms} and \emph{monotone functions}.  By using
-  such mappings, the per-component monotonicity guarantees offered by CRDTs can
-  be extended across multiple lattice-based components.  This capability is key
-  to the CALM analysis of monotonic \lang programs described above.  It is also
-  useful for establishing the monotonicity of sub-programs even when the whole
-  program is not designed to be monotonic.
+\item {\lang} provides monotonicity-preserving mappings between lattices via
+  \emph{morphisms} and \emph{monotone functions}.  By using such mappings, the
+  per-component monotonicity guarantees offered by CRDTs can be extended across
+  multiple lattice-based components.  This capability is key to the CALM
+  analysis of monotonic \lang programs described above.  It is also useful for
+  establishing the monotonicity of sub-programs even when the whole program is
+  not designed to be monotonic.
 
 \item For efficient execution, we extend the standard Datalog semi-naive
   evaluation scheme~\cite{Balbin1987} to support both lattices and traditional

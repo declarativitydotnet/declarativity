@@ -353,12 +353,11 @@ operations, as is common practice for immutable data structures in functional
 programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
 
 % XXX: awkward placement for this paragraph
-Finally, custom lattices must define a keyword that can be used in \lang state
+Custom lattices must define a keyword that can be used in \lang state
 blocks. This is done using the \texttt{wrapper\_name} class method. For example,
 line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} means that
-``\texttt{lset :foo}'' in a \lang state block will introduce an identifier
-\texttt{foo} that is associated with an instance of the \texttt{Bud::SetLattice}
-class.
+``\texttt{lset :foo}'' in a state block will introduce an identifier
+\texttt{foo} that is associated with an instance of \texttt{Bud::SetLattice}.
 
 \subsection{Integration with set-oriented logic}
 \label{sec:bloom-interop}
