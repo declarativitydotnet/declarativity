@@ -106,18 +106,25 @@ class QuorumKvsClient
   include KvsProtocol
 
   state do
-    table :quorum_reqs, [:req_id] => [:acks, :val]
-    scratch :quorum_tests, [:req_id] => [:ready, :val]
-    scratch :got_quorum, [:req_id]
+    table :put_reqs, [:req_id] => [:acks]
+    table :get_reqs, [:req_id] => [:acks, :val]
+    scratch :w_quorum, [:req_id]
+    scratch :r_quorum, [:req_id] => [:val]
   end
 
   bloom do
-    quorum_reqs  <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr]), nil]}
-    quorum_reqs  <= kvget_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr]), r.value]}
-    quorum_tests <= quorum_reqs {|r| [r.req_id, r.acks.size.gt_eq(@quorum_size), r.val]}
-    got_quorum   <= quorum_tests {|t|
-      t.ready.when_true {
-        [t.req_id]
+    put_reqs <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
+    w_quorum <= put_reqs {|r|
+      r.acks.size.gt_eq(@quorum_size).when_true {
+        [r.req_id]
+      }
+    }
+
+    get_reqs <= kvget_response {|r| [r.req_id,
+                                     Bud::SetLattice.new([r.replica_addr]), r.value]}
+    r_quorum <= get_reqs {|r|
+      r.acks.size.gt_eq(@quorum_size).when_true {
+        [r.req_id, r.val]
       }
     }
   end
@@ -132,14 +139,13 @@ class QuorumKvsClient
   def write(key, val)
     req_id = make_req_id
     put_reqs = @addrs.map {|a| [req_id, a, key, val, ip_port]}
-    r = sync_callback(:kvput, put_reqs, :got_quorum)
+    r = sync_callback(:kvput, put_reqs, :w_quorum)
     r.each do |t|
       return if t[0] == req_id
     end
     raise
   end
 
-  # XXX: not quorum-aware yet
   def read(key)
     req_id = make_req_id
     r = sync_callback(:kvget, [[req_id, @addrs.first, key, ip_port]],
