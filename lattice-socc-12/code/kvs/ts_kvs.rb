@@ -234,3 +234,19 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     (nodes + clients).each {|n| n.stop_bg}
   end
 end
+
+class TestQuorumKvs < MiniTest::Unit::TestCase
+  include LatticeTestSugar
+
+  def test_singleton_quorum
+    r = MergeMapKvsReplica.new
+    r.run_bg
+    q = QuorumKvsClient.new(1, r.ip_port)
+    q.run_bg
+
+    q.write('bar', max(3))
+
+    r.stop_bg
+    q.stop_bg
+  end
+end
