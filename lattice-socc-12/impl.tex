@@ -2,11 +2,11 @@
 \label{sec:impl}
 
 In this section, we describe how \lang programs can be evaluated. First, we
-detail a variant of semi-naive evaluation that supports lattices. We validate
-that our implementation of semi-naive evaluation results in significant
-performance gains and is competitive with the traditional set-oriented
-semi-naive evaluation scheme in Bud. Finally, we describe how we extended Bud to
-add support for \lang with relatively few changes.
+generalize semi-naive evaluation to support lattices. We validate that our
+implementation of semi-naive evaluation results in significant performance gains
+and is competitive with the traditional set-oriented semi-naive evaluation
+scheme in Bud. Finally, we describe how we extended Bud to add support for \lang
+with relatively few changes.
 
 \subsection{Semi-naive evaluation}
 \label{sec:lattice-eval-strat}
@@ -16,7 +16,7 @@ the rules in the program are evaluated over the entire database, including all
 derivations made in previous rounds. This process stops when a round makes no
 new derivations. Naive evaluation is inefficient because it makes many redundant
 derivations: once a fact has been derived in round $i$, it is rederived in every
-subsequent round.
+round $>i$.
 
 \emph{Semi-naive} evaluation improves upon naive evaluation by making fewer
 redundant derivations~\cite{Balbin1987}. Let $\Delta_0$ represent the initial
