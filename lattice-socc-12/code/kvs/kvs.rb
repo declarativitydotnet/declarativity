@@ -5,7 +5,8 @@ require './lpair'
 
 module KvsProtocol
   state do
-    channel :kvput, [:reqid] => [:@addr, :key, :value]
+    channel :kvput, [:reqid] => [:@addr, :key, :value, :client_addr]
+    channel :kvput_response, [:req_id] => [:@addr]
     channel :kvget, [:reqid] => [:@addr, :key, :client_addr]
     channel :kvget_response, [:reqid] => [:@addr, :value]
 
@@ -26,6 +27,7 @@ class MergeMapKvsReplica
 
   bloom do
     kv_store <= kvput {|c| {c.key => c.value}}
+    kvput_response <~ kvput {|c| [c.reqid, c.client_addr]}
     # XXX: if the key does not exist in the KVS, we want to return some bottom
     # value. For now, ignore this case.
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr, kv_store.at(c.key)]}
@@ -72,20 +74,75 @@ class KvsClient
   end
 
   def write(key, val)
-    sync_do {
-      kvput <~ [[make_req_id, @addr, key, val]]
-    }
+    req_id = make_req_id
+    r = sync_callback(:kvput, [[req_id, @addr, key, val, ip_port]], :kvput_response)
+    r.each do |t|
+      return if t[0] == req_id
+    end
+    raise
   end
 
-  # To make it easier to provide a synchronous API, we assume that the
-  # destination node (the target of the replication operator) is local.
+  # XXX: Probably not thread-safe
   def cause_repl(to)
     sync_do {
       kv_do_repl <~ [[@addr, to.ip_port]]
     }
 
-    # XXX: Probably not thread-safe
+    # To make it easier to provide a synchronous API, we assume that the
+    # destination node (the target of the replication operator) is local.
     to.delta(:repl_propagate)
+  end
+
+  private
+  def make_req_id
+    @req_id += 1
+    "#{ip_port}_#{@req_id}"
+  end
+end
+
+class QuorumKvsClient
+  include Bud
+  include KvsProtocol
+
+  QUORUM_SIZE = 3
+
+  state do
+    table :quorum_ops, [:req_id] => [:acks]
+    scratch :quorum_sizes, [:req_id] => [:sz]
+    scratch :quorum_tests, [:req_id] => [:ready]
+    lmap :quorum_ops    # Request ID => lset
+    lmap :quorum_sizes  # Request ID => lmax
+    lmap :quorum_test   # Request ID => lbool
+    scratch :got_quorum, [:req_id]
+  end
+
+  bloom do
+    quorum_ops <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
+    quorum_sizes <= quorum_ops {|o| [o.req_id, o.acks.size]}
+    quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(QUORUM_SIZE)]}
+    got_quorum <= quorum_tests {|t|
+      t.ready.when_true {
+        [t.req_id]
+      }
+    }
+    # quorum_ops <+ kvput_response {|r| {r.req_id => Bud::SetLattice.new([r.replica_addr])}}
+    # quorum_sizes <= quorum_ops.project {|k,v| v.size}
+    # quorum_tests <= quorum_sizes.filter {|k,v| v.gt_eq(QUORUM_SIZE)}
+    # got_quorum <= quorum_tests.project {|k,v|
+    #   v.when_true {
+    #     [k]
+    #   }
+    # }
+  end
+
+  def initialize(*addrs)
+    @req_id = 0
+    @addrs = addrs
+    super()
+  end
+
+  def read(key)
+    req_id = make_req_id
   end
 
   private
