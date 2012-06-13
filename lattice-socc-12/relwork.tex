@@ -5,16 +5,16 @@ This paper relates to work on concurrency control, groupware, distributed
 storage, and non-monotonic logic programming.
 
 \vspace{0.5em}\noindent
-\textbf{Semantics-based concurrency control:} In the absence of semantic
-knowledge about transactions, serializability is the main correctness criteria
-for concurrency control schemes. However, ensuring serializability can be
-prohibitively expensive, for instance when transactions are long-running or the
-nodes of a distributed database are connected via an unreliable network. Thus,
-many methods have been proposed to allow non-serializable transaction schedules
-that preserve some \emph{semantic} notion of correctness. In particular, several
-schemes allow users to specify that certain operations can be commuted with
-other operations; this enlarges the space of legal schedules, increasing the
-potential for concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
+\textbf{Semantics-based concurrency control:} Serializability is the traditional
+correctness criteria for concurrency control schemes. However, ensuring
+serializability can be prohibitively expensive, for instance when transactions
+are long-running or the nodes of a distributed database are connected via an
+unreliable network. Thus, many methods have been proposed to allow
+non-serializable transaction schedules that preserve a \emph{semantic} notion
+of correctness. In particular, several schemes allow users to specify that
+certain operations can be commuted with other operations; this enlarges the
+space of legal schedules, increasing potential
+concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
 
 % TODO: do we need to cite all 3 papers?
 %       the weihl paper claims to explicitly only allow serializable schedules
@@ -43,18 +43,18 @@ operations~\cite{Sun1998a}.
 users to specify that certain operations are commutative, associative, or
 idempotent. Helland and Campbell observe that using commutative, associative and
 idempotent operations is particularly valuable as systems scale and guaranteeing
-global serializability becomes increasingly expensive~\cite{Helland2009}. Many
+global serializability becomes burdensome~\cite{Helland2009}. Many
 distributed storage systems allow users to provide ``merge functions'' that are
 used to resolve write-write conflicts between replicas, allowing the system to
 eventually reach a consistent state
 (e.g.,~\cite{DeCandia2007,statebox,Lloyd2011,Power2010,Terry1995}).% User-defined merge
 % functions typically rely on domain knowledge about the semantics of updates to
 % allow conflicting writes to be safely commuted.
-Writing a correct merge function can be difficult because the developer must
-reason about all the possible interleavings of read and write operations at
-different replicas. This challenge is exacerbated because these systems rarely
-provide tool support or analysis techniques to help developers reason about
-replica convergence.
+% Writing a correct merge function can be difficult because the developer must
+% reason about all the possible interleavings of read and write operations at
+% different replicas. This challenge is exacerbated because these systems rarely
+% provide tool support or analysis techniques to help developers reason about
+% replica convergence.
 
 % Writing a correct merge function can be challenging, because developers must
 % reason about the many possible interleavings of read and write operations. More
@@ -79,8 +79,8 @@ design patterns to achieve coordination-free convergence. Unlike \lang, the CRDT
 approach considers the correctness of replicated values in isolation. This
 allows CRDTs to be more easily adapted into standalone libraries (e.g.,
 Statebox~\cite{statebox}). However, the narrow focus of CRDTs means that, even
-if a CRDT is correct, application state may remain inconsistent (as noted in
-Section~\ref{sec:intro}).
+if a CRDT is correct, application state may remain inconsistent
+(Section~\ref{sec:intro}).
 
 % . A major difference between \lang and CRDTs is that Shapiro et
 % al.\ focus on the design of replicated data types in isolation, whereas we
@@ -120,7 +120,7 @@ have been made to assign a semantics to larger classes of programs
 % XXX: cite Van Gelder's "foundations of agg" paper
 The observation that many uses of aggregation and negation have a ``monotonic''
 flavor has been made before. Ross and Sagiv study a class of programs that
-include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model theoretic
+include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model-theoretic
 semantics for this class of programs that is similar to our semantics for \lang
 in Section~\ref{sec:lang}. Our work differs from Ross and Sagiv's in several
 respects: most notably, they use lattices as a way to characterize classes of
