@@ -303,13 +303,13 @@ end
 \end{figure}
 
 \label{sec:lattice-api}
-The built-in lattices are sufficient to express many distributed protocols, such
-as the causal delivery protocol described in Section~\ref{sec:causal}. However,
-\lang also allows developers to create custom lattices to capture
-domain-specific behavior. To define a lattice in Bud, a developer creates a Ruby
-class that meets a certain API contract. Figure~\ref{fig:lattice-lset} contains
-the Ruby code for the \texttt{lset} lattice (note that we omit the
-implementation of a few \texttt{lset} methods for brevity).
+The built-in lattices are sufficient to express many distributed programs, such
+as the key-value store described in Section~\ref{sec:kvs}. However, \lang also
+allows developers to create custom lattices to capture domain-specific
+behavior. To define a lattice in Bud, a developer creates a Ruby class that
+meets a certain API contract. Figure~\ref{fig:lattice-lset} contains the Ruby
+code for the \texttt{lset} lattice (note that we omit the implementation of a
+few \texttt{lset} methods for brevity).
 
 A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -428,8 +428,7 @@ deterministic and is the least upper bound of all the merged
 values. Nevertheless, we felt this behavior should be manifest in the program
 syntax because tuples in Datalog relations are traditionally immutable. Hence,
 this ``lattice merge'' behavior is only enabled for columns that are prefixed
-with ``\texttt{!}'' in collection declarations (e.g.,
-line~\ref{line:ddl-lattice-merge} in Figure~\ref{fig:vector-clock-src}). If the
+with ``\texttt{!}'' in collection declarations. If the
 annotation is not specified, lattice elements embedded in Bloom collections
 cannot change; it is up to the programmer to avoid key constraint violations.
 

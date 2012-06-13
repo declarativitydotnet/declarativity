@@ -1,6 +1,6 @@
 NAME=socc
 USE_PDFLATEX=1
-TEXSRCS=socc.tex intro.tex causal.tex lang.tex relwork.tex carts.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex
+TEXSRCS=socc.tex intro.tex lang.tex relwork.tex cart-case.tex kvs-case.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex
 BIBTEXSRCS=socc.bib
 
 OTHER_PDF=$(wildcard fig/*.pdf)
