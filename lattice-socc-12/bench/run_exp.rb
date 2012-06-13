@@ -15,7 +15,7 @@ sizes.each do |s|
   puts "Running benchmark; size = #{s}"
   variants.each do |v|
     # Skip naive evaluation for large inputs
-    if v == "naive-lat" && s >= 60
+    if v == "naive-lat" && s >= 64
       puts "Skipping #{v}"
       next
     end

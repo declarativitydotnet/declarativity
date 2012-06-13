@@ -17,5 +17,6 @@ endif
 
 # Regenerate perf graph if needed
 EXP_DATA=$(wildcard bench/*.data)
-fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) 
+EXP_SUMMARY=$(wildcard bench/*.summary)
+fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) $(EXP_SUMMARY)
 	gnuplot -e "set output \"$@\"" $<
