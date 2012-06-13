@@ -105,17 +105,17 @@ class QuorumKvsClient
   include KvsProtocol
 
   state do
-    table :quorum_ops, [:req_id] => [:acks]
+    table :quorum_reqs, [:req_id] => [:acks]
     scratch :quorum_sizes, [:req_id] => [:sz]
     scratch :quorum_tests, [:req_id] => [:ready]
     scratch :got_quorum, [:req_id]
   end
 
   bloom do
-    quorum_ops <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
-    quorum_sizes <= quorum_ops {|o| [o.req_id, o.acks.size]}
+    quorum_reqs  <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
+    quorum_sizes <= quorum_reqs {|o| [o.req_id, o.acks.size]}
     quorum_tests <= quorum_sizes {|s| [s.req_id, s.sz.gt_eq(@quorum_size)]}
-    got_quorum <= quorum_tests {|t|
+    got_quorum   <= quorum_tests {|t|
       t.ready.when_true {
         [t.req_id]
       }
