@@ -1,84 +1,765 @@
-****** 2012-06-12 18:32:24 -0700 ******
-Run #: 0, size = 32, # links = 129, variant = naive-lat
-Elapsed time: 3.291112, # of paths: 4880
-****** 2012-06-12 18:32:27 -0700 ******
-Run #: 1, size = 32, # links = 129, variant = naive-lat
-Elapsed time: 3.284213, # of paths: 4880
-****** 2012-06-12 18:32:31 -0700 ******
-Run #: 2, size = 32, # links = 129, variant = naive-lat
-Elapsed time: 3.357675, # of paths: 4880
-****** 2012-06-12 18:32:35 -0700 ******
-Run #: 3, size = 32, # links = 129, variant = naive-lat
-Elapsed time: 3.266812, # of paths: 4880
-****** 2012-06-12 18:32:39 -0700 ******
+****** 2012-06-13 00:15:20 -0700 ******
+Run #: 0, size = 36, # links = 149, variant = bloom
+Elapsed time: 0.417519, # of paths: 6981
+****** 2012-06-13 00:15:21 -0700 ******
+Run #: 1, size = 36, # links = 149, variant = bloom
+Elapsed time: 0.4237, # of paths: 6981
+****** 2012-06-13 00:15:22 -0700 ******
+Run #: 2, size = 36, # links = 149, variant = bloom
+Elapsed time: 0.443436, # of paths: 6981
+****** 2012-06-13 00:15:23 -0700 ******
+Run #: 3, size = 36, # links = 149, variant = bloom
+Elapsed time: 0.420689, # of paths: 6981
+****** 2012-06-13 00:15:24 -0700 ******
+Run #: 4, size = 36, # links = 149, variant = bloom
+Elapsed time: 0.42281, # of paths: 6981
+****** 2012-06-13 00:15:25 -0700 ******
+Run #: 0, size = 36, # links = 149, variant = seminaive-lat
+Elapsed time: 0.243454, # of paths: 6981
+****** 2012-06-13 00:15:25 -0700 ******
+Run #: 1, size = 36, # links = 149, variant = seminaive-lat
+Elapsed time: 0.245593, # of paths: 6981
+****** 2012-06-13 00:15:26 -0700 ******
+Run #: 2, size = 36, # links = 149, variant = seminaive-lat
+Elapsed time: 0.238633, # of paths: 6981
+****** 2012-06-13 00:15:27 -0700 ******
+Run #: 3, size = 36, # links = 149, variant = seminaive-lat
+Elapsed time: 0.241607, # of paths: 6981
+****** 2012-06-13 00:15:27 -0700 ******
+Run #: 4, size = 36, # links = 149, variant = seminaive-lat
+Elapsed time: 0.241223, # of paths: 6981
+****** 2012-06-13 00:15:28 -0700 ******
 Run #: 0, size = 36, # links = 149, variant = naive-lat
-Elapsed time: 5.589799, # of paths: 6981
-****** 2012-06-12 18:32:45 -0700 ******
+Elapsed time: 5.872638, # of paths: 6981
+****** 2012-06-13 00:15:35 -0700 ******
 Run #: 1, size = 36, # links = 149, variant = naive-lat
-Elapsed time: 5.680413, # of paths: 6981
-****** 2012-06-12 18:32:51 -0700 ******
+Elapsed time: 5.720693, # of paths: 6981
+****** 2012-06-13 00:15:41 -0700 ******
 Run #: 2, size = 36, # links = 149, variant = naive-lat
-Elapsed time: 5.801413, # of paths: 6981
-****** 2012-06-12 18:32:57 -0700 ******
+Elapsed time: 5.695274, # of paths: 6981
+****** 2012-06-13 00:15:47 -0700 ******
 Run #: 3, size = 36, # links = 149, variant = naive-lat
-Elapsed time: 5.694121, # of paths: 6981
-****** 2012-06-12 18:33:03 -0700 ******
+Elapsed time: 5.639106, # of paths: 6981
+****** 2012-06-13 00:15:53 -0700 ******
+Run #: 4, size = 36, # links = 149, variant = naive-lat
+Elapsed time: 5.535526, # of paths: 6981
+****** 2012-06-13 00:15:59 -0700 ******
+Run #: 0, size = 40, # links = 169, variant = bloom
+Elapsed time: 0.608893, # of paths: 9616
+****** 2012-06-13 00:16:00 -0700 ******
+Run #: 1, size = 40, # links = 169, variant = bloom
+Elapsed time: 0.600411, # of paths: 9616
+****** 2012-06-13 00:16:01 -0700 ******
+Run #: 2, size = 40, # links = 169, variant = bloom
+Elapsed time: 0.592475, # of paths: 9616
+****** 2012-06-13 00:16:02 -0700 ******
+Run #: 3, size = 40, # links = 169, variant = bloom
+Elapsed time: 0.598086, # of paths: 9616
+****** 2012-06-13 00:16:03 -0700 ******
+Run #: 4, size = 40, # links = 169, variant = bloom
+Elapsed time: 0.603221, # of paths: 9616
+****** 2012-06-13 00:16:04 -0700 ******
+Run #: 0, size = 40, # links = 169, variant = seminaive-lat
+Elapsed time: 0.36361, # of paths: 9616
+****** 2012-06-13 00:16:05 -0700 ******
+Run #: 1, size = 40, # links = 169, variant = seminaive-lat
+Elapsed time: 0.359718, # of paths: 9616
+****** 2012-06-13 00:16:06 -0700 ******
+Run #: 2, size = 40, # links = 169, variant = seminaive-lat
+Elapsed time: 0.357607, # of paths: 9616
+****** 2012-06-13 00:16:07 -0700 ******
+Run #: 3, size = 40, # links = 169, variant = seminaive-lat
+Elapsed time: 0.355973, # of paths: 9616
+****** 2012-06-13 00:16:07 -0700 ******
+Run #: 4, size = 40, # links = 169, variant = seminaive-lat
+Elapsed time: 0.36157, # of paths: 9616
+****** 2012-06-13 00:16:08 -0700 ******
 Run #: 0, size = 40, # links = 169, variant = naive-lat
-Elapsed time: 9.213462, # of paths: 9616
-****** 2012-06-12 18:33:13 -0700 ******
+Elapsed time: 9.167853, # of paths: 9616
+****** 2012-06-13 00:16:18 -0700 ******
 Run #: 1, size = 40, # links = 169, variant = naive-lat
-Elapsed time: 9.090937, # of paths: 9616
-****** 2012-06-12 18:33:23 -0700 ******
+Elapsed time: 9.278785, # of paths: 9616
+****** 2012-06-13 00:16:28 -0700 ******
 Run #: 2, size = 40, # links = 169, variant = naive-lat
-Elapsed time: 9.152253, # of paths: 9616
-****** 2012-06-12 18:33:32 -0700 ******
+Elapsed time: 9.262175, # of paths: 9616
+****** 2012-06-13 00:16:37 -0700 ******
 Run #: 3, size = 40, # links = 169, variant = naive-lat
-Elapsed time: 9.12329, # of paths: 9616
-****** 2012-06-12 18:33:42 -0700 ******
+Elapsed time: 9.051827, # of paths: 9616
+****** 2012-06-13 00:16:47 -0700 ******
+Run #: 4, size = 40, # links = 169, variant = naive-lat
+Elapsed time: 9.172054, # of paths: 9616
+****** 2012-06-13 00:16:56 -0700 ******
+Run #: 0, size = 44, # links = 189, variant = bloom
+Elapsed time: 0.816726, # of paths: 12843
+****** 2012-06-13 00:16:58 -0700 ******
+Run #: 1, size = 44, # links = 189, variant = bloom
+Elapsed time: 0.815069, # of paths: 12843
+****** 2012-06-13 00:16:59 -0700 ******
+Run #: 2, size = 44, # links = 189, variant = bloom
+Elapsed time: 0.804967, # of paths: 12843
+****** 2012-06-13 00:17:00 -0700 ******
+Run #: 3, size = 44, # links = 189, variant = bloom
+Elapsed time: 0.819326, # of paths: 12843
+****** 2012-06-13 00:17:02 -0700 ******
+Run #: 4, size = 44, # links = 189, variant = bloom
+Elapsed time: 0.812161, # of paths: 12843
+****** 2012-06-13 00:17:03 -0700 ******
+Run #: 0, size = 44, # links = 189, variant = seminaive-lat
+Elapsed time: 0.518468, # of paths: 12843
+****** 2012-06-13 00:17:04 -0700 ******
+Run #: 1, size = 44, # links = 189, variant = seminaive-lat
+Elapsed time: 0.503566, # of paths: 12843
+****** 2012-06-13 00:17:05 -0700 ******
+Run #: 2, size = 44, # links = 189, variant = seminaive-lat
+Elapsed time: 0.499877, # of paths: 12843
+****** 2012-06-13 00:17:06 -0700 ******
+Run #: 3, size = 44, # links = 189, variant = seminaive-lat
+Elapsed time: 0.504923, # of paths: 12843
+****** 2012-06-13 00:17:07 -0700 ******
+Run #: 4, size = 44, # links = 189, variant = seminaive-lat
+Elapsed time: 0.506124, # of paths: 12843
+****** 2012-06-13 00:17:08 -0700 ******
 Run #: 0, size = 44, # links = 189, variant = naive-lat
-Elapsed time: 13.63711, # of paths: 12843
-****** 2012-06-12 18:33:56 -0700 ******
+Elapsed time: 13.771777, # of paths: 12843
+****** 2012-06-13 00:17:22 -0700 ******
 Run #: 1, size = 44, # links = 189, variant = naive-lat
-Elapsed time: 13.992258, # of paths: 12843
-****** 2012-06-12 18:34:10 -0700 ******
+Elapsed time: 14.128571, # of paths: 12843
+****** 2012-06-13 00:17:36 -0700 ******
 Run #: 2, size = 44, # links = 189, variant = naive-lat
-Elapsed time: 13.663403, # of paths: 12843
-****** 2012-06-12 18:34:24 -0700 ******
+Elapsed time: 14.010123, # of paths: 12843
+****** 2012-06-13 00:17:51 -0700 ******
 Run #: 3, size = 44, # links = 189, variant = naive-lat
-Elapsed time: 13.661919, # of paths: 12843
-****** 2012-06-12 18:34:39 -0700 ******
+Elapsed time: 13.716556, # of paths: 12843
+****** 2012-06-13 00:18:05 -0700 ******
+Run #: 4, size = 44, # links = 189, variant = naive-lat
+Elapsed time: 13.601406, # of paths: 12843
+****** 2012-06-13 00:18:19 -0700 ******
+Run #: 0, size = 48, # links = 209, variant = bloom
+Elapsed time: 1.08738, # of paths: 16716
+****** 2012-06-13 00:18:21 -0700 ******
+Run #: 1, size = 48, # links = 209, variant = bloom
+Elapsed time: 1.085096, # of paths: 16716
+****** 2012-06-13 00:18:23 -0700 ******
+Run #: 2, size = 48, # links = 209, variant = bloom
+Elapsed time: 1.073149, # of paths: 16716
+****** 2012-06-13 00:18:24 -0700 ******
+Run #: 3, size = 48, # links = 209, variant = bloom
+Elapsed time: 1.065075, # of paths: 16716
+****** 2012-06-13 00:18:26 -0700 ******
+Run #: 4, size = 48, # links = 209, variant = bloom
+Elapsed time: 1.096148, # of paths: 16716
+****** 2012-06-13 00:18:27 -0700 ******
+Run #: 0, size = 48, # links = 209, variant = seminaive-lat
+Elapsed time: 0.704356, # of paths: 16716
+****** 2012-06-13 00:18:28 -0700 ******
+Run #: 1, size = 48, # links = 209, variant = seminaive-lat
+Elapsed time: 0.703019, # of paths: 16716
+****** 2012-06-13 00:18:29 -0700 ******
+Run #: 2, size = 48, # links = 209, variant = seminaive-lat
+Elapsed time: 0.707164, # of paths: 16716
+****** 2012-06-13 00:18:31 -0700 ******
+Run #: 3, size = 48, # links = 209, variant = seminaive-lat
+Elapsed time: 0.704559, # of paths: 16716
+****** 2012-06-13 00:18:32 -0700 ******
+Run #: 4, size = 48, # links = 209, variant = seminaive-lat
+Elapsed time: 0.6991, # of paths: 16716
+****** 2012-06-13 00:18:33 -0700 ******
 Run #: 0, size = 48, # links = 209, variant = naive-lat
-Elapsed time: 20.313275, # of paths: 16716
-****** 2012-06-12 18:34:59 -0700 ******
+Elapsed time: 20.029329, # of paths: 16716
+****** 2012-06-13 00:18:53 -0700 ******
 Run #: 1, size = 48, # links = 209, variant = naive-lat
-Elapsed time: 19.987205, # of paths: 16716
-****** 2012-06-12 18:35:20 -0700 ******
+Elapsed time: 19.826665, # of paths: 16716
+****** 2012-06-13 00:19:14 -0700 ******
 Run #: 2, size = 48, # links = 209, variant = naive-lat
-Elapsed time: 19.821391, # of paths: 16716
-****** 2012-06-12 18:35:40 -0700 ******
+Elapsed time: 20.525888, # of paths: 16716
+****** 2012-06-13 00:19:35 -0700 ******
 Run #: 3, size = 48, # links = 209, variant = naive-lat
-Elapsed time: 19.883345, # of paths: 16716
-****** 2012-06-12 18:36:01 -0700 ******
+Elapsed time: 19.852468, # of paths: 16716
+****** 2012-06-13 00:19:55 -0700 ******
+Run #: 4, size = 48, # links = 209, variant = naive-lat
+Elapsed time: 19.888475, # of paths: 16716
+****** 2012-06-13 00:20:16 -0700 ******
+Run #: 0, size = 52, # links = 229, variant = bloom
+Elapsed time: 1.424042, # of paths: 21303
+****** 2012-06-13 00:20:18 -0700 ******
+Run #: 1, size = 52, # links = 229, variant = bloom
+Elapsed time: 1.471479, # of paths: 21303
+****** 2012-06-13 00:20:19 -0700 ******
+Run #: 2, size = 52, # links = 229, variant = bloom
+Elapsed time: 1.429949, # of paths: 21303
+****** 2012-06-13 00:20:21 -0700 ******
+Run #: 3, size = 52, # links = 229, variant = bloom
+Elapsed time: 1.40722, # of paths: 21303
+****** 2012-06-13 00:20:23 -0700 ******
+Run #: 4, size = 52, # links = 229, variant = bloom
+Elapsed time: 1.450984, # of paths: 21303
+****** 2012-06-13 00:20:25 -0700 ******
+Run #: 0, size = 52, # links = 229, variant = seminaive-lat
+Elapsed time: 0.959082, # of paths: 21303
+****** 2012-06-13 00:20:27 -0700 ******
+Run #: 1, size = 52, # links = 229, variant = seminaive-lat
+Elapsed time: 0.962802, # of paths: 21303
+****** 2012-06-13 00:20:28 -0700 ******
+Run #: 2, size = 52, # links = 229, variant = seminaive-lat
+Elapsed time: 0.971331, # of paths: 21303
+****** 2012-06-13 00:20:29 -0700 ******
+Run #: 3, size = 52, # links = 229, variant = seminaive-lat
+Elapsed time: 0.953812, # of paths: 21303
+****** 2012-06-13 00:20:31 -0700 ******
+Run #: 4, size = 52, # links = 229, variant = seminaive-lat
+Elapsed time: 0.97433, # of paths: 21303
+****** 2012-06-13 00:20:32 -0700 ******
 Run #: 0, size = 52, # links = 229, variant = naive-lat
-Elapsed time: 28.317487, # of paths: 21303
-****** 2012-06-12 18:36:30 -0700 ******
+Elapsed time: 28.597728, # of paths: 21303
+****** 2012-06-13 00:21:01 -0700 ******
 Run #: 1, size = 52, # links = 229, variant = naive-lat
-Elapsed time: 28.623249, # of paths: 21303
-****** 2012-06-12 18:36:59 -0700 ******
+Elapsed time: 28.720166, # of paths: 21303
+****** 2012-06-13 00:21:31 -0700 ******
 Run #: 2, size = 52, # links = 229, variant = naive-lat
-Elapsed time: 29.518273, # of paths: 21303
-****** 2012-06-12 18:37:29 -0700 ******
+Elapsed time: 28.039999, # of paths: 21303
+****** 2012-06-13 00:21:59 -0700 ******
 Run #: 3, size = 52, # links = 229, variant = naive-lat
-Elapsed time: 28.395242, # of paths: 21303
-****** 2012-06-12 18:37:58 -0700 ******
+Elapsed time: 28.003222, # of paths: 21303
+****** 2012-06-13 00:22:28 -0700 ******
+Run #: 4, size = 52, # links = 229, variant = naive-lat
+Elapsed time: 28.237223, # of paths: 21303
+****** 2012-06-13 00:22:56 -0700 ******
+Run #: 0, size = 56, # links = 249, variant = bloom
+Elapsed time: 1.879233, # of paths: 26664
+****** 2012-06-13 00:22:59 -0700 ******
+Run #: 1, size = 56, # links = 249, variant = bloom
+Elapsed time: 1.860537, # of paths: 26664
+****** 2012-06-13 00:23:01 -0700 ******
+Run #: 2, size = 56, # links = 249, variant = bloom
+Elapsed time: 1.937673, # of paths: 26664
+****** 2012-06-13 00:23:04 -0700 ******
+Run #: 3, size = 56, # links = 249, variant = bloom
+Elapsed time: 1.827224, # of paths: 26664
+****** 2012-06-13 00:23:06 -0700 ******
+Run #: 4, size = 56, # links = 249, variant = bloom
+Elapsed time: 1.792286, # of paths: 26664
+****** 2012-06-13 00:23:08 -0700 ******
+Run #: 0, size = 56, # links = 249, variant = seminaive-lat
+Elapsed time: 1.350745, # of paths: 26664
+****** 2012-06-13 00:23:10 -0700 ******
+Run #: 1, size = 56, # links = 249, variant = seminaive-lat
+Elapsed time: 1.348413, # of paths: 26664
+****** 2012-06-13 00:23:12 -0700 ******
+Run #: 2, size = 56, # links = 249, variant = seminaive-lat
+Elapsed time: 1.39807, # of paths: 26664
+****** 2012-06-13 00:23:14 -0700 ******
+Run #: 3, size = 56, # links = 249, variant = seminaive-lat
+Elapsed time: 1.380655, # of paths: 26664
+****** 2012-06-13 00:23:16 -0700 ******
+Run #: 4, size = 56, # links = 249, variant = seminaive-lat
+Elapsed time: 1.317043, # of paths: 26664
+****** 2012-06-13 00:23:17 -0700 ******
 Run #: 0, size = 56, # links = 249, variant = naive-lat
-Elapsed time: 39.534809, # of paths: 26664
-****** 2012-06-12 18:38:38 -0700 ******
+Elapsed time: 39.401405, # of paths: 26664
+****** 2012-06-13 00:23:57 -0700 ******
 Run #: 1, size = 56, # links = 249, variant = naive-lat
-Elapsed time: 39.381677, # of paths: 26664
-****** 2012-06-12 18:39:18 -0700 ******
+Elapsed time: 39.560197, # of paths: 26664
+****** 2012-06-13 00:24:37 -0700 ******
 Run #: 2, size = 56, # links = 249, variant = naive-lat
-Elapsed time: 39.427745, # of paths: 26664
-****** 2012-06-12 18:39:58 -0700 ******
+Elapsed time: 39.911608, # of paths: 26664
+****** 2012-06-13 00:25:18 -0700 ******
 Run #: 3, size = 56, # links = 249, variant = naive-lat
-Elapsed time: 39.642442, # of paths: 26664
+Elapsed time: 39.06964, # of paths: 26664
+****** 2012-06-13 00:25:57 -0700 ******
+Run #: 4, size = 56, # links = 249, variant = naive-lat
+Elapsed time: 39.618849, # of paths: 26664
+****** 2012-06-13 00:26:38 -0700 ******
+Run #: 0, size = 60, # links = 269, variant = bloom
+Elapsed time: 2.338052, # of paths: 32857
+****** 2012-06-13 00:26:41 -0700 ******
+Run #: 1, size = 60, # links = 269, variant = bloom
+Elapsed time: 2.308234, # of paths: 32857
+****** 2012-06-13 00:26:43 -0700 ******
+Run #: 2, size = 60, # links = 269, variant = bloom
+Elapsed time: 2.325288, # of paths: 32857
+****** 2012-06-13 00:26:46 -0700 ******
+Run #: 3, size = 60, # links = 269, variant = bloom
+Elapsed time: 2.296086, # of paths: 32857
+****** 2012-06-13 00:26:49 -0700 ******
+Run #: 4, size = 60, # links = 269, variant = bloom
+Elapsed time: 2.321484, # of paths: 32857
+****** 2012-06-13 00:26:52 -0700 ******
+Run #: 0, size = 60, # links = 269, variant = seminaive-lat
+Elapsed time: 1.822451, # of paths: 32857
+****** 2012-06-13 00:26:54 -0700 ******
+Run #: 1, size = 60, # links = 269, variant = seminaive-lat
+Elapsed time: 1.795585, # of paths: 32857
+****** 2012-06-13 00:26:56 -0700 ******
+Run #: 2, size = 60, # links = 269, variant = seminaive-lat
+Elapsed time: 1.783652, # of paths: 32857
+****** 2012-06-13 00:26:59 -0700 ******
+Run #: 3, size = 60, # links = 269, variant = seminaive-lat
+Elapsed time: 1.874132, # of paths: 32857
+****** 2012-06-13 00:27:01 -0700 ******
+Run #: 4, size = 60, # links = 269, variant = seminaive-lat
+Elapsed time: 1.824911, # of paths: 32857
+****** 2012-06-13 00:27:03 -0700 ******
+Run #: 0, size = 60, # links = 269, variant = naive-lat
+Elapsed time: 53.981787, # of paths: 32857
+****** 2012-06-13 00:27:58 -0700 ******
+Run #: 1, size = 60, # links = 269, variant = naive-lat
+Elapsed time: 54.343377, # of paths: 32857
+****** 2012-06-13 00:28:53 -0700 ******
+Run #: 2, size = 60, # links = 269, variant = naive-lat
+Elapsed time: 53.923091, # of paths: 32857
+****** 2012-06-13 00:29:47 -0700 ******
+Run #: 3, size = 60, # links = 269, variant = naive-lat
+Elapsed time: 53.948775, # of paths: 32857
+****** 2012-06-13 00:30:42 -0700 ******
+Run #: 4, size = 60, # links = 269, variant = naive-lat
+Elapsed time: 53.798899, # of paths: 32857
+****** 2012-06-13 00:31:36 -0700 ******
+Run #: 0, size = 64, # links = 321, variant = bloom
+Elapsed time: 2.940507, # of paths: 40464
+****** 2012-06-13 00:31:39 -0700 ******
+Run #: 1, size = 64, # links = 321, variant = bloom
+Elapsed time: 2.950853, # of paths: 40464
+****** 2012-06-13 00:31:43 -0700 ******
+Run #: 2, size = 64, # links = 321, variant = bloom
+Elapsed time: 2.987108, # of paths: 40464
+****** 2012-06-13 00:31:46 -0700 ******
+Run #: 3, size = 64, # links = 321, variant = bloom
+Elapsed time: 2.961726, # of paths: 40464
+****** 2012-06-13 00:31:50 -0700 ******
+Run #: 4, size = 64, # links = 321, variant = bloom
+Elapsed time: 2.936194, # of paths: 40464
+****** 2012-06-13 00:31:53 -0700 ******
+Run #: 0, size = 64, # links = 321, variant = seminaive-lat
+Elapsed time: 2.584164, # of paths: 40464
+****** 2012-06-13 00:31:57 -0700 ******
+Run #: 1, size = 64, # links = 321, variant = seminaive-lat
+Elapsed time: 2.641507, # of paths: 40464
+****** 2012-06-13 00:32:00 -0700 ******
+Run #: 2, size = 64, # links = 321, variant = seminaive-lat
+Elapsed time: 2.591497, # of paths: 40464
+****** 2012-06-13 00:32:03 -0700 ******
+Run #: 3, size = 64, # links = 321, variant = seminaive-lat
+Elapsed time: 2.570113, # of paths: 40464
+****** 2012-06-13 00:32:06 -0700 ******
+Run #: 4, size = 64, # links = 321, variant = seminaive-lat
+Elapsed time: 2.557915, # of paths: 40464
+****** 2012-06-13 00:32:09 -0700 ******
+Run #: 0, size = 68, # links = 345, variant = bloom
+Elapsed time: 3.561387, # of paths: 48645
+****** 2012-06-13 00:32:13 -0700 ******
+Run #: 1, size = 68, # links = 345, variant = bloom
+Elapsed time: 3.521352, # of paths: 48645
+****** 2012-06-13 00:32:17 -0700 ******
+Run #: 2, size = 68, # links = 345, variant = bloom
+Elapsed time: 3.540954, # of paths: 48645
+****** 2012-06-13 00:32:21 -0700 ******
+Run #: 3, size = 68, # links = 345, variant = bloom
+Elapsed time: 3.604903, # of paths: 48645
+****** 2012-06-13 00:32:25 -0700 ******
+Run #: 4, size = 68, # links = 345, variant = bloom
+Elapsed time: 3.639203, # of paths: 48645
+****** 2012-06-13 00:32:29 -0700 ******
+Run #: 0, size = 68, # links = 345, variant = seminaive-lat
+Elapsed time: 2.764295, # of paths: 48645
+****** 2012-06-13 00:32:32 -0700 ******
+Run #: 1, size = 68, # links = 345, variant = seminaive-lat
+Elapsed time: 2.797755, # of paths: 48645
+****** 2012-06-13 00:32:36 -0700 ******
+Run #: 2, size = 68, # links = 345, variant = seminaive-lat
+Elapsed time: 2.796, # of paths: 48645
+****** 2012-06-13 00:32:39 -0700 ******
+Run #: 3, size = 68, # links = 345, variant = seminaive-lat
+Elapsed time: 2.848768, # of paths: 48645
+****** 2012-06-13 00:32:42 -0700 ******
+Run #: 4, size = 68, # links = 345, variant = seminaive-lat
+Elapsed time: 2.785242, # of paths: 48645
+****** 2012-06-13 00:32:45 -0700 ******
+Run #: 0, size = 72, # links = 369, variant = bloom
+Elapsed time: 4.39962, # of paths: 57872
+****** 2012-06-13 00:32:50 -0700 ******
+Run #: 1, size = 72, # links = 369, variant = bloom
+Elapsed time: 4.349029, # of paths: 57872
+****** 2012-06-13 00:32:55 -0700 ******
+Run #: 2, size = 72, # links = 369, variant = bloom
+Elapsed time: 4.366701, # of paths: 57872
+****** 2012-06-13 00:33:00 -0700 ******
+Run #: 3, size = 72, # links = 369, variant = bloom
+Elapsed time: 4.446502, # of paths: 57872
+****** 2012-06-13 00:33:05 -0700 ******
+Run #: 4, size = 72, # links = 369, variant = bloom
+Elapsed time: 4.633514, # of paths: 57872
+****** 2012-06-13 00:33:10 -0700 ******
+Run #: 0, size = 72, # links = 369, variant = seminaive-lat
+Elapsed time: 3.510321, # of paths: 57872
+****** 2012-06-13 00:33:14 -0700 ******
+Run #: 1, size = 72, # links = 369, variant = seminaive-lat
+Elapsed time: 3.466534, # of paths: 57872
+****** 2012-06-13 00:33:18 -0700 ******
+Run #: 2, size = 72, # links = 369, variant = seminaive-lat
+Elapsed time: 3.481103, # of paths: 57872
+****** 2012-06-13 00:33:22 -0700 ******
+Run #: 3, size = 72, # links = 369, variant = seminaive-lat
+Elapsed time: 3.486715, # of paths: 57872
+****** 2012-06-13 00:33:26 -0700 ******
+Run #: 4, size = 72, # links = 369, variant = seminaive-lat
+Elapsed time: 3.445272, # of paths: 57872
+****** 2012-06-13 00:33:30 -0700 ******
+Run #: 0, size = 76, # links = 393, variant = bloom
+Elapsed time: 5.162381, # of paths: 68203
+****** 2012-06-13 00:33:36 -0700 ******
+Run #: 1, size = 76, # links = 393, variant = bloom
+Elapsed time: 5.204816, # of paths: 68203
+****** 2012-06-13 00:33:41 -0700 ******
+Run #: 2, size = 76, # links = 393, variant = bloom
+Elapsed time: 5.190967, # of paths: 68203
+****** 2012-06-13 00:33:47 -0700 ******
+Run #: 3, size = 76, # links = 393, variant = bloom
+Elapsed time: 5.205183, # of paths: 68203
+****** 2012-06-13 00:33:53 -0700 ******
+Run #: 4, size = 76, # links = 393, variant = bloom
+Elapsed time: 5.176572, # of paths: 68203
+****** 2012-06-13 00:33:58 -0700 ******
+Run #: 0, size = 76, # links = 393, variant = seminaive-lat
+Elapsed time: 4.36602, # of paths: 68203
+****** 2012-06-13 00:34:03 -0700 ******
+Run #: 1, size = 76, # links = 393, variant = seminaive-lat
+Elapsed time: 4.314176, # of paths: 68203
+****** 2012-06-13 00:34:08 -0700 ******
+Run #: 2, size = 76, # links = 393, variant = seminaive-lat
+Elapsed time: 4.420966, # of paths: 68203
+****** 2012-06-13 00:34:13 -0700 ******
+Run #: 3, size = 76, # links = 393, variant = seminaive-lat
+Elapsed time: 4.55213, # of paths: 68203
+****** 2012-06-13 00:34:18 -0700 ******
+Run #: 4, size = 76, # links = 393, variant = seminaive-lat
+Elapsed time: 4.538894, # of paths: 68203
+****** 2012-06-13 00:34:23 -0700 ******
+Run #: 0, size = 80, # links = 417, variant = bloom
+Elapsed time: 6.207146, # of paths: 79692
+****** 2012-06-13 00:34:30 -0700 ******
+Run #: 1, size = 80, # links = 417, variant = bloom
+Elapsed time: 6.173859, # of paths: 79692
+****** 2012-06-13 00:34:37 -0700 ******
+Run #: 2, size = 80, # links = 417, variant = bloom
+Elapsed time: 6.086373, # of paths: 79692
+****** 2012-06-13 00:34:43 -0700 ******
+Run #: 3, size = 80, # links = 417, variant = bloom
+Elapsed time: 6.17605, # of paths: 79692
+****** 2012-06-13 00:34:50 -0700 ******
+Run #: 4, size = 80, # links = 417, variant = bloom
+Elapsed time: 6.119418, # of paths: 79692
+****** 2012-06-13 00:34:56 -0700 ******
+Run #: 0, size = 80, # links = 417, variant = seminaive-lat
+Elapsed time: 5.471978, # of paths: 79692
+****** 2012-06-13 00:35:02 -0700 ******
+Run #: 1, size = 80, # links = 417, variant = seminaive-lat
+Elapsed time: 5.432608, # of paths: 79692
+****** 2012-06-13 00:35:08 -0700 ******
+Run #: 2, size = 80, # links = 417, variant = seminaive-lat
+Elapsed time: 5.444583, # of paths: 79692
+****** 2012-06-13 00:35:14 -0700 ******
+Run #: 3, size = 80, # links = 417, variant = seminaive-lat
+Elapsed time: 5.508384, # of paths: 79692
+****** 2012-06-13 00:35:20 -0700 ******
+Run #: 4, size = 80, # links = 417, variant = seminaive-lat
+Elapsed time: 5.674673, # of paths: 79692
+****** 2012-06-13 00:35:26 -0700 ******
+Run #: 0, size = 84, # links = 441, variant = bloom
+Elapsed time: 7.343044, # of paths: 92407
+****** 2012-06-13 00:35:34 -0700 ******
+Run #: 1, size = 84, # links = 441, variant = bloom
+Elapsed time: 7.227224, # of paths: 92407
+****** 2012-06-13 00:35:42 -0700 ******
+Run #: 2, size = 84, # links = 441, variant = bloom
+Elapsed time: 7.188914, # of paths: 92407
+****** 2012-06-13 00:35:50 -0700 ******
+Run #: 3, size = 84, # links = 441, variant = bloom
+Elapsed time: 7.067606, # of paths: 92407
+****** 2012-06-13 00:35:58 -0700 ******
+Run #: 4, size = 84, # links = 441, variant = bloom
+Elapsed time: 7.09629, # of paths: 92407
+****** 2012-06-13 00:36:05 -0700 ******
+Run #: 0, size = 84, # links = 441, variant = seminaive-lat
+Elapsed time: 6.837345, # of paths: 92407
+****** 2012-06-13 00:36:13 -0700 ******
+Run #: 1, size = 84, # links = 441, variant = seminaive-lat
+Elapsed time: 6.82885, # of paths: 92407
+****** 2012-06-13 00:36:20 -0700 ******
+Run #: 2, size = 84, # links = 441, variant = seminaive-lat
+Elapsed time: 6.853313, # of paths: 92407
+****** 2012-06-13 00:36:27 -0700 ******
+Run #: 3, size = 84, # links = 441, variant = seminaive-lat
+Elapsed time: 7.04805, # of paths: 92407
+****** 2012-06-13 00:36:35 -0700 ******
+Run #: 4, size = 84, # links = 441, variant = seminaive-lat
+Elapsed time: 6.893097, # of paths: 92407
+****** 2012-06-13 00:36:42 -0700 ******
+Run #: 0, size = 88, # links = 465, variant = bloom
+Elapsed time: 8.45684, # of paths: 106408
+****** 2012-06-13 00:36:51 -0700 ******
+Run #: 1, size = 88, # links = 465, variant = bloom
+Elapsed time: 8.347231, # of paths: 106408
+****** 2012-06-13 00:37:00 -0700 ******
+Run #: 2, size = 88, # links = 465, variant = bloom
+Elapsed time: 8.709276, # of paths: 106408
+****** 2012-06-13 00:37:09 -0700 ******
+Run #: 3, size = 88, # links = 465, variant = bloom
+Elapsed time: 8.336613, # of paths: 106408
+****** 2012-06-13 00:37:18 -0700 ******
+Run #: 4, size = 88, # links = 465, variant = bloom
+Elapsed time: 8.50826, # of paths: 106408
+****** 2012-06-13 00:37:27 -0700 ******
+Run #: 0, size = 88, # links = 465, variant = seminaive-lat
+Elapsed time: 8.228698, # of paths: 106408
+****** 2012-06-13 00:37:36 -0700 ******
+Run #: 1, size = 88, # links = 465, variant = seminaive-lat
+Elapsed time: 8.352277, # of paths: 106408
+****** 2012-06-13 00:37:45 -0700 ******
+Run #: 2, size = 88, # links = 465, variant = seminaive-lat
+Elapsed time: 8.396816, # of paths: 106408
+****** 2012-06-13 00:37:54 -0700 ******
+Run #: 3, size = 88, # links = 465, variant = seminaive-lat
+Elapsed time: 8.370411, # of paths: 106408
+****** 2012-06-13 00:38:03 -0700 ******
+Run #: 4, size = 88, # links = 465, variant = seminaive-lat
+Elapsed time: 8.2506, # of paths: 106408
+****** 2012-06-13 00:38:12 -0700 ******
+Run #: 0, size = 92, # links = 489, variant = bloom
+Elapsed time: 9.723134, # of paths: 121753
+****** 2012-06-13 00:38:22 -0700 ******
+Run #: 1, size = 92, # links = 489, variant = bloom
+Elapsed time: 9.907692, # of paths: 121753
+****** 2012-06-13 00:38:33 -0700 ******
+Run #: 2, size = 92, # links = 489, variant = bloom
+Elapsed time: 9.871289, # of paths: 121753
+****** 2012-06-13 00:38:43 -0700 ******
+Run #: 3, size = 92, # links = 489, variant = bloom
+Elapsed time: 9.867523, # of paths: 121753
+****** 2012-06-13 00:38:53 -0700 ******
+Run #: 4, size = 92, # links = 489, variant = bloom
+Elapsed time: 10.05114, # of paths: 121753
+****** 2012-06-13 00:39:04 -0700 ******
+Run #: 0, size = 92, # links = 489, variant = seminaive-lat
+Elapsed time: 9.397969, # of paths: 121753
+****** 2012-06-13 00:39:14 -0700 ******
+Run #: 1, size = 92, # links = 489, variant = seminaive-lat
+Elapsed time: 9.297379, # of paths: 121753
+****** 2012-06-13 00:39:24 -0700 ******
+Run #: 2, size = 92, # links = 489, variant = seminaive-lat
+Elapsed time: 9.37485, # of paths: 121753
+****** 2012-06-13 00:39:34 -0700 ******
+Run #: 3, size = 92, # links = 489, variant = seminaive-lat
+Elapsed time: 9.12117, # of paths: 121753
+****** 2012-06-13 00:39:43 -0700 ******
+Run #: 4, size = 92, # links = 489, variant = seminaive-lat
+Elapsed time: 9.13717, # of paths: 121753
+****** 2012-06-13 00:39:53 -0700 ******
+Run #: 0, size = 96, # links = 513, variant = bloom
+Elapsed time: 11.37372, # of paths: 138496
+****** 2012-06-13 00:40:05 -0700 ******
+Run #: 1, size = 96, # links = 513, variant = bloom
+Elapsed time: 11.421427, # of paths: 138496
+****** 2012-06-13 00:40:17 -0700 ******
+Run #: 2, size = 96, # links = 513, variant = bloom
+Elapsed time: 11.381417, # of paths: 138496
+****** 2012-06-13 00:40:29 -0700 ******
+Run #: 3, size = 96, # links = 513, variant = bloom
+Elapsed time: 11.507498, # of paths: 138496
+****** 2012-06-13 00:40:41 -0700 ******
+Run #: 4, size = 96, # links = 513, variant = bloom
+Elapsed time: 11.266712, # of paths: 138496
+****** 2012-06-13 00:40:53 -0700 ******
+Run #: 0, size = 96, # links = 513, variant = seminaive-lat
+Elapsed time: 10.840505, # of paths: 138496
+****** 2012-06-13 00:41:04 -0700 ******
+Run #: 1, size = 96, # links = 513, variant = seminaive-lat
+Elapsed time: 11.049112, # of paths: 138496
+****** 2012-06-13 00:41:16 -0700 ******
+Run #: 2, size = 96, # links = 513, variant = seminaive-lat
+Elapsed time: 11.021954, # of paths: 138496
+****** 2012-06-13 00:41:28 -0700 ******
+Run #: 3, size = 96, # links = 513, variant = seminaive-lat
+Elapsed time: 10.980512, # of paths: 138496
+****** 2012-06-13 00:41:39 -0700 ******
+Run #: 4, size = 96, # links = 513, variant = seminaive-lat
+Elapsed time: 10.818822, # of paths: 138496
+****** 2012-06-13 00:41:50 -0700 ******
+Run #: 0, size = 100, # links = 537, variant = bloom
+Elapsed time: 12.856389, # of paths: 156715
+****** 2012-06-13 00:42:04 -0700 ******
+Run #: 1, size = 100, # links = 537, variant = bloom
+Elapsed time: 13.174218, # of paths: 156715
+****** 2012-06-13 00:42:18 -0700 ******
+Run #: 2, size = 100, # links = 537, variant = bloom
+Elapsed time: 13.326141, # of paths: 156715
+****** 2012-06-13 00:42:32 -0700 ******
+Run #: 3, size = 100, # links = 537, variant = bloom
+Elapsed time: 12.878546, # of paths: 156715
+****** 2012-06-13 00:42:46 -0700 ******
+Run #: 4, size = 100, # links = 537, variant = bloom
+Elapsed time: 12.859781, # of paths: 156715
+****** 2012-06-13 00:42:59 -0700 ******
+Run #: 0, size = 100, # links = 537, variant = seminaive-lat
+Elapsed time: 13.180494, # of paths: 156715
+****** 2012-06-13 00:43:13 -0700 ******
+Run #: 1, size = 100, # links = 537, variant = seminaive-lat
+Elapsed time: 13.426815, # of paths: 156715
+****** 2012-06-13 00:43:27 -0700 ******
+Run #: 2, size = 100, # links = 537, variant = seminaive-lat
+Elapsed time: 13.255694, # of paths: 156715
+****** 2012-06-13 00:43:40 -0700 ******
+Run #: 3, size = 100, # links = 537, variant = seminaive-lat
+Elapsed time: 13.245974, # of paths: 156715
+****** 2012-06-13 00:43:54 -0700 ******
+Run #: 4, size = 100, # links = 537, variant = seminaive-lat
+Elapsed time: 13.248491, # of paths: 156715
+****** 2012-06-13 00:44:08 -0700 ******
+Run #: 0, size = 104, # links = 561, variant = bloom
+Elapsed time: 15.009309, # of paths: 176476
+****** 2012-06-13 00:44:24 -0700 ******
+Run #: 1, size = 104, # links = 561, variant = bloom
+Elapsed time: 14.900206, # of paths: 176476
+****** 2012-06-13 00:44:39 -0700 ******
+Run #: 2, size = 104, # links = 561, variant = bloom
+Elapsed time: 14.832429, # of paths: 176476
+****** 2012-06-13 00:44:55 -0700 ******
+Run #: 3, size = 104, # links = 561, variant = bloom
+Elapsed time: 14.579646, # of paths: 176476
+****** 2012-06-13 00:45:10 -0700 ******
+Run #: 4, size = 104, # links = 561, variant = bloom
+Elapsed time: 14.997156, # of paths: 176476
+****** 2012-06-13 00:45:26 -0700 ******
+Run #: 0, size = 104, # links = 561, variant = seminaive-lat
+Elapsed time: 15.655663, # of paths: 176476
+****** 2012-06-13 00:45:42 -0700 ******
+Run #: 1, size = 104, # links = 561, variant = seminaive-lat
+Elapsed time: 15.499798, # of paths: 176476
+****** 2012-06-13 00:45:58 -0700 ******
+Run #: 2, size = 104, # links = 561, variant = seminaive-lat
+Elapsed time: 15.415282, # of paths: 176476
+****** 2012-06-13 00:46:14 -0700 ******
+Run #: 3, size = 104, # links = 561, variant = seminaive-lat
+Elapsed time: 15.6536, # of paths: 176476
+****** 2012-06-13 00:46:30 -0700 ******
+Run #: 4, size = 104, # links = 561, variant = seminaive-lat
+Elapsed time: 15.578471, # of paths: 176476
+****** 2012-06-13 00:46:46 -0700 ******
+Run #: 0, size = 108, # links = 585, variant = bloom
+Elapsed time: 16.733736, # of paths: 197837
+****** 2012-06-13 00:47:04 -0700 ******
+Run #: 1, size = 108, # links = 585, variant = bloom
+Elapsed time: 17.146137, # of paths: 197837
+****** 2012-06-13 00:47:22 -0700 ******
+Run #: 2, size = 108, # links = 585, variant = bloom
+Elapsed time: 16.782549, # of paths: 197837
+****** 2012-06-13 00:47:39 -0700 ******
+Run #: 3, size = 108, # links = 585, variant = bloom
+Elapsed time: 17.06984, # of paths: 197837
+****** 2012-06-13 00:47:57 -0700 ******
+Run #: 4, size = 108, # links = 585, variant = bloom
+Elapsed time: 16.836392, # of paths: 197837
+****** 2012-06-13 00:48:15 -0700 ******
+Run #: 0, size = 108, # links = 585, variant = seminaive-lat
+Elapsed time: 19.473291, # of paths: 197837
+****** 2012-06-13 00:48:35 -0700 ******
+Run #: 1, size = 108, # links = 585, variant = seminaive-lat
+Elapsed time: 18.847369, # of paths: 197837
+****** 2012-06-13 00:48:54 -0700 ******
+Run #: 2, size = 108, # links = 585, variant = seminaive-lat
+Elapsed time: 19.250769, # of paths: 197837
+****** 2012-06-13 00:49:14 -0700 ******
+Run #: 3, size = 108, # links = 585, variant = seminaive-lat
+Elapsed time: 18.96632, # of paths: 197837
+****** 2012-06-13 00:49:33 -0700 ******
+Run #: 4, size = 108, # links = 585, variant = seminaive-lat
+Elapsed time: 19.250842, # of paths: 197837
+****** 2012-06-13 00:49:53 -0700 ******
+Run #: 0, size = 112, # links = 609, variant = bloom
+Elapsed time: 19.537178, # of paths: 220852
+****** 2012-06-13 00:50:13 -0700 ******
+Run #: 1, size = 112, # links = 609, variant = bloom
+Elapsed time: 19.200813, # of paths: 220852
+****** 2012-06-13 00:50:33 -0700 ******
+Run #: 2, size = 112, # links = 609, variant = bloom
+Elapsed time: 19.356042, # of paths: 220852
+****** 2012-06-13 00:50:54 -0700 ******
+Run #: 3, size = 112, # links = 609, variant = bloom
+Elapsed time: 18.903709, # of paths: 220852
+****** 2012-06-13 00:51:13 -0700 ******
+Run #: 4, size = 112, # links = 609, variant = bloom
+Elapsed time: 19.224122, # of paths: 220852
+****** 2012-06-13 00:51:33 -0700 ******
+Run #: 0, size = 112, # links = 609, variant = seminaive-lat
+Elapsed time: 23.167468, # of paths: 220852
+****** 2012-06-13 00:51:57 -0700 ******
+Run #: 1, size = 112, # links = 609, variant = seminaive-lat
+Elapsed time: 23.011326, # of paths: 220852
+****** 2012-06-13 00:52:21 -0700 ******
+Run #: 2, size = 112, # links = 609, variant = seminaive-lat
+Elapsed time: 23.151321, # of paths: 220852
+****** 2012-06-13 00:52:44 -0700 ******
+Run #: 3, size = 112, # links = 609, variant = seminaive-lat
+Elapsed time: 23.028072, # of paths: 220852
+****** 2012-06-13 00:53:08 -0700 ******
+Run #: 4, size = 112, # links = 609, variant = seminaive-lat
+Elapsed time: 23.1347, # of paths: 220852
+****** 2012-06-13 00:53:32 -0700 ******
+Run #: 0, size = 116, # links = 633, variant = bloom
+Elapsed time: 21.446762, # of paths: 245589
+****** 2012-06-13 00:53:54 -0700 ******
+Run #: 1, size = 116, # links = 633, variant = bloom
+Elapsed time: 21.181068, # of paths: 245589
+****** 2012-06-13 00:54:16 -0700 ******
+Run #: 2, size = 116, # links = 633, variant = bloom
+Elapsed time: 21.773889, # of paths: 245589
+****** 2012-06-13 00:54:38 -0700 ******
+Run #: 3, size = 116, # links = 633, variant = bloom
+Elapsed time: 21.617333, # of paths: 245589
+****** 2012-06-13 00:55:01 -0700 ******
+Run #: 4, size = 116, # links = 633, variant = bloom
+Elapsed time: 21.571138, # of paths: 245589
+****** 2012-06-13 00:55:23 -0700 ******
+Run #: 0, size = 116, # links = 633, variant = seminaive-lat
+Elapsed time: 23.712231, # of paths: 245589
+****** 2012-06-13 00:55:47 -0700 ******
+Run #: 1, size = 116, # links = 633, variant = seminaive-lat
+Elapsed time: 23.700105, # of paths: 245589
+****** 2012-06-13 00:56:12 -0700 ******
+Run #: 2, size = 116, # links = 633, variant = seminaive-lat
+Elapsed time: 23.772298, # of paths: 245589
+****** 2012-06-13 00:56:36 -0700 ******
+Run #: 3, size = 116, # links = 633, variant = seminaive-lat
+Elapsed time: 23.629218, # of paths: 245589
+****** 2012-06-13 00:57:00 -0700 ******
+Run #: 4, size = 116, # links = 633, variant = seminaive-lat
+Elapsed time: 23.744423, # of paths: 245589
+****** 2012-06-13 00:57:24 -0700 ******
+Run #: 0, size = 120, # links = 657, variant = bloom
+Elapsed time: 24.064939, # of paths: 272108
+****** 2012-06-13 00:57:49 -0700 ******
+Run #: 1, size = 120, # links = 657, variant = bloom
+Elapsed time: 24.349093, # of paths: 272108
+****** 2012-06-13 00:58:15 -0700 ******
+Run #: 2, size = 120, # links = 657, variant = bloom
+Elapsed time: 23.956172, # of paths: 272108
+****** 2012-06-13 00:58:39 -0700 ******
+Run #: 3, size = 120, # links = 657, variant = bloom
+Elapsed time: 23.729727, # of paths: 272108
+****** 2012-06-13 00:59:04 -0700 ******
+Run #: 4, size = 120, # links = 657, variant = bloom
+Elapsed time: 23.798789, # of paths: 272108
+****** 2012-06-13 00:59:29 -0700 ******
+Run #: 0, size = 120, # links = 657, variant = seminaive-lat
+Elapsed time: 27.101738, # of paths: 272108
+****** 2012-06-13 00:59:56 -0700 ******
+Run #: 1, size = 120, # links = 657, variant = seminaive-lat
+Elapsed time: 27.47641, # of paths: 272108
+****** 2012-06-13 01:00:24 -0700 ******
+Run #: 2, size = 120, # links = 657, variant = seminaive-lat
+Elapsed time: 27.326216, # of paths: 272108
+****** 2012-06-13 01:00:52 -0700 ******
+Run #: 3, size = 120, # links = 657, variant = seminaive-lat
+Elapsed time: 27.038715, # of paths: 272108
+****** 2012-06-13 01:01:20 -0700 ******
+Run #: 4, size = 120, # links = 657, variant = seminaive-lat
+Elapsed time: 27.064468, # of paths: 272108
