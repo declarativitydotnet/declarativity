@@ -78,10 +78,10 @@ wrote two versions of a program to compute the transitive closure of a directed
 acyclic graph. One version was written in Bloom and used Bloom collections. The
 other version was written in \lang using morphisms over the \texttt{lset}
 lattice. For the \lang version, we ran the program both with and without
-semi-naive evaluation enabled. As input, we used synthetic graphs of various
-sizes---in a graph with $n$ nodes, each node had $O(\log_2 n)$ outgoing
+semi-naive evaluation enabled. As input, we generated synthetic graphs of
+various sizes---in a graph with $n$ nodes, each node had $O(\log_2 n)$ outgoing
 edges. We ran the experiment using a 2.13 Ghz Intel Core 2 Duo processor and 4GB
-of RAM, running Mac OS X 10.7.3 and Ruby 1.8.7-p352. We ran each program variant
+of RAM, running Mac OS X 10.7.4 and Ruby 1.9.3-p194. We ran each program variant
 five times on each graph and report the mean elapsed wall-clock time.
 
 Figure~\ref{fig:tc-perf-graph} shows how the runtime of each program varied with
