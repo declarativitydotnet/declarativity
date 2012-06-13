@@ -276,7 +276,7 @@ class Bud::SetLattice < Bud::Lattice
   wrapper_name :lset (*\label{line:lset-wrapper-name}*)
 
   def initialize(x=[])
-    # Test for valid input removed for brevity
+    # Input validation removed for brevity
     @v = x.uniq # Remove duplicates from input
   end
 
@@ -298,7 +298,7 @@ class Bud::SetLattice < Bud::Lattice
 end
 \end{lstlisting}
 \end{scriptsize}
-\caption{The implementation of the \texttt{lset} lattice in Bud.}
+\caption{Implementation of the \texttt{lset} lattice.}
 \label{fig:lattice-lset}
 \end{figure}
 
@@ -306,10 +306,10 @@ end
 The built-in lattices are sufficient to express many distributed programs, such
 as the key-value store described in Section~\ref{sec:kvs}. However, \lang also
 allows developers to create custom lattices to capture domain-specific
-behavior. To define a lattice in Bud, a developer creates a Ruby class that
-meets a certain API contract. Figure~\ref{fig:lattice-lset} contains the Ruby
-code for the \texttt{lset} lattice (note that we omit the implementation of a
-few \texttt{lset} methods for brevity).
+behavior. To define a new lattice, a developer creates a Ruby class that meets a
+certain API contract. Figure~\ref{fig:lattice-lset} contains the Ruby code for
+the \texttt{lset} lattice (we omit a few \texttt{lset} methods for
+brevity).
 
 A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
