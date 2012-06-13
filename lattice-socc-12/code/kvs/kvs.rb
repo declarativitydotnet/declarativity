@@ -38,7 +38,7 @@ module KvsProtocolLogger
   bloom do
     stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
     stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
-    stdio <~ kvget {|c| ["kv_do_repl: #{c.inspect} @ #{ip_port}"]}
+    stdio <~ kv_do_repl {|c| ["kv_do_repl: #{c.inspect} @ #{ip_port}"]}
   end
 end
 
