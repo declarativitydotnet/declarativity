@@ -1,2 +1,23 @@
 \section{Case Study: Key-Value Store}
 \label{sec:kvs}
+The next two sections contain case studies that show how \lang can be used to
+build practical distributed programs. Both case studies are monotonic programs:
+that is, both programs consist of monotone functions applied to lattices. This
+ensures that the values computed by the programs ``grow'' over time (according
+to some notion of ``growth'') --- these examples show the various kinds of
+forward progress that can be encoded using \lang.
+
+In the first case study, we show that a complex program can be \emph{composed}
+via a series of monotone mappings between simple lattices. This demonstrates
+that \lang's builtin lattices are useful and results in a very concise
+implementation. Moreover, it gives us confidence in the correctness of our
+implementation, because much of the program's complexity is handled by the
+behavior of the builtin lattices, which are likely to be correct.
+
+\subsection{Basic Architecture}
+
+\subsection{Object Versioning}
+
+\subsubsection{Vector Clocks}
+
+\subsection{Quorum Replication}
