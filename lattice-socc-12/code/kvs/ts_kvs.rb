@@ -241,7 +241,7 @@ class TestQuorumKvs < MiniTest::Unit::TestCase
   def test_singleton_quorum
     r = MergeMapKvsReplica.new
     r.run_bg
-    q = QuorumKvsClient.new(1, r.ip_port)
+    q = QuorumKvsClient.new([r.ip_port], [r.ip_port])
     q.run_bg
 
     q.write('bar', max(3))
@@ -255,7 +255,8 @@ class TestQuorumKvs < MiniTest::Unit::TestCase
   def test_quorum_write_all
     nodes = Array.new(3) { MergeMapKvsReplica.new }
     nodes.each {|n| n.run_bg }
-    q = QuorumKvsClient.new(nodes.length, *(nodes.map {|n| n.ip_port}))
+    addr_list = nodes.map {|n| n.ip_port}
+    q = QuorumKvsClient.new(addr_list, addr_list)
     q.run_bg
 
     q.write('bar', max(7))
@@ -264,9 +265,23 @@ class TestQuorumKvs < MiniTest::Unit::TestCase
       c_for_n.run_bg
       res = c_for_n.read('bar')
       assert_equal(max(7), res)
-      c_for_n.stop_bg
+      c_for_n.stop
     end
 
-    (nodes + [q]).each {|n| n.stop_bg}
+    (nodes + [q]).each {|n| n.stop}
+  end
+
+  def test_quorum_write_one_read_all
+    nodes = Array.new(5) { MergeMapKvsReplica.new }
+    nodes.each {|n| n.run_bg }
+    addr_list = nodes.map {|n| n.ip_port}
+    q = QuorumKvsClient.new([addr_list.last], addr_list)
+    q.run_bg
+
+    q.write('baz', set(2))
+    res = q.read('baz')
+    assert_equal(set(2), res)
+
+    (nodes + [q]).each {|n| n.stop}
   end
 end
