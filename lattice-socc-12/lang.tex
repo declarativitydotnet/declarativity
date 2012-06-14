@@ -367,7 +367,6 @@ programs that manipulate set-oriented collections.
 \subsubsection{Converting collections into lattices}
 % XXX: this ignores the fact that Bloom collections consist of sets of tuples,
 % whereas implicit fold works for sets of singleton values
-% XXX: refer to shortest paths program as practical example
 This feature enables an intuitive syntax for merging the contents of a
 set-oriented collection into a lattice. If a statement has a Bloom collection on
 the rhs and a lattice on the lhs, the collection is converted into a lattice
@@ -386,55 +385,72 @@ referenced by the lhs.
 
 \subsubsection{Collections with embedded lattice values}
 \label{sec:lattice-embedding}
-It would be convenient to allow lattice elements to be used as columns of
-tuples in Bloom collections. In addition to easing interoperability, Bloom
-provides several facilities (e.g., network communication, persistent storage) as
-collections with special semantics, and we wanted to avoid providing a redundant
-set of facilities for lattices. A simple solution would be to extract the
-underlying Ruby value from the lattice element (via the \texttt{reveal} method).
-However, that would introduce needless non-monotonicity into the program.
+\lang allows lattice elements to be used as columns of tuples in Bloom
+collections. This feature allows \lang programs to use a mixture of Bloom-style
+relational operators and lattice method invocations, depending on which is more
+convenient. Bloom also provides several collection types with special semantics
+(e.g., channels, durable storage); allowing lattice elements to be embedded into
+collections avoids the need to create a redundant set of facilities for
+lattices.
 
-Storing lattice elements as columns of tuples in set-oriented collections
-introduces several challenges. Consider a simple \lang statement that derives
-tuples with a lattice element as a column:
+Consider a simple \lang statement that derives tuples with an embedded lattice
+element as a column:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, cnt]}
 \end{verbatim}
 where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
-lattice, and the first column of \texttt{t1} is the collection's key. The value
-associated with \texttt{cnt} can change over the course of a single timestep
-(\texttt{cnt} can move ``upward'' according to the lattice's partial
-order). This might result in multiple \texttt{t1} tuples with different values
-for the second column, which would violate \texttt{t1}'s key (the first column
-of \texttt{t1} would not functionally determine a single value for the second
-column).
+lattice, and the key of \texttt{t1} is its first column. Note that
+\texttt{cnt} might change over the course of a single timestep (specifically,
+\texttt{cnt} can move ``upward'' according to the lattice's partial
+order). This might result in multiple tuples \texttt{t1} tuples that differ only
+in the second column, which would violate \texttt{t1}'s key.
 
-This problem could be avoided by placing constraints on the evaluation order of
-statements: for example, we could require that all potential changes to
-\texttt{cnt} be completed before statements that embed \texttt{cnt} could be
-evaluated. This would effectively stratify the program according to lattice
-embedding statements and disallow cycles through lattice
-embeddings~\cite{Apt1988}.  This would reduce the expressiveness of the
-language; it also seems unsatisfying to require stratification of monotonic
-programs.
+To resolve this situation, \lang allows multiple facts to be derived that differ
+only in their embedded lattice values; those facts are merged into a single fact
+using the lattice's merge function. This is similar to specifying a procedure
+for how to resolve key constraint violations, a feature supported by some
+databases~\cite{oracle-conflict,sqlite-on-conflict}. For similar reasons,
+lattice elements cannot be used as keys in Bloom collections. It might be
+possible to relax this restriction in certain ``safe'' cases, but we have not
+found this limitation to be problematic to date.
 
-Instead, \lang allows multiple facts to be derived that differ only in their
-embedded lattice values; those facts are merged into a single fact using the
-lattice's merge function. This is similar to specifying a procedure for how to
-resolve key constraint violations, a feature supported by some
-databases~\cite{oracle-conflict,sqlite-on-conflict}. Note that the safety of the
-merge procedure is guaranteed by the lattice properties: the final value is
-deterministic and is the least upper bound of all the merged
-values. Nevertheless, we felt this behavior should be manifest in the program
-syntax because tuples in Datalog relations are traditionally immutable. Hence,
-this ``lattice merge'' behavior is only enabled for columns that are prefixed
-with ``\texttt{!}'' in collection declarations. If the
-annotation is not specified, lattice elements embedded in Bloom collections
-cannot change; it is up to the programmer to avoid key constraint violations.
+% Storing lattice elements as columns of tuples in set-oriented collections
+% introduces several challenges. Consider a simple \lang statement that derives
+% tuples with a lattice element as a column:
+% \begin{verbatim}
+%     t1 <= t2 {|t| [t.x, cnt]}
+% \end{verbatim}
+% where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
+% lattice, and the first column of \texttt{t1} is the collection's key. The value
+% associated with \texttt{cnt} can change over the course of a single timestep
+% (\texttt{cnt} can move ``upward'' according to the lattice's partial
+% order). This might result in multiple \texttt{t1} tuples with different values
+% for the second column, which would violate \texttt{t1}'s key (the first column
+% of \texttt{t1} would not functionally determine a single value for the second
+% column).
 
-For similar reasons, lattice elements cannot be used as keys in Bloom
-collections. It might be possible to relax this restriction in certain ``safe''
-cases, but we have not found this limitation to be problematic to date.
+% This problem could be avoided by placing constraints on the evaluation order of
+% statements: for example, we could require that all potential changes to
+% \texttt{cnt} be completed before statements that embed \texttt{cnt} could be
+% evaluated. This would effectively stratify the program according to lattice
+% embedding statements and disallow cycles through lattice
+% embeddings~\cite{Apt1988}.  This would reduce the expressiveness of the
+% language; it also seems unsatisfying to require stratification of monotonic
+% programs.
+
+% Instead, \lang allows multiple facts to be derived that differ only in their
+% embedded lattice values; those facts are merged into a single fact using the
+% lattice's merge function. This is similar to specifying a procedure for how to
+% resolve key constraint violations, a feature supported by some
+% databases~\cite{oracle-conflict,sqlite-on-conflict}. Note that the safety of the
+% merge procedure is guaranteed by the lattice properties: the final value is
+% deterministic and is the least upper bound of all the merged
+% values. Nevertheless, we felt this behavior should be manifest in the program
+% syntax because tuples in Datalog relations are traditionally immutable. Hence,
+% this ``lattice merge'' behavior is only enabled for columns that are prefixed
+% with ``\texttt{!}'' in collection declarations. If the
+% annotation is not specified, lattice elements embedded in Bloom collections
+% cannot change; it is up to the programmer to avoid key constraint violations.
 
 \subsection{Confluence in \lang}
 \label{sec:calmL}
