@@ -7,14 +7,47 @@ ensures that the values computed by the programs ``grow'' over time (according
 to some notion of ``growth'') --- these examples show the various kinds of
 forward progress that can be encoded using \lang.
 
-In the first case study, we show that a complex program can be \emph{composed}
-via a series of monotone mappings between simple lattices. This demonstrates
-that \lang's builtin lattices are useful and results in a very concise
-implementation. Moreover, it gives us confidence in the correctness of our
-implementation, because much of the program's complexity is handled by the
+In the first case study, we show that a distributed key-value store can be
+\emph{composed} via a series of monotone mappings between simple lattices. This
+demonstrates that \lang's builtin lattices are useful and results in a very
+concise implementation. Moreover, it gives us confidence in the correctness of
+our implementation, because much of the program's complexity is handled by the
 behavior of the builtin lattices, which are likely to be correct.
 
 \subsection{Basic Architecture}
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+module KvsProtocol
+  state do
+    channel :kvput, [:req_id, :@addr] => [:key, :value, :client_addr]
+    channel :kvput_response, [:req_id] => [:@addr, :replica_addr]
+    channel :kvget, [:req_id, :@addr] => [:key, :client_addr]
+    channel :kvget_response, [:req_id] => [:@addr, :value, :replica_addr]
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{Key-value store interface.}
+\label{fig:kvs-interface}
+\end{figure}
+
+Key-value stores (KVS) such as Chord~\cite{Stoica2001} and
+Dynamo~\cite{DeCandia2007} are a popular choice for distributed storage. A KVS
+provides a lookup service that allows client applications to retrieve the
+\emph{value} associated with a given \emph{key}. In a typical KVS, key-value
+pairs are replicated on multiple server replicas for redundancy and the keyspace
+is partitioned in some fashion to improve aggregate storage and
+throughput. \emph{Eventual consistency} is a common correctness criteria: the
+KVS guarantees that after all client updates have reached all storage nodes, all
+the replicas of a key-value pair will converge to the same final
+state~\cite{vogels}.
+
+Figure~\ref{fig:kvs-interface} shows a simple KVS interface in \lang. Client
+applications submit \emph{get(key)} and \texttt{put(key, val)} operations by
+inserting into the \texttt{kvget} and \texttt{kvput} channels, respectively;
+server replicas return responses by sending back corresponding messages via the
+\texttt{kvget\_response} and \texttt{kvput\_response} channels.
 
 \subsection{Object Versioning}
 
