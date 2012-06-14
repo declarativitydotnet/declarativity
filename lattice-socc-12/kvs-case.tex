@@ -131,10 +131,23 @@ a replica increases over time, rather than the associated value. Hence, we now
 consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
+\nrc{Ugh, TODO.}
 Vector clocks are a well-known mechanism for recording the causal relationships
 between events~\cite{Fidge1988}. A vector clock is a map from node identifiers
-to logical clocks. 
+to logical clocks. Each event $e$ is associated with a vector clock $V_e$; if
+$V_e < V_{e'}$, $e$ causally precedes $e'$.
+
+In \lang, vector clocks can be represented as an \texttt{lmap} that maps node
+identifiers to \texttt{lmax} values. This seems reasonable, since logical clock
+values (\texttt{lmax}) can only increase over time. The merge function provided
+by \texttt{lmap} achieves the desired semantics.
 
 \subsubsection{Version-Value Pairs}
+\begin{figure}[t]
+\includegraphics[width=\linewidth]{fig/kvs-vc-lattice.pdf}
+\caption{Nested lattices in KVS with object versioning.}
+\label{fig:kvs-vc-lattices}
+\end{figure}
+
 
 \subsection{Quorum Replication}
