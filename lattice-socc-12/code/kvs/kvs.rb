@@ -69,7 +69,7 @@ class KvsClient
     req_id = make_req_id
     r = sync_callback(:kvget, [[req_id, @addr, key, ip_port]], :kvget_response)
     r.each do |t|
-      return t.value if t[0] == req_id
+      return t.value if t.req_id == req_id
     end
     raise
   end
@@ -78,7 +78,7 @@ class KvsClient
     req_id = make_req_id
     r = sync_callback(:kvput, [[req_id, @addr, key, val, ip_port]], :kvput_response)
     r.each do |t|
-      return if t[0] == req_id
+      return if t.req_id == req_id
     end
     raise
   end
@@ -107,15 +107,15 @@ class QuorumKvsClient
 
   state do
     table :put_reqs, [:req_id] => [:acks]
-    table :get_reqs, [:req_id] => [:acks, :val]
+    table :get_reqs, [:req_id] => [:acks, :value]
     scratch :w_quorum, [:req_id]
-    scratch :r_quorum, [:req_id] => [:val]
+    scratch :r_quorum, [:req_id] => [:value]
   end
 
   bloom do
     put_reqs <= kvput_response {|r| [r.req_id, Bud::SetLattice.new([r.replica_addr])]}
     w_quorum <= put_reqs {|r|
-      r.acks.size.gt_eq(@quorum_size).when_true {
+      r.acks.size.gt_eq(@w_quorum_size).when_true {
         [r.req_id]
       }
     }
@@ -123,35 +123,37 @@ class QuorumKvsClient
     get_reqs <= kvget_response {|r| [r.req_id,
                                      Bud::SetLattice.new([r.replica_addr]), r.value]}
     r_quorum <= get_reqs {|r|
-      r.acks.size.gt_eq(@quorum_size).when_true {
-        [r.req_id, r.val]
+      r.acks.size.gt_eq(@r_quorum_size).when_true {
+        [r.req_id, r.value]
       }
     }
   end
 
-  def initialize(quorum_size, *addrs)
-    @quorum_size = quorum_size
+  def initialize(put_list, get_list)
+    @put_addrs = put_list
+    @get_addrs = get_list
+    @r_quorum_size = get_list.size
+    @w_quorum_size = put_list.size
     @req_id = 0
-    @addrs = addrs
     super()
   end
 
   def write(key, val)
     req_id = make_req_id
-    put_reqs = @addrs.map {|a| [req_id, a, key, val, ip_port]}
+    put_reqs = @put_addrs.map {|a| [req_id, a, key, val, ip_port]}
     r = sync_callback(:kvput, put_reqs, :w_quorum)
     r.each do |t|
-      return if t[0] == req_id
+      return if t.req_id == req_id
     end
     raise
   end
 
   def read(key)
     req_id = make_req_id
-    r = sync_callback(:kvget, [[req_id, @addrs.first, key, ip_port]],
-                      :kvget_response)
+    get_reqs = @get_addrs.map {|a| [req_id, a, key, ip_port]}
+    r = sync_callback(:kvget, get_reqs, :r_quorum)
     r.each do |t|
-      return t.value if t[0] == req_id
+      return t.value if t.req_id == req_id
     end
     raise
   end
