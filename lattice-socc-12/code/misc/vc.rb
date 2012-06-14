@@ -26,3 +26,5 @@ class VectorClock
     out_msg_vc <= out_msg {|m| [m.addr, m.payload, next_vc]}
   end
 end
+
+v = VectorClock.new

@@ -192,10 +192,11 @@ According to the CALM theorem, distributed inconsistency may only occur at
 \emph{points of order}: program locations where the output of an asynchronously
 derived value is consumed by a non-monotonic operator.  This is because
 asynchronous messaging results in non-deterministic arrival order, and
-non-monotonic operators may be produce different conclusions when evaluated over
-different subsets of their inputs.  For example, consider a Bloom program in
-which collections $A$ and $B$ are fed by asynchronous channels and the program
-sends a message whenever an element of $A$ arrives that is not in $B$. This
+non-monotonic operators may produce different conclusions when evaluated over
+different subsets of their inputs.  For example, consider a Bloom program 
+consisting of a pair of collections $A$ and $B$ (both fed by asynchronous
+channels) and a rule that sends a message whenever an element of $A$ arrives that is not in $B$.
+This
 program is non-monotonic and exhibits non-confluent behavior: the messages sent
 by the program will depend on the order in which the elements of $A$ and $B$
 arrive.
@@ -207,7 +208,8 @@ runs or converging to the same state on multiple distributed replicas.
 Otherwise, programs are flagged as potentially inconsistent.  To achieve
 consistency, the programmer either needs to rewrite their program to avoid the
 use of non-monotonicity or introduce a coordination protocol to ensure that a
-consistent ordering is agreed upon. Coordination protocols incur additional
+consistent ordering is agreed upon at each of the program's points of order. 
+Coordination protocols incur additional
 latency and reduce availability in the event of network partitions, so in this
 paper we focus on coordination-free designs---that is, monotonic programs.
 
