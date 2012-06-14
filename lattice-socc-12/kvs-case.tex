@@ -64,7 +64,7 @@ pairs are replicated on multiple server replicas for redundancy and the keyspace
 is partitioned in some fashion to improve aggregate storage and
 throughput. \emph{Eventual consistency} is a common correctness criteria: after
 all client updates have reached all storage nodes, all the replicas of a
-key-value pair will converge to the same final state~\cite{vogels}.
+key-value pair will converge to the same final state~\cite{Terry1995,vogels}.
 
 Figure~\ref{fig:kvs-interface} shows a simple KVS interface in \lang. Client
 applications submit \emph{get(key)} and \emph{put(key, val)} operations by
@@ -90,14 +90,43 @@ channels) and lattices (e.g., the \texttt{kv\_store} lattice).
 
 The state of two replicas can be synchronized by simply exchanging their
 \texttt{kv\_store} maps; the \texttt{lmap} merge function will automatically
-resolve all conflicting updates made to the same key.
+resolve all conflicting updates made to the same key. This property allows
+considerable flexibility in how replicas can choose to propagate updates.
 % TODO: (1) finish repl discussion (composition, replication strat) (2) partitioning
 
 \subsection{Object Versioning}
 \label{sec:kvs-versions}
-The KVS design proposed so far is sufficient for associating keys with lattice
-values.
+
+The initial KVS design is sufficient for applications that want to store
+monotonically increasing values, such as session logs or increasing counters. To
+allow arbitrary updates to be made to the stored values, we now consider how to
+support \emph{object versions}. This is a classic technique for recognizing
+mutual inconsistency between members of a distributed system~\cite{Parker1983};
+our design is similar to that used by Dynamo~\cite{DeCandia2007}.
+
+In this scheme, each replica stores a map from keys to
+$\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
+(VC) represents the causal relationship between different versions of a given
+value~\cite{Fidge1988,Mattern1989}. Clients get and put
+$\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
+updates a value it has previously read, the client increments its own position
+in the VC and includes the updated vector clock with its \emph{put}
+operation. Upon receiving an update, the server compares the update's VC with
+the VC of the server's version of the record. If the update's VC is strictly
+greater than the stored VC, the server replaces the stored record with the
+client's update. If the stored VC is strictly greater than the VC of the update,
+the update is ignored (this situation might arise due to duplication and
+reordering of messages by the network). If the two versions are incomparable,
+the server invokes a client-supplied reconciliation function to resolve the
+conflict, and also merges together the two VCs.
+
+From a \lang perspective, each replica still stores a monotically increasing
+value---the only difference is that in this scheme, the \emph{version} stored by
+a replica increases over time, rather than the associated value. Hence, we now
+consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
+
+\subsubsection{Version-Value Pairs}
 
 \subsection{Quorum Replication}
