@@ -7,27 +7,27 @@
 \label{fig:cart-system-arch}
 \end{figure}
 
-The next two sections contain case studies that show how \lang can be used to
-build practical distributed programs. Our goal is to demonstrate that
-non-trivial distributed protocols can be expressed using lattices and monotone
-functions. If written in Bloom, these programs would be considered non-monotonic
-because they contain aggregation. Presenting monotonic implementations in \lang
-is equivalent to showing that the use of aggregation in these protocols is
-``safe'' and produces consistent results without needing additional
-coordination.
+In the previous section, we showed how a complex program can be composed via
+monotonic mappings between simple lattice types. In this section, we demonstrate
+how \lang can be used to define custom lattice types. This allows developers to
+encode domain-specific notions of ``growth'' or ``forward progress''; as we will
+see, this allows more programs to be shown to be monotonic. Presenting monotonic
+implementations in \lang is equivalent to showing that the use of aggregation in
+these protocols is ``safe'' and produces consistent results without needing
+additional coordination.
 
-In the first case study, we consider a simple e-commerce system in which clients
+In this case study, we consider a simple e-commerce system in which clients
 interact with a shopping cart service by adding and removing items over the
-course of a shopping session (Figure~\ref{fig:cart-system-arch}). The cart service is
-replicated to improve fault tolerance; client requests can be routed to any of
-the cart replicas. Eventually, a client submits a ``checkout'' operation, at
-which point the cumulative effect of their shopping session should be summarized
-and returned to the client. In a practical system, the result of the checkout
-operation might be presented to the client for confirmation or submitted to a
-payment processor to complete the e-commerce transaction. This case study is
-based on the cart system from Alvaro et al.~\cite{Alvaro2011}, which was in turn
-inspired by the discussion of replicated shopping carts in the Dynamo
-paper~\cite{DeCandia2007}.
+course of a shopping session (Figure~\ref{fig:cart-system-arch}). The cart
+service is replicated to improve fault tolerance; client requests can be routed
+to any of the cart replicas. Eventually, a client submits a ``checkout''
+operation, at which point the cumulative effect of their shopping session should
+be summarized and returned to the client. In a practical system, the result of
+the checkout operation might be presented to the client for confirmation or
+submitted to a payment processor to complete the e-commerce transaction. This
+case study is based on the cart system from Alvaro et al.~\cite{Alvaro2011},
+which was in turn inspired by the discussion of replicated shopping carts in the
+Dynamo paper~\cite{DeCandia2007}.
 
 Alvaro et al.\ discuss two different designs: a ``disorderly'' version in which
 the cart state is represented as a set of operations (allowing monotonic
