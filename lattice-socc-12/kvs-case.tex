@@ -13,6 +13,10 @@ demonstrates that \lang's builtin lattices are useful and results in a very
 concise implementation. Moreover, it gives us confidence in the correctness of
 our implementation, because much of the program's complexity is handled by the
 behavior of the builtin lattices, which are likely to be correct.
+\paa{not sure what to suggest, but this last clause seems underconfident 
+(and slightly run-on).
+perhaps we just want to say that we assert them to be correct, or that it's easy
+to prove/convince ourselves that they are correct due to their simplicity, etc}
 
 \subsection{Basic Architecture}
 \begin{figure}[t]
@@ -71,12 +75,13 @@ applications submit \emph{get(key)} and \emph{put(key, val)} operations by
 inserting into the \texttt{kvget} and \texttt{kvput} channels, respectively;
 server replicas return responses via the \texttt{kvget\_resp} and
 \texttt{kvput\_resp} channels.
+\paa{what is kvput\_response for?  will I learn in section 5.2?}
 
 Figure~\ref{fig:kvs-replica} contains the \lang code for a KVS server
 replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
 and values (line~\ref{line:kvs-map-ddl}). Since the values in an \texttt{lmap}
 lattice must themselves be lattice elements, for now we assume that clients only
-want to store and lattice values; we discuss how to support arbitrary values in
+want to store and \paa{send?} lattice values; we discuss how to support arbitrary values in
 Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)} request, a new
 \emph{key} $\to$ \emph{val} map is created and merged into \texttt{kv\_store}
 (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store} already contains a value
