@@ -118,7 +118,7 @@ client's update. If the stored VC is strictly greater than the VC of the update,
 the update is ignored (this situation might arise due to duplication and
 reordering of messages by the network). If the two versions are incomparable,
 the server invokes a client-supplied reconciliation function to resolve the
-conflict, and also merges together the two VCs.
+conflict.
 
 From a \lang perspective, each replica still stores a monotically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
@@ -126,6 +126,10 @@ a replica increases over time, rather than the associated value. Hence, we now
 consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
+\emph{Vector clocks} are a classical mechanism for recording the causal
+relationships between events in a distributed
+system~\cite{Fidge1988,Mattern1989}.  A vector clock is a map from node
+identifiers to a logical clock for member of the distributed system.
 
 \subsubsection{Version-Value Pairs}
 
