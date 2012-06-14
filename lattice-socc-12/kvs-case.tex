@@ -9,10 +9,10 @@ examples show the various kinds of forward progress that can be encoded using
 
 In the first case study, we show that a distributed key-value store can be
 \emph{composed} via a series of monotone mappings between simple lattices. This
-demonstrates that \lang's builtin lattices are useful and results in a very
+demonstrates that \lang's built-in lattices are useful and results in a very
 concise implementation. Moreover, it gives us confidence in the correctness of
 our implementation, because much of the program's complexity is handled by the
-behavior of the builtin lattices, which are likely to be correct.
+behavior of the built-in lattices, which are likely to be correct.
 \paa{not sure what to suggest, but this last clause seems underconfident 
 (and slightly run-on).
 perhaps we just want to say that we assert them to be correct, or that it's easy
@@ -81,17 +81,18 @@ Figure~\ref{fig:kvs-replica} contains the \lang code for a KVS server
 replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
 and values (line~\ref{line:kvs-map-ddl}). Since the values in an \texttt{lmap}
 lattice must themselves be lattice elements, for now we assume that clients only
-want to store and \paa{send?} lattice values; we discuss how to support arbitrary values in
-Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)} request, a new
-\emph{key} $\to$ \emph{val} map is created and merged into \texttt{kv\_store}
-(line~\ref{line:kvs-put-merge}). If \texttt{kv\_store} already contains a value
-for the given key, the two values will be merged together using the value
-lattice's merge function (see Section~\ref{sec:lattice-built-ins} for
-details). Note that \texttt{ip\_port} is a builtin function provided by Bud that
-returns the IP address and port number of the current Bud instance. We use the
-\lang features described in Section~\ref{sec:bloom-interop} to enable
-interoperability between code that accesses traditional Bloom collections (e.g.,
-channels) and lattices (e.g., the \texttt{kv\_store} lattice).
+want to store and retrieve lattice values; we discuss how to support arbitrary
+values in Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)}
+request, a new \emph{key} $\to$ \emph{val} map is created and merged into
+\texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
+already contains a value for the given key, the two values will be merged
+together using the value lattice's merge function (see
+Section~\ref{sec:lattice-built-ins} for details). Note that we use the \lang
+features described in Section~\ref{sec:bloom-interop} to enable interoperability
+between code that accesses traditional Bloom collections (e.g., channels) and
+lattices (e.g., the \texttt{kv\_store} lattice).  Note that \texttt{ip\_port} is
+a built-in function that returns the IP address and port number of the current
+Bud instance.
 
 The state of two replicas can be synchronized by simply exchanging their
 \texttt{kv\_store} maps; the \texttt{lmap} merge function will automatically
@@ -109,21 +110,20 @@ support \emph{object versions}. This is a classic technique for recognizing
 mutual inconsistency between members of a distributed system~\cite{Parker1983};
 our design is similar to that used by Dynamo~\cite{DeCandia2007}.
 
-In this scheme, each replica stores a map from keys to
+Each replica associates keys with
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
-(VC) represents the causal relationship between different versions of a given
-value~\cite{Fidge1988,Mattern1989}. Clients get and put
+(VC) captures the causal relationship between different versions of a
+record~\cite{Fidge1988,DeCandia2007}. Clients get and put
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
 updates a value it has previously read, the client increments its own position
-in the VC and includes the updated vector clock with its \emph{put}
-operation. Upon receiving an update, the server compares the update's VC with
-the VC of the server's version of the record. If the update's VC is strictly
-greater than the stored VC, the server replaces the stored record with the
-client's update. If the stored VC is strictly greater than the VC of the update,
-the update is ignored (this situation might arise due to duplication and
-reordering of messages by the network). If the two versions are incomparable,
-the server invokes a client-supplied reconciliation function to resolve the
-conflict.
+in the VC and includes the updated vector clock $V_U$ with its \emph{put}
+operation. Upon receiving an update, the server compares $V_U$ with the VC of
+the server's version of the record ($V_S$). If $V_U > V_S$, the server replaces
+the stored record with the client's update. If $V_S > V_U$, the update is
+ignored (this situation might arise due to duplication and reordering of
+messages by the network). If $V_U$ and $V_S$ are incomparable, the two versions
+of the record are concurrent, so a client-supplied reconciliation function is
+used to resolve the conflict.
 
 From a \lang perspective, each replica still stores a monotically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
@@ -131,10 +131,9 @@ a replica increases over time, rather than the associated value. Hence, we now
 consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
-\emph{Vector clocks} are a classical mechanism for recording the causal
-relationships between events in a distributed
-system~\cite{Fidge1988,Mattern1989}.  A vector clock is a map from node
-identifiers to a logical clock for member of the distributed system.
+Vector clocks are a well-known mechanism for recording the causal relationships
+between events~\cite{Fidge1988}. A vector clock is a map from node identifiers
+to logical clocks. 
 
 \subsubsection{Version-Value Pairs}
 
