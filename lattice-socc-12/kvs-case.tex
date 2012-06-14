@@ -3,9 +3,9 @@
 The next two sections contain case studies that show how \lang can be used to
 build practical distributed programs. Both case studies are monotonic programs:
 that is, both programs consist of monotone functions applied to lattices. This
-ensures that the values computed by the programs ``grow'' over time (according
-to some notion of ``growth'') --- these examples show the various kinds of
-forward progress that can be encoded using \lang.
+ensures that the values computed by the programs ``grow'' over time---these
+examples show the various kinds of forward progress that can be encoded using
+\lang.
 
 In the first case study, we show that a distributed key-value store can be
 \emph{composed} via a series of monotone mappings between simple lattices. This
@@ -20,10 +20,12 @@ behavior of the builtin lattices, which are likely to be correct.
 \begin{lstlisting}
 module KvsProtocol
   state do
-    channel :kvput, [:req_id, :@addr] => [:key, :value, :client_addr]
-    channel :kvput_response, [:req_id] => [:@addr, :replica_addr]
-    channel :kvget, [:req_id, :@addr] => [:key, :client_addr]
-    channel :kvget_response, [:req_id] => [:@addr, :value, :replica_addr]
+    channel :kvput, [:reqid, :@addr] => [:key, :val,
+                                         :client_addr]
+    channel :kvput_resp, [:reqid] => [:@addr, :replica_addr]
+    channel :kvget, [:reqid, :@addr] => [:key, :client_addr]
+    channel :kvget_resp, [:reqid] => [:@addr, :val,
+                                      :replica_addr]
   end
 end
 \end{lstlisting}
@@ -32,24 +34,69 @@ end
 \label{fig:kvs-interface}
 \end{figure}
 
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+class KvsReplica
+  include Bud
+  include KvsProtocol
+
+  state { lmap :kv_store } (*\label{line:kvs-map-ddl}*)
+
+  bloom do
+    kv_store   <= kvput {|c| {c.key => c.val}} (*\label{line:kvs-put-merge}*)
+    kvput_resp <~ kvput {|c| [c.reqid, c.client_addr, ip_port]}
+    kvget_resp <~ kvget {|c| [c.reqid, c.client_addr,
+                              kv_store.at(c.key), ip_port]}
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{KVS replica implementation in \lang.}
+\label{fig:kvs-replica}
+\end{figure}
+
 Key-value stores (KVS) such as Chord~\cite{Stoica2001} and
 Dynamo~\cite{DeCandia2007} are a popular choice for distributed storage. A KVS
 provides a lookup service that allows client applications to retrieve the
 \emph{value} associated with a given \emph{key}. In a typical KVS, key-value
 pairs are replicated on multiple server replicas for redundancy and the keyspace
 is partitioned in some fashion to improve aggregate storage and
-throughput. \emph{Eventual consistency} is a common correctness criteria: the
-KVS guarantees that after all client updates have reached all storage nodes, all
-the replicas of a key-value pair will converge to the same final
-state~\cite{vogels}.
+throughput. \emph{Eventual consistency} is a common correctness criteria: after
+all client updates have reached all storage nodes, all the replicas of a
+key-value pair will converge to the same final state~\cite{vogels}.
 
 Figure~\ref{fig:kvs-interface} shows a simple KVS interface in \lang. Client
-applications submit \emph{get(key)} and \texttt{put(key, val)} operations by
+applications submit \emph{get(key)} and \emph{put(key, val)} operations by
 inserting into the \texttt{kvget} and \texttt{kvput} channels, respectively;
-server replicas return responses by sending back corresponding messages via the
-\texttt{kvget\_response} and \texttt{kvput\_response} channels.
+server replicas return responses via the \texttt{kvget\_resp} and
+\texttt{kvput\_resp} channels.
+
+Figure~\ref{fig:kvs-replica} contains the \lang code for a KVS server
+replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
+and values (line~\ref{line:kvs-map-ddl}). Since the values in an \texttt{lmap}
+lattice must themselves be lattice elements, for now we assume that clients only
+want to store and lattice values; we discuss how to support arbitrary values in
+Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)} request, a new
+\emph{key} $\to$ \emph{val} map is created and merged into \texttt{kv\_store}
+(line~\ref{line:kvs-put-merge}). If \texttt{kv\_store} already contains a value
+for the given key, the two values will be merged together using the value
+lattice's merge function (see Section~\ref{sec:lattice-built-ins} for
+details). Note that \texttt{ip\_port} is a builtin function provided by Bud that
+returns the IP address and port number of the current Bud instance. We use the
+\lang features described in Section~\ref{sec:bloom-interop} to enable
+interoperability between code that accesses traditional Bloom collections (e.g.,
+channels) and lattices (e.g., the \texttt{kv\_store} lattice).
+
+The state of two replicas can be synchronized by simply exchanging their
+\texttt{kv\_store} maps; the \texttt{lmap} merge function will automatically
+resolve all conflicting updates made to the same key.
+% TODO: (1) finish repl discussion (composition, replication strat) (2) partitioning
 
 \subsection{Object Versioning}
+\label{sec:kvs-versions}
+The KVS design proposed so far is sufficient for associating keys with lattice
+values.
 
 \subsubsection{Vector Clocks}
 
