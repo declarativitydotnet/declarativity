@@ -27,4 +27,3 @@ class VectorClock
   end
 end
 
-v = VectorClock.new
