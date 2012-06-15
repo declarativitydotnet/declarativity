@@ -75,7 +75,6 @@ applications submit \emph{get(key)} and \emph{put(key, val)} operations by
 inserting into the \texttt{kvget} and \texttt{kvput} channels, respectively;
 server replicas return responses via the \texttt{kvget\_resp} and
 \texttt{kvput\_resp} channels.
-\paa{what is kvput\_response for?  will I learn in section 5.2?}
 
 Figure~\ref{fig:kvs-replica} contains the \lang code for a KVS server
 replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
@@ -102,10 +101,17 @@ considerable flexibility in how replicas can choose to propagate updates.
 
 \subsection{Object Versioning}
 \label{sec:kvs-versions}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{fig/kvs-vc-lattice.pdf}
+\caption{Lattice structure of a KVS with object versioning. Rectangles are
+  lattices and ovals are atomic values.}
+\label{fig:kvs-vc-lattices}
+\end{figure}
 
-The initial KVS design is sufficient for applications that want to store
+The basic KVS design is sufficient for applications that want to store
 monotonically increasing values, such as session logs or increasing counters. To
-allow arbitrary updates to be made to the stored values, we now consider how to
+allow storage of values that change in arbitrary ways, we now consider how to
 support \emph{object versions}. This is a classic technique for recognizing
 mutual inconsistency between members of a distributed system~\cite{Parker1983};
 our design is similar to that used by Dynamo~\cite{DeCandia2007}.
@@ -137,18 +143,55 @@ between events~\cite{Fidge1988}. A vector clock is a map from node identifiers
 to logical clocks. Each event $e$ is associated with a vector clock $V_e$; if
 $V_e < V_{e'}$, $e$ causally precedes $e'$.
 
-In \lang, vector clocks can be represented as an \texttt{lmap} that maps node
-identifiers to \texttt{lmax} values. This seems reasonable, since logical clock
-values (\texttt{lmax}) can only increase over time. The merge function provided
-by \texttt{lmap} achieves the desired semantics.
+In \lang, a vector clock can be represented as an \texttt{lmap} that maps node
+identifiers to \texttt{lmax} values. \texttt{lmax} is appropriate, since the
+logical clock value associated with a given node will only increase over
+time. The merge function provided by \texttt{lmap} achieves the desired
+semantics.
 
 \subsubsection{Version-Value Pairs}
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.8\linewidth]{fig/kvs-vc-lattice.pdf}
-\caption{Nested lattices in a KVS with object versioning.}
-\label{fig:kvs-vc-lattices}
-\end{figure}
+We now turn to representing $\langle\textit{vector-clock},\textit{value}\rangle$
+in \lang. To do this, we define a new lattice \texttt{lpair} that ``wraps'' two
+lattice elements; we use ``fst'' and ``snd'' to refer to the first and second
+elements of a pair, respectively. The discussion above suggests a natural least
+upper bound operator for \texttt{lpair}:
+\begin{displaymath}
+  A \sqcup B = \left\{
+    \begin{array}{l l}
+      A & \textrm{if } A.\textit{fst} > B.\textit{fst} \\
+      B & \textrm{if } A.\textit{fst} < B.\textit{fst} \\
+      \langle A.\textit{fst} \sqcup B.\textit{fst}, A.\textit{snd} \sqcup B.\textit{snd}\rangle & \textrm{otherwise} \\
+    \end{array} \right. 
+\end{displaymath}
+This implements the desired semantics: given two candidate values for a key, the
+candidate with the strictly greater version number should be preferred. When the
+two versions are incomparable, a new \texttt{lpair} should be formed by merging
+both elements of the input pairs with one another. In the case of the KVS,
+\emph{fst} is a vector clock, while \emph{snd} is the user's data; applying the
+least upper bound for the \emph{snd} lattice corresponds to invoking a
+user-defined merge function.
 
+Note that although the \emph{fst} of an \texttt{lpair} will increase over time
+(as new ``versions'' are received), the \emph{snd} may not (a newer version
+might not contain a larger \emph{snd} value). Again, this is the behavior we
+expect.
 
-\subsection{Quorum Replication}
+\subsubsection{Discussion}
+Surprisingly, extending the KVS to support object versioning does not require
+\emph{any} changes to the KVS replica code! Instead, clients simply store
+\texttt{lpair} values containing a vector clock as the first element and
+increment their position in the vector clock when submitting updates. The KVS
+replica merges these \texttt{lpair} values into an \texttt{lmap} as usual; the
+merge function of \texttt{lpair} handles conflict resolution in the appropriate
+manner.
+
+\subsection{Quorum Reads and Writes}
+A common KVS feature is the ability to submit reads and writes to a configurable
+number of nodes. If a client reads from $R$ nodes and writes to $W$ nodes in a
+KVS with $N$ replicas, the user can set $R + W > N$ to achieve behavior
+equivalent to a quorum replication system~\cite{Gifford1979}. This system allows
+users to vary $R$ and $W$ on a per-operation basis, depending on the consistency
+and durability requirements of their operations.
+
+To support this feature, we can reuse the \lang quorum voting pattern first
+introduced in 
