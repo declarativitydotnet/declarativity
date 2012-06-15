@@ -178,7 +178,8 @@ new versions are received), the \emph{snd} may not (a newer version might
 contain a ``smaller'' \emph{snd}). Again, this is the desired behavior.
 
 \subsubsection{Discussion}
-Surprisingly, extending the KVS to support object versioning did not require
+Figure~\ref{fig:kvs-vc-lattices} shows the lattices used in the KVS with object
+versioning. Surprisingly, adding support for object versioning did not require
 \emph{any} changes to the KVS replica code! Instead, clients simply store
 \texttt{lpair} values containing a vector clock as the first element and
 increment their position in the vector clock when submitting updates. The KVS
