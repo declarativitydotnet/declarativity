@@ -48,7 +48,7 @@ databases and systems~\cite{Farrag1989,Garcia-Molina1983,O'Neil1986,Helland2009,
 groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a formalism
 for these approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs),
 which casts these ideas into the algebraic framework of {\em
-  semi-lattices}~\cite{Shapiro2011a,Shapiro2011b}.
+  semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
 
 CRDTs present two main problems: (a) the programmer bears responsibilty for ensuring that lattice properties hold for their methods (commutativity, associativity, idempotence), and (b) CRDTs only provide guarantees for individual data objects, not for application logic in general. As an example of this second point, consider the following:
 
@@ -82,22 +82,22 @@ trust.
 \textbf{Monotonic Logic}: In recent work, we observed that the database theory
 literature on monotonic logic provides a powerful lens for reasoning about
 distributed consistency. Intuitively, a monotonic program makes forward progress
-on each input: it never ``retracts'' an earlier conclusion in the face of new
+over time: it never ``retracts'' an earlier conclusion in the face of new
 information. We proposed the CALM theorem, which established that all monotonic
 programs are \emph{confluent} (invariant to message reordering and retry) and
 hence eventually
 consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-confluence}. Monotonicity
-of a Datalog program is straightforward to determine conservatively from
-syntax, so the CALM theorem provides the basis for a simple analysis technique
-for verifying the consistency of distributed programs. We concretized CALM into
-an analysis procedure for \emph{Bloom}, a Datalog-based language for distributed
+of a Datalog program is straightforward to determine conservatively from syntax,
+so the CALM theorem provides the basis for a simple analysis technique for
+verifying the consistency of distributed programs. We concretized CALM into an
+analysis procedure for \emph{Bloom}, a Datalog-based language for distributed
 programming~\cite{Alvaro2011,bloom}
 
 The original formulation of CALM and Bloom only verified the consistency of
 programs that compute sets of facts that grow over time (``set monotonicity'');
-that is, ``forward progress'' was defined according to set containment. As a practical
-matter, this is overly conservative: it precludes the use of common monotonically-increasing
-constructs such as timestamps and sequence numbers. 
+that is, ``forward progress'' was defined according to set containment. As a
+practical matter, this is overly conservative: it precludes the use of common
+monotonically increasing constructs such as timestamps and sequence numbers.
 
 \vspace{-0.25em}
 \begin{example}  In a
