@@ -80,7 +80,7 @@ replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
 and values (line~\ref{line:kvs-map-ddl}). Since the values in an \texttt{lmap}
 lattice must themselves be lattice elements, for now we assume that clients only
 want to store and retrieve lattice values; we discuss how to support arbitrary
-values in Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)}
+values in Section~\ref{sec:kvs-versions}. \jmh{Ref statebox again?}  To handle a \emph{put(key, val)}
 request, a new \emph{key} $\to$ \emph{val} map is created and merged into
 \texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
 already contains a value for the given key, the two values will be merged
