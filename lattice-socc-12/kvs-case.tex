@@ -199,8 +199,8 @@ not including whitespace or comments~\cite{voldemort-vector-clock}. In \lang,
 vector clocks follow directly from the composition of the \texttt{lmap} and
 \texttt{lmax} lattices; the entire KVS requires only 53 lines of Ruby and \lang
 code, including the client library. The \texttt{lpair} lattice required 30 lines
-of Ruby but is completely generic, and would be suitable for inclusion among the
-\lang built-in lattices.
+of Ruby but is completely generic, and would be suitable for inclusion as a
+built-in lattice.
 
 \subsection{Quorum Reads and Writes}
 A common KVS feature is the ability to submit reads and writes to a configurable
