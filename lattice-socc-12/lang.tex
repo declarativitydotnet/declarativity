@@ -331,15 +331,26 @@ Lattices can also define any number of monotone functions, morphisms, and
 non-monotonic methods. The syntax for declaring morphisms and monotone functions
 can be seen in lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
 \ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
-Figure~\ref{fig:lattice-lset}, respectively. Because lattice methods can contain
-arbitrary Ruby code, the lattice developer should be careful to ensure that
-lattice methods satisfy the appropriate algebraic properties. For example,
-implementing a lattice method might require examining the underlying Ruby value
-contained in another lattice element. This can be done using the \texttt{reveal}
-method (e.g., line~\ref{line:lset-reveal} in Figure~\ref{fig:lattice-lset}).
-Since \texttt{reveal} is not itself monotonic, developers should use it
-carefully when implementing monotonic lattice methods.
-% Tweak this text
+Figure~\ref{fig:lattice-lset}, respectively. Note that lattice elements are
+\emph{immutable}---that is, lattice methods (including \texttt{merge} methods)
+must return new values, rather than destructively modifying any of their inputs.
+% explain why?
+
+%  (e.g., \texttt{merge} functions construct a new lattice element
+% rather than destructively modifying one of their inputs). Efficient lattice
+% implementations will often \emph{share structure} on merge operations, as is
+% common practice for immutable data structures in functional programming
+% languages~\cite{Okasaki1999}. % XXX: not the right place for this?
+
+
+% Because lattice methods can contain arbitrary Ruby code, the lattice developer
+% should be careful to ensure that lattice methods satisfy the appropriate
+% algebraic properties. For example, implementing a lattice method might require
+% examining the underlying Ruby value contained in another lattice element. This
+% can be done using the \texttt{reveal} method (e.g.,
+% line~\ref{line:lset-reveal} in Figure~\ref{fig:lattice-lset}).  Since
+% \texttt{reveal} is not itself monotonic, developers should use it carefully
+% when implementing monotonic lattice methods.  Tweak this text
 
 Because Ruby is dynamically typed, there will often be constraints on the legal
 inputs to lattice methods that cannot be enforced until runtime. For example,
@@ -347,11 +358,11 @@ initializing an \texttt{lbool} lattice with a non-boolean value is not
 supported. The developer of a lattice implementation should check for invalid
 inputs and signal errors by raising a Ruby exception.
 
-Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions construct
-a new lattice element rather than destructively modifying one of their
-inputs). Efficient lattice implementations will often \emph{share structure} on merge
-operations, as is common practice for immutable data structures in functional
-programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
+% Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions construct
+% a new lattice element rather than destructively modifying one of their
+% inputs). Efficient lattice implementations will often \emph{share structure} on merge
+% operations, as is common practice for immutable data structures in functional
+% programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
 
 % XXX: awkward placement for this paragraph
 Custom lattices must define a keyword that can be used in \lang state
