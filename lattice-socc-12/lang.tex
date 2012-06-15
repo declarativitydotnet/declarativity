@@ -475,12 +475,12 @@ program has exactly one ultimate model for every input, we say that it is
 confluent: all message delivery orders result in the same eventual state.
 
 To reason about confluence in \lang, we first observe that lattices are
-guaranteed (as are CRDTs) to have inflationary behavior over time: a lattice
-value only increases.  Hence if we include lattices in the output of an
-otherwise confluent \lang program, they will not increase the number of ultimate
-models.  It is not enough, however, that this local property of lattice objects
-holds: we must also show that anything a \lang program \emph{does} with a
-lattice value is monotonic.  Monotone lattice methods provide a mechanism for
-reasoning about composition of lattices or between lattices and collections.  By
-including monotone lattice methods among the ``safe,'' monotonic constructs
-provided by the Bloom language, we can easily extend our CALM analysis to \lang.
+guaranteed to have inflationary behavior over time: a lattice value only
+increases.  Hence if we include lattices in the output of an otherwise confluent
+\lang program, they will not increase the number of ultimate models.  It is not
+enough, however, that this local property of lattice objects holds: we must also
+show that anything a \lang program \emph{does} with a lattice value is
+monotonic.  Monotone lattice methods provide a mechanism for reasoning about
+composition of lattices or between lattices and collections.  By including
+monotone lattice methods among the ``safe,'' monotonic constructs provided by
+the Bloom language, we can easily extend our CALM analysis to \lang.
