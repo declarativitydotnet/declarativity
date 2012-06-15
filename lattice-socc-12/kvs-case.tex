@@ -178,13 +178,18 @@ new versions are received), the \emph{snd} may not (a newer version might
 contain a ``smaller'' \emph{snd}). Again, this is the desired behavior.
 
 \subsubsection{Discussion}
-Surprisingly, extending the KVS to support object versioning does not require
+Surprisingly, extending the KVS to support object versioning did not require
 \emph{any} changes to the KVS replica code! Instead, clients simply store
 \texttt{lpair} values containing a vector clock as the first element and
 increment their position in the vector clock when submitting updates. The KVS
 replica merges these \texttt{lpair} values into an \texttt{lmap} as usual; the
 merge function of \texttt{lpair} handles conflict resolution in the appropriate
-manner.
+manner. Moreover, by composing the KVS from a collection of simple lattices, we
+found it easy to reason about the behavior of the system. For example,
+convincing ourselves that the KVS replicas will eventually converge only
+required checking that the individual \texttt{lmap}, \texttt{lmax}, and
+\texttt{lpair} lattices satisfy the lattice properties, rather than analyzing
+the behavior of the system as a whole.
 
 Our design compares favorably to traditional implementations of object
 versioning and vector clocks. For example, the implementation of vector clocks
@@ -192,7 +197,9 @@ in Voldemort (a popular key-value store) requires 216 lines of Java source code,
 not including whitespace or comments~\cite{voldemort-vector-clock}. In \lang,
 vector clocks follow directly from the composition of the \texttt{lmap} and
 \texttt{lmax} lattices; the entire KVS requires only 53 lines of Ruby and \lang
-code, including the client library.
+code, including the client library. The \texttt{lpair} lattice required 30 lines
+of Ruby but is completely generic, and would be suitable for inclusion among the
+\lang built-in lattices.
 
 \subsection{Quorum Reads and Writes}
 A common KVS feature is the ability to submit reads and writes to a configurable
@@ -207,8 +214,8 @@ To support this feature, we can use the \lang quorum voting pattern first
 introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
 systems, the KVS client accumulates \texttt{kvput\_response} messages into an
 \texttt{lset}. Testing for quorum can be done in a monotonic fashion by mapping
-the \texttt{lset} to an \texttt{lmax} (using the \emph{size}) method, and then
-performing a threshold test \texttt{gt\_eq} on the \texttt{lmax}. As expected,
+the \texttt{lset} to an \texttt{lmax} (using the \texttt{size} method), and then
+performing a threshold test using \texttt{gt\_eq} on \texttt{lmax}. As expected,
 this is monotonic: once quorum has been reached, it will never be retracted.
 
 Quorum reads work in a similar fashion, except that the client must also merge
