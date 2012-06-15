@@ -189,9 +189,21 @@ manner.
 A common KVS feature is the ability to submit reads and writes to a configurable
 number of nodes. If a client reads from $R$ nodes and writes to $W$ nodes in a
 KVS with $N$ replicas, the user can set $R + W > N$ to achieve behavior
-equivalent to a quorum replication system~\cite{Gifford1979}. This system allows
-users to vary $R$ and $W$ on a per-operation basis, depending on the consistency
-and durability requirements of their operations.
+equivalent to a quorum replication system~\cite{Gifford1979}, or use smaller
+values of $R$ and $W$ if eventual consistency is sufficient. This scheme allows
+users to vary $R$ and $W$ on a per-operation basis, depending on their
+consistency and durability requirements.
 
-To support this feature, we can reuse the \lang quorum voting pattern first
-introduced in 
+To support this feature, we can use the \lang quorum voting pattern first
+introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
+systems, the KVS client accumulates \texttt{kvput\_response} messages into an
+\texttt{lset}. Testing for quorum can be done in a monotonic fashion by mapping
+the \texttt{lset} to an \texttt{lmax} (using the \emph{size}) method, and then
+performing a threshold test \texttt{gt\_eq} on the \texttt{lmax}. As expected,
+this is monotonic: once quorum has been reached, it will never be retracted.
+
+Read quorums work in a similar fashion, except that a client must also merge
+together the $R$ different versions of the value it receives (so-called ``read
+repair''~\cite{DeCandia2007}). This follows naturally from the discussion in
+Section~\ref{sec:kvs-versions}: the client can simply take the least upper bound
+of all the values it receives, which produces the expected behavior.
