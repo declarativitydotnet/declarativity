@@ -45,12 +45,12 @@ merges conflicting updates to data items in a key-value store; the user of the
 library need only register commutative, associative, idempotent merge
 functions~\cite{statebox}. This approach has roots in research in
 databases and systems~\cite{Farrag1989,Garcia-Molina1983,O'Neil1986,Helland2009,Terry1995} as well as
-groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a formalism
+groupware~\cite{Ellis1989,Sun1998}.  Shapiro, et al.\ recently proposed a formalism
 for these approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs),
 which casts these ideas into the algebraic framework of {\em
   semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
 
-CRDTs present two main problems: (a) the programmer bears responsibility for ensuring that lattice properties hold for their methods (commutativity, associativity, idempotence), and (b) CRDTs only provide guarantees for individual data objects, not for application logic in general. As an example of this second point, consider the following:
+CRDTs present two main problems: (a) the programmer bears responsibility for ensuring lattice properties for their methods (commutativity, associativity, idempotence), and (b) CRDTs only provide guarantees for individual data objects, not for application logic in general. As an example of this second point, consider the following:
 
 \vspace{-0.25em}
 \begin{example}
@@ -109,7 +109,7 @@ original CALM analysis.
 \end{example}
 
 \vspace{-.25em}
-Monotonic Logic solves the scope dilemma of CRDTs but presents a \textbf{type dilemma}: sets are the only data type amenable to CALM analysis, but the programmer may have a more natural representation of a monotonically growing phenomenon. For example, a monotonic counter is more naturally represented as a growing integer than a growing set. This dilemma leads either to false negatives in CALM analysis and over-use of coordination, or to idiosyncratic set-based implementations that can be hard to read and maintain.
+The CALM theorem obviates any scoping concerns for convergent monotonic logic, but it presents a \textbf{type dilemma}. Sets are the only data type amenable to CALM analysis, but the programmer may have a more natural representation of a monotonically growing phenomenon. For example, a monotonic counter is more naturally represented as a growing integer than a growing set. This dilemma leads either to false negatives in CALM analysis and over-use of coordination, or to idiosyncratic set-based implementations that can be hard to read and maintain.
 
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 \subsection{\lang: Logic and Lattices}
@@ -140,7 +140,7 @@ function (set union) and partial order (set containment).
   establishing the monotonicity of sub-programs even when the whole program is
   not designed to be monotonic.
 
-\item For efficient incremental execution, we extend the standard Datalog semi-naive
+\item For efficient incremental execution, we show how to extend the standard Datalog semi-naive
   evaluation scheme~\cite{Balbin1987} to support arbitrary lattices. We also describe how an existing Datalog-style engine can be
   extended to support lattices with relatively minor changes.
 \end{enumerate}

@@ -217,7 +217,7 @@ paper we focus on coordination-free designs---that is, monotonic programs.
 
 \subsubsection{Limitations of set monotonicity}
 The original formulation of the CALM theorem considered only programs that
-compute more facts over time---that is, programs whose output \emph{sets} grow
+compute more facts over time---that is, programs whose \emph{sets} grow
 monotonically. Many distributed protocols make progress over time, but their
 notion of ``progress'' is often difficult to represent as a growing set of
 facts. For example, consider the Bloom program in
@@ -233,8 +233,8 @@ It is easy to see that this program makes progress in a semantically monotonic
 fashion: the set of received votes grows and the size of the \texttt{votes}
 collection can only increase, so once a quorum has been reached it will never be
 retracted. Unfortunately, the current CALM analysis would regard this program as
-non-monotonic because it contains aggregation (the grouping operation on
-line~\ref{line:bloom-nm-quorum}).
+non-monotonic because it contains a point of order: the grouping operation on
+line~\ref{line:bloom-nm-quorum}.
 
 To solve this problem, we need to introduce a notion of program values that
 ``grow'' according to a partial order other than set containment. We do this by

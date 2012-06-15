@@ -7,7 +7,7 @@ ensures that the values computed by the programs ``grow'' over time---these
 examples show the various kinds of forward progress that can be encoded using
 \lang.
 
-In the first case study, we show that a distributed key-value store (KVS) can be
+In the first case study, we show that a distributed key-value store can be
 \emph{composed} via a series of monotonic mappings between simple lattices. By
 composing a complex program from simple lattices, we show that \lang's built-in
 lattices are useful; morever, the resulting KVS implementation is concise,
@@ -125,7 +125,7 @@ considerable flexibility in how replicas propagate updates.
 The basic KVS design is sufficient for applications that want to store
 monotonically increasing values, such as session logs or increasing counters. To
 allow storage of values that change in arbitrary ways, we now consider how to
-support \emph{object versions}. This is a classic technique for recognizing
+support \emph{object versions}. This is a classic technique for recognizing and resolving
 mutual inconsistency between members of a distributed system~\cite{Parker1983};
 our design is similar to that used by Dynamo~\cite{DeCandia2007}.
 
@@ -188,8 +188,8 @@ both elements of the input pairs with one another. In the case of the KVS,
 upper bound of the \emph{snd} lattice corresponds to a user-defined merge
 function.\footnote{If the user stores a value that does not have a merge
   function, similar systems typically provide a default merge function that
-  collects conflicting updates for eventual manual resolution by the user. Such
-  a strategy could easily be implemented with \lang.}
+  collects conflicting updates into a set for eventual manual resolution by the user. Such
+  a strategy could easily be implemented monotonically with \lang.}
 
 Note that while the \emph{fst} of a given \texttt{lpair} increases over time (as
 new versions are received), the \emph{snd} may not (a newer version might
@@ -212,13 +212,13 @@ the behavior of the system as a whole.
 
 Our design compares favorably to traditional implementations of object
 versioning and vector clocks. For example, the implementation of vector clocks
-in Voldemort (a popular key-value store) requires 216 lines of Java, not
+alone in Voldemort (a popular key-value store) requires 216 lines of Java, not
 including whitespace or comments~\cite{voldemort-vector-clock}. In \lang, vector
 clocks follow directly from the composition of the \texttt{lmap} and
-\texttt{lmax} lattices; the entire KVS requires only 53 lines of Ruby and \lang
+\texttt{lmax} lattices; the \emph{entire KVS} requires only 53 lines of Ruby and \lang
 code, including the client library. The \texttt{lpair} lattice required 30 lines
 of Ruby but is completely generic, and would be suitable for inclusion as a
-built-in lattice.
+built-in lattice.  \jmh{Does the 53 lines include the 30 of lpair?}
 
 \subsection{Quorum Reads and Writes}
 A common KVS feature is the ability to submit reads and writes to a configurable
@@ -244,3 +244,5 @@ least upper bound of the values it receives, which produces the expected
 behavior. The client can optionally write the merged value back to the KVS
 (so-called ``read repair''~\cite{DeCandia2007}); note that the \texttt{lpair}
 merge method also updates the record's vector clock appropriately.
+
+\jmh{Summarize?}

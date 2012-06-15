@@ -18,14 +18,17 @@ traditional Bloom collections in Section~\ref{sec:bloom-interop}.
 \subsection{Definitions}
 \label{sec:lattice-defn}
 A \emph{bounded join semilattice} is a triple $\langle S, \sqcup, \bot\rangle$,
-where $S$ is a partially ordered set (poset), $\sqcup$ is a binary operator
+where $S$ is a set, $\sqcup$ is a binary operator
 (called ``join'' or ``least upper bound''), and $\bot \in S$. The operator
-$\sqcup$ is associative, commutative, and idempotent. For all $x, y \in S$, $x
-\sqcup y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$
-such that $z' \leq_S z$ (where $\leq_S$ is the partial order of poset $S$). Note
-that although $S$ only has a partial order, the least upper bound is defined for
+$\sqcup$ is associative, commutative, and idempotent. The $\sqcup$ operator induces a partial order $\leq_S$ on the elements of $S$: $x \leq_S y$ if $x \sqcup y = y$.
+% 
+% For all $x, y \in S$, $x
+% \sqcup y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$
+% such that $z' \leq_S z$ (where $\leq_S$ is the partial order of poset $S$). 
+Note
+that although $\leq_S$ is only a partial order, the least upper bound is defined for
 all elements $x,y \in S$. The distinguished element $\bot$ is the smallest
-element in $S$; therefore, $x \sqcup \bot = x$ for every $x \in S$. For brevity,
+element in $S$:  $x \sqcup \bot = x$ for every $x \in S$. For brevity,
 we use the term ``lattice'' to mean ``bounded join semilattice'' in the rest of
 this paper. We use the informal term ``merge function'' to mean ``least upper
 bound.''
@@ -98,7 +101,7 @@ moves ``upward'' in the \texttt{lset} lattice). When a lattice identifier is
 declared, it is initially bound to the value $\bot$, the smallest element in the
 lattice. For example, an \texttt{lset} lattice initially contains the empty set.
 
-\begin{table*}[t]
+\begin{table*}[t]\small
 \begin{center}
 \begin{tabular}{|l|p{0.98in}|l|l|p{1.72in}|p{1.18in}|}
 \hline
@@ -173,7 +176,7 @@ line~\ref{line:quorum-size} of Figure~\ref{fig:lattice-quorum} invokes the
 
 If the lhs is a lattice, the statement's operator must be either \verb|<=| or
 \verb|<+| (instantaneous or deferred deduction, respectively). The meaning of
-this operator is that, at either the current or the following timestep, the lhs
+these operators is that, at either the current or the following timestep, the lhs
 identifier will take on the result of applying the lattice's least upper bound
 to the lhs and rhs lattice elements. The intuition remains the same as in Bloom:
 the rhs value is ``merged into'' the lhs lattice, except that the semantics of
@@ -233,7 +236,7 @@ subsequent code uses the value in a monotonic fashion.
 Table~\ref{tbl:built-in-lattices} lists the lattices provided by \lang. The
 built-in lattices provide support for several different notions of ``progress'':
 a predicate that moves from false to true (\texttt{lbool}), a numeric value that
-increases or decreases (\texttt{lmax} and \texttt{lmin}, respectively), and
+strictly increases or strictly decreases (\texttt{lmax} and \texttt{lmin}, respectively), and
 various kinds of collections that grow over time (\texttt{lset}, \texttt{lpset},
 \texttt{lbag}, and \texttt{lmap}). The behavior of most of the lattice methods
 should be unsurprising, so we do not describe every method in this section.
