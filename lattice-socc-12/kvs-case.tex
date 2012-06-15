@@ -128,13 +128,10 @@ the server's version of the record ($V_S$). If $V_U > V_S$, the server replaces
 the stored record with the client's update. If $V_S > V_U$, the update is
 ignored (this situation might arise due to duplication and reordering of
 messages by the network). If $V_U$ and $V_S$ are incomparable, the two versions
-of the record are concurrent, so a client-supplied reconciliation function is
-used to resolve the conflict.
-\paa{my confusion wrt COPS is even more acute here: if there exists a merge
-function for *any* pair of values (which must be true if the values are a
-lattice), why on earth did we care about causal order to begin with?}
+are concurrent, so a client-supplied reconciliation function is used to resolve
+the conflict.
 
-From a \lang perspective, each replica still stores a monotically increasing
+From a \lang perspective, each replica still stores a monotonically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
 a replica increases over time, rather than the associated value. Hence, we now
 consider how to support vector clocks and version-value pairs using \lang.
@@ -155,9 +152,9 @@ semantics.
 \subsubsection{Version-Value Pairs}
 We now turn to representing $\langle\textit{vector-clock},\textit{value}\rangle$
 in \lang. To do this, we define a new lattice \texttt{lpair} that ``wraps'' two
-lattice elements; we use ``fst'' and ``snd'' to refer to the first and second
-elements of a pair, respectively. The discussion above suggests a natural least
-upper bound operator for \texttt{lpair}:
+lattice elements; we use \emph{fst} and \emph{snd} to refer to the first and
+second elements of an \texttt{lpair}, respectively. The discussion above
+suggests a natural least upper bound for \texttt{lpair}:
 \begin{displaymath}
   A \sqcup B = \left\{
     \begin{array}{l l}
@@ -172,12 +169,14 @@ two versions are incomparable, a new \texttt{lpair} should be formed by merging
 both elements of the input pairs with one another. In the case of the KVS,
 \emph{fst} is a vector clock, while \emph{snd} is the user's data; applying the
 least upper bound for the \emph{snd} lattice corresponds to invoking a
-user-defined merge function.
+user-defined merge function.\footnote{If the user stores a value that does not
+  have a merge function, similar systems typically provide a default merge
+  function that collects conflicting updates for eventual manual resolution by
+  the user. Such a strategy could easily be implemented with \lang.}
 
-Note that although the \emph{fst} of an \texttt{lpair} will increase over time
-(as new ``versions'' are received), the \emph{snd} may not (a newer version
-might not contain a larger \emph{snd} value). Again, this is the behavior we
-expect.
+Note that while the \emph{fst} of a given \texttt{lpair} increases over time (as
+new versions are received), the \emph{snd} may not (a newer version might
+contain a ``smaller'' \emph{snd}). Again, this is the desired behavior.
 
 \subsubsection{Discussion}
 Surprisingly, extending the KVS to support object versioning does not require
@@ -188,6 +187,14 @@ replica merges these \texttt{lpair} values into an \texttt{lmap} as usual; the
 merge function of \texttt{lpair} handles conflict resolution in the appropriate
 manner.
 
+Our design compares favorably to traditional implementations of object
+versioning and vector clocks. For example, the implementation of vector clocks
+in Voldemort (a popular key-value store) requires 216 lines of Java source code,
+not including whitespace or comments~\cite{voldemort-vector-clock}. In \lang,
+vector clocks follow directly from the composition of the \texttt{lmap} and
+\texttt{lmax} lattices; the entire KVS requires only 53 lines of Ruby and \lang
+code, including the client library.
+
 \subsection{Quorum Reads and Writes}
 A common KVS feature is the ability to submit reads and writes to a configurable
 number of nodes. If a client reads from $R$ nodes and writes to $W$ nodes in a
@@ -196,10 +203,6 @@ equivalent to a quorum replication system~\cite{Gifford1979}, or use smaller
 values of $R$ and $W$ if eventual consistency is sufficient. This scheme allows
 users to vary $R$ and $W$ on a per-operation basis, depending on their
 consistency and durability requirements.
-\paa{if R+W > N we don't need vector clocks or values drawn from a lattice,
-right?  so the code described in sections 5.1 and 5.2 is only active in the 
-"EC mode" -- yes?
-}
 
 To support this feature, we can use the \lang quorum voting pattern first
 introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
@@ -209,11 +212,11 @@ the \texttt{lset} to an \texttt{lmax} (using the \emph{size}) method, and then
 performing a threshold test \texttt{gt\_eq} on the \texttt{lmax}. As expected,
 this is monotonic: once quorum has been reached, it will never be retracted.
 
-Read quorums work in a similar fashion, except that a client must also merge
-together the $R$ different versions of the value it receives (so-called ``read
+Quorum reads work in a similar fashion, except that the client must also merge
+together the $R$ different versions of the record it receives (so-called ``read
 repair''~\cite{DeCandia2007}). This follows naturally from the discussion in
 Section~\ref{sec:kvs-versions}: the client can simply take the least upper bound
-of all the values it receives, which produces the expected behavior.
-\paa{need to check the ref, but I thought read repair implies read operations 
-actually mutating (repairing) replica state, not just client-side 
-reconciliation}
+of all the values it receives, which produces the expected behavior. The client
+can optionally write the merged value back to the KVS; note that the
+\texttt{lpair} merge method also updates the record's vector clock
+appropriately.
