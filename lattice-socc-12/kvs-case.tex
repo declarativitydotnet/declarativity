@@ -66,7 +66,7 @@ provides a lookup service that allows client applications to retrieve the
 \emph{value} associated with a given \emph{key}. In a typical KVS, key-value
 pairs are replicated on multiple server replicas for redundancy and the keyspace
 is partitioned in some fashion to improve aggregate storage and
-throughput. \emph{Eventual consistency} is a common correctness criteria: after
+throughput. \emph{Eventual consistency} is a common correctness criterion: after
 all client updates have reached all storage nodes, all the replicas of a
 key-value pair will converge to the same final state~\cite{Terry1995,vogels}.
 
