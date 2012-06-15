@@ -7,16 +7,29 @@ ensures that the values computed by the programs ``grow'' over time---these
 examples show the various kinds of forward progress that can be encoded using
 \lang.
 
-In the first case study, we show that a distributed key-value store can be
-\emph{composed} via a series of monotone mappings between simple lattices. This
-demonstrates that \lang's built-in lattices are useful and results in a very
-concise implementation. Moreover, it gives us confidence in the correctness of
-our implementation, because much of the program's complexity is handled by the
-behavior of the built-in lattices, which are likely to be correct.
-\paa{not sure what to suggest, but this last clause seems underconfident 
-(and slightly run-on).
-perhaps we just want to say that we assert them to be correct, or that it's easy
-to prove/convince ourselves that they are correct due to their simplicity, etc}
+In the first case study, we show that a distributed key-value store (KVS) can be
+\emph{composed} via a series of monotonic mappings between simple lattices. By
+composing a complex program from simple lattices, we show that \lang's built-in
+lattices are useful; morever, the resulting KVS implementation is concise,
+readable, and has clear semantics.
+
+%  This
+% demonstrates that \lang's built-in lattices are useful and yields a very concise
+% implementation. Morever, using lattice composition gave us confidence in the
+% correctness of our code, because much of the program's complexity resides in
+% simple built-in lattices that we 
+
+%  More importantly, composing a complex program from simple
+% lattices made it easy to reason about the behavior of the entire program
+
+%  and results in a very
+% concise implementation. Moreover, it gives us confidence in the correctness of
+% our implementation, because much of the program's complexity is handled by the
+% behavior of the built-in lattices, which are likely to be correct.  \paa{not
+%   sure what to suggest, but this last clause seems underconfident (and slightly
+%   run-on).  perhaps we just want to say that we assert them to be correct, or
+%   that it's easy to prove/convince ourselves that they are correct due to their
+%   simplicity, etc}
 
 \subsection{Basic Architecture}
 \begin{figure}[t]
@@ -60,6 +73,7 @@ end
 \label{fig:kvs-replica}
 \end{figure}
 
+% duplicate introduction of KVS acronym -- remove?
 A key-value store (KVS) provides a lookup service that allows client
 applications to retrieve the \emph{value} associated with a given \emph{key}. In
 a typical KVS, key-value pairs are replicated on multiple server replicas for
@@ -150,7 +164,7 @@ semantics.
 
 \subsubsection{Version-Value Pairs}
 We now turn to representing $\langle\textit{vector-clock},\textit{value}\rangle$
-in \lang. To do this, we define a new lattice \texttt{lpair} that ``wraps'' two
+pairs. To do this, we define a new lattice \texttt{lpair} that ``wraps'' two
 lattice elements; we use \emph{fst} and \emph{snd} to refer to the first and
 second elements of an \texttt{lpair}, respectively. The discussion above
 suggests a natural least upper bound for \texttt{lpair}:
@@ -166,12 +180,12 @@ This implements the desired semantics: given two candidate values for a key, the
 candidate with the strictly greater version number should be preferred. When the
 two versions are incomparable, a new \texttt{lpair} should be formed by merging
 both elements of the input pairs with one another. In the case of the KVS,
-\emph{fst} is a vector clock, while \emph{snd} is the user's data; applying the
-least upper bound for the \emph{snd} lattice corresponds to invoking a
-user-defined merge function.\footnote{If the user stores a value that does not
-  have a merge function, similar systems typically provide a default merge
-  function that collects conflicting updates for eventual manual resolution by
-  the user. Such a strategy could easily be implemented with \lang.}
+\emph{fst} is a vector clock, while \emph{snd} is the user's data; the least
+upper bound of the \emph{snd} lattice corresponds to a user-defined merge
+function.\footnote{If the user stores a value that does not have a merge
+  function, similar systems typically provide a default merge function that
+  collects conflicting updates for eventual manual resolution by the user. Such
+  a strategy could easily be implemented with \lang.}
 
 Note that while the \emph{fst} of a given \texttt{lpair} increases over time (as
 new versions are received), the \emph{snd} may not (a newer version might
