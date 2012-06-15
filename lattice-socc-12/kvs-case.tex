@@ -130,6 +130,9 @@ ignored (this situation might arise due to duplication and reordering of
 messages by the network). If $V_U$ and $V_S$ are incomparable, the two versions
 of the record are concurrent, so a client-supplied reconciliation function is
 used to resolve the conflict.
+\paa{my confusion wrt COPS is even more acute here: if there exists a merge
+function for *any* pair of values (which must be true if the values are a
+lattice), why on earth did we care about causal order to begin with?}
 
 From a \lang perspective, each replica still stores a monotically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
@@ -193,6 +196,10 @@ equivalent to a quorum replication system~\cite{Gifford1979}, or use smaller
 values of $R$ and $W$ if eventual consistency is sufficient. This scheme allows
 users to vary $R$ and $W$ on a per-operation basis, depending on their
 consistency and durability requirements.
+\paa{if R+W > N we don't need vector clocks or values drawn from a lattice,
+right?  so the code described in sections 5.1 and 5.2 is only active in the 
+"EC mode" -- yes?
+}
 
 To support this feature, we can use the \lang quorum voting pattern first
 introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
@@ -207,3 +214,6 @@ together the $R$ different versions of the value it receives (so-called ``read
 repair''~\cite{DeCandia2007}). This follows naturally from the discussion in
 Section~\ref{sec:kvs-versions}: the client can simply take the least upper bound
 of all the values it receives, which produces the expected behavior.
+\paa{need to check the ref, but I thought read repair implies read operations 
+actually mutating (repairing) replica state, not just client-side 
+reconciliation}
