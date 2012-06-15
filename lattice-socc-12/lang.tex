@@ -12,10 +12,8 @@ also show how users can define their own lattice types.
 When designing \lang, we decided to extend Bloom to include support for lattices
 rather than building a new language from scratch. Hence, \lang is backward
 compatible with Bloom and was implemented with relatively minor changes to the
-Bud runtime. This design decision also required that we consider how code
-written using lattices should interoperate with traditional Bloom collections. We
-added several \lang features to ease this interoperability, which we describe in
-Section~\ref{sec:bloom-interop}.
+Bud runtime. We describe how code written using lattices can interoperate with
+traditional Bloom collections in Section~\ref{sec:bloom-interop}.
 
 \subsection{Definitions}
 \label{sec:lattice-defn}
@@ -29,8 +27,8 @@ that although $S$ only has a partial order, the least upper bound is defined for
 all elements $x,y \in S$. The distinguished element $\bot$ is the smallest
 element in $S$; therefore, $x \sqcup \bot = x$ for every $x \in S$. For brevity,
 we use the term ``lattice'' to mean ``bounded join semilattice'' in the rest of
-this paper. We also use the informal term ``merge function'' to mean ``least
-upper bound.''
+this paper. We use the informal term ``merge function'' to mean ``least upper
+bound.''
 
 % XXX: note that algebraic properties that must be satisfied by morphisms and
 % monotone functions
@@ -182,10 +180,10 @@ the rhs value is ``merged into'' the lhs lattice, except that the semantics of
 the merge operation are defined by the lattice's least upper bound operator. We
 require that the lhs and rhs refer to a lattice of the same type.
 
-\lang does not currently support a notion of deletion (\verb|<-| operator) for
-lattices. Lattices do not directly support asynchronous communication (via the
-\verb|<~| operator) but lattice elements can be embedded into tuples that appear
-in channels (Section~\ref{sec:lattice-embedding}).
+\lang does not support deletion (\verb|<-| operator) for lattices. Lattices do
+not directly support asynchronous communication (via the \verb|<~| operator) but
+lattice elements can be embedded into tuples that appear in channels
+(Section~\ref{sec:lattice-embedding}).
 
 \subsubsection{Lattice methods}
 \lang statements compute values over lattices by invoking methods on lattice
