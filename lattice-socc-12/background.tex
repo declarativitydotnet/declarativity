@@ -33,6 +33,7 @@ In this section, we review the Bloom programming language and the CALM program
 analysis.  We highlight a simple distributed program for which the CALM analysis
 yields unsatisfactory results.
 
+\newpage
 \subsection{Bloom}
 \label{sec:bg-bloom}
 
@@ -62,6 +63,7 @@ more details are available on the Bloom language website~\cite{bloom}.
 
 \subsubsection{Data model}
 \begin{table}[t]
+\centering
 \begin{tabular}{|l|p{2.32in}|}
 \hline
 \textbf{Name} & \textbf{Behavior }\\
@@ -107,22 +109,23 @@ arise in our discussion in this paper; the interested reader is referred to the
 Bloom website~\cite{bloom}.
 
 \subsubsection{Statements}
-\begin{table}
+\begin{table}[t]
+\centering
 \begin{tabular}{|c|l|p{1.85in}|}
 \hline
 \textbf{Op} & \textbf{Name} & \textbf{Meaning} \\
 \hline
 \verb|<=| & \emph{merge} & lhs includes the content of rhs in the
-current timestep \\
+current timestep. \\
 \hline
 \verb|<+| & \emph{deferred merge} & lhs will include the content of rhs in the
-next timestep \\
+next timestep. \\
 \hline
 \verb|<-| & \emph{deferred delete} & lhs will not include the content of rhs
-in the next timestep \\
+in the next timestep. \\
 \hline
-\verb|<~| & \emph{async merge} & (remote) lhs will include the content of the
-rhs at some non-deterministic future timestep\\
+\verb|<~| & \emph{async merge} & (Remote) lhs will include the content of the
+rhs at some non-deterministic future timestep. \\
 \hline
 \end{tabular}
 \caption{Bloom operators.}
