@@ -80,17 +80,17 @@ replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
 and values (line~\ref{line:kvs-map-ddl}). Since the values in an \texttt{lmap}
 lattice must themselves be lattice elements, for now we assume that clients only
 want to store and retrieve lattice values; we discuss how to support arbitrary
-values in Section~\ref{sec:kvs-versions}. \jmh{Ref statebox again?}  To handle a \emph{put(key, val)}
-request, a new \emph{key} $\to$ \emph{val} map is created and merged into
-\texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
+values in Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)}
+request, a new \emph{key} $\to$ \emph{val} \texttt{lmap} is created and merged
+into \texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
 already contains a value for the given key, the two values will be merged
 together using the value lattice's merge function (see
 Section~\ref{sec:lattice-built-ins} for details). Note that we use the \lang
 features described in Section~\ref{sec:bloom-interop} to enable interoperability
 between code that accesses traditional Bloom collections (e.g., channels) and
-lattices (e.g., the \texttt{kv\_store} lattice).  Note also that \texttt{ip\_port} is
-a built-in function that returns the IP address and port number of the current
-Bud instance.
+lattices (e.g., the \texttt{kv\_store} lattice).  Note also that
+\texttt{ip\_port} is a built-in function that returns the IP address and port
+number of the current Bud instance.
 
 The state of two replicas can be synchronized by simply exchanging their
 \texttt{kv\_store} maps; the \texttt{lmap} merge function will automatically
@@ -213,17 +213,16 @@ consistency and durability requirements.
 
 To support this feature, we can use the \lang quorum voting pattern first
 introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
-systems, the KVS client accumulates \texttt{kvput\_response} messages into an
+systems, the KVS client accumulates \texttt{kvput\_resp} messages into an
 \texttt{lset}. Testing for quorum can be done in a monotonic fashion by mapping
 the \texttt{lset} to an \texttt{lmax} (using the \texttt{size} method), and then
 performing a threshold test using \texttt{gt\_eq} on \texttt{lmax}. As expected,
 this is monotonic: once quorum has been reached, it will never be retracted.
 
 Quorum reads work in a similar fashion, except that the client must also merge
-together the $R$ different versions of the record it receives (so-called ``read
-repair''~\cite{DeCandia2007}). This follows naturally from the discussion in
-Section~\ref{sec:kvs-versions}: the client can simply take the least upper bound
-of all the values it receives, which produces the expected behavior. The client
-can optionally write the merged value back to the KVS; note that the
-\texttt{lpair} merge method also updates the record's vector clock
-appropriately.
+together the $R$ versions of the record it receives. This follows naturally from
+the discussion in Section~\ref{sec:kvs-versions}: the client simply takes the
+least upper bound of the values it receives, which produces the expected
+behavior. The client can optionally write the merged value back to the KVS
+(so-called ``read repair''~\cite{DeCandia2007}); note that the \texttt{lpair}
+merge method also updates the record's vector clock appropriately.
