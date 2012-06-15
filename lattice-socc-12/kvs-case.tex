@@ -150,14 +150,15 @@ a replica increases over time, rather than the associated value. Hence, we now
 consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
-\nrc{Ugh, TODO.}
 Vector clocks are a well-known mechanism for recording the causal relationships
 between events~\cite{Fidge1988}. A vector clock is a map from node identifiers
-to logical clocks. Each event $e$ is associated with a vector clock $V_e$; if
-$V_e < V_{e'}$, $e$ causally precedes $e'$.
+to logical clocks. Let $V_e$ denote the vector clock associated with event $e$;
+let $V_e(n)$ denote the logical clock of node $n$ in $V_e$. If $V_e < V_{e'}$,
+$e$ causally precedes $e'$, where $V_e < V_{e'} \equiv \forall x [ V_e(x) \leq
+V_{e'}(x) ] \land \exists y [ V_e(x) < V_{e'}(y) ]$.
 
 In \lang, a vector clock can be represented as an \texttt{lmap} that maps node
-identifiers to \texttt{lmax} values. \texttt{lmax} is appropriate, since the
+identifiers to \texttt{lmax} values. \texttt{lmax} is appropriate because the
 logical clock value associated with a given node will only increase over
 time. The merge function provided by \texttt{lmap} achieves the desired
 semantics.
