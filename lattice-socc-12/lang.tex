@@ -185,7 +185,7 @@ require that the lhs and rhs refer to a lattice of the same type.
 \lang does not currently support a notion of deletion (\verb|<-| operator) for
 lattices. Lattices do not directly support asynchronous communication (via the
 \verb|<~| operator) but lattice elements can be embedded into tuples that appear
-in channels (Section~\ref{sec:bloom-interop}).
+in channels (Section~\ref{sec:lattice-embedding}).
 
 \subsubsection{Lattice methods}
 \lang statements compute values over lattices by invoking methods on lattice
@@ -195,7 +195,7 @@ monotone lattice method guarantees that, if the lattice on which the method is
 invoked grows (according to the lattice's partial order), the value returned by
 the method will grow (according to the return value's lattice type). For
 example, the \texttt{size} method provided by the \texttt{lset} lattice is
-monotone, because as more elements are added to the set, the size of the set
+monotone because as more elements are added to the set, the size of the set
 increases. From a CRDT perspective, a lattice's monotone methods constitute a
 ``safe'' interface of operations that can be invoked in a distributed setting
 without risk of inconsistency.
@@ -204,27 +204,27 @@ A lattice method's signature indicates its monotonicity properties. \lang
 distinguishes between methods that are monotone and a subset of monotone methods
 that are \emph{morphisms}. Section~\ref{sec:lattice-defn} defines the properties
 that a morphism must satisfy, but the intuition is that a morphism on lattice
-$T$ can be distributed over $T$'s least upper bound operator. For example, the
+$T$ can be distributed over $T$'s least upper bound. For example, the
 \texttt{size} method provided by the \texttt{lset} lattice is not a morphism. To
 see why, consider two elements of the \texttt{lset} lattice, $\{1,2\}$ and
 $\{2,3\}$.  \texttt{size} is not a morphism because $size(\{1,2\}
 \sqcup_{\mathtt{lset}} \{2,3\}) \ne size(\{1,2\}) \sqcup_{\mathtt{lmax}}
 size(\{2,3\})$. Morphisms can be evaluated more efficiently than monotone
-functions, as we discuss in Section~\ref{sec:lattice-eval-strat}.
+methods, as we discuss in Section~\ref{sec:lattice-eval-strat}.
 
 Lattices can also define non-monotonic methods. Using a non-monotonic lattice
 method is analogous to using a non-monotonic relational operator in Bloom: the
 Bud interpreter stratifies the program to ensure that the input value is
 computed to completion before allowing the non-monotonic method to be
-invoked. Stratification implies that programs with cycles through non-monotonic
-lattice methods will be rejected. \lang encourages developers to minimize the
-use of non-monotonic constructs: as the CALM analysis suggests, non-monotonic
-reasoning may need to be augmented with coordination to ensure consistent
-results.
+invoked. \lang encourages developers to minimize the use of non-monotonic
+constructs: as the CALM analysis suggests, non-monotonic reasoning may need to
+be augmented with coordination to ensure consistent results.
+% Stratification implies that programs with cycles through non-monotonic
+% lattice methods will be rejected. 
 
 Every lattice defines a non-monotonic \texttt{reveal} method that returns a
 representation of the lattice element as a plain Ruby value. For example, the
-\texttt{reveal} method on a \texttt{lset} lattice returns a Ruby array
+\texttt{reveal} method on an \texttt{lset} lattice returns a Ruby array
 containing the contents of the set. This method is non-monotonic because once the
 underlying Ruby value has been extracted from the set, \lang cannot ensure that
 subsequent code uses the value in a monotonic fashion.
