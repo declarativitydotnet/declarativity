@@ -1,29 +1,30 @@
 \section{Introduction}
 \label{sec:intro}
-Although distributed programming has become an essential and commonplace task,
-it remains challenging for most developers to write correct distributed
-programs. The inherent difficulties of distributed computing---asynchrony,
-concurrency, and partial failure---are exacerbated by the scale at which many
-modern systems operate.
-
-% remind reviewers that it's a database problem. can remove if accepted! 
+%Distributed programming has become an essential and commonplace task,
+%but most developers still find it challenging to write correct distributed
+%programs. 
+As cloud computing becomes increasingly common, the inherent difficulties of distributed systems---asynchrony,
+concurrency, and partial failure---affect a growing segment of the developer community.
+Traditionally, transactions and other forms of strong consistency encapsulated these problems at the data management layer.  But in recent years there has been interest in achieving application-level consistency criteria without incurring the latency and availability costs of strongly consistent storage~\cite{Birman2009,Helland2009}.
+% % remind reviewers that it's a database problem. can remove if accepted! 
+% % Much of the discussion about distributed programming today revolves around data
+% % management, and the tradeoffs between transactions and weak
+% % consistency. Programmers using distributed transactions are relieved of
+% % consistency concerns but often face significant performance and operational
+% % challenges~\cite{Birman2009,Helland2009}. By contrast, programmers who use loosely
+% % consistent systems can expect more predictable and low-latency performance, but
+% % must reason explicitly about program correctness over inconsistent distributed
+% % state.
+% 
 % Much of the discussion about distributed programming today revolves around data
 % management, and the tradeoffs between transactions and weak
 % consistency. Programmers using distributed transactions are relieved of
-% consistency concerns but often face significant performance and operational
-% challenges~\cite{Birman2009,Helland2009}. By contrast, programmers who use loosely
-% consistent systems can expect more predictable and low-latency performance, but
-% must reason explicitly about program correctness over inconsistent distributed
-% state.
-
-Much of the discussion about distributed programming today revolves around data
-management, and the tradeoffs between transactions and weak
-consistency. Programmers using distributed transactions are relieved of
-consistency concerns, but the coordination protocols that are needed to achieve
-strong consistency are widely believed to raise unacceptable challenges in
-performance and operational overhead~\cite{Birman2009,Helland2009}. As a result,
-there has been increased interest in techniques for achieving correct program
-behavior without requiring coordination.  Two different frameworks for these
+% consistency concerns, but the coordination mechanisms that guarantee
+% strong consistency are widely believed to raise unacceptable problems in
+% performance and operational overhead~\cite{Birman2009,Helland2009}. As a result,
+% there has been increased interest in techniques for achieving correct program
+% behavior without requiring coordination.  
+Two different frameworks for these
 techniques have received significant attention in recent research:
 \emph{Convergent Modules} and \emph{Monotonic Logic}.
 
@@ -38,28 +39,34 @@ techniques have received significant attention in recent research:
 
 \vspace{0.5em}\noindent
 \textbf{Convergent Modules}: In this approach, a programmer writes encapsulated
-modules whose public methods guarantee certain properties regarding message
+modules whose public methods provide certain guarantees regarding message
 reordering and retry. For example, Statebox is an open-source library that
 merges conflicting updates to data items in a key-value store; the user of the
-library need only register commutative, idempotent merge
+library need only register commutative, associative, idempotent merge
 functions~\cite{statebox}. This approach has roots in research in
-databases~\cite{Farrag1989,Garcia-Molina1983,Helland2009} and
-groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a model
+databases and systems~\cite{Garcia-Molina1983,O'Neil1986,Farrag1989,Terry1995,Helland2009,Helland2009} as well as
+groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a formalism
 for these approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs),
-which formalizes these ideas in the algebraic framework of {\em join
-  semilattices}~\cite{Shapiro2011b}.
+which casts these ideas into the algebraic framework of {\em
+  semi-lattices}~\cite{Shapiro2011b}.
 
-The main problem with the CRDT approach is that it provides guarantees only
-for individual data values, not for application logic in general. For example,
-consider an application that uses a CRDT to represent a mutable set. Suppose the
-application reads a version of the set and computes a derived value~$y$ that is
-conditional on $x$ being present in the set. Concurrently, $x$ is removed from
-the set by another replica. While the CRDT ensures that all replicas will
-eventually agree that $x$ is absent from the set, application-level state may
-remain inconsistent unless the derived value $y$ is updated to reflect the
-removal of $x$. Although the CRDT maintains its own invariants, the programmer
-still bears the burden of ensuring the consistency semantics of the entire
-program.
+CRDTs present two main problems: (a) the programmer bears responsibilty for ensuring that lattice properties hold for their methods (commutativity, associativity, idempotence), and (b) CRDTs only provide guarantees for individual data objects, not for application logic in general. As an example of this second point, consider the following:
+
+\vspace{-0.25em}
+\begin{example}
+A replicated, fault-tolerant courseware application assigns students into study teams.  It uses two \emph{set} CRDTs: one for \emph{Students} and another for \emph{Teams}.  The application reads a version of \emph{Students} and inserts the derived element $<$\emph{Alice,Bob}$>$ into \emph{Teams}. Concurrently, \emph{Bob} is removed from
+\emph{Students} by another application replica. The use of CRDTs ensures that all replicas will
+eventually agree that \emph{Bob} is absent from \emph{Students}, but this is not enough: application-level state
+is inconsistent unless the derived values in \emph{Teams} are updated consistently to reflect \emph{Bob}'s
+removal.  This is outside the scope of CRDT guarantees.
+\end{example}
+
+\vspace{-.25em}
+Taken together, the problems with Convergent Modules present the programmer with a {\bf scoping dilemma}: a small module (e.g., a set) makes lattice properties easy to inspect and test, but provides only simple semantic guarantees. Large CRDTs (e.g., an eventually-consistent shopping cart) provide higher-level application guarantees, but require the programmer to ensure lattice properties for a large codebase, resulting in software that is difficult to test, maintain, and trust.
+% 
+% Although the CRDT maintains its own invariants, the programmer
+% still bears the burden of ensuring the consistency semantics of the
+% program as a whole.
 
 % Many researchers have proposed the use of deductive database languages to enable
 % high-level declarative implementations of distributed systems
@@ -67,33 +74,37 @@ program.
 
 \vspace{0.5em} \noindent
 \textbf{Monotonic Logic}: In recent work, we observed that the database theory
-literature on non-monotonic logic provides a promising starting point for
-reasoning about distributed consistency. Intuitively, a \emph{monotonic} program
-computes more information over time---it never ``retracts'' an earlier
+literature on monotonic logic provides a powerful lens for
+reasoning about distributed consistency. Intuitively, a monotonic program
+makes forward progress on each input: it never ``retracts'' an earlier
 conclusion in the face of new information. We proposed the CALM theorem, which
 established that all monotonic programs are \emph{confluent} (invariant to
-message reordering) and hence eventually
+message reordering and retry) and hence eventually
 consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-confluence}. Monotonicity of
 a Datalog-style program is straightforward to determine conservatively from
 syntax, so the CALM theorem provides the basis for a simple analysis technique
-for verifying the consistency of distributed programs. We realized CALM analysis
-as part of Bloom, a Datalog-based domain-specific language for distributed
-programming~\cite{Alvaro2011,bloom}.
+for verifying the consistency of distributed programs. We concretized CALM 
+into an analysis procedure for \emph{Bloom}, a Datalog-based domain-specific language for distributed
+programming~\cite{Alvaro2011,bloom}
 
-The original formulation of Bloom and CALM only verified the consistency of
+The original formulation of CALM and Bloom only verified the consistency of
 programs that compute sets of facts that grow over time (``set monotonicity'');
-that is, ``growth'' was defined according to set containment. As a practical
-matter, this is overly conservative because it precludes the use of common
-constructs such as timestamps and sequence numbers. For example, consider a
-quorum voting scheme where a coordinator counts the number of votes received
-from participant nodes. A quorum is reached once the number of votes exceeds a
-threshold. This is monotonic in the broad sense: the vote counter increases
-monotonically and the threshold test ($\mathtt{count(votes)} > k$) also grows
-monotonically from False to True. But both of these constructs (upward-moving
-mutable variables and aggregates) are considered to be non-monotonic by the
-original CALM analysis.  As a result, the initial Bloom prototype would
-mistakenly suggest that the voting program needs additional coordination logic
-to ensure consistent results.
+that is, ``forward progress'' was defined according to set containment. As a practical
+matter, this is overly conservative: it precludes the use of common monotonically-increasing
+constructs such as timestamps and sequence numbers. 
+
+\vspace{-0.25em}
+\begin{example}  In a
+quorum voting service, a coordinator counts the number of votes received
+from participant nodes; quorum is reached once the number of votes exceeds a
+threshold. This is clearly monotonic: the vote counter increases
+monotonically, as does the threshold test ($\mathtt{count(votes)} > k$) which ``grows'' from False to True. But both of these constructs (upward-moving
+mutable variables and aggregates) are labeled non-monotonic by the
+original CALM analysis.
+\end{example}
+
+\vspace{-.25em}
+Monotonic Logic solves the scope dilemma of CRDTs but presents a \textbf{type dilemma}: sets are the only data type amenable to CALM analysis, but the programmer may have a more natural representation of a monotonically growing phenomenon. For example, a monotonic counter is more naturally represented as a growing integer than a growing set. This dilemma leads either to false negatives in CALM analysis and over-use of coordination, or to idiosyncratic set-based implementations that can be hard to read and maintain.
 
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 \subsection{\lang: Logic and Lattices}
@@ -102,14 +113,7 @@ to ensure consistent results.
 % cannot guarantee whole-program consistency. Bloom's CALM analysis guarantees
 % whole-program consistency but is unable to verify a number of natural
 % coordination-free mechanisms.
-Instead of only allowing growth according to the set containment partial order,
-we would like to allow any user-defined partial order to be used.  To this end,
-we introduce \lang, an extension to Bloom which provides a programming
-construct for defining join semilattices like CRDTs.  We give a formal
-definition of this construct below, but the intuition is that the programmer
-provides a commutative, idempotent merge function (``least upper bound'') that
-takes two input values and produces an output value that is greater than or
-equal to both input values, according to the user's partial order. This
+We address the two dilemmas above with \emph{\lang,} an extension to Bloom that incorporates a semilattice construct like CRDTs.  We present this construct in detail below, but the intuition is that Bloom programs can be defined over arbitrary types---not just sets---as long as they have commutative, associative, idempotent \emph{merge} functions (``least upper bound'') for pairs of items.  Such a merge function defines a partial order  for its type. This
 generalizes Bloom (and traditional Datalog), which assumes a fixed merge
 function (set union) and partial order (set containment).
 
@@ -118,22 +122,20 @@ function (set union) and partial order (set containment).
 
 \lang provides three main improvements in the state of the art of both Bloom and CRDTs:  
 \begin{enumerate}
-\item By combining lattices and logic, the CALM analysis in \lang is able to be
-  significantly more liberal in identifying monotonic code that is confluent
-  without the need for coordination.  This enables the coordination-free use of
-  common monotonic constructs, including timestamps and sequence numbers.
+\item \lang removes the type dilemma of logic programming: CALM analysis in \lang is able to 
+ assess monotonicity for arbitrary lattices, making it significantly more liberal in its ability to test for confluence.  \lang can validate the coordination-free use of
+  common constructs like timestamps and sequence numbers.
 
-\item {\lang} provides monotonicity-preserving mappings between lattices via
-  \emph{morphisms} and \emph{monotone functions}.  By using such mappings, the
+\item {\lang} removes the scope dilemma of CRDTs by providing monotonicity-preserving mappings between lattices via
+  \emph{morphisms} and \emph{monotone functions}, as described below.  By using such mappings, the
   per-component monotonicity guarantees offered by CRDTs can be extended across
-  multiple lattice-based components.  This capability is key to the CALM
-  analysis of monotonic \lang programs described above.  It is also useful for
+  multiple items of lattice type.  This capability is key to the CALM
+  analysis described above.  It is also useful for
   establishing the monotonicity of sub-programs even when the whole program is
   not designed to be monotonic.
 
-\item For efficient execution, we extend the standard Datalog semi-naive
-  evaluation scheme~\cite{Balbin1987} to support both lattices and traditional
-  database relations. We also describe how an existing Datalog engine can be
+\item For efficient incremental execution, we extend the standard Datalog semi-naive
+  evaluation scheme~\cite{Balbin1987} to support arbitrary lattices. We also describe how an existing Datalog-style engine can be
   extended to support lattices with relatively minor changes.
 \end{enumerate}
 
