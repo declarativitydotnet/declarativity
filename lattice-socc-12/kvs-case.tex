@@ -100,16 +100,16 @@ into \texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
 already contains a value for the given key, the two values will be merged
 together using the value lattice's merge function (see
 Section~\ref{sec:lattice-built-ins} for details). Note that we use the \lang
-features described in Section~\ref{sec:bloom-interop} to enable interoperability
-between code that accesses traditional Bloom collections (e.g., channels) and
-lattices (e.g., the \texttt{kv\_store} lattice).  Note also that
-\texttt{ip\_port} is a built-in function that returns the IP address and port
-number of the current Bud instance.
+features described in Section~\ref{sec:bloom-interop} to allow traditional Bloom
+collections (e.g., channels) and lattices (e.g., the \texttt{kv\_store} lattice)
+to be used by the same program. Note also that \texttt{ip\_port} is a built-in
+function that returns the IP address and port number of the current Bud
+instance.
 
 The state of two replicas can be synchronized by simply exchanging their
 \texttt{kv\_store} maps; the \texttt{lmap} merge function will automatically
 resolve all conflicting updates made to the same key. This property allows
-considerable flexibility in how replicas can choose to propagate updates.
+considerable flexibility in how replicas propagate updates.
 % TODO: (1) finish repl discussion (composition, replication strat) (2) partitioning
 
 \subsection{Object Versioning}
