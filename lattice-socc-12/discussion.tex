@@ -24,10 +24,11 @@ lattice discussed in Section~\ref{sec:monotone-checkout}. $\top$ behaves
 differently than other lattice elements: because it is immutable, any function
 can safely be applied to it (whether monotone or not), without risking
 inconsistency. Since the merge function for $\top$ will always yield $\top$,
-this might allow a more efficient representation.  For example, in a complete
-\texttt{lcart}, we need only store the ``summarized'' cart state, not the log of
-client operations. We are investigating how \lang could be enhanced to provide
-special support for bounded lattices with $\top$ values.
+this might also allow a more efficient representation.  For example, in a
+complete \texttt{lcart}, we need only store the ``summarized'' cart state, not
+the log of client operations.
+% We are investigating how \lang could be enhanced to provide special support
+% for bounded lattices with $\top$ values.
 
 % As discussed in Section~\ref{sec:kvs}, \lang is still useful even when
 % confluence is not an appropriate correctness criteria. Nevertheless, we would
