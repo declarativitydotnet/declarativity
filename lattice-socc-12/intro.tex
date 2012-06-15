@@ -62,7 +62,7 @@ removal.  This is outside the scope of CRDT guarantees.
 \end{example}
 
 \vspace{-.25em}
-Taken together, the problems with Convergent Modules present a {\bf scoping
+Taken together, the problems with Convergent Modules present a {\bf scope
   dilemma}: a small module (e.g., a set) makes lattice properties easy to
 inspect and test, but provides only simple semantic guarantees. Large CRDTs
 (e.g., an eventually consistent shopping cart) provide higher-level application
@@ -88,10 +88,9 @@ programs are \emph{confluent} (invariant to message reordering and retry) and
 hence eventually
 consistent~\cite{Ameloot2011,Hellerstein2010,dedalus-confluence}. Monotonicity
 of a Datalog program is straightforward to determine conservatively from syntax,
-so the CALM theorem provides the basis for a simple analysis technique for
-verifying the consistency of distributed programs. We concretized CALM into an
+so the CALM theorem provides the basis for a simple analysis of the consistency of distributed programs. We concretized CALM into an
 analysis procedure for \emph{Bloom}, a Datalog-based language for distributed
-programming~\cite{Alvaro2011,bloom}
+programming~\cite{Alvaro2011,bloom}.
 
 The original formulation of CALM and Bloom only verified the consistency of
 programs that compute sets of facts that grow over time (``set monotonicity'');
