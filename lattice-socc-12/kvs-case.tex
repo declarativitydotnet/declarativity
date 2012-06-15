@@ -194,9 +194,9 @@ the behavior of the system as a whole.
 
 Our design compares favorably to traditional implementations of object
 versioning and vector clocks. For example, the implementation of vector clocks
-in Voldemort (a popular key-value store) requires 216 lines of Java source code,
-not including whitespace or comments~\cite{voldemort-vector-clock}. In \lang,
-vector clocks follow directly from the composition of the \texttt{lmap} and
+in Voldemort (a popular key-value store) requires 216 lines of Java, not
+including whitespace or comments~\cite{voldemort-vector-clock}. In \lang, vector
+clocks follow directly from the composition of the \texttt{lmap} and
 \texttt{lmax} lattices; the entire KVS requires only 53 lines of Ruby and \lang
 code, including the client library. The \texttt{lpair} lattice required 30 lines
 of Ruby but is completely generic, and would be suitable for inclusion as a
