@@ -36,12 +36,11 @@ yields unsatisfactory results.
 \subsection{Bloom}
 \label{sec:bg-bloom}
 
-Bloom is a Datalog-based language for distributed
-programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
-using single-node \emph{collections} and computation is expressed as a bundle of declarative
-\emph{statements}.  An instance of a Bloom program performs computation by
-evaluating its statements over the contents of its local database. Bloom
-instances communicate via asynchronous messaging, as described further below.
+Bloom programs are bundles of declarative \emph{statements} about collections of
+\emph{facts} (tuples). An \emph{instance} of a Bloom program performs
+computation by evaluating its statements over the contents of its local
+database. Collections are local to a single Bloom instance---instances
+communicate via asynchronous messaging, as described below.
 
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
 each containing three phases.\footnote{There is a precise declarative semantics
@@ -146,10 +145,10 @@ lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
 \verb+link.to = path.from+ followed by a projection to four attributes, and
 line~\ref{line:spaths-group} demonstrates grouping and aggregation. Bloom
-statements appear in one or more \texttt{bloom} blocks. A Bloom program can also
-include a \texttt{bootstrap} block, which contains statements that are evaluated
-only once when a Bloom instance starts executing. \texttt{bootstrap} blocks are
-typically used for initialization or configuration data.
+statements appear in one or more \texttt{bloom} blocks.%  A Bloom program can also
+% include a \texttt{bootstrap} block, which contains statements that are evaluated
+% only once when a Bloom instance starts executing. \texttt{bootstrap} blocks are
+% typically used for initialization or configuration data.
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
