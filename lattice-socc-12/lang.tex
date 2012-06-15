@@ -302,13 +302,11 @@ end
 \end{figure}
 
 \label{sec:lattice-api}
-The built-in lattices are sufficient to express many distributed programs, such
-as the key-value store described in Section~\ref{sec:kvs}. However, \lang also
-allows developers to create custom lattices to capture domain-specific
+The built-in lattices are sufficient to express many programs. However, \lang
+also allows developers to create custom lattices to capture domain-specific
 behavior. To define a new lattice, a developer creates a Ruby class that meets a
 certain API contract. Figure~\ref{fig:lattice-lset} contains the Ruby code for
-the \texttt{lset} lattice (we omit a few \texttt{lset} methods for
-brevity).
+the \texttt{lset} lattice (we omit a few \texttt{lset} methods for brevity).
 
 A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -372,7 +370,7 @@ line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} means that
 \subsection{Integration with set-oriented logic}
 \label{sec:bloom-interop}
 \lang provides two features to ease integration of lattice-based code with Bloom
-programs that manipulate set-oriented collections.
+rules that use set-oriented collections.
 
 \subsubsection{Converting collections into lattices}
 % XXX: this ignores the fact that Bloom collections consist of sets of tuples,
