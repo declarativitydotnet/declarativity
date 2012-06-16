@@ -1,10 +1,14 @@
 \section{Case Study: Key-Value Store}
 \label{sec:kvs}
 The next two sections contain case studies that show how \lang can be used to
-build correct distributed programs. Both case studies are monotonic:
-that is, both programs consist of monotone functions applied to lattices. As a result, the \lang compiler can verify that both of them are eventually consistent without any need for coordination\footnote{Full code listings for these case studies are available at \mbox{\small \url{http://db.cs.berkeley.edu/socc12-code}}.}.
+build correct distributed programs. Both case studies are monotonic: that is,
+both programs consist of monotone functions applied to lattices. As a result,
+the \lang compiler can verify that both of them are eventually consistent
+without any need for coordination.\footnote{Full code listings for these case
+  studies are available at \mbox{\small
+    \url{http://db.cs.berkeley.edu/socc12-code}}.}
 
-In the first case study, we show that a distributed, eventually-consistent key-value store can be
+In the first case study, we show that a distributed, eventually consistent key-value store can be
 \emph{composed} via a series of monotonic mappings between simple lattices. This example highlights the way that \lang overcomes the ``scope dilemma'' of CRDTs: by
 composing a complex program from simple lattices (mostly \lang built-ins), we can feel confident that individual lattices are correct, while CALM analysis finishes the job of verifying whole-program correctness.
 
