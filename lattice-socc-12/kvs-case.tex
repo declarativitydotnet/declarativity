@@ -1,17 +1,12 @@
 \section{Case Study: Key-Value Store}
 \label{sec:kvs}
 The next two sections contain case studies that show how \lang can be used to
-build practical distributed programs. Both case studies are monotonic programs:
-that is, both programs consist of monotone functions applied to lattices. This
-ensures that the values computed by the programs ``grow'' over time---these
-examples show the various kinds of forward progress that can be encoded using
-\lang.
+build correct distributed programs. Both case studies are monotonic:
+that is, both programs consist of monotone functions applied to lattices. As a result, the \lang compiler can verify that both of them are eventually consistent without any need for coordination\footnote{Full code listings for these case studies are available at \mbox{\small \url{http://db.cs.berkeley.edu/socc12-code}}.}.
 
-In the first case study, we show that a distributed key-value store can be
-\emph{composed} via a series of monotonic mappings between simple lattices. By
-composing a complex program from simple lattices, we show that \lang's built-in
-lattices are useful; morever, the resulting key-value store implementation is
-concise, readable, and has clear semantics.
+In the first case study, we show that a distributed, eventually-consistent key-value store can be
+\emph{composed} via a series of monotonic mappings between simple lattices. This example highlights the way that \lang overcomes the ``scope dilemma'' of CRDTs: by
+composing a complex program from simple lattices (mostly \lang built-ins), we can feel confident that individual lattices are correct, while CALM analysis finishes the job of verifying whole-program correctness.
 
 %  This
 % demonstrates that \lang's built-in lattices are useful and yields a very concise
@@ -215,13 +210,13 @@ versioning and vector clocks. For example, the implementation of vector clocks
 alone in Voldemort (a popular key-value store) requires 216 lines of Java, not
 including whitespace or comments~\cite{voldemort-vector-clock}. In \lang, vector
 clocks follow directly from the composition of the \texttt{lmap} and
-\texttt{lmax} lattices; the \emph{entire KVS} requires only 53 lines of Ruby and \lang
-code, including the client library. The \texttt{lpair} lattice required 30 lines
+\texttt{lmax} lattices; the \emph{entire KVS} requires under 100 lines of Ruby and \lang
+code, including the client library. This includes the \texttt{lpair} lattice, which required 30 lines
 of Ruby but is completely generic, and would be suitable for inclusion as a
-built-in lattice.  \jmh{Does the 53 lines include the 30 of lpair?}
+built-in lattice.
 
 \subsection{Quorum Reads and Writes}
-A common KVS feature is the ability to submit reads and writes to a configurable
+To further demonstrate the flexibility of our implementation, we add an additional feature to our KVS: the ability to submit reads and writes to a configurable
 number of nodes. If a client reads from $R$ nodes and writes to $W$ nodes in a
 KVS with $N$ replicas, the user can set $R + W > N$ to achieve behavior
 equivalent to a quorum replication system~\cite{Gifford1979}, or use smaller
@@ -244,5 +239,3 @@ least upper bound of the values it receives, which produces the expected
 behavior. The client can optionally write the merged value back to the KVS
 (so-called ``read repair''~\cite{DeCandia2007}); note that the \texttt{lpair}
 merge method also updates the record's vector clock appropriately.
-
-\jmh{Summarize?}
