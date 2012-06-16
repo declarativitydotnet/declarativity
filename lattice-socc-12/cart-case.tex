@@ -8,14 +8,16 @@
 \label{fig:cart-system-arch}
 \end{figure}
 
-In the previous section, we showed how a complex program can be composed via
-monotonic mappings between simple lattice types. In this section, we demonstrate
-how \lang can be used to define custom lattice types. This allows developers to
-encode domain-specific notions of ``growth'' or ``forward progress''; as we will
-see, this allows more programs to be shown to be monotonic. Presenting monotonic
-implementations in \lang is equivalent to showing that the use of aggregation in
-these protocols is ``safe'' and produces consistent results without needing
-additional coordination.
+In the previous section, we showed how a complete, consistent distributed program can be composed via monotonic mappings between simple lattice types. In this section, we focus on the way that \lang enables us to overcome the ``type dilemma'' of Bloom, by demonstrating the use of custom lattice types. 
+Our previous implementation of this case study in Bloom called for coordination due to apparently-nonmonotonic grouping and aggregation~\cite{Alvaro2011}; by using custom lattice types in the implementation here, we enable the \lang CALM analysis to verify eventual consistency without any coordination.
+% This feature of \lang allows developers to
+% encode notions of ``forward progress'' for data types that are suited to the application.
+% 
+% ; as we will
+% see, this allows more programs to be shown to be monotonic. Presenting monotonic
+% implementations in \lang is equivalent to showing that the use of aggregation in
+% these protocols is ``safe'' and produces consistent results without needing
+% additional coordination.
 
 In this case study, we consider a simple e-commerce system in which clients
 interact with a shopping cart service by adding and removing items over the
