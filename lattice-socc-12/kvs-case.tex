@@ -214,18 +214,19 @@ versioning and vector clocks. For example, the implementation of vector clocks
 alone in Voldemort (a popular key-value store) requires 216 lines of Java, not
 including whitespace or comments~\cite{voldemort-vector-clock}. In \lang, vector
 clocks follow directly from the composition of the \texttt{lmap} and
-\texttt{lmax} lattices; the \emph{entire KVS} requires under 100 lines of Ruby and \lang
-code, including the client library. This includes the \texttt{lpair} lattice, which required 30 lines
-of Ruby but is completely generic, and would be suitable for inclusion as a
-built-in lattice.
+\texttt{lmax} lattices; the \emph{entire KVS} requires less than 100 lines of
+Ruby and \lang code, including the client library. The \texttt{lpair} lattice
+requires an additional lines 30 of Ruby but is completely generic, and would be
+suitable for inclusion as a built-in lattice.
 
 \subsection{Quorum Reads and Writes}
-To further demonstrate the flexibility of our implementation, we add an additional feature to our KVS: the ability to submit reads and writes to a configurable
-number of nodes. If a client reads from $R$ nodes and writes to $W$ nodes in a
-KVS with $N$ replicas, the user can set $R + W > N$ to achieve behavior
-equivalent to a quorum replication system~\cite{Gifford1979}, or use smaller
-values of $R$ and $W$ if eventual consistency is sufficient. This scheme allows
-users to vary $R$ and $W$ on a per-operation basis, depending on their
+To further demonstrate the flexibility of our implementation, we add an
+additional feature to our KVS: the ability to submit reads and writes to a
+configurable number of nodes. If a client reads from $R$ nodes and writes to $W$
+nodes in a KVS with $N$ replicas, the user can set $R + W > N$ to achieve
+behavior equivalent to a quorum replication system~\cite{Gifford1979}, or use
+smaller values of $R$ and $W$ if eventual consistency is sufficient. This scheme
+allows users to vary $R$ and $W$ on a per-operation basis, depending on their
 consistency and durability requirements.
 
 To support this feature, we can use the \lang quorum voting pattern first
