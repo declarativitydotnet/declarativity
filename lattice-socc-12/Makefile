@@ -20,3 +20,10 @@ EXP_DATA=$(wildcard bench/*.data)
 EXP_SUMMARY=$(wildcard bench/*.summary)
 fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) $(EXP_SUMMARY)
 	gnuplot -e "set output \"$@\"" $<
+
+# Generate tarball containing public code listings
+PUBLIC_SRC=$(wildcard code/public-tarball/**/*)
+socc12-blooml-code.tar.gz: $(PUBLIC_SRC)
+	tar czf $@ -C code/public-tarball socc12-blooml-code
+
+public-tgz: socc12-blooml-code.tar.gz
