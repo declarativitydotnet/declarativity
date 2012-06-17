@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'bud'
 
-require 'cart/cart_lattice'
+require './cart_lattice'
 
 module MonotoneCartProtocol
   state do
@@ -28,8 +28,6 @@ module MonotoneReplica
   bloom :on_checkout do
     sessions <= checkout_msg {|c| { c.session => CartLattice.new({c.reqid => [CHECKOUT_OP, c.lbound, c.client]}) } }
 
-    # XXX: Note that we will send an unbounded number of response messages for
-    # each sealed cart.
     response_msg <~ sessions {|s_id, c|
       c.sealed.when_true { [c.checkout_addr, ip_port, s_id, c.summary] }
     }
@@ -66,19 +64,23 @@ class ClientProgram
   include MonotoneClient
 end
 
+# Simple test case
 s = ReplicaProgram.new
 s.run_bg
 c = ClientProgram.new
 c.run_bg
 
+# Session 10: req IDs 5,6,7,8
+# Session 11: req IDs 4,5,6
 c.sync_do {
   c.serv <+ [[s.ip_port]]
-  c.do_action <+ [[11, 5, 1, 2]]
-  c.do_checkout <+ [[10, 7, 5]]
+  c.do_action <+ [[11, 5, 'beer', 2]]
+  c.do_action <+ [[10, 7, 'vodka', -1]]
+  c.do_checkout <+ [[10, 8, 5]]
 }
 
 c.sync_do {
-  c.do_action <+ [[10, 5, 1, 1], [10, 6, 2, 7]]
+  c.do_action <+ [[10, 5, 'vodka', 2], [10, 6, 'coffee', 7]]
   c.do_checkout <+ [[11, 6, 5]]
 }
 
