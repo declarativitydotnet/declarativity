@@ -68,18 +68,14 @@ class KvsClient
   def read(key)
     reqid = make_reqid
     r = sync_callback(:kvget, [[reqid, @addr, key, ip_port]], :kvget_response)
-    r.each do |t|
-      return t.val if t.reqid == reqid
-    end
+    r.each {|t| return t.val if t.reqid == reqid}
     raise
   end
 
   def write(key, val)
     reqid = make_reqid
     r = sync_callback(:kvput, [[reqid, @addr, key, val, ip_port]], :kvput_response)
-    r.each do |t|
-      return if t.reqid == reqid
-    end
+    r.each {|t| return if t.reqid == reqid}
     raise
   end
 
@@ -142,9 +138,7 @@ class QuorumKvsClient
     reqid = make_reqid
     put_reqs = @put_addrs.map {|a| [reqid, a, key, val, ip_port]}
     r = sync_callback(:kvput, put_reqs, :w_quorum)
-    r.each do |t|
-      return if t.reqid == reqid
-    end
+    r.each {|t| return if t.reqid == reqid}
     raise
   end
 
@@ -152,9 +146,7 @@ class QuorumKvsClient
     reqid = make_reqid
     get_reqs = @get_addrs.map {|a| [reqid, a, key, ip_port]}
     r = sync_callback(:kvget, get_reqs, :r_quorum)
-    r.each do |t|
-      return t.val if t.reqid == reqid
-    end
+    r.each {|t| return t.val if t.reqid == reqid}
     raise
   end
 
