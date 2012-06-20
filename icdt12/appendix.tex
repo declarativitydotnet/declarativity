@@ -1,3 +1,217 @@
+\newpage
+%\begin{subappendices}
+
+\appendix
+
+\section{Distributed Garbage Collection Program}
+\label{ap:garbage}
+
+\begin{example}                                                                
+\label{ex:gc}                                                                  
+Distributed garbage collection:                                                
+
+\begin{Drules}                                                                 
+  \drule{addr(Addr)@async}                                                     
+        {addr_edb(Addr)}                                                       
+  \drule{refers_to(#M, Src, Dst)@async}                                        
+        {local_ptr_edb(#N, Src, Dst), master(#M)}                              
+  \drule{refers_to(Src, Dst)@next}{refers_to(Src, Dst)}                        
+  \drule{reach(Src, Dst)}                                                      
+        {refers_to(Src, Dst)}                                                  
+  \drule{reach(Src, Next)}                                                     
+        {reach(Src, Dst), refers_to(Dst, Next)}                                
+  \drule{garbage(Addr)}                                                        
+        {addr(Addr), root_edb(Root), $\lnot$reach(Root, Addr)}                 
+  \drule{garbage(Addr)@next} {garbage(Addr)}                                   
+\end{Drules}                                                                   
+\end{example}                                                                  
+
+Example~\ref{ex:gc} presents a simple garbage collection program for a         
+distributed memory system. Each node manages a set of pointers and forwards this                                                                              
+information to a central master node. The master computes the set of           
+transitively reachable addresses; if an address is not reachable from the root
+address, it can be garbage collected. For                                      
+simplicity, we assume that each node owns a fixed set of pointers, stored in the                                                                              
+EDB relation \dedalus{local_ptr_edb}.                                          
+
+This more complicated example suffers from the same ambiguity as the marriage  
+ceremony presented previously.  While the program has an ultimate model        
+corresponding to executions in which \dedalus{garbage} is not computed until the                                                                              
+transitive closure of \dedalus{refers\_to} has been fully determined (i.e.,    
+after all messages have been delivered), it also has ultimate models           
+corresponding to executions in which \dedalus{garbage} is ``prematurely''      
+computed.  When \dedalus{garbage} is computed before all the \dedalus{refers_to}                                                                              
+messages have been delivered, there is a correctness violation: reachable memory                                                                              
+addresses appear in the \dedalus{garbage} relation.
+
+\section{Transformed Garbage Collection Program}
+\label{ap:transform}
+
+Applying the program transformation $\mathcal{P}$ to the garbage collection pr\
+ogram from Example~\ref{ex:gc} results in the addition of the following rules.  
+
+\begin{example}                                                                
+Synthesized rules for the garbage collection program:                          
+
+\begin{Drules}                                                                 
+  \drule{refers_to_to_send(M, Src, Dst)}                                       
+        {local_ptr_edb(N, Src, Dst), master(M)}                                
+  \drule{refers_to_send(#M, L, Src, Dst)@async}                                
+        {refers_to_to_send(#L, M, Src, Dst)}                                   
+  \drule{refers_to_ack(#N, L, Src, Dst)}                                       
+        {refers_to_send(#L, N, Src, Dst)}                                      
+  \drule{refers_to_done_node(#M, N)@async}                                     
+        {local_ptr_edb_done(#N), master(#N, M), (\(\forall \od{X}.\dedalus{ref\
+ers_to_to_send(#N, M, \od{X})} \Rightarrow \dedalus{refers_to_ack(#N, M, \od{X}\
+)}\))}                                                                          
+  \drule{refers_to_done(M)}                                                    
+        {(\(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{refers_\
+to_done_node(M, N)}\))}                                                         
+  \drule{reach_done()}                                                         
+        {refers_to_done(), (\(\forall \dedalus{N}.\dedalus{node(N)} \Rightarrow \dedalus{local_ptr_edb_done(N)}\))}                                           
+\end{Drules}                                                                   
+\end{example}                                                                  
+
+One rule from the original program must also be rewritten to include the       
+new subgoal \dedalus{reach\_done}:                                             
+
+\begin{example}                                                                
+Garbage collection rewrite                                                     
+
+\begin{Drules}                                                                 
+  \drule{garbage(Addr)}                                                        
+        {addr_edb(Addr), root_edb(Root), $\lnot$reach(Root, Addr), reach_done(\
+)}                                                                              
+\end{Drules}                                                                   
+\end{example}                                                                  
+
+As we have shown, the resulting program has a single ultimate model.  This mod\
+el                                                                             
+corresponds exactly with one of the ultimate models of the original program fr\
+om                                                                             
+Example~\ref{ex:gc}: the model in which \dedalus{$\lnot$reach} is not evaluate\
+d until                                                                        
+\dedalus{reach} is fully determined.  The rewrite has effectively forced an    
+evaluation strategy analogous to stratum-order evaluation in a centralized
+Datalog program.                                                               
+
+Note also that the rewrite code is a generalization of the ``coordination'' co\
+de                                                                             
+that a \lang programmer could have written by hand to ensure that the local    
+relation \dedalus{refers\_to} is a faithful representation of global state.
+
+\section{Asynchronous Rule Rewrite in the Non-Async-Recursive Case}
+\label{ap:coordination}
+For each asynchronous rule:
+
+\begin{Drules}
+  \drule{p(#N,\od{W})@async}
+        {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), $\lnot$c\sub{1}(#L,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(#L,\od{Y\sub{m}})}
+\end{Drules}
+
+add the following set of rules:
+
+\begin{Drules}
+\drule{p\sub{j}_to_send(N,\od{W})}
+      {b\sub{1}(#L,\od{X\sub{1}}), \ldots, b\sub{l}(#L,\od{X\sub{l}}), $\lnot$c\sub{1}(#L,\od{Y\sub{1}}), \ldots, $\lnot$c\sub{m}(#L,\od{Y\sub{m}})}
+\drule{p\sub{j}_to_send_done()}
+      {b\sub{1}_done(), \ldots, b\sub{l}_done(), c\sub{1}_done(), \ldots, c\sub{m}_done()}
+\drule{p\sub{j}_send(#N,L,\od{X})@async}
+      {p\sub{j}_to_send(#L,N,\od{X})}
+\drule{p\sub{j}_ack(#N,L,\od{X})@async}
+      {p\sub{j}_send(#L,N,\od{X})}
+
+\drule{r\sub{j}_done_node(#L,N)@async}
+      {p\sub{1}_done(#N), \ldots, p\sub{i\sb{q}}_done(#N), \(\left(\forall \od{X} . \dedalus{p\sub{j}_to_send(#N,L,\od{X})} \Rightarrow \right.\) \(\left. \dedalus{p\sub{j}_ack(#N,L,\od{X})}\right)\)}
+
+\drule{r\sub{j}_done()}
+      {\(\left(\forall \dedalus{N} . \dedalus{node(N)} \Rightarrow \dedalus{r\sub{j}_done_node(N)}\right)\)}
+\end{Drules}
+
+The first rule stores messages to be sent at the body (source's) location
+specifier, so the source can check whether all messages have
+been acknowledged.  The original destination location specifier is stored as an
+ordinary column in the \dedalus{p\sub{j}_to_send} relation (indicated by the absence of \dedalus{#}).  Note that because this first rule is a deductive rule, as well as the only rule defining \dedalus{p\sub{j}_to_send}, the \dedalus{p\sub{j}_to_send} relation is done at the same time as the body relations of the first rule, as shown in the second rule.  The third rule copies messages to the correct destination location specifier, while including the location specifier of the source (\dedalus{L}).  The fourth derives acknowledgments at the source's location specifier.  The fifth rule (at the source) derives a \dedalus{r\sub{j}_done_node} fact at a node when the source has an \dedalus{p\sub{j}_ack} for each \dedalus{p\sub{j}_send}.  Note that the causality constraint ensures that the timestamp chosen for each \dedalus{r\sub{j}_done_node} message is greater than any timestamp before the stable model satisfies the body of the rule.  The final rule (at the destination) asserts that rule $j$ is done once \dedalus{r\sub{j}_done_node} has been received from all nodes---intuitively, the rule is done when all messages from all nodes have been received.
+
+The formula \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} where $\phi(\od{W},\od{X})$ is of the form $\dedalus{p(\od{W},\od{X})} \Rightarrow \dedalus{q(\od{W},\od{X})}$ translates to \dedalus{forall\sub{\phi}(\od{W})}, and the following rules are added:
+
+\begin{Drules}
+\drule{p\sub{\phi}_min(\od{W},\od{X})}
+      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},$\bar{\_}$,\od{X}), p\sub{\phi}_succ_done()}
+\drule{p\sub{\phi}_max(\od{W},\od{X})}
+      {p(\od{W},\od{X}), $\lnot$p\sub{\phi}_succ(\od{W},\od{X},$\bar{\_}$), p\sub{\phi}_succ_done()}
+\drule{p\sub{\phi}_succ(\od{W},\od{X},\od{Y})}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), \od{X} < \od{Y}, $\lnot$p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y}), p\sub{\phi}_not_succ_done()}
+\drule{p\sub{\phi}_not_succ(\od{W},\od{X},\od{Y})}
+      {p(\od{W},\od{X}), p(\od{W},\od{Y}), p(\od{W},\od{Z}), \od{X} < \od{Z}, \od{Z} < \od{Y}}
+\drule{forall\sub{\phi}_ind(\od{W},\od{X})}
+      {p\sub{\phi}_min(\od{W},\od{X}), q(\od{W},\od{X})}
+\drule{forall\sub{\phi}_ind(\od{W},\od{X})}
+      {forall\sub{\phi}_ind(\od{W},\od{Y}), p\sub{\phi}_succ(\od{W},\od{Y},\od{X}), q(\od{W},\od{X})}
+\drule{forall\sub{\phi}(\od{W})}
+      {forall\sub{\phi}_ind(\od{W},\od{X}), p\sub{\phi}_max(\od{W},\od{X})}
+\end{Drules}
+
+The first four rules above compute a total order over the facts in \dedalus{p\sub{\phi}}.  The final three rules iterate over the total order of \dedalus{p\sub{\phi}}, and checking each \dedalus{p\sub{\phi}} to see if \dedalus{q} also holds.  If \dedalus{q} does not hold for any \dedalus{p}, iteration will cease.  However, if \dedalus{q} holds for all \dedalus{p} then \dedalus{forall\sub{\phi}} is true.
+
+We additionally need to add a rule for the vacuous case of the universal quantification.  In general, we cannot write \dedalus{forall\sub{\phi}(\od{W}) $\leftarrow$ $\lnot$p(\od{W},$\bar{\_}$), p_done().}, because the variables in \od{W} do not obey our safety restrictions.  Thus, for every rule $r$ that contains \dedalus{\(\forall \od{X} . \phi(\od{W},\od{X})\)} in its body, we must duplicate $r$, replacing the $\forall$ clause with the atom \dedalus{$\lnot$p(\od{W}, $\bar{\_}$)}.
+
+Note also that we are abusing notation for the \dedalus{<} relation.  We previously defined \dedalus{<} as a binary relation, but it is easy to define a $2n$-ary version of \dedalus{<} that encodes a lexicographic ordering over $n$-ary relations.  Here, we use \dedalus{<} to refer to the latter.
+
+\section{Example of a Diffluent \slang Program}\label{ap:nonconfluent}
+
+\begin{example}
+A confluent \lang program that is not a \slang program.
+
+\begin{Drules}
+\drule{b(#N, I)@async}
+      {b_edb(#L, I)}
+\drule{b(I)@next}
+      {b(I), $\lnot$dequeued(I)}
+\drule{b_lt(I, J)}
+      {b(I), b(J), I < J}
+\drule{dequeued(I)@next}
+      {b(I), $\lnot$b_lt(_, I), b_lt(_, _)}
+\end{Drules}
+
+Any instance of this program has a single ultimate model in which \dedalus{b()}
+(at all nodes) contains the highest element in \dedalus{b_edb()} according to the order
+\dedalus{<}.  Thus it is confluent, but the program uses IDB negation and does
+not have guarded asynchrony.
+\end{example}
+
+\section{Example of Unimportant Differences in Stable Models}\label{ap:ordering}
+
+\begin{example}
+\label{ex:unimportant}
+Take the following \lang program with input schema $\{\dedalus{q}\}$.  The program determines whether two values, \dedalus{c1} and \dedalus{c2} ``arrive'' at the same time.  Assume the EDB instance is $\{\dedalus{node(n1), q(n1,c1),}$ $\dedalus{q(n1,c2)}\}$.
+
+\begin{Drules}
+  \drule{p(#L,X)@async}
+        {q(#L,X), $\lnot$r(#L,X)}
+  \drule{r(X)@next}
+        {q(X)}
+  \drule{r(X)@next}
+        {r(X)}
+  \drule{concurrent()}
+        {p(n1,c1), p(n1,c2)}
+  \drule{concurrent()@next}
+        {concurrent()}
+\end{Drules}
+
+For each $\dedalus{s}, \dedalus{t} \in \mathbb{N}$, the following is a stable model:
+\begin{eqnarray*}
+\{\dedalus{q(n1,i,c1), q(n1,i,c2)} \, | \, \dedalus{i} \in \mathbb{N}\} \, \cup
+\{\dedalus{node(n1), p(n1,s,c1), p(n1,t,c2)}\} \, \cup \\
+\{\dedalus{r(n1,i,c1), r(n1,i,c2)} \, | \, \dedalus{i} \in \mathbb{N} \setminus \{0\}\}
+\{\dedalus{concurrent(n1,i)} \, | \, \dedalus{i} \in \mathbb{N} \, \land \, \dedalus{s $\leq$ i}\} \, \text{if} \, \dedalus{s} = \dedalus{t}
+\end{eqnarray*}
+
+These are the only stable models of the instance. Since \dedalus{q} is part of the input schema, \dedalus{q} facts are true at every time.  By the rules, \dedalus{r} facts are true at every time except time \dedalus{0}.  Thus, there is only one choice of head timestamp for \dedalus{p} for each value of \dedalus{q}'s second argument---this choice corresponds with a body timestamp of \dedalus{0}.  If these choices are the same, then \dedalus{concurrent()} is true at all timestamps afterwards.
+
+However, note that while the specific values of \dedalus{s} and \dedalus{t} are unimportant in terms of the eventual contents of the \dedalus{concurrent} relation, there are different stable models for each of these choices.  Intuitively, we do not want these ``intermediate'' temporal behaviors that are not eventually significant, to differentiate program outputs.
+\end{example}
+
 \section{Proof of Lemma 1}
 \begin{proof}
 
@@ -29,8 +243,11 @@ If we could decide confluence for this program, we could decide whether there is
 \end{proof}
 
 
-\section{QBF in {\large \bf \lang}}
-We assume that the QBF formula is in prenex normal form: \linebreak$Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF~\cite{garey-johnson} involves removing $Q_1$ and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
+\section{Proof of Lemma 2}
+%QBF in {\large \bf \lang}}
+Below, we show how to write the PSPACE-complete Quantified Boolean Formula (QBF) problem~\cite{garey-johnson} in \lang. Since \lang is closed under first-order reductions and QBF is PSPACE-complete under first-order reductions, we have that $\text{PSPACE} \subseteq \lang$.
+
+We assume that the QBF formula is in prenex normal form: $Q_1 x_1 Q_2 x_2 \ldots Q_n x_n(x_1, \ldots, x_n)$.  The textbook recursive algorithm for QBF~\cite{garey-johnson} involves removing $Q_1$ and recursively calling the algorithm twice, once for $F_1 = Q_2 x_2 \ldots Q_n x_n(0, x_2, \ldots x_n)$ and once for $F_2 = Q_2 x_2 \ldots Q_n x_n(1, x_2, \ldots, x_n)$ for $x_1$.  If $Q_1 = \exists$, then the algorithm returns $F_1 \lor F_2$; if $Q_1 = \forall$, then $F_1 \land F_2$.
 
 The leaves of the tree of recursive calls can each be represented as an $n$-bit binary number, where bit $i$ holds the value of $x_i$.  Assume the left child of a node at depth $i$ of the recursive call tree represents binding $x_{i}$ to $0$, and the right child $1$.
 
@@ -74,9 +291,9 @@ The truth value at depth $n$ (denoted by \dedalus{var_last}) is the truth value 
   \drule{var_sat_in(N, U, B)}
         {var_sat_left_in(V, B), var_succ(U, V)}
   \drule{var_sat_left_in(vn, 1)}
-        {exists(vn), \linebreak var_sat(_, vn, 1)}
+        {exists(vn), var_sat(_, vn, 1)}
   \drule{var_sat_left_in(vn, 0)}
-        {exists(vn), \linebreak var_sat(a, vn, 0), var_sat(b, vn, 0)}
+        {exists(vn), var_sat(a, vn, 0), var_sat(b, vn, 0)}
   \drule{var_sat_left_in(vn_succ, 1)}
         {forall(vn), var_sat(a, vn, 1), var_sat(b, vn, 1)}
   \drule{var_sat_left_in(vn_succ, 0)}
@@ -89,3 +306,50 @@ Finally, the entire formula is \dedalus{satisfiable(1)} (satisfiable) if the out
   \drule{satisfiable(B)}
         {var_sat_left_in(V, B), var_first(V)}
 \end{Drules}
+
+\section{Proof of Lemma 3}
+\begin{proof}
+Consider a {\em derivation tree} for \dedalus{f@t}: a finite tree of instantiated (variable-free) rules, where negation only occurs at the leaves.  Note that the instantiated head atom, as well as every instantiated body relation, is a spatio-temporal fact
+
+The tree's root is some instantiated rule with \dedalus{f@t} in its head.  A node has one child node for each body fact: the child node contains an instantiated rule with the fact in its head---if the body fact's relation does not appear in the head of any rule, then the corresponding node contains just the fact, and is a leaf node.  The leaves of the tree are instantiated EDB facts.
+
+For the moment, we assume that every fact has a unique derivation tree.  Multiple derivation trees are easy to handle---simply repeat the following process for each tree.
+
+If the relation of \dedalus{f} is EDB, or appears in the head of an asynchronous rule, then the lemma holds by definition of \slang.  Assume some stable model contains \dedalus{f@t} and not \dedalus{f@t+1}.  Thus, if the rule is inductive (resp.\ deductive), then for some child of \dedalus{f@t}, call it \dedalus{g@t-1} (resp.\ \dedalus{g@t}), the fact \dedalus{g@t} (resp.\ \dedalus{g@t+1}) is not in the stable model.  Inductively proceed down the tree, at each step going to a node whose relation does not appear in the head of an asynchronous rule.  However, the path will eventually terminate at a leaf node providing a contradiction, because facts at leaf nodes are either EDB or negated EDB, meaning that they exist at all timestamps, or they are one of \dedalus{time}, \dedalus{timeSucc}, or \dedalus{<}, which also exist at all timestamps.
+\end{proof}
+
+\section{Proof of Theorem 1}
+\begin{proof}
+Towards a proof by contradiction, consider a \slang program that
+induces two ultimate models $\mathcal{U}_1, \mathcal{U}_2$ for some EDB.  Without loss of generality, there must be a spatial fact \dedalus{f}, such that
+$\dedalus{f} \in \mathcal{U}_1$ and $\dedalus{f} \not\in \mathcal{U}_2$.
+
+Recall that if spatial fact \dedalus{f} is in some ultimate model, then for some $\dedalus{t\sub{0}} \in \mathbb{N}$, there is some stable model that contains \dedalus{f@t} for all \dedalus{t} > \dedalus{t\sub{0}}.
+
+Consider a derivation tree for \dedalus{f@t\sub{0}} in any stable model that yields $\mathcal{U}_1$.  Again, for simplicity, we assume uniqueness of this derivation tree.  For some child of \dedalus{f@t\sub{0}}, call it \dedalus{g@s}, for all stable models that yield $\mathcal{U}_2$ there is no \dedalus{r} such that \dedalus{g@r} is in the stable model by Lemma~\ref{lem:inflationary}.  Continue traversing the tree, at each step picking such a \dedalus{g}.  Eventually, the traversal terminates at an EDB node, leading to a contradiction.
+\end{proof}
+
+\section{Proof of Lemma 4}
+\begin{proof}                                                                  
+Note that by Lemma~\ref{lem:inflationary}, $\mathcal{I}(P)$ is inflationary.  The proof proceeds similarly to the proof of Lemma~\ref{lem:inflationary}---there is some fact in $\mathcal{U}_1$ but not $\mathcal{U}_2$; we consider a derivation tree for this fact in any stable model; it must be the case that some child fact of the parent does not appear in any stable model for $\mathcal{U}_2$ (by Lemma~\ref{lem:inflationary}).  We inductively repeat the procedure, and discover that in order for the fact to be absent from $\mathcal{U}_1$, the EDB must be different, which is a contradiction.                                       
+\end{proof}
+
+\section{Proof of Theorem 2}
+\begin{proof}                                                                  
+                                                                               First we apply Corollary~\ref{cor:no-async} to rewrite asynchronous rules as inductive rules.  Then, we convert all inductive rules into deductive rules using Lemma~\ref{lem:no-inductive}.  Since all rules are deductive, there is a unique stable model, which is also the same for every timestamp.                    
+
+Consider removing the timestamp attributes from all relations, and thus the \dedalus{time} relations from the bodies of all rules.  The result is a Datalog program with EDB negation.  Its minimal model is exactly the ultimate model of the single-timestep \slang program.                                              
+
+In the other direction, it is clear that we can encode any Datalog program with EDB negation in \slang using deductive rules; the ultimate model coincides with the minimal model of the Datalog program.                                    
+\end{proof}
+
+\section{Proof of Lemma 5}
+\begin{proof}                                                                  
+We assume that \dedalus{p\sub{1}_done(), \ldots, p\sub{i\sb{q}}_done()} have the properties mentioned in the Lemma.                                           
+
+Clearly, \dedalus{p_done()} has the properties mentioned in the Lemma for the deductive case.                                                                 
+
+In the asynchronous case, \dedalus{p_done()} is similarly correct; the causality constraint implies that the timestamp on acknowledgments is later than the timestamp on the facts they acknowledge, and thus the timestamp on each node's \dedalus{r\sub{j}_node_done} fact is greater than the timestamp on the acknowledged facts.  Thus, before a node concludes \dedalus{p_done()}, that node has all \dedalus{p} facts.                                                             
+
+In the asynchronous recursive case, the causality constraint ensures that every response in the second round is received at a time greater than every response in the first round.  Thus, between at least the last response of the first round and the last response of the second round, no node has outstanding messages and no node sends a message.  This implies that no node ever sends a message again.                                                                           
+\end{proof}
