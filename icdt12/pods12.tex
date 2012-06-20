@@ -1,9 +1,9 @@
-\documentclass{sig-alternate}
+\documentclass{llncs}
 %%\documentclass[english]{hacked-sig-alternate}
 
-
+\usepackage{makeidx}
 \usepackage[usenames, dvipsnames]{color}
-%\usepackage{times}
+\usepackage{times}
 \usepackage{xspace}
 \usepackage{textcomp}
 \usepackage{wrapfig}
@@ -19,6 +19,7 @@
 %\usepackage{texlive-science}
 \usepackage{comment}
 \usepackage{array,tabularx}
+\usepackage{setspace}
 
 \usepackage{txfonts}
 \newcommand{\Tau}{\mathcal{T}}
@@ -48,12 +49,12 @@
 \newcommand{\univ}{\mathcal{U}}
 \newcommand{\sub}[1]{{\ensuremath{\sb{#1}}}}
 
-\newtheorem{theorem}{Theorem}
-\newtheorem{lemma}{Lemma}
-\newtheorem{corollary}{Corollary}
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}{Lemma}
+%\newtheorem{corollary}{Corollary}
 %\theoremstyle{definition}
-\newdef{example}{Example}
-\newdef{definition}{Definition}
+%\newdef{example}{Example}
+%\newdef{definition}{Definition}
 
 \def\slang{\textsc{Dedalus}$^+$\xspace}
 \def\lang{\textsc{Dedalus}\xspace}
@@ -76,8 +77,8 @@
 %\newcommand{\drule}[2]{\dedalus{#1}&$\leftarrow$&\dedalus{#2.}}
 %\newcommand{\dfact}[1]{\dedalus{#1.}}
 
-\newenvironment{Drules}{\vspace{0.5em}\begin{minipage}{0.45\textwidth}}
-{\end{minipage}\vspace{0.5em}}
+\newenvironment{Drules}{\vspace{0.3em}\begin{minipage}{0.95\textwidth}\begin{spacing}{0.8}}
+{\end{spacing}\end{minipage}\vspace{-0.5em}}
 
 % XXX: commented out for escaping # and _ in \dedalus blocks.  See below comment.
 %\newcommand{\drule}[2]{\begin{tabularx}{\textwidth}{l@{\hspace{0.5em}}l@{\hspace{0.5em}}X}\dedalus{#1}&$\leftarrow$&\dedalus{#2.}\end{tabularx}}
@@ -106,14 +107,14 @@
 
 \makeatletter
 \DeclareRobustCommand*{\drule}{\begingroup\@makeother\#\@escapehashtwo}
-\DeclareRobustCommand*{\@escapehashtwo}[2]{\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}} $\leftarrow$ 
+\DeclareRobustCommand*{\@escapehashtwo}[2]{\texttt{\fontsize{8pt}{8pt}\selectfont \escapeus{#1}} $\leftarrow$ 
 %\vspace{-3mm}
 %\begin{list}{}{}
 %\item[]
 \hangindent=4em
 \hangafter=1
 \raggedright
-\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#2}.} \\
+\texttt{\fontsize{8pt}{8pt}\selectfont \escapeus{#2}.} \\
 %\end{list}
 \endgroup}
 \makeatother
@@ -126,7 +127,7 @@
 % Dedalus escapes pounds
 \makeatletter
 \DeclareRobustCommand*{\dedalus}{\begingroup\@makeother\#\@escapehash}
-\DeclareRobustCommand*{\@escapehash}[1]{\texttt{\fontsize{9pt}{9pt}\selectfont \escapeus{#1}}\endgroup}
+\DeclareRobustCommand*{\@escapehash}[1]{\texttt{\fontsize{8pt}{8pt}\selectfont \escapeus{#1}}\endgroup}
 \makeatother
 
 % Escape underscores
@@ -142,43 +143,23 @@
 
 \begin{document}
 
-%\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+\mainmatter
 \title{Confluence Analysis for Distributed Programs:\\A Model-Theoretic Approach}
 
-\pdfinfo{/Title (Confluence Analysis for Distributed Programs: A Model-Theoretic Approach)}
+\titlerunning{Confluence Analysis for Distributed Programs:\\A Model-Theoretic Approach}
 
-%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
-%
-% You need the command \numberofauthors to handle the "boxing"
-% and alignment of the authors under the title, and to add
-% a section for authors number 4 through n.
+\author{William R. Marczak\inst{1} \and Peter Alvaro\inst{1} \and Neil Conway\inst{1} \and Joseph M. Hellerstein\inst{1} \and \\ David Maier\inst{2}}
 
-\numberofauthors{5}
+\authorrunning{Marczak et al.}
 
-\author{
-\alignauthor William R.\ Marczak\\
-\affaddr{UC Berkeley}\\
-\email{wrm@cs.berkeley.edu}
-%
-\alignauthor Peter Alvaro\\
-\affaddr{UC Berkeley}\\
-\email{palvaro@cs.berkeley.edu}
-%
-\alignauthor Neil Conway\\
-\affaddr{UC Berkeley}\\
-\email{nrc@cs.berkeley.edu}
+\institute{University of California, Berkeley
+%\email{\{wrm, palvaro, nrc, hellerstein\}@cs.berkeley.edu}
 \and
-%
-\alignauthor Joseph M.\ Hellerstein\\
-\affaddr{UC Berkeley}\\
-\email{hellerstein@cs.berkeley.edu}
-%
-\alignauthor David Maier\\
-\affaddr{Portland State University}\\
-\email{maier@cs.pdx.edu}
+Portland State University
+%\email{maier@cs.pdx.edu}
 }
 
-\toappear{}
+\pdfinfo{/Title (Confluence Analysis for Distributed Programs: A Model-Theoretic Approach)}
 
 \maketitle
 
@@ -187,90 +168,26 @@
   take a model-theoretic approach to analyzing confluence of asynchronous
   distributed programs. 
   We begin with a model-theoretic
-  semantics for \lang and develop the concept of \emph{ultimate models} to capture the
-  non-deterministic eventual outcomes of distributed programs.  After demonstrating the undecidability of checking confluence for \lang programs, we look for restricted sub-languages that guarantee confluence while providing adequate expressivity.  
-We observe that a simple semipositive restriction called \slang guarantees confluence while capturing  PTIME, but demonstrate that the limited use of negation in \slang makes certain simple and practical programs very difficult to express.  To remedy this, we introduce \plang, a restriction of
-  \lang that allows a natural use of 
-  negation in the spirit of stratified negation, but retains the
-  confluence of \slang and similarly captures PTIME.  
-%\plang is the formal  basis for our applied programming language, Bloom~\cite{bloom}.
-
-%  Building on recent interest in distributed logic programming, we take a
-%  model-theoretic approach to the correctness of asynchronous distributed
-%  programs. We begin by reviewing \lang, a previously proposed extension to
-%  Datalog for modeling distributed programs. We show that \lang captures PSPACE
-%  and allows programs that have non-deterministic results. We prove that
-%  checking whether a \lang program has non-deterministic results is undecidable,
-%  and hence we present \slang, a restriction of \lang that admits only PTIME
-%  programs with deterministic results. \slang requires that programs be
-%  inflationary and restricts the use of negation. Finally, we introduce \plang,
-%  a restriction of \lang that captures PTIME and only admits deterministic
-%  results but allows a more liberal use of negation.
-
-  % We show that this restricted use of negation corresponds to popular
-  % coordination protocols from the distributed systems literature.
-
-%
-%We present a formal definition of the \lang language and prove conjectures.
-
-% An increasing amount of interest surrounds the use of logic languages such as
-% Datalog to ease the design and verification of asynchronous distributed
-% systems.  An oft-cited reason is the model-theoretic semantics of logic
-% programming, which underpin a robust literature on analysis techniques to
-% ensure, among other things, termination and the existince and uniqueness of a
-% program result.  While prior work on logic programming for distributed systems
-% has demonstrated compactness of representation and efficiency of execution, the
-% tantalizing possibility of leveraging model theory to realize analysis
-% techniques for distributed systems correctness criteria has gone largely
-% unrealized.  In this paper, we define model-theoretic notions for two such
-% criteria popular in the distributed systems domain: {\em determinism} and {\em
-% eventual consistency}.  Unfortunately, we show that these are undecidable
-% properties in the general case.  However, we prove the conjectured result that
-% {\em monotonicity} of logic can be a powerful conservative test for these
-% criteria, and we leverage existing static {\em stratification} checks from
-% logic programming to enforce monotonicity in a large class of programs by
-% instrumenting them with {\em coordination logic}.
-
-%However, using analyses from logic programming, including {\em stratification} analyses, 
-
-%Recent distributed systems research has used variants of Datalog to specify and implement large-scale practical systems, showing orders of magnitude reduction in code size~\cite{boon}, and in some cases applying or reinterpreting 
-
-%Programs written in declarative logic languages such as Datalog have a model-theoretic semantics that
-%is independent of how the program is executed.  As a result, they are amenable to simple and powerful
-%static analysis techniques to ensure, among other things, termination and the existence and uniqueness
-%of a program result.  Recent distributed systems research has experimented with using variants of 
-%Datalog to specify and implement large-scale practical systems, in some cases applying or reinterpreting
-%existing analyses with respect to the new domain~\cite{dedalus}.  
-
-%Continuing in this vein, it is only natural 
-%to ask to what extent we can characterize notions of correctness and ``good behavior'' that are unique to distributed 
-%systems, like determinism of distributed computations and eventual consistency of replicated state,
-% in a model theoretic framework, and whether we may add or adapt program analyses for these properties.
-
-%In this paper, we define a model-theoretic notions of {\em confluence, consistency} and {\em eventual
-%consistency}, which are based on the existence of an {\em ultimate models}, or equivalence classes among 
-%distributed traces \paa{ummmm}.  We show that for programs that do not have a unique ultimate model, 
-%there often exists a single ultimate model that corresponds to the intuitive semantics of the program,
-%and which can be enforced via a program rewrite that adds additional {\em coordination} logic to the given
-%program to suppress the other models.  We also show that in general, the problem of deciding whether a program
-%is consistent or confluent for all EDBs is undecidable, and as a correlary that it is impossible in general to
-%soundly and completely verify that a program is correctly ``coordinated.''  
-%Nevertheless, we propose a set of conservative tests that suffice for a wide variety of practical systems.
-%
+  semantics for \lang and introduce the \emph{ultimate model}, which captures
+  non-deterministic eventual outcomes of distributed programs.  After showing the question of confluence undecidable for \lang, we identify restricted sub-languages that guarantee confluence while providing adequate expressivity.  
+We observe that the semipositive restriction \slang guarantees confluence while capturing PTIME, but show that its restriction of negation makes certain simple and practical programs difficult to write.  To remedy this, we introduce \plang, a restriction of
+  \lang that allows a kind of stratified negation, but retains the
+  confluence of \slang and similarly captures PTIME.
+%  \keywords{Datalog, distributed systems, logic programming, temporal logic}
 \end{abstract}
 
 \input{new_intro}
 \input{foundation}
 \input{confluence}
 \input{perfect}
-
-%\input{bloom}
 \input{relwork}
-\input{conclusion}
-\bibliographystyle{abbrv}
+%\input{conclusion}
+%\fontsize{8pt}{8pt}
+\bibliographystyle{splncs}
+\begin{spacing}{0.895}
 \bibliography{pods,declarativity}
-
-\appendix
+\end{spacing}
+%\appendix
 \input{appendix}
 
 %%\input{attic}

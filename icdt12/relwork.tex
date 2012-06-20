@@ -1,50 +1,53 @@
 \section{Related Work}
 \label{sec:relwork}
 
-\lang shares features with a long history of deductive database systems.
+%\lang shares features with a long history of deductive database systems.
 The purely declarative semantics of \lang, based on the reification of logical time into
-facts, are closer in spirit and interpretation to  Statelog~\cite{statelog} and
-the languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog} than
-to languages that admit procedural semantics to deal with update 
-and deletion over time~\cite{ldl, glue-nail}.
-Previous work in temporal deductive databases attempted to compute finite representations for periodic phenomena~\cite{tdd-infinite}: we reuse many of these results in \lang.
+facts, are close in spirit and interpretation to Statelog~\cite{statelog},
+the languages proposed by Cleary and Liu~\cite{harmful,deductiveupdates,starlog}, and work in 
+% than
+%to languages that admit procedural semantics to deal with update 
+%and deletion over time~\cite{ldl,glue-nail}.
+%Previous work in 
+temporal deductive databases~\cite{tdd-infinite}.%: we reuse many of these results in \lang.
 
-Significant recent work (\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}) has focused on applying deductive database languages extended with networking 
-primitives to the problem of specifying and implementing network protocols and distributed systems.  Theorem~\ref{thm:confluence} resembles the  correctness proof of ``pipelined
+Significant recent work (\cite{boom,Belaramani:2009,Chu:2007,Loo2009-CACM}) has focused on using deductive database languages extended with networking 
+primitives to specify and implementing network protocols and distributed systems.  Theorem~\ref{thm:confluence} resembles the correctness proof of ``pipelined
 semi-naive evaluation'' for distributed Datalog presented by Loo \emph{et al}.~\cite{loo-sigmod06}.
 %Inspired by those results, we extend them here to programs that are not syntactically 
 %monotonic and channels that may drop or arbitrarily reorder messages \nrc{We
 %  don't handle message drops at the moment}.
 In general, however, the language extensions 
 proposed in much of this prior work added
-expressivity and domain applicability but compromised the declarative
-semantics of Datalog, making formal analysis difficult~\cite{Mao2009, navarro-oper-sem}.
-In designing \lang, we tried to recover and extend the model-theoretic analyses applicable
-to pure Datalog, while preserving the features appropriate to modeling loosely coupled
-distributed systems.
+expressivity and domain applicability but compromised declarativity,
+making formal analysis difficult~\cite{Mao2009,navarro-oper-sem}.
+%In designing \lang, we tried to recover and extend the model-theoretic analyses applicable
+%to pure Datalog, while preserving the features appropriate to modeling loosely coupled
+%distributed systems.
 
-Specification languages such as TLA~\cite{tla} and I/O Automata~\cite{ioa} employ
-first-order logic and set theory to model and prove properties about distributed
-systems, and a subset of both languages produce executable code.  Like \lang,
-TLA expresses concurrent systems in terms of constraints over valuations of
-state, and temporal logic that describes admissible transitions.  \lang differs
-from TLA in its minimalist use of temporal constructs (\dedalus{@next} and
-\dedalus{@async}), and in its model-theoretic semantics.  I/O Automata model
-distributed systems at a lower level than \lang, as a composition of state
-machines with explicitly specified transition systems.  We intend to further
-explore the relationship of \lang to these traditional distributed systems
-formalisms.
+%Specification languages such as TLA~\cite{tla} and I/O Automata~\cite{ioa} employ
+%first-order logic and set theory to model and prove properties about distributed
+%systems, and a subset of both languages produce executable code.  Like \lang,
+%TLA expresses concurrent systems in terms of constraints over valuations of
+%state, and temporal logic that describes admissible transitions.  \lang differs
+%from TLA in its minimalist use of temporal constructs (\dedalus{@next} and
+%\dedalus{@async}), and in its model-theoretic semantics.  I/O Automata model
+%distributed systems at a lower level than \lang, as a composition of state
+%machines with explicitly specified transition systems.  We intend to further
+%explore the relationship of \lang to these traditional distributed systems
+%formalisms.
 
 Recently, Ameloot \emph{et al}.\ explored Hellerstein's CALM theorem using
 relational transducers~\cite{relational-transducers}.  They proved that
-monotonic first-order queries are exactly the set of queries that can be
-computed in a coordination-free fashion in that transducer formalism.  Their
-work uses some different assumptions than ours---for example, they assume that
-all messages sent by a node are multicast to a fixed set of neighbors, whereas
-\lang permits arbitrary unicast. Relational transducers have also been used to
-specify and show the correctness of interactive web services and electronic
-commerce workflows
-(e.g.,~\cite{trans-ecommerce,deutsch-icdt,deutsch-web-app}).%  Investigating the
+monotonic first-order queries are exactly those queries that can be
+computed in a coordination-free fashion using transducers.  Some of their
+assumptions differ from ours---for example, they assume that
+all messages sent by a node are multicast to a fixed neighbor set, whereas
+\lang permits arbitrary unicast. 
+%Relational transducers have also been used to
+%specify and show the correctness of interactive web services and electronic
+%commerce workflows
+%(e.g.,~\cite{trans-ecommerce,deutsch-icdt,deutsch-web-app}).%  Investigating the
 % connections between this literature and our efforts on \lang is a promising area
 % for future work.
 
