@@ -3,6 +3,51 @@
 
 \appendix
 
+\section{Example: sugared and unsugared \lang rules}
+
+\begin{example}
+\label{ex:marriage-sug}
+A distributed marriage ceremony in (sugared) \lang
+
+\begin{Drules}
+  \drule{i_do(#P, X)@async}
+        {i_do_edb(X), priest(P)}
+  \drule{runaway()}        {$\lnot$i_do(_, bride), i_do(_, groom)}
+  \drule{runaway()}        {$\lnot$i_do(_, groom), i_do(_, bride)}
+  \drule{runaway()@next}
+        {runaway()}
+  \drule{i_do(X)@next}
+        {i_do(X)}
+\end{Drules}
+\end{example}
+
+
+\begin{example}
+\label{ex:marriage-usug}
+The same program in unsugared \lang
+
+\begin{Drules}
+  \drule{i_do(#P, S, X)}
+        {i_do_edb(L, T, X), priest(P), node(L), node(P), time(T), time(S), choice((L, T, X), (S))}
+  \drule{runaway(L, T)}        {$\lnot$i_do(L, T, bride), i_do(L, T, groom), time(T), node(L)}
+  \drule{runaway(L, T)}        {$\lnot$i_do(L, T, groom), i_do(L, T, bride), time(T), node(L)}
+  \drule{runaway(L, S)}
+        {runaway(L, T), time(T), node(L), timeSucc(T, S)}
+  \drule{i_do(L, T, X)}
+        {i_do(L, T, X), time(T), node(L), timeSucc(T, S)}
+\end{Drules}
+\end{example}
+
+
+Example~\ref{ex:marriage-sug} extends the asynchronous (but local) marriage ceremony presented in
+Example~\ref{ex:marriage} to include physical distribution.  Each participant has access to a relation
+\texttt{priest} containing the address of the ceremony coordinator; the first rule of the program
+forwards \texttt{i\_do} records from participators to the coordinator.  Note the physical distribution
+has no effect on the semantics of the program---uncertainty in message timing and ordering were already
+captured by the \emph{async} rule in Example~\ref{ex:marriage}.
+
+Example~\ref{ex:marriage-usug} presents the same \lang program in its unsugared form.
+
 \section{Distributed Garbage Collection Program}
 \label{ap:garbage}
 
