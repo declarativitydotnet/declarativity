@@ -126,12 +126,12 @@ monotonically increasing values, such as session logs or increasing counters. To
 allow storage of values that change in arbitrary ways, we now consider how to
 support \emph{object versions}. This is a classic technique for recognizing and resolving
 mutual inconsistency between members of a distributed system~\cite{Parker1983};
-our design is similar to that used by Dynamo~\cite{DeCandia2007}.
+our design is similar to that used by Amazon Dynamo~\cite{DeCandia2007}.
 
 Each replica associates keys with
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
 (VC) captures the causal relationship between different versions of a
-record~\cite{Fidge1988,DeCandia2007}. Clients get and put
+record~\cite{Fidge1988,Mattern1989,DeCandia2007}. Clients get and put
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
 updates a value it has previously read, the client increments its own position
 in the VC and includes the updated vector clock $V_U$ with its \emph{put}
@@ -185,10 +185,10 @@ two versions are incomparable, a new \texttt{lpair} should be formed by merging
 both elements of the input pairs with one another. In the case of the KVS,
 \emph{fst} is a vector clock, while \emph{snd} is the user's data; the least
 upper bound of the \emph{snd} lattice corresponds to a user-defined merge
-function.\footnote{If the user stores a value that does not have a merge
+function.\footnote{If the user stores a value that does not have a natural merge
   function, similar systems typically provide a default merge function that
-  collects conflicting updates into a set for eventual manual resolution by the user. Such
-  a strategy could easily be implemented monotonically with \lang.}
+  collects conflicting updates into a set for eventual manual resolution by the
+  user. Such a strategy could easily be implemented monotonically with \lang.}
 
 Note that while the \emph{fst} of a given \texttt{lpair} increases over time (as
 new versions are received), the \emph{snd} may not (a newer version might
@@ -216,8 +216,8 @@ including whitespace or comments~\cite{voldemort-vector-clock}. In \lang, vector
 clocks follow directly from the composition of the \texttt{lmap} and
 \texttt{lmax} lattices; the \emph{entire KVS} requires less than 100 lines of
 Ruby and \lang code, including the client library. The \texttt{lpair} lattice
-requires an additional lines 30 of Ruby but is completely generic, and would be
-suitable for inclusion as a built-in lattice.
+requires an additional lines 30 of Ruby but is completely generic, and could be
+included as a built-in lattice.
 
 \subsection{Quorum Reads and Writes}
 To further demonstrate the flexibility of our implementation, we add an
