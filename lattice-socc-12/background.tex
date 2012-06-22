@@ -40,8 +40,7 @@ over sets yields unsatisfactory results.
 Bloom programs are bundles of declarative \emph{statements} about collections of
 \emph{facts} (tuples). An \emph{instance} of a Bloom program performs
 computation by evaluating its statements over the contents of its local
-database. Collections are local to a single Bloom instance---instances
-communicate via asynchronous messaging, as described below.
+database. Instances communicate via asynchronous messaging, as described below.
 
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
 each containing three phases.\footnote{There is a precise declarative semantics
@@ -192,10 +191,10 @@ logic is a useful building block for loosely consistent distributed programming.
 
 According to the CALM theorem, distributed inconsistency may only occur at
 \emph{points of order}: program locations where the output of an asynchronously
-derived value is consumed by a non-monotonic operator.  This is because
-asynchronous messaging results in non-deterministic arrival order, and
-non-monotonic operators may produce different conclusions when evaluated over
-different subsets of their inputs.  For example, consider a Bloom program
+derived value is consumed by a non-monotonic operator~\cite{Alvaro2011}.  This
+is because asynchronous messaging results in non-deterministic arrival order,
+and non-monotonic operators may produce different conclusions when evaluated
+over different subsets of their inputs.  For example, consider a Bloom program
 consisting of a pair of collections $A$ and $B$ (both fed by asynchronous
 channels) and a rule that sends a message whenever an element of $A$ arrives
 that is not in $B$.  This program is non-monotonic and exhibits non-confluent
@@ -213,7 +212,7 @@ consistent ordering is agreed upon at each of the program's points of order.
 Coordination protocols incur additional latency and reduce availability in the
 event of network partitions, so in this paper we focus on coordination-free
 designs---that is, monotonic programs.
-
+\newpage
 \subsubsection{Limitations of set monotonicity}
 The original formulation of the CALM theorem considered only programs that
 compute more facts over time---that is, programs whose \emph{sets} grow
