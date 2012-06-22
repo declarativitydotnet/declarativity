@@ -1,7 +1,7 @@
 \section{Adding Lattices to Bloom}
 \label{sec:lang}
 
-In this section, we introduce \lang, an extension to Bloom that allows monotonic
+This section introduces \lang, an extension to Bloom that allows monotonic
 programs to be written using arbitrary lattices. We begin by reviewing the
 algebraic properties of lattices used in CRDTs and note the applicability of
 monotone functions and morphisms in that context. We then introduce the basic
@@ -37,8 +37,8 @@ bound.''
 % monotone functions
 A \emph{monotone function} from poset $S$ to poset $T$ is a function $f: S \to
 T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow f(a) \leq_T f(b)$. That
-is, $f$ maps elements of $S$ to elements of $T$ in a manner that is consistent
-with the partial orders of both posets.
+is, $f$ maps elements of $S$ to elements of $T$ in a manner that respects the
+partial orders of both posets.
 
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
@@ -80,13 +80,13 @@ end
 \label{fig:lattice-quorum}
 \end{figure}
 
-\lang allows both lattices and collections to be used to represent state. A
-lattice is analogous to a collection type in Bloom, while a \emph{lattice
-  element} corresponds to a particular collection. For example, the
-\texttt{lset} lattice is similar to the \texttt{table} collection type provided
-by Bloom; an element of the \texttt{lset} lattice is a particular set. In the
-terminology of object-oriented programming, a lattice is a class that obeys a
-certain interface and an element of a lattice is an instance of that
+\lang allows both lattices and collections to represent state. A lattice is
+analogous to a collection type in Bloom, while a \emph{lattice element}
+corresponds to a particular collection. For example, the \texttt{lset} lattice
+is similar to the \texttt{table} collection type provided by Bloom; an element
+of the \texttt{lset} lattice is a particular set. In the terminology of
+object-oriented programming, a lattice is a class that obeys a certain interface
+and an element of a lattice is an instance of that
 class. Figure~\ref{fig:lattice-quorum} contains an example \lang program.
 
 As with collections, the lattices used by a \lang program are declared in a
@@ -103,60 +103,62 @@ lattice. For example, an \texttt{lset} lattice initially contains the empty set.
 
 \begin{table*}[t]\small
 \begin{center}
-\begin{tabular}{|l|p{0.98in}|l|l|p{1.72in}|p{1.18in}|}
+\begin{tabular}{|l|p{0.88in}|l|l|p{1.44in}|p{1.00in}|}
 \hline
 \textbf{Name} & \textbf{Description} & \textbf{Least element ($\bot$)} & \textbf{Merge($a,b$)} & \textbf{Morphisms} &
 \textbf{Monotone functions}\\
 \hline
 \hline
 \texttt{lbool} & Boolean lattice \newline (false $\to$ true) & \texttt{false} & $a \lor
-b$ & \texttt{when\_true()} $\to$ \texttt{v} & \\
+b$ & \texttt{when\_true(\&blk)} $\to$ \texttt{v} & \\
 \hline
 \texttt{lmax} & Max over an \newline ordered domain & $-\infty$ & $max(a, b)$ &
 \texttt{gt(n)} $\to$ \texttt{lbool}\newline
 \texttt{gt\_eq(n)} $\to$ \texttt{lbool}\newline
-\texttt{$\mathtt{+}$(lmax)} $\to$ \texttt{lmax}\newline
-\texttt{$\mathtt{-}{}$(lmax)} $\to$ \texttt{lmax} & \\
+\texttt{$\mathtt{+}$(n)} $\to$ \texttt{lmax}\newline
+\texttt{$\mathtt{-}{}$(n)} $\to$ \texttt{lmax} & \\
 \hline
 \texttt{lmin} & Min over an \newline ordered domain & $\infty$ & $min(a, b)$ &
 \texttt{lt(n)} $\to$ \texttt{lbool}\newline
 \texttt{lt\_eq(n)} $\to$ \texttt{lbool}\newline
-\texttt{$\mathtt{+}$(lmin)} $\to$ \texttt{lmin}\newline
-\texttt{$\mathtt{-}{}$(lmin)} $\to$ \texttt{lmin} & \\
+\texttt{$\mathtt{+}$(n)} $\to$ \texttt{lmin}\newline
+\texttt{$\mathtt{-}{}$(n)} $\to$ \texttt{lmin} & \\
 \hline
 \texttt{lset} & Set of values & empty set & $a \cup b$ &
 \texttt{intersect(lset)} $\to$ \texttt{lset}\newline
+\texttt{project(\&blk)} $\to$ \texttt{lset}\newline
 \texttt{product(lset)} $\to$ \texttt{lset}\newline
-\texttt{project(lset)} $\to$ \texttt{lset}\newline
 \texttt{contains?(v)} $\to$ \texttt{lbool}
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
 \texttt{lpset} & Set of non-\newline{}negative numbers & empty set & $a \cup b$ &
 \texttt{intersect(lpset)} $\to$ \texttt{lpset}\newline
+\texttt{project(\&blk)} $\to$ \texttt{lpset}\newline
 \texttt{product(lpset)} $\to$ \texttt{lpset}\newline
-\texttt{project(lpset)} $\to$ \texttt{lpset}\newline
 \texttt{contains?(v)} $\to$ \texttt{lbool}
 & \texttt{size()} $\to$ \texttt{lmax}\newline
 \texttt{sum()} $\to$ \texttt{lmax} \\
 \hline
 \texttt{lbag} & Multiset of values & empty multiset & $a \cup b$ &
 \texttt{intersect(lbag)} $\to$ \texttt{lbag}\newline
-\texttt{project(lbag)} $\to$ \texttt{lbag}\newline
-\texttt{mult(v)} $\to$ \texttt{lmax}\newline
+\texttt{project(\&blk)} $\to$ \texttt{lbag}\newline
+\texttt{card(v)} $\to$ \texttt{lmax}\newline
 \texttt{contains?(v)} $\to$ \texttt{lbool}\newline
 \texttt{$\mathtt{+}$(lbag)} $\to$ \texttt{lbag}
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
-\texttt{lmap} & Map from key to lattice values & empty map & see text&
+\texttt{lmap} & Map from keys to \newline{}lattice values & empty map & see text&
 \texttt{intersect(lmap)} $\to$ \texttt{lmap}\newline
-\texttt{key\_set(lmap)} $\to$ \texttt{lset}\newline
+\texttt{project(\&blk)} $\to$ \texttt{lmap}\newline
+\texttt{key\_set()} $\to$ \texttt{lset}\newline
 \texttt{at(v)} $\to$ \texttt{any-lattice}\newline
 \texttt{key?(v)} $\to$ \texttt{lbool}
 & \texttt{size()} $\to$ \texttt{lmax}\\
 \hline
 \end{tabular}
-\caption{Built-in lattices in \lang. Note that \texttt{v} denotes a Ruby value
-  and \texttt{n} denotes a number.}
+\caption{Built-in lattices in \lang. Note that \texttt{v} denotes a Ruby value,
+  \texttt{n} denotes a number, and \texttt{blk} indicates a Ruby code block
+  (anonymous function).}
 \label{tbl:built-in-lattices}
 \end{center}
 \end{table*}
@@ -233,13 +235,14 @@ subsequent code uses the value in a monotonic fashion.
 \subsection{Built-in lattices}
 \label{sec:lattice-built-ins}
 
-Table~\ref{tbl:built-in-lattices} lists the lattices provided by \lang. The
-built-in lattices provide support for several different notions of ``progress'':
-a predicate that moves from false to true (\texttt{lbool}), a numeric value that
-strictly increases or strictly decreases (\texttt{lmax} and \texttt{lmin}, respectively), and
-various kinds of collections that grow over time (\texttt{lset}, \texttt{lpset},
-\texttt{lbag}, and \texttt{lmap}). The behavior of most of the lattice methods
-should be unsurprising, so we do not describe every method in this section.
+Table~\ref{tbl:built-in-lattices} lists the lattices included with \lang. The
+built-in lattices provide support for several common notions of ``progress'': a
+predicate that moves from false to true (\texttt{lbool}), a numeric value that
+strictly increases or strictly decreases (\texttt{lmax} and \texttt{lmin},
+respectively), and various kinds of collections that grow over time
+(\texttt{lset}, \texttt{lpset}, \texttt{lbag}, and \texttt{lmap}). The behavior
+of most of the lattice methods should be unsurprising, so we do not describe
+every method in this section.
 
 The \texttt{lbool} lattice represents conditions that, once satisfied, remain
 satisfied. For example, the \texttt{gt} morphism on the \texttt{lmax} lattice
@@ -252,15 +255,22 @@ Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
 statement.\footnote{Observe that an ``else'' clause would test for an upper
   bound on the final lattice value, which is a non-monotonic property!}
 
-The \texttt{lmap} lattice associates keys with values. Keys are normal Ruby
+The collection-like lattices support familiar operations such as union,
+intersection and testing for the presence of an element in the collection. The
+\texttt{project} morphism takes a code block and forms a new collection by
+applying the code block to each element of the input collection. Elements for
+which the code block returns \texttt{nil} are omitted from the output
+collection, which allows \texttt{project} to be used as a filter.
+
+The \texttt{lmap} lattice associates keys with values. Keys are immutable Ruby
 objects and values are lattice elements. For example, a web application could
 use an \texttt{lmap} to associate session IDs with an \texttt{lset} containing
 the pages visited by that session. The \texttt{lmap} merge function takes the
 union of the key sets of its input maps. If a key occurs in both inputs, the two
 corresponding values are merged using the appropriate lattice merge
-function. Note that the \texttt{at} morphism returns the lattice element
-associated with the given key (or $\bot$ if the \texttt{lmap} does not contain
-the key).
+function. Note that the \texttt{at(v)} morphism returns the lattice element
+associated with key \texttt{v} (or $\bot$ if the \texttt{lmap} does not contain
+\texttt{v}).
 
 The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
@@ -300,7 +310,7 @@ class Bud::SetLattice < Bud::Lattice
 end
 \end{lstlisting}
 \end{scriptsize}
-\caption{Implementation of the \texttt{lset} lattice.}
+\caption{Example implementation of the \texttt{lset} lattice.}
 \label{fig:lattice-lset}
 \end{figure}
 
@@ -308,8 +318,12 @@ end
 The built-in lattices are sufficient to express many programs. However, \lang
 also allows developers to create custom lattices to capture domain-specific
 behavior. To define a new lattice, a developer creates a Ruby class that meets a
-certain API contract. Figure~\ref{fig:lattice-lset} contains the Ruby code for
-the \texttt{lset} lattice (we omit a few \texttt{lset} methods for brevity).
+certain API contract. Figure~\ref{fig:lattice-lset} shows a simple
+implementation of the \texttt{lset} lattice using a Ruby array for
+storage.\footnote{We omit a few \texttt{lset} methods for brevity. While we use
+  an array for simplicity, this is inefficient (e.g., duplicate elimination
+  requires linear time). The built-in \texttt{lset} uses a hash-based set data
+  type.}
 
 A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -421,9 +435,9 @@ only in their embedded lattice values; those facts are merged into a single fact
 using the lattice's merge function. This is similar to specifying a procedure
 for how to resolve key constraint violations, a feature supported by some
 databases~\cite{oracle-conflict,sqlite-on-conflict}. For similar reasons,
-lattice elements cannot be used as keys in Bloom collections. It might be
-possible to relax this restriction in certain ``safe'' cases, but we have not
-found this limitation to be problematic to date.
+lattice elements cannot be used as keys in Bloom collections.%  It might be
+% possible to relax this restriction in certain ``safe'' cases, but we have not
+% found this limitation to be problematic to date.
 
 % Storing lattice elements as columns of tuples in set-oriented collections
 % introduces several challenges. Consider a simple \lang statement that derives
