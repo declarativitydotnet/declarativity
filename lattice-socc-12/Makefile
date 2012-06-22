@@ -23,7 +23,7 @@ fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) $(EXP_SUMMARY)
 
 # Generate tarball containing public code listings
 PUBLIC_SRC=$(wildcard code/public-tarball/**/*)
-socc12-blooml-code.tar.gz: $(PUBLIC_SRC)
-	tar czf $@ -C code/public-tarball socc12-blooml-code
+blooml-case-studies.tar.gz: $(PUBLIC_SRC)
+	tar czf $@ -C code/public-tarball blooml-case-studies
 
-public-tgz: socc12-blooml-code.tar.gz
+public-tgz: blooml-case-studies.tar.gz
