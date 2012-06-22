@@ -8,8 +8,15 @@
 \label{fig:cart-system-arch}
 \end{figure}
 
-In the previous section, we showed how a complete, consistent distributed program can be composed via monotonic mappings between simple lattice types. In this section, we focus on the way that \lang enables us to overcome the ``type dilemma'' of Bloom, by demonstrating the use of custom lattice types. 
-Our previous implementation of this case study in Bloom called for coordination due to apparently-nonmonotonic grouping and aggregation~\cite{Alvaro2011}; by using custom lattice types in the implementation here, we enable the \lang CALM analysis to verify eventual consistency without any coordination.
+In the previous section, we showed how a complete, consistent distributed
+program can be composed via monotonic mappings between simple lattice types. In
+this section, we focus on the way that \lang enables us to overcome the ``type
+dilemma'' of Bloom, by demonstrating the use of custom lattice types.  Our
+previous implementation of this case study in Bloom called for coordination due
+to apparently-nonmonotonic grouping and aggregation~\cite{Alvaro2011}; by using
+custom lattice types in the implementation here, we enable the \lang CALM
+analysis to verify eventual consistency without any coordination.
+
 % This feature of \lang allows developers to
 % encode notions of ``forward progress'' for data types that are suited to the application.
 % 
@@ -89,7 +96,7 @@ that processing a checkout request is non-monotonic because it requires
 aggregating over an asynchronously computed data set---in general, coordination
 might be required to ensure that all inputs have been received before the
 checkout response can be returned to the client. However, observe that the
-client knows exactly which add/remove operations should be reflected in the
+client knows exactly which add and remove operations should be reflected in the
 result of the checkout. If that information can be propagated to the cart
 service, any server replica can decide if it has enough information to process
 the checkout operation without needing additional coordination. This design is
@@ -138,7 +145,7 @@ returns a summary of the actions in the cart---an exception is raised if
 \texttt{summary} is called before the cart is complete. Similarly, attempts to
 construct ``illegal'' \texttt{lcart} elements (e.g., carts containing multiple
 checkout operations or actions that are outside the ID range specified by the
-checkout) also result in runtime exceptions, since this indicates a likely logic
+checkout) also result in runtime exceptions, since this likely indicates a logic
 error in the program. Implementing the \texttt{lcart} lattice required 58 lines
 of Ruby using the lattice API described in Section~\ref{sec:lattice-api}.
 

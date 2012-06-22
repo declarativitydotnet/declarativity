@@ -31,7 +31,7 @@ end
 
 In this section, we review the Bloom programming language and the CALM program
 analysis.  We highlight a simple distributed program for which the CALM analysis
-yields unsatisfactory results.
+over sets yields unsatisfactory results.
 
 \newpage
 \subsection{Bloom}
@@ -45,15 +45,15 @@ communicate via asynchronous messaging, as described below.
 
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
 each containing three phases.\footnote{There is a precise declarative semantics
-  for Bloom~\cite{dedalus}, but we describe the language operationally for the
-  sake of exposition.} In the first phase, inbound events (e.g., network
-messages) are received and represented as facts in collections. In the second
-phase, the program's statements are evaluated over local state to compute all
-the additional facts that can be derived from the current collection
-contents. In some cases (described below), a derived fact is intended to achieve
-a ``side effect,'' such as modifying local state or sending a network message.
-These effects are deferred during the second phase of the timestep; the third
-phase is devoted to carrying them out.
+  for Bloom~\cite{dedalus-semantics,dedalus}, but we describe the language
+  operationally for the sake of exposition.} In the first phase, inbound events
+(e.g., network messages) are received and represented as facts in
+collections. In the second phase, the program's statements are evaluated over
+local state to compute all the additional facts that can be derived from the
+current collection contents. In some cases (described below), a derived fact is
+intended to achieve a ``side effect,'' such as modifying local state or sending
+a network message.  These effects are deferred during the second phase of the
+timestep; the third phase is devoted to carrying them out.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
@@ -83,12 +83,12 @@ database of a remote Bloom instance at a non-deterministic future time.\\
 The Bloom data model is based on \emph{collections}.  A collection is an
 unordered set of \emph{facts}, akin to a relation in Datalog. The Bud prototype
 adopts the Ruby type system rather than inventing its own; hence, a fact in Bud
-is just an array of Ruby objects. Each collection has a \emph{schema}, which
-declares the structure (column names) of the facts in the collection. A subset
-of the columns in a collection form its \emph{key}: as in the relational model,
-the key columns functionally determine the remaining columns. The collections
-used by a Bloom program are declared in a \texttt{state} block. For example,
-line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
+is just an array of immutable Ruby objects. Each collection has a \emph{schema},
+which declares the structure (column names) of the facts in the collection. A
+subset of the columns in a collection form its \emph{key}: as in the relational
+model, the key columns functionally determine the remaining columns. The
+collections used by a Bloom program are declared in a \texttt{state} block. For
+example, line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
 collection named \texttt{link} with three columns, two of which form the
 collection's key. Ruby is a dynamically typed language, so keys and values in
 Bud can hold arbitrary Ruby objects.
@@ -138,17 +138,17 @@ collection.  A statement takes the form: \\ \noindent
     $<$collection-expression$>$}}\\ \noindent
 The left-hand side (lhs) is the name of the output collection and the right-hand
 side (rhs) is an expression that produces a collection.  A statement defines how
-the contents of the input collections should be transformed before being
-included (via set union) in the output collection. Bloom allows the usual
-relational operators to be used on the rhs (selection, projection, join,
-grouping, aggregation, and negation), although it adopts a syntax intended to be
-more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
-line~\ref{line:spaths-proj} demonstrates projection,
+the input collections are transformed before being included (via set union) in
+the output collection. Bloom allows the usual relational operators to be used on
+the rhs (selection, projection, join, grouping, aggregation, and negation),
+although it adopts a syntax intended to be more familiar to imperative
+programmers. In Figure~\ref{fig:bloom-spaths}, line~\ref{line:spaths-proj}
+demonstrates projection,
 lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
 \verb+link.to = path.from+ followed by a projection to four attributes, and
-line~\ref{line:spaths-group} demonstrates grouping and aggregation. Bloom
-statements appear in one or more \texttt{bloom} blocks.%  A Bloom program can also
+line~\ref{line:spaths-group} shows grouping and aggregation. Bloom statements
+appear in one or more \texttt{bloom} blocks.% A Bloom program can also
 % include a \texttt{bootstrap} block, which contains statements that are evaluated
 % only once when a Bloom instance starts executing. \texttt{bootstrap} blocks are
 % typically used for initialization or configuration data.
@@ -178,8 +178,8 @@ or asynchronous operator)~\cite{dedalus}.
 Work on deductive databases has long drawn a distinction between
 \emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, a
 monotonic program only computes more information over time---it will never
-``retract'' a previous conclusion in the face of new evidence.  In Bloom (and
-Datalog), a simple conservative test for monotonicity is based on program
+``retract'' a previous conclusion in the face of additional evidence.  In Bloom
+(and Datalog), a simple conservative test for monotonicity is based on program
 syntax: selection, projection, and join are monotonic, while aggregation and
 negation are not.
 
@@ -195,13 +195,12 @@ According to the CALM theorem, distributed inconsistency may only occur at
 derived value is consumed by a non-monotonic operator.  This is because
 asynchronous messaging results in non-deterministic arrival order, and
 non-monotonic operators may produce different conclusions when evaluated over
-different subsets of their inputs.  For example, consider a Bloom program 
+different subsets of their inputs.  For example, consider a Bloom program
 consisting of a pair of collections $A$ and $B$ (both fed by asynchronous
-channels) and a rule that sends a message whenever an element of $A$ arrives that is not in $B$.
-This
-program is non-monotonic and exhibits non-confluent behavior: the messages sent
-by the program will depend on the order in which the elements of $A$ and $B$
-arrive.
+channels) and a rule that sends a message whenever an element of $A$ arrives
+that is not in $B$.  This program is non-monotonic and exhibits non-confluent
+behavior: the messages sent by the program will depend on the order in which the
+elements of $A$ and $B$ arrive.
 
 We have implemented a conservative static program analysis in Bloom that follows
 directly from the CALM theorem.  Programs that are free from non-monotonic
@@ -210,10 +209,10 @@ runs or converging to the same state on multiple distributed replicas.
 Otherwise, programs are flagged as potentially inconsistent.  To achieve
 consistency, the programmer either needs to rewrite their program to avoid the
 use of non-monotonicity or introduce a coordination protocol to ensure that a
-consistent ordering is agreed upon at each of the program's points of order. 
-Coordination protocols incur additional
-latency and reduce availability in the event of network partitions, so in this
-paper we focus on coordination-free designs---that is, monotonic programs.
+consistent ordering is agreed upon at each of the program's points of order.
+Coordination protocols incur additional latency and reduce availability in the
+event of network partitions, so in this paper we focus on coordination-free
+designs---that is, monotonic programs.
 
 \subsubsection{Limitations of set monotonicity}
 The original formulation of the CALM theorem considered only programs that
@@ -229,9 +228,9 @@ node to indicate that quorum has been reached
 subroutine that might be used by an implementation of Paxos~\cite{Lamport1998}
 or quorum replication~\cite{Gifford1979}.
 
-It is easy to see that this program makes progress in a semantically monotonic
-fashion: the set of received votes grows and the size of the \texttt{votes}
-collection can only increase, so once a quorum has been reached it will never be
+Intuitively, this program makes progress in a semantically monotonic fashion:
+the set of received votes grows and the size of the \texttt{votes} collection
+can only increase, so once a quorum has been reached it will never be
 retracted. Unfortunately, the current CALM analysis would regard this program as
 non-monotonic because it contains a point of order: the grouping operation on
 line~\ref{line:bloom-nm-quorum}.

@@ -2,14 +2,14 @@
 In this paper, we proposed \lang, a distributed variant of Datalog that extends
 logic programming with join semilattices. \lang is particularly valuable for
 enabling coordination-free, consistent distributed programming, overcoming key
-hurdles in prior work.  Like convergent module proposals, it allows
-application-specific notions of ``progress'' to be represented as lattices, and
-goes further by enabling safe mappings between lattices.  \lang improves upon
-our own earlier work by expanding the space of recognizably monotonic programs,
-allowing more programs to be verified as eventually consistent via the CALM
-analysis.  In addition to providing richer semantic guarantees than previous
-approaches, in our experience \lang provides a natural and straightforward
-language for building distributed systems.
+hurdles in prior work.  Like CRDTs, \lang allows application-specific notions of
+``progress'' to be represented as lattices, and goes further by enabling safe
+mappings between lattices.  \lang improves upon our own earlier work by
+expanding the space of recognizably monotonic programs, allowing more programs
+to be verified as eventually consistent via the CALM analysis.  In addition to
+providing richer semantic guarantees than previous approaches, in our experience
+\lang provides a natural and straightforward language for building distributed
+systems.
 
 \begin{comment}
 \jmh{Some thoughts here to start.  More work this afternoon.}

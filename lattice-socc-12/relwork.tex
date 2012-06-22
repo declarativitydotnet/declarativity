@@ -5,16 +5,16 @@ This paper relates to work on concurrency control, distributed storage, and
 non-monotonic logic programming.
 
 \vspace{0.5em}\noindent
-\textbf{Semantics-based concurrency control:} Serializability is the traditional
-correctness criteria for concurrency control schemes. However, ensuring
-serializability can be prohibitively expensive, for instance when transactions
-are long-running or the nodes of a distributed database are connected via an
-unreliable network. Thus, many methods have been proposed to allow
-non-serializable transaction schedules that preserve a \emph{semantic} notion
-of correctness. In particular, several schemes allow users to specify that
-certain operations can be commuted with other operations; this enlarges the
-space of legal schedules, increasing potential
-concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
+\textbf{Semantics-based concurrency control:} The traditional correctness
+criteria for concurrency control schemes is
+serializability~\cite{Papadimitriou1979}. However, ensuring serializability can
+be prohibitively expensive, for instance when transactions are long-running or
+the nodes of a distributed database are connected via an unreliable
+network. Thus, many methods have been proposed to allow non-serializable
+transaction schedules that preserve some \emph{semantic} notion of correctness. In
+particular, several schemes allow users to specify that certain operations can
+be commuted with other operations; this enlarges the space of legal schedules,
+increasing the potential for concurrency~\cite{Farrag1989,Garcia-Molina1983,Weihl1988}.
 
 % TODO: do we need to cite all 3 papers?
 %       the weihl paper claims to explicitly only allow serializable schedules
