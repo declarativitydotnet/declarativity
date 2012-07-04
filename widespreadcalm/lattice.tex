@@ -1,0 +1,19 @@
+\jmh{Intro paragraph.}
+\begin{itemize}
+\item Crib motivation from VLDB submission, shortening the CRDT and Bloom background and moving straight to the idea of solving the type dilemma (as discussed in Intro) by merging them. (Cite Ross/Sagiv along the way.)
+\item Discuss the idea of extending Bloom logic programming and CALM analysis to disorderly programs over arbitrary lattices. Say we've got an initial prototype of BloomL -- can cite TR if we like.
+\item Give an example of a Bloom rule over sets and a corresponding rule over lmaxes.  
+\item Discuss mappings, commutative functions and homomorphisms.  Impact on CALM and delta computation.
+\item Show the vector clock example in a box.
+\item Challenge: proving lattice properties. Possible conservative analysis in a nice imperative language, or a subsetted DSL within such a language., 
+\item Challenge: Lattices and efficiency: garbage collection and lower bounds
+\item Challenge: Lattices and non-monotonicity: e.g. ``odometer'' compositions, etc.
+\end{itemize}
+
+\subsection{Summary of Tasks and Goals}
+\begin{itemize}
+\item \textbf{Efficient Evaluation of Lattice programs}.  \jmh{Sentence or 2 here on Lower bounds, zero-copy, etc.}
+\item \textbf{Tools for guaranteed lattice properties}.  \jmh{Sentence or two here on a possible DSL agenda, perhaps subsetting some existing language like Scala.  Remind that scope can be small because so much can be done outside the DSL in BloomL via lattice composition (e.g. data structures).}
+\item \textbf{Extend the Bloom prototype to support rich set of built-in for composition.}  \jmh{Sentence or two here on what's involved, including language design and evaluation.  Say we've got a first prototype, and highlight remaining challenges.}.
+\item \textbf{Evaluations: KVSs and Collaborative Editors.}  \jmh{Sentence or two here pitching the challenge here, and sketching some milestones/metrics for success}.
+\end{itemize}

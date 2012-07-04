@@ -1,0 +1,133 @@
+\documentclass[11pt, us-letter]{article}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{color}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{subfigure}
+\usepackage{algorithm2e}
+\usepackage[letterpaper, top=.9in, bottom=.9in, inner=.9in, outer=.9in, foot=.25in]{geometry}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{comment}
+
+\usepackage[compact]{titlesec}
+\titlespacing{\section}{0pt}{6pt}{4pt}
+\titlespacing{\subsection}{0pt}{5pt}{3pt}
+\titlespacing{\subsubsection}{0pt}{5pt}{3pt}
+
+
+\newcommand{\mytitle}{BIGDATA:Small:Data Collection and Management:\\Widespread CALM: Coordination Analysis and Big Data}
+
+\newcommand{\denselist}{
+\addtolength{\itemsep}{-7pt}}
+%\setlength{\listparindent}{-170pt}}
+%\addtolength{\partopsep}{-40pt}}
+
+%\addtolength{\textwidth}{10mm}
+%\addtolength{\textheight}{10mm}
+\renewcommand{\baselinestretch}{0.95}
+
+\renewcommand{\paragraph}[1]{\vspace*{2mm}\noindent\textbf{#1} \ \ }
+
+% FORMATTING -------------------------------------------------------
+\newcommand{\term}[1]{\textbf{#1}}
+\newcommand{\figref}[1]{Figure~\ref{#1}}
+\newcommand{\secref}[1]{Section~\ref{#1}}
+\newcommand{\eqnref}[1]{Equation~\ref{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcommand{\itembf}[1]{\item\textbf{#1}}
+\newenvironment{tightitemize}{\begin{list}{$\bullet$}{\setlength{\itemsep}{1pt}\setlength{\topsep}{2pt}\setlength{\parskip}{1pt}\setlength{\parsep}{1pt}\leftmargin=1.5em}}{\end{list}}
+
+
+% THEOREMS -------------------------------------------------------
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}{Corollary}
+\newtheorem{lem}{Lemma}
+\newtheorem{prop}{Proposition}
+%\theoremstyle{definition}
+\newtheorem{defn}{Definition}
+\newtheorem{property}{Property}
+%\theoremstyle{remark}
+\newtheorem{rem}{Remark}
+%\theoremstyle{assumption}
+\newtheorem{assumpt}{Assumption}
+%\numberwithin{equation}{section}
+\newtheorem{example}{Example}
+\newtheorem{ex}[thm]{Example}
+\newtheorem{exa}{Example}
+\newtheorem{dfn}{Definition}[section]
+\newtheorem{goal}{Goal}
+
+
+% inline comments
+% color names at http://en.wikibooks.org/wiki/LaTeX/Colors#Predefined_colors
+\usepackage[usenames,dvipsnames]{xcolor}
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+
+% indent full paragraph for compact lists
+\newenvironment{myparindent} {
+  \hangindent=1em
+  \hangafter=0
+  \noindent
+}
+
+%captionsmall -- format captions in a smaller font
+\newcommand{\captionsmall}[1]{\caption{\footnotesize{#1}}}
+
+% Comment out to take away comments
+\newcommand{\commentout}[1]{}
+\newcommand{\out}[1]{}
+
+% no page numbers
+%\pagestyle{empty}
+
+
+\newcommand{\myurl}[1]{{\footnotesize \url{#1}}}
+\def\blooml{Bloom$^L$\xspace}
+
+\begin{document}
+
+\input{summary}
+
+\pagebreak
+
+\section{Introduction}
+\label{sec:intro}
+\input{intro}
+
+\section{CALM Beyond Sets}
+\label{sec:lattice}
+\input{lattice}
+
+\section{CALM Service Composition}
+\label{sec:soa}
+\input{soa}
+
+\section{CALM over Distributed Storage}
+\label{sec:storage}
+\input{storage}
+
+\section{CALM Software Quality}
+\label{sec:qa}
+\input{qa}
+
+
+% \input{lada}
+
+% \input{boom-msr}
+
+% \input{blazes/intro}
+% \input{blazes/path}
+% \input{blazes/labeling}
+
+\section{Summary}
+The difficulty of distributed programming presents critical challenges to the development of robust and scalable systems for Big Data.  Chief among these challenges is the desire to sidestep coordination overheads while guaranteeing acceptable program outcomes.  The CALM theorem provided a breakthrough framework for reasoning about these problems.  The work we propose here, if successful, would extend the CALM theorem well beyond its initial restricted setting, and use it to define a powerful, principled new framework for robust distributed programming that is consistent with common practice.  
+
+\newpage
+
+\input{endmatter}
+
+\end{document}
