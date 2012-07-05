@@ -30,3 +30,6 @@ However, in our initial research on applying the CALM foundations in practice, w
   
   \item \textbf{CALM Software Engineering for Distributed Programs.}  Even with powerful tools like CALM analysis, programmers sometimes choose to forgo static consistency guarantees of the form provided by monotonic code and distributed coordination.  In short, they may choose to ``cut corners'' with respect to formal modeling and guarantees, and rely on dynamic tests (exception handling) to deal with any problems at runtime.  This raises challenges in Quality Assurance (QA) and Software Engineering issues involving the testing and dynamic analysis of complex software.  QA over Big Data can be very difficult: there is an enormous space of possible executions to exercise, which arises from (a) the non-determinism inherent in asynchronous messaging between unreliable machines, and (b) the incredible diversity of execution scenarios that arise at massive scale, where small-probability events occur on surprisingly small timescales.  We believe CALM analysis can help here to radically prune the space of scenarios to test, and provide succinct, targeted explanations of software hazards for programmers to reason about.  (Section~\ref{sec:qa}).
 \end{itemize}
+
+\subsection{Concrete Examples}
+\jmh{Crib some example Bloom code and monotonicity analysis from a previous paper}

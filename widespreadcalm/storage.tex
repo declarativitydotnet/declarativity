@@ -1,1 +1,17 @@
-\input{skeleton}
+Bloom was defined with local storage as its core construct, since local storage forms a strong foundation: it is easy to understand and enforce its semantics.  
+
+That was useful at first, but by now it seems crazy to have a Big-Data-in-the-Cloud language that can describe only local storage.  We'd like to expose distributed storage as a programming construct in the next generation of Bloom, both for point lookups as well as for large-scale analytics workloads.  In prior work we showed that both of these kinds of systems can be implemented as libraries in Bloom.  But these proofs of concept are a long way from reusable implementations that can be supported as first-class citizens in a language.  \jmh{Should build on the themes of the previous section.}  Here are some important issues:
+\begin{itemize}
+\item \textbf{Easily configurable distributed storage}.  There's been a panoply of NoSQL storage implementations in recent years, many of them monolithic: the consistency model is ``baked in'' to the architecture.  We'd like a distributed storage framework that composes with various coordination protocols to achieve a wide variety of consistency models.  In essence, we'd like a little toolkit from which it's trivial to build a host of storage systems with different consistency models.  \jmh{We could perhaps also talk about performance issues of layout, compression, indexing, etc.}
+\item \textbf{Declarative storage consistency.}  Bloom currently lets you define the structural types of stored collections, but not the consistency types.  It seems important to raise the specification of consistency into the language itself so it can be the subject of static analyses like CALM.  Unfortunately, definitions of loose consistency are often vague or operational (cite Vogels and Terry).  In implementing a wide variety of consistency models in Bloom, we propose to (a) use CALM analysis to refine that codebase and capture each model's essential contracts for programmers, and (b) expose those contracts within Bloom in a way that is easy to understand and interact with.
+\item \textbf{Decoupling of application and storage consistency.}  In standard practice, the consistency guarantees of a storage engine dictate the consistency responsibilities of higher-level software.  As a result, many applications are written with particular storage consistency in mind.  This means that there are subtle but important assumptions being guaranteed across components without contracts being reflected in code that a compiler can check over time.  This makes correctness very difficult to maintain for such systems, and makes it hard to ``port'' application code across storage systems, or ``swap out'' one storage system for another.  If we can more expressively expose the consistency guarantees of different storage systems, we should be able to more cleanly decouple application and storage logic---making it more easy to port applications across data stores.  \jmh{find a way to discussion Bailis' shim work.}
+\end{itemize}
+
+\subsection{Summary of Tasks and Goals}
+\jmh{Introductory paragraph here.  This structure is not dictated by NSF, it's just a way for us to appear organized and focused.  It also distills any vagueness above into recognizable deliverables that are worthy of research, even if their details are vague.}
+\begin{itemize}
+\item \textbf{Thing One}.  We will investigate the previously-sketched challenge of Thing One, produce a prototype implementation, and evaluate it by...
+\item \textbf{Thing Two}.  We will investigate the previously-sketched challenge of Thing Two, produce a prototype implementation, and evaluate it by...
+\item ...
+\item ...
+\end{itemize}
