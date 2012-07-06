@@ -46,14 +46,14 @@ end
 \label{fig:bloom-quorum-set}
 \end{figure}
 
-Figure~\ref{fig:bloom-quorum-set} contains a concrete example where the CALM analysis
-over sets produces unsatisfactory results. This program receives votes from a
-client program (not shown) via the \texttt{vote\_chn} channel. Once at least
-\texttt{QUORUM\_SIZE} votes have been received, a message is sent to a remote
-node to indicate that quorum has been reached
+Figure~\ref{fig:bloom-quorum-set} contains a concrete example where the CALM
+analysis over sets produces unsatisfactory results. This program receives votes
+from one or more clients (not shown) via the \texttt{vote\_chn} channel. Once at
+least \texttt{QUORUM\_SIZE} votes have been received, a message is sent to a
+remote node to indicate that quorum has been reached
 (line~\ref{line:bloom-quorum-msg}). This program resembles a ``quorum vote''
-subroutine that might be used by an implementation of Paxos~\cite{part-time}
-or quorum replication~\cite{Gifford1979}.
+subroutine that might be used by an implementation of Paxos~\cite{part-time} or
+quorum replication~\cite{Gifford1979}.
 
 Intuitively, this program makes progress in a semantically monotonic fashion:
 the set of received votes grows and the size of the \texttt{votes} collection
