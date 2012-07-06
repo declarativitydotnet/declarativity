@@ -219,8 +219,8 @@ compute more facts over time---that is, programs whose \emph{sets} grow
 monotonically. Many distributed protocols make progress over time, but their
 notion of ``progress'' is often difficult to represent as a growing set of
 facts. For example, consider the Bloom program in
-Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from a client
-program (not shown) via the \texttt{vote\_chn} channel. Once at least
+Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from one or more
+clients (not shown) via the \texttt{vote\_chn} channel. Once at least
 \texttt{QUORUM\_SIZE} votes have been received, a message is sent to a remote
 node to indicate that quorum has been reached
 (line~\ref{line:bloom-quorum-msg}). This program resembles a ``quorum vote''
