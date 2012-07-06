@@ -1,2 +1,70 @@
-%!TEX root = proposal.tex
-\input{skeleton}
+
+
+Writing correct distributed systems is extremely challenging, in large part
+because developers of such systems are forced to reason
+about their behavior under all the combinations of message ordering and failure
+scenarios that could occur in an execution.
+In addition to the basic computation they wish to express, developers
+must consider the enormous space of nondeterministic behaviors caused by 
+asynchrony, concurrency and partial failure.
+Two techniques are commonly used
+to address this difficulty in practical systems: verification and testing.
+Verification using formal methods typically involves writing a specification
+that models the program's behavior, and systematically exploring the state 
+space that can be reached in any execution.  Verification is an attractive 
+approach because it can catch bugs that are very difficult to reproduce,
+but it requires a high level of mathematical sophistication, both to write the 
+specifications and to interpret tool feedback.
+Hence formal verification is not widely adopted in practice.  
+In contrast, programmers widely turn to \emph{testing} strategies to increase
+their confidence that distributed code is correct.  Unlike formal methods, 
+which typically require the entire system to be specified before providing 
+feedback, program testing has very rapid returns.  A developer can write a 
+small set of unit tests to ``bootstrap'' a new piece of functionality, then
+incrementally add tests to better ``cover'' the space of expected program 
+inputs.  Unfortunately, unit tests do a poor job of covering the space of
+program \emph{behaviors} in a distributed system, which are highly
+nondeterministic due uncertaintly about ordering and failures.
+
+CALM provides a solid foundation for program analysis---monotonic programs
+produce the same results in all executions---freeing programmers from reasoning
+about nondeterminism in program executions.  Unfortunately, while languages
+like Bloom make it easy to construct (and ``bless'') purely monotonic 
+\emph{components}, completely monotonic \emph{systems} are rare in practice.
+Nonmonotonic distributed programs---as the CALM Theorem asserts---may exhibit
+inconsistencies (e.g., in the form of divergent replica state)
+if they are not
+properly \emph{coordinated} (e.g., by using a total order broadcast protocol
+to eliminate nondeterminism in message delivery order).
+While Bloom (inspired by the CALM Theorem) has static analysis capabilities
+that can pinpoint program locations where coordination should be interposed
+to ensure consistent outcomes, it offers little help confirming if a supplied
+coordination protocol is actually correct.
+
+To increase the programmer's confidence that Bloom programs (including those
+that are not completely monotonic) are correct, 
+it is tempting to adopt a testing framework similar to those used with common
+systems programming languages.  We believe that Bloom's relational model,
+high-level declarative language and static analysis capabilities will allow
+us to improve many shortcomings in existing testing systems, including:
+
+\begin{itemize}
+\item \textbf{}.
+
+\end{itemize}
+
+
+
+\subsection{Summary of Tasks and Goals}
+
+We are currently developing the BloomUnit system, a quality assurance tool
+for programs written in Bloom.  
+
+\begin{itemize}
+\item \textbf{Declarative assertions}.
+\item \textbf{Constraint-guided input generation}
+\item \textbf{CALM-based pruning of the state space}
+\item ...
+\item ...
+\end{itemize}
+
