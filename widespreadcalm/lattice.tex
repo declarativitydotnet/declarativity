@@ -20,7 +20,7 @@ to support arbitrary lattices, rather than just the set lattice.
 
 \begin{figure}[t]
 \begin{minipage}{.48\textwidth}
-\begin{lstlisting}[caption=Quorum vote in Bloom.,label=lst:bloom-quorum-set]
+\begin{lstlisting}[caption=Quorum vote in Bloom (non-monotonic).,label=lst:bloom-quorum-set]
 QUORUM_SIZE = 5
 RESULT_ADDR = "example.org"
 
@@ -42,9 +42,9 @@ class QuorumVote
   end
 end
 \end{lstlisting}
-\end{minipage}\hfill
+\end{minipage}
 \begin{minipage}{.48\textwidth}
-\begin{lstlisting}[caption=Quorum vote in \blooml{}.,label=lst:bloom-quorum-lattice]
+\begin{lstlisting}[caption=Quorum vote in \blooml (monotonic).,label=lst:bloom-quorum-lattice]
 QUORUM_SIZE = 5
 RESULT_ADDR = "example.org"
 
@@ -77,17 +77,24 @@ analysis over sets produces unsatisfactory results. This program receives votes
 from one or more clients (not shown) via the \texttt{vote\_chn} channel. Once at
 least \texttt{QUORUM\_SIZE} votes have been received, a message is sent to a
 remote node to indicate that quorum has been reached
-(lines~\ref{line:bloom-quorum-msg-start}--\ref{line:bloom-quorum-msg-end}). This
-program resembles a ``quorum vote'' subroutine that might be used by an
-implementation of Paxos~\cite{part-time} or quorum
-replication~\cite{Gifford1979}.
+(lines~\ref{line:bloom-quorum-msg-start}--\ref{line:bloom-quorum-msg-end}).
 
 Intuitively, this program makes progress in a semantically monotonic fashion:
 the set of received votes grows and the size of the \texttt{votes} collection
 can only increase, so once a quorum has been reached it will never be
-retracted. Unfortunately, the current CALM analysis would regard this program as
-non-monotonic because of the grouping/aggregation operation on
+retracted. Unfortunately, the CALM analysis over sets would regard this program
+as non-monotonic because of the grouping/aggregation operation on
 line~\ref{line:bloom-nm-quorum}.
+
+We have developed an initial prototype of \blooml, a version of the Bloom
+language and runtime that has been extended to support programs over arbitrary
+lattices~\cite{bloom-lattice-tr}. Listing~\ref{lst:bloom-quorum-lattice}
+contains a version of the quorum voting program implemented using
+\blooml. Rather than being limited to monotonically growing sets, this version
+of quorum voting uses three different lattices: a \texttt{set} lattice (to hold
+the set of votes received), a \texttt{max} lattice representing an increasing
+counter (to count the number of votes), and a \texttt{bool} lattice representing
+a threshold test that
 
 \jmh{Intro paragraph.}
 \begin{itemize}
