@@ -21,26 +21,28 @@
 
 \newcommand{\mytitle}{BIGDATA:Small:Data Collection and Management:\\Widespread CALM: Coordination Analysis and Big Data}
 
-\newcommand{\denselist}{
-\addtolength{\itemsep}{-7pt}}
-%\setlength{\listparindent}{-170pt}}
-%\addtolength{\partopsep}{-40pt}}
+%%% VARIOUS COMPACTIFICATION TRICKS
+% %%% CHANGE DEFAULTS
+% %\setlength{\listparindent}{-170pt}}
+% %\addtolength{\partopsep}{-40pt}}
+% %\addtolength{\textwidth}{10mm}
+% %\addtolength{\textheight}{10mm}
+% \renewcommand{\baselinestretch}{0.95}
+% \renewcommand{\paragraph}[1]{\vspace*{2mm}\noindent\textbf{#1} \ \ }
 
-%\addtolength{\textwidth}{10mm}
-%\addtolength{\textheight}{10mm}
-\renewcommand{\baselinestretch}{0.95}
-
-\renewcommand{\paragraph}[1]{\vspace*{2mm}\noindent\textbf{#1} \ \ }
-
-% FORMATTING -------------------------------------------------------
-\newcommand{\term}[1]{\textbf{#1}}
-\newcommand{\figref}[1]{Figure~\ref{#1}}
-\newcommand{\secref}[1]{Section~\ref{#1}}
-\newcommand{\eqnref}[1]{Equation~\ref{#1}}
-\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
-\newcommand{\itembf}[1]{\item\textbf{#1}}
+% ADD COMPACT OPTIONS
 \newenvironment{tightitemize}{\begin{list}{$\bullet$}{\setlength{\itemsep}{1pt}\setlength{\topsep}{2pt}\setlength{\parskip}{1pt}\setlength{\parsep}{1pt}\leftmargin=1.5em}}{\end{list}}
+\newcommand{\denselist}{\addtolength{\itemsep}{-7pt}}
+% indent full paragraph for compact lists
+\newenvironment{myparindent} {
+  \hangindent=1em
+  \hangafter=0
+  \noindent
+}
 
+%captionsmall -- format captions in a smaller font
+\newcommand{\captionsmall}[1]{\caption{\footnotesize{#1}}}
+\newcommand{\myurl}[1]{{\footnotesize \url{#1}}}
 
 % THEOREMS -------------------------------------------------------
 \newtheorem{thm}{Theorem}[section]
@@ -61,32 +63,22 @@
 \newtheorem{dfn}{Definition}[section]
 \newtheorem{goal}{Goal}
 
-
+% OTHER MACROS -----------------------------
 % inline comments
 % color names at http://en.wikibooks.org/wiki/LaTeX/Colors#Predefined_colors
 \usepackage[usenames,dvipsnames]{xcolor}
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 
-% indent full paragraph for compact lists
-\newenvironment{myparindent} {
-  \hangindent=1em
-  \hangafter=0
-  \noindent
-}
-
-%captionsmall -- format captions in a smaller font
-\newcommand{\captionsmall}[1]{\caption{\footnotesize{#1}}}
-
 % Comment out to take away comments
 \newcommand{\commentout}[1]{}
 \newcommand{\out}[1]{}
 
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
 % no page numbers
 %\pagestyle{empty}
-
-
-\newcommand{\myurl}[1]{{\footnotesize \url{#1}}}
 \def\blooml{Bloom$^L$\xspace}
+
 
 \begin{document}
 
