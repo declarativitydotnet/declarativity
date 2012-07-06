@@ -3,7 +3,64 @@ To achieve consistency without using expensive distributed coordination, many
 systems have proposed using a vocabulary of \emph{commutative} operations
 (e.g.,~\cite{dynamo,Reiher1994,bayou}); this allows the replicas of a distributed
 object to process events in different orders and converge to the same final
-state. This approach has recently been formalized 
+state. Shapiro et al.\ recently proposed a formalism for these approaches called
+\emph{Conflict-Free Replicated Data Types} (CRDTs), which casts these ideas into
+the algebraic framework of \emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
+
+CALM analysis is more powerful than approaches that only consider the
+convergence of individual objects or lattices: by analyzing both distributed
+state and logic, CALM can ensure the consistency of the application's entire
+state, rather than individual objects. However, the original formulation of the
+CALM analysis only supported monotonic programs over sets (that is, programs
+that compute larger sets of facts over time). This prevents the CALM analysis
+for supporting several common patterns in weakly consistent distributed
+programming, including timestamps, versions, counters, and threshold
+tests. Drawing inspiration from CRDTs, we are working to extend Bloom and CALM
+to support arbitrary lattices, rather than just the set lattice.
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+QUORUM_SIZE = 5
+RESULT_ADDR = "example.org"
+
+class QuorumVote
+  include Bud
+
+  state do
+    channel :vote_chn, [:@addr, :voter_id]
+    channel :result_chn, [:@addr]
+    table   :votes, [:voter_id]
+    scratch :cnt, [] => [:cnt]
+  end
+
+  bloom do
+    votes      <= vote_chn {|v| [v.voter_id]}
+    cnt        <= votes.group(nil, count(:voter_id)) (*\label{line:bloom-nm-quorum}*)
+    result_chn <~ cnt {|c| [RESULT_ADDR] if c >= QUORUM_SIZE} (*\label{line:bloom-quorum-msg}*)
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A non-monotonic Bloom program that waits for a quorum of votes to be received.}
+\label{fig:bloom-quorum-set}
+\end{figure}
+
+Figure~\ref{fig:bloom-quorum-set} contains a concrete example where the CALM analysis
+over sets produces unsatisfactory results. This program receives votes from a
+client program (not shown) via the \texttt{vote\_chn} channel. Once at least
+\texttt{QUORUM\_SIZE} votes have been received, a message is sent to a remote
+node to indicate that quorum has been reached
+(line~\ref{line:bloom-quorum-msg}). This program resembles a ``quorum vote''
+subroutine that might be used by an implementation of Paxos~\cite{part-time}
+or quorum replication~\cite{Gifford1979}.
+
+Intuitively, this program makes progress in a semantically monotonic fashion:
+the set of received votes grows and the size of the \texttt{votes} collection
+can only increase, so once a quorum has been reached it will never be
+retracted. Unfortunately, the current CALM analysis would regard this program as
+non-monotonic because of the grouping/aggregation operation on
+line~\ref{line:bloom-nm-quorum}.
 
 \jmh{Intro paragraph.}
 \begin{itemize}
