@@ -1,3 +1,4 @@
+%!TEX root = proposal.tex
 Bloom was defined with local storage as its core construct, since local storage forms a strong foundation: it is easy to understand and enforce its semantics.  
 
 That was useful at first, but by now it seems crazy to have a Big-Data-in-the-Cloud language that can describe only local storage.  We'd like to expose distributed storage as a programming construct in the next generation of Bloom, both for point lookups as well as for large-scale analytics workloads.  In prior work we showed that both of these kinds of systems can be implemented as libraries in Bloom.  But these proofs of concept are a long way from reusable implementations that can be supported as first-class citizens in a language.  \jmh{Should build on the themes of the previous section.}  Here are some important issues:
