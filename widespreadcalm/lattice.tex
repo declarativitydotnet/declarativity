@@ -46,7 +46,7 @@ end
 \label{fig:bloom-quorum-set}
 \end{figure}
 
-Figure~\ref{fig:bloom-quorum-set} contains a concrete example where the CALM
+Figure~\ref{fig:bloom-quorum-set} contains a simple example where the CALM
 analysis over sets produces unsatisfactory results. This program receives votes
 from one or more clients (not shown) via the \texttt{vote\_chn} channel. Once at
 least \texttt{QUORUM\_SIZE} votes have been received, a message is sent to a
@@ -61,6 +61,36 @@ can only increase, so once a quorum has been reached it will never be
 retracted. Unfortunately, the current CALM analysis would regard this program as
 non-monotonic because of the grouping/aggregation operation on
 line~\ref{line:bloom-nm-quorum}.
+
+\begin{figure}[t]
+\begin{scriptsize}
+\begin{lstlisting}
+QUORUM_SIZE = 5
+RESULT_ADDR = "example.org"
+
+class QuorumVoteL
+  include Bud
+
+  state do
+    channel :vote_chn, [:@addr, :voter_id]
+    channel :result_chn, [:@addr]
+    lset    :votes (*\label{line:quorum-lset-decl}*)
+    lmax    :cnt
+    lbool   :quorum_done
+  end
+
+  bloom do
+    votes       <= vote_chn {|v| v.voter_id} (*\label{line:quorum-set-accum}*)
+    cnt         <= votes.size (*\label{line:quorum-size}*)
+    quorum_done <= cnt.gt_eq(QUORUM_SIZE) (*\label{line:quorum-threshold}*)
+    result_chn  <~ quorum_done.when_true { [RESULT_ADDR] } (*\label{line:quorum-when-true}*)
+  end
+end
+\end{lstlisting}
+\end{scriptsize}
+\caption{A monotonic \blooml program that waits for a quorum of votes to be received.}
+\label{fig:lattice-quorum}
+\end{figure}
 
 \jmh{Intro paragraph.}
 \begin{itemize}
