@@ -1,22 +1,25 @@
 %!TEX root = proposal.tex
+
 To achieve consistency without using expensive distributed coordination, many
-systems have proposed using a vocabulary of \emph{commutative} operations
-(e.g.,~\cite{dynamo,Reiher1994,bayou}); this allows the replicas of a distributed
-object to process events in different orders and converge to the same final
-state. Shapiro et al.\ recently proposed a formalism for these approaches called
-\emph{Conflict-Free Replicated Data Types} (CRDTs), which casts these ideas into
-the algebraic framework of \emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
+systems have proposed using a vocabulary of \emph{commutative},
+\emph{associative}, and \emph{idempotent} operations
+(e.g.,~\cite{dynamo,Reiher1994,bayou,quicksand}). This helps to ensure that the
+replicas of a distributed object converge to the same final state (``eventual
+consistency''), despite the message reordering and duplication that may occur in
+an asynchronous network. Shapiro et al.\ recently proposed a formalism for these
+approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs), which
+casts these ideas into the algebraic framework of
+\emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
 
 CALM analysis is more powerful than approaches that only consider the
 convergence of individual objects or lattices: by analyzing both distributed
 state and logic, CALM can ensure the consistency of the application's entire
 state, rather than individual objects. However, the original formulation of the
-CALM analysis only supported monotonic programs over sets (that is, programs
-that compute larger sets of facts over time). This prevents the CALM analysis
-for supporting several common patterns in weakly consistent distributed
-programming, including timestamps, versions, counters, and threshold
-tests. Drawing inspiration from CRDTs, we are working to extend Bloom and CALM
-to support arbitrary lattices, rather than just the set lattice.
+CALM analysis only supported monotonic programs over sets, which causes the
+analysis to fail for common constructs such as timestamps, versions, and
+counters. Drawing inspiration from CRDTs, we are working to address this problem
+by extending Bloom and CALM to support arbitrary lattices, rather than just the
+set lattice.
 
 \begin{figure}[t]
 \begin{minipage}{.48\textwidth}
@@ -87,14 +90,74 @@ as non-monotonic because of the grouping/aggregation operation on
 line~\ref{line:bloom-nm-quorum}.
 
 We have developed an initial prototype of \blooml, a version of the Bloom
-language and runtime that has been extended to support programs over arbitrary
+language that supports programs over arbitrary
 lattices~\cite{bloom-lattice-tr}. Listing~\ref{lst:bloom-quorum-lattice}
 contains a version of the quorum voting program implemented using
 \blooml. Rather than being limited to monotonically growing sets, this version
 of quorum voting uses three different lattices: a \texttt{set} lattice (to hold
 the set of votes received), a \texttt{max} lattice representing an increasing
 counter (to count the number of votes), and a \texttt{bool} lattice representing
-a threshold test that
+a threshold test (to check for reaching quorum). Note that all three lattices
+``grow'' over time, but according to different notions of growth (set
+containment, increasing integers, and movement from False to True,
+respectively). The key advantage of \blooml compared with CRDTs is that \blooml
+allows \emph{safe} mappings between lattices via monotone functions. For
+example, \texttt{size} is a monotone function from the \texttt{set} lattice to
+the \texttt{max} lattice; as a set increases (according to set containment), the
+\texttt{size} of the set will increase numerically. Monotone functions allow
+complex applications to be safely \emph{composed} from a collection of simple
+lattice types.
+
+Our initial \blooml prototype has yielded promising results: for example, we
+have used \blooml to build a simple Dynamo-style KVS that supports version
+vectors and quorum replication. Not only is our KVS orders of magnitude more
+concise than traditional KVS implementations, it has clear semantics because it
+consists of the straightforward composition (via monotone functions) of a
+collection of simple lattices. Our \blooml prototype also performs comparably to
+the original Bloom runtime, in part because we generalized a well-known
+evaluation strategy from logic programming~\cite{Balbin1987} to work over
+lattices rather than just sets~\cite{bloom-lattice-tr}.
+
+Nevertheless, many challenges and open questions remain. We are currently
+pursuing the following ideas:
+\begin{itemize}
+\item \textbf{Distributed Garbage Collection:} Many distributed systems
+  accumulate state that can eventually be reclaimed. For example, a vector clock
+  in a dynamic system will eventually contain many entries for nodes that have
+  subsequently left the system. In general, doing distributed garbage collection
+  requires consensus; hence, such operations would be flagged as non-monotonic
+  by the CALM analysis.
+
+  A common pattern is to do distributed garbage collection as a background
+  operation. Because application functionality does not block on achieving
+  consensus, this avoids much of the operational concern associated with
+  deploying consensus protocols at scale; this pattern is often called ``weak''
+  or ``lazy'' consensus.
+
+  We are working on providing language support for this pattern using
+  \blooml. Intuitively, a datum can be reclaimed once it is no longer needed by
+  any member of the system---this can be formalized as reclaiming objects that
+  fall below the greatest lower bound of all the replicas of a 
+
+\item \textbf{Controlled Non-Determinism:} Thus far, we have primarily been
+  interested in analysis techniques for deterministic distributed
+  programs. While this is often desirable (e.g., determinism implies eventual
+  consistency), certain popular protocols are intentionally
+  non-deterministic. For example, a two-phase commit protocol might choose to
+  abort a transaction if a response hasn't been received from a participant
+  within a configured time bound. Although this exhibits a race condition
+  (between receiving a slow response and exceeding the time bound), this is
+  intended: in this situation, the programmer uses non-determinism to select
+  from two acceptable outcomes.
+
+\item \textbf{Evaluations:} To validate that \blooml is useful for building
+  practical distributed programs, we are exploring several different application
+  domains. In particular, we are exploring how \blooml can be used to build
+  collaborate editing systems.
+
+  We are also working on building out the KVS prototype mentioned above into a
+  complete distributed storage system.
+\end{itemize}
 
 \jmh{Intro paragraph.}
 \begin{itemize}
