@@ -3,7 +3,7 @@
 Writing correct distributed systems is extremely challenging, in large part
 because developers of such systems are forced to reason
 about their behavior under all the combinations of message ordering and failure
-scenarios that could occur in an execution.
+that could occur in an execution.
 In addition to the basic computation they wish to express, developers
 must consider the enormous space of nondeterministic behaviors caused by 
 asynchrony, concurrency and partial failure.
@@ -46,10 +46,29 @@ that are not completely monotonic) are correct,
 it is tempting to adopt a testing framework similar to those used with common
 systems programming languages.  We believe that Bloom's relational model,
 high-level declarative language and static analysis capabilities will allow
-us to improve many shortcomings in existing testing systems, including:
+us to improve many shortcomings in existing testing systems.  Some clear
+advantages to this approach follow:
 
 \begin{itemize}
-\item \textbf{}.
+\item At its heart, Bloom is a query language.  If we view the execution
+of a module over some input as a database containing the trace of inputs and
+outputs to that module, we can recast the difficult problem of correctness 
+specifications into the easier problem of querying a database.  A BloomUnit
+assertion is simply a query that compares module inputs, outputs, and timing
+information.
+
+\item Database systems use \emph{constraints} to characterize admissible 
+database instances.  Inspired by recent work on lightweight formal methods and
+model finding~\cite{jackson}, we are exploring using relational constraints 
+to generate valid test inputs automatically.
+
+\item Most importantly, the CALM Theorem implies that we can significantly
+reduce the enormous space of executions (corresponding to different message
+orderings) that must be searched to ensure that a distributed system satisfies
+its correctness requirements.  For monotonic modules, all orderings produce
+the same result, so we need only explore a single execution.  For hybrid
+modules, we need only explore message reorderings for racing messages that
+are bound for nonmonotonic processing at the receiver.
 
 \end{itemize}
 
@@ -62,9 +81,29 @@ for programs written in Bloom.
 
 \begin{itemize}
 \item \textbf{Declarative assertions}.
+BloomUnit users will write declarative test specifications that describe the 
+intended input-output behavior of the program. These specifications will be 
+written 
+as Bloom queries over the (distributed) execution trace of the program; 
+using Bloom avoids the need for users to learn another language. 
+BloomUnit will allow ``pay as you go'' testing: a simple test specification 
+is equivalent to a single test case, while a more complex test specification 
+can encapsulate many different test cases.
+
+
 \item \textbf{Constraint-guided input generation}
+Rather than supplying concrete inputs for test specifications, users will 
+instead 
+specify the constraints that the input must satisfy; BloomUnit will then 
+automatically generate inputs that are consistent with those constraints.
+
 \item \textbf{CALM-based pruning of the state space}
-\item ...
-\item ...
+BloomUnit will systematically explore the space of
+possible network behaviors in an intelligent manner. To reduce the size of this space, we may again
+leverage the CALM Theorem.
+If we can recognize that certain code fragments are purely monotonic, it follows 
+that they are insensitive to message delivery order.
+Hence the evaluator may explore only those message delivery order permuatations
+that could have produced different outputs.
 \end{itemize}
 

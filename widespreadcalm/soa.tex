@@ -1,10 +1,80 @@
+When a programmer submits a Bloom program, a static analysis tool can sometimes
+(conservatively) affirm that the program has eventually consistent outcomes.
+If it is unable to do so---due to the presence of nonmontonic deductions
+that follow asynchronous communication---a graphical debugger displays the
+program locations where coordination may need to be added to ``guard'' the
+nonmonotonic operations.  This functionality is particularly useful when
+analyzing small modules (units of code encapsulation and reuse) written 
+entirely in the Bloom language.
+As modules are composed and the overall program grows, the corresponding graphical representation becomes more difficult to reason about.  Ideally,
+we could analyze module individually, attribute to their external API a
+label representing the details of the implementation that are relevant to
+consistency in future compositions, and henceforth interact with the module at
+the level of its API.  
+
+In practice, distributed systems are often composed from a large 
+collection of functional units, loosely coupled using message-based APIs.
+Such services are often implemented in a variety of programming 
+languages, and in some cases they are opaque and outside the control of
+the programmer using them.  
+Many services (e.g. data stores and message queues) provide their own 
+consistency guarantees, but how are we to reason about the consistency of an
+\emph{application} that calls out to various such services and transforms
+and combines their responses?  
+
+The intuitions behind the CALM Theorem apply at this level of reasoning
+just as they applied to the low-level composition of relational operators
+in a Bloom execution.  Consider an inventory management application 
+that makes calls into two asynchronously updated but
+eventually consistent datastores.  It selects from the first service---an 
+inventory datastore---the model numbers of all toaster ovens that are currently in stock.  For each, it probes the second datastore---a recall database---to
+see if the unit has been recalled.  Finally, the application returns the 
+set of model number for units that have not been recalled.  Observe that this
+application is inconsistent; it will \emph{sometimes} return recalled units 
+because it probed the recall database ``too early.''  If the orchestration
+application that correlates the results from the different datastores were written in bloom, we would observe that although the datastores are monotonic, 
+the manner in which their results are \emph{used} is not.  If the inputs to 
+the datastores are asynchronous (reorderable), then the output of the 
+application may be inconsistent.
+
+
 \subsection{Summary of Tasks and Goals}
 
 
 
 \begin{itemize}
-\item \textbf{Path labeling and label propagation}.  
+\item \textbf{Path labeling and label propagation}.
+We are currently developing a collection of ``consistency labels'' that 
+can be used to describe the data flowing out of a given module.  When the module
+is implemented in Bloom, we can derive these labels automatically via program
+analysis of the low-level code.  Each individual transformation or rule is 
+given a label, and chains of labels are ``collapsed'' based on CALM analysis to 
+a single label for each module output.  
+Otherwise, such labels can be associated with service APIs as an annotation.  
+When two modules are composed, the label of the resulting composition is derived
+by collapsing the labels of the component modules.
+As programmers construct larger systems out of reusable modules, they may 
+hide the complexity of module implementations while preserving those semantic 
+details that may affect the consistency of future compositions. The 
+labeling technique is a confluent term rewriting system that allows us to 
+characterize any dataflow as a compact expression with an intuitive 
+meaning in the context of distributed systems.
+
 \item \textbf{Automated coordination synthesis}.
+
+Given the labeling system described above, certain compositions will be 
+labeled as inconsistent.  In such cases, we will exploit the CALM
+analysis system to discover locations in an otherwise 
+inconsistent dataflow where interposition of such an order-restoration 
+coordination mechanism can yield an eventually consistent program.
+We will provide a mechanism by which a programmer may either supply 
+their own coordination protocol, or rely on the system to synthesize one. 
+In the latter case, we will show that a generic coordination 
+protocol—--totally ordered broadcast--—may be interposed into arbitrary 
+programs at their ``points of order''
+to ensure consistency of replicated state.
+
 \item \textbf{Building Service-oriented architectures in Bloom}
+The system described above applies directly to 
 \end{itemize}
 
