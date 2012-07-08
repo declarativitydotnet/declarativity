@@ -137,7 +137,7 @@ pursuing the following ideas:
   We are working on providing language support for this pattern using
   \blooml. Intuitively, a datum can be reclaimed once it is no longer needed by
   any member of the system---this can be formalized as reclaiming objects that
-  fall below the greatest lower bound of all the replicas of a 
+  fall below the greatest lower bound of all the replicas of a \jmh{finish me.}
 
 \item \textbf{Controlled Non-Determinism:} Thus far, we have primarily been
   interested in analysis techniques for deterministic distributed
@@ -148,30 +148,32 @@ pursuing the following ideas:
   within a configured time bound. Although this exhibits a race condition
   (between receiving a slow response and exceeding the time bound), this is
   intended: in this situation, the programmer uses non-determinism to select
-  from two acceptable outcomes.
+  from two acceptable outcomes.  \jmh{Expand a bit and connect to lattices.}
 
 \item \textbf{Evaluations:} To validate that \blooml is useful for building
   practical distributed programs, we are exploring several different application
   domains. In particular, we are exploring how \blooml can be used to build
-  collaborate editing systems.
+  collaborate editing systems.  \jmh{Expand on the challenges here, perhaps invoke the scope dillemma.}
 
   We are also working on building out the KVS prototype mentioned above into a
-  complete distributed storage system.
+  complete distributed storage system.  \jmh{Expand on challenges here, perhaps connect to Peter's stuff.}
 \end{itemize}
 
-\jmh{Intro paragraph.}
-\begin{itemize}
-\item Crib motivation from VLDB submission, shortening the CRDT and Bloom background and moving straight to the idea of solving the type dilemma (as discussed in Intro) by merging them. (Cite Ross/Sagiv along the way.)
-\item Discuss the idea of extending Bloom logic programming and CALM analysis to disorderly programs over arbitrary lattices. Say we've got an initial prototype of BloomL -- can cite TR if we like.
-\item Give an example of a Bloom rule over sets and a corresponding rule over lmaxes.  
-\item Discuss mappings, commutative functions and homomorphisms.  Impact on CALM and delta computation.
-\item Show the vector clock example in a box.
-\item Challenge: proving lattice properties. Possible conservative analysis in a nice imperative language, or a subsetted DSL within such a language., 
-\item Challenge: Lattices and efficiency: garbage collection and lower bounds
-\item Challenge: Lattices and non-monotonicity: e.g. ``odometer'' compositions, etc.
-\end{itemize}
+% \jmh{Intro paragraph.}
+% \begin{itemize}
+% \item Crib motivation from VLDB submission, shortening the CRDT and Bloom background and moving straight to the idea of solving the type dilemma (as discussed in Intro) by merging them. (Cite Ross/Sagiv along the way.)
+% \item Discuss the idea of extending Bloom logic programming and CALM analysis to disorderly programs over arbitrary lattices. Say we've got an initial prototype of BloomL -- can cite TR if we like.
+% \item Give an example of a Bloom rule over sets and a corresponding rule over lmaxes.  
+% \item Discuss mappings, commutative functions and homomorphisms.  Impact on CALM and delta computation.
+% \item Show the vector clock example in a box.
+% \item Challenge: proving lattice properties. Possible conservative analysis in a nice imperative language, or a subsetted DSL within such a language., 
+% \item Challenge: Lattices and efficiency: garbage collection and lower bounds
+% \item Challenge: Lattices and non-monotonicity: e.g. ``odometer'' compositions, etc.
+% \end{itemize}
 
 \subsection{Summary of Tasks and Goals}
+\jmh{Revisit in light of Neil's text.}
+
 \begin{itemize}
 \item \textbf{Efficient Evaluation of Lattice programs}.  \jmh{Sentence or 2 here on Lower bounds, zero-copy, etc.}
 \item \textbf{Tools for guaranteed lattice properties}.  \jmh{Sentence or two here on a possible DSL agenda, perhaps subsetting some existing language like Scala.  Remind that scope can be small because so much can be done outside the DSL in BloomL via lattice composition (e.g. data structures).}

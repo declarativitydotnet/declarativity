@@ -1,17 +1,20 @@
-When a programmer submits a Bloom program, a static analysis tool can sometimes
-(conservatively) affirm that the program has eventually consistent outcomes.
-If it is unable to do so---due to the presence of nonmontonic deductions
+Our static analysis techniques for Bloom can
+(conservatively) affirm that a given program has eventually consistent outcomes.
+If the analysis is unable to do so---due to the presence of nonmontonic deductions
 that follow asynchronous communication---a graphical debugger displays the
 program locations where coordination may need to be added to ``guard'' the
-nonmonotonic operations.  This functionality is particularly useful when
+nonmonotonic operations.  \jmh{Add figures to match Neil's figures.}  This functionality is particularly useful when
 analyzing small modules (units of code encapsulation and reuse) written 
 entirely in the Bloom language.
-As modules are composed and the overall program grows, the corresponding graphical representation becomes more difficult to reason about.  Ideally,
-we could analyze module individually, attribute to their external API a
-label representing the details of the implementation that are relevant to
+As modules are composed and the overall program grows, the corresponding graphical representation becomes more difficult to reason about.  \jmh{clean up following sentence}.  Ideally,
+we could analyze a program piecewise, attributing to the external API of each module a
+label representing only the details of the implementation that are relevant to
 consistency in future compositions, and henceforth interact with the module at
 the level of its API.  
 
+\jmh{At this point, go into some detail on how to do module-level analysis \emph{within} Bloom---introduce labels and examples of rules over labels.}
+
+\jmh{Now pivot to the case where it's not Bloom from top to bottom.}
 In practice, distributed systems are often composed from a large 
 collection of functional units, loosely coupled using message-based APIs.
 Such services are often implemented in a variety of programming 
@@ -29,10 +32,9 @@ that makes calls into two asynchronously updated but
 eventually consistent datastores.  It selects from the first service---an 
 inventory datastore---the model numbers of all toaster ovens that are currently in stock.  For each, it probes the second datastore---a recall database---to
 see if the unit has been recalled.  Finally, the application returns the 
-set of model number for units that have not been recalled.  Observe that this
-application is inconsistent; it will \emph{sometimes} return recalled units 
-because it probed the recall database ``too early.''  If the orchestration
-application that correlates the results from the different datastores were written in bloom, we would observe that although the datastores are monotonic, 
+set of model numbers for units that have \emph{not} been recalled.  Observe that this
+application has a race condition due to the negation (``not recalled''): for a given model number $N$, the order of a request to lookup $N$ and a request to insert a recall for $N$ will determine whether or not the system returns $N$.  In a distributed implementation, both orderings could occur at different replicas, yielding inconsistent results.  If the orchestration
+application that correlates the results from the different datastores were written in Bloom, we would observe that although the datastores are monotonic, 
 the manner in which their results are \emph{used} is not.  If the inputs to 
 the datastores are asynchronous (reorderable), then the output of the 
 application may be inconsistent.
@@ -70,11 +72,11 @@ coordination mechanism can yield an eventually consistent program.
 We will provide a mechanism by which a programmer may either supply 
 their own coordination protocol, or rely on the system to synthesize one. 
 In the latter case, we will show that a generic coordination 
-protocol—--totally ordered broadcast--—may be interposed into arbitrary 
+protocol---totally ordered broadcast---may be interposed into arbitrary 
 programs at their ``points of order''
 to ensure consistency of replicated state.
 
 \item \textbf{Building Service-oriented architectures in Bloom}
-The system described above applies directly to 
+The system described above applies directly to \jmh{finish me}.
 \end{itemize}
 
