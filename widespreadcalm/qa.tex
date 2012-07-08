@@ -2,11 +2,12 @@
 
 Writing correct distributed systems is extremely challenging, in large part
 because developers of such systems are forced to reason
-about their behavior under all the combinations of message ordering and failure
+about program behavior under all the combinations of message ordering and failure
 that could occur in an execution.
 In addition to the basic computation they wish to express, developers
 must consider the enormous space of nondeterministic behaviors caused by 
 asynchrony, concurrency and partial failure.
+
 Two techniques are commonly used
 to address this difficulty in practical systems: verification and testing.
 Verification using formal methods typically involves writing a specification
@@ -41,10 +42,9 @@ that can pinpoint program locations where coordination should be interposed
 to ensure consistent outcomes, it offers little help confirming if a supplied
 coordination protocol is actually correct.
 
-To increase the programmer's confidence that Bloom programs (including those
-that are not completely monotonic) are correct, 
-it is tempting to adopt a testing framework similar to those used with common
-systems programming languages.  We believe that Bloom's relational model,
+To increase the programmer's confidence that Bloom programs are correct---including those
+that are not completely monotonic---it is tempting to adopt a testing framework similar to those used with common
+systems programming languages.  \jmh{I'm not clear if we succumb to this temptation or reject it in the following text.} We believe that Bloom's relational model,
 high-level declarative language and static analysis capabilities will allow
 us to improve many shortcomings in existing testing systems.  Some clear
 advantages to this approach follow:
@@ -53,7 +53,7 @@ advantages to this approach follow:
 \item At its heart, Bloom is a query language.  If we view the execution
 of a module over some input as a database containing the trace of inputs and
 outputs to that module, we can recast the difficult problem of correctness 
-specifications into the easier problem of querying a database.  A BloomUnit
+specifications into the easier problem of querying a database.  \jmh{Haven't intro'd BloomUnit yet.}  A BloomUnit
 assertion is simply a query that compares module inputs, outputs, and timing
 information.
 
