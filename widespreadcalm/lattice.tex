@@ -111,7 +111,7 @@ complex applications to be safely \emph{composed} from a collection of simple
 lattice types.
 
 Our initial \blooml prototype has yielded promising results: for example, we
-have used \blooml to build a simple Dynamo-style KVS that supports version
+have used \blooml to build a simple Dynamo-style key-value store (KVS) that supports version
 vectors and quorum replication. Not only is our KVS orders of magnitude more
 concise than traditional KVS implementations, it has clear semantics because it
 consists of the straightforward composition (via monotone functions) of a
@@ -180,7 +180,7 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
 
 \item \textbf{Evaluations:} To validate that \blooml is useful for building
   practical distributed programs, we are exploring several different application
-  domains. In particular, we are exploring how \blooml can be used to build
+  domains. For example, we are exploring how \blooml can be used to build
   collaborative editing systems. In concurrent editing, several users make
   changes to a shared document. To provide low-latency interactive behavior,
   each user typically edits a private copy of the document; the resulting
