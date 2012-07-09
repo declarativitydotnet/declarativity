@@ -1,5 +1,6 @@
 %!TEX root = proposal.tex
-Monotonic logic programming is not the first proposal for achieving consistency without using expensive distributed coordination.  There is a long tradition of work that proposes the use a vocabulary of \emph{commutative},
+Monotonic logic programming is not the first proposal for achieving consistency without using expensive distributed coordination.  There is a long tradition of work that proposes 
+using a vocabulary of \emph{commutative},
 \emph{associative}, and \emph{idempotent} operations to achieve coordination-free consistency
 (e.g.,~\cite{dynamo,quicksand,Reiher1994,bayou}). These properties can help to ensure that the
 replicas of a distributed object converge to the same final state (``eventual
@@ -77,7 +78,7 @@ end
 
 Listing~\ref{lst:bloom-quorum-set} contains a simple example where the CALM
 analysis over sets produces unsatisfactory results. This program implements a
-``coordinator'' process receives votes from one or more clients (not shown) via
+``coordinator'' process that receives votes from one or more clients (not shown) via
 the \texttt{vote\_chn} channel. Once at least \texttt{QUORUM\_SIZE} votes have
 been received, the coordinator sends a message to a remote node to indicate that
 quorum has been reached
