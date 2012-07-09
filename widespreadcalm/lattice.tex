@@ -156,10 +156,29 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
   intended: in this situation, the programmer uses non-determinism to select
   from two acceptable outcomes.  \jmh{Expand a bit and connect to lattices.}
 
+\item \textbf{Verifying Lattice Implementations:} In \blooml, the developer of a
+  new lattice type is responsible for ensuring that their design is a valid
+  lattice (e.g., that it behaves in a commutative, associative, and idempotent
+  fashion). In many cases, this burden is manageable because \blooml allows
+  complex applications to be written via the safe composition of simple lattice
+  types using monotone functions---for example, we found this to be the case
+  when building the KVS described above.
+
+  Nevertheless, providing tools to help programmers validate the correctness
+  of their lattice implementations would be useful. We have recently been
+  exploring systematic testing for Bloom programs (Section~\ref{sec:qa});
+  similar ideas could be adopted to automatically generate high-quality test
+  cases for lattice implementations. Another approach we are investigating is to
+  provide a specialized domain-specific language (DSL) for building lattice
+  implementations; this would simplify formal verification of lattice
+  definitions.
+
 \item \textbf{Evaluations:} To validate that \blooml is useful for building
   practical distributed programs, we are exploring several different application
   domains. In particular, we are exploring how \blooml can be used to build
-  collaborate editing systems.  \jmh{Expand on the challenges here, perhaps invoke the scope dillemma.}
+  collaborative editing systems.
+
+  \jmh{Expand on the challenges here, perhaps invoke the scope dillemma.}
 
   We are also working on building out the KVS prototype mentioned above into a
   complete distributed storage system.  \jmh{Expand on challenges here, perhaps connect to Peter's stuff.}
