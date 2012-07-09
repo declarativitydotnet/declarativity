@@ -5,7 +5,12 @@ Our static analysis techniques for Bloom can
 If the analysis is unable to do so---due to the presence of nonmontonic deductions
 that follow asynchronous communication---a graphical debugger displays the
 program locations where coordination may need to be added to ``guard'' the
-nonmonotonic operations.  \jmh{Add figures to match Neil's figures.}  This functionality is particularly useful when
+nonmonotonic operations.  
+Figure~\ref{fig:kvs} shows a Bloom implementation of a simple key-value store
+and its accompanying dataflow visualization.  Note the white circles on the edges leading
+into the \emph{kvstate} collection, indicating nonmonotonic operations (corresponding to 
+deletion).
+The visualization functionality is particularly useful when
 analyzing small modules (units of code encapsulation and reuse) written 
 entirely in the Bloom language.
 As modules are composed and the overall program grows, the corresponding graphical representation becomes more difficult to reason about.  \jmh{clean up following sentence}.  Ideally,
@@ -13,6 +18,59 @@ we could analyze a program piecewise, attributing to the external API of each mo
 label representing only the details of the implementation that are relevant to
 consistency in future compositions, and henceforth interact with the module at
 the level of its API.  
+
+
+\begin{figure}[t]
+\begin{minipage}{.48\textwidth}
+
+\begin{scriptsize}
+\begin{lstlisting}
+module KVSProtocol
+  state do
+    interface input, :kvput, [:client, :key] => [:reqid, :value]
+    interface input, :kvdel, [:key] => [:reqid]
+    interface input, :kvget, [:reqid] => [:key]
+    interface output, :kvget_response, [:reqid] => [:key, :value]
+  end
+end
+
+module BasicKVS
+  include KVSProtocol
+
+  state do
+    table :kvstate, [:key] => [:value]
+  end
+
+  bloom :mutate do
+    kvstate <+ kvput {|s| [s.key, s.value]}
+    kvstate <- (kvstate * kvput).lefts(:key => :key)
+    kvstate <- (kvstate * kvdel).lefts(:key => :key)
+  end
+
+  bloom :get do
+    temp :getj <= (kvget * kvstate).pairs(:key => :key)
+    kvget_response <= getj do |g, t|
+      [g.reqid, t.key, t.value]
+    end
+  end
+
+end
+
+\end{lstlisting}
+\end{scriptsize}
+\end{minipage}
+\begin{minipage}{.48\textwidth}
+\raggedleft
+\includegraphics[width=0.7\linewidth]{kvs.pdf}
+\end{minipage}
+
+\vspace{-10pt}
+\caption{A Bloom key-value store and its CALM visualization}
+\label{fig:kvs}
+\vspace{-2pt}
+
+\end{figure}
+
 
 
 \begin{figure}[t]
@@ -72,20 +130,22 @@ $NR \rightarrow N$ & $R$ can do no good \\ \hline
 \vspace{-2pt}
 \end{figure}
 
+
 Figure~\ref{fig:rules} enumerates the Bloom consistency labels and rules for their propagation.
-Consider a Bloom module implementing an overwriting key-value store, with two input interfaces (for
-\emph{put} and \emph{get}) and one output interface (\emph{get\_response}, to return the values associated
-with \emph{get}s).  CALM analysis will detect nonmonotonic operations in the dataflow from \emph{put}
-to \emph{get\_response}, because \emph{put}s implicitly delete old values.  As we collapse the labels,
-the nonmonotonic label will dominate; we will ultimately associate with the module the following signature:
-$get\_response: N(put) | \bot(get)$.
+Consider again the overwriting key-value store presented in Figure~\ref{fig:kvs}.
+CALM analysis detected nonmonotonic operations in the dataflow from \emph{kvput}
+to \emph{kvget\_response}, because PUTs implicitly delete old values.  As we collapse the labels,
+the nonmonotonic label will dominate, and we will ultimately associate with BasicKVS the following signature:
+$kvget\_response: \{N(put) | \bot(get)\}$.
 Consider now a larger system that uses the key-value store.  It will not be safe to attach an asynchronous
-stream to the \emph{put} interface of the store, as this will lead to a divergent consistency label
+stream to the \emph{kvput} interface of the store, as this will lead to a divergent consistency label
 (due to the rule $AN \rightarrow D$).  Asynchronous (i.e., unordered) inputs must be reordered (via
-interposition of a dataflow labeled ``R'') before composing with \emph{put}.  This corresponds to intuition:
+Order must be \emph{restored} (via
+interposition of a dataflow labeled ``R'') 
+to asynchronous (i.e., unordered) inputs
+before composing with \emph{kvput}.  This corresponds to intuition:
 a key-value store with ``last writer wins'' semantics is highly sensitive to the order in which it receives writes,
 while reads may be reordered freely.
-
 
 In practice, distributed systems are often composed from a large 
 collection of functional units, loosely coupled using message-based APIs.
