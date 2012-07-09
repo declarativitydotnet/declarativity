@@ -103,8 +103,8 @@ three lattices ``grow'' over time, but according to different notions of growth:
 set containment, increasing integers, and movement from False to True,
 respectively. The key advantage of \blooml compared with CRDTs is that \blooml
 allows \emph{safe} mappings between lattices via monotone functions. For
-example, \texttt{size} is a monotone function from the \texttt{set} lattice to
-the \texttt{max} lattice (line~\ref{line:quorum-size}); as a set grows via set
+example, \texttt{size} is a monotone function from the \texttt{lset} lattice to
+the \texttt{lmax} lattice (line~\ref{line:quorum-size}); as a set grows via set
 union, the \texttt{size} of the set grows numerically. Monotone functions allow
 complex applications to be safely \emph{composed} from a collection of simple
 lattice types.
