@@ -153,8 +153,11 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
   abort a transaction if a response hasn't been received from a participant
   within a configured time bound. Although this exhibits a race condition
   (between receiving a slow response and exceeding the time bound), this is
-  intended: in this situation, the programmer uses non-determinism to select
-  from two acceptable outcomes.  \jmh{Expand a bit and connect to lattices.}
+  intended: in this situation, the programmer has deliberately used a
+  non-deterministic choice between two acceptable outcomes.
+
+ % uses non-determinism to select
+ %  from two acceptable outcomes.  \jmh{Expand a bit and connect to lattices.}
 
 \item \textbf{Verifying Lattice Implementations:} In \blooml, the developer of a
   new lattice type is responsible for ensuring that their design is a valid
@@ -178,7 +181,7 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
   domains. In particular, we are exploring how \blooml can be used to build
   collaborative editing systems.
 
-  \jmh{Expand on the challenges here, perhaps invoke the scope dillemma.}
+  \jmh{Expand on the challenges here, perhaps invoke the scope dilemma.}
 
   We are also working on building out the KVS prototype mentioned above into a
   complete distributed storage system.  \jmh{Expand on challenges here, perhaps connect to Peter's stuff.}
