@@ -179,7 +179,13 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
 \item \textbf{Evaluations:} To validate that \blooml is useful for building
   practical distributed programs, we are exploring several different application
   domains. In particular, we are exploring how \blooml can be used to build
-  collaborative editing systems.
+  collaborative editing systems. In concurrent editing, several users make
+  changes to a shared document. To improve interactive behavior, each user
+  typically edits a private copy of the document; the resulting versions must
+  then be reconciled as the private copies are merged together.
+
+  Several CRDT-based approaches to concurrent editing have been
+  proposed~\cite{Preguica2009,Weiss2009,Weiss2010}.
 
   \jmh{Expand on the challenges here, perhaps invoke the scope dilemma.}
 
