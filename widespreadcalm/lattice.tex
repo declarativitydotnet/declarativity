@@ -125,6 +125,23 @@ This represents an important direction for extending the reach of CALM analysis 
 
 Despite our progress to date, many challenges and open questions remain.  \jmh{Try and connect the following ideas to the ``Beyond Sets'' theme}.  In upcoming work, we hope to pursue the following ideas:
 \begin{itemize}
+\item \textbf{Verifying Lattice Implementations:} In \blooml, the developer of a
+  new lattice type is responsible for ensuring that their design is a valid
+  lattice (e.g., that it behaves in a commutative, associative, and idempotent
+  fashion). In many cases, this burden is manageable because \blooml allows
+  complex applications to be written via the safe composition of simple lattice
+  types using monotone functions---for example, we found this to be the case
+  when building the KVS described above.
+
+  Nevertheless, providing tools to help programmers validate the correctness
+  of their lattice implementations would be useful. We have recently been
+  exploring systematic testing for Bloom programs (Section~\ref{sec:qa});
+  similar ideas could be adopted to automatically generate high-quality test
+  cases for lattice implementations. Another approach we are investigating is to
+  provide a specialized domain-specific language (DSL) for building lattice
+  implementations; this would simplify formal verification of lattice
+  definitions.
+
 \item \textbf{Distributed Garbage Collection:} Many distributed systems
   accumulate state that can eventually be reclaimed. For example, a vector clock
   in a dynamic system will eventually contain many entries for nodes that have
@@ -153,41 +170,30 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
   abort a transaction if a response hasn't been received from a participant
   within a configured time bound. Although this exhibits a race condition
   (between receiving a slow response and exceeding the time bound), this is
-  intended: in this situation, the programmer has deliberately used a
-  non-deterministic choice between two acceptable outcomes.
+  intended: in this situation, the programmer has deliberately used
+  non-determinism to choose between two acceptable outcomes. \jmh{Expand a bit
+    and connect to lattices.}
 
- % uses non-determinism to select
- %  from two acceptable outcomes.  \jmh{Expand a bit and connect to lattices.}
-
-\item \textbf{Verifying Lattice Implementations:} In \blooml, the developer of a
-  new lattice type is responsible for ensuring that their design is a valid
-  lattice (e.g., that it behaves in a commutative, associative, and idempotent
-  fashion). In many cases, this burden is manageable because \blooml allows
-  complex applications to be written via the safe composition of simple lattice
-  types using monotone functions---for example, we found this to be the case
-  when building the KVS described above.
-
-  Nevertheless, providing tools to help programmers validate the correctness
-  of their lattice implementations would be useful. We have recently been
-  exploring systematic testing for Bloom programs (Section~\ref{sec:qa});
-  similar ideas could be adopted to automatically generate high-quality test
-  cases for lattice implementations. Another approach we are investigating is to
-  provide a specialized domain-specific language (DSL) for building lattice
-  implementations; this would simplify formal verification of lattice
-  definitions.
+  As a practical matter, extending CALM-style analysis to programs that make
+  limited use of non-determinism would be very useful.
 
 \item \textbf{Evaluations:} To validate that \blooml is useful for building
   practical distributed programs, we are exploring several different application
   domains. In particular, we are exploring how \blooml can be used to build
   collaborative editing systems. In concurrent editing, several users make
-  changes to a shared document. To improve interactive behavior, each user
-  typically edits a private copy of the document; the resulting versions must
-  then be reconciled as the private copies are merged together.
+  changes to a shared document. To provide low-latency interactive behavior,
+  each user typically edits a private copy of the document; the resulting
+  versions must then be reconciled by the system.
 
   Several CRDT-based approaches to concurrent editing have been
-  proposed~\cite{Preguica2009,Weiss2009,Weiss2010}.
-
-  \jmh{Expand on the challenges here, perhaps invoke the scope dilemma.}
+  proposed~\cite{Preguica2009,Weiss2009,Weiss2010}. Implementing these designs
+  in \blooml would validate that our language supports an important target
+  application where eventual consistency is commonly employed. Morever,
+  CRDT-based approaches to concurrent editing are very complicated, and require
+  considerable analysis to determine if they are correct. By leveraging the CALM
+  analysis and \blooml's ability to safely compose lattices via monotone
+  functions, we hope to build concurrent editors that have clear semantics and
+  that are provably eventually consistent.
 
   We are also working on building out the KVS prototype mentioned above into a
   complete distributed storage system.  \jmh{Expand on challenges here, perhaps connect to Peter's stuff.}
