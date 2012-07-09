@@ -16,7 +16,78 @@ the level of its API.
 
 \jmh{At this point, go into some detail on how to do module-level analysis \emph{within} Bloom---introduce labels and examples of rules over labels.}
 
-\jmh{Now pivot to the case where it's not Bloom from top to bottom.}
+\begin{figure}[t]
+\begin{minipage}{.48\textwidth}
+\footnotesize
+
+%%\centering
+\begin{tabular}{|l|l|l|}
+\hline
+Class & Label & Interpretation \\ \hline
+Primitive & $\bot$ & Transformation does not affect consistency \\ \cline{2-3}
+& $N$ & Nonmonotonic (order-sensitive) \\
+& & transformation \\ \cline{2-3}
+& $A$ & Asynchronous (order-sacrificing) \\
+& & communication \\ \hline
+Compound & $D$ & Diffluent (potentially different \\
+& & results in different executions or on \\
+& & different replicas) \\ \cline{2-3}
+& $R$ & Restores order.  Represents some \\
+& & coordination protocol. \\ \hline
+
+\end{tabular}
+
+%\vspace{-10pt}
+%\caption{Consistency Labels}
+%\label{fig:basic-labels}
+%\vspace{-2pt}
+%\end{figure}
+
+
+%\begin{figure}[t]
+
+\end{minipage}
+\begin{minipage}{.48\textwidth}
+\raggedleft
+
+\footnotesize
+\begin{tabular}{|l|l|}
+\hline
+Rule & Interpretation \\ \hline
+$AN \rightarrow D$ & Loss of order followed by order-\\
+&sensitivity causes diffluence \\ \hline
+$D \alpha \rightarrow D$ & \\
+$\alpha D \rightarrow D$ & Diffluence is final\\ \hline
+$\bot \beta \rightarrow \beta$ & \\
+$\beta \bot \rightarrow \beta$ & $\bot$ propagates labels from the left \\ \hline
+$AR \rightarrow R$ & Order lost and regained \\ \hline
+$RA \rightarrow A$ & $R$'s labors lost \\ \hline
+$RN \rightarrow R$ & $N$ an do no harm \\ \hline
+$NR \rightarrow N$ & $R$ can do no good \\ \hline
+
+\end{tabular}
+\end{minipage}
+\vspace{-10pt}
+\caption{Labels and Reduction Rules}
+\label{fig:rules}
+\vspace{-2pt}
+\end{figure}
+
+Figure~\ref{fig:rules} enumerates the Bloom consistency labels and rules for their propagation.
+Consider a Bloom module implementing an overwriting key-value store, with two input interfaces (for
+\emph{put} and \emph{get}) and one output interface (\emph{get\_response}, to return the values associated
+with \emph{get}s).  CALM analysis will detect nonmonotonic operations in the dataflow from \emph{put}
+to \emph{get\_response}, because \emph{put}s implicitly delete old values.  As we collapse the labels,
+the nonmonotonic label will dominate; we will ultimately associate with the module the following signature:
+$get\_response: N(put) | \bot(get)$.
+Consider now a larger system that uses the key-value store.  It will not be safe to attach an asynchronous
+stream to the \emph{put} interface of the store, as this will lead to a divergent consistency label
+(due to the rule $AN \rightarrow D$).  Asynchronous (i.e., unordered) inputs must be reordered (via
+interposition of a dataflow labeled ``R'') before composing with \emph{put}.  This corresponds to intuition:
+a key-value store with ``last writer wins'' semantics is highly sensitive to the order in which it receives writes,
+while reads may be reordered freely.
+
+
 In practice, distributed systems are often composed from a large 
 collection of functional units, loosely coupled using message-based APIs.
 Such services are often implemented in a variety of programming 
