@@ -1,7 +1,31 @@
 %!TEX root = proposal.tex
 % XXX: should this be a distributed example?
-\begin{figure}[t]
-\begin{minipage}{.48\textwidth}
+In this section, we review the Bloom programming language and the CALM program
+analysis.  \jmh{Reinsert an example---perhaps the first one discussed in the lattice section.}  We highlight a simple distributed program for which the CALM analysis
+yields unsatisfactory results.  \jmh{Make sure to clarify that we're going to push beyond Bloom---both beyond the current state of the language, and also to the composition of software written in other languages.}
+
+\subsection{Bloom}
+\label{sec:bg-bloom}
+Bloom is a Datalog-based domain-specific language (DSL) for distributed
+programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
+using \emph{collections} and computation is expressed as a bundle of declarative
+\emph{statements}.  An instance of a Bloom program performs computation by
+evaluating its statements over the contents of its local database. Bloom
+instances communicate via asynchronous messaging, as described further below.
+
+An instance of a Bloom program proceeds through a series of \emph{timesteps},
+each containing three phases.\footnote{There is a precise declarative semantics
+  for Bloom~\cite{dedalus}, but we describe the language operationally for the
+  sake of exposition.} In the first phase, inbound events (e.g., network
+messages) are received and represented as facts in collections. In the second
+phase, the program's statements are evaluated over local state to compute all
+the additional facts that can be derived from the current collection
+contents. In some cases (described below), a derived fact is intended to achieve
+a ``side effect,'' such as modifying local state or sending a network message.
+These effects are deferred during the second phase of the timestep; the third
+phase is devoted to carrying them out.
+
+\begin{wrapfigure}[=18]{r}{3.0in}
 \begin{scriptsize}
 \begin{lstlisting}
 class ShortestPaths
@@ -26,55 +50,7 @@ end
 \end{scriptsize}
 \caption{All-pairs shortest paths of a directed graph in Bloom.}
 \label{fig:bloom-spaths}
-\end{minipage}
-\begin{minipage}{.48\textwidth}
-\begin{scriptsize}
-\begin{tabular}{|l|p{2.32in}|}
-\hline
-\textbf{Name} & \textbf{Behavior }\\
-\hline
-\texttt{table} & Persistent storage.\\
-\texttt{scratch} & Transient storage.\\
-\texttt{channel} & Asynchronous communication. A fact derived into a \texttt{channel} appears in the
-database of a remote Bloom instance at a non-deterministic future time.\\
-\texttt{periodic} & Interface to the system clock.\\
-\texttt{interface} & Interface point between software modules.\\
-\hline
-\end{tabular}
-\caption{Bloom collection types.}
-\label{tbl:bloom-collections}
-\end{scriptsize}
-\end{minipage}
-\end{figure}
-
-
-In this section, we review the Bloom programming language and the CALM program
-analysis.  We highlight a simple distributed program for which the CALM analysis
-yields unsatisfactory results.  \jmh{Make sure to clarify that we're going to push beyond Bloom---both beyond the current state of the language, and also to the composition of software written in other languages.}
-
-\pagebreak
-\subsection{Bloom}
-\label{sec:bg-bloom}
-
-Bloom is a Datalog-based domain-specific language (DSL) for distributed
-programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
-using \emph{collections} and computation is expressed as a bundle of declarative
-\emph{statements}.  An instance of a Bloom program performs computation by
-evaluating its statements over the contents of its local database. Bloom
-instances communicate via asynchronous messaging, as described further below.
-
-An instance of a Bloom program proceeds through a series of \emph{timesteps},
-each containing three phases.\footnote{There is a precise declarative semantics
-  for Bloom~\cite{dedalus}, but we describe the language operationally for the
-  sake of exposition.} In the first phase, inbound events (e.g., network
-messages) are received and represented as facts in collections. In the second
-phase, the program's statements are evaluated over local state to compute all
-the additional facts that can be derived from the current collection
-contents. In some cases (described below), a derived fact is intended to achieve
-a ``side effect,'' such as modifying local state or sending a network message.
-These effects are deferred during the second phase of the timestep; the third
-phase is devoted to carrying them out.
-
+\end{wrapfigure}
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
 program represented as an annotated Ruby class. A small amount of imperative
@@ -82,6 +58,7 @@ Ruby code is needed to instantiate the Bloom program and begin executing it;
 more details are available on the Bloom language website~\cite{bloom}.
 
 \subsubsection{Data model}
+
 The Bloom data model is based on \emph{collections}.  A collection is an
 unordered set of \emph{facts}, akin to a relation in Datalog. The Bud prototype
 adopts the Ruby type system rather than inventing its own; hence, a fact in Bud
@@ -106,12 +83,29 @@ collection type enables communication between Bloom instances. The schema of a
 channel has a distinguished \emph{location specifier} column (prefixed with
 ``\texttt{@}''); when a fact is derived for a channel collection, it appears in
 the database of the Bloom instance at the address given by the location
-specifier. The \texttt{periodic} and \texttt{interface} collection types do not
-arise in our discussion in this paper; the interested reader is referred to the
-Bloom website~\cite{bloom}.
+specifier. The \texttt{interface} collection types define the input and output dataflows for Bloom code modules; like \texttt{scratch} types their contents are transient across timesteps.  Finally, the \texttt{periodic} collection type enables the programmer to define a transient collection that delivers facts (``events'') on a wall-clock schedule.
 
 \subsubsection{Statements}
-\begin{wraptable}[11]{r}{3.0in}
+\begin{table}[t]
+\begin{minipage}{.48\textwidth}
+\begin{scriptsize}
+\begin{tabular}{|l|p{2.32in}|}
+\hline
+\textbf{Name} & \textbf{Behavior }\\
+\hline
+\texttt{table} & Persistent storage.\\
+\texttt{scratch} & Transient storage.\\
+\texttt{channel} & Asynchronous communication. A fact derived into a \texttt{channel} appears in the
+database of a remote Bloom instance at a non-deterministic future time.\\
+\texttt{periodic} & Interface to the system clock.\\
+\texttt{interface} & Interface point between software modules.\\
+\hline
+\end{tabular}
+\caption{Bloom collection types.}
+\label{tbl:bloom-collections}
+\end{scriptsize}
+\end{minipage}
+\begin{minipage}{.48\textwidth}
 \begin{scriptsize}
 \begin{tabular}{|c|l|p{1.85in}|}
 \hline
@@ -133,7 +127,8 @@ rhs at some non-deterministic future timestep\\
 \caption{Bloom operators.}
 \label{tbl:bloom-ops}
 \end{scriptsize}
-\end{wraptable}
+\end{minipage}
+\end{table}
 
 Each Bloom statement has one or more input collections and a single output
 collection.  A statement takes the form: \\ \noindent
@@ -142,7 +137,7 @@ collection.  A statement takes the form: \\ \noindent
 The left-hand side (lhs) is the name of the output collection and the right-hand
 side (rhs) is an expression that produces a collection.  A statement defines how
 the contents of the input collections should be transformed before being
-included (via set union) in the output collection. Bloom allows the usual
+merged (via set union) in the output collection. Bloom allows the usual
 relational operators to be used on the rhs (selection, projection, join,
 grouping, aggregation, and negation), although it adopts a syntax intended to be
 more familiar to imperative programmers. In Figure~\ref{fig:bloom-spaths},
@@ -183,11 +178,10 @@ Work on deductive databases has long drawn a distinction between
 monotonic program only computes more information over time---it will never
 ``retract'' a previous conclusion in the face of new evidence.  In Bloom (and
 Datalog), a simple conservative test for monotonicity is based on program
-syntax: selection, projection, and join are monotonic, while aggregation and
-negation are not.
+syntax: selection, projection, and join are guaranteed to be monotonic, while aggregation and negation are not.
 
 The CALM theorem connects the theory of monotonic logic with the practical
-problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  All
+problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  CALM establishes that all
 monotonic distributed programs are ``eventually consistent'' or
 \emph{confluent}: for any given input, all program executions result in the same
 final state regardless of network
@@ -208,14 +202,13 @@ arrive.
 
 We have implemented a conservative static program analysis in Bloom that follows
 directly from the CALM theorem.  Programs that are free from non-monotonic
-constructs are ``blessed'' as confluent: producing the same output on different
-runs or converging to the same state on multiple distributed replicas.
+constructs are ``blessed'' as confluent: they will produce the same output on different
+runs and converge to the same state on multiple distributed replicas.
 Otherwise, programs are flagged as potentially inconsistent.  To achieve
 consistency, the programmer either needs to rewrite their program to avoid the
-use of non-monotonicity or introduce a coordination protocol to ensure that a
-consistent ordering is agreed upon. Coordination protocols incur additional
-latency and reduce availability in the event of network partitions, so in this
-paper we focus on coordination-free designs---that is, monotonic programs.
+use of non-monotonicity, or needs to introduce a coordination protocol to ensure that a
+consistent ordering is agreed upon across nodes. Coordination protocols incur additional
+latency and reduce availability in the event of network partitions, so CALM discourages programmers from using these protocols unless they are deemed necessary for maintaining consistent semantics.
 
 % \subsubsection{Limitations of set monotonicity}
 % The original formulation of the CALM theorem considered only programs that

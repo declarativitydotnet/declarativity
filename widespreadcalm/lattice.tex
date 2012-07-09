@@ -1,9 +1,7 @@
 %!TEX root = proposal.tex
-
-To achieve consistency without using expensive distributed coordination, many
-systems have proposed using a vocabulary of \emph{commutative},
-\emph{associative}, and \emph{idempotent} operations
-(e.g.,~\cite{dynamo,Reiher1994,bayou,quicksand}). This helps to ensure that the
+Monotonic logic programming is not the first proposal for achieving consistency without using expensive distributed coordination.  There is a long tradition of work that proposes the use a vocabulary of \emph{commutative},
+\emph{associative}, and \emph{idempotent} operations to achieve coordination-free consistency
+(e.g.,~\cite{dynamo,Reiher1994,bayou,quicksand}). These properties can help to ensure that the
 replicas of a distributed object converge to the same final state (``eventual
 consistency''), despite the message reordering and duplication that may occur in
 an asynchronous network. Shapiro et al.\ recently proposed a formalism for these
@@ -13,13 +11,12 @@ casts these ideas into the algebraic framework of
 
 CALM analysis is more powerful than approaches that only consider the
 convergence of individual objects or lattices: by analyzing both distributed
-state and logic, CALM can ensure the consistency of the application's entire
-state, rather than individual objects. However, the original formulation of the
+state and logic, CALM can ensure consistency \emph{across all state} of an entire application, rather than the consistency \emph{within individual objects} offered by prior work. However, the original formulation of the
 CALM analysis only supported monotonic programs over sets, which causes the
 analysis to fail for common constructs such as timestamps, versions, and
 counters. Drawing inspiration from CRDTs, we are working to address this problem
 by extending Bloom and CALM to support arbitrary lattices, rather than just the
-set lattice.
+set lattice.  In essence, this extends Bloom and its CALM analysis beyond the tradition of logic programming, into a more general and programmer-friendly framework.
 
 \begin{figure}[t]
 \begin{minipage}{.48\textwidth}
@@ -103,8 +100,8 @@ containment, increasing integers, and movement from False to True,
 respectively). The key advantage of \blooml compared with CRDTs is that \blooml
 allows \emph{safe} mappings between lattices via monotone functions. For
 example, \texttt{size} is a monotone function from the \texttt{set} lattice to
-the \texttt{max} lattice; as a set increases (according to set containment), the
-\texttt{size} of the set will increase numerically. Monotone functions allow
+the \texttt{max} lattice (line~\ref{line:quorum-size}); as a set grows via set union, the
+\texttt{size} of the set grows numerically. Monotone functions allow
 complex applications to be safely \emph{composed} from a collection of simple
 lattice types.
 
@@ -114,12 +111,14 @@ vectors and quorum replication. Not only is our KVS orders of magnitude more
 concise than traditional KVS implementations, it has clear semantics because it
 consists of the straightforward composition (via monotone functions) of a
 collection of simple lattices. Our \blooml prototype also performs comparably to
-the original Bloom runtime, in part because we generalized a well-known
-evaluation strategy from logic programming~\cite{Balbin1987} to work over
-lattices rather than just sets~\cite{bloom-lattice-tr}.
+the original Bloom runtime, in part because we generalized the well-known
+delta evaluation strategy ``semi-naive'' from logic programming~\cite{Balbin1987} to work over
+lattices, not just sets~\cite{bloom-lattice-tr}.
 
-Nevertheless, many challenges and open questions remain. We are currently
-pursuing the following ideas:
+\jmh{We need a sentence here saying we overcame the scope dilemma.}
+This represents an important direction for extending the reach of CALM analysis into more typical programming styles.  
+
+Despite our progress to date, many challenges and open questions remain.  \jmh{Try and connect the following ideas to the ``Beyond Sets'' theme}.  In upcoming work, we hope to pursue the following ideas:
 \begin{itemize}
 \item \textbf{Distributed Garbage Collection:} Many distributed systems
   accumulate state that can eventually be reclaimed. For example, a vector clock
@@ -128,16 +127,15 @@ pursuing the following ideas:
   requires consensus; hence, such operations would be flagged as non-monotonic
   by the CALM analysis.
 
-  A common pattern is to do distributed garbage collection as a background
-  operation. Because application functionality does not block on achieving
-  consensus, this avoids much of the operational concern associated with
-  deploying consensus protocols at scale; this pattern is often called ``weak''
-  or ``lazy'' consensus.
+  It is typical to perform distributed garbage collection---including its coordination overhead---as a background
+  operation. Since garbage collection need not impact user-facing application functionality, background processing avoids much of the operational concern associated with
+  deploying consensus protocols at scale. This general pattern is often called ``weak''
+  or ``lazy'' consensus---tasks requiring consensus are isolated from tasks with interactive requirements.
 
   We are working on providing language support for this pattern using
   \blooml. Intuitively, a datum can be reclaimed once it is no longer needed by
   any member of the system---this can be formalized as reclaiming objects that
-  fall below the greatest lower bound of all the replicas of a \jmh{finish me.}
+  fall below the greatest lower bound of all the replicas of a lattice object.  \jmh{finish me.}
 
 \item \textbf{Controlled Non-Determinism:} Thus far, we have primarily been
   interested in analysis techniques for deterministic distributed
