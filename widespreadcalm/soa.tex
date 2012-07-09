@@ -14,7 +14,6 @@ label representing only the details of the implementation that are relevant to
 consistency in future compositions, and henceforth interact with the module at
 the level of its API.  
 
-\jmh{At this point, go into some detail on how to do module-level analysis \emph{within} Bloom---introduce labels and examples of rules over labels.}
 
 \begin{figure}[t]
 \begin{minipage}{.48\textwidth}
@@ -116,6 +115,22 @@ application may be inconsistent.
 \subsection{Summary of Tasks and Goals}
 \jmh{Make an explicit plan here to do something new with widely-used systems -- zookeeper+voldemort+something?  Perhaps talk about potential collaboration with LinkedIn.}
 
+The labeling system presented above provides a framework for reasoning about service composition that is 
+mostly independent of Bloom, so long as we can accurately attribute consistency labels to service APIs.
+If the services are written in Bloom, we can derive their labels automatically---otherwise we may rely on annotations.
+As the example above indicated, however, we must be very careful how we \emph{use} data returned from 
+eventually consistent services
+if we wish to assert that application output is likewise consistent.  Hence the ``glue'' language used
+to compose services must also be amenable to CALM analysis and label propagation.
+
+We are currently exploring the use of Bloom as a high-level service orchestration language.
+As a proof of concept, we are collaborating with LinkedIn to implement a collection of services and applications atop
+their Service-oriented Architecture.
+We will show how CALM analysis can ease the burden of reasoning about the behavior of applications
+that call out to a number of services (including data stores, message queues, coordination services like Zookeeper, 
+and logging subsystems)
+with various service-level consistency guarantees.
+This project will rely on the following technology:
 
 \begin{itemize}
 \item \textbf{Path labeling and label propagation}.
@@ -149,7 +164,13 @@ protocol---totally ordered broadcast---may be interposed into arbitrary
 programs at their ``points of order''
 to ensure consistency of replicated state.
 
-\item \textbf{Building Service-oriented architectures in Bloom}
-The system described above applies directly to \jmh{finish me}.
+\item \textbf{Uniform error communication and handling}
+A significant challenge for an orchestration language is robust error handling.
+Calls to services can fail in various ways; in some cases services can report the error
+back to the caller along with relevant information about its cause, while it other cases
+applications must manage timeout and retry logic.  Since a robust orchestration language will
+be fundamentally nondeterministic, we will have to revisit the consistency labeling system to
+accomodate this uncertainty.
+
 \end{itemize}
 
