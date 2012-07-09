@@ -25,7 +25,7 @@ small set of unit tests to ``bootstrap'' a new piece of functionality, then
 incrementally add tests to better ``cover'' the space of expected program 
 inputs.  Unfortunately, unit tests do a poor job of covering the space of
 program \emph{behaviors} in a distributed system, which are highly
-nondeterministic due uncertaintly about ordering and failures.
+nondeterministic due to uncertainty about ordering and failures.
 
 CALM provides a solid foundation for program analysis---monotonic programs
 produce the same results in all executions---freeing programmers from reasoning
@@ -103,7 +103,7 @@ possible network behaviors in an intelligent manner. To reduce the size of this 
 leverage the CALM Theorem.
 If we can recognize that certain code fragments are purely monotonic, it follows 
 that they are insensitive to message delivery order.
-Hence the evaluator may explore only those message delivery order permuatations
+Hence the evaluator may explore only those message delivery order permutations
 that could have produced different outputs.
 \end{itemize}
 
