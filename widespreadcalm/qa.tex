@@ -3,7 +3,7 @@
 
 
 Writing distributed software is difficult because developers must ensure that
-their program behaves correctly in the face of network nondeterminism---e.g.,
+their program behaves correctly in the face of network non-determinism---e.g.,
 node failures, message reordering and duplication. Two techniques are commonly
 used to address this difficulty in practical systems: \emph{verification} and
 \emph{testing}.
@@ -20,21 +20,21 @@ allows ``pay as you go'' quality assurance. A developer can write a small set of
 tests to ``bootstrap'' a new piece of functionality, then incrementally add
 tests to better cover the space of expected program inputs. Unfortunately,
 testing is a poor fit for distributed software, because few testing tools allow
-the developer to account for network nondeterminism. To ensure that a module
+the developer to account for network non-determinism. To ensure that a module
 produces the expected results for every possible network behavior, developers
 typically need to build significant infrastructure to ``force'' the system to
-follow a particular nondeterministic trace for a particular test case.
+follow a particular non-deterministic trace for a particular test case.
 
 % \nrc{I don't understand the point of this paragraph or why it was located here.}
 % CALM provides a solid foundation for program analysis---monotonic programs
 % produce the same results in all executions---freeing programmers from reasoning
-% about nondeterminism in program executions.  Unfortunately, while languages like
+% about non-determinism in program executions.  Unfortunately, while languages like
 % Bloom make it easy to construct (and ``bless'') purely monotonic
 % \emph{components}, completely monotonic \emph{systems} are rare in practice.
-% Nonmonotonic distributed programs---as the CALM Theorem asserts---may exhibit
+% Non-monotonic distributed programs---as the CALM Theorem asserts---may exhibit
 % inconsistencies (e.g., in the form of divergent replica state) if they are not
 % properly \emph{coordinated} (e.g., by using a total order broadcast protocol to
-% eliminate nondeterminism in message delivery order).  While Bloom (inspired by
+% eliminate non-determinism in message delivery order).  While Bloom (inspired by
 % the CALM Theorem) has static analysis capabilities that can pinpoint program
 % locations where coordination should be interposed to ensure consistent outcomes,
 % it offers little help confirming if a supplied coordination protocol is actually
@@ -66,7 +66,7 @@ testing and formal verification. Some clear advantages to this approach follow:
   its correctness requirements.  For monotonic modules, all orderings produce
   the same result, so we need only explore a single execution.  For hybrid
   modules, we need only explore message reorderings for racing messages that are
-  bound for nonmonotonic processing at the receiver.
+  bound for non-monotonic processing at the receiver.
 \end{itemize}
 
 
