@@ -5,7 +5,7 @@ In this section, we review the Bloom programming language and the CALM approach 
 \subsection{Bloom}
 \label{sec:bg-bloom}
 Bloom was originally designed as a Datalog-based domain-specific language (DSL) for distributed
-programming~\cite{bloom}. The state of a Bloom program is represented
+programming~\cite{Alvaro2011,bloom-website}. The state of a Bloom program is represented
 using \emph{collections} and computation is expressed as a bundle of declarative
 \emph{statements}.  An instance of a Bloom program performs computation by
 evaluating its statements over the contents of its local database. Bloom
@@ -13,15 +13,15 @@ instances communicate via asynchronous messaging, as described further below.
 
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
 each containing three phases.\footnote{There is a precise declarative semantics
-  for Bloom~\cite{dedalus}, but we describe the language operationally for the
-  sake of exposition.} In the first phase, inbound events (e.g., network
-messages) are received and represented as facts in collections. In the second
-phase, the program's statements are evaluated over local state to compute all
-the additional facts that can be derived from the current collection
-contents. In some cases (described below), a derived fact is intended to achieve
-a ``side effect,'' such as modifying local state or sending a network message.
-These effects are deferred during the second phase of the timestep; the third
-phase is devoted to carrying them out.
+  for Bloom~\cite{dedalus,Ameloot2011a}, but we describe the language
+  operationally for the sake of exposition.} In the first phase, inbound events
+(e.g., network messages) are received and represented as facts in
+collections. In the second phase, the program's statements are evaluated over
+local state to compute all the additional facts that can be derived from the
+current collection contents. In some cases (described below), a derived fact is
+intended to achieve a ``side effect,'' such as modifying local state or sending
+a network message.  These effects are deferred during the second phase of the
+timestep; the third phase is devoted to carrying them out.
 
 \begin{wrapfigure}[=18]{r}{3.0in}
 \begin{scriptsize}
@@ -53,7 +53,7 @@ The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
 program represented as an annotated Ruby class. A small amount of imperative
 Ruby code is needed to instantiate an object containing the Bloom program and begin executing it;
-more details are available on the Bloom language website~\cite{bloom}.
+more details are available on the Bloom language website~\cite{bloom-website}.
 
 \subsubsection{Data model}
 
@@ -182,11 +182,11 @@ Datalog), a simple conservative test for monotonicity is based on program
 syntax: selection, projection, and join are guaranteed to be monotonic, while aggregation and negation are not.
 
 The CALM theorem connects the theory of monotonic logic with the practical
-problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  CALM establishes that all
+problem of distributed consistency~\cite{Alvaro2011,podskey}.  CALM establishes that all
 monotonic distributed programs are ``eventually consistent'' or
 \emph{confluent}: for any given input, all program executions result in the same
 final state regardless of network
-non-determinism~\cite{Ameloot2011,dedalus-pods12-tr}.  Hence, monotonic logic is
+non-determinism~\cite{Ameloot2011,marczak2012}.  Hence, monotonic logic is
 a useful building block for loosely consistent distributed programming.
 
 According to the CALM theorem, distributed inconsistency may only occur at
