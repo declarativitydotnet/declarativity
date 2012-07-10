@@ -75,7 +75,7 @@ the execution was nondeterministic, it may be difficult to reproduce the error i
 run.  Moreover, because the program is distributed, it is likely that although we observed the 
 error at one site, its cause lies at one or more other sites.  Surely the cause of the error
 occurred \emph{before} the error itself, but even identifying the set of events that preceeded the 
-error~\cite{lamport} is nontrivial!  Had we the foresight to log execution details at each node,
+error~\cite{timeclocks} is nontrivial!  Had we the foresight to log execution details at each node,
 it could have simplified this search for causes.  Unfortunately, logging trades off between 
 runtime overhead and detail, and it is difficult to know the appropriate ``level'' at which to
 log events until bugs actually surface.  If the logs we recorded are highly detailed, it is likely

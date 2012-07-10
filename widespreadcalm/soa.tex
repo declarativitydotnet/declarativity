@@ -186,7 +186,7 @@ characterize any dataflow as a compact expression with an intuitive
 meaning in the context of distributed systems.
 
 \item \textbf{Automated coordination synthesis}.
-For inconsistent (diffluent) programs, we want enhance them with order-restoring coordination mechanisms ($R$) to achieve consistency.
+For inconsistent (diffluent) programs, we want to enhance them with order-restoring coordination mechanisms ($R$) to achieve consistency.
 Programmers can supply their own coordination protocols, but we also hope that CALM analysis can lead to automatic synthesis of coordination code. 
 It seems clear that a generic coordination 
 protocol (e.g., totally ordered broadcast) may be interposed at arbitrary 
@@ -195,7 +195,7 @@ to ensure consistency.  More interestingly, we would like to automatically
 discover cases where more efficient but more limited protocols---e.g., totally ordered unicast between pairs of nodes---are sufficient to ensure consistency.  We could then search the space of points-of-order and coordination protocols and (semi-)automatically choose the most efficient way to convert a disorderly and inconsistent program into a judiciously-ordered consistent program.
 
 \item \textbf{Uniform error communication and handling}.
-A significant challenge for an orchestration language is to provide and reason about robust error handling.
+A significant challenge for an orchestration language is to provide robust error handling.
 Calls to services can fail in various ways; in some cases services can report the error
 back to the caller along with relevant information about its cause, while in other cases
 applications must manage timeout and retry logic.  Since a robust orchestration language will
