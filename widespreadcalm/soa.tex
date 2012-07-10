@@ -139,13 +139,16 @@ the nonmonotonic label will dominate, and we will ultimately associate with Basi
 $kvget\_response: \{N(put) | \bot(get)\}$.
 Consider now a larger system that uses the key-value store.  It will not be safe to attach an asynchronous
 stream to the \emph{kvput} interface of the store, as this will lead to a divergent consistency label
-(due to the rule $AN \rightarrow D$).  Asynchronous (i.e., unordered) inputs must be reordered (via
+(due to the rule $AN \rightarrow D$).  
 Order must be \emph{restored} (via
 interposition of a dataflow labeled ``R'') 
 to asynchronous (i.e., unordered) inputs
 before composing with \emph{kvput}.  This corresponds to intuition:
-a key-value store with ``last writer wins'' semantics is highly sensitive to the order in which it receives writes,
-while reads may be reordered freely.
+a key-value store with ``last writer wins'' semantics is highly sensitive to the order in which it receives writes.
+If the KVS is replicated, we must be especially careful about reordering of writes, as this
+may lead to inconsistent state on different replicas---indeed, we may be willing to pay a coordination
+cost to totally order all writes.
+Reads, on the other hand, may be reordered freely.
 
 In practice, distributed systems are often composed from a large 
 collection of functional units, loosely coupled using message-based APIs.
@@ -169,7 +172,11 @@ application has a race condition due to the negation (``not recalled''): for a g
 application that correlates the results from the different datastores were written in Bloom, we would observe that although the datastores are monotonic, 
 the manner in which their results are \emph{used} is not.  If the inputs to 
 the datastores are asynchronous (reorderable), then the output of the 
-application may be inconsistent.
+application may be inconsistent.  In the Bloom labeling system presented above, both services would be labeled 
+``A''---that is, asynchronously updated but otherwise monotonic.  The orchestration code that connects them would be 
+labeled ``N''---nonmonotonic, due to the negation.  The resulting composition would then be labeled ``D''---divergent, with
+a point of order in the orchestration code that should be resolved (e.g., by versioning the recall database and issuing queries against the 
+oldest ``complete'' version).
 
 
 \subsection{Summary of Tasks and Goals}
