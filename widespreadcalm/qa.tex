@@ -1,13 +1,15 @@
 %!TEX root = proposal.tex
+\jmh{This reads fine, but it seems like it was all done already in the cited workshop paper.  Call out what remains to be done, and how hard/deep that work is.  More importantly, maybe we should expand scope here to also talk about debugging disorderly programs in addition to testing?  E.g. describe a suite of metaphors/facets (logical dataflow, physical communication a la Lamport diagrams, execution tracing/data provenance) and raise questions about how CALM connects to each, and how they fit together.}
+
 
 Writing distributed software is difficult because developers must ensure that
-their program behaves correctly in the face of network nondeterminism (e.g.,
-node failures, message reordering and duplication). Two techniques are commonly
+their program behaves correctly in the face of network nondeterminism---e.g.,
+node failures, message reordering and duplication. Two techniques are commonly
 used to address this difficulty in practical systems: \emph{verification} and
 \emph{testing}.
 
-Verification usually involves writing a specification that models the program's
-behavior and then systematically exploring the state space that can be reached
+Verification usually involves writing a formal specification that models the program's
+behavior, and then systematically exploring the state space that can be reached
 in any execution. Verification is a powerful approach that can find
 difficult-to-reproduce errors, but it requires a high level of mathematical
 sophistication, both to write the specifications and to interpret tool feedback.

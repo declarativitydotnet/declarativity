@@ -121,10 +121,10 @@ the original Bloom runtime, in part because we generalized the well-known
 programming~\cite{Balbin1987} to work over lattices, not just
 sets~\cite{bloom-lattice-tr}.
 
-\jmh{We need a sentence here saying we overcame the scope dilemma.}
-This represents an important direction for extending the reach of CALM analysis into more typical programming styles.  
+The design of \blooml represents an important direction for extending the reach of CALM analysis into more traditional programming styles.  In the original version of Bloom, programmers were faced with a ``type dilemma'': sets are the only data type amenable to CALM analysis, but the programmer may have a more natural representation of a monotonically growing phenomenon. For example, a monotonic counter is more naturally represented as a growing integer than a growing set. This dilemma lead either to false negatives in CALM analysis and over-use of coordination, or to idiosyncratic set-based implementations that can be hard to read and maintain.  \blooml allows programmers to retain the use of data types that are natural to their application, while taking advantage of CALM analysis for commutative merge behaviors.
 
-Despite our progress to date, many challenges and open questions remain.  \jmh{Try and connect the following ideas to the ``Beyond Sets'' theme}.  In upcoming work, we hope to pursue the following ideas:
+\subsection{Summary of Tasks and Goals}
+Despite our progress to date, many challenges and open questions remain.  In upcoming work, we hope to pursue the following ideas:
 \begin{itemize}
 \item \textbf{Verifying Lattice Implementations:} In \blooml, the developer of a
   new lattice type is responsible for ensuring that their design is a valid
@@ -143,19 +143,19 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
   implementations; this would simplify formal verification of lattice
   definitions.
 
-\item \textbf{Distributed Garbage Collection:} Many distributed systems
+\item \textbf{Distributed Garbage Collection:} Many natural data types used in distributed systems
   accumulate state that can eventually be reclaimed. For example, a vector clock
   in a dynamic system will eventually contain many entries for nodes that have
-  subsequently left the system. In general, doing distributed garbage collection
-  requires consensus; hence, such operations would be flagged as non-monotonic
+  subsequently left the system. While these data types may be monotonic lattices in their use, the task of doing distributed garbage collection for them often
+  requires consensus. As a result, memory-efficient versions of these datatypes will be flagged as non-monotonic
   by the CALM analysis.
 
-  It is typical to perform distributed garbage collection---including its
+  However, it is typical to perform distributed garbage collection---including its
   coordination overhead---as a background operation. Since garbage collection
   need not impact user-facing application functionality, background processing
   avoids much of the operational concern associated with deploying consensus
   protocols at scale. This general pattern is often called ``weak'' or ``lazy''
-  consensus---tasks requiring consensus are isolated from tasks with interactive
+  consensus: tasks requiring consensus are isolated from tasks with interactive
   requirements.
 
   We are working on providing language support for this pattern using
@@ -165,27 +165,28 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
 
 \item \textbf{Controlled Non-Determinism:} Thus far, we have primarily been
   interested in analysis techniques for deterministic distributed
-  programs. While this is often desirable (e.g., determinism implies eventual
-  consistency), certain popular protocols are intentionally
+  programs. While this is often desirable,
+  % I don't believe the following commented statement --JMH
+  % (e.g., determinism implies eventual
+  % consistency), 
+  certain popular protocols are intentionally
   non-deterministic. For example, a two-phase commit protocol might choose to
   abort a transaction if a response hasn't been received from a participant
   within a configured time bound. Although this exhibits a race condition
   (between receiving a slow response and exceeding the time bound), this is
   intended: in this situation, the programmer has deliberately used
-  non-determinism to choose between two acceptable outcomes. \jmh{Expand a bit
-    and connect to lattices.}
+  non-determinism to choose between two acceptable outcomes. Neither outcome is the ``top'' of a lattice; they are incomparable alternatives.
 
-  As a practical matter, extending CALM-style analysis to programs that make
-  limited use of non-determinism would be very useful.
+  We would like to extend CALM-style analysis to programs that make
+  controlled use of non-determinism.  One possibility is to consider a ``possible worlds'' lattice---one in which the top value captures the equivalence class of acceptable states.  
 
 \item \textbf{Evaluations:} To validate that \blooml is useful for building
   practical distributed programs, we are exploring several different application
-  domains. For example, we are exploring how \blooml can be used to build
+  domains. First, we are exploring how \blooml can be used to build
   collaborative editing systems. In concurrent editing, several users make
   changes to a shared document. To provide low-latency interactive behavior,
   each user typically edits a private copy of the document; the resulting
   versions must then be reconciled by the system.
-
   Several CRDT-based approaches to concurrent editing have been
   proposed~\cite{Oster2006,Preguica2009,Weiss2009,Weiss2010}. Implementing these designs
   in \blooml would validate that our language supports an important target
@@ -197,7 +198,7 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
   that are provably eventually consistent.
 
   We are also working on building out the KVS prototype mentioned above into a
-  complete distributed storage system.  \jmh{Expand on challenges here, perhaps connect to Peter's stuff.}
+  complete distributed storage system that can be configured with a wide variety of choices for consistency semantics.  We discuss this further in Section~\ref{sec:storage}.
 \end{itemize}
 
 % \jmh{Intro paragraph.}
@@ -212,12 +213,12 @@ Despite our progress to date, many challenges and open questions remain.  \jmh{T
 % \item Challenge: Lattices and non-monotonicity: e.g. ``odometer'' compositions, etc.
 % \end{itemize}
 
-\subsection{Summary of Tasks and Goals}
-\jmh{Revisit in light of Neil's text.}
 
-\begin{itemize}
-\item \textbf{Efficient Evaluation of Lattice programs}.  \jmh{Sentence or 2 here on Lower bounds, zero-copy, etc.}
-\item \textbf{Tools for guaranteed lattice properties}.  \jmh{Sentence or two here on a possible DSL agenda, perhaps subsetting some existing language like Scala.  Remind that scope can be small because so much can be done outside the DSL in BloomL via lattice composition (e.g. data structures).}
-\item \textbf{Extend the Bloom prototype to support rich set of built-in for composition.}  \jmh{Sentence or two here on what's involved, including language design and evaluation.  Say we've got a first prototype, and highlight remaining challenges.}.
-\item \textbf{Evaluations: KVSs and Collaborative Editors.}  \jmh{Sentence or two here pitching the challenge here, and sketching some milestones/metrics for success}.
-\end{itemize}
+% \jmh{Revisit in light of Neil's text.}
+% 
+% \begin{itemize}
+% \item \textbf{Efficient Evaluation of Lattice programs}.  \jmh{Sentence or 2 here on Lower bounds, zero-copy, etc.}
+% \item \textbf{Tools for guaranteed lattice properties}.  \jmh{Sentence or two here on a possible DSL agenda, perhaps subsetting some existing language like Scala.  Remind that scope can be small because so much can be done outside the DSL in BloomL via lattice composition (e.g. data structures).}
+% \item \textbf{Extend the Bloom prototype to support rich set of built-in for composition.}  \jmh{Sentence or two here on what's involved, including language design and evaluation.  Say we've got a first prototype, and highlight remaining challenges.}.
+% \item \textbf{Evaluations: KVSs and Collaborative Editors.}  \jmh{Sentence or two here pitching the challenge here, and sketching some milestones/metrics for success}.
+% \end{itemize}
