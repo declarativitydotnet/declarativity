@@ -1,4 +1,8 @@
 %!TEX root = proposal.tex
+% \input{preamble}
+% 
+% \begin{document}
+%   
 \vspace{-2pt}
 \section*{\mytitle\\
 {\normalsize PI: Joseph M. Hellerstein, U.C. Berkeley}}
@@ -16,38 +20,6 @@ The goal of this proposal is to \textbf{exploit CALM theory to improve the devel
 \noindent \textbf{Intellectual Merit.} Initial versions of CALM and Bloom have been steeped in a ``closed world'' of logic programming and low-level, fine-grained communication.  The work here proposes to extend this research to address challenges in a number of directions: \emph{analyzing monotonicity in familiar data types} that go beyond simple logic predicates and relations; \emph{composing encapsulated, service-oriented APIs using Bloom as a principled orchestration language} that can reason about the composition of API contracts; \emph{modeling massive distributed storage as a software component}, including a wide variety of possible consistency semantics; and \emph{providing CALM-aware software engineering tools} to back up these ideas with efficient debugging and testing frameworks that can help achieve and maintain software correctness over time.
  
 \vspace{6pt}
-\noindent \textbf{Broader Impacts.} Beyond the scientific and engineering impact of the Bloom languages and CALM analysis, this work is intended to improve the implementation of Big Data software in the field.  To promote understanding of concepts and adoption of techniques, we will run a Massive Open Online Course (MOOC), to reach out not only to Berkeley students and fellow researchers, but also to developers around the world. We will also continue to engage aggressively in industry, as we have been doing in recent years.  Given our history of releasing useful software, we plan to focus a significant fraction of this effort on releasing new versions of Bloom and its compiler analyses that can be used in academia and industry, along with the course materials and videos.
+\noindent \textbf{Broader Impacts.} Beyond the scientific and engineering impact of the Bloom languages and CALM analysis, this work is intended to improve the practice of Big Data software engineering in the field.  To promote understanding of concepts and adoption of techniques, we will run a Massive Open Online Course (MOOC), to reach out not only to Berkeley students and fellow researchers, but also to developers around the world. We will also continue to engage aggressively in industry, as we have been doing in recent years, via direct collaboration, industry talks and social media.  Given our history of releasing useful software, we plan to focus a significant fraction of this effort on releasing new versions of Bloom and its compiler analyses that can be used in academia and industry, along with the course materials and videos.
 
-% where the main components include novel
-% contributions in multiple areas:
-% \begin{tightitemize}
-% \itembf{Visualization \& Interaction}: tools for end-user
-% analysts to construct workflows, assess the results of learning
-% algorithms, refine models, explore recommended alternatives, and
-% provide feedback and labels.   
-% \itembf{Feedback Models to Machine Learning (ML) Algorithms}: algorithms that enable analysts to go beyond
-% simply labeling data, to provide new, more intuitive forms of
-% \emph{constraint-based feedback};  new active learning methods
-% that allow the system to make the most out of a user's attention.  
-% \itembf{Hierarchical Big Data Representations}: 
-% human-understandable, multi-scale abstractions of data, which
-% integrate a user's interactive view
-% %of the learning procedure on their desktop computer
-% with anytime processing of the entire dataset in the Cloud.
-% \itembf{Online Distributed Machine Learning}: algorithms that translate hierarchical representations and user feedback into anytime processing and
-% solution methods with theoretical guarantees.
-% \itembf{Systems Synthesis from Domain-Specific Languages
-%   (DSLs)}:  integrate these layers of data processing and understanding  via task-appropriate DSLs, compiled to run efficiently in scalable distributed systems.
-% \end{tightitemize}
-
-%\joe{We may want to integrate the next two paragraphs.}
-%We propose to tackle this problem with two key technical themes that cut across disciplines: (a) the design of high-level, data-centric \emph{Domain-Specific Languages} (DSLs) for data analysis tasks, and (b) \emph{mixed-initiative visual analysis interfaces} that enable analysts to specify, assess and manipulate an analysis workflow. The use of DSLs allows us to model analytic operators at a level of abstraction that is appropriate to the task, and generate lower-level code for a variety of runtime platforms. In turn, the visual interface will translate user interactions into DSL statements and orchestrate low-latency client-side processing of data samples with slower, large-scale processing in the cloud. The interface will also provide coordinated visualizations for both data and models throughout the analysis workflow.
-
-%The design and use of DSLs form the technical cornerstone of our approach.  By isolating simple, task-appropriate DSLs, we can extract user intent at a high level in a visual or simple programmatic interface, and use a \emph{single small DSL program} to generate two semantically identical code artifacts: one appropriate for the client, the other for a distributed cloud infrastructure.  The client code works at modest scale (gigabytes) on an extract of the data and runs with interactive speed to generate a fluid user experience, while the cloud-based code works on the full data set and produces ``online'' or ``anytime'' results that can respond in finer detail to user behavior, albeit at a coarser timescale.  
-% These two simultaneous runs of the program are connected bidirectionally: the cloud code (with richer data access) can provide detail to the client, and the client code (with richer human access) can provide context and information to the cloud computation.  This approach marries ideas from online query processing and anytime algorithms (backend interactivity), active learning (backend driving frontend) weakly-supervised learning (frontend driving backend) and \emph{XXX interactive HCI goodness as in Wrangler and interactive vis tools} (frontend interactivity).
-
-%This architectural pattern is a generic approach to interacting with Big Data, and results from initial designs we have been doing for manipulating unstructured but inherently tabular data \cite{kandel:2011:wrangler}. To ground and scope the work in this proposal, we propose to focus specifically on applications in \textbf{Text Analytics}. Unlike tabular data, which can often be visualized and analyzed directly, text emphasizes the need for feature extraction and modeling in order to to generate structure suitable for analysis. We intend to focus on the concrete problems of \emph{topic modeling} (understanding latent themes in a corpus), \emph{document similarity and clustering} (categorizing or finding similar documents), and \emph{recommendation} (suggesting unread documents of interest). \textbf{Say more about how these applications relate to our technical themes?}
-
-%\joe{Carlos' stuff is currently missing from here.  One natural thing to do is to argue that many of the ML algorithms that are relevant to text analysis we well captured in a computational abstraction centered on graphs.  This may actually help highlight the diversity of modeling challenges at both the DSL and HCI levels: the end-user goal relates to collections of text docs, but the internal representation goes through models that are described over graphs. We need to map from a text-centric DSL to a tabular or matrix DSL over features to a graph DSL to support a clean separation of concerns at the system design level.  Similarly we also need to help users map semi-intuitively from one visual metaphor to another (as Jeff describes in his section draft) at the interface level.}
-
-%\joe{This also suggests a way to organize some sections of the proposal by ``representational domain'': start with a focus on processing collections of linear text (tokenization, CRFs, etc.), switch to a focus on extracted text features (TFxIDF and LDA input/output, etc.), and then to a focus on graphical representations (algorithm implementations in GraphLab, document clusters and proximity, user communities and content recommendation...).  In each section we can highlight a canonical use case or two, describe the representation from a DSL perspective (its structure and operations), and talk about visual representations and interaction.  Of course after doing all that we have to talk about cross-representation issues: compilation as well as the kinds of vis/interaction issues that Jeff mentions e.g. trellis of plots across representations.}  
+% \end{document}

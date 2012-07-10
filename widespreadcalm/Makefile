@@ -14,14 +14,15 @@ BIBINPUTS := .:${TEXINPUTS}
 all: pdf
 eps: fig obj
 
-PAPER=proposal
+PROPOSAL=proposal
+SUMMARY=summary
 
 LATEX=pdflatex
 
-ps:  $(PAPER).ps
+ps:  $(PROPOSAL).ps 
 
-pdf: $(PAPER).pdf
-dvi: $(PAPER).dvi
+pdf: $(PROPOSAL).pdf
+dvi: $(PROPOSAL).dvi
 
 obj: $(patsubst %.obj, %.eps, $(wildcard *.obj))
 fig: $(patsubst %.fig, %.eps, $(wildcard *.fig))
@@ -32,9 +33,9 @@ res:
 
 clean:
 	$(RM) *.aux *.log *.bbl *.blg *~ \#*\# *.toc *.idx
-	$(RM) $(patsubst %.tex, $(PAPER).ps, $(wildcard *.tex))
+	$(RM) $(patsubst %.tex, $(PROPOSAL).ps, $(wildcard *.tex))
 	$(RM) $(patsubst %.tex, %.dvi, $(wildcard *.tex))
-	$(RM) $(patsubst %.tex, $(PAPER).pdf, $(wildcard *.tex))
+	$(RM) $(patsubst %.tex, $(PROPOSAL).pdf, $(wildcard *.tex))
 
 distclean: clean
 	$(RM) $(patsubst %.fig, %.eps, $(wildcard *.fig))

@@ -1,127 +1,8 @@
-\documentclass[11pt, us-letter]{article}
-\usepackage[T1]{fontenc}
-\usepackage{times}
-\usepackage{graphicx}
-\usepackage{wrapfig}
-\usepackage{color}
-\usepackage{xspace}
-\usepackage{url}
-\usepackage{subfigure}
-\usepackage{algorithm2e}
-\usepackage[letterpaper, top=.9in, bottom=.9in, inner=.9in, outer=.9in, foot=.25in]{geometry}
-\usepackage{amsmath,amsfonts,amsthm,amssymb}
-\usepackage{txfonts}
-\usepackage{textcomp}
-\usepackage[protrusion=true,expansion=true]{microtype}
-\usepackage{array}
-\usepackage{comment}
-
-\usepackage[compact]{titlesec}
-\titlespacing{\section}{0pt}{6pt}{4pt}
-\titlespacing{\subsection}{0pt}{5pt}{3pt}
-\titlespacing{\subsubsection}{0pt}{5pt}{3pt}
-
-\frenchspacing
-
-\usepackage{listings}
-\lstset{
-basicstyle=\ttfamily\scriptsize,       % the size of the fonts that are used for the code
-numbers=left,                   % where to put the line-numbers
-numberstyle=\ttfamily,      % the size of the fonts that are used for the line-numbers
-%aboveskip=0pt,
-%belowskip=0pt,
-stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
-%numbersep=10pt,                  % how far the line-numbers are from the code
-breakindent=0pt,
-firstnumber=1,
-%backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
-showspaces=false,               % show spaces adding particular underscores
-showstringspaces=false,         % underline spaces within strings
-showtabs=false,                 % show tabs within strings adding particular underscores
-frame=leftline,
-tabsize=2,  		% sets default tabsize to 2 spaces
-captionpos=b,   		% sets the caption-position to bottom
-breaklines=false,    	% sets automatic line breaking
-breakatwhitespace=true,    % sets if automatic breaks should only happen at whitespace
-columns=fixed,
-basewidth=0.52em,
-xleftmargin=6mm,
-xrightmargin=-6mm,
-numberblanklines=false,
-language=Ruby,
-morekeywords={table,scratch,channel,interface,periodic,bloom,state,bootstrap,morph,monotone,lset,lbool,lmax,lmap},
-escapeinside={(*}{*)}
-}
-
-
-\newcommand{\mytitle}{BIGDATA:Small:Data Collection and Management:\\Widespread CALM: Coordination Analysis and Big Data}
-
-%%% VARIOUS COMPACTIFICATION TRICKS
-% %%% CHANGE DEFAULTS
-% %\setlength{\listparindent}{-170pt}}
-% %\addtolength{\partopsep}{-40pt}}
-% %\addtolength{\textwidth}{10mm}
-% %\addtolength{\textheight}{10mm}
-% \renewcommand{\baselinestretch}{0.95}
-% \renewcommand{\paragraph}[1]{\vspace*{2mm}\noindent\textbf{#1} \ \ }
-
-% ADD COMPACT OPTIONS
-\newenvironment{tightitemize}{\begin{list}{$\bullet$}{\setlength{\itemsep}{1pt}\setlength{\topsep}{2pt}\setlength{\parskip}{1pt}\setlength{\parsep}{1pt}\leftmargin=1.5em}}{\end{list}}
-\newcommand{\denselist}{\addtolength{\itemsep}{-7pt}}
-% indent full paragraph for compact lists
-\newenvironment{myparindent} {
-  \hangindent=1em
-  \hangafter=0
-  \noindent
-}
-
-%captionsmall -- format captions in a smaller font
-\newcommand{\captionsmall}[1]{\caption{\footnotesize{#1}}}
-\newcommand{\myurl}[1]{{\footnotesize \url{#1}}}
-
-% THEOREMS -------------------------------------------------------
-\newtheorem{thm}{Theorem}[section]
-\newtheorem{cor}{Corollary}
-\newtheorem{lem}{Lemma}
-\newtheorem{prop}{Proposition}
-%\theoremstyle{definition}
-\newtheorem{defn}{Definition}
-\newtheorem{property}{Property}
-%\theoremstyle{remark}
-\newtheorem{rem}{Remark}
-%\theoremstyle{assumption}
-\newtheorem{assumpt}{Assumption}
-%\numberwithin{equation}{section}
-\newtheorem{example}{Example}
-\newtheorem{ex}[thm]{Example}
-\newtheorem{exa}{Example}
-\newtheorem{dfn}{Definition}[section]
-\newtheorem{goal}{Goal}
-
-% OTHER MACROS -----------------------------
-% inline comments
-% color names at http://en.wikibooks.org/wiki/LaTeX/Colors#Predefined_colors
-\usepackage[usenames,dvipsnames]{xcolor}
-\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
-% \newcommand{\jmh}[1]{}
-
-% Comment out to take away comments
-\newcommand{\commentout}[1]{}
-\newcommand{\out}[1]{}
-
-\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
-
-% no page numbers
-%\pagestyle{empty}
-\def\blooml{Bloom$^L$\xspace}
-
-
+\input{preamble}
 \begin{document}
-
-\input{summary}
-
-\pagebreak
-
+  
+  \input{summary}
+  
 \section{Introduction}
 \jmh{On a later pass, make sure that thematically we push on going ``widespread''---that is, make sure we don't seem like our impact is limited to Bloom, but rather that (a) our ideas are cracking open big, general challenges, and (b) the work we're proposing applies to widely-deployed systems.}
 \label{sec:intro}
@@ -147,6 +28,8 @@ escapeinside={(*}{*)}
 \label{sec:qa}
 \input{qa}
 
+\input{capacity}
+
 % \input{lada}
 
 % \input{boom-msr}
@@ -155,8 +38,17 @@ escapeinside={(*}{*)}
 % \input{blazes/path}
 % \input{blazes/labeling}
 
-\section{Summary}
-The difficulty of distributed programming presents critical challenges to the development of robust and scalable systems for Big Data.  Chief among these challenges is the desire to sidestep coordination overheads while guaranteeing acceptable program outcomes.  The CALM theorem provided a breakthrough framework for reasoning about these problems.  The work we propose here, if successful, would extend the CALM theorem well beyond its initial restricted setting, and use it to define a powerful, principled new framework for robust distributed programming that is consistent with common practice.  
+\newpage
+\bibliographystyle{plain}
+
+\immediate\write18{%
+  pdfLaTeX --jobname="\jobname1"
+  \gdef\string\conditionmacro{1}\string\input\space\jobname
+}%
+\bibliography{boom-msr,graphlab}
+
+% \section{Summary}
+% The difficulty of distributed programming presents critical challenges to the development of robust and scalable systems for Big Data.  Chief among these challenges is the desire to sidestep coordination overheads while guaranteeing acceptable program outcomes.  The CALM theorem provided a breakthrough framework for reasoning about these problems.  The work we propose here, if successful, would extend the CALM theorem well beyond its initial restricted setting, and use it to define a powerful, principled new framework for robust distributed programming that is consistent with common practice.  
 
 \newpage
 

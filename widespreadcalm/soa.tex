@@ -1,23 +1,16 @@
 %!TEX root = proposal.tex
 
 Our static analysis techniques for Bloom can
-(conservatively) affirm that a given program has eventually consistent outcomes.
+%conservatively 
+affirm that a given program has eventually consistent outcomes.
 If the analysis is unable to do so---due to the presence of nonmontonic deductions
-that follow asynchronous communication---a graphical debugger displays the
+that follow asynchronous communication---a dataflow visualization tool can display the
 program locations where coordination may need to be added to ``guard'' the
 nonmonotonic operations.  
 Figure~\ref{fig:kvs} shows a Bloom implementation of a simple key-value store
 and its accompanying dataflow visualization.  Note the white circles on the edges leading
-into the \emph{kvstate} collection, indicating nonmonotonic operations (corresponding to 
-deletion).
-The visualization functionality is particularly useful when
-analyzing small modules (units of code encapsulation and reuse) written 
-entirely in the Bloom language.
-As modules are composed and the overall program grows, the corresponding graphical representation becomes more difficult to reason about.  \jmh{clean up following sentence}.  Ideally,
-we could analyze a program piecewise, attributing to the external API of each module a
-label representing only the details of the implementation that are relevant to
-consistency in future compositions, and henceforth interact with the module at
-the level of its API.  
+into the \texttt{kvstate} collection, indicating nonmonotonic operations corresponding to 
+the deletion in lines~\ref{line:bloom-kvs-del1} and~\ref{line:bloom-kvs-del2}; clicking on those circles brings up the relevant non-monotonic statements.
 
 
 \begin{figure}[t]
@@ -43,8 +36,8 @@ module BasicKVS
 
   bloom :mutate do
     kvstate <+ kvput {|s| [s.key, s.value]}
-    kvstate <- (kvstate * kvput).lefts(:key => :key)
-    kvstate <- (kvstate * kvdel).lefts(:key => :key)
+    kvstate <- (kvstate * kvput).lefts(:key => :key) (*\label{line:bloom-kvs-del1}*)
+    kvstate <- (kvstate * kvdel).lefts(:key => :key) (*\label{line:bloom-kvs-del2}*)
   end
 
   bloom :get do
@@ -71,26 +64,21 @@ end
 
 \end{figure}
 
-
+The interface presents a visualization of the static dataflow analysis that we perform on a Bloom program.  While useful, such visualizations do not scale well to large programs and big graphs. Moreover, in many cases a programmer does not want to see this level of detail for all the code in their program.  For instance, when using encapsulated library modules, it is helpful to reason only about their interfaces, not their internals.  Ideally, CALM analysis should be encapsulated via annotations on a module's external input/output API, exposing only the consistency implications of composing the module with other code.
 
 \begin{figure}[t]
-\begin{minipage}{.48\textwidth}
+\begin{minipage}{.63\textwidth}
 \footnotesize
 
 %%\centering
-\begin{tabular}{|l|l|l|}
+\begin{tabular}{|l|l|p{7cm}|}
 \hline
 Class & Label & Interpretation \\ \hline
 Primitive & $\bot$ & Transformation does not affect consistency \\ \cline{2-3}
-& $N$ & Nonmonotonic (order-sensitive) \\
-& & transformation \\ \cline{2-3}
-& $A$ & Asynchronous (order-sacrificing) \\
-& & communication \\ \hline
-Compound & $D$ & Diffluent (potentially different \\
-& & results in different executions or on \\
-& & different replicas) \\ \cline{2-3}
-& $R$ & Restores order.  Represents some \\
-& & coordination protocol. \\ \hline
+& $N$ & Nonmonotonic (order-sensitive) transformation \\ \cline{2-3}
+& $A$ & Asynchronous (unordered) communication \\ \hline
+Compound & $D$ & Diffluent (non-confluent): non-deterministic results across executions or replicas \\ \cline{2-3}
+& $R$ & Restores order.  Represents some coordination protocol. \\ \hline
 
 \end{tabular}
 
@@ -104,83 +92,81 @@ Compound & $D$ & Diffluent (potentially different \\
 %\begin{figure}[t]
 
 \end{minipage}
-\begin{minipage}{.48\textwidth}
+\begin{minipage}{.35\textwidth}
 \raggedleft
 
 \footnotesize
-\begin{tabular}{|l|l|}
+\begin{tabular}{|l|p{4cm}|}
 \hline
 Rule & Interpretation \\ \hline
-$AN \rightarrow D$ & Loss of order followed by order-\\
-&sensitivity causes diffluence \\ \hline
+$\alpha\alpha \rightarrow \alpha$ & label repetition does not change semantics \\ \hline
+$\bot \beta \rightarrow \beta$ & $\bot$ has no effect on neighboring \\
+$\beta \bot \rightarrow \beta$ & labels\\ \hline
+$AN \rightarrow D$ & Loss of order followed by order-sensitivity causes diffluence \\ \hline
 $D \alpha \rightarrow D$ & \\
-$\alpha D \rightarrow D$ & Diffluence is final\\ \hline
-$\bot \beta \rightarrow \beta$ & \\
-$\beta \bot \rightarrow \beta$ & $\bot$ propagates labels from the left \\ \hline
+$\alpha D \rightarrow D$ & Once diffluent, always diffluent\\ \hline
 $AR \rightarrow R$ & Order lost and regained \\ \hline
-$RA \rightarrow A$ & $R$'s labors lost \\ \hline
-$RN \rightarrow R$ & $N$ an do no harm \\ \hline
-$NR \rightarrow N$ & $R$ can do no good \\ \hline
+$RA \rightarrow A$ & Order imposed and then lost \\ \hline
+$RN \rightarrow R$ & $N$ does no harm to $R$ flows \\ \hline
+$NR \rightarrow N$ & $R$ does no good for $N$ flows \\ \hline
 
 \end{tabular}
 \end{minipage}
-\vspace{-10pt}
 \caption{Labels and Reduction Rules}
 \label{fig:rules}
-\vspace{-2pt}
 \end{figure}
 
+To summarize the input-to-output relationships in a module, we have to characterize the dataflow \emph{paths} from each of its input interfaces to each of its output interfaces.  We do this by (1) labeling individual edges of a dataflow graph like Figure~\ref{fig:kvs} with key properties, and (2) understanding the transitive implications of these properties across multiple edges.  The left side of Figure~\ref{fig:rules} shows the labels that the analysis assigns to individual edges (``primitive''), and the labels that arise via dataflow composition (``compound'') as described in the rules on the right side of Figure~\ref{fig:rules}.  
 
-Figure~\ref{fig:rules} enumerates the Bloom consistency labels and rules for their propagation.
-Consider again the overwriting key-value store presented in Figure~\ref{fig:kvs}.
-CALM analysis detected nonmonotonic operations in the dataflow from \emph{kvput}
-to \emph{kvget\_response}, because PUTs implicitly delete old values.  As we collapse the labels,
-the nonmonotonic label will dominate, and we will ultimately associate with BasicKVS the following signature:
-$kvget\_response: \{N(put) | \bot(get)\}$.
-Consider now a larger system that uses the key-value store.  It will not be safe to attach an asynchronous
+As an illustration, consider again the overwriting key-value store presented in Figure~\ref{fig:kvs}.
+CALM analysis detected a nonmonotonic operation in the dataflow edge from \texttt{kvput} to \texttt{kvstate}: the appearance of PUT requests contribute to the deletion of old values (line~\ref{line:bloom-kvs-del1}).  Thus we label that edge with an $N$.  The other edge labels in Figure~\ref{fig:kvs} are eithe $N$ or $\bot$, so as we transitively combine edges, the first two rules on the right side of Figure~\ref{fig:rules} lead us to associate with BasicKVS the following signature for the single output interface and two input interfaces:
+$kvget\_response: \{N(put) \; | \; \bot(get)\}$.  
+
+Consider now a larger system that uses this key-value store as a component.  It will not be safe to attach an asynchronous ($A$)
 stream to the \emph{kvput} interface of the store, as this will lead to a divergent consistency label
-(due to the rule $AN \rightarrow D$).  
-Order must be \emph{restored} (via
-interposition of a dataflow labeled ``R'') 
-to asynchronous (i.e., unordered) inputs
+(due to the rule $AN \rightarrow D$).  For asynchronous ($A$) inputs to this module,
+order must be \emph{restored} (via
+interposition of a dataflow labeled $R$) 
 before composing with \emph{kvput}.  This corresponds to intuition:
-a key-value store with ``last writer wins'' semantics is highly sensitive to the order in which it receives writes.
-If the KVS is replicated, we must be especially careful about reordering of writes, as this
-may lead to inconsistent state on different replicas---indeed, we may be willing to pay a coordination
-cost to totally order all writes.
+a key-value store with ``last writer wins'' semantics like Figure~\ref{fig:kvs} is clearly sensitive to the order in which it receives writes.
+If the KVS is replicated, we must be careful about write reordering in the network, as this
+may lead to inconsistent state on different replicas.
 Reads, on the other hand, may be reordered freely.
 
-In practice, distributed systems are often composed from a large 
-collection of functional units, loosely coupled using message-based APIs.
+\subsection{Widespread CALM Analysis: Service Composition}
+The analysis framework above is helpful for analyzing pure Bloom programs that span multiple modules.
+In practice, however, many distributed applications are not written in any single language, nor are all their components available for deep analysis.  Instead, many systems are compositions of large distributed services, loosely coupled using message-based APIs.
 Such services are often implemented in a variety of programming 
 languages, and in some cases they are opaque and outside the control of
 the programmer using them.  
 Many services (e.g. data stores and message queues) provide their own 
-consistency guarantees, but how are we to reason about the consistency of an
+consistency guarantees, but how are we to reason about the consistency of an end-to-end
 \emph{application} that calls out to various such services and transforms
 and combines their responses?  
 
-The intuitions behind the CALM Theorem apply at this level of reasoning
-just as they applied to the low-level composition of relational operators
-in a Bloom execution.  Consider an inventory management application 
-that makes calls into two asynchronously updated but
-eventually consistent datastores.  It selects from the first service---an 
-inventory datastore---the model numbers of all toaster ovens that are currently in stock.  For each, it probes the second datastore---a recall database---to
-see if the unit has been recalled.  Finally, the application returns the 
-set of model numbers for units that have \emph{not} been recalled.  Observe that this
-application has a race condition due to the negation (``not recalled''): for a given model number $N$, the order of a request to lookup $N$ and a request to insert a recall for $N$ will determine whether or not the system returns $N$.  In a distributed implementation, both orderings could occur at different replicas, yielding inconsistent results.  If the orchestration
-application that correlates the results from the different datastores were written in Bloom, we would observe that although the datastores are monotonic, 
-the manner in which their results are \emph{used} is not.  If the inputs to 
-the datastores are asynchronous (reorderable), then the output of the 
-application may be inconsistent.  In the Bloom labeling system presented above, both services would be labeled 
-``A''---that is, asynchronously updated but otherwise monotonic.  The orchestration code that connects them would be 
-labeled ``N''---nonmonotonic, due to the negation.  The resulting composition would then be labeled ``D''---divergent, with
-a point of order in the orchestration code that should be resolved (e.g., by versioning the recall database and issuing queries against the 
-oldest ``complete'' version).
+% We believe that the intuitions behind the CALM Theorem should apply at this level of reasoning,
+% just as they applied to the low-level composition of operators
+% in a Bloom execution.  We envision a scenario where Bloom is used as an \emph{orchestration} language for composing applications from multiple services.  The ``primitive'' consistency properties of many services in wide use today are well-known: for example, there are various libraries for distributed consensus that could be labeled $R$, there are various libraries for order-insensitive key-value stores that could be labeled $\bot$, and so on.  
 
-
-\subsection{Summary of Tasks and Goals}
-\jmh{Make an explicit plan here to do something new with widely-used systems -- zookeeper+voldemort+something?  Perhaps talk about potential collaboration with LinkedIn.}
+% Consider an inventory management application 
+% that makes calls into two asynchronously updated but
+% eventually consistent datastores.  It selects from the first service---an 
+% inventory datastore---the model numbers of all toaster ovens that are currently in stock.  For each, it probes the second datastore---a recall database---to
+% see if the unit has been recalled.  Finally, the application returns the 
+% set of model numbers for units that have \emph{not} been recalled.  Observe that this
+% application has a race condition due to the negation (``not recalled''): for a given model number $N$, the order of a request to lookup $N$ and a request to insert a recall for $N$ will determine whether or not the system returns $N$.  In a distributed implementation, both orderings could occur at different replicas, yielding inconsistent results.  
+% If the orchestration
+% application that correlates the results from the different datastores were written in Bloom, we would observe that although the datastores are monotonic, 
+% the manner in which their results are \emph{used} is not.  If the inputs to 
+% the datastores are asynchronous (reorderable), then the output of the 
+% application may be inconsistent.  In the Bloom labeling system presented above, both services would be labeled 
+% $A$---that is, asynchronously updated but otherwise monotonic.  The orchestration code that connects them would be 
+% labeled $N$---nonmonotonic, due to the negation.  The resulting composition would then be labeled $D$---divergent, with
+% a point of order in the orchestration code that should be resolved (e.g., by versioning the recall database and issuing queries against the 
+% oldest ``complete'' version).
+% 
+% 
+% \jmh{Make an explicit plan here to do something new with widely-used systems -- zookeeper+voldemort+something?  Perhaps talk about potential collaboration with LinkedIn.}
 
 The labeling system presented above provides a framework for reasoning about service composition that is 
 mostly independent of Bloom, so long as we can accurately attribute consistency labels to service APIs.
@@ -190,54 +176,36 @@ eventually consistent services
 if we wish to assert that application output is likewise consistent.  Hence the ``glue'' language used
 to compose services must also be amenable to CALM analysis and label propagation.
 
-We are currently exploring the use of Bloom as a high-level service orchestration language.
-As a proof of concept, we are collaborating with LinkedIn to implement a collection of services and applications atop
-their Service-oriented Architecture.
-We will show how CALM analysis can ease the burden of reasoning about the behavior of applications
-that call out to a number of services (including data stores, message queues, coordination services like Zookeeper, 
-and logging subsystems)
-with various service-level consistency guarantees.
-This project will rely on the following technology:
+We are currently exploring the use of Bloom as a high-level \emph{orchestration} language.  \jmh{More here.}
 
+\subsection{Summary of Tasks and Goals}
 \begin{itemize}
 \item \textbf{Path labeling and label propagation}.
-We are currently developing a collection of ``consistency labels'' that 
-can be used to describe the data flowing out of a given module.  When the module
-is implemented in Bloom, we can derive these labels automatically via program
-analysis of the low-level code.  Each individual transformation or rule is 
-given a label, and chains of labels are ``collapsed'' based on CALM analysis to 
-a single label for each module output.  
-Otherwise, such labels can be associated with service APIs as an annotation.  
-When two modules are composed, the label of the resulting composition is derived
-by collapsing the labels of the component modules.
-As programmers construct larger systems out of reusable modules, they may 
-hide the complexity of module implementations while preserving those semantic 
-details that may affect the consistency of future compositions. The 
-labeling technique is a confluent term rewriting system that allows us to 
+The framework of labels and rules in Figure~\ref{fig:rules} is not yet complete; we are still formalizing its theory to prove correctness, and developing the program analysis tools to automatically label code written in Bloom and \blooml.  The labeling technique should be a confluent term rewriting system, allowing us to 
 characterize any dataflow as a compact expression with an intuitive 
 meaning in the context of distributed systems.
 
 \item \textbf{Automated coordination synthesis}.
+For inconsistent (diffluent) programs, we want enhance them with order-restoring coordination mechanisms ($R$) to achieve consistency.
+Programmers can supply their own coordination protocols, but we also hope that CALM analysis can lead to automatic synthesis of coordination code. 
+It seems clear that a generic coordination 
+protocol (e.g., totally-ordered broadcast) may be interposed at arbitrary 
+``points of order''
+to ensure consistency.  More interestingly, we would like to automatically discover cases where more efficient but more limited protocols---e.g. totally-ordered unicast between pairs of nodes---are sufficient to ensure consistency.  We could then search the space of points-of-order and coordination protocols and (semi-)automatically choose the most efficient way to convert a disorderly and inconsistent program into a judiciously-ordered consistent program.
 
-Given the labeling system described above, certain compositions will be 
-labeled as inconsistent.  In such cases, we will exploit the CALM
-analysis system to discover locations in an otherwise 
-inconsistent dataflow where interposition of such an order-restoration 
-coordination mechanism can yield an eventually consistent program.
-We will provide a mechanism by which a programmer may either supply 
-their own coordination protocol, or rely on the system to synthesize one. 
-In the latter case, we will show that a generic coordination 
-protocol---totally ordered broadcast---may be interposed into arbitrary 
-programs at their ``points of order''
-to ensure consistency of replicated state.
-
-\item \textbf{Uniform error communication and handling}
-A significant challenge for an orchestration language is robust error handling.
+\item \textbf{Uniform error communication and handling}.
+A significant challenge for an orchestration language is to provide and reason about robust error handling.
 Calls to services can fail in various ways; in some cases services can report the error
-back to the caller along with relevant information about its cause, while it other cases
+back to the caller along with relevant information about its cause, while in other cases
 applications must manage timeout and retry logic.  Since a robust orchestration language will
 be fundamentally nondeterministic, we will have to revisit the consistency labeling system to
 accomodate this uncertainty.
+
+\item \textbf{Evaluation}.  As a proof of concept, we intend to implement a collection of services and applications for a social network setting implemented via a Service-Oriented Architecture.  We currently are collaborating with engineers at LinkedIn and plan to either emulate or integrate with their architecture, which is based heavily on open-source services.
+We hope to show how CALM analysis can ease the burden of reasoning about the behavior of applications
+that call out to a number of services (including data stores, message queues, coordination services like Zookeeper, 
+and logging subsystems)
+with various service-level consistency guarantees.
 
 \end{itemize}
 

@@ -1,13 +1,11 @@
 %!TEX root = proposal.tex
 % XXX: should this be a distributed example?
-In this section, we review the Bloom programming language and the CALM program
-analysis.  \jmh{Reinsert an example---perhaps the first one discussed in the lattice section.}  We highlight a simple distributed program for which the CALM analysis
-yields unsatisfactory results.  \jmh{Make sure to clarify that we're going to push beyond Bloom---both beyond the current state of the language, and also to the composition of software written in other languages.}
+In this section, we review the Bloom programming language and the CALM approach to analyzing programs for distributed consistency.
 
 \subsection{Bloom}
 \label{sec:bg-bloom}
-Bloom is a Datalog-based domain-specific language (DSL) for distributed
-programming~\cite{Alvaro2011,bloom}. The state of a Bloom program is represented
+Bloom was originally designed as a Datalog-based domain-specific language (DSL) for distributed
+programming~\cite{bloom}. The state of a Bloom program is represented
 using \emph{collections} and computation is expressed as a bundle of declarative
 \emph{statements}.  An instance of a Bloom program performs computation by
 evaluating its statements over the contents of its local database. Bloom
@@ -54,18 +52,21 @@ end
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
 program represented as an annotated Ruby class. A small amount of imperative
-Ruby code is needed to instantiate the Bloom program and begin executing it;
+Ruby code is needed to instantiate an object containing the Bloom program and begin executing it;
 more details are available on the Bloom language website~\cite{bloom}.
 
 \subsubsection{Data model}
 
-The Bloom data model is based on \emph{collections}.  A collection is an
+The original Bloom data model is based on \emph{collections}.  A collection is an
 unordered set of \emph{facts}, akin to a relation in Datalog. The Bud prototype
 adopts the Ruby type system rather than inventing its own; hence, a fact in Bud
 is just an array of Ruby objects. Each collection has a \emph{schema}, which
 declares the structure (column names) of the facts in the collection. A subset
-of the columns in a collection form its \emph{key}: as in the relational model,
-the key columns functionally determine the remaining columns. The collections
+of the columns in a collection form its \emph{key}: 
+the key columns functionally determine the remaining columns. 
+Reflecting standard practice in popular NoSQL systems, the default schema for a Bloom collection is \texttt{[key]=>[value]}, but this can be overridden to have arbitrary arrays of attributes, and a (potentially composite) key made up of a subset of the attributes.
+
+The collections
 used by a Bloom program are declared in a \texttt{state} block. For example,
 line~\ref{line:spaths-ddl} of Figure~\ref{fig:bloom-spaths} declares a
 collection named \texttt{link} with three columns, two of which form the
@@ -162,7 +163,7 @@ that uses \verb+<~+ must be a channel; the \verb+<~+ operator captures
 asynchronous messaging.
 
 % XXX: does this need to be said?
-Bloom allows recursion---i.e., the rhs of a statement can reference the lhs
+Bloom supports recursive rules with fixpoint semantics---i.e., the rhs of a statement can reference the lhs
 collection, either directly or indirectly. As in Datalog, certain constraints
 must be adopted to ensure that programs with recursive statements have a
 sensible interpretation. For deductive statements (\verb+<=+ operator), we
