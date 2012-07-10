@@ -3,13 +3,13 @@
 Our static analysis techniques for Bloom can
 %conservatively 
 affirm that a given program has eventually consistent outcomes.
-If the analysis is unable to do so---due to the presence of nonmonotonic deductions
+If the analysis is unable to do so---due to the presence of non-monotonic deductions
 that follow asynchronous communication---a dataflow visualization tool can display the
 program locations where coordination may need to be added to ``guard'' the
-nonmonotonic operations.  
+non-monotonic operations.  
 Figure~\ref{fig:kvs} shows a Bloom implementation of a simple key-value store
 and its accompanying dataflow visualization.  Note the white circles on the edges leading
-into the \texttt{kvstate} collection, indicating nonmonotonic operations corresponding to 
+into the \texttt{kvstate} collection, indicating non-monotonic operations corresponding to 
 the deletion in lines~\ref{line:bloom-kvs-del1} and~\ref{line:bloom-kvs-del2}; clicking on those circles brings up the relevant non-monotonic statements.
 
 
@@ -75,7 +75,7 @@ The interface presents a visualization of the static dataflow analysis that we p
 \hline
 Class & Label & Interpretation \\ \hline
 Primitive & $\bot$ & Transformation does not affect consistency \\ \cline{2-3}
-& $N$ & Nonmonotonic (order-sensitive) transformation \\ \cline{2-3}
+& $N$ & Non-monotonic (order-sensitive) transformation \\ \cline{2-3}
 & $A$ & Asynchronous (unordered) communication \\ \hline
 Compound & $D$ & Diffluent (non-confluent): non-deterministic results across executions or replicas \\ \cline{2-3}
 & $R$ & Restores order.  Represents some coordination protocol. \\ \hline
@@ -119,7 +119,7 @@ $NR \rightarrow N$ & $R$ does no good for $N$ flows \\ \hline
 To summarize the input-to-output relationships in a module, we have to characterize the dataflow \emph{paths} from each of its input interfaces to each of its output interfaces.  We do this by (1) labeling individual edges of a dataflow graph like Figure~\ref{fig:kvs} with key properties, and (2) understanding the transitive implications of these properties across multiple edges.  The left side of Figure~\ref{fig:rules} shows the labels that the analysis assigns to individual edges (``primitive''), and the labels that arise via dataflow composition (``compound'') as described in the rules on the right side of Figure~\ref{fig:rules}.  
 
 As an illustration, consider again the overwriting key-value store presented in Figure~\ref{fig:kvs}.
-CALM analysis detected a nonmonotonic operation in the dataflow edge from \texttt{kvput} to \texttt{kvstate}: the appearance of PUT requests contribute to the deletion of old values (line~\ref{line:bloom-kvs-del1}).  Thus we label that edge with an $N$.  The other edge labels in Figure~\ref{fig:kvs} are either $N$ or $\bot$, so as we transitively combine edges, the first two rules on the right side of Figure~\ref{fig:rules} lead us to associate with BasicKVS the following signature for the single output interface and two input interfaces:
+CALM analysis detected a non-monotonic operation in the dataflow edge from \texttt{kvput} to \texttt{kvstate}: the appearance of PUT requests contribute to the deletion of old values (line~\ref{line:bloom-kvs-del1}).  Thus we label that edge with an $N$.  The other edge labels in Figure~\ref{fig:kvs} are either $N$ or $\bot$, so as we transitively combine edges, the first two rules on the right side of Figure~\ref{fig:rules} lead us to associate with BasicKVS the following signature for the single output interface and two input interfaces:
 $kvget\_response: \{N(put) \; | \; \bot(get)\}$.  
 
 Consider now a larger system that uses this key-value store as a component.  It will not be safe to attach an asynchronous ($A$)
@@ -161,12 +161,12 @@ and combines their responses?
 % the datastores are asynchronous (reorderable), then the output of the 
 % application may be inconsistent.  In the Bloom labeling system presented above, both services would be labeled 
 % $A$---that is, asynchronously updated but otherwise monotonic.  The orchestration code that connects them would be 
-% labeled $N$---nonmonotonic, due to the negation.  The resulting composition would then be labeled $D$---divergent, with
+% labeled $N$---non-monotonic, due to the negation.  The resulting composition would then be labeled $D$---divergent, with
 % a point of order in the orchestration code that should be resolved (e.g., by versioning the recall database and issuing queries against the 
 % oldest ``complete'' version).
 % 
 % 
-% \jmh{Make an explicit plan here to do something new with widely-used systems -- zookeeper+voldemort+something?  Perhaps talk about potential collaboration with LinkedIn.}
+% \jmh{Make an explicit plan here to do something new with widely used systems -- zookeeper+voldemort+something?  Perhaps talk about potential collaboration with LinkedIn.}
 
 The labeling system presented above provides a framework for reasoning about service composition that is 
 mostly independent of Bloom, so long as we can accurately attribute consistency labels to service APIs.
@@ -189,16 +189,17 @@ meaning in the context of distributed systems.
 For inconsistent (diffluent) programs, we want enhance them with order-restoring coordination mechanisms ($R$) to achieve consistency.
 Programmers can supply their own coordination protocols, but we also hope that CALM analysis can lead to automatic synthesis of coordination code. 
 It seems clear that a generic coordination 
-protocol (e.g., totally-ordered broadcast) may be interposed at arbitrary 
+protocol (e.g., totally ordered broadcast) may be interposed at arbitrary 
 ``points of order''
-to ensure consistency.  More interestingly, we would like to automatically discover cases where more efficient but more limited protocols---e.g. totally-ordered unicast between pairs of nodes---are sufficient to ensure consistency.  We could then search the space of points-of-order and coordination protocols and (semi-)automatically choose the most efficient way to convert a disorderly and inconsistent program into a judiciously-ordered consistent program.
+to ensure consistency.  More interestingly, we would like to automatically
+discover cases where more efficient but more limited protocols---e.g., totally ordered unicast between pairs of nodes---are sufficient to ensure consistency.  We could then search the space of points-of-order and coordination protocols and (semi-)automatically choose the most efficient way to convert a disorderly and inconsistent program into a judiciously-ordered consistent program.
 
 \item \textbf{Uniform error communication and handling}.
 A significant challenge for an orchestration language is to provide and reason about robust error handling.
 Calls to services can fail in various ways; in some cases services can report the error
 back to the caller along with relevant information about its cause, while in other cases
 applications must manage timeout and retry logic.  Since a robust orchestration language will
-be fundamentally nondeterministic, we will have to revisit the consistency labeling system to
+be fundamentally non-deterministic, we will have to revisit the consistency labeling system to
 accommodate this uncertainty.
 
 \item \textbf{Evaluation}.  As a proof of concept, we intend to implement a collection of services and applications for a social network setting implemented via a Service-Oriented Architecture.  We currently are collaborating with engineers at LinkedIn and plan to either emulate or integrate with their architecture, which is based heavily on open-source services.
