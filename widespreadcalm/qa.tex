@@ -69,12 +69,45 @@ testing and formal verification. Some clear advantages to this approach follow:
   bound for non-monotonic processing at the receiver.
 \end{itemize}
 
+When a distributed program produces an unexpected result---either in testing or in
+deployment---tracking down the cause of the error can be very challenging.  First, because
+the execution was nondeterministic, it may be difficult to reproduce the error in a subsequent
+run.  Moreover, because the program is distributed, it is likely that although we observed the 
+error at one site, its cause lies at one or more other sites.  Surely the cause of the error
+occurred \emph{before} the error itself, but even identifying the set of events that preceeded the 
+error~\cite{lamport} is nontrivial!  Had we the foresight to log execution details at each node,
+it could have simplified this search for causes.  Unfortunately, logging trades off between 
+runtime overhead and detail, and it is difficult to know the appropriate ``level'' at which to
+log events until bugs actually surface.  If the logs we recorded are highly detailed, it is likely
+that the debugging information we seek is a needle in a haystack.
+
+We believe that the CALM Theorem has important implications for distributed debuggging.
+Just as monotonicity analysis allowed us to prune the space of executions that needed to be
+explored during quality assurance, similar analyses should dramatically reduce the number of events
+that must be logged by each site.  A purely monotonic program is a deterministic function of its inputs;
+to replay an execution of such a program we need only to have recorded its inputs.  To replay a nonmonontic 
+program, we must record its inputs and those nondeterministic events (i.e., message delivery orderings) 
+that could have produced different outputs under different orderings.  
+
+This event reduction has implications not just for logging efficiency but for log interpretation during
+the debugging process.  Consider an interaction with a distributed version of the KVS previously presented.
+At some point in the execution, the value associated with a particular key had become corrupted and we wish
+to track down the cause of this stray PUT.  Unfortunately, the store has a read-dominant workload, and concurrent 
+with the PUT in question are thousands of in-flight read requests.  It is infeasible to visualize this execution,
+and difficult to reason about which message orderings actually matter with respect to the observed anomaly.
+CALM analysis tell us that PUTs do not commute (due to the nonmonotonic operations they trigger), so each PUT
+should be represented individually on the timeline.  On the other hand, GETs trigger monotonic processing, so
+their ordering is immaterial as long as the log accurately represents, which PUTs they follow.
+Therefore for the key in question we may partition the set of GETs into two classes: those that precede the ``bad''
+PUT and those that follow it.  From thousands of concrete events that occurred in the execution, we may log (and
+display) only three.
+
 
 
 \subsection{Summary of Tasks and Goals}
 
 We are currently developing the BloomUnit system, a quality assurance tool
-for programs written in Bloom.  
+for programs written in Bloom, and a collection of debugging utilities.
 
 \begin{itemize}
 \item \textbf{Declarative assertions}.
@@ -102,5 +135,15 @@ If we can recognize that certain code fragments are purely monotonic, it follows
 that they are insensitive to message delivery order.
 Hence the evaluator may explore only those message delivery order permutations
 that could have produced different outputs.
+
+\item \textbf{Dataflow debugging}  Bloom already provides a graphical debugging tool that allows programmers
+to visualize data as it moves through the (local) dataflow implied by a Bloom program.  To aid in debugging
+executions that span multiple sites,  we will augment the logical dataflow ``view'' with a space / time visualization
+(in the style of lamport diagrams), in which sites are represented as timelines and messages connect timelines.
+The debugging process might begin in the logical dataflow at the site where the unexpected output of behavior was observed.
+As the search for causes widens, the programmer may ``zoom out'' to the space/time view and track the cause of the observed
+event backwards in time to other sites.  To ensure that the programmer only visualizes (and hence reasons about) message orders
+that could possibly have contributed to the observed result, we will use CALM analysis to collapse groups of messages that
+could have been received in any order.  
 \end{itemize}
 
