@@ -97,7 +97,7 @@ with the PUT in question are thousands of in-flight read requests.  It is infeas
 and difficult to reason about which message orderings actually matter with respect to the observed anomaly.
 CALM analysis tell us that PUTs do not commute (due to the nonmonotonic operations they trigger), so each PUT
 should be represented individually on the timeline.  On the other hand, GETs trigger monotonic processing, so
-their ordering is immaterial as long as the log accurately represents, which PUTs they follow.
+their ordering is immaterial as long as the log accurately represents which PUTs they follow.
 Therefore for the key in question we may partition the set of GETs into two classes: those that precede the ``bad''
 PUT and those that follow it.  From thousands of concrete events that occurred in the execution, we may log (and
 display) only three.
