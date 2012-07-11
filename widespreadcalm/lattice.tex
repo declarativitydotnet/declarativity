@@ -134,19 +134,18 @@ Despite our progress to date, many challenges and open questions remain.  In upc
   types using monotone functions---for example, we found this to be the case
   when building the KVS described above.
 
-  Nevertheless, providing tools to help programmers validate the correctness
-  of their lattice implementations would be useful. We have recently been
+  Nevertheless, to provide trusted software we would like to  validate the lattice properties of user-provided
+  lattice type implementations. We have recently been
   exploring systematic testing for Bloom programs (Section~\ref{sec:qa});
   similar ideas could be adopted to automatically generate high-quality test
   cases for lattice implementations. Another approach we are investigating is to
-  provide a specialized domain-specific language (DSL) for building lattice
-  implementations; this would simplify formal verification of lattice
+  provide a specialized domain-specific language (DSL) for implementing lattices; this would simplify formal verification of lattice
   definitions.
 
 \item \textbf{Distributed Garbage Collection:} Many natural data types used in distributed systems
   accumulate state that can eventually be reclaimed. For example, a vector clock
   in a dynamic system will eventually contain many entries for nodes that have
-  subsequently left the system. While these data types may be monotonic lattices in their use, the task of doing distributed garbage collection for them often
+  subsequently left the system. While these data types may be monotonic lattices, the task of doing distributed garbage collection for them often
   requires consensus. As a result, memory-efficient versions of these datatypes will be flagged as non-monotonic
   by the CALM analysis.
 
