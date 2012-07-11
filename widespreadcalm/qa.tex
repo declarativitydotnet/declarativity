@@ -85,7 +85,7 @@ We believe that the CALM Theorem has important implications for distributed debu
 Just as monotonicity analysis allowed us to prune the space of executions that needed to be
 explored during quality assurance, similar analyses should dramatically reduce the number of events
 that must be logged by each site.  A purely monotonic program is a deterministic function of its inputs;
-to replay an execution of such a program we need only to have recorded its inputs.  To replay a nonmonontic 
+to replay an execution of such a program we need only to have recorded its inputs.  To replay a nonmonotonic 
 program, we must record its inputs and those nondeterministic events (i.e., message delivery orderings) 
 that could have produced different outputs under different orderings.  
 

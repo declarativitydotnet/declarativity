@@ -116,14 +116,14 @@ $NR \rightarrow N$ & $R$ does no good for $N$ flows \\ \hline
 \label{fig:rules}
 \end{figure}
 
-To summarize the input-to-output relationships in a module, we have to characterize the dataflow \emph{paths} from each of its input interfaces to each of its output interfaces.  We do this by (1) labeling individual edges of a dataflow graph like Figure~\ref{fig:kvs} with key properties, and (2) understanding the transitive implications of these properties across multiple edges.  The left side of Figure~\ref{fig:rules} shows the labels that the analysis assigns to individual edges (``primitive''), and the labels that arise via dataflow composition (``compound'') as described in the rules on the right side of Figure~\ref{fig:rules}.  
+To summarize the input-to-output relationships in a module, we have to characterize the dataflow \emph{paths} from each of its input interfaces to each of its output interfaces.  We do this by (1) labeling individual edges of a dataflow graph like Figure~\ref{fig:kvs} with certain properties, and (2) understanding the transitive implications of these properties across multiple edges.  The left side of Figure~\ref{fig:rules} shows the labels that the analysis assigns to individual edges (``primitive''), and the labels that arise via dataflow composition (``compound'') as described in the rules on the right side of Figure~\ref{fig:rules}.  
 
 As an illustration, consider again the overwriting key-value store presented in Figure~\ref{fig:kvs}.
 CALM analysis detected a non-monotonic operation in the dataflow edge from \texttt{kvput} to \texttt{kvstate}: the appearance of PUT requests contribute to the deletion of old values (line~\ref{line:bloom-kvs-del1}).  Thus we label that edge with an $N$.  The other edge labels in Figure~\ref{fig:kvs} are either $N$ or $\bot$, so as we transitively combine edges, the first two rules on the right side of Figure~\ref{fig:rules} lead us to associate with BasicKVS the following signature for the single output interface and two input interfaces:
 $kvget\_response: \{N(put) \; | \; \bot(get)\}$.  
 
 Consider now a larger system that uses this key-value store as a component.  It will not be safe to attach an asynchronous ($A$)
-stream to the \texttt{kvput} interface of the store, as this will lead to a divergent consistency label
+stream to the \texttt{kvput} interface of the store, as this will lead to a diffluent ($D$) consistency label
 (due to the rule $AN \rightarrow D$).  For asynchronous ($A$) inputs to this module,
 order must be \emph{restored} (via
 interposition of a dataflow labeled $R$) 
@@ -173,8 +173,8 @@ mostly independent of Bloom, so long as we can accurately attribute consistency 
 If the services are written in Bloom, we can derive their labels automatically---otherwise we may rely on annotations.
 As the example above indicated, however, we must be very careful how we \emph{use} data returned from 
 eventually consistent services
-if we wish to assert that application output is likewise consistent.  Hence the ``glue'' language used
-to compose services must also be amenable to CALM analysis and label propagation.
+if we wish to assert that application output is likewise consistent.  Hence the ``glue'' or ``orchestration'' language used
+to compose services must also be amenable to CALM analysis and label propagation.  Bloom is our exemplar of such a language.
 
 \subsection{Summary of Tasks and Goals}
 \begin{itemize}
