@@ -91,7 +91,7 @@ that could have produced different outputs under different orderings.
 
 This event reduction has implications not just for logging efficiency but for log interpretation during
 the debugging process.  Consider an interaction with a distributed version of the KVS previously presented.
-At some point in the execution, the value associated with a particular key had become corrupted and we wish
+At some point in the execution, the value associated with a particular key has become corrupted and we wish
 to track down the cause of this stray PUT.  Unfortunately, the store has a read-dominant workload, and concurrent 
 with the PUT in question are thousands of in-flight read requests.  It is infeasible to visualize this execution,
 and difficult to reason about which message orderings actually matter with respect to the observed anomaly.
