@@ -110,7 +110,7 @@ We are currently developing the BloomUnit system, a quality assurance tool
 for programs written in Bloom, and a collection of debugging utilities.
 
 \begin{itemize}
-\item \textbf{Declarative assertions}.
+\item \textbf{Declarative assertions:}
 BloomUnit users will write declarative test specifications that describe the 
 intended input-output behavior of the program. These specifications will be 
 written 
@@ -121,25 +121,24 @@ is equivalent to a single test case, while a more complex test specification
 can encapsulate many different test cases.
 
 
-\item \textbf{Constraint-guided input generation}
+\item \textbf{Constraint-guided input generation:}
 Rather than supplying concrete inputs for test specifications, users will 
 instead 
 specify the constraints that the input must satisfy; BloomUnit will then 
 automatically generate inputs that are consistent with those constraints.
 
-\item \textbf{CALM-based pruning of the state space}
-BloomUnit will systematically explore the space of
-possible network behaviors in an intelligent manner. To reduce the size of this space, we may again
-leverage the CALM Theorem.
-If we can recognize that certain code fragments are purely monotonic, it follows 
-that they are insensitive to message delivery order.
-Hence the evaluator may explore only those message delivery order permutations
-that could have produced different outputs.
+\item \textbf{Semantics-aware state space exploration:}
+  BloomUnit will systematically explore the space of possible network behaviors
+  in an intelligent manner. To reduce the size of this space, we may again
+  leverage the CALM Theorem.  If we can recognize that certain code fragments
+  are monotonic, it follows that they are insensitive to message delivery order.
+  Hence the evaluator may explore only those message delivery order permutations
+  that could have produced different outputs.
 
-\item \textbf{Dataflow debugging}  Bloom already provides a graphical debugging tool that allows programmers
+\item \textbf{Dataflow debugging:}  Bloom already provides a graphical debugging tool that allows programmers
 to visualize data as it moves through the (local) dataflow implied by a Bloom program.  To aid in debugging
 executions that span multiple sites,  we will augment the logical dataflow ``view'' with a space / time visualization
-(in the style of lamport diagrams), in which sites are represented as timelines and messages connect timelines.
+(in the style of Lamport diagrams), in which sites are represented as timelines and messages connect timelines.
 The debugging process might begin in the logical dataflow at the site where the unexpected output of behavior was observed.
 As the search for causes widens, the programmer may ``zoom out'' to the space/time view and track the cause of the observed
 event backwards in time to other sites.  To ensure that the programmer only visualizes (and hence reasons about) message orders

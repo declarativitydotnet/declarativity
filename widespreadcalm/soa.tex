@@ -178,33 +178,42 @@ to compose services must also be amenable to CALM analysis and label propagation
 
 \subsection{Summary of Tasks and Goals}
 \begin{itemize}
-\item \textbf{Path labeling and label propagation}.
+\item \textbf{Path labeling and label propagation:}
 The framework of labels and rules in Figure~\ref{fig:rules} is not yet complete; we are still formalizing its theory to prove correctness, and developing the program analysis tools to automatically label code written in Bloom and \blooml.  The labeling technique should be a confluent term rewriting system, allowing us to 
 characterize any dataflow as a compact expression with an intuitive 
 meaning in the context of distributed systems.
 
-\item \textbf{Automated coordination synthesis}.
-For inconsistent (diffluent) programs, we want to enhance them with order-restoring coordination mechanisms ($R$) to achieve consistency.
-Programmers can supply their own coordination protocols, but we also hope that CALM analysis can lead to automatic synthesis of coordination code. 
-It seems clear that a generic coordination 
-protocol (e.g., totally ordered broadcast) may be interposed at arbitrary 
-``points of order''
-to ensure consistency.  More interestingly, we would like to automatically
-discover cases where more efficient but more limited protocols---e.g., totally ordered unicast between pairs of nodes---are sufficient to ensure consistency.  We could then search the space of points-of-order and coordination protocols and (semi-)automatically choose the most efficient way to convert a disorderly and inconsistent program into a judiciously-ordered consistent program.
+\item \textbf{Automated coordination synthesis:}
+  Programs that use non-monotonic constructs without coordination may produce
+  non-deterministic behavior. We are exploring how such programs might be
+  \emph{automatically} enhanced with order-restoring coordination mechanisms
+  ($R$) to achieve consistency. We envision providing a library of built-in
+  coordination strategies (e.g., Paxos, totally ordered broadcast, ordered
+  unicast), and also allowing programmers to provide their own protocols. It
+  seems clear that a general-purpose, heavyweight coordination protocol (e.g., Paxos)
+  may be interposed at arbitrary ``points of order'' to ensure that all nodes
+  agree on a message order.  More interestingly, we would like to automatically
+  discover cases where more efficient but more limited protocols---e.g.,
+  ordered unicast delivery between pairs of nodes---are sufficient to ensure consistency.
+  We could then search the space of points-of-order and coordination protocols
+  to select the most efficient coordination strategy.
 
-\item \textbf{Uniform error communication and handling}.
-A significant challenge for an orchestration language is to provide robust error handling.
-Calls to services can fail in various ways; in some cases services can report the error
-back to the caller along with relevant information about its cause, while in other cases
-applications must manage timeout and retry logic.  Since a robust orchestration language will
-be fundamentally non-deterministic, we will have to revisit the consistency labeling system to
-accommodate this uncertainty.
+\item \textbf{Uniform error communication and handling:}
+  A significant challenge for an orchestration language is to provide robust
+  error handling. Calls to services can fail in many different ways. In some
+  cases services can report the error back to the caller along with relevant
+  information about its cause, while in other cases applications must manage
+  timeout and retry logic.  Since a robust orchestration language will be
+  fundamentally non-deterministic, we will have to revisit the consistency
+  labeling system to accommodate this uncertainty.
 
-\item \textbf{Evaluation}.  As a proof of concept, we intend to implement a collection of services and applications for a social network setting implemented via a Service-Oriented Architecture.  We currently are collaborating with engineers at LinkedIn and plan to either emulate or integrate with their architecture, which is based heavily on open-source services.
-We hope to show how CALM analysis can ease the burden of reasoning about the behavior of applications
-that call out to a number of services (including data stores, message queues, coordination services like Zookeeper, 
-and logging subsystems)
-with various service-level consistency guarantees.
+\item \textbf{Evaluation:} As a proof of concept, we intend to implement a
+  collection of services and applications for a social network.  We are currently
+  collaborating with engineers at LinkedIn and plan to either emulate or
+  integrate with their architecture, which employs a deeply service-oriented design.  We hope to show how CALM analysis can ease the burden of reasoning
+  about the behavior of applications that call out to a number of services
+  (including data stores, message queues, coordination services like Zookeeper,
+  and logging subsystems) with different service-level consistency guarantees.
 
 \end{itemize}
 
