@@ -112,7 +112,7 @@ $NR \rightarrow N$ & $R$ does no good for $N$ flows \\ \hline
 
 \end{tabular}
 \end{minipage}
-\caption{Labels and Reduction Rules}
+\caption{Labels and Reduction Rules \jmh{what is the distinction between $\alpha$ and $\beta$ and did I use them right?}}
 \label{fig:rules}
 \end{figure}
 
@@ -123,11 +123,11 @@ CALM analysis detected a non-monotonic operation in the dataflow edge from \text
 $kvget\_response: \{N(put) \; | \; \bot(get)\}$.  
 
 Consider now a larger system that uses this key-value store as a component.  It will not be safe to attach an asynchronous ($A$)
-stream to the \emph{kvput} interface of the store, as this will lead to a divergent consistency label
+stream to the \texttt{kvput} interface of the store, as this will lead to a divergent consistency label
 (due to the rule $AN \rightarrow D$).  For asynchronous ($A$) inputs to this module,
 order must be \emph{restored} (via
 interposition of a dataflow labeled $R$) 
-before composing with \emph{kvput}.  This corresponds to intuition:
+before composing with \texttt{kvput}.  This corresponds to intuition:
 a key-value store with ``last writer wins'' semantics like Figure~\ref{fig:kvs} is clearly sensitive to the order in which it receives writes.
 If the KVS is replicated, we must be careful about write reordering in the network, as this
 may lead to inconsistent state on different replicas.
@@ -175,8 +175,6 @@ As the example above indicated, however, we must be very careful how we \emph{us
 eventually consistent services
 if we wish to assert that application output is likewise consistent.  Hence the ``glue'' language used
 to compose services must also be amenable to CALM analysis and label propagation.
-
-We are currently exploring the use of Bloom as a high-level \emph{orchestration} language.  \jmh{More here.}
 
 \subsection{Summary of Tasks and Goals}
 \begin{itemize}
