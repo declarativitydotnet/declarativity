@@ -58,7 +58,7 @@ end
 \end{minipage}
 
 \vspace{-10pt}
-\caption{A Bloom key-value store and its CALM visualization}
+\caption{A Bloom key-value store and its CALM visualization.}
 \label{fig:kvs}
 \vspace{-2pt}
 
@@ -99,7 +99,7 @@ Compound & $D$ & Diffluent (non-confluent): non-deterministic results across exe
 \begin{tabular}{|l|p{4cm}|}
 \hline
 Rule & Interpretation \\ \hline
-$\alpha\alpha \rightarrow \alpha$ & label repetition does not change semantics \\ \hline
+$\alpha\alpha \rightarrow \alpha$ & Label repetition does not change semantics \\ \hline
 $\bot \beta \rightarrow \beta$ & $\bot$ has no effect on neighboring \\
 $\beta \bot \rightarrow \beta$ & labels\\ \hline
 $AN \rightarrow D$ & Loss of order followed by order-sensitivity causes diffluence \\ \hline
@@ -112,7 +112,7 @@ $NR \rightarrow N$ & $R$ does no good for $N$ flows \\ \hline
 
 \end{tabular}
 \end{minipage}
-\caption{Labels and Reduction Rules \jmh{what is the distinction between $\alpha$ and $\beta$ and did I use them right?}}
+\caption{Labels and Reduction Rules.\jmh{what is the distinction between $\alpha$ and $\beta$ and did I use them right?}}
 \label{fig:rules}
 \end{figure}
 
@@ -184,7 +184,7 @@ characterize any dataflow as a compact expression with an intuitive
 meaning in the context of distributed systems.
 
 \item \textbf{Automated coordination synthesis:}
-  Programs that use non-monotonic constructs without coordination may produce
+  Programs that use non-monotonic constructs without coordination may exhibit
   non-deterministic behavior. We are exploring how such programs might be
   \emph{automatically} enhanced with order-restoring coordination mechanisms
   ($R$) to achieve consistency. We envision providing a library of built-in
