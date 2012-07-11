@@ -51,8 +51,8 @@ end
 \end{wrapfigure}
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
-program represented as an annotated Ruby class. A small amount of imperative
-Ruby code is needed to instantiate an object containing the Bloom program and begin executing it;
+program represented as an annotated Ruby class. A few lines of imperative
+Ruby code are needed to instantiate an object containing the Bloom program and begin executing it;
 more details are available on the Bloom language website~\cite{bloom-website}.
 
 \subsubsection{Data model}
@@ -132,9 +132,10 @@ rhs at some non-deterministic future timestep\\
 \end{table}
 
 Each Bloom statement has one or more input collections and a single output
-collection.  A statement takes the form: \\ \noindent
+collection.  A statement takes the form: \\ 
+\centerline{
 \mbox{\hspace{0.25in}\emph{$<$collection-identifier$>$ $<$op$>$
-    $<$collection-expression$>$}}\\ \noindent
+    $<$collection-expression$>$}}}\\ \noindent
 The left-hand side (lhs) is the name of the output collection and the right-hand
 side (rhs) is an expression that produces a collection.  A statement defines how
 the contents of the input collections should be transformed before being
@@ -193,7 +194,7 @@ According to the CALM theorem, distributed inconsistency may only occur at
 \emph{points of order}: program locations where the output of an asynchronously
 derived value is consumed by a non-monotonic operator.  This is because
 asynchronous messaging results in non-deterministic arrival order, and
-non-monotonic operators may be produce different conclusions when evaluated over
+non-monotonic operators may produce different conclusions when evaluated over
 different subsets of their inputs.  For example, consider a Bloom program in
 which collections $A$ and $B$ are fed by asynchronous channels and the program
 sends a message whenever an element of $A$ arrives that is not in $B$. This
