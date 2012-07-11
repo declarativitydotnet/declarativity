@@ -1,3 +1,4 @@
+%!TEX root = proposal.tex
 \section{Capacity Building}
 \label{sec:capacity}
 Capacity-building activities will focus on ``infrastructure for data
@@ -40,7 +41,7 @@ proposal.
 }
 
 \section{Evaluation Plan and Metrics}
-The work of this proposal aims to provide programming languages and analysis tools that improve the quality of distributed systems software and its development.  Throughout, we will be motivated by practical use cases from collaborators in industry, including online services including our collaborators at LinkedIn and SurveyMonkey, and infrastructure companies including our collaborators at EMC and Microsoft.
+The work of this proposal aims to provide programming languages and analysis tools that improve the quality of distributed systems software and its development.  Throughout, we will be motivated by practical use cases from collaborators in industry, including our collaborators at online services like LinkedIn and SurveyMonkey, and at infrastructure companies like EMC and Microsoft.
 
 Given these use cases, we plan to employ multiple metrics of quality for our research: 
 \begin{itemize}
@@ -48,10 +49,10 @@ Given these use cases, we plan to employ multiple metrics of quality for our res
 
 \item \emph{Analytic Power.}  Static analysis of software is a mathematical construct, so we primarily assess the power of our analysis framework via the formal expressiveness of the languages it can verify.  To connect to practice, however, we can assess relevance via case studies on important classes of programs.
 
-\item \emph{Performance.}  In order to support widespread adoption, our Bloom language has to produce fast code, and our analysis tools have to scale to large programs.  These are matters that can be measured quantitatively in fairly traditional ways.  Our evaluations will entail performance studies using target applications mentioned previously  (Key-Value Stores, collaborative editing, coordination protocols, etc.), instantiated via large public data sets like those provided by Amazon and InfoChimps.  As an experimental platform, we will run our software on multiple computers hosted in commercial cloud services like Amazon EC2.  Microbenchmarks may focus on small numbers of computers and modest amounts of data, but there will also be a focus on macrobenchmarks that use hundreds or thousands of machines and massive datasets (Terabytes to Petabytes).  Although there are no languages with equivalent analysis support, we intend to compare the performance of Bloom programs against other systems when appropriate to validate our approach. 
+\item \emph{Performance.}  In order to support widespread adoption, our Bloom language has to produce fast code, and our analysis tools have to scale to large programs.  These matters can be measured quantitatively in  traditional ways.  Our evaluations will entail performance studies using target applications mentioned previously  (Key-Value Stores, collaborative editing, coordination protocols, etc.), instantiated via large public data sets.  As an experimental platform, we will run our software on multiple computers hosted in commercial cloud services like Amazon EC2.  Microbenchmarks may focus on small numbers of computers and modest amounts of data, but there will also be a focus on macrobenchmarks that use hundreds or thousands of machines and massive datasets (Terabytes to Petabytes).  Although there are no languages with equivalent analysis support, we intend to compare the performance of Bloom programs against other systems when appropriate to validate our approach. 
 \end{itemize}
 
-Quantitative results from these evaluations will be written up in scholarly papers and judged by peer review in publications.
+Results from these evaluations will be written up in scholarly papers and judged by peer review in publications.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,7 +72,7 @@ In our early work, we were eager to validate the Bloom language and the CALM coo
 
 In the coming years we wish to expand the course along the lines described in this proposal: increase the focus on large data sets, expand the language discussion to encompass new monotonic constructs, focus on orchestrating Service-Oriented Architectures in the cloud, and reason about debugging distributed systems in a more organized and better-tooled fashion.  
 
-Moreover, we plan to scale the class itself to the Cloud, by hosting it online as a Massive Open Online Course (MOOC) at Coursera.com or a similar facility.  The plan is to offer a version of the course in person each year at Berkeley to a moderate audience (50-100 students), and then post lectures and homeworks to the MOOC after a lag of a month or two (thousands of students). The delay will facilitate polishing the material and ensuring that homeworks can be self-managed.
+Moreover, we plan to scale the class itself to the Cloud, by hosting it online as a Massive Open Online Course (MOOC) at Coursera.com or a similar facility.  The plan is to offer a version of the course in person each year at Berkeley to a moderate-size audience (50-100 students), and then post lectures and homeworks to the MOOC after a lag of a month or two (thousands of students). The delay will facilitate polishing the material and ensuring that homeworks can be self-managed.
 
 \subsection{Results from Prior NSF Funded Collaborations Between PIs}
 \label{sec:prior}
@@ -80,10 +81,7 @@ Over the last 5 years, PI Hellerstein has received six NSF grants, four of which
 completes in 2013 and has no substantive overlap with this
 proposal. Grant 0963922 focuses on \emph{Social Data Analysis}, in which groups of people collaborate to analyze data. 
 
-The most relevant of the completed grants is IIS-0803333, which focused on system infrastructure for supporting distributed machine learning in collaboration with Prof. Carlos Guestrin of CMU.  This work fueled multiple software artifacts: the P2 declarative networking system~\cite{p2}, the GraphLab infrastructure for parallel machine learning~\cite{uaigraphlab} and the initial work on Bloom that set the seeds for this proposal.  That effort produced dozens of top-tier publications, and
-open source software including the Bloom programming language,
-which in 2010 was recognized by MIT Technology Review as one of 10
-technologies ``most likely to change our world''.  
+The most relevant of the completed grants is IIS-0803333, which focused on system infrastructure for supporting distributed machine learning in collaboration with Prof. Carlos Guestrin of CMU.  This work fueled multiple software artifacts: the P2 declarative networking system~\cite{p2}, the GraphLab infrastructure for parallel machine learning~\cite{uaigraphlab} and the initial work on Bloom that set the seeds for this proposal.  
 
 NSF-funded students in the PI's group have gone on to major roles in academia (Cal State, Clarkson, MIT, UCLA, U. Florida, U. Massachusetts-Amherst, U. Maryland, U. Pennsylvania), industrial research (IBM, Microsoft, HP, Yahoo!) and entrepreneurship (Captricity, Conviva, Nou Data).  Many of these former students are actively contributing to the development of new technology in the Big Data arena.
 
