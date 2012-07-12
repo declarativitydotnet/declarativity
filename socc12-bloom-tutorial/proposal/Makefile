@@ -1,7 +1,9 @@
-NAME=proposal
+NAME=cover proposal
 USE_PDFLATEX=1
-TEXSRCS=proposal.tex
-BIBTEXSRCS=proposal.bib
+
+proposal_TEXSRCS=proposal.tex
+proposal_BIBTEXSRCS=proposal.bib
+cover_TEXSRCS=cover.tex
 
 OTHER_PDF=$(wildcard fig/*.pdf)
 OTHER+=$(OTHER_PDF)
