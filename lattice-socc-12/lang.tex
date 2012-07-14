@@ -33,8 +33,6 @@ we use the term ``lattice'' to mean ``bounded join semilattice'' in the rest of
 this paper. We use the informal term ``merge function'' to mean ``least upper
 bound.''
 
-% XXX: note that algebraic properties that must be satisfied by morphisms and
-% monotone functions
 A \emph{monotone function} from poset $S$ to poset $T$ is a function $f: S \to
 T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow f(a) \leq_T f(b)$. That
 is, $f$ maps elements of $S$ to elements of $T$ in a manner that respects the
@@ -43,11 +41,11 @@ partial orders of both posets.
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
 A \emph{morphism} from lattice $\langle X, \sqcup_X, \bot_X\rangle$ to lattice
-$\langle Y, \sqcup_Y, \bot_Y\rangle$ is a function $g: X \to Y$ such that,
-$\forall a,b \in X: g(a \sqcup_X b) = g(a) \sqcup_Y g(b)$. That is, $g$ allows
-elements of $X$ to be mapped to elements of $Y$ in a way that preserves the
-lattice properties.  Note that morphisms are monotone functions but the converse
-is not true in general.
+$\langle Y, \sqcup_Y, \bot_Y\rangle$ is a function $g: X \to Y$ such that
+$g(\bot_X) = \bot_Y$ and $\forall a,b \in X: g(a \sqcup_X b) = g(a) \sqcup_Y
+g(b)$. Intuitively, $g$ allows elements of $X$ to be mapped to elements of $Y$
+in a way that preserves the lattice properties.  Note that morphisms are
+monotone functions but the converse is not true in general.
 
 \subsection{Language concepts}
 \begin{figure}[t]
