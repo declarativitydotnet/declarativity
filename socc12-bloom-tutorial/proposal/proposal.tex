@@ -53,20 +53,41 @@ programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
 show how Bloom can be used to develop declarative, readable declarative
 programs. Our focus will be on using Bloom to develop well-known distributed
 systems infrastructure components, including a key-value store, quorum
-replication, a distributed lock manager, and a distributed commit protocol. In
-addition to introducing Bloom and showing how distributed logic can be used to
-implement realistic designs, our emphasis will be on how the unique features of
-Bloom help programmers understand the \emph{semantics} of their distributed
+replication, a distributed lock manager, and a distributed commit protocol.
+
+In addition to introducing Bloom and showing how distributed logic can be used
+to implement realistic designs, our emphasis will be on how the unique features
+of Bloom help programmers understand the \emph{semantics} of their distributed
 programs. In particular, we will discuss the \emph{CALM Theorem}, which
 establishes a connection between \emph{logical monotonicity} and
 \emph{distributed
   consistency}~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Using
 tools distributed with the Bloom runtime, we will show how programmers can
-reason about the monotonicity of their software components, compose individual
+reason about the monotonicity of software components, compose individual
 monotonic components into larger programs, and employ Bloom's systematic
 distributed testing tool~\cite{Alvaro2012}.
 
 \section{Objectives and Benefits}
+
+\begin{enumerate}
+\item
+  Introduce the Bloom programming language and show how realistic programs can
+  be built using a combination of declarative rules, local storage, and message
+  passing
+\item
+  Discuss the CALM theorem, which sheds light on \emph{why} certain programs
+  require distributed consensus and why others do not.
+\item
+  Discuss the particular challenges and benefits associated with programming
+  using systems that provide only eventual
+  consistency~\cite{DeCandia2007,Terry1995,vogels}, rather than the stronger
+  guarantees provided by traditional distributed database systems. We will
+  discuss the connection between eventual consistency and \emph{join
+    semilattices}~\cite{Conway2012}, show how programs can be written by
+  composing lattices using monotonic functions, and discuss the connection
+  between Bloom and recent work on convergent modules (CRDTs) from the systems
+  community~\cite{Shapiro2011a,Shapiro2011b}.
+\end{enumerate}
 
 \section{Outline}
 
