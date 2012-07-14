@@ -50,17 +50,23 @@ still further.
 
 In this tutorial, we will introduce \emph{Bloom}, a language for distributed
 programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
-show how to use Bloom to develop well-known examples of distributed systems
-infrastructure, including a key-value store, quorum replication, a distributed
-lock manager, and a distributed commit protocol. While we believe that Bloom
-allows declarative, concise, and readable implementations of these systems, our
-emphasis will be on how the unique features of Bloom help programmers understand
-the \emph{semantics} of their distributed programs. In particular, we will
-discuss the \emph{CALM Theorem}, which establishes a connection between
-\emph{logical monotonicity} and \emph{distributed
-  consistency}~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}.
+show how Bloom can be used to develop declarative, readable declarative
+programs. Our focus will be on using Bloom to develop well-known distributed
+systems infrastructure components, including a key-value store, quorum
+replication, a distributed lock manager, and a distributed commit protocol. In
+addition to introducing Bloom and showing how distributed logic can be used to
+implement realistic designs, our emphasis will be on how the unique features of
+Bloom help programmers understand the \emph{semantics} of their distributed
+programs. In particular, we will discuss the \emph{CALM Theorem}, which
+establishes a connection between \emph{logical monotonicity} and
+\emph{distributed
+  consistency}~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Using
+tools distributed with the Bloom runtime, we will show how programmers can
+reason about the monotonicity of their software components, compose individual
+monotonic components into larger programs, and employ Bloom's systematic
+distributed testing tool~\cite{Alvaro2012}.
 
-\section{Objectives and Proposed Benefits}
+\section{Objectives and Benefits}
 
 \section{Outline}
 
