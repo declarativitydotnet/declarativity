@@ -37,7 +37,48 @@ Joseph M.\ Hellerstein\\
 
 \maketitle
 
-Foo~\cite{Alvaro2011}.
+\section{Introduction}
+
+In recent years, distributed programming has become a topic of widespread
+interest among developers. However, writing reliable distributed programs
+remains stubbornly difficult. In addition to the inherent challenges of
+distribution--- asynchrony, concurrency, and partial failure---many modern
+distributed systems operate at massive scale. Scalability concerns have in turn
+encouraged many developers to eschew strongly consistent distributed
+storage~\cite{Birman2009,Helland2009}, which has raised the level of difficulty
+still further.
+
+In this tutorial, we will introduce \emph{Bloom}, a language for distributed
+programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
+show how to use Bloom to develop well-known examples of distributed systems
+infrastructure, including a key-value store, quorum replication, a distributed
+lock manager, and a distributed commit protocol. While we believe that Bloom
+allows declarative, concise, and readable implementations of these systems, our
+emphasis will be on how the unique features of Bloom help programmers understand
+the \emph{semantics} of their distributed programs. In particular, we will
+discuss the \emph{CALM Theorem}, which establishes a connection between
+\emph{logical monotonicity} and \emph{distributed
+  consistency}~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}.
+
+\section{Objectives and Proposed Benefits}
+
+\section{Outline}
+
+\begin{itemize}
+\item
+  Introduction to Bloom
+\item
+  Key-value store
+  \begin{itemize}
+  \item
+    Version 1: non-monotonic updates
+  \item
+    Version 2: monotonic updates using a \texttt{map} lattice
+  \item
+    Version 3: monotonic updates using lattices to implement version vectors
+    (per Dynamo~\cite{DeCandia2007}).
+  \end{itemize}
+\end{itemize}
 
 \bibliographystyle{abbrv}
 \bibliography{proposal}
