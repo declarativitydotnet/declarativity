@@ -1,8 +1,8 @@
 \section{Related Work}
 \label{sec:relwork}
 
-This paper relates to work on concurrency control, distributed storage, and
-non-monotonic logic programming.
+This paper relates to work on concurrency control, distributed storage, parallel
+programming, and non-monotonic logic programming.
 
 \vspace{0.5em}\noindent
 \textbf{Semantics-based concurrency control:} The traditional correctness
@@ -27,6 +27,8 @@ might only commute if the bank account balance can be guaranteed to be
 non-negative. We are currently exploring how to add support for escrow
 operations to \lang.
 
+% XXX: do we need to say more about how our stuff compares to escrow?
+
 To support concurrent editing of shared documents, the groupware community has
 studied a family of algorithms known as \emph{Operational Transformations}
 (OT)~\cite{Ellis1989,Sun1998}. Many OT algorithms have been proposed but the
@@ -35,8 +37,6 @@ document should converge to the same final state, the causal relationship
 between operations should be preserved, and the final state of the document
 should reflect the semantic intent of each user's editing
 operations~\cite{Sun1998a}.
-
-% XXX: do we need to say more about how our stuff compares to escrow?
 
 \vspace{0.5em}\noindent
 \textbf{Commutativity in distributed systems:} Many distributed systems allow
@@ -102,10 +102,16 @@ if a CRDT is correct, application state may remain inconsistent
 % XXX: should we wager anything about the relative expressiveness of CRDTs and
 % \lang programs?
 
-% XXX: cite statebox?
-
 % XXX: Wuu & Bernstein
-% XXX: Operational transformations?
+
+\vspace{0.5em}\noindent
+\textbf{Parallel programming:} Lattices have also been used in the design of
+languages for parallel programming. Kuper and Newton recently proposed
+$\lambda_{\textsf{par}}$, a deterministic parallel variant of the untyped lambda
+calculus~\cite{Kuper2012}. To ensure determinism in the face of concurrent
+writes to a shared variable, $\lambda_{\textsf{par}}$ allows only monotonically
+increasing writes. Reads are restricted in a way similar to the ``threshold
+tests'' supported by the \texttt{lbool} and \texttt{lcart} lattices in \lang.
 
 \vspace{0.5em}\noindent
 \textbf{Non-monotonicity in deductive databases:} Adding non-monotonic operators
