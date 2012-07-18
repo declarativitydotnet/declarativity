@@ -48,7 +48,7 @@ distribution---asynchrony, concurrency, and partial failure---many modern
 distributed systems operate at massive scale. Scalability concerns have in turn
 encouraged many developers to eschew strongly consistent distributed storage in
 favor of application-level consistency criteria~\cite{Birman2009,Helland2009,vogels},
-which has raised the level of difficulty still further.
+which has raised the degree of difficulty still further.
 
 To cope with the challenges of distributed programming without the benefit of
 strong consistency, practitioners have developed rules of thumb, such as using
@@ -89,7 +89,7 @@ demonstrate the concepts introduced in this tutorial by using Bloom to interacti
 develop well-known distributed systems infrastructure components, including a key-value
 store, quorum replication, a distributed lock manager with deadlock detection,
 and a distributed commit protocol. Using tools distributed with the Bloom
-runtime, we will show how programmers can visualize the distributed behavior of
+runtime, we will show how developers can visualize the distributed behavior of
 their programs, reason about the need for coordination across software components, compose
 individual monotonic components into larger programs, and employ Bloom's
 built-in tools for systematic distributed testing~\cite{Alvaro2012}.
@@ -144,7 +144,7 @@ extend the example programs we present.
   \item
     CAP and partition tolerance~\cite{Brewer2012,Brewer2000}
   \item
-    Design patterns working with eventual consistency
+    Design patterns for working with eventual consistency
   \end{itemize}
 \item
   CRDTs: lattices for convergent replicated values
