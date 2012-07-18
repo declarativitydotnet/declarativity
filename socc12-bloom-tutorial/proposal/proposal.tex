@@ -17,7 +17,7 @@
 
 \begin{document}
 
-\title{Distributed Programming with Bloom}
+\title{Distributed Programming and Consistency:\\A Principled and Practical Approach}
 
 \numberofauthors{3}
 \author{
@@ -48,30 +48,46 @@ encouraged many developers to eschew strongly consistent distributed storage in
 favor of application-level consistency criteria~\cite{Birman2009,Helland2009},
 which has raised the level of difficulty still further.
 
-In this tutorial, we will introduce \emph{Bloom}, a language for distributed
-programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
-show how Bloom can be used to develop declarative, readable distributed
-programs. Our focus will be on using Bloom to develop well-known distributed
-systems infrastructure components, including a key-value store, quorum
-replication, a distributed lock manager with deadlock detection, and a
-distributed commit protocol.
+To cope with the challenges of distributed programming without the benefit of
+strong consistency, practitioners have developed rules of thumb, such as using
+commutative, associative, and idempotent operations when
+possible~\cite{Helland2009,Pritchett2008} and employing application semantics to
+resolve divergent replica states~\cite{DeCandia2007}. However, until recently
+there was relatively little work on principled approaches to enable
+application-level consistency criteria without requiring global coordination.
 
-In addition to introducing Bloom and showing how distributed logic can be used
-to implement realistic designs, our emphasis will be on how the unique features
-of Bloom help programmers understand the \emph{semantics} of their distributed
-programs. In particular, we will discuss the \emph{CALM Theorem}, which
-establishes a connection between \emph{logical monotonicity} and
-\emph{distributed
-  consistency}~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. We
-will review recent work on developing eventually consistent programs using
-\emph{lattices} and \emph{monotone functions}~\cite{Conway2012}. We will also
-compare Bloom to other recent proposals for principled eventually consistent
-programming~\cite{Burckhardt2012,Shapiro2011a,Shapiro2011b}. Using tools distributed with the
-Bloom runtime, we will show how programmers can visualize the distributed
-behavior of their programs, reason about the monotonicity of software
-components, compose individual monotonic components into larger programs, and
-employ Bloom's built-in tools for systematic distributed
-testing~\cite{Alvaro2012}.
+In this tutorial, we will review recent research on principled approaches to
+eventually consistent
+programming~\cite{Alvaro2011,Burckhardt2012,Conway2012,Hellerstein2010,Roh2011,Shapiro2011a,Shapiro2011b},
+and connect this body of work to practical systems and design patterns used by
+practioners. We will begin by discussing how \emph{semilattices} can be used to
+reason about the convergence of replicated data values, following the ``CRDT''
+framework recently proposed by Shapiro et
+al.~\cite{Shapiro2011a,Shapiro2011b}. After presenting several examples of how
+lattices can be used to achieve consistency without coordination, we will then
+discuss how lattices can be composed using \emph{monotone functions} to form
+more complex applications~\cite{Conway2012}. We will present our work on the
+\emph{CALM Theorem}, which characterizes the kinds of programs that can be
+guaranteed to be deterministic without distributed
+coordination~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Finally,
+we will discuss several design options for supporting non-monotonic operations:
+(a) carefully introducing coordination at appropriate program locations (b)
+employing ``weak coordination'' as a background operation (e.g., for distributed
+garbage collection) (c) tolerating and then correcting inconsistency using
+after-the-fact ``apology'' or compensation logic~\cite{Helland2009}. We will
+conclude by summarizing the state of the art and highlighting open problems and
+challenges in the field.
+
+Throughout the tutorial, we will use \emph{Bloom}, a language for distributed
+programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
+demonstrate the concepts introduced in this tutorial by using Bloom to develop
+well-known distributed systems infrastructure components, including a key-value
+store, quorum replication, a distributed lock manager with deadlock detection,
+and a distributed commit protocol. Using tools distributed with the Bloom
+runtime, we will show how programmers can visualize the distributed behavior of
+their programs, reason about the monotonicity of software components, compose
+individual monotonic components into larger programs, and employ Bloom's
+built-in tools for systematic distributed testing~\cite{Alvaro2012}.
 
 The tutorial will be \emph{interactive}, in that simple installation
 instructions for the Bloom runtime will be provided and attendees will be given
