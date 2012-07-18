@@ -19,7 +19,7 @@
 
 \begin{document}
 
-\title{Distributed Programming and Consistency:\\A Principled and Practical Approach}
+\title{Distributed Programming and Consistency:\\Principles and Practice}
 
 \numberofauthors{3}
 \author{
@@ -68,30 +68,29 @@ framework recently proposed by Shapiro et
 al.~\cite{Shapiro2011a,Shapiro2011b}. After presenting several examples of how
 lattices can be used to achieve consistency without coordination, we will then
 discuss how lattices can be composed using \emph{monotone functions} to form
-more complex applications~\cite{Conway2012}. We will present our work on the
-\emph{CALM Theorem}, which characterizes the kinds of programs that can be
-guaranteed to be deterministic without distributed
-coordination~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Finally,
+more complex applications~\cite{Conway2012}. We will connect this work to the tradition of logic programming from the database community~\cite{AliceBook}, and to our work on the
+\emph{CALM Theorem}, which characterizes the need for distributed coordination to 
+ensure consistency at application level~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Finally,
 we will discuss several design options for supporting non-monotonic operations:
 \begin{compactenum}[(a)]
 \item introducing coordination at appropriate program locations identified by
   CALM analysis
 \item employing ``weak coordination'' as a background operation (e.g., for distributed
 garbage collection)
-\item tolerating and then correcting inconsistency using
+\item tolerating and then correcting inconsistency using taint tracking and
 after-the-fact ``apology'' or compensation logic~\cite{Garcia-Molina1987,Helland2009,Korth1990}
 \end{compactenum}
 We will conclude by summarizing the state of the art and highlighting open
 problems and challenges in the field.
 
 Throughout the tutorial, we will use \emph{Bloom}, a language for distributed
-programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
-demonstrate the concepts introduced in this tutorial by using Bloom to develop
-well-known distributed systems infrastructure components, including a key-value
+programming that we have developed at Berkeley~\cite{bloom-website}. We will
+demonstrate the concepts introduced in this tutorial by using Bloom to interactively 
+develop well-known distributed systems infrastructure components, including a key-value
 store, quorum replication, a distributed lock manager with deadlock detection,
 and a distributed commit protocol. Using tools distributed with the Bloom
 runtime, we will show how programmers can visualize the distributed behavior of
-their programs, reason about the monotonicity of software components, compose
+their programs, reason about the need for coordination across software components, compose
 individual monotonic components into larger programs, and employ Bloom's
 built-in tools for systematic distributed testing~\cite{Alvaro2012}.
 
@@ -106,12 +105,12 @@ reasons we do not expect attendees to develop Bloom programs from scratch during
 the tutorial, although several ``homework'' assignments will be made available to
 extend the example programs we present.
 
-\section{Objectives and Benefits}
+\section{Objectives and Outcomes}
 
 \begin{enumerate}
 \item
   Discuss the particular challenges and benefits associated with programming
-  using systems that provide only eventual
+  over systems that provide only eventual
   consistency~\cite{DeCandia2007,Terry1995,vogels}, rather than the stronger
   guarantees provided by traditional distributed transactional systems.
   Summarize the motivations behind the current trend away from widespread use of
@@ -120,7 +119,7 @@ extend the example programs we present.
   Introduce and compare recent research proposals to simplify distributed
   programming without strong consistency.
 \item
-  In particular, introduce the CRDT and Bloom/CALM approaches to distributed
+  Focus on the CRDT and Bloom/CALM approaches to distributed
   consistency, and show how lattices and monotone functions can be used to build
   provably consistent implementations of well-known distributed infrastructure.
 \item
