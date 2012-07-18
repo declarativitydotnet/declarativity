@@ -13,6 +13,8 @@
 \usepackage{comment}
 %\usepackage[hidelinks]{hyperref}
 
+\def\blooml{Bloom$^L$\xspace}
+
 \frenchspacing
 
 \begin{document}
@@ -45,7 +47,7 @@ remains stubbornly difficult. In addition to the inherent challenges of
 distribution---asynchrony, concurrency, and partial failure---many modern
 distributed systems operate at massive scale. Scalability concerns have in turn
 encouraged many developers to eschew strongly consistent distributed storage in
-favor of application-level consistency criteria~\cite{Birman2009,Helland2009},
+favor of application-level consistency criteria~\cite{Birman2009,Helland2009,vogels},
 which has raised the level of difficulty still further.
 
 To cope with the challenges of distributed programming without the benefit of
@@ -71,12 +73,16 @@ more complex applications~\cite{Conway2012}. We will present our work on the
 guaranteed to be deterministic without distributed
 coordination~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Finally,
 we will discuss several design options for supporting non-monotonic operations:
-(a) carefully introducing coordination at appropriate program locations (b)
-employing ``weak coordination'' as a background operation (e.g., for distributed
-garbage collection) (c) tolerating and then correcting inconsistency using
-after-the-fact ``apology'' or compensation logic~\cite{Helland2009}. We will
-conclude by summarizing the state of the art and highlighting open problems and
-challenges in the field.
+\begin{compactenum}[(a)]
+\item introducing coordination at appropriate program locations identified by
+  CALM analysis
+\item employing ``weak coordination'' as a background operation (e.g., for distributed
+garbage collection)
+\item tolerating and then correcting inconsistency using
+after-the-fact ``apology'' or compensation logic~\cite{Garcia-Molina1987,Helland2009,Korth1990}
+\end{compactenum}
+We will conclude by summarizing the state of the art and highlighting open
+problems and challenges in the field.
 
 Throughout the tutorial, we will use \emph{Bloom}, a language for distributed
 programming that we have developed at UC Berkeley~\cite{bloom-website}. We will
@@ -97,57 +103,91 @@ analysis tools to understand program behavior, and iteratively refine programs
 as appropriate. Attendees will have the option to run the tools themselves,
 although participation int this manner will not be mandatory. Note that for time
 reasons we do not expect attendees to develop Bloom programs from scratch during
-the tutorial, although simple ``homework'' assignments will be made available to
+the tutorial, although several ``homework'' assignments will be made available to
 extend the example programs we present.
 
 \section{Objectives and Benefits}
 
 \begin{enumerate}
 \item
-  Introduce the Bloom programming language and show how realistic programs can
-  be built using a combination of declarative rules, local storage, and message
-  passing.
-\item
-  Discuss the CALM theorem, which sheds light on \emph{why} certain programs
-  require distributed consensus and why others do not.
-\item
   Discuss the particular challenges and benefits associated with programming
   using systems that provide only eventual
   consistency~\cite{DeCandia2007,Terry1995,vogels}, rather than the stronger
-  guarantees provided by traditional distributed database systems. We will
-  discuss the connection between eventual consistency and \emph{join
-    semilattices}~\cite{Conway2012}, show how programs can be written by
-  composing lattices using monotonic functions, and discuss the connection
-  between Bloom and recent work on convergent modules (CRDTs) from the systems
-  community~\cite{Shapiro2011a,Shapiro2011b}.
+  guarantees provided by traditional distributed transactional systems.
+  Summarize the motivations behind the current trend away from widespread use of
+  strong consistency protocols.
 \item
-  Highlight open problems and potential research challenges in the area of
-  principled eventual consistency.
+  Introduce and compare recent research proposals to simplify distributed
+  programming without strong consistency.
+\item
+  In particular, introduce the CRDT and Bloom/CALM approaches to distributed
+  consistency, and show how lattices and monotone functions can be used to build
+  provably consistent implementations of well-known distributed infrastructure.
+\item
+  Discuss the CALM Theorem, which sheds light on \emph{why} certain programs
+  require distributed coordination and why others do not.  Characterize the
+  situations in which monotone programs are not sufficient, and discuss several
+  ways in which non-monotonic operations can be supported.
+\item
+  Introduce the Bloom programming language and related tools for visualization,
+  debugging, and systematic testing of distributed programs.
+\item
+  Highlight open problems and research challenges in the area of principled
+  eventual consistency.
 \end{enumerate}
 
 \section{Outline}
 
 \begin{itemize}
 \item
-  Introduction to Bloom
+  The current landscape of distributed programming
   \begin{itemize}
   \item
-    Installation and configuration
+    CAP and partition tolerance~\cite{Brewer2012,Brewer2000}
   \item
-    Syntax and semantics
-  \item
-    Simple example program: chat server
+    Design patterns working with eventual consistency
   \end{itemize}
 \item
-  CALM
+  CRDTs: lattices for convergent replicated values
   \begin{itemize}
   \item
-    Lattices, monotone functions, and confluence
-  \item
-    CALM analysis and visualization tools, presented with examples
+    Example CRDTs: sets, counters, graphs
   \end{itemize}
 \item
-  Key-value store
+  Composing lattices using \blooml
+  \begin{itemize}
+  \item
+    Monotone functions and homomorphisms
+  \item
+    CALM Theorem
+  \item
+    Bloom and \blooml
+    \begin{itemize}
+    \item
+      Syntax, semantics
+    \item
+      Visualization and debugging tools
+    \end{itemize}
+  \item
+    Example programs: shopping cart, simple key-value store, vector clocks,
+    quorum replication
+  \end{itemize}
+\item
+  Dealing with non-monotonicity
+  \begin{itemize}
+  \item
+    Strong coordination: two-phase commit or Paxos in Bloom
+    \begin{itemize}
+    \item
+      Automatic coordination synthesis
+    \end{itemize}
+  \item
+    Weak coordination: applying lattices to distributed garbage collection
+  \item
+    Apologies and compensation logic~\cite{Garcia-Molina1987,Helland2009,Korth1990}
+  \end{itemize}
+\item
+  Complete example system: key-value store
   \begin{itemize}
   \item
     Version 1: non-monotonic updates
@@ -161,21 +201,6 @@ extend the example programs we present.
     Version 4: distributed locking, multi-key atomic updates
   \end{itemize}
 \item
-  Dealing with non-monotonicity
-  \begin{itemize}
-  \item
-    Strong coordination: two-phase commit or Paxos in Bloom
-    \begin{itemize}
-    \item
-      Automatic coordination synthesis
-    \end{itemize}
-  \item
-    Weak coordination: lattice-theoretic approach to distributed garbage
-    collection
-  \item
-    Apologies and compensation logic~\cite{Helland2009}
-  \end{itemize}
-\item
   Distributed testing
   \begin{itemize}
   \item
@@ -187,7 +212,7 @@ extend the example programs we present.
   Summary and conclusion
   \begin{itemize}
   \item
-    Strengths and weaknesses of Bloom and CALM
+    State of the art in principled eventual consistency
   \item
     Open research problems
   \end{itemize}
