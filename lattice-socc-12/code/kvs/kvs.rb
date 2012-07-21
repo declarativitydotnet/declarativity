@@ -7,11 +7,16 @@ module KvsProtocol
   state do
     channel :kvput, [:reqid, :@addr] => [:key, :val, :client_addr]
     channel :kvput_response, [:reqid] => [:@addr, :replica_addr]
-    channel :kvget, [:reqid, :@addr] => [:key, :client_addr]
+    # If the key does not exist in the KVS, we return a "bottom" value. Since
+    # there is not a single bottom value shared across all lattice types (and
+    # since we don't have type parameters), we require that the user specify the
+    # class to use to construct the bottom value (if needed).
+    channel :kvget, [:reqid, :@addr] => [:key, :val_class, :client_addr]
     channel :kvget_response, [:reqid] => [:@addr, :val, :replica_addr]
 
-    # Replicate the contents of this replica to the given address,
-    # asynchronously.
+    # Initiate an async operation to replicate the contents of this replica to
+    # the replica at the given address.
+    # XXX: currently don't provide a sync API for this functionality
     channel :kvrepl, [:@addr, :target_addr]
   end
 end
@@ -30,10 +35,8 @@ class KvsReplica
   bloom do
     kv_store <= kvput {|c| {c.key => c.val}}
     kvput_response <~ kvput {|c| [c.reqid, c.client_addr, ip_port]}
-    # XXX: if the key does not exist in the KVS, we want to return some bottom
-    # value. For now, ignore this case.
     kvget_response <~ kvget {|c| [c.reqid, c.client_addr,
-                                  kv_store.at(c.key), ip_port]}
+                                  kv_store.at(c.key, c.val_class), ip_port]}
   end
 end
 
@@ -62,16 +65,17 @@ class KvsClient
   include Bud
   include KvsProtocol
 
-  def initialize(addr)
+  def initialize(addr, val_class)
     @reqid = 0
     @addr = addr
+    @val_class = val_class
     super()
   end
 
   # XXX: Probably not thread-safe.
   def read(key)
     reqid = make_reqid
-    r = sync_callback(:kvget, [[reqid, @addr, key, ip_port]], :kvget_response)
+    r = sync_callback(:kvget, [[reqid, @addr, key, @val_class, ip_port]], :kvget_response)
     r.each {|t| return t.val if t.reqid == reqid}
     raise
   end
@@ -133,13 +137,22 @@ class QuorumKvsClient
     }
   end
 
-  def initialize(put_list, get_list)
+  def initialize(put_list, get_list, val_class)
+    @reqid = 0
     @put_addrs = put_list
     @get_addrs = get_list
     @r_quorum_size = get_list.size
     @w_quorum_size = put_list.size
-    @reqid = 0
+    @val_class = val_class
     super()
+  end
+
+  def read(key)
+    reqid = make_reqid
+    get_reqs = @get_addrs.map {|a| [reqid, a, key, @val_class, ip_port]}
+    r = sync_callback(:kvget, get_reqs, :r_quorum)
+    r.each {|t| return t.val if t.reqid == reqid}
+    raise
   end
 
   def write(key, val)
@@ -147,14 +160,6 @@ class QuorumKvsClient
     put_reqs = @put_addrs.map {|a| [reqid, a, key, val, ip_port]}
     r = sync_callback(:kvput, put_reqs, :w_quorum)
     r.each {|t| return if t.reqid == reqid}
-    raise
-  end
-
-  def read(key)
-    reqid = make_reqid
-    get_reqs = @get_addrs.map {|a| [reqid, a, key, ip_port]}
-    r = sync_callback(:kvget, get_reqs, :r_quorum)
-    r.each {|t| return t.val if t.reqid == reqid}
     raise
   end
 
