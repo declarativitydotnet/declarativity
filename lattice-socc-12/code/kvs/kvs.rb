@@ -12,7 +12,7 @@ module KvsProtocol
 
     # Replicate the contents of this replica to the given address,
     # asynchronously.
-    channel :kv_do_repl, [:@addr, :target_addr]
+    channel :kvrepl, [:@addr, :target_addr]
   end
 end
 
@@ -41,7 +41,7 @@ module KvsProtocolLogger
   bloom do
     stdio <~ kvput {|c| ["kvput: #{c.inspect} @ #{ip_port}"]}
     stdio <~ kvget {|c| ["kvget: #{c.inspect} @ #{ip_port}"]}
-    stdio <~ kv_do_repl {|c| ["kv_do_repl: #{c.inspect} @ #{ip_port}"]}
+    stdio <~ kvrepl {|c| ["kvrepl: #{c.inspect} @ #{ip_port}"]}
   end
 end
 
@@ -51,7 +51,7 @@ class ReplicatedKvsReplica < KvsReplica
   end
 
   bloom do
-    repl_propagate <~ kv_do_repl {|r| [r.target_addr, kv_store]}
+    repl_propagate <~ kvrepl {|r| [r.target_addr, kv_store]}
     kv_store <= repl_propagate {|r| r.kv_store}
   end
 end
@@ -86,11 +86,12 @@ class KvsClient
   # XXX: Probably not thread-safe
   def cause_repl(to)
     sync_do {
-      kv_do_repl <~ [[@addr, to.ip_port]]
+      kvrepl <~ [[@addr, to.ip_port]]
     }
 
-    # To make it easier to provide a synchronous API, we assume that the
-    # destination node (the target of the replication operator) is local.
+    # XXX: To make it easier to provide a synchronous API, we assume that "to"
+    # is local (i.e., we're passed the _instance_ of Bud we want to replicate
+    # to, not just its address).
     to.delta(:repl_propagate)
   end
 
