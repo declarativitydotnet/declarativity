@@ -10,6 +10,8 @@ module KvsProtocol
     channel :kvget, [:reqid, :@addr] => [:key, :client_addr]
     channel :kvget_response, [:reqid] => [:@addr, :val, :replica_addr]
 
+    # Replicate the contents of this replica to the given address,
+    # asynchronously.
     channel :kv_do_repl, [:@addr, :target_addr]
   end
 end
@@ -54,6 +56,8 @@ class ReplicatedKvsReplica < KvsReplica
   end
 end
 
+# Simple KVS client that issues put and get operations against a single KVS
+# replica. KVS replica address is currently fixed on instanciation.
 class KvsClient
   include Bud
   include KvsProtocol
@@ -97,6 +101,9 @@ class KvsClient
   end
 end
 
+# More sophisticated KVS client that supports quorum-style operations over a set
+# of KVS replicas. Currently, put/get replica sets are fixed on instanciation,
+# and we wait for acks from all replicas in the set.
 class QuorumKvsClient
   include Bud
   include KvsProtocol
