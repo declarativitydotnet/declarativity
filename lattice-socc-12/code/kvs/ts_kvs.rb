@@ -120,7 +120,7 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
   def test_merge_simple
     r = KvsReplica.new
     r.run_bg
-    c = KvsClient.new(r.ip_port)
+    c = KvsClient.new(r.ip_port, Bud::MaxLattice)
     c.run_bg
 
     c.write('foo', max(5))
@@ -147,9 +147,9 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
   def test_vc_simple
     r = KvsReplica.new
     r.run_bg
-    c = KvsClient.new(r.ip_port)
+    c = KvsClient.new(r.ip_port, PairLattice)
     c.run_bg
-    c2 = KvsClient.new(r.ip_port)
+    c2 = KvsClient.new(r.ip_port, PairLattice)
     c2.run_bg
 
     new_vc = bump_vc(map, c.ip_port)
@@ -185,7 +185,7 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
   def test_repl
     nodes = Array.new(3) { ReplicatedKvsReplica.new }
     nodes.each {|n| n.run_bg}
-    clients = nodes.map {|n| KvsClient.new(n.ip_port)}
+    clients = nodes.map {|n| KvsClient.new(n.ip_port, PairLattice)}
     clients.each {|c| c.run_bg}
 
     c0, c1, c2 = clients
@@ -241,7 +241,7 @@ class TestQuorumKvs < MiniTest::Unit::TestCase
   def test_singleton_quorum
     r = KvsReplica.new
     r.run_bg
-    q = QuorumKvsClient.new([r.ip_port], [r.ip_port])
+    q = QuorumKvsClient.new([r.ip_port], [r.ip_port], Bud::MaxLattice)
     q.run_bg
 
     q.write('bar', max(3))
@@ -256,12 +256,12 @@ class TestQuorumKvs < MiniTest::Unit::TestCase
     nodes = Array.new(3) { KvsReplica.new }
     nodes.each {|n| n.run_bg }
     addr_list = nodes.map {|n| n.ip_port}
-    q = QuorumKvsClient.new(addr_list, addr_list)
+    q = QuorumKvsClient.new(addr_list, addr_list, Bud::MaxLattice)
     q.run_bg
 
     q.write('bar', max(7))
     nodes.each do |n|
-      c_for_n = KvsClient.new(n.ip_port)
+      c_for_n = KvsClient.new(n.ip_port, Bud::MaxLattice)
       c_for_n.run_bg
       res = c_for_n.read('bar')
       assert_equal(max(7), res)
@@ -271,12 +271,11 @@ class TestQuorumKvs < MiniTest::Unit::TestCase
     (nodes + [q]).each {|n| n.stop}
   end
 
-  # XXX: disabled for now
-  def ntest_quorum_write_one_read_all
+  def test_quorum_write_one_read_all
     nodes = Array.new(5) { KvsReplica.new }
     nodes.each {|n| n.run_bg }
     addr_list = nodes.map {|n| n.ip_port}
-    q = QuorumKvsClient.new([addr_list.last], addr_list)
+    q = QuorumKvsClient.new([addr_list.last], addr_list, Bud::SetLattice)
     q.run_bg
 
     q.write('baz', set(2))
