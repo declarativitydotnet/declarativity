@@ -1,0 +1,98 @@
+\documentclass{sig-alternate}
+%%\documentclass[english]{hacked-sig-alternate}
+
+\usepackage[usenames, dvipsnames]{color}
+%\usepackage{times}
+\usepackage{xspace}
+\usepackage{textcomp}
+\usepackage{wrapfig}
+\usepackage{url}
+\usepackage{amsmath, amssymb}
+\usepackage[protrusion=true,expansion=true]{microtype}
+%\usepackage{float}
+\usepackage{alltt}
+\usepackage{appendix}
+%\usepackage{algorithm}
+%\usepackage{algorithmicx}
+%\usepackage{algpseudocode}
+%\usepackage{texlive-science}
+\usepackage{comment}
+\usepackage{array,tabularx}
+
+%\usepackage{txfonts}
+\newcommand{\eat}[1]{}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+%\theoremstyle{definition}
+\newdef{example}{Example}
+\newdef{definition}{Definition}
+
+\newcommand{\naive}      {na\"{\i}ve\xspace}
+\newcommand{\Naive}      {Na\"{\i}ve\xspace}
+
+\newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
+\newcommand{\paa}[1]{{\textcolor{blue}{#1 -- paa}}}
+\newcommand{\rcs}[1]{{\textcolor{green}{#1 -- rcs}}}
+\newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
+\newcommand{\wrm}[1]{{\color{BurntOrange}{#1 -- wrm}}}
+
+\begin{document}
+
+%\conferenceinfo{ACM PODS}{'10 Indianapolis, IN, USA}
+\title{Deterministic Concurrent Programming with Algebra}
+
+\pdfinfo{/Title (Algebraic Programming for Parallel Asynchronous Systems)}
+
+%%Format\titlenote{(Produces the permission block, copyright information and page numbering). For use with ACM\_PROC\_ARTICLE-SP.CLS V2.6SP. Supported by ACM.}}
+%
+% You need the command \numberofauthors to handle the "boxing"
+% and alignment of the authors under the title, and to add
+% a section for authors number 4 through n.
+
+\numberofauthors{1}
+
+\author{
+\alignauthor William R.\ Marczak\\
+\affaddr{UC Berkeley}\\
+\email{wrm@cs.berkeley.edu}
+}
+
+\toappear{}
+
+\maketitle
+
+\begin{abstract}
+Codd's idea of order-independence underlies much of the fields of query
+optimization and parallel databases.  In this paper, we apply
+order-independence as a programming pattern for writing correct deterministic algorithms that use admit order non-determinism---such as randomness or parallelism---for increased performance.
+We propose a programming language for decomposing algorithms
+into "algebra" and "ordering," in the vein of Kowalski's famous "Algorithm
+= Logic + Control" formulation.  In our language, a programmer writes a
+specification in "algebra,"  which can be optimized without affecting its meaning by by changing only the "ordering."  Our
+"algebra" is similar to the Bloom language for distributed systems.  In
+Bloom, programmers react to an adversarial network that may reorder
+messages by removing order from their code.  In contrast, our "algebra"
+forces programmers to proactively write order-independent code so that the
+order may later be customized.  We present the notion of "timelines" as an
+interface between "algebra" and "ordering:" the "ordering" can be any
+arbitrary code that produces a "timeline," whereas the "algebra" is
+restricted to ensure that program outcomes are independent of the
+"ordering."  We formally prove this property of our language, and
+demonstrate its applicability by considering a variety of case studies.
+\end{abstract}
+
+\input{intro}
+\input{background}
+\input{case}
+
+\bibliographystyle{abbrv}
+\bibliography{pods}
+
+%\appendix
+%\input{appendix}
+
+%%\input{attic}
+
+\end{document}

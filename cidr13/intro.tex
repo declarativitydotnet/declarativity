@@ -1,0 +1,14 @@
+\section{Introduction}
+\label{sec:intro}
+
+Disorder was previously viewed as something unavoidable to be managed.  Programmers reacted to disorder by analyzing and perhaps modifying their programs to ensure deterministic outcomes.~\cite{cidr11}
+
+In this work, we start with well-known deterministic algorithms.  Many deterministic algorithms leverage non-determinism for increased performance.  For example, when one designs an asynchronous parallel algorithm, one must reason about the effects of temporal non-determinism between tasks on the output of the program.  Similarly, when one designs a Las Vegas algorithm---a deterministic algorithm that employs randomness for a speedup---one must reason about the effects of different random choices.
+
+Current tools provide little help for programmers to understand when asynchronous parallel programs, or programs that employ randomness, are deterministic.
+
+Making one's program non-deterministic leaves it underspecified.  While any ordering of task completion in a parallel algorithm, or any order of choices in a Las Vegas algorithm would yield a correct result, there is often a particular implementation that is more performant.
+
+The specification of non-deterministic ``holes'' in ones program naturally lends itself to the orthogonal specification of a concrete order.
+
+In this paper, we present a language that captures this separation of concerns, reminiscent of Kowalski's famed ``Algorithm = Logic + Control'' formula~\cite{alc}.  The language has an ``algebra'' component and an ``ordering'' component.  A programmer writes an order-independent specification in the ``algebra'' component, and later specifies concrete orderings using the ``ordering'' component.  The interface between ``algebra'' and ``ordering'' is known as a ``timeline.''  A ``timeline'' intuitively specifies a particular concrete ordering of operations.  The ``ordering'' component may be any arbitrary code that generates a legal ``timeline.''  The ``algebra'' component is based on the Bloom language for distributed systems, enhanced with algebraic constructs.  We provide a formal static analysis for ``confluence'' of the ``algebra'' portion---i.e., when the output of the specification of the program is independent of the particular ``timeline'' (concrete ordering) chosen.  A formal presentation of a similar analysis was absent from prior work on Bloom~\cite{this-tr}.

@@ -1,0 +1,225 @@
+\section{Foundation}
+\label{sec:foundation}
+
+\wrm{INTRODUCE SEALED VALUES!!}
+
+A {\em monoid} $M = (S, *, e)$ is a set $S$ together with an associative, closed binary operator $*$.  The identity element, $e \in M$, satisfies $a*e = e*a = a$.
+
+%A {\em batch} is an ordered list of values from some {\em domain}.  A {\em domain} is a set $V$ of values together with a single {\em default value} $d \in V$.  We denote a domain by $(V,d)$.
+
+A {\em stream} $T$ over a monoid $M = (S, *, e)$, denoted $T = (L, M)$ is an ordered list $L$ of elements of $S$.  The {\em value} of a stream $T$, denoted $Val(T)$ is the result obtained by left-folding over $T$ with $*$.  If $T$ has a single element $x$, then $Val(T)=x$.  If $T$ is empty, then $Val(T)=e$.  Note that it is always the case that $Val(T) \in S$ by closure of $*$.
+
+\begin{example}
+Consider the stream $T = (L,M)$ where $L = [4, 5, 3, 2]$ the monoid $M = (\mathbb{N} \cup \{\textsc{null}\}, \rhd, \textsc{null})$  Let $\rhd$ be defined as follows.
+$$
+x \rhd y = \left\{
+	\begin{array}{lr}
+		y & : y \neq \textsc{null}\\
+		x & : y = \textsc{null} 
+	\end{array}
+	\right.
+$$
+
+\noindent The $\rhd$ function takes the value of its second argument, except when its second argument is $\textsc{null}$, in which case it takes the value of its first argument.  Intuitively the monoid $M$ represents a mutable unsigned arbitrarily large integer variable in a traditional imperative programming language, except once non-null, it cannot again become null.  Note that $Val(T) = 2$.  Consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = \textsc{null}$.
+\end{example}
+
+%A {\em channel} $C$ consists of a stream $T = (L, M)$. 
+An {\em identifier} $v$ is a name that represents a stream.  The {\em domain} of identifier $v$, denoted $dom(v)$ is equal to $S$, where $M = (S, *, e)$.
+
+\subsection{Rule}
+Intuitively, a {\em rule} describes how an output identifier is derived from some set of input identifiers.  We will explain the precise operational semantics later, but the intuition is that for each combination of elements in the input streams of a rule, the rule's function is invoked, resulting in an ordered list of elements that becomes a part of the rule's output stream.  Note that a rule's output stream may also be one of its input streams.
+
+A rule is denoted as a tuple: $$(l, v_0 \Leftarrow f_l(v_1, v_2, \dots, v_n);)$$  The first argument of the tuple, $l$, is the rule's {\em label}, which is drawn from the domain $\mathbb{N}$.  The second argument of the tuple is the rule's {\em clause}. $v_0$ is the rule's {\em head identifier} or the {\em head} of the rule, and $f_l(v_1, v_2, \dots, v_n)$ is the rule's {\em body}.  We write $f_l$ by convention, to denote the fact that $f$ is the function of the rule with label $l$.  $v_1, \dots, v_n$ are the rule's {\em body identifiers}, and $f_l$ is the rule's {\em body function} or just {\em function}.  A rule may contain multiple occurrences of the same identifier, including the case where $v_0 = v_i$ for one or more $0 \leq i \leq n$.  We denote the head identifier of rule $l$ as $head(l)$, and the set of body identifiers of rule $l$ as $bodies(l)$.
+
+The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams, as we will see later.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
+
+\subsection{Program}
+A {\em program} $\mathcal{R}$ is a set of rules.  One can also view $\mathcal{R}$ as a list of rules in label order.  For simplicity, we will usually only list the clauses of a program's rules, one per line.  If a clause $c$ appears in the $i$-th position of this list, then the program contains a rule $(i,c)$.
+
+A {\em domain compatible} program is one in which $doms(v)$ contains a single element, over all rules in the program, for each identifier $v$.  In the sequel, we will assume that all programs are domain compatible, and denote the single domain of identifier $v$ as $dom(v)$.
+
+\begin{example}
+Assume the following program $\mathcal{R}$:
+\begin{eqnarray*}
+flipflop & \Leftarrow & mod2(nums) \\
+doubled & \Leftarrow & dbl(flipflop)
+\end{eqnarray*}
+
+Recall that this representation is equivalent to the following:
+\begin{equation*}
+\begin{split}
+\mathcal{R} = & \left\{(0, flipflop \Leftarrow mod2(nums);), \right. \\
+& \left. (1, doubled \Leftarrow dbl(flipflop);) \right\}
+\end{split}
+\end{equation*}
+Assume that $mod2 : \mathbb{N} \rightarrow \mathbb{Z}/2$, and $dbl : \mathbb{N} \rightarrow \mathbb{N}$.  The program is not domain compatible because $\mathbb{Z}/2, \,\, \mathbb{N} \,\, \in doms(flipflop)$.
+\end{example}
+
+\subsubsection{Input and output}
+
+Every program has an associated set of {\em input identifiers} $\mathcal{R}_I$, which must not appear in the head of any rule in the program.  Every program also has an associated set of {\em output identifiers} $\mathcal{R}_O$, which may appear in the heads or bodies of rules.  For each input identifier $v \in \mathcal{R}_i$, the program $\mathcal{R}$ contains the following {\em canonical rule}, where $id$ is the identity function with appropriate domain:
+
+$$(c_v, v \Leftarrow id(v)) $$
+
+An {\em input instance} or {\em instance} $\mathcal{I}$ is an ordered dictionary, where $\mathcal{I}[v] = T$, associating an identifier $v$ with a (possibly empty) stream $T$.  An instance $\mathcal{I}$ is {\em compatible} with a program $\mathcal{R}$ if the keys in $\mathcal{I}$ match exactly the identifiers used in $\mathcal{R}$, and if $\mathcal{I}[v] = T$, then every element in $T$ is in $dom(v)$.
+
+\subsubsection{Timeline}
+
+%Assume the monoids used in $\mathcal{R}$ are $M_0 = (S_0, *_0, e_0), \dots, M_n = (S_n, *_n, e_n)$.  The {\em domain} of $\mathcal{R}$, denoted $dom(\mathcal{R})$ is defined to be $\bigcup_{i=0}^n S_i$.
+A {\em timeline} $T$ is a list of pairs of a rule label and a list of elements.  We denote the rule label at position $i$ of timeline $T$ as $r(T, i)$, and we denote by $\delta(T, i)$ the corresponding list of elements.  Element $j$ of the list of elements is denoted as $\delta(T,i)[j]$.  A {\em domain compatible} timeline $T$ is one in which the arity of $\delta(T, i)$ corresponds with the arity of $f_{r(T,i)}$ (the body function of the rule with label $r(T,i)$), and the element in $\delta(T,i)[j]$ is a member of the domain of the label in the $j$-th argument of $f_{r(T,i)}$.  In the sequel, we only consider {\em domain compatible} timelines.
+
+\begin{example}
+Assume the following $\mathcal{R}$:
+\begin{eqnarray*}
+  s &\Leftarrow& f_0(u, v); \\
+  w &\Leftarrow& f_1(s);
+\end{eqnarray*}
+The timeline $T = [(0, [2])]$ is domain incompatible because $2 \not\in dom(u) = \mathbb{Z}/2$, and the length of $[2]$ does not equal the arity of $f_0$.  The timeline $U = [(1,[7]), (0,[1,0]), (1,[1])]$ is domain compatible.  To ease the reader's visual burden in reading a timeline, in the future, we will dispense with the brackets.  The aforementioned timeline will be written as:
+%$$U = (1 : 7), (0 : 1, 0), (1 : 1)$$
+\begin{eqnarray*}
+U & = & 1 : 7 \\
+ 		&		& 0 : 1, 0 \\
+		&		& 1 : 1
+\end{eqnarray*}
+
+\end{example}
+
+\subsubsection{Canonical Choice Function}
+
+A {\em choice function} takes as input an integer and a timeline, and outputs a timeline.  We now define the {\em canonical choice function} $C$ from which all other choice functions are defined.  First, some notation.  
+Define the stream at position $h$ of timeline $T$ for non-input identifier $v$ (i.e., $v \not\in \mathcal{R}_I$), denoted $stream(T,h,v)$, to be the results of applying $r(T,g)$ to $\delta(T,g)$, for all $0 \leq g < h$ such that $head(r(T,g)) = v$, ordered by $g$.
+%$$stream(T,h,v) = [f_{r(T,g)}(\delta(T,g)) \,\, | \,\, head(r(T,g)) = v \,\, \land \,\, 0 \leq g < h] $$
+\begin{equation*}
+\begin{split}
+stream(T,h,v) = & \left[ f_{r(T,g)}(\delta(T,g)) \,\, | \right. \\
+& \left. head(r(T,g)) = v \,\, \land \,\, 0 \leq g < h \right]
+\end{split}
+\end{equation*}
+% {\em column projection} $D(i,T,l)$ to be the list of elements that appear in the $i$-th column of tuples in timeline $T$ whose associated rule has label $l$.  The order of elements in the list is the same as their order in the timeline.  $D(i,T,l)$ is represented below in list-builder notation.  If $i$ is greater than the arity of $f_l$, or $l$ does not appear in $T$, then $D(i,T,l)$ is the empty list.
+%$$
+%D(l,i,T) = [\delta(T,x)[i] \,\, | \,\, r(T,x) = l \, \land \, x \in \mathbb{N}]
+%$$
+Define the {\em argument compatibility} of argument $v$ in program $\mathcal{R}$, denoted $B(v,\mathcal{R})$, to be the set consisting of a tuple for each column of each body function in the program whose identifier is $v$.
+$$
+B(v,\mathcal{R}) = \{(l,j) \,\, | \,\, v = bodies(l)[j]\}
+$$
+
+Let $\overline{a} = a_1, \ldots, a_k$.  Define the notation $\overline{a}[j = x]$ to mean the replacement of the $j$-th element by $x$.
+$$ \overline{a}[j = x] = a_1, \ldots, a_{j-1}, x, a_{j+1}, \ldots, a_{k}$$
+%Let $\overline{a} = a_1, \ldots, a_k$.  Define the notation $\overline{a}_{-j}$ to mean $a_1, \ldots, a_{j-1}, a_{j+1}, \ldots, a_{k}$.  
+%Define the $\overline{a}_{-j}$ {\em delta} of position $h$ of timeline $T$ with respect to argument $j$ of rule $l$, denoted $L(T, j, h, l, \overline{a}_{-j})$, as follows.  Intuitively, the delta is an element that could appear in a timeline.  We apply the rule with label $r(T,h)$ to the arguments $\delta(T,h)$, and place the result in the $j$-th position of a list.  In positions $h \neq j$, where $1 \leq h \leq k$ of the same list, we place $a_h$.  We associate the list in a tuple with the rule label $l$.
+%$$ L(l,j,\overline{a}_{-j},x) = \left(l, [a_1, \ldots, a_{j-1}, x, a_{j+1}, \ldots, a_k] \right) $$
+%\begin{equation*}
+%\begin{split}
+%L(l,j,\overline{a}_{-j},x) = & \left(l, [a_1, \ldots, a_{j-1}, \right. \\
+%& \left. f_{r(T,h)}(\delta(T,h)), \right. \\
+%& \left. a_{j+1}, \ldots, a_k] \right)
+%\end{split}
+%\end{equation*}
+%We will use deltas in the definition of our canonical choice function.  In the sequel, we will only make use of domain compatible deltas $L(T,j,h,l,\overline{a}_{-j})$. In particular, for all $a_g$, where $g \neq j$, we will ensure $a_g \in dom(bodies(l)[g])$.  For the $j$-th column, we will require that $(l,j) \in B(head(r(T,h)),\mathcal{R})$.
+
+We are now ready to define the canonical choice function and give an example.  The canonical choice function $C(h, \mathcal{I})$ takes an integer $h$, and an instance $\mathcal{I}$, which is compatible with $\mathcal{R}$.  In the base case:
+$$C(0,\mathcal{I}) = [(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$$
+%\begin{equation*}
+%\begin{split}
+%C_\delta(h,\mathcal{I}) = & \\
+%& \left[ (l, \overline{a}[j = x]) \, | \right. \\
+%& \left. \text{if $bodies(l)[g} \in \mathcal{R}_I$ then} x \in %\mathcal{I}[bodies(l)[j]]
+%\end{split}
+%\end{equation*}
+We next define $C(h,\mathcal{I})$ in terms of $C_\delta(h,\mathcal{I})$, for $h \neq 0$.
+\begin{equation*}
+\begin{split}
+C_\delta(h,\mathcal{I}) = & \left[ (l, \overline{a}[j =  f_{r(C(h-1,\mathcal{I}),h)}(\delta(C(h-1,\mathcal{I}),h))]) \, | \right. \\
+& \left. (l,j) \in B(r(C(h-1,\mathcal{I}),h), \mathcal{R}) \, \land \right. \\
+& \left. \forall g \, . \, g \neq j \Rightarrow a_g \in stream(C(h-1,\mathcal{I}),h,bodies(l)[g]) \right]
+\end{split}
+\end{equation*}
+
+Then, $ C(h,\mathcal{I}) = C(h-1,\mathcal{I}) ++ C_\delta(h,\mathcal{I})$.
+Note that any timeline $C(h,\mathcal{I})$ is domain compatible with $\mathcal{R}$.
+
+This is similar to {\em semi-na\"{\i}ve evaluation} for Datalog, where, when given a delta in one relation of a rule's body, we must evaluate the rule for all possible combinations of values in the database for the other relations in the rule's body.
+
+\begin{example}
+Consider the following program for computing the transitive closure of a graph.
+\begin{eqnarray*}
+  path &\Leftarrow& id(link); \\
+  path &\Leftarrow& equijoin\_2\_1(path, path);
+\end{eqnarray*}
+The monoid associated with both $path$ and $link$ is $(\mathcal{P}(\mathbb{N} \times \mathbb{N}), \cup, \phi)$, where $\mathcal{P}(x)$ represents the powerset of $x$. In this case, $id : \mathcal{P}(\mathbb{N} \times \mathbb{N}) \rightarrow \mathcal{P}(\mathbb{N} \times \mathbb{N})$ is defined to be $id((x,y)) = (x,y)$, i.e., the identity function.  The function $equijoin\_2\_1 : \mathcal{P}(\mathbb{N} \times \mathbb{N}) \times \mathcal{P}(\mathbb{N} \times \mathbb{N}) \rightarrow \mathcal{P}(\mathbb{N} \times \mathbb{N})$ is defined to be 
+$$equijoin\_2\_1(x,y) = \{\,(a,b) \,\, | \,\, \exists \, c \, .\,  (a,c) \in x \land (c,b) \in y\,\}$$
+
+\noindent Let $\mathcal{R}_I = \{link\}$, and let $\mathcal{R}_O = \{path\}$.  Assume our input instance is $link = [\{1,2\}, \{2,3\}, \{3,1\}]$:
+%$$T_0 = (0 : \{(1,2)\}), (0 : \{(2,3)\}), (0 : \{(3,1)\})$$
+\begin{eqnarray*}
+T_0 & = & 0 : \{(1,2)\} \\
+ 		&		& 0 : \{(2,3)\} \\
+		&		& 0 : \{(3,1)\}
+\end{eqnarray*}
+Let $T_i = C(i, \ldots, C(0, T_0) \ldots )$. This gives us:
+\begin{eqnarray*}
+stream(T_0,0,path) & = & [] \\
+T_1 & = & T_0 \\
+stream(T_1,1,path) & = & [\{(1,2)\}] \\
+T_2 & = & T_1 ++ \\
+& & 1: \{(2,3)\}, \{(1,2)\} \\
+& & 1: \{(1,2)\}, \{(2,3)\} \\
+stream(T_2,2,path) & = & [\{(1,2)\}, \{(2,3)\}] \\
+T_3 & = & T_2 ++ \\
+& & 1: \{(3,1)\}, \{(1,2)\} \\
+& & 1: \{(3,1)\}, \{(2,3)\} \\
+& & 1: \{(1,2)\}, \{(3,1)\} \\
+& & 1: \{(2,3)\}, \{(3,1)\} \\
+stream(T_2,2,path) & = & [\{(1,2)\}, \{(2,3)\}, \{3,1\}]
+\end{eqnarray*}
+Continuing, it is not hard to see there exists some $n$ such that $\forall m \, . \, m \geq n \Rightarrow val(stream(T_n,n,path)) = val(stream(T_m,m,path))$, and that $val(stream(T_n,n,path))$ is the transitive closure of $link$.  Of course, a fixed point does not exist in general for all programs and inputs.
+\end{example}
+
+\subsubsection{Other Choice Functions}
+
+The set of {\em legal} choice functions are given based on the following generation rules.  A stream in a program may have one or more of the following generation rules:
+
+\begin{itemize}
+\item If a stream is {\em unreliable}, then the choice function applied to rules with the stream's identifier in the head may be the identity.
+%\item If a channel is {\em persistent unreliable}, then the choice function applied to rules with the channel's identifier in the head may be the identity. channel never joins anything with a given element.
+\item If a stream is {\em duplicating}, then the choice function must add the same elements to the timeline in the same order that $C$ does, except there may be multiple duplicate of an element in sequence.
+\item If a stream is {\em acausal}, then it must add the same elements to the timeline in the same order that $C$ does, but they need not be added to the end of the timeline.
+\item If a stream is {\em batching}, then consecutive elements may be batched.
+\item An {\em atomizing} stream allows the insertion of multiple deltas, as opposed to a single delta.
+\item A {\em re-ordering} choice function allows the list to be re-ordered.
+\end{itemize}
+
+If a stream is not batching or atomizing, it is called {\em atomicity preserving}.  If a stream is not unreliable or persistent unreliable, it is called {\em reliable}.  If a stream is not causal, it is called {\em noncausal}.  If a stream is not duplicating, it is called {\em idempotency preserving}.  If a stream is not re-ordering, it is called {\em sequential}.
+
+There are several properties that a choice function may obey, and some of these are mutually exclusive:
+
+
+
+
+Note that we have so far only explained how rules are written, not how the meaning of rules.  Note also that these definitions force the rules to be {\em well typed} in the sense that the domain of every identifier is the same as the domain associated with any argument of a function where the identifier is used, and the domain of the head identifier is the same as the function's codomain.
+
+A {\em program} is a collection of rules.  An identifier's usage in the head ... (merged somehow) An identifier's usage in the body of a rule intuitively represents some output stream.
+
+
+\subsection{Operational semantics}
+
+%Semantics 1: "`Naive"'
+
+%Semantics 2: Semi-naive
+
+One can think of the operational semantics as a number of asynchronous processes.  Initially, a possible output stream is chosen for each usage of an identifier in a body.  There is an asynchronous process for each rule.  This process reads the next element from the body stream $\delta_1$ in the first argument of the body function, then executes $f(\delta_1, Val(S_i2), Val(S_i3), \dots, Val(S_in))$.  This element is added to the input stream of the head identifier ($S_i0$).  This process is repeated for the 2nd, up to nth body stream.  Finally, $f(\delta_1, \delta_2, , \delta_n)$ is executed, and the element added to $S_i0$.
+
+%When the value of the output is eventually always the same, the program is done and the output is final.
+
+%Semantics 3: Homomorphic semi-naive
+
+\subsection{Correctness criteria}
+
+One nice correctness criterion would be for the program to be {\em functional}, meaning that the final value of the output is a function of the values of the input streams to the input schema.  In other words, different choices of output streams for streams do not affect the program.
+
+Theorem 1: Assuming all streams have no rules (i.e., there is a single output stream for every input stream), then all programs are functional.
+
+Theorem 2: Assuming all streams are batching or have no rules, then all programs are functional.
+
+\wrm{import proofs for these}
