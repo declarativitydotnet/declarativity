@@ -1,17 +1,32 @@
 \section{Case Study: Quicksort}
 \label{sec:qscs}
 
+\wrm{todo put this syntax in the new syntax}
+
 Consider the structure of the traditional Quicksort algorithm: a single element called the “pivot” is selected from a list, and the list is divided into two sublists -- one containing the elements in the original list less than the pivot and the other containing the elements in the original sublist greater than the pivot.  The division is performed in-place in memory.  Quicksort is then recursively applied to each list.
+
+Our goal is to get a version of quicksort that is provably confluent, where we have leveraged the power of the language to introduce disorder to add parallelism and boost performance through selection of random pivots.
 
 In our first step of the case study, we introduce disorder to enable asynchronous parallelism.  It is naturally observed that quicksort, like most divide and conquer algorithms, can perform splits in parallel.
 
-Divide and conquer algorithms are usually easily parallelizable as written, as there is no logical dependence between independent divisions.  For example, the basic translation of the functional/imperative version of quicksort:
+Divide and conquer algorithms are usually easily parallelizable as written, as there is no logical dependence between independent divisions.  For example, the basic translation of the functional version of quicksort:
 
-\wrm{show code}
+\begin{alltt}
+quicksort []     = []
+quicksort (p:xs) = (quicksort lesser) ++ [p] ++ (quicksort greater)
+    where
+        lesser  = filter (< p) xs
+        greater = filter (>= p) xs
+\end{alltt}
 
 Is translated as:
 
-\wrm{show code}
+\begin{alltt}
+sublist(p,'LEFT',l), sublist(p,'RIGHT',r) <- sublist(x,y,l), sublist(x,y,r), f_select_pivot(x,y,p), l < p, r > p.
+link(max<l>,p), link(p,min<r>) <- sublist(p,'LEFT',l), sublist(p,'RIGHT',r).
+\end{alltt}
+
+The second rule intuitively represents the second line of the functional version of quicksort, which concatenates the lists.  The first rule represents the bottom three lines of the functional version, which partition into sublists.
 
 In the next step of our case study, we introduce disorder in order to enable random selection of pivots.  To maintain determinism, it must be the case that the order of selecting pivots is immaterial.  In particular, it is the case that permuting two pivot selections does not have an effect.  Why is this the case?  In quicksort, a pivot operation establishes the information that any element $e$ that is greater than the pivot has a predecessor of at least the pivot.  No predecessor information is established for elements less than the pivot.  Thus, if two pivots are considered, the information established for those elements greater than both pivots is that the predecessor is at least the max of the two pivots.  Of course, max is order-independent.  Thus, the order of pivot consideration doesn’t matter.
 
@@ -19,12 +34,46 @@ Of course, considering the pivots in “the wrong” order could establish a sub
 
 In order to enable random pivot selection in quicksort while preserving determinism, we must rewrite quicksort to introduce disorder into the pivot selection.
 
-\wrm{show code with disorderly pivot selection}
+\begin{alltt}
+link(x,p) <- pivot(p), list(x), link(x,z), link(p,z), x > p;
+link(x,0) <- list(x);
+\end{alltt}
 
-\wrm{show imperative code that generates the timeline based on random pivots}
+\wrm{link is a key-value lattice where max is applied to the second argument; pivot and list are regular set lattices}
+
+\begin{alltt}
+function main:
+   for each (x) in list:
+      add ``r2 : [(x)]'' to the timeline
+
+   for each (p) in pivot in random order:
+      for each (x) in list:
+         if (z = (sorted_list[p] == sorted_list[x])) and x > p:
+            add ``r1 : [(p),(x),(x,z),(p,z)]'' to the timeline
+\end{alltt}
 
 \section{Case Study: Hamiltonian Path}
 
 This is a well-known NP complete problem.  One known search strategy for this problem is a ``backtracking'' approach, where paths are extended until we either find a hamiltonian path or a dead-end.  Once we reach a dead-end, we backtrack to our last choice, and choose another link.
 
 \wrm{Whereas in quicksort, we could get away with specifying an ordering on a single relation, in the Hamlitonian path case, we need to specify an order on the link relation PER JOINED PATH.  In other words, we need to exercise advanced control over the ordering of the join.}
+
+\wrm{single source longest path}
+
+\begin{alltt}
+path(x,y,\{x,y\}) <- link(x,y);
+path(x,y,s \(\cup \{x\}\)) <- link(x,z), path(z,y,s), x \(\not\in\) s;
+\end{alltt}
+
+\wrm{ordering code}
+
+\begin{alltt}
+for each (x,y) in link in random order:
+   add ``r1: [(x,y)]'' to timeline
+   next_link(x,y,{x,y})
+
+function next_link(z,y,s)
+   for each (x,z) in link such that x \(\not\in\) s, in random order:
+      add ``r2: [(x,z), (z,y,s)]'' to timeline
+      next_link(x,z,s\(\cup\{x\}\))
+\end{alltt}
