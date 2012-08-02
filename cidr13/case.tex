@@ -9,7 +9,7 @@ Consider the structure of the traditional Quicksort algorithm: a single element 
 
 In traditional programming languages, there are no confluence guarantees for a version of quicksort that does either or both of parallelism and randomized pivot selection.  Our goal is to write such a version of quicksort that is provably confluent.
 
-In our first step of the case study, we consider asynchronous parallelism.  It is naturally observed that quicksort, like most divide and conquer algorithms, can perform each pivoting operatoin in parallel.  Divide and conquer algorithms are usually easily parallelizable as written, as there is no logical dependence between independent divisions.
+In our first step of the case study, we consider asynchronous parallelism.  It is naturally observed that quicksort, like most divide and conquer algorithms, can perform each pivoting operation in parallel.  Divide and conquer algorithms are usually easily parallelizable as written, as there is no logical dependence between independent divisions.
 
 Consider the following code:
 
@@ -42,11 +42,11 @@ The {\tt link} identifier represents the predecessor relation.  If $(x,y)$ is in
 
 The first rule in the above code takes a set of pivots $p$ with predecessor $z$, and a set of list elements $x$ with the same predecessor $z$.  The maximum of the pivots $p$ is chosen as the predecessor for $x$, assuming $x > p$.
 
-To understand the correspondence to quicksort, imagine that for each execution of the rule, there is only a single pivot $p$, and further imagine thhat {\tt link(x,z)} contains all $x$ with predecessor $z$.  Then, execution of the rule corresponds to considering all elements that should be in the right sublist of $p$, and putting them in the right sublist by updating each of their predecessors to $p$.  
+To understand the correspondence to quicksort, imagine that for each execution of the rule, there is only a single pivot $p$, and further imagine that {\tt link(x,z)} contains all $x$ with predecessor $z$.  Then, execution of the rule corresponds to considering all elements that should be in the right sublist of $p$, and putting them in the right sublist by updating each of their predecessors to $p$.  
 
 Subsequent executions of the rule can only increase an element's predecessor, as it moves into further-right sublists.
 
-Of course, considering the pivots in “the wrong” order could establish a substantial amount of redundant information, reducing performance of the algorithm.  What if we considered the pivots in sort order?  We would establish the information that $n-1$ elements are greater than the first pivot, $n-2$ elements are greater than both the first and second pivot, $n-3$ elements are greater than the first three pivots, etc.  Overall, we would establish $O(n^2)$ information.  However, assume we consider the pivots in an order corresponding to the optimum for quicksort.  The first selection is the median, so we establish $n/2$ elements are greater than the first pivot.  The second and third are the median of both of the sublists, so we establish that $n/2$ elements are greater than either the second or third.  The fourth, fifth, sixth, and seventh are the medias of the 4 resulting sublists, and again we stablish a total of $n/2$ elements are greater than either of these.  Overall, we establish $O(n log(n))$ information in this case.
+Of course, considering the pivots in “the wrong” order could establish a substantial amount of redundant information, reducing performance of the algorithm.  What if we considered the pivots in sort order?  We would establish the information that $n-1$ elements are greater than the first pivot, $n-2$ elements are greater than both the first and second pivot, $n-3$ elements are greater than the first three pivots, etc.  Overall, we would establish $O(n^2)$ information.  However, assume we consider the pivots in an order corresponding to the optimum for quicksort.  The first selection is the median, so we establish $n/2$ elements are greater than the first pivot.  The second and third are the median of both of the sublists, so we establish that $n/2$ elements are greater than either the second or third.  The fourth, fifth, sixth, and seventh are the medias of the 4 resulting sublists, and again we establish a total of $n/2$ elements are greater than either of these.  Overall, we establish $O(n log(n))$ information in this case.
 
 The different performance for each of these orders motivates us to induce a specific order to tune the performance of our quicksort specification.  Recall that we induce a specific order by writing an ``ordering'' program that generates a timeline.  The code below selects pivots in random order.  From the algorithmic analysis of randomized quicksort, we know that in expectation, $O(n log(n))$ information is established.
 
@@ -64,13 +64,13 @@ function main:
 
 \section{Case Study: Hamiltonian Path}
 
-Another example of a program that benefits from the strategic introduction of disorder is one that finds Hamiltonian paths in a graph.  A Hamiltonian path in a grpah is a path that visits each of the graph's vertices exactly once.  This is a well-known NP complete problem, but there are search strategies that are fast for graphs of interest.  By exploiting the disorder (i.e., lack of logical dependency) between different paths, we can write ``ordering'' programs for various search strategies.
+Another example of a program that benefits from the strategic introduction of disorder is one that finds Hamiltonian paths in a graph.  A Hamiltonian path in a graph is a path that visits each of the graph's vertices exactly once.  This is a well-known NP complete problem, but there are search strategies that are fast for graphs of interest.  By exploiting the disorder (i.e., lack of logical dependency) between different paths, we can write ``ordering'' programs for various search strategies.
 
 One popular search strategy involves selecting a random vertex, and extending the path by selection of subsequent random edges until either a Hamiltonian path is created, or no Hamiltonian path is created, and the selection of a link takes the path to a previously explored vertex.  In the latter case, the path is ``rotated'' by deleting the outgoing edge from the vertex, and reversing all links in the path up to the vertex where the edge was deleted.
 
 Other popular search strategies involve backtracking and pruning.
 
-\wrm{Whereas in quicksort, we could get away with specifying an ordering on a single relation, in the Hamlitonian path case, we need to specify an order on the link relation PER JOINED PATH.  In other words, we need to exercise advanced control over the ordering of the join.}
+\wrm{Whereas in quicksort, we could get away with specifying an ordering on a single relation, in the Hamiltonian path case, we need to specify an order on the link relation PER JOINED PATH.  In other words, we need to exercise advanced control over the ordering of the join.}
 
 At its core, the Hamiltonian path algorithm can be represented in algebra as a filter on an all-pairs-all-paths computation:
 
