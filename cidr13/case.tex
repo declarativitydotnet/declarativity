@@ -64,26 +64,56 @@ function main:
 
 \section{Case Study: Hamiltonian Path}
 
-This is a well-known NP complete problem.  One known search strategy for this problem is a ``backtracking'' approach, where paths are extended until we either find a hamiltonian path or a dead-end.  Once we reach a dead-end, we backtrack to our last choice, and choose another link.
+Another example of a program that benefits from the strategic introduction of disorder is one that finds Hamiltonian paths in a graph.  A Hamiltonian path in a grpah is a path that visits each of the graph's vertices exactly once.  This is a well-known NP complete problem, but there are search strategies that are fast for graphs of interest.  By exploiting the disorder (i.e., lack of logical dependency) between different paths, we can write ``ordering'' programs for various search strategies.
+
+One popular search strategy involves selecting a random vertex, and extending the path by selection of subsequent random edges until either a Hamiltonian path is created, or no Hamiltonian path is created, and the selection of a link takes the path to a previously explored vertex.  In the latter case, the path is ``rotated'' by deleting the outgoing edge from the vertex, and reversing all links in the path up to the vertex where the edge was deleted.
+
+Other popular search strategies involve backtracking and pruning.
 
 \wrm{Whereas in quicksort, we could get away with specifying an ordering on a single relation, in the Hamlitonian path case, we need to specify an order on the link relation PER JOINED PATH.  In other words, we need to exercise advanced control over the ordering of the join.}
 
-\wrm{single source longest path}
+At its core, the Hamiltonian path algorithm can be represented in algebra as a filter on an all-pairs-all-paths computation:
 
 \begin{alltt}
-path(x,y,\{x,y\}) <- link(x,y);
-path(x,y,s \(\cup \{x\}\)) <- link(x,z), path(z,y,s), x \(\not\in\) s;
+path(x,y,[x,y]) <- link(x,y);
+path(x,y,x ++ s) <- link(x,z), path(z,y,s), x \(\not\in\) s;
+hpath(s) <- path(x,y,s), \(\forall x \, . \, (x \in node) \Rightarrow x \in s \);
 \end{alltt}
 
-\wrm{ordering code}
+The ordering code for the path rotation search strategy could be written as:
+
+\begin{alltt}
+for each (x) in node in random order:
+   for each (x,y) in link in random order:
+      add ``r1:[(x,y)'' to timeline
+      next_link(x,y,[x,y])
+
+next_link(z,y,s)
+   for each (x,z) in link in random order:
+      if x \(\not\in\) s then:
+         add ``r2: [(x,z), (z,y,s)]'' to timeline
+         next_link(x,z,x++s)
+      else:
+         let p be the element before x in s
+         copy s into t
+         truncate t before x
+         iterate through s up to x:
+            let a be the current element from s in the iteration
+            let b be the previous element from s in the iteration
+            t := a ++ t
+            add ``r2: [(a,b), (b,y,t)]'' to timeline
+         next_link(p,y,t)
+\end{alltt}
+
+The ordering code for a simple backtracking search strategy could be written as:
 
 \begin{alltt}
 for each (x,y) in link in random order:
    add ``r1: [(x,y)]'' to timeline
-   next_link(x,y,{x,y})
+   next_link(x,y,[x,y])
 
 function next_link(z,y,s)
    for each (x,z) in link such that x \(\not\in\) s, in random order:
       add ``r2: [(x,z), (z,y,s)]'' to timeline
-      next_link(x,z,s\(\cup\{x\}\))
+      next_link(x,z,x ++ s)
 \end{alltt}
