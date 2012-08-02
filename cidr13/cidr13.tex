@@ -66,11 +66,13 @@
 \begin{abstract}
 Codd's idea of order-independence underlies much of the fields of query
 optimization and parallel databases.  In this paper, we apply
-order-independence as a programming pattern for writing correct deterministic algorithms that use admit order non-determinism---such as randomness or parallelism---for increased performance.
+order-independence as a programming pattern for writing correct deterministic algorithms that admit order non-determinism for increased performance by way of randomness or parallelism.
 We propose a programming language for decomposing algorithms
 into "algebra" and "ordering," in the vein of Kowalski's famous "Algorithm
 = Logic + Control" formulation.  In our language, a programmer writes a
-specification in "algebra,"  which can be optimized without affecting its meaning by by changing only the "ordering."  Our
+specification in "algebra;" the program's performance characteristics can
+then be tuned without affecting its meaning by by changing only the "ordering."
+Our
 "algebra" is similar to the Bloom language for distributed systems.  In
 Bloom, programmers react to an adversarial network that may reorder
 messages by removing order from their code.  In contrast, our "algebra"
