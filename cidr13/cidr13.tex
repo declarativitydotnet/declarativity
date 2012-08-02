@@ -68,20 +68,20 @@ Codd's idea of order-independence underlies much of the fields of query
 optimization and parallel databases.  In this paper, we apply
 order-independence as a programming pattern for writing correct deterministic algorithms that admit order non-determinism for increased performance by way of randomness or parallelism.
 We propose a programming language for decomposing algorithms
-into "algebra" and "ordering," in the vein of Kowalski's famous "Algorithm
-= Logic + Control" formulation.  In our language, a programmer writes a
-specification in "algebra;" the program's performance characteristics can
-then be tuned without affecting its meaning by by changing only the "ordering."
+into ``algebra'' and ``ordering,'' in the vein of Kowalski's famous ``Algorithm
+= Logic + Control'' formulation.  In our language, a programmer writes a
+specification in ``algebra;'' the program's performance characteristics can
+then be tuned without affecting its meaning by changing only the ``ordering.''
 Our
 "algebra" is similar to the Bloom language for distributed systems.  In
 Bloom, programmers react to an adversarial network that may reorder
-messages by removing order from their code.  In contrast, our "algebra"
+messages by removing order from their code.  In contrast, our ``algebra''
 forces programmers to proactively write order-independent code so that the
-order may later be customized.  We present the notion of "timelines" as an
-interface between "algebra" and "ordering:" the "ordering" can be any
-arbitrary code that produces a "timeline," whereas the "algebra" is
+order may later be customized.  We present the notion of ``timelines'' as an
+interface between ``algebra'' and ``ordering:'' the ``ordering'' can be any
+arbitrary code that produces a ``timeline,'' whereas the ``algebra'' is
 restricted to ensure that program outcomes are independent of the
-"ordering."  We formally prove this property of our language, and
+``ordering.''  We formally prove this property of our language, and
 demonstrate its applicability by considering a variety of case studies.
 \end{abstract}
 
