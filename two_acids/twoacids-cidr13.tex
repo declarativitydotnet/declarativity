@@ -1,6 +1,13 @@
 \documentclass{sig-alternate}
 
+\usepackage{xspace}
+\usepackage[T1]{fontenc}
+\usepackage{times}
 \usepackage{color}
+\usepackage{txfonts}  % apparently needed to fixup the formatting of lstlistings
+\usepackage{textcomp}
+\usepackage[protrusion=true,expansion=true]{microtype}
+
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{[[#1 -- paa]]}}}
 \newcommand{\nrc}[1]{{\textcolor{green}{[[#1 -- nrc]]}}}
@@ -91,10 +98,10 @@ the action of least upper bound.  The \emph{CALM Theorem} proved that monotonic
 programs admit eventually consistent, coordination-free distributed
 implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  Combining the
 idea of lattice data types with CALM, recent work shows how whole programs can
-be constructed out of multiple lattice instances, and a compiler can
-(conservatively) check the program for monotonicity, and introduce coordination
-in front of non-monotonic operations.  Since this is a new result, we give
-familiar examples below.
+be constructed out of multiple lattice instances~\cite{Conway2012}, and a
+compiler can (conservatively) check the program for monotonicity and introduce
+coordination in front of non-monotonic operations.  Since this is a new result,
+we give familiar examples below.
 
 In this paper we consider how these different ACID traditions can inform each
 other.  At the risk of over-simplifying, ACID transactions are often thought of
