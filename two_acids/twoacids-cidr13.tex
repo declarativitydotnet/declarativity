@@ -150,7 +150,7 @@ Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
 	\\
 	\emph{// Write: visible at subsequent timestep}\\
 	\emph{// The King is Dead, Long Live The King}\\
-	dead\_king(C,K0)@next :- write(C,K1)\\
+	dead\_king(C,K0)@next :- king(C,K0), write(C,K1)\\
 	king(C,K1)@next :- write(C,K1)\\
 	\\
 	write(France, Charles6)@1380.\\
@@ -159,7 +159,9 @@ Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
 The problem (or ``conflict'') with the Write-able key/value pairs king(C, X) is
 clear from the syntax: ``NOT'' ($\neg$) is the basic non-monotonic operator in
 logic.  Operationally, a Read of the current state of king must wait for the
-contents of dead\_king to be completely accounted for.
+contents of dead\_king to be completely accounted for.\nrc{Assuming you want to
+  read the ``final''/confluent value of king, which of course is not the usual
+  assumption in ACID transactions.}
 
 By the CALM theorem, the ``coordination'' required to seal the contents of a set
 (e.g., dead\_king) is not necessary for purely monotonic logic.  Said
@@ -216,16 +218,16 @@ traditional transactional thinking to inform our understanding of disorder in
 distributed systems.
 
 Many discussions of distributed concurrency are couched in the language of
-\emph{eventual consistency} and a concern for the ordering of applying actions
-redundantly across replicated state.  Replication and redundancy are key
-mechanisms for availability and latency reduction in distributed systems.
-Traditionally, discussions of eventual consistency constrain the diversity in
-the order of conflicting actions across replicas: e.g., ``last writer wins'',
-``read your writes'', and so on~\cite{Terry1994}.  These constraints limit the
-kinds of races that low-level programmers need to consider to ensure desirable
-application semantics.  ACID 2.0 argues for using order-insensitive actions,
-which ensures eventual consistency, since any ordering of all the actions
-produces the same result as any other.
+\emph{eventual consistency}~\cite{Terry1995} and a concern for the ordering of
+applying actions redundantly across replicated state.  Replication and
+redundancy are key mechanisms for availability and latency reduction in
+distributed systems.  Traditionally, discussions of eventual consistency
+constrain the diversity in the order of conflicting actions across replicas:
+e.g., ``last writer wins'', ``read your writes'', and so on~\cite{Terry1994}.
+These constraints limit the kinds of races that low-level programmers need to
+consider to ensure desirable application semantics.  ACID 2.0 argues for using
+order-insensitive actions, which ensures eventual consistency, since any
+ordering of all the actions produces the same result as any other.
 
 Missing from most of these discussions is the notion of transactions; ACID 2.0
 is typically defined on a set of individual actions.  But what would a
@@ -242,7 +244,7 @@ sequence numbers.  Operationally, the order of actions does not need to be
 controlled via a protocol: monotonic programs admit \emph{streaming execution}.
 
 Unfortunately, non-monotonicity is very natural, and very few interesting
-programs limit themselves to ACID 2.0 operations~\footnote{There is, however, an
+programs limit themselves to ACID 2.0 operations.\footnote{There is, however, an
   intriguing theoretical result due independently to Immerman, Vardi and
   Papadimitriou that monotonic logic with sequences can express any
   polynomial-time computation.  In our experience to date, this is more
