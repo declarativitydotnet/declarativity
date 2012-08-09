@@ -64,10 +64,10 @@ accompanying theory that codifies the tradition formally, and leads to useful
 engineering techniques.
 
 The first tradition is the classic notion of \textsf{ACID} database
-transactions, formalized by the theory of \emph{serializability}.  As is well
-known, a transaction is a sequence of actions, and serializability constrains
-the admissible interleavings of actions across transactions.  The declarative
-definition of serializability famously led to a host of protocols to
+transactions, formalized by the theory of \emph{serializability}~\cite{Papadimitriou1979}.
+As is well known, a transaction is a sequence of actions, and serializability
+constrains the admissible interleavings of actions across transactions.  The
+declarative definition of serializability famously led to a host of protocols to
 \emph{enforce orderings of actions across transactions}, satisfying
 (conservatively) the constraints of serializability.  These protocols are
 defined over transactions that follow the basic von Neumann notion of
@@ -135,7 +135,7 @@ Viewed through the lens of ACID 2.0, we might say this differently.  Conflict
 serializability tolerates reordering of Reads but not of Writes.  Why not
 Writes?  Logically, a Write to mutable state is an atomic pair of actions: the
 revocation of a previous value and the introduction of a new value.  As noted in
-the literature on stateful logics~\cite{statelog,dedalus}, mutable state entails
+the literature on stateful logics~\cite{dedalus,statelog}, mutable state entails
 non-monotonic logic: the persistence of a variable depends on it being
 NOT(revoked).  What follows is an example of a mutable key-value store ``king'',
 keyed by country.  We express this using the logic notation of
@@ -220,9 +220,9 @@ Many discussions of distributed concurrency are couched in the language of
 redundantly across replicated state.  Replication and redundancy are key
 mechanisms for availability and latency reduction in distributed systems.
 Traditionally, discussions of eventual consistency constrain the diversity in
-the order of conflicting actions across replicas: e.g. ``last writer wins'',
-``read your writes'', and so on~\cite{Terry1994}.  These constraints limit the kinds
-of races that low-level programmers need to consider to ensure desirable
+the order of conflicting actions across replicas: e.g., ``last writer wins'',
+``read your writes'', and so on~\cite{Terry1994}.  These constraints limit the
+kinds of races that low-level programmers need to consider to ensure desirable
 application semantics.  ACID 2.0 argues for using order-insensitive actions,
 which ensures eventual consistency, since any ordering of all the actions
 produces the same result as any other.
