@@ -112,7 +112,7 @@
 %
 % 1st. author
 \alignauthor
-Joseph M.~Hellerstein, Peter~Alvaro, Neil~Conway, William~Marczak\\
+Joseph M.~Hellerstein, Peter~Alvaro, Neil~Conway, William R.~Marczak\\
        \affaddr{UC Berkeley}\\
        % \affaddr{387 Soda Hall \#1776}\\
        % \affaddr{Berkeley, CA 94720-1776  USA}\\
@@ -141,7 +141,7 @@ Alan Fekete\\
 \begin{abstract}
 Distributed concurrency is supported by two scientific traditions, each having a vernacular centered on the acronym \textsf{ACID}.  The original use of the term refers, of course, to database transactions. A separate long tradition of freely-reorderable convergent actions was recently dubbed \textsf{ACID~2.0}.   Both of these mnemonics are backed by formal theories: traditional ACID transactions rely on the theory of serializable schedules, while the ACID 2.0 idea recently acquired theoretical underpinnings via lattices and the CALM Theorem.
 
-We propose rethinking distributed concurrency from the application viewpoint, and propose a solution blended from both ACIDs.  We begin by combining the notion of Conflict Serializability with CALM analysis, to propose a general notion of \emph{Non-Monotone Serializability}.  We then look toward a ``system-free'' future, in which software developers write applications with transactional assumptions, and a compiler uses program analysis to synthesize a solution of low-level code that (a) allows a broad range of application-level monotonic concurrency, and (b) produces application-specific concurrency control for essential non-monotonic conflicts..  
+We propose rethinking distributed concurrency from the application viewpoint, and propose a solution blended from both ACIDs.  We begin by combining the notion of Conflict Serializability with CALM analysis, to propose a general notion of \emph{Non-Monotone Serializability}.  We then look toward a ``system-free'' future, in which software developers write applications with transactional assumptions, and a compiler uses program analysis to synthesize a solution of low-level code that (a) allows a broad range of application-level monotonic concurrency, and (b) produces application-specific concurrency control for essential non-monotonic conflicts.
 \end{abstract}
 
 % % A category with the (minimum) three required fields
