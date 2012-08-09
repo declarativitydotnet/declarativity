@@ -1,10 +1,10 @@
-% SIG-ALTERNATE.CLS - VERSION 2.4
+% SIG-ALTERNATE.CLS - VERSION 2.5
 % "COMPATIBLE" WITH THE "ACM_PROC_ARTICLE-SP.CLS" V3.2SP
-% Gerald Murray - April 22nd. 2009
+% Gerald Murray - May 23rd 2012
 %
 % ---- Start of 'updates'  ----
-%
-% Changed $5 fee to $10 - Gerry
+% Changed $10 fee to $15 -- May 2012  --  Gerry
+% Changed $5 fee to $10 --  April 2009 -- Gerry
 % April 22nd. 2009 - Fixed 'Natbib' incompatibility problem - Gerry
 % April 22nd. 2009 - Fixed 'Babel' incompatibility problem - Gerry
 % April 22nd. 2009 - Inserted various bug-fixes and improvements - Gerry
@@ -42,9 +42,9 @@
 %
 % ---- End of 'updates' ----
 %
-\def\fileversion{v2.4}          % for ACM's tracking purposes
-\def\filedate{April 22, 2009}    % Gerry Murray's tracking data
-\def\docdate {Wednesday 22nd. April 2009} % Gerry Murray (with deltas to doc}
+\def\fileversion{v2.5}          % for ACM's tracking purposes
+\def\filedate{May 23, 2012}    % Gerry Murray's tracking data
+\def\docdate {Wednesday 23rd. May 2012} % Gerry Murray (with deltas to doc}
 \usepackage{epsfig}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -113,7 +113,7 @@
 %%% You may turn this hackery off via the -e option:
 %%%     dvips -e 0 foo.dvi >foo.ps
 %%%
-\typeout{Document Class 'sig-alternate' <22nd. April '09>.  Modified by G.K.M. Tobin/Gerry Murray}
+\typeout{Document Class 'sig-alternate' <23rd. May '12>.  Modified by G.K.M. Tobin/Gerry Murray}
 \typeout{Based in part upon document Style `acmconf' <22 May 89>. Hacked 4/91 by}
 \typeout{shivers@cs.cmu.edu, 4/93 by theobald@cs.mcgill.ca}
 \typeout{Excerpts were taken from (Journal Style) 'esub2acm.cls'.}
@@ -610,7 +610,7 @@
 
 \if@ll
   \NeedsTeXFormat{LaTeX2e}
-  \ProvidesClass{sig-alternate} [2009/04/22 - V2.4 - based on acmproc.cls V1.3 <Nov. 30 '99>]
+  \ProvidesClass{sig-alternate} [2012/05/23 - V2.5 - based on acmproc.cls V1.3 <Nov. 30 '99>]
   \RequirePackage{latexsym}% QUERY: are these two really needed?
   \let\dooptions\ProcessOptions
 \else
@@ -1423,14 +1423,14 @@
 \newtoks\acmcopyr
 \newtoks\boilerplate
 \global\acmcopyr={X-XXXXX-XX-X/XX/XX}  % Default - 5/11/2001 *** Gerry
-\global\copyrtyr={200X}                % Default - 3/3/2003 *** Gerry
+\global\copyrtyr={20XX}                % Default - 3/3/2003 *** Gerry
 \def\CopyrightYear#1{\global\copyrtyr{#1}}
 \def\crdata#1{\global\acmcopyr{#1}}
 \def\permission#1{\global\boilerplate{#1}}
 %
 \global\boilerplate={Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page.  To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright \the\copyrtyr\ ACM \the\acmcopyr\ ...\$10.00}
+\global\copyrightetc{Copyright \the\copyrtyr\ ACM \the\acmcopyr\ ...\$15.00} % Gerry changed to 15 May 2012
 \toappear{\the\boilerplate\par
 {\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.}
 %\DeclareFixedFont{\altcrnotice}{OT1}{tmr}{m}{n}{8}  % << patch needed for accenting e.g. Montreal - Gerry, May 2007
