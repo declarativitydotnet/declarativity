@@ -1,123 +1,24 @@
-% This is "sig-alternate.tex" V2.0 May 2012
-% This file should be compiled with V2.5 of "sig-alternate.cls" May 2012
-%
-% This example file demonstrates the use of the 'sig-alternate.cls'
-% V2.5 LaTeX2e document class file. It is for those submitting
-% articles to ACM Conference Proceedings WHO DO NOT WISH TO
-% STRICTLY ADHERE TO THE SIGS (PUBS-BOARD-ENDORSED) STYLE.
-% The 'sig-alternate.cls' file will produce a similar-looking,
-% albeit, 'tighter' paper resulting in, invariably, fewer pages.
-%
-% ----------------------------------------------------------------------------------------------------------------
-% This .tex file (and associated .cls V2.5) produces:
-%       1) The Permission Statement
-%       2) The Conference (location) Info information
-%       3) The Copyright Line with ACM data
-%       4) NO page numbers
-%
-% as against the acm_proc_article-sp.cls file which
-% DOES NOT produce 1) thru' 3) above.
-%
-% Using 'sig-alternate.cls' you have control, however, from within
-% the source .tex file, over both the CopyrightYear
-% (defaulted to 200X) and the ACM Copyright Data
-% (defaulted to X-XXXXX-XX-X/XX/XX).
-% e.g.
-% \CopyrightYear{2007} will cause 2007 to appear in the copyright line.
-% \crdata{0-12345-67-8/90/12} will cause 0-12345-67-8/90/12 to appear in the copyright line.
-%
-% ---------------------------------------------------------------------------------------------------------------
-% This .tex source is an example which *does* use
-% the .bib file (from which the .bbl file % is produced).
-% REMEMBER HOWEVER: After having produced the .bbl file,
-% and prior to final submission, you *NEED* to 'insert'
-% your .bbl file into your source .tex file so as to provide
-% ONE 'self-contained' source file.
-%
-% ================= IF YOU HAVE QUESTIONS =======================
-% Questions regarding the SIGS styles, SIGS policies and
-% procedures, Conferences etc. should be sent to
-% Adrienne Griscti (griscti@acm.org)
-%
-% Technical questions _only_ to
-% Gerald Murray (murray@hq.acm.org)
-% ===============================================================
-%
-% For tracking purposes - this is V2.0 - May 2012
-
 \documentclass{sig-alternate}
 
 \usepackage{color}
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{[[#1 -- paa]]}}}
+\newcommand{\nrc}[1]{{\textcolor{green}{[[#1 -- nrc]]}}}
 
 \begin{document}
-%
-% --- Author Metadata here ---
 \conferenceinfo{CIDR}{'13 Asilomar, CA USA}
 %\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
-% --- End of Author Metadata ---
 
-\title{Application-Aware Concurrency: A Solution of Two ACIDs
-% \titlenote{(Produces the permission block, and
-% copyright information). For use with
-% SIG-ALTERNATE.CLS. Supported by ACM.}
-}
-% \subtitle{[Extended Abstract]
-% \titlenote{A full version of this paper is available as
-% \textit{Author's Guide to Preparing ACM SIG Proceedings Using
-% \LaTeX$2_\epsilon$\ and BibTeX} at
-% \texttt{www.acm.org/eaddress.htm}}
-% }
-%
-% You need the command \numberofauthors to handle the 'placement
-% and alignment' of the authors beneath the title.
-%
-% For aesthetic reasons, we recommend 'three authors at a time'
-% i.e. three 'name/affiliation blocks' be placed beneath the title.
-%
-% NOTE: You are NOT restricted in how many 'rows' of
-% "name/affiliations" may appear. We just ask that you restrict
-% the number of 'columns' to three.
-%
-% Because of the available 'opening page real-estate'
-% we ask you to refrain from putting more than six authors
-% (two rows with three columns) beneath the article title.
-% More than six makes the first-page appear very cluttered indeed.
-%
-% Use the \alignauthor commands to handle the names
-% and affiliations for an 'aesthetic maximum' of six authors.
-% Add names, affiliations, addresses for
-% the seventh etc. author(s) as the argument for the
-% \additionalauthors command.
-% These 'additional authors' will be output/set for you
-% without further effort on your part as the last section in
-% the body of your article BEFORE References or any Appendices.
-
-\numberofauthors{2} %  in this sample file, there are a *total*
-% of EIGHT authors. SIX appear on the 'first-page' (for formatting
-% reasons) and the remaining two appear in the \additionalauthors section.
-%
+\title{Application-Aware Concurrency: A Solution of Two ACIDs}
+\numberofauthors{2}
 \author{
-% You can go ahead and credit any number of authors here,
-% e.g. one 'row of three' or two rows (consisting of one row of three
-% and a second row of one, two or three).
-%
-% The command \alignauthor (no curly braces needed) should
-% precede each author name, affiliation/snail-mail address and
-% e-mail address. Additionally, tag each line of
-% affiliation/address with \affaddr, and tag the
-% e-mail address with \email.
-%
-% 1st. author
 \alignauthor
 Joseph M.~Hellerstein, Peter~Alvaro, Neil~Conway, William R.~Marczak\\
        \affaddr{UC Berkeley}\\
        % \affaddr{387 Soda Hall \#1776}\\
        % \affaddr{Berkeley, CA 94720-1776  USA}\\
        \email{\small \{hellerstein, palvaro, nrc, wrm\}@cs.berkeley.edu}
-% 2nd. author
 \alignauthor
 Alan Fekete\\
        \affaddr{University of Sydney}\\
@@ -125,54 +26,112 @@ Alan Fekete\\
        % \affaddr{NSW 2006, Sydney, Australia}\\
        \email{\small alan.fekete@sydney.edu.au}
 }
-% There's nothing stopping you putting the seventh, eighth, etc.
-% author on the opening page (as the 'third row') but we ask,
-% for aesthetic reasons that you place these 'additional authors'
-% in the \additional authors block, viz.
-% \additionalauthors{Additional authors: John Smith (The Th{\o}rv{\"a}ld Group,
-% email: {\texttt{jsmith@affiliation.org}}) and Julius P.~Kumquat
-% (The Kumquat Consortium, email: {\texttt{jpkumquat@consortium.net}}).}
-% \date{30 July 1999}
-% Just remember to make sure that the TOTAL number of authors
-% is the number that will appear on the first page PLUS the
-% number that will appear in the \additionalauthors section.
 
 \maketitle
 \begin{abstract}
-Distributed concurrency is supported by two scientific traditions, each having a vernacular centered on the acronym \textsf{ACID}.  The original use of the term refers, of course, to database transactions. A separate long tradition of reorderable convergent actions was recently dubbed \textsf{ACID~2.0}.   Both of these mnemonics are backed by formal theories: traditional ACID transactions rely on the theory of serializable schedules, while the ACID 2.0 idea recently acquired theoretical underpinnings via lattices and the CALM Theorem.
+  Distributed concurrency is supported by two scientific traditions, each having
+  a vernacular centered on the acronym \textsf{ACID}.  The original use of the
+  term refers, of course, to database transactions. A separate long tradition of
+  reorderable convergent actions was recently dubbed \textsf{ACID~2.0}.  Both of
+  these mnemonics are backed by formal theories: traditional ACID transactions
+  rely on the theory of serializable schedules, while the ACID 2.0 idea recently
+  acquired theoretical underpinnings via lattices and the CALM Theorem.
 
-We propose rethinking distributed concurrency from the application viewpoint, and propose a solution blended from both ACIDs.  We begin by combining the notion of Conflict Serializability with CALM analysis, to propose a general notion of \emph{Non-Monotone Serializability}.  We then look toward a ``system-free'' future, in which software developers write applications with transactional assumptions, and a compiler uses program analysis to synthesize a solution of low-level code that (a) allows a broad range of application-level monotonic concurrency, and (b) produces application-specific concurrency control for essential non-monotonic conflicts.
+  We propose rethinking distributed concurrency from the application viewpoint,
+  and propose a solution blended from both ACIDs.  We begin by combining the
+  notion of Conflict Serializability with CALM analysis, to propose a general
+  notion of \emph{Non-Monotone Serializability}.  We then look toward a
+  ``system-free'' future, in which software developers write applications with
+  transactional assumptions, and a compiler uses program analysis to synthesize
+  a solution of low-level code that (a) allows a broad range of
+  application-level monotonic concurrency, and (b) produces application-specific
+  concurrency control for essential non-monotonic conflicts.
 \end{abstract}
 
-% % A category with the (minimum) three required fields
-% \category{H.4}{Information Systems Applications}{Miscellaneous}
-% %A category including the fourth, optional field follows...
-% \category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
-
-% \terms{Theory}
-
-% \keywords{ACM proceedings, \LaTeX, text tagging}
-
 \section{Introduction}
-Concurrency is an evergreen problem in computer systems, which has regained a great deal of interest in the recent era of wide-area distributed systems and cloud computing.  There are two scientific traditions in this area that have been dubbed with the mnemonic \textsf{ACID}, and for each there is an accompanying theory that codifies the tradition formally, and leads to useful engineering techniques.
+Concurrency is an evergreen problem in computer systems, which has regained a
+great deal of interest in the recent era of wide-area distributed systems and
+cloud computing.  There are two scientific traditions in this area that have
+been dubbed with the mnemonic \textsf{ACID}, and for each there is an
+accompanying theory that codifies the tradition formally, and leads to useful
+engineering techniques.
 
-The first tradition is the classic notion of \textsf{ACID} database transactions, formalized by the theory of \emph{serializability}.  As is well known, a transaction is a sequence of actions, and serializability constrains the admissible interleavings of actions across transactions.  The declarative definition of serializability famously led to a host of protocols to \emph{enforce orderings of actions across transactions}, satisfying (conservatively) the constraints of serializability.  These protocols are defined over transactions that follow the basic von Neumann notion of computation: a sequential program issuing Reads and Writes to a mutable store.  These ideas have been exhaustively studied in research and translated into practice.
+The first tradition is the classic notion of \textsf{ACID} database
+transactions, formalized by the theory of \emph{serializability}.  As is well
+known, a transaction is a sequence of actions, and serializability constrains
+the admissible interleavings of actions across transactions.  The declarative
+definition of serializability famously led to a host of protocols to
+\emph{enforce orderings of actions across transactions}, satisfying
+(conservatively) the constraints of serializability.  These protocols are
+defined over transactions that follow the basic von Neumann notion of
+computation: a sequential program issuing Reads and Writes to a mutable store.
+These ideas have been exhaustively studied in research and translated into
+practice.
 
-The second tradition, recently dubbed \textsf{ACID 2.0}, arose in the world of large-scale distributed systems.  ACID 2.0 is a framework for thinking about programming, in which one defines application-specific vocabularies of \emph{actions that tolerate reordering}---that is, 
-actions that produce the same outcome regardless of the order in which they occur.
-The acronym reminds us of the desired algebraic properties of the vocabulary: Associativity, Commutativity, and Idempotence (the D stands for Distributed systems).  These properties are helpful in distributed systems where network delays and failures often lead to reordering and a need for retry. Low-level Read and Write operations clearly do not satisfy these properties, so work in this domain tends to suggest application-specific vocabularies of actions where the relevant properties hold.  Formally, the ACID 2.0 properties are precisely those of the least upper bound operator in a {\em join semi-lattice}, which led to a recent object-oriented model for defining distributed object classes whose instances tolerate reordering and retry~\cite{CRDTs}.  This definition is of limited utility: an individual class instance rarely encompasses a full-featured program.
+The second tradition, recently dubbed \textsf{ACID 2.0}, arose in the world of
+large-scale distributed systems.  ACID 2.0 is a framework for thinking about
+programming, in which one defines application-specific vocabularies of
+\emph{actions that tolerate reordering}---that is, actions that produce the same
+outcome regardless of the order in which they occur.  The acronym reminds us of
+the desired algebraic properties of the vocabulary: Associativity,
+Commutativity, and Idempotence (the D stands for Distributed systems).  These
+properties are helpful in distributed systems where network delays and failures
+often lead to reordering and a need for retry. Low-level Read and Write
+operations clearly do not satisfy these properties, so work in this domain tends
+to suggest application-specific vocabularies of actions where the relevant
+properties hold.  Formally, the ACID 2.0 properties are precisely those of the
+least upper bound operator in a {\em join semi-lattice}, which led to a recent
+object-oriented model for defining distributed object classes whose instances
+tolerate reordering and retry~\cite{CRDTs}.  This definition is of limited
+utility: an individual class instance rarely encompasses a full-featured
+program.
 
-The key property of semi-lattices is that they grow \emph{monotonically} under the action of least upper bound.  The \emph{CALM Theorem} proved that monotonic programs admit eventually consistent, coordination-free distributed implementations~\cite{calm}.  Combining the idea of lattice data types with CALM, recent work shows how whole programs can be constructed out of multiple lattice instances, and a compiler can (conservatively) check the program for monotonicity, and introduce coordination in front of non-monotonic operations.  Since this is a new result, we give familiar examples below.
+The key property of semi-lattices is that they grow \emph{monotonically} under
+the action of least upper bound.  The \emph{CALM Theorem} proved that monotonic
+programs admit eventually consistent, coordination-free distributed
+implementations~\cite{calm}.  Combining the idea of lattice data types with
+CALM, recent work shows how whole programs can be constructed out of multiple
+lattice instances, and a compiler can (conservatively) check the program for
+monotonicity, and introduce coordination in front of non-monotonic operations.
+Since this is a new result, we give familiar examples below.
 
-In this paper we consider how these different ACID traditions can inform each other.  At the risk of over-simplifying, ACID transactions are often thought of as an \emph{inter-transaction} approach, realized by \emph{enforcing an order} that satisfies serializability.  ACID 2.0 can be thought of as an \emph{intra-transaction} approach that \emph{tolerates disorder} when non-deterministic orders result in deterministic outcomes.  This is not a precise characterization as we discuss below, but it is useful for framing discussion.
-\paa{I am not sure I get/buy the inter vs. intra dichotomy.  it seems to me that the transactional abstraction lets you write ordered programs and gives a guarantee of an *extension* of that order in a "correct" global schedule, whereas calm asks for unordered programs and in return gives correct executions.  *both* allow the programmer to not explicitly reason about inter-xact interleavings.}
+In this paper we consider how these different ACID traditions can inform each
+other.  At the risk of over-simplifying, ACID transactions are often thought of
+as an \emph{inter-transaction} approach, realized by \emph{enforcing an order}
+that satisfies serializability.  ACID 2.0 can be thought of as an
+\emph{intra-transaction} approach that \emph{tolerates disorder} when
+non-deterministic orders result in deterministic outcomes.  This is not a
+precise characterization as we discuss below, but it is useful for framing
+discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
+  seems to me that the transactional abstraction lets you write ordered programs
+  and gives a guarantee of an *extension* of that order in a "correct" global
+  schedule, whereas calm asks for unordered programs and in return gives correct
+  executions.  *both* allow the programmer to not explicitly reason about
+  inter-xact interleavings.}
 
 \section{Non-Monotone Serializability}
-We begin by reconsidering the classic notion of ACID transactions and examine how ideas that improve concurrency in ACID 2.0 can also improve concurrency in the context of serializable transaction schedules.
+We begin by reconsidering the classic notion of ACID transactions and examine
+how ideas that improve concurrency in ACID 2.0 can also improve concurrency in
+the context of serializable transaction schedules.
 
-Serializability has a declarative definition: it encompasses those interleavings that produce an outcome equivalent to a serial execution of transactions.  In practice, the more constrained notion of \emph{conflict serializability} is used, which \emph{constrains the ordering of actions} across transactions.  As is well known, actions \emph{conflict} if they involve the same data item and one of them is a Write.  And since an individual transaction is classically a sequential program, conflicts are only considered between actions across transactions.
+Serializability has a declarative definition: it encompasses those interleavings
+that produce an outcome equivalent to a serial execution of transactions.  In
+practice, the more constrained notion of \emph{conflict serializability} is
+used, which \emph{constrains the ordering of actions} across transactions.  As
+is well known, actions \emph{conflict} if they involve the same data item and
+one of them is a Write.  And since an individual transaction is classically a
+sequential program, conflicts are only considered between actions across
+transactions.
 
-Viewed through the lens of ACID 2.0, we might say this differently.  Conflict serializability tolerates reordering of Reads but not of Writes.  Why not Writes?  Logically, a Write to mutable state is an atomic pair of actions: the revocation of a previous value and the introduction of a new value.   As noted in the literature on stateful logics~\cite{statelog,dedalus}, mutable state entails non-monotonic logic: the persistence of a variable depends on it being NOT(revoked).  What follows is an example of a mutable key-value store ``king'', keyed by country.  We express this using the logic notation of Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
+Viewed through the lens of ACID 2.0, we might say this differently.  Conflict
+serializability tolerates reordering of Reads but not of Writes.  Why not
+Writes?  Logically, a Write to mutable state is an atomic pair of actions: the
+revocation of a previous value and the introduction of a new value.  As noted in
+the literature on stateful logics~\cite{statelog,dedalus}, mutable state entails
+non-monotonic logic: the persistence of a variable depends on it being
+NOT(revoked).  What follows is an example of a mutable key-value store ``king'',
+keyed by country.  We express this using the logic notation of
+Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
 \begin{quote}
 	\emph{// Define read: each item of the set king: }\\
 	read(C,K) :- king(C,K)\\
@@ -189,46 +148,155 @@ Viewed through the lens of ACID 2.0, we might say this differently.  Conflict se
 	write(France, Charles6)@1380.\\
 	write(France, Charles7)@1422.
 \end{quote}
-The problem (or ``conflict'') with the Write-able key/value pairs king(C, X) is clear from the syntax: ``NOT'' ($\neg$) is the basic non-monotonic operator in logic.  Operationally, a Read of the current state of king must wait for the contents of dead\_king to be completely accounted for.
+The problem (or ``conflict'') with the Write-able key/value pairs king(C, X) is
+clear from the syntax: ``NOT'' ($\neg$) is the basic non-monotonic operator in
+logic.  Operationally, a Read of the current state of king must wait for the
+contents of dead\_king to be completely accounted for.
 
-By the CALM theorem, the ``coordination'' required to seal the contents of a set (e.g., dead\_king) is not necessary for purely monotonic logic.  Said differently, \emph{monotonic logic is conflict-free}.  This suggests a broader class of schedules that we can guarantee to be ``conflict''-serializable: those in which the non-monotonic conflicts are ordered the same as some serial schedule.  We refer to this as \emph{Non-Monotone Serializability}.
+By the CALM theorem, the ``coordination'' required to seal the contents of a set
+(e.g., dead\_king) is not necessary for purely monotonic logic.  Said
+differently, \emph{monotonic logic is conflict-free}.  This suggests a broader
+class of schedules that we can guarantee to be ``conflict''-serializable: those
+in which the non-monotonic conflicts are ordered the same as some serial
+schedule.  We refer to this as \emph{Non-Monotone Serializability}.
 
-As an example, consider the classic case of debit/credit ledgers.  We begin with the simple case in which all actions are credits. We assume that an account is liquid if its balance is above zero. In Bloom's lattice notation, this looks like so:
+As an example, consider the classic case of debit/credit ledgers.  We begin with
+the simple case in which all actions are credits. We assume that an account is
+liquid if its balance is above zero. In Bloom's lattice notation, this looks
+like so:
 \begin{quote}
-	\jmh{`ledger' is an lmap with key `acctId' and value an lset of [xid, amount] pairs.  `balance' is a derived lmap with key `acctId' and an lmax `value'.  `liquid' is an lmap from `acctId' to an lbool `status'.  The monotone function sum maps from [xid,amount] to `value', and the monotone function gt maps from `value' to `status'. Need to give syntax and explanation, perhaps in a figure if its too big a gulp inline.  I fudged:  ledger is not a sequence, it's a set.  That's OK for the credit-only scenario, but kinda bogus.}
+  \jmh{`ledger' is an lmap with key `acctId' and value an lset of [xid, amount]
+    pairs.  `balance' is a derived lmap with key `acctId' and an lmax `value'.
+    `liquid' is an lmap from `acctId' to an lbool `status'.  The monotone
+    function sum maps from [xid,amount] to `value', and the monotone function gt
+    maps from `value' to `status'. Need to give syntax and explanation, perhaps
+    in a figure if its too big a gulp inline.  I fudged: ledger is not a
+    sequence, it's a set.  That's OK for the credit-only scenario, but kinda
+    bogus.}
 \end{quote}
-In a credit-only scenario, the ledger grows monotonically as a set of credits, the account balances grow monotonically as integers, and account liquidity grows monotonically as a boolean (from false to true).  However, consider introducing debits that succeed only if the account would remain liquid: ``conflicts'' can arise between the liquidity checks of debits and credits, so we must establish ordering constraints for each debit with respect to preceding credits.  However, the order among credits remains irrelevant---the only order that matters relates to the non-monotone operator `debit'.  In Bloom, this non-monotonicity is again clear from the syntax and checkable by a parser:
+In a credit-only scenario, the ledger grows monotonically as a set of credits,
+the account balances grow monotonically as integers, and account liquidity grows
+monotonically as a boolean (from false to true).  However, consider introducing
+debits that succeed only if the account would remain liquid: ``conflicts'' can
+arise between the liquidity checks of debits and credits, so we must establish
+ordering constraints for each debit with respect to preceding credits.  However,
+the order among credits remains irrelevant---the only order that matters relates
+to the non-monotone operator `debit'.  In Bloom, this non-monotonicity is again
+clear from the syntax and checkable by a parser:
 \begin{quote}
 	\jmh{debit logic including threshold test goes here}
 \end{quote}
-Note that we can be finer-grained in our assessment of conflict: there are no conflicts across acctIds, which can be determined via analyzing the program logic: the grouping of balance by acctID \emph{partitions} the ledger.  This partitioning is akin to the partitioning of Reads and Writes, which conflict only if they are on the same object.
+Note that we can be finer-grained in our assessment of conflict: there are no
+conflicts across acctIds, which can be determined via analyzing the program
+logic: the grouping of balance by acctID \emph{partitions} the ledger.  This
+partitioning is akin to the partitioning of Reads and Writes, which conflict
+only if they are on the same object.
 
-In short, we can constrain the notion of conflicting Read/Write actions to a language-extensible notion of non-monotone actions.  Said positively, we can broaden the notion of tolerating Read reordering to the one of tolerating the reordering of any monotone operations.  With an application-specific vocabulary of actions, this Non-Monotone Serializability can allow a much broader set of serializable schedules than Conflict Serializability of low-level Reads and Writes.
+In short, we can constrain the notion of conflicting Read/Write actions to a
+language-extensible notion of non-monotone actions.  Said positively, we can
+broaden the notion of tolerating Read reordering to the one of tolerating the
+reordering of any monotone operations.  With an application-specific vocabulary
+of actions, this Non-Monotone Serializability can allow a much broader set of
+serializable schedules than Conflict Serializability of low-level Reads and
+Writes.
 
 \section{Blended ACID}
-In the previous section, we showed how to import the ACID 2.0 idea of \emph{tolerating disorder} via application-specific actions into traditional serializable transaction processing. In this section, we use the lens of traditional transactional thinking to inform our understanding of disorder in distributed systems.
+In the previous section, we showed how to import the ACID 2.0 idea of
+\emph{tolerating disorder} via application-specific actions into traditional
+serializable transaction processing. In this section, we use the lens of
+traditional transactional thinking to inform our understanding of disorder in
+distributed systems.
 
-Many discussions of distributed concurrency are couched in the language of \emph{eventual consistency} and a concern for the ordering of applying actions redundantly across replicated state.  Replication and redundancy are key mechanisms for availability and latency reduction in distributed systems.  Traditionally, discussions of eventual consistency constrain the diversity in the order of conflicting actions across replicas: e.g. ``last writer wins'', ``read your writes'', and so on~\cite{terry}.  These constraints limit the kinds of races that low-level programmers need to consider to ensure desirable application semantics.  ACID 2.0 argues for using order-insensitive actions, which ensures eventual consistency, since any ordering of all the actions produces the same result as any other.
+Many discussions of distributed concurrency are couched in the language of
+\emph{eventual consistency} and a concern for the ordering of applying actions
+redundantly across replicated state.  Replication and redundancy are key
+mechanisms for availability and latency reduction in distributed systems.
+Traditionally, discussions of eventual consistency constrain the diversity in
+the order of conflicting actions across replicas: e.g. ``last writer wins'',
+``read your writes'', and so on~\cite{terry}.  These constraints limit the kinds
+of races that low-level programmers need to consider to ensure desirable
+application semantics.  ACID 2.0 argues for using order-insensitive actions,
+which ensures eventual consistency, since any ordering of all the actions
+produces the same result as any other.
 
-Missing from most of these discussions is the notion of transactions; ACID 2.0 is typically defined on a set of individual actions.  But what would a transaction look like in this context?  Given a set of individual actions, transactions are defined by partitioning those actions via assigning each a key (the transaction ID), and ordering the actions within each transactions via a subsidiary sequence number.  Note that for a set of ACID 2.0 operations, any order is equivalent to any other, so the sequence number within a transaction is irrelevant, and the interleaving across transactions is also irrelevant.  In some sense, \emph{any schedule of ACID 2.0 actions is serializable}, in the sense that it is equivalent to some (in fact, to \emph{any}) interleaving of actions, regardless of the assignment of partitioning keys and ordering by sequence numbers.  Operationally, the order of actions does not need to be controlled via a protocol: monotonic programs admit \emph{streaming execution}.
+Missing from most of these discussions is the notion of transactions; ACID 2.0
+is typically defined on a set of individual actions.  But what would a
+transaction look like in this context?  Given a set of individual actions,
+transactions are defined by partitioning those actions via assigning each a key
+(the transaction ID), and ordering the actions within each transactions via a
+subsidiary sequence number.  Note that for a set of ACID 2.0 operations, any
+order is equivalent to any other, so the sequence number within a transaction is
+irrelevant, and the interleaving across transactions is also irrelevant.  In
+some sense, \emph{any schedule of ACID 2.0 actions is serializable}, in the
+sense that it is equivalent to some (in fact, to \emph{any}) interleaving of
+actions, regardless of the assignment of partitioning keys and ordering by
+sequence numbers.  Operationally, the order of actions does not need to be
+controlled via a protocol: monotonic programs admit \emph{streaming execution}.
 
-Unfortunately, non-monotonicity is very natural, and very few interesting programs limit themselves to ACID 2.0 operations~\cite{There is, however, an intriguing theoretical result due independently to Immerman, Vardi and Papadimitriou that monotonic logic with sequences can express any polynomial-time computation.  In our experience to date, this is more intriguing than practical.}  See for instance the focus in the eventual consistency literature on Writes, or the focus in the Bloom work on non-monotonic ``points of order''~\cite{cidr11}.  As discussed previously, non-monotonic logic requires ``sealing'' a set of actions.  How is this typically done in practice?
+Unfortunately, non-monotonicity is very natural, and very few interesting
+programs limit themselves to ACID 2.0 operations~\cite{There is, however, an
+  intriguing theoretical result due independently to Immerman, Vardi and
+  Papadimitriou that monotonic logic with sequences can express any
+  polynomial-time computation.  In our experience to date, this is more
+  intriguing than practical.}  See for instance the focus in the eventual
+consistency literature on Writes, or the focus in the Bloom work on
+non-monotonic ``points of order''~\cite{cidr11}.  As discussed previously,
+non-monotonic logic requires ``sealing'' a set of actions.  How is this
+typically done in practice?
 
-Operationally, non-monotonicity requires \emph{blocking execution}. This is done routinely in distributed systems in an operational fashion.  The classic example is an ``end-of-session'' token with a sequence number: it indicates the count of messages in the session as sealed by a sender, so that a receiver can know when it has received all messages in the session.  Or from the receiver's point of view, until it receives an end-of-session token, it cannot proceed based on the results of the session: the session is ``open'' while it is ``NOT(closed)''.  Among the operations in an open session, they can be ACID 2.0.  For example, in a shopping cart scenario, a ledger of adds and deletes to the cart tolerates reordering, and the ``checkout'' message is what seals the ledger and hence the final cart contents.  Fulfillment logic must block until the cart contents are sealed via checkout.
+Operationally, non-monotonicity requires \emph{blocking execution}. This is done
+routinely in distributed systems in an operational fashion.  The classic example
+is an ``end-of-session'' token with a sequence number: it indicates the count of
+messages in the session as sealed by a sender, so that a receiver can know when
+it has received all messages in the session.  Or from the receiver's point of
+view, until it receives an end-of-session token, it cannot proceed based on the
+results of the session: the session is ``open'' while it is ``NOT(closed)''.
+Among the operations in an open session, they can be ACID 2.0.  For example, in
+a shopping cart scenario, a ledger of adds and deletes to the cart tolerates
+reordering, and the ``checkout'' message is what seals the ledger and hence the
+final cart contents.  Fulfillment logic must block until the cart contents are
+sealed via checkout.
 
-So distributed application designers routinely partition messages into finite sessions, and partially order the messages within a session: at minimum the ``action'' messages proceed the ``end-of-session message'' in a partial order.  So what is a session?  Given a set of individual actions, sessions are defined by partitioning the actions via assignment of a key (the session ID), and partially ordering the actions within each session via some subsidiary partial order.  Looking above \emph{sessions and transactions are nearly the same thing}: a session is simply a transaction in which the ACID 2.0 operations tolerate any order.  The only real difference is the serializability constraint on transactions, which is not typically required across sessions in a distributed system.
+So distributed application designers routinely partition messages into finite
+sessions, and partially order the messages within a session: at minimum the
+``action'' messages proceed the ``end-of-session message'' in a partial order.
+So what is a session?  Given a set of individual actions, sessions are defined
+by partitioning the actions via assignment of a key (the session ID), and
+partially ordering the actions within each session via some subsidiary partial
+order.  Looking above \emph{sessions and transactions are nearly the same
+  thing}: a session is simply a transaction in which the ACID 2.0 operations
+tolerate any order.  The only real difference is the serializability constraint
+on transactions, which is not typically required across sessions in a
+distributed system.
 
-Now, some partitionings of actions into sessions are fully independent: no two online shopping carts share state, for example.  In such cases, interleaving across sessions is irrelevant, even if the actions within an open session are not ACID 2.0.  When two sessions do share state---for example, if we model inventory in our shopping program---then we need to worry about the order of interleavings.  
+Now, some partitionings of actions into sessions are fully independent: no two
+online shopping carts share state, for example.  In such cases, interleaving
+across sessions is irrelevant, even if the actions within an open session are
+not ACID 2.0.  When two sessions do share state---for example, if we model
+inventory in our shopping program---then we need to worry about the order of
+interleavings.
 
-In short, there is very little difference between the question of conflict serializability and the concurrency control concerns of distributed systems.  Pure ACID 2.0 provides serializability because it has no conflicts.  The use of non-monotonic operators (non-ACID 2.0) requires sessionization to ``seal'' sets and enable forward progress; this introduces partial orders of actions within a session, and raises the potential for conflicting actions across sessions.  If these conflicting actions are allowed to ``race'' in a way that results in a cyclic conflict graph, the results are non-deterministic and may not be equivalent to any serial schedule over sessions.
+In short, there is very little difference between the question of conflict
+serializability and the concurrency control concerns of distributed systems.
+Pure ACID 2.0 provides serializability because it has no conflicts.  The use of
+non-monotonic operators (non-ACID 2.0) requires sessionization to ``seal'' sets
+and enable forward progress; this introduces partial orders of actions within a
+session, and raises the potential for conflicting actions across sessions.  If
+these conflicting actions are allowed to ``race'' in a way that results in a
+cyclic conflict graph, the results are non-deterministic and may not be
+equivalent to any serial schedule over sessions.
 
 
 \section{The Vision}
-Application-specific ACID.  Understand ``true'' conflicts.  Highlight the need for ``slicing'' into ``batches''.  Guide the application toward an efficient, useful choice of batches and barriers.
+Application-specific ACID.  Understand ``true'' conflicts.  Highlight the need
+for ``slicing'' into ``batches''.  Guide the application toward an efficient,
+useful choice of batches and barriers.
 
-Example: slicing into totally independent batches: easy concurrency control across transactions (but possibly need coordination intra-transaction)
+Example: slicing into totally independent batches: easy concurrency control
+across transactions (but possibly need coordination intra-transaction)
 
-Example: dependent batches -- this is really just serializability?  No -- also intra-transaction parallelism.
+Example: dependent batches -- this is really just serializability?  No -- also
+intra-transaction parallelism.
 
 %\end{document}  % This is where a 'short' article might terminate
 
