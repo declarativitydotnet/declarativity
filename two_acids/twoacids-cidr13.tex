@@ -82,18 +82,19 @@ to suggest application-specific vocabularies of actions where the relevant
 properties hold.  Formally, the ACID 2.0 properties are precisely those of the
 least upper bound operator in a {\em join semi-lattice}, which led to a recent
 object-oriented model for defining distributed object classes whose instances
-tolerate reordering and retry~\cite{CRDTs}.  This definition is of limited
+tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This definition is of limited
 utility: an individual class instance rarely encompasses a full-featured
 program.
 
 The key property of semi-lattices is that they grow \emph{monotonically} under
 the action of least upper bound.  The \emph{CALM Theorem} proved that monotonic
 programs admit eventually consistent, coordination-free distributed
-implementations~\cite{calm}.  Combining the idea of lattice data types with
-CALM, recent work shows how whole programs can be constructed out of multiple
-lattice instances, and a compiler can (conservatively) check the program for
-monotonicity, and introduce coordination in front of non-monotonic operations.
-Since this is a new result, we give familiar examples below.
+implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  Combining the
+idea of lattice data types with CALM, recent work shows how whole programs can
+be constructed out of multiple lattice instances, and a compiler can
+(conservatively) check the program for monotonicity, and introduce coordination
+in front of non-monotonic operations.  Since this is a new result, we give
+familiar examples below.
 
 In this paper we consider how these different ACID traditions can inform each
 other.  At the risk of over-simplifying, ACID transactions are often thought of
@@ -213,7 +214,7 @@ redundantly across replicated state.  Replication and redundancy are key
 mechanisms for availability and latency reduction in distributed systems.
 Traditionally, discussions of eventual consistency constrain the diversity in
 the order of conflicting actions across replicas: e.g. ``last writer wins'',
-``read your writes'', and so on~\cite{terry}.  These constraints limit the kinds
+``read your writes'', and so on~\cite{Terry1994}.  These constraints limit the kinds
 of races that low-level programmers need to consider to ensure desirable
 application semantics.  ACID 2.0 argues for using order-insensitive actions,
 which ensures eventual consistency, since any ordering of all the actions
@@ -234,13 +235,13 @@ sequence numbers.  Operationally, the order of actions does not need to be
 controlled via a protocol: monotonic programs admit \emph{streaming execution}.
 
 Unfortunately, non-monotonicity is very natural, and very few interesting
-programs limit themselves to ACID 2.0 operations~\cite{There is, however, an
+programs limit themselves to ACID 2.0 operations~\footnote{There is, however, an
   intriguing theoretical result due independently to Immerman, Vardi and
   Papadimitriou that monotonic logic with sequences can express any
   polynomial-time computation.  In our experience to date, this is more
   intriguing than practical.}  See for instance the focus in the eventual
 consistency literature on Writes, or the focus in the Bloom work on
-non-monotonic ``points of order''~\cite{cidr11}.  As discussed previously,
+non-monotonic ``points of order''~\cite{Alvaro2011}.  As discussed previously,
 non-monotonic logic requires ``sealing'' a set of actions.  How is this
 typically done in practice?
 
@@ -303,66 +304,7 @@ intra-transaction parallelism.
 %ACKNOWLEDGMENTS are optional
 \section{Acknowledgments}
 Dave Maier.
-%
-% The following two commands are all you need in the
-% initial runs of your .tex file to
-% produce the bibliography for the citations in your paper.
+
 \bibliographystyle{abbrv}
-% \bibliography{sigproc}  % sigproc.bib is the name of the Bibliography in this case
-% You must have a proper ".bib" file
-%  and remember to run:
-% latex bibtex latex latex
-% to resolve all references
-%
-% ACM needs 'a single self-contained file'!
-%
-%APPENDICES are optional
-%\balancecolumns
-% \appendix
-% %Appendix A
-% \section{Headings in Appendices}
-% The rules about hierarchical headings discussed above for
-% the body of the article are different in the appendices.
-% In the \textbf{appendix} environment, the command
-% \textbf{section} is used to
-% indicate the start of each Appendix, with alphabetic order
-% designation (i.e. the first is A, the second B, etc.) and
-% a title (if you include one).  So, if you need
-% hierarchical structure
-% \textit{within} an Appendix, start with \textbf{subsection} as the
-% highest level. Here is an outline of the body of this
-% document in Appendix-appropriate form:
-% \subsection{Introduction}
-% \subsection{The Body of the Paper}
-% \subsubsection{Type Changes and  Special Characters}
-% \subsubsection{Math Equations}
-% \paragraph{Inline (In-text) Equations}
-% \paragraph{Display Equations}
-% \subsubsection{Citations}
-% \subsubsection{Tables}
-% \subsubsection{Figures}
-% \subsubsection{Theorem-like Constructs}
-% \subsubsection*{A Caveat for the \TeX\ Expert}
-% \subsection{Conclusions}
-% \subsection{Acknowledgments}
-% \subsection{Additional Authors}
-% This section is inserted by \LaTeX; you do not insert it.
-% You just add the names and information in the
-% \texttt{{\char'134}additionalauthors} command at the start
-% of the document.
-% \subsection{References}
-% Generated by bibtex from your ~.bib file.  Run latex,
-% then bibtex, then latex twice (to resolve references)
-% to create the ~.bbl file.  Insert that ~.bbl file into
-% the .tex source file and comment out
-% the command \texttt{{\char'134}thebibliography}.
-% % This next section command marks the start of
-% % Appendix B, and does not continue the present hierarchy
-% \section{More Help for the Hardy}
-% The sig-alternate.cls file itself is chock-full of succinct
-% and helpful comments.  If you consider yourself a moderately
-% experienced to expert user of \LaTeX, you may find reading
-% it useful but please remember not to change it.
-% %\balancecolumns % GM June 2007
-% % That's all folks!
+\bibliography{cidr}
 \end{document}
