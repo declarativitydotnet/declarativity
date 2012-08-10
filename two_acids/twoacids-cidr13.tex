@@ -247,12 +247,11 @@ sequence numbers.  Operationally, the order of actions does not need to be
 controlled via a protocol: monotonic programs admit \emph{streaming execution}.
 
 Unfortunately, non-monotonicity is very natural, and very few interesting
-programs limit themselves to ACID 2.0 operations.\footnote{There is, however, an
-  intriguing theoretical result due independently to Immerman, Vardi and
-  Papadimitriou that monotonic logic with sequences can express any
-  polynomial-time computation.  In our experience to date, this is more
-  intriguing than practical.}  See for instance the focus in the eventual
-consistency literature on Writes, or the focus in the Bloom work on
+programs limit themselves to ACID 2.0 operations.\footnote{There is, however, a
+  well-known theoretical result that monotonic logic with sequences can express
+  any polynomial-time computation~\cite{immerman-ptime}.  In our experience to
+  date, this is more intriguing than practical.}  See for instance the focus in
+the eventual consistency literature on Writes, or the focus in the Bloom work on
 non-monotonic ``points of order''~\cite{Alvaro2011}.  As discussed previously,
 non-monotonic logic requires ``sealing'' a set of actions.  How is this
 typically done in practice?
