@@ -20,6 +20,9 @@ class CreditOnlyLedger
     ledger <= credit_op {|c| {c.acct_id => Bud::PositiveSetLattice.new(c.cmt)}}
 
     # compute account liquidity
+    # (NB: apply_morph is a morphism that takes the name of another morphism and
+    # applies it to all the values in the map; the resulting set of values is
+    # used to form a new lmap with the same key set as the input lmap.)
     balance <= ledger.apply_morph(:pos_sum)
     liquid  <= balance.apply_morph(:gt_eq, 0)
   end
@@ -55,6 +58,8 @@ class CompleteLedger
     d_balance <= d_ledger.apply_morph(:pos_sum)
 
     account <= c_balance.key_set.to_collection
+    # Compute account liquidity. Note that this is non-monotonic because we need
+    # to peak at the underlying values (via the reveal method).
     liquid_status <= account {|a| [a.id, c_balance.at(a.id).reveal >= d_balance.at(a.id).reveal] }
   end
 end
