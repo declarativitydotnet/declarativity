@@ -175,8 +175,8 @@ schedule.  We refer to this as \emph{Non-Monotone Serializability}.
 
 As an example, consider the classic case of debit/credit ledgers.  We begin with
 the simple case in which all actions are credits. We assume that an account is
-liquid if its balance is above zero. In Bloom's lattice notation, this looks
-like so:
+liquid if its balance is above zero. In Bloom's lattice notation~\cite{Conway2012},
+this looks like so:
 \begin{quote}
   \jmh{`ledger' is an lmap with key `acctId' and value an lset of [xid, amount]
     pairs.  `balance' is a derived lmap with key `acctId' and an lmax `value'.
