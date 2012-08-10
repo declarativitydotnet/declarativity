@@ -104,7 +104,7 @@ coordination in front of non-monotonic operations.  Since this is a new result,
 we give familiar examples below.
 
 In this paper we consider how these different ACID traditions can inform each
-other.  At the risk of over-simplifying, ACID transactions are often thought of
+other. At the risk of over-simplifying, ACID transactions are often thought of
 as an \emph{inter-transaction} approach, realized by \emph{enforcing an order}
 that satisfies serializability.  ACID 2.0 can be thought of as an
 \emph{intra-transaction} approach that \emph{tolerates disorder} when
@@ -115,10 +115,10 @@ discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
   and gives a guarantee of an *extension* of that order in a "correct" global
   schedule, whereas calm asks for unordered programs and in return gives correct
   executions.  *both* allow the programmer to not explicitly reason about
-  inter-xact interleavings.} \jmh{Are you equating CALM with pure monotonicity?  
+  inter-xact interleavings.} \jmh{Are you equating CALM with pure monotonicity?
   Because Bloom, with non-monotonicity, does not help reasoning transactionally.
-  As I discuss below, pure monotonicity is trivially serializable, but that doesn't
-  really help think about most transactions.}
+  As I discuss below, pure monotonicity is trivially serializable, but that
+  doesn't really help think about most transactions.}
 
 \section{Non-Monotone Serializability}
 We begin by reconsidering the classic notion of ACID transactions and examine
@@ -128,9 +128,9 @@ the context of serializable transaction schedules.
 Serializability has a declarative definition: it encompasses those interleavings
 that produce an outcome equivalent to a serial execution of transactions.  In
 practice, the more constrained notion of \emph{conflict serializability} is
-used, which \emph{constrains the ordering of actions} across transactions.  As
-is well known, actions \emph{conflict} if they involve the same data item and
-one of them is a Write.  And since an individual transaction is classically a
+used, which \emph{constrains the ordering of actions} across transactions:
+actions \emph{conflict} if they involve the same data item and one of them is a
+Write~\cite{Eswaran1976}.  Since an individual transaction is classically a
 sequential program, conflicts are only considered between actions across
 transactions.
 
@@ -246,8 +246,8 @@ actions, regardless of the assignment of partitioning keys and ordering by
 sequence numbers.  Operationally, the order of actions does not need to be
 controlled via a protocol: monotonic programs admit \emph{streaming execution}.
 
-Unfortunately, non-monotonicity is very natural, and very few interesting
-programs limit themselves to ACID 2.0 operations.\footnote{There is, however, a
+Unfortunately, non-monotonicity is very natural and few interesting programs
+limit themselves to ACID 2.0 operations.\footnote{There is, however, a
   well-known theoretical result that monotonic logic with sequences can express
   any polynomial-time computation~\cite{immerman-ptime}.  In our experience to
   date, this is more intriguing than practical.}  See for instance the focus in
