@@ -115,7 +115,10 @@ discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
   and gives a guarantee of an *extension* of that order in a "correct" global
   schedule, whereas calm asks for unordered programs and in return gives correct
   executions.  *both* allow the programmer to not explicitly reason about
-  inter-xact interleavings.}
+  inter-xact interleavings.} \jmh{Are you equating CALM with pure monotonicity?  
+  Because Bloom, with non-monotonicity, does not help reasoning transactionally.
+  As I discuss below, pure monotonicity is trivially serializable, but that doesn't
+  really help think about most transactions.}
 
 \section{Non-Monotone Serializability}
 We begin by reconsidering the classic notion of ACID transactions and examine
