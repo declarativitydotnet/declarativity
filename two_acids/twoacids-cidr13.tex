@@ -311,6 +311,20 @@ across transactions (but possibly need coordination intra-transaction)
 Example: dependent batches -- this is really just serializability?  No -- also
 intra-transaction parallelism.
 
+\paa{the below is something to shoot holes in}
+
+Our end goal is an adaptible, application-specific embodiment of the best of both ACID traditions in a practical programming language. This language will require program analysis tools to recognize ``true'' conflicts---operations that produce different end states when reordered---and resolve them in a manner appropriate to the application.
+
+We observed a similarity between transactions in databases and sessions in distributed systems.  Both represent names for a logical grouping of actions, and mechanisms that control the visibility of these groupings can be used to ensure atomicity (these actions occur together) and isolation (I need not reason about interleavings with other actions).  When these grouping correspond to finite, continguous ranges of real time, they can be used to constructively define (potentially infinite) collections in which partitions grow, become ``sealed,'' and are henceforth immutable.  As we recall from stratified logic programming, nonmonotonic operations against complete inputs produce a single model; similarly, distributed programs that constrain their nonmonotonic deductions to sealed partitions are insensitive to the order in which the contents of those partitions materialized.
+ 
+Similarities aside, the shopping cart sessions described in Alvaro et al fundamentally differ from general database transactions in their mutual independence: no two users update the same cart, and in this simple example, no two carts conflict in any of their operations (e.g., by changing inventory).  Hence trivial coordination---in the form of manifest shipping---was sufficient to ensure that replicas agreed, and no concurrency control was necessary.  A transactional store cannot make such an independence guarantee over transactions, which may access and mutate shared state.   It is precisely this dependency on nonmonotonically updated shared state that makes serializability (a weaker correctness criterion than confluence) the ``right'' correctness criterion for transactional systems---when different orders produce different results, we require a protocol to choose which order ``wins.'' 
+
+If we write programs in the right language, detecting nonmonotonicity is easy, as is extending such a language with support for programmer-guided ``sealing'' of input partitions.  Given a particular sealing attribute---for example, ``session id''---a straightforward dependency analysis can tell us whether individual seals are dependent by answering (conservatively) whether the consequences of processing one partition can affect outputs associated with another.  This whole program analysis will tell us that because we cannot prove independence of seals (transactions) a generic transactional store requires additional arbitration in the form of an ordering \emph{across} seals.  By contrast, we can prove independence of seals (sessions) for the shopping cart application---even when the cart is implemented atop a transactional kvs.  
+
+Thus we may choose the appropriate protocols ``just in time'' based upon a given composition; a transactional store exposes the abstraction of transactions, but uses an order-enforcing mechanism like locks to implement them only when the access patterns implied by the application make it necessary. The programmer is forced to provide some extra information---\emph{what} partitions are we sealing; \emph{when} do we seal them?---and in return the compiler synthesizes custom coordination to exclude bad outcomes.  
+
+
+
 %\end{document}  % This is where a 'short' article might terminate
 
 %ACKNOWLEDGMENTS are optional
