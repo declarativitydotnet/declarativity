@@ -17,7 +17,7 @@
 %\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
 %\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 
-\title{Application-Aware Concurrency: A Solution of Two ACIDs}
+\title{Aqua Regia: A Solution of Two ACIDs}
 \numberofauthors{2}
 \author{
 \alignauthor
@@ -44,12 +44,12 @@ Alan Fekete\\
   rely on the theory of serializable schedules, while the ACID 2.0 idea recently
   acquired theoretical underpinnings via lattices and the CALM Theorem.
 
-  We propose rethinking distributed concurrency from the application viewpoint,
+  We propose rethinking distributed concurrency from the application viewpoint
   and propose a solution blended from both ACIDs.  We begin by combining the
   notion of Conflict Serializability with CALM analysis, to propose a general
   notion of \emph{Non-Monotone Serializability}.  We then look toward a
   ``system-free'' future, in which software developers write applications with
-  transactional assumptions, and a compiler uses program analysis to synthesize
+  transactional assumptions and a compiler uses program analysis to synthesize
   a solution of low-level code that (a) allows a broad range of
   application-level monotonic concurrency, and (b) produces application-specific
   concurrency control for essential non-monotonic conflicts.
@@ -89,9 +89,9 @@ to suggest application-specific vocabularies of actions where the relevant
 properties hold.  Formally, the ACID 2.0 properties are precisely those of the
 least upper bound operator in a {\em join semi-lattice}, which led to a recent
 object-oriented model for defining distributed object classes whose instances
-tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This definition is of limited
-utility: an individual class instance rarely encompasses a full-featured
-program.
+tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This definition
+is of limited utility: an individual class instance rarely encompasses a
+full-featured program.
 
 The key property of semi-lattices is that they grow \emph{monotonically} under
 the action of least upper bound.  The \emph{CALM Theorem} proved that monotonic
