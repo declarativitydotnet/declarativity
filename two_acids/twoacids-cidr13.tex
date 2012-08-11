@@ -7,6 +7,7 @@
 \usepackage{txfonts}
 \usepackage{textcomp}
 \usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{comment}
 
 \newcommand{\jmh}[1]{{\textcolor{red}{#1 -- jmh}}}
 \newcommand{\paa}[1]{{\textcolor{blue}{[[#1 -- paa]]}}}
@@ -104,7 +105,10 @@ coordination in front of non-monotonic operations.  Since this is a new result,
 we give familiar examples below.
 
 In this paper we consider how these different ACID traditions can inform each
-other. At the risk of over-simplifying, ACID transactions are often thought of
+other.
+
+\begin{comment}
+At the risk of over-simplifying, ACID transactions are often thought of
 as an \emph{inter-transaction} approach, realized by \emph{enforcing an order}
 that satisfies serializability.  ACID 2.0 can be thought of as an
 \emph{intra-transaction} approach that \emph{tolerates disorder} when
@@ -119,6 +123,7 @@ discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
   Because Bloom, with non-monotonicity, does not help reasoning transactionally.
   As I discuss below, pure monotonicity is trivially serializable, but that
   doesn't really help think about most transactions.}
+\end{comment}
 
 \section{Non-Monotone Serializability}
 We begin by reconsidering the classic notion of ACID transactions and examine
@@ -127,22 +132,23 @@ the context of serializable transaction schedules.
 
 Serializability has a declarative definition: it encompasses those interleavings
 that produce an outcome equivalent to a serial execution of transactions.  In
-practice, the more constrained notion of \emph{conflict serializability} is
+practice, the more conservative notion of \emph{conflict serializability} is
 used, which \emph{constrains the ordering of actions} across transactions:
-actions \emph{conflict} if they involve the same data item and one of them is a
+actions \emph{conflict} if they access the same data item and one of them is a
 Write~\cite{Eswaran1976}.  Since an individual transaction is classically a
 sequential program, conflicts are only considered between actions across
 transactions.
 
 Viewed through the lens of ACID 2.0, we might say this differently.  Conflict
-serializability tolerates reordering of Reads but not of Writes.  Why not
-Writes?  Logically, a Write to mutable state is an atomic pair of actions: the
-revocation of a previous value and the introduction of a new value.  As noted in
-the literature on stateful logics~\cite{dedalus,statelog}, mutable state entails
-non-monotonic logic: the persistence of a variable depends on it being
-NOT(revoked).  What follows is an example of a mutable key-value store ``king'',
-keyed by country.  We express this using the logic notation of
-Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
+serializability allows two Reads of a given object to be executed in any order,
+but constrains the ordering of Writes. Why can Writes not be reordered freely?
+Logically, a Write is an atomic pair of actions: the revocation of a previous
+value and the introduction of a new value.  As noted in the literature on
+stateful logics~\cite{dedalus,statelog}, mutable state entails non-monotonic
+logic: the persistence of a value depends on it being NOT(revoked).  What
+follows is an example of a mutable key-value store ``king'', keyed by country.
+We express this using the logic notation of Dedalus~\cite{dedalus}, which
+exposes the inherent non-monotonicity:
 \begin{quote}
 	\emph{// Define read: each item of the set king: }\\
 	read(C,K) :- king(C,K)\\
