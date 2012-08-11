@@ -229,7 +229,7 @@ distributed systems.
 Many discussions of distributed concurrency are couched in the language of
 \emph{eventual consistency}~\cite{Terry1995} and a concern for the ordering of
 applying actions redundantly across replicated state.  Replication and
-redundancy are key mechanisms for availability and latency reduction in
+redundancy~\paa{in this context, what's the diff?} are key mechanisms for availability and latency reduction in
 distributed systems.  Traditionally, discussions of eventual consistency
 constrain the diversity in the order of conflicting actions across replicas:
 e.g., ``last writer wins'', ``read your writes'', and so on~\cite{Terry1994}.
@@ -258,12 +258,22 @@ limit themselves to ACID 2.0 operations.\footnote{There is, however, a
   any polynomial-time computation~\cite{immerman-ptime}.  In our experience to
   date, this is more intriguing than practical.}  See for instance the focus in
 the eventual consistency literature on Writes, or the focus in the Bloom work on
-non-monotonic ``points of order''~\cite{Alvaro2011}.  As discussed previously,
-non-monotonic logic requires ``sealing'' a set of actions.  How is this
-typically done in practice?
+non-monotonic ``points of order''~\cite{Alvaro2011}.
+When we extend an ACID 2.0 system with nonmontonic operations, do we spoil the whole batch
+or can we continue to exploit the commutativity properties among certain actions?
 
-Operationally, non-monotonicity requires \emph{blocking execution}. This is done
-routinely in distributed systems in an operational fashion.  The classic example
+%As discussed previously,
+%non-monotonic logic requires ``sealing'' a set of actions.  How is this
+%typically done in practice?
+
+Recall that the logic programming paradigm commonly requires that we
+``seal'' (or stop adding to) certain collections before we evaluate non-monotonic operators
+over them.
+Thus operationally, non-monotonicity implies \emph{blocking execution}. 
+%%This is done
+%%routinely in distributed systems in an operational fashion.  
+Analogous patterns are common in distributed systems.
+A classic example
 is an ``end-of-session'' token with a sequence number: it indicates the count of
 messages in the session as sealed by a sender, so that a receiver can know when
 it has received all messages in the session.  Or from the receiver's point of
@@ -275,7 +285,7 @@ reordering, and the ``checkout'' message is what seals the ledger and hence the
 final cart contents.  Fulfillment logic must block until the cart contents are
 sealed via checkout.
 
-So distributed application designers routinely partition messages into finite
+Distributed application designers routinely partition messages into finite
 sessions, and partially order the messages within a session: at minimum the
 ``action'' messages proceed the ``end-of-session message'' in a partial order.
 So what is a session?  Given a set of individual actions, sessions are defined
