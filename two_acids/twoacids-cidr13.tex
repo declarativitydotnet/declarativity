@@ -4,7 +4,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{times}
 \usepackage{color}
-\usepackage{txfonts}  % apparently needed to fixup the formatting of lstlistings
+\usepackage{txfonts}
 \usepackage{textcomp}
 \usepackage[protrusion=true,expansion=true]{microtype}
 
@@ -14,8 +14,6 @@
 
 \begin{document}
 \conferenceinfo{CIDR}{'13 Asilomar, CA USA}
-%\CopyrightYear{2007} % Allows default copyright year (20XX) to be over-ridden - IF NEED BE.
-%\crdata{0-12345-67-8/90/01}  % Allows default copyright data (0-89791-88-6/97/05) to be over-ridden - IF NEED BE.
 
 \title{Aqua Regia: A Solution of Two ACIDs}
 \numberofauthors{2}
@@ -36,16 +34,17 @@ Alan Fekete\\
 
 \maketitle
 \begin{abstract}
-  Distributed concurrency is supported by two scientific traditions, each having
-  a vernacular centered on the acronym \textsf{ACID}.  The original use of the
-  term refers, of course, to database transactions. A separate long tradition of
-  reorderable convergent actions was recently dubbed \textsf{ACID~2.0}.  Both of
-  these mnemonics are backed by formal theories: traditional ACID transactions
-  rely on the theory of serializable schedules, while the ACID 2.0 idea recently
-  acquired theoretical underpinnings via lattices and the CALM Theorem.
+  Distributed concurrency is supported by two scientific traditions that each
+  have a vernacular centered on the acronym \textsf{ACID}.  The original use of
+  the term refers, of course, to database transactions. A separate long
+  tradition of reorderable convergent actions was recently dubbed
+  \textsf{ACID~2.0}.  Both mnemonics are backed by formal theories:
+  ACID transactions rely on the theory of serializable schedules, while the ACID
+  2.0 idea recently acquired theoretical underpinnings via lattices and the CALM
+  Theorem.
 
   We propose rethinking distributed concurrency from the application viewpoint
-  and propose a solution blended from both ACIDs.  We begin by combining the
+  and present a solution blended from both ACIDs.  We begin by combining the
   notion of Conflict Serializability with CALM analysis, to propose a general
   notion of \emph{Non-Monotone Serializability}.  We then look toward a
   ``system-free'' future, in which software developers write applications with
@@ -70,32 +69,33 @@ constrains the admissible interleavings of actions across transactions.  The
 declarative definition of serializability famously led to a host of protocols to
 \emph{enforce orderings of actions across transactions}, satisfying
 (conservatively) the constraints of serializability.  These protocols are
-defined over transactions that follow the basic von Neumann notion of
+defined over transactions that follow the traditional von Neumann notion of
 computation: a sequential program issuing Reads and Writes to a mutable store.
 These ideas have been exhaustively studied in research and translated into
 practice.
 
 The second tradition, recently dubbed \textsf{ACID 2.0}, arose in the world of
-large-scale distributed systems~\cite{Helland2009}.  ACID 2.0 is a framework for thinking about
-programming, in which one defines application-specific vocabularies of
-\emph{actions that tolerate reordering}---that is, actions that produce the same
-outcome regardless of the order in which they occur.  The acronym reminds us of
-the desired algebraic properties of the vocabulary: Associativity,
-Commutativity, and Idempotence (the D stands for Distributed systems).  These
-properties are helpful in distributed systems where network delays and failures
-often lead to reordering and a need for retry. Low-level Read and Write
-operations clearly do not satisfy these properties, so work in this domain tends
-to suggest application-specific vocabularies of actions where the relevant
-properties hold.  Formally, the ACID 2.0 properties are precisely those of the
-least upper bound operator in a {\em join semi-lattice}, which led to a recent
-object-oriented model for defining distributed object classes whose instances
-tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This definition
-is of limited utility: an individual class instance rarely encompasses a
-full-featured program.
+large-scale distributed systems~\cite{Helland2009}.  ACID 2.0 is a framework for
+thinking about programming in which one defines application-specific
+vocabularies of \emph{actions that tolerate reordering}---that is, operations
+that produce the same final outcome regardless of the order in which they occur.
+The acronym reminds us of the desired algebraic properties of the vocabulary:
+Associativity, Commutativity, and Idempotence (the D stands for Distributed
+systems).  These properties are helpful in distributed systems where network
+delays and failures often lead to reordering and a need for retry. Low-level
+Read and Write operations clearly do not satisfy these properties, so work in
+this domain tends to suggest application-specific vocabularies of actions where
+the relevant properties hold.  Formally, the ACID 2.0 properties are precisely
+those of the least upper bound in a \emph{join semilattice}, which led to a
+recent object-oriented model for defining distributed object classes whose
+instances tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This
+definition is of limited utility: an individual class instance rarely
+encompasses a full-featured program.
 
-The key property of semi-lattices is that they grow \emph{monotonically} under
-the action of least upper bound.  The \emph{CALM Theorem} proved that monotonic
-programs admit eventually consistent, coordination-free distributed
+The key property of semilattices is that they describe values that grow
+\emph{monotonically} under the action of least upper bound.  The \emph{CALM
+  Theorem} proved that monotonic programs have eventually consistent,
+coordination-free distributed
 implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  Combining the
 idea of lattice data types with CALM, recent work shows how whole programs can
 be constructed out of multiple lattice instances~\cite{Conway2012}, and a
@@ -312,7 +312,7 @@ intra-transaction parallelism.
 
 \paa{the below is something to shoot holes in}
 
-Our end goal is an adaptible, application-specific embodiment of the best of both ACID traditions in a practical programming language. This language will require program analysis tools to recognize ``true'' conflicts---operations that produce different end states when reordered---and resolve them in a manner appropriate to the application.
+Our end goal is an adaptable, application-specific embodiment of the best of both ACID traditions in a practical programming language. This language will require program analysis tools to recognize ``true'' conflicts---operations that produce different end states when reordered---and resolve them in a manner appropriate to the application.
 
 We observed a similarity between transactions in databases and sessions in distributed systems.  Both represent names for a logical grouping of actions, and mechanisms that control the visibility of these groupings can be used to ensure atomicity (these actions occur together) and isolation (I need not reason about interleavings with other actions).  When these grouping correspond to finite, continguous ranges of real time, they can be used to constructively define (potentially infinite) collections in which partitions grow, become ``sealed,'' and are henceforth immutable.  As we recall from stratified logic programming, nonmonotonic operations against complete inputs produce a single model; similarly, distributed programs that constrain their nonmonotonic deductions to sealed partitions are insensitive to the order in which the contents of those partitions materialized.
  
