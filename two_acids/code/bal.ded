@@ -1,0 +1,14 @@
+# Balance persists at next timestep unless revoked
+bal(X)@next :- bal(X), (*$\neg$*)revoke_bal(X). (*\label{line:neg}*)
+t1_read(X)@T1_R_TIME :- bal(X)@T1_R_TIME.
+t1_write(X+1)@T1_W_TIME :- t1_read(X)@T1_R_TIME.
+
+t2_read(X)@T2_R_TIME :- bal(X)@T2_R_TIME.
+t2_write(X+1)@T2_W_TIME :- t2_read(X)@T2_R_TIME.
+
+# Apply writes to database
+bal(X)@next :- t1_write(X).
+revoke_bal(X) :- t1_write(_), bal(X).
+bal(X)@next :- t2_write(X).
+revoke_bal(X) :- t2_write(_), bal(X).
+
