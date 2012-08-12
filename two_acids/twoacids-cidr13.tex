@@ -152,7 +152,53 @@ Logically, a Write is an atomic pair of actions: the revocation of a previous
 value and the introduction of a new value.  As noted in the literature on
 stateful logic languages~\cite{dedalus,statelog}, mutable state entails
 non-monotonic logic: the persistence of a value depends on it being
-NOT(revoked). What follows is an example of a mutable key-value store ``king'',
+NOT(revoked). The CALM Theorem shows that this non-monotonicity might produce
+different outcomes depending on the order in which operations are scheduled;
+hence, a concurrency control scheme is needed to constrain the allowed operation
+orders to ensure that only serializable schedules are produced.
+
+To make this discussion more concrete, we first show how traditional read/write
+schedules can be encoded in a stateful logic such as Dedalus~\cite{dedalus}. We
+then show how schedules containing only monotonic updates can be executed
+without concurrency control and yet still guarantee serializability. Finally, we
+show that schedules containing a mix of monotonic and non-monotonic updates only
+require concurrency control ``around'' the non-monotonic constructs. We refer to
+this as \emph{Non-Monotone Serializability}.
+
+Consider the classic case of credit/debit ledgers. For the sake of exposition,
+we assume a single account and two transactions, \texttt{T1} and \texttt{T2}.
+For now we assume only credit operations and consider debits shortly. Using
+traditional Read and Write operations, we can model this system using Dedalus as
+follows:
+\begin{quote}
+\emph{// Account balance persists unless revoked and replaced}\\
+bal(X)@next :- bal(X), $\neg$revoke\_bal(X).\\
+\\
+t1\_read(X)@T1\_R\_TIME :- bal(X)@T1\_R\_TIME.\\
+t1\_write(X+1)@T1\_W\_TIME :- t1\_read(X)@T1\_R\_TIME.\\
+\\
+t2\_read(X)@T2\_R\_TIME :- bal(X)@T2\_R\_TIME.\\
+t2\_write(X+1)@T2\_W\_TIME :- t2\_read(X)@T2\_R\_TIME.\\
+\\
+\emph{Apply writes to database}\\
+bal(X)@next :- t1\_write(X).\\
+revoke\_bal(X) :- t1\_write(\_), bal(X).\\
+bal(X)@next :- t2\_write(X).\\
+revoke\_bal(X) :- t2\_write(\_), bal(X).\\
+\end{quote}
+Note that \texttt{p(X)@t} asserts that a fact \texttt{p(X)} is true at time
+\texttt{t}; \texttt{@next} denotes the timestamp that immediately follows the
+timestamp of the body predicates. The special timestamps \texttt{T1\_R\_TIME}
+and related values denote the time at which the read and write operations are
+occur; these are chosen by the scheduler, and hence are non-deterministic. The
+conflicts in this schedule are manifest from the program syntax: negation
+($\neg$ in line X) is non-monotonic. Hence, concurrency control is required to
+select a legal assignment of read and write timestamps.
+
+We can avoid the conflicts in this schedule by employing ACID 2.0 techniques.
+
+\begin{comment}
+ What follows is an example of a mutable key-value store ``king'',
 keyed by country.  We express this using the logic notation of
 Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
 \begin{quote}
@@ -184,6 +230,7 @@ differently, \emph{monotonic logic is conflict-free}.  This suggests a broader
 class of schedules that we can guarantee to be ``conflict''-serializable: those
 in which the non-monotonic conflicts are ordered the same as some serial
 schedule.  We refer to this as \emph{Non-Monotone Serializability}.
+\end{comment}
 
 As an example, consider the classic case of debit/credit ledgers.  We begin with
 the simple case in which all actions are credits. We assume that an account is
@@ -265,14 +312,14 @@ sequence numbers.  Operationally, the order of actions does not need to be
 controlled via a protocol: monotonic programs admit \emph{streaming execution}.
 
 Unfortunately, non-monotonicity is very natural and few interesting programs
-limit themselves to ACID 2.0 operations.\footnote{There is, however, a
-  well-known theoretical result that monotonic logic on an ordered domain can express
-  any polynomial-time computation~\cite{immerman-ptime}.  In our experience to
-  date, this is more intriguing than practical.}  See for instance the focus in
-the eventual consistency literature on Writes, or the focus in the Bloom work on
-non-monotonic ``points of order''~\cite{Alvaro2011}.
-When we extend an ACID 2.0 system with nonmontonic operations, do we spoil the whole batch
-or can we continue to exploit the commutativity properties among certain actions?
+limit themselves to ACID 2.0 operations.\footnote{A well-known theoretical
+  result shows that monotonic logic on an ordered domain can express any
+  polynomial-time computation~\cite{immerman-ptime}.  In our experience to date,
+  this is more intriguing than practical.}  See for instance the focus in the
+eventual consistency literature on Writes, or the focus in the Bloom work on
+non-monotonic ``points of order''~\cite{Alvaro2011}.  When we extend an ACID 2.0
+system with nonmontonic operations, do we spoil the whole batch or can we
+continue to exploit the commutativity properties among certain actions?
 
 %As discussed previously,
 %non-monotonic logic requires ``sealing'' a set of actions.  How is this
@@ -351,13 +398,8 @@ If we write programs in the right language, detecting nonmonotonicity is easy, a
 
 Thus we may choose the appropriate protocols ``just in time'' based upon a given composition; a transactional store exposes the abstraction of transactions, but uses an order-enforcing mechanism like locks to implement them only when the access patterns implied by the application make it necessary. The programmer is forced to provide some extra information---\emph{what} partitions are we sealing; \emph{when} do we seal them?---and in return the compiler synthesizes custom coordination to exclude bad outcomes.  
 
-
-
-%\end{document}  % This is where a 'short' article might terminate
-
 %ACKNOWLEDGMENTS are optional
-\section{Acknowledgments}
-Dave Maier.
+% \section{Acknowledgments}
 
 \bibliographystyle{abbrv}
 \bibliography{cidr}
