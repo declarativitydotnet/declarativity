@@ -19,10 +19,10 @@
 
 \title{{\ttlit Aqua Regia}: A Solution of Two ACIDs\titlenote{\emph{Aqua regia}
     (``royal water'') is a mixture of nitric acid and hydrochloric acid~\cite{aqua-regia}.}}
-\numberofauthors{2}
+\numberofauthors{3}
 \author{
 \alignauthor
-Joseph M.~Hellerstein, Peter~Alvaro, Neil~Conway, William R.~Marczak\\
+Joseph M.~Hellerstein, Peter~Alvaro, Neil~Conway, William~R.~Marczak\\
        \affaddr{UC Berkeley}\\
        % \affaddr{387 Soda Hall \#1776}\\
        % \affaddr{Berkeley, CA 94720-1776  USA}\\
@@ -33,6 +33,10 @@ Alan Fekete\\
        % \affaddr{Building J12}\\
        % \affaddr{NSW 2006, Sydney, Australia}\\
        \email{\small alan.fekete@sydney.edu.au}
+\alignauthor
+David Maier\\
+       \affaddr{Portland State University}\\
+       \email{\small maier@cs.pdx.edu}
 }
 
 \maketitle
@@ -228,6 +232,12 @@ serializable transaction processing. In this section, we use the lens of
 traditional transactional thinking to inform our understanding of disorder in
 distributed systems.
 
+\jmh{One leading question:  Monotonicity (ACID 2.0) guarantees Confluence, and Confluence implies Serializability for any assignment of transaction IDs.  But the other direction isn't true in general: Serializability does not guarantee Confluence -- in fact, it's designed to deal with non-confluence.  So what can Serializability teach us about Distributed Systems?}
+
+\jmh{Alternative leading question: Serializabilty doesn't seem to help much with the main motivation of ACID 2.0: confluent (A.C.) replication. Nor does Serializability have much to do with Idempotence.  So what can Serializability teach us about Distributed Systems?}
+
+\jmh{Answer: Here's a thought: sometimes you can't be ACID 2.0.  In those cases, maybe the ideas of Atomicity and Isolation could be useful for making sense of ``real'' programs that have to occasionally compromise on ACID 2.0.}
+
 Many discussions of distributed concurrency are couched in the language of
 \emph{eventual consistency}~\cite{Terry1995} and a concern for the ordering of
 applying actions redundantly across replicated state.  Replication and
@@ -289,7 +299,7 @@ sealed via checkout.
 
 Distributed application designers routinely partition messages into finite
 sessions, and partially order the messages within a session: at minimum the
-``action'' messages proceed the ``end-of-session message'' in a partial order.
+``action'' messages precede the ``end-of-session message'' in a partial order.
 So what is a session?  Given a set of individual actions, sessions are defined
 by partitioning the actions via assignment of a key (the session ID), and
 partially ordering the actions within each session via some subsidiary partial
@@ -318,6 +328,7 @@ equivalent to any serial schedule over sessions.
 
 
 \section{The Vision}
+\jmh{Original notes:}  
 Application-specific ACID.  Understand ``true'' conflicts.  Highlight the need
 for ``slicing'' into ``batches''.  Guide the application toward an efficient,
 useful choice of batches and barriers.
