@@ -171,7 +171,7 @@ For now we assume only credit operations and consider debits shortly. Using
 traditional Read and Write operations, we can model this system using Dedalus as
 follows:
 \begin{quote}
-\emph{// Account balance persists unless revoked and replaced}\\
+\emph{// Balance persists at next timestep unless revoked}\\
 bal(X)@next :- bal(X), $\neg$revoke\_bal(X).\\
 \\
 t1\_read(X)@T1\_R\_TIME :- bal(X)@T1\_R\_TIME.\\
@@ -180,7 +180,7 @@ t1\_write(X+1)@T1\_W\_TIME :- t1\_read(X)@T1\_R\_TIME.\\
 t2\_read(X)@T2\_R\_TIME :- bal(X)@T2\_R\_TIME.\\
 t2\_write(X+1)@T2\_W\_TIME :- t2\_read(X)@T2\_R\_TIME.\\
 \\
-\emph{Apply writes to database}\\
+\emph{// Apply writes to database}\\
 bal(X)@next :- t1\_write(X).\\
 revoke\_bal(X) :- t1\_write(\_), bal(X).\\
 bal(X)@next :- t2\_write(X).\\
@@ -195,7 +195,48 @@ conflicts in this schedule are manifest from the program syntax: negation
 ($\neg$ in line X) is non-monotonic. Hence, concurrency control is required to
 select a legal assignment of read and write timestamps.
 
-We can avoid the conflicts in this schedule by employing ACID 2.0 techniques.
+We can avoid the conflicts in this schedule by making updates monotonic. In a
+credit-only system, the balance is a monotonically increasing number; hence, we
+can model the account balance as a join semilattice with a least upper bound
+(``$\sqcup$'') that takes the largest balance proposed so
+far~\cite{Conway2012}. This \emph{replaces} the previous non-monotonic
+persistence rule: rather than revoking and asserting new account balances,
+instead the balance will grow as more credit operations are received.
+\begin{quote}
+\emph{// Balance is least upper bound of proposed credits}
+bal(X)@n :- $\sqcup_{i=0}^n$ proposed\_bal(\_, X)@i.
+
+proposed\_bal(``T1'', X + 1)@next :- bal(X)@T1\_W\_TIME.
+proposed\_bal(``T2'', X + 1)@next :- bal(X)@T2\_W\_TIME.
+\end{quote}
+Because this program contains only monotonic constructs, the CALM Theorem
+certifies that it is deterministic regardless of the timestamps that are
+assigned to the write operations; thus, it can safely be executed without
+concurrency control. Said differently, \emph{monotone logic is conflict-free}.
+
+We now consider how to support debit operations that succeed only if the account
+would remain liquid: ``conflicts'' can arise between the liquidity checks of
+debits and credits, so we must establish ordering constraints for each debit
+with respect to preceding credits.  However, the order among credits remains
+irrelevant---the only order that matters relates to the non-monotone operator
+``debit.'' Because a debit 
+
+Surprisingly, we can make debits monotonic by maintaining a separate ``debit
+ledger''; both debit and credit ledgers would then grow monotonically. However,
+checking the liquidity of an account is \emph{not} monotonic because subtracting
+one monotonically increasing number from another does not, in general, yield a
+monotonically increasing result. This design moves the coordination cost from
+debit operations to liquidity checks, at the expense of allowing some debits to
+be performed on illiquid accounts; nevertheless, similar designs are often
+employed in practice (\nrc{CITE?}).
+
+In short, we can constrain the notion of conflicting Read/Write actions to a
+language-extensible notion of non-monotone actions.  Said positively, we can
+broaden the notion of tolerating Read reordering to the one of tolerating the
+reordering of any monotone operations.  With an application-specific vocabulary
+of actions, this Non-Monotone Serializability can allow a much broader set of
+serializable schedules than Conflict Serializability of low-level Reads and
+Writes.
 
 \begin{comment}
  What follows is an example of a mutable key-value store ``king'',
@@ -230,7 +271,6 @@ differently, \emph{monotonic logic is conflict-free}.  This suggests a broader
 class of schedules that we can guarantee to be ``conflict''-serializable: those
 in which the non-monotonic conflicts are ordered the same as some serial
 schedule.  We refer to this as \emph{Non-Monotone Serializability}.
-\end{comment}
 
 As an example, consider the classic case of debit/credit ledgers.  We begin with
 the simple case in which all actions are credits. We assume that an account is
@@ -263,14 +303,7 @@ conflicts across acctIds, which can be determined via analyzing the program
 logic: the grouping of balance by acctID \emph{partitions} the ledger.  This
 partitioning is akin to the partitioning of Reads and Writes, which conflict
 only if they are on the same object.
-
-In short, we can constrain the notion of conflicting Read/Write actions to a
-language-extensible notion of non-monotone actions.  Said positively, we can
-broaden the notion of tolerating Read reordering to the one of tolerating the
-reordering of any monotone operations.  With an application-specific vocabulary
-of actions, this Non-Monotone Serializability can allow a much broader set of
-serializable schedules than Conflict Serializability of low-level Reads and
-Writes.
+\end{comment}
 
 \section{Blended ACID}
 In the previous section, we showed how to import the ACID 2.0 idea of
