@@ -58,8 +58,8 @@ class CompleteLedger
     d_balance <= d_ledger.apply_morph(:pos_sum)
 
     account <= c_balance.key_set.to_collection
-    # Compute account liquidity. Note that this is non-monotonic because we need
-    # to peak at the underlying values (via the reveal method).
+    # Compute account liquidity. Note that this is non-monotonic because we
+    # peek at the underlying values (via the reveal method).
     liquid_status <= account {|a| [a.id, c_balance.at(a.id).reveal >= d_balance.at(a.id).reveal] }
   end
 end
