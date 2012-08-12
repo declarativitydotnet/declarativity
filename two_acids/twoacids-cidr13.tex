@@ -216,10 +216,15 @@ concurrency control. Said differently, \emph{monotone logic is conflict-free}.
 
 We now consider how to support debit operations that succeed only if the account
 would remain liquid: ``conflicts'' can arise between the liquidity checks of
-debits and credits, so we must establish ordering constraints for each debit
-with respect to preceding credits.  However, the order among credits remains
-irrelevant---the only order that matters relates to the non-monotone operator
-``debit.'' Because a debit 
+debits and credits. From the ACID 2.0 perspective, debits can introduce
+conflicts because they are non-monotonic: monotone operations can only cause the
+\texttt{bal} lattice to increase. Hence, we must establish ordering constraints
+for each debit with respect to preceding credits.  However, the order among
+credits remains irrelevant---the only order that matters relates to the
+non-monotone operator ``debit.'' Importantly, the non-monotonicity of debits is
+clear from the program syntax; hence, a compiler can observe the presence of a
+potentially conflicting operation, and insert the necessary
+coordination~\cite{Alvaro2011}.
 
 Surprisingly, we can make debits monotonic by maintaining a separate ``debit
 ledger''; both debit and credit ledgers would then grow monotonically. However,
