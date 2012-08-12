@@ -48,13 +48,13 @@ Alan Fekete\\
 
   We propose rethinking distributed concurrency from the application viewpoint
   and present a solution blended from both ACIDs.  We begin by combining the
-  notion of Conflict Serializability with CALM analysis, to propose a general
+  notion of conflict serializability with CALM analysis, to propose a general
   notion of \emph{Non-Monotone Serializability}.  We then look toward a
   ``system-free'' future, in which software developers write applications with
-  transactional assumptions and a compiler uses program analysis to synthesize
-  a solution of low-level code that (a) allows a broad range of
-  application-level monotonic concurrency, and (b) produces application-specific
-  concurrency control for essential non-monotonic conflicts.
+  transactional assumptions and a compiler uses program analysis to synthesize a
+  solution of low-level code that (a) allows a broad range of application-level
+  monotonic concurrency, and (b) produces application-specific concurrency
+  control for essential non-monotonic conflicts.
 \end{abstract}
 
 \section{Introduction}
@@ -136,21 +136,21 @@ Serializability has a declarative definition: it encompasses those interleavings
 that produce an outcome equivalent to a serial execution of transactions.  In
 practice, the more conservative notion of \emph{conflict serializability} is
 used, which \emph{constrains the ordering of actions} across transactions:
-actions \emph{conflict} if they access the same data item and one of them is a
+actions conflict if they access the same data item and one of them is a
 Write~\cite{Eswaran1976}.  Since an individual transaction is classically a
 sequential program, conflicts are only considered between actions across
 transactions.
 
 Viewed through the lens of ACID 2.0, we might say this differently.  Conflict
-serializability allows two Reads of a given object to be executed in any order,
+serializability allows two Reads of a given object to be executed in any order
 but constrains the ordering of Writes. Why can Writes not be reordered freely?
 Logically, a Write is an atomic pair of actions: the revocation of a previous
 value and the introduction of a new value.  As noted in the literature on
-stateful logics~\cite{dedalus,statelog}, mutable state entails non-monotonic
-logic: the persistence of a value depends on it being NOT(revoked).  What
-follows is an example of a mutable key-value store ``king'', keyed by country.
-We express this using the logic notation of Dedalus~\cite{dedalus}, which
-exposes the inherent non-monotonicity:
+stateful logic languages~\cite{dedalus,statelog}, mutable state entails
+non-monotonic logic: the persistence of a value depends on it being
+NOT(revoked). What follows is an example of a mutable key-value store ``king'',
+keyed by country.  We express this using the logic notation of
+Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
 \begin{quote}
 	\emph{// Define read: each item of the set king: }\\
 	read(C,K) :- king(C,K)\\
