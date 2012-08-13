@@ -1,0 +1,9 @@
+# Balance is least upper bound of proposed credits over time.
+bal(Acct, Val $\sqcup$ New)@next :- bal(Acct, Val), proposed(Acct, New).
+
+# reads as in Figure 1
+read(Acct, Val, Xid) :- bal(Acct, Val), sched_R(Acct, Xid).
+
+# At each timestep, propose the least upper bound of credits.
+proposed(Acct, $\bigsqcup$(New)) :- read(Acct, _, Xid), 
+                          sched_W(Acct, New, Xid).
