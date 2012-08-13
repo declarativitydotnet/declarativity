@@ -96,13 +96,6 @@ David Maier\\
 \end{abstract}
 
 \section{Introduction}
-\jmh{Background: ACID was defined in an era of uniprocessors and low-level sequential languages---simple compilers, and carefully layered monolithic software.  Focus on von Neumann read/write formal analysis and its implications for concurrency control.  ACID 2.0 was defined in an era of distributed systems and componentized services, but still programmed with relatively low-level sequential languages.  Hence focus on software design maxims and programmer enforcement of properties.}
-
-\jmh{Pivot: Basis from previous work.  In our recent work on the CALM theorem and Bloom language we demonstrated new language design and compiler technology that can inform and generate custom, application-aware custom systems infrastructure.  We can now automatically analyze program semantics and identify software subsystems that run naturally in distributed systems: wait-free parallel and replicated for fault tolerance.}
-
-\jmh{So -- what are the implications of this work on distributed systems and in particular on concurrency control?  We've argued previously that CALM analysis makes ACID 2.0 formally enforceable and actionable, and recently more familiar and programmable.  But can this data-oriented compiler technology enrich our understanding of traditional ACID transactions?  And what can we borrow from ACID transactions to inform these new language technologies?  And as we leave sequential read/write interfaces behind, perhaps it's time to embrace ``bespoke systems'': software automatically tailored to application needs.}
-
-
 Concurrency is an evergreen problem in computer systems, which has regained a
 great deal of interest in the recent era of wide-area distributed systems and
 cloud computing.  There are two scientific traditions in this area that have
@@ -110,49 +103,33 @@ been dubbed with the mnemonic \textsf{ACID}, and for each there is an
 accompanying theory that codifies the tradition formally and leads to useful
 engineering techniques.
 
-The first tradition is the classic notion of \textsf{ACID} database
-transactions, formalized by the theory of \emph{serializability}~\cite{Papadimitriou1979}.
-As is well known, a transaction is a sequence of actions, and serializability
-constrains the admissible interleavings of actions across transactions.  The
-declarative definition of serializability famously led to a host of protocols to
-\emph{enforce orderings of actions across transactions}, satisfying
-(conservatively) the constraints of serializability.  These protocols are
-defined over transactions that follow the traditional von Neumann notion of
-computation: a sequential program issuing Reads and Writes to a mutable store.
-These ideas have been exhaustively studied in research and translated into
-practice.
+The original notion of ACID transactions---and its foundation in serializability theory---was defined in an era of limited physical concurrency and low-level sequential languages.  Software engineering at that time focused on carefully layered monolithic software, and compilers focused on low-level performance optimizations rather than higher-level static analysis for semantic guarantees.  In the spirit of generality, Serializability captured the low-level von Neumann model of computation prevalent at the time: a single sequential program issuing a series of Reads and Writes to a mutable store.  As a result, practical work on serializability focuses on \emph{enforcing orderings of Reads and Writes} across transactions.
 
-The second tradition, recently dubbed \textsf{ACID 2.0}, arose in the world of
-large-scale distributed systems~\cite{Helland2009}.  ACID 2.0 is a framework for
-thinking about programming in which one defines application-specific
-vocabularies of \emph{actions that tolerate reordering}---that is, operations
-that produce the same final outcome regardless of the order in which they occur.
-The acronym reminds us of the desired algebraic properties of the vocabulary:
-Associativity, Commutativity, and Idempotence (the D stands for Distributed
-systems).  These properties are helpful in distributed systems where network
+Work on ACID 2.0 was developed in the context of distributed systems and componentized services, and attempts to address programming at a higher level of abstraction.  Specifically,  it encourages programmers to define application-specific vocabularies of \emph{actions that tolerate reordering}---that is, operations
+that produce the same final outcome regardless of the order in which they occur.  
+Unfortunately, most work on ACID 2.0 assumes programmers are still using relatively low-level sequential languages, and compilers that have limited ability to assess program semantics relevant to distributed systems issues.  Our recent work on the CALM theorem showed how database theory regarding Monotonicity can be used to formalize ACID 2.0 maxims~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}, and our work on Bloom showed how language design and compiler technology can use that theory to automatically inform and generate custom, application-aware systems infrastructure~\cite{Alvaro2011}.  
+
+At this point, with the theory behind ACID 2.0 maturing and computing moving to the cloud, we believe it is time to examine theoretical and practical questions that emerge from these two ACID traditions. Can our understanding of ACID 2.0 via the CALM theorem inform the original goals of ACID transaction?  Are there lessons from ACID that can inform design and program analysis in distributed computing?  And given the radical change in computing platforms in the last half-century, is it not time to change our design philosophy from one that focuses on layered systems to one that focuses on application-aware compilation of custom code?
+
+\subsection{Brief Update: CRDTs, CALM and Bloom}
+The basics of traditional ACID transactions are well known, but ACID 2.0 is an idea in evolution.  Hence we pause to briefly survey the field.  The ACID 2.0 acronym reminds us of the desired algebraic properties of a reorderable vocabulary: Associativity, Commutativity, and Idempotence (the D stands for Distributed systems).  These properties are helpful in distributed systems where network
 delays and failures often lead to reordering and a need for retry. Low-level
 Read and Write operations clearly do not satisfy these properties, so work in
 this domain tends to suggest application-specific vocabularies of actions where
 the relevant properties hold.  Formally, the ACID 2.0 properties are precisely
 those of the least upper bound in a \emph{join semilattice}, which led to a
 recent object-oriented model for defining distributed object classes whose
-instances tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This
-definition is of limited utility: an individual class instance rarely
+instances tolerate reordering and retry called Convergent Replicated Data Types (CRDTs)~\cite{Shapiro2011a,Shapiro2011b}.  CRDTs are of limited utility, however, since an individual class instance rarely
 encompasses a full-featured program.
+
 
 The key property of semilattices is that they describe values that grow
 \emph{monotonically} under the action of least upper bound.  The \emph{CALM
   Theorem} proved that monotonic programs have eventually consistent,
 coordination-free distributed
-implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  Combining the
-idea of lattice data types with CALM, recent work shows how whole programs can
-be constructed out of multiple lattice instances~\cite{Conway2012}, and a
-compiler can (conservatively) check the program for monotonicity and introduce
-coordination in front of non-monotonic operations.  Since this is a new result,
-we give familiar examples below.
+implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  This translated some key maxims of the ACID 2.0 literature into a robust theory.  The Bloom language~\cite{Alvaro2011} embodied these ideas into a programming language and static analysis techniques. Bloom programmers write high-level programs over collections of unordered data.  By default, the order of statements and data structures in Bloom is left unspecified by the programmer, maximizing runtime latitude for parallelism and asynchrony.  A CALM-based program analysis technique examines the program statically to identify non-monotonic constructs in the program; these ``points of order'' need to be controlled via a coordination protocol to ensure deterministic behavior.  In recent work combining the idea of lattice data types with CALM, we extended Bloom to support complex programs constructed out of simple lattice instances composed 
+with monotone operators; CALM analysis can then check for monotonicity and points of order in a manner that takes into account the ACID 2.0 properties of the lattices and their compositions~\cite{Conway2012}.  Since this is a new result, we give familiar examples of this idea below.  However, in order to highlight the non-monotonicity in our examples, we do not use Bloom syntax; instead, we use the formal logic Dedalus~\cite{dedalus} that is the basis of Bloom.
 
-In this paper we consider how these different ACID traditions can inform each
-other.
 
 \section{Non-Monotone Serializability}
 We begin by applying ACID 2.0 ideas to traditional ACID.  Specifically, we use the CALM theorem to enable static program analysis that can extract a range of semantically-aware serializable schedules---including schedules that would be forbidden by traditional Read/Write transaction protocols.

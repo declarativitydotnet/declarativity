@@ -1,0 +1,184 @@
+The key property of semilattices is that they describe values that grow
+\emph{monotonically} under the action of least upper bound operator.  The \emph{CALM
+  Theorem} proved that monotonic logic programs have eventually consistent,
+coordination-free distributed
+implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  Combining the
+idea of lattice data types with CALM, in our recent work we showed how whole programs can
+be constructed out of simple lattice instances composed with monotone functions.  Moreover, we showed that a
+compiler can (conservatively) check these extended lattice-logic programs for monotonicity, and introduce
+coordination in front of non-monotonic operations~\cite{Conway2012}.  Since this is a new result,
+we give familiar examples below.
+
+\jmh{OOPS WHERE DID BLOOM GO?}
+
+
+In recent results we showed that the notion of Monotonicity applies not only to set logic but to arbitrary lattices, leading to an extension of Bloom that enables CRDTs to be plugged into the whole-program analysis afforded by CALM.
+
+
+
+\jmh{So -- what are the implications of this work on distributed systems and in particular on concurrency control?  We've argued previously that CALM analysis makes ACID 2.0 formally enforceable and actionable, and recently more familiar and programmable.  But can this data-oriented compiler technology enrich our understanding of traditional ACID transactions?  And what can we borrow from ACID transactions to inform these new language technologies?  And as we leave sequential read/write interfaces behind, perhaps it's time to embrace ``bespoke systems'': software automatically tailored to application needs.}
+
+
+The first tradition is the classic notion of \textsf{ACID} database
+transactions, formalized by the theory of \emph{serializability}~\cite{Papadimitriou1979}.
+As is well known, a transaction is a sequence of actions, and serializability
+constrains the admissible interleavings of actions across transactions.  The
+declarative definition of serializability famously led to a host of protocols to
+\emph{enforce orderings of actions across transactions}, satisfying
+(conservatively) the constraints of serializability.  These protocols are
+defined over transactions that follow the traditional von Neumann notion of
+computation: a sequential program issuing Reads and Writes to a mutable store.
+These ideas have been exhaustively studied in research and translated into
+practice.
+
+The second tradition, recently dubbed \textsf{ACID 2.0}, arose in the world of
+large-scale distributed systems~\cite{Helland2009}.  ACID 2.0 is a framework for
+thinking about programming in which one defines application-specific
+vocabularies of \emph{actions that tolerate reordering}---that is, operations
+that produce the same final outcome regardless of the order in which they occur.
+The acronym reminds us of the desired algebraic properties of the vocabulary:
+Associativity, Commutativity, and Idempotence (the D stands for Distributed
+systems).  These properties are helpful in distributed systems where network
+delays and failures often lead to reordering and a need for retry. Low-level
+Read and Write operations clearly do not satisfy these properties, so work in
+this domain tends to suggest application-specific vocabularies of actions where
+the relevant properties hold.  Formally, the ACID 2.0 properties are precisely
+those of the least upper bound in a \emph{join semilattice}, which led to a
+recent object-oriented model for defining distributed object classes whose
+instances tolerate reordering and retry~\cite{Shapiro2011a,Shapiro2011b}.  This
+definition is of limited utility: an individual class instance rarely
+encompasses a full-featured program.
+
+
+\begin{comment}
+At the risk of over-simplifying, ACID transactions are often thought of
+as an \emph{inter-transaction} approach, realized by \emph{enforcing an order}
+that satisfies serializability.  ACID 2.0 can be thought of as an
+\emph{intra-transaction} approach that \emph{tolerates disorder} when
+non-deterministic orders result in deterministic outcomes.  This is not a
+precise characterization as we discuss below, but it is useful for framing
+discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
+  seems to me that the transactional abstraction lets you write ordered programs
+  and gives a guarantee of an *extension* of that order in a "correct" global
+  schedule, whereas calm asks for unordered programs and in return gives correct
+  executions.  *both* allow the programmer to not explicitly reason about
+  inter-xact interleavings.} \jmh{Are you equating CALM with pure monotonicity?
+  Because Bloom, with non-monotonicity, does not help reasoning transactionally.
+  As I discuss below, pure monotonicity is trivially serializable, but that
+  doesn't really help think about most transactions.}
+\end{comment}
+
+
+
+
+
+
+Distributed system designs that do not obey ACID 2.0 face a conundrum: they have liveness criteria that requires them to be responsive, but they also have sets they need to seal, but 
+
+Much of the discussion of CALM to date centered on the idea of \emph{protecting} points of order via protocols for waiting until a set is known by all participants to be complete.  Transactions propose a different approach: \emph{enforce} a point of order
+
+ requires \emph{sealing} the contents of a set as of a point in time so that it does not change.  Prior work on CALM analysis proposes that sets be sealed only when the system knows their contents are fully complete.  
+
+comes from facing the realities of distributed programming: essentially no systems of note are constructed solely of monotonic, reorderable logic\footnote{A well-known theoretical
+  result shows that monotonic logic on an ordered domain can express any
+  polynomial-time computation~\cite{immerman-ptime}.  However, in our experience to date,
+  this is more intriguing than practical.}.  ACID 2.0 is a nice design principal for components, but at some point, a distributed system typically needs to embrace non-monotonic logic.
+
+
+
+
+
+
+\jmh{One leading question:  Monotonicity (ACID 2.0) guarantees Confluence, and Confluence implies Serializability for any assignment of transaction IDs.  But the other direction isn't true in general: Serializability does not guarantee Confluence -- in fact, it's designed to deal with non-confluence.  So what can Serializability teach us about Distributed Systems?}
+
+\jmh{Alternative leading question: Serializabilty doesn't seem to help much with the main motivation of ACID 2.0: confluent (A.C.) replication. Nor does Serializability have much to do with Idempotence.  So what can Serializability teach us about Distributed Systems?}
+
+\jmh{Answer: Here's a thought: sometimes you can't be ACID 2.0.  In those cases, maybe the ideas of Atomicity and Isolation could be useful for making sense of ``real'' programs that have to occasionally compromise on ACID 2.0.}
+
+Many discussions of distributed concurrency are couched in the language of
+\emph{eventual consistency}~\cite{Terry1995} and a concern for the ordering of
+applying actions redundantly across replicated state.  Replication and
+redundancy~\paa{in this context, what's the diff?} are key mechanisms for availability and latency reduction in
+distributed systems.  Traditionally, discussions of eventual consistency
+constrain the diversity in the order of conflicting actions across replicas:
+e.g., ``last writer wins'', ``read your writes'', and so on~\cite{Terry1994}.
+These constraints limit the kinds of races that low-level programmers need to
+consider to ensure desirable application semantics.  ACID 2.0 argues for using
+order-insensitive actions, which ensures eventual consistency, since any
+ordering of all the actions produces the same result as any other.
+
+Missing from most of these discussions is the notion of transactions; ACID 2.0
+is typically defined on a set of individual actions.  But what would a
+transaction look like in this context?  Given a set of individual actions,
+transactions are defined by partitioning those actions via assigning each a key
+(the transaction ID), and ordering the actions within each transactions via a
+subsidiary sequence number.  Note that for a set of ACID 2.0 operations, any
+order is equivalent to any other, so the sequence number within a transaction is
+irrelevant, and the interleaving across transactions is also irrelevant.  In
+some sense, \emph{any schedule of ACID 2.0 actions is serializable}, in the
+sense that it is equivalent to some (in fact, to \emph{any}) interleaving of
+actions, regardless of the assignment of partitioning keys and ordering by
+sequence numbers.  Operationally, the order of actions does not need to be
+controlled via a protocol: monotonic programs admit \emph{streaming execution}.
+
+Unfortunately, non-monotonicity is very natural and few interesting programs
+limit themselves to ACID 2.0 operations.\footnote{A well-known theoretical
+  result shows that monotonic logic on an ordered domain can express any
+  polynomial-time computation~\cite{immerman-ptime}.  In our experience to date,
+  this is more intriguing than practical.}  See for instance the focus in the
+eventual consistency literature on Writes, or the focus in the Bloom work on
+non-monotonic ``points of order''~\cite{Alvaro2011}.  When we extend an ACID 2.0
+system with nonmontonic operations, do we spoil the whole batch or can we
+continue to exploit the commutativity properties among certain actions?
+
+%As discussed previously,
+%non-monotonic logic requires ``sealing'' a set of actions.  How is this
+%typically done in practice?
+
+Recall that the logic programming paradigm commonly requires that we
+``seal'' (or stop adding to) certain collections before we evaluate non-monotonic operators
+over them.
+Thus operationally, non-monotonicity implies \emph{blocking execution}. 
+%%This is done
+%%routinely in distributed systems in an operational fashion.  
+Analogous patterns are common in distributed systems.
+A classic example
+is an ``end-of-session'' token with a sequence number: it indicates the count of
+messages in the session as sealed by a sender, so that a receiver can know when
+it has received all messages in the session.  Or from the receiver's point of
+view, until it receives an end-of-session token, it cannot proceed based on the
+results of the session: the session is ``open'' while it is ``NOT(closed)''.
+Among the operations in an open session, they can be ACID 2.0.  For example, in
+a shopping cart scenario, a ledger of adds and deletes to the cart tolerates
+reordering, and the ``checkout'' message is what seals the ledger and hence the
+final cart contents.  Fulfillment logic must block until the cart contents are
+sealed via checkout.
+
+Distributed application designers routinely partition messages into finite
+sessions, and partially order the messages within a session: at minimum the
+``action'' messages precede the ``end-of-session message'' in a partial order.
+So what is a session?  Given a set of individual actions, sessions are defined
+by partitioning the actions via assignment of a key (the session ID), and
+partially ordering the actions within each session via some subsidiary partial
+order.  Looking above \emph{sessions and transactions are nearly the same
+  thing}: a session is simply a transaction in which the ACID 2.0 operations
+tolerate any order.  The only real difference is the serializability constraint
+on transactions, which is not typically required across sessions in a
+distributed system.
+
+Now, some partitionings of actions into sessions are fully independent: no two
+online shopping carts share state, for example.  In such cases, interleaving
+across sessions is irrelevant, even if the actions within an open session are
+not ACID 2.0.  When two sessions do share state---for example, if we model
+inventory in our shopping program---then we need to worry about the order of
+interleavings.
+
+In short, there is very little difference between the question of conflict
+serializability and the concurrency control concerns of distributed systems.
+Pure ACID 2.0 provides serializability because it has no conflicts.  The use of
+non-monotonic operators (non-ACID 2.0) requires sessionization to ``seal'' sets
+and enable forward progress; this introduces partial orders of actions within a
+session, and raises the potential for conflicting actions across sessions.  If
+these conflicting actions are allowed to ``race'' in a way that results in a
+cyclic conflict graph, the results are non-deterministic and may not be
+equivalent to any serial schedule over sessions.
