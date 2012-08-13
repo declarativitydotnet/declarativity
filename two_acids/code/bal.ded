@@ -8,5 +8,5 @@ bal(Acct, New)@next :- write(Acct, New, _).
 
 # Simple transaction logic with scheduler interface 
 read(Acct, Val, Xid) :- bal(Acct, Val), sched_R(Acct, Xid).
-write(Acct, New) :- read(Acct, _, Xid), sched_W(Acct, New, Xid). (*\label{line:write_req}*)
+write(Acct, New, Xid) :- read(Acct, _, Xid), sched_W(Acct, New, Xid). (*\label{line:write_req}*)
 

@@ -21,7 +21,7 @@ numberstyle=\ttfamily,      % the size of the fonts that are used for the line-n
 stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
 %numbersep=10pt,                  % how far the line-numbers are from the code
 breakindent=0pt,
-firstnumber=0,
+firstnumber=1,
 %backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
 showspaces=false,               % show spaces adding particular underscores
 showstringspaces=false,         % underline spaces within strings
@@ -103,23 +103,29 @@ been dubbed with the mnemonic \textsf{ACID}, and for each there is an
 accompanying theory that codifies the tradition formally and leads to useful
 engineering techniques.
 
-The original notion of ACID transactions---and its foundation in serializability theory---was defined in an era of limited physical concurrency and low-level sequential languages.  Software engineering at that time focused on carefully layered monolithic software, and compilers focused on low-level performance optimizations rather than higher-level static analysis for semantic guarantees.  In the spirit of generality, Serializability captured the low-level von Neumann model of computation prevalent at the time: a single sequential program issuing a series of Reads and Writes to a mutable store.  As a result, practical work on serializability focuses on \emph{enforcing orderings of Reads and Writes} across transactions.
+The original notion of ACID transactions---and its foundation in serializability theory---was defined in an era of limited physical concurrency and low-level sequential languages.  Software engineering at that time focused on carefully layered monolithic software, and compilers focused on low-level performance optimizations rather than higher-level static analysis for semantic guarantees.  In the spirit of generality, serializability captured the low-level von Neumann model of computation prevalent at the time: a single sequential program issuing a series of Reads and Writes to a mutable store.  As a result, practical work on serializability focuses on \emph{enforcing orderings of Reads and Writes} across transactions.
 
 Work on ACID 2.0 was developed in the context of distributed systems and componentized services, and attempts to address programming at a higher level of abstraction.  Specifically,  it encourages programmers to define application-specific vocabularies of \emph{actions that tolerate reordering}---that is, operations
 that produce the same final outcome regardless of the order in which they occur.  
-Unfortunately, most work on ACID 2.0 assumes programmers are still using relatively low-level sequential languages, and compilers that have limited ability to assess program semantics relevant to distributed systems issues.  Our recent work on the CALM theorem showed how database theory regarding Monotonicity can be used to formalize ACID 2.0 maxims~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}, and our work on Bloom showed how language design and compiler technology can use that theory to automatically inform and generate custom, application-aware systems infrastructure~\cite{Alvaro2011}.  
+Unfortunately, most work on ACID 2.0 assumes programmers are still using relatively low-level sequential languages and compilers that have limited ability to assess program semantics relevant to distributed systems issues.  Our recent work on the CALM theorem showed how database theory regarding monotonicity can be used to formalize ACID 2.0 maxims~\cite{Alvaro2011,Ameloot2011,Conway2012,Hellerstein2010}, and our work on Bloom showed how language design and compiler technology can use that theory to automatically inform and generate custom, application-aware systems infrastructure~\cite{Alvaro2011}.  
 
-At this point, with the theory behind ACID 2.0 maturing and computing moving to the cloud, we believe it is time to examine theoretical and practical questions that emerge from these two ACID traditions. Can our understanding of ACID 2.0 via the CALM theorem inform the original goals of ACID transaction?  Are there lessons from ACID that can inform design and program analysis in distributed computing?  And given the radical change in computing platforms in the last half-century, is it not time to change our design philosophy from one that focuses on layered systems to one that focuses on application-aware compilation of custom code?
+At this point, with the theory behind ACID 2.0 maturing and computing moving to the cloud, we believe it is time to examine theoretical and practical questions that emerge from these two ACID traditions. Can our understanding of ACID 2.0 via the CALM theorem inform the original goals of ACID transactions?  Are there lessons from ACID that can inform design and program analysis in distributed computing?  And given the radical change in computing platforms in the last half-century, is it not time to change our design philosophy from one that focuses on layered systems to one that focuses on application-aware compilation of custom code?
 
 \subsection{Brief Update: CRDTs, CALM and Bloom}
-The basics of traditional ACID transactions are well known, but ACID 2.0 is an idea in evolution.  Hence we pause to briefly survey the field.  The ACID 2.0 acronym reminds us of the desired algebraic properties of a reorderable vocabulary: Associativity, Commutativity, and Idempotence (the D stands for Distributed systems).  These properties are helpful in distributed systems where network
-delays and failures often lead to reordering and a need for retry. Low-level
-Read and Write operations clearly do not satisfy these properties, so work in
-this domain tends to suggest application-specific vocabularies of actions where
-the relevant properties hold.  Formally, the ACID 2.0 properties are precisely
-those of the least upper bound in a \emph{join semilattice}, which led to a
-recent object-oriented model for defining distributed object classes whose
-instances tolerate reordering and retry called Convergent Replicated Data Types (CRDTs)~\cite{Shapiro2011a,Shapiro2011b}.  CRDTs are of limited utility, however, since an individual class instance rarely
+The basics of traditional ACID transactions are well known, but ACID 2.0 is an
+idea in evolution.  Hence we pause to briefly survey the field.  The ACID 2.0
+acronym reminds us of the desired algebraic properties of a reorderable
+vocabulary: Associativity, Commutativity, and Idempotence (the D stands for
+Distributed systems).  These properties are helpful in distributed systems where
+network delays and failures often lead to reordering and a need for
+retry. Low-level Read and Write operations clearly do not satisfy these
+properties, so work in this domain tends to suggest application-specific
+vocabularies of actions where the relevant properties hold.  Formally, the ACID
+2.0 properties are precisely those of the least upper bound in a \emph{join
+  semilattice}, which led to recent work on Convergent Replicated Data Types
+(CRDTs)~\cite{Shapiro2011a,Shapiro2011b}, an object-oriented model for defining
+distributed object classes whose instances tolerate reordering and retry. CRDTs
+are of limited utility, however, since an individual class instance rarely
 encompasses a full-featured program.
 
 
@@ -137,7 +143,7 @@ We begin by applying ACID 2.0 ideas to traditional ACID.  Specifically, we use t
 Recall that pure serializability has a declarative definition: it encompasses all interleavings
 that produce an outcome equivalent to a serial execution of transactions.  In
 practice, the more conservative notion of conflict serializability has typically
-used, which \emph{constrains the ordering of actions} across transactions:
+been used, which \emph{constrains the ordering of actions} across transactions:
 actions conflict if they access the same data item and one of them is a
 Write~\cite{Eswaran1976}.  
 % Since an individual transaction is classically a
@@ -189,7 +195,7 @@ Hence, a compiler for this language---or for a more programmer-friendly language
 
 However the writes in this program induce what we might call ``false conflicts'': in a credit-only program, balances grow monotonically, so it should in some way be OK to reorder writes.  We can avoid these false conflicts by better exposing the monotonicity of our balance updates in application logic. We
 can model the account balance as an instance of an object class (a join semilattice) with a monotonic merge method ``$\sqcup$'' (least upper bound)~\cite{Conway2012}. Using this idea, we can replace the previous non-monotonic persistence rule: rather than revoking old account balances,
-we say simply that the balance object grows as more credit operations are merged into it\footnote{The choice of a merge method is pluggable, as long as it is associative, commutative and idempotent. Note that addition is not idempotent.  To capture typical credit ledger logic, the \texttt{proposed} values can use a custom lattice data type that pairs a nonce and an integer, and a merge function that essentially removes duplicates by nonce.  Bloom supports the registration and validation of such data types~\cite{Conway2012}.}.  We can capture this in version of Dedalus that includes a merge method, as in Figure~\ref{fig:lattice_balance}.
+we say simply that the balance object grows as more credit operations are merged into it.\footnote{The choice of a merge method is pluggable, as long as it is associative, commutative, and idempotent. Note that addition is not idempotent.  To capture typical credit ledger logic, the \texttt{proposed} values can use a custom lattice data type that pairs a nonce and an integer, and a merge function that essentially removes duplicates by nonce.  Bloom supports the registration and validation of such user-defined lattice data types~\cite{Conway2012}.}  We can capture this in version of Dedalus that includes a merge method, as in Figure~\ref{fig:lattice_balance}.
 
 \begin{figure}[h]
 \begin{scriptsize}
@@ -218,9 +224,9 @@ non-monotonic relative to credits: monotone operations can only cause the
  	\textsf{debit account \textbf{if} (old\_balance + SUM(credits) - SUM(debits) $>$ 0)}
 	\end{scriptsize}
 \end{quote}
-Basic rules of arithmetic---easily registered with a compiler~\cite{Conway2012}---tell us that as credits and debits grow monotonically, the left-hand-side of this inequality goes up {\em and down}, and hence the truth value of the predicate can oscillate non-monotonically as well.  Much like our discussion of Figure~\ref{fig:balance}, the logic for the overdraft test contains a non-monotonic clause (arithmetic subtraction), which is transitively dependent on a monotonic operation (accumulation of debits).  Hence scheduler requests will need to control the order of both credits and debits with respect to debits, but can ignore the ordering of credits independent of debits\footnote{Note that we coupled debit with an overdraft check.  A common design pattern decouples overdraft checks---e.g. it applies them only once per day.  This introduces the potential to allow free reordering of debits and credits during a single day without affecting the non-monotonic logic.  We return to this point in the next section.}.
+Basic rules of arithmetic---easily registered with a compiler~\cite{Conway2012}---tell us that as credits and debits grow monotonically, the left-hand-side of this inequality goes up {\em and down}, and hence the truth value of the predicate can oscillate non-monotonically as well.  Much like our discussion of Figure~\ref{fig:balance}, the logic for the overdraft test contains a non-monotonic clause (arithmetic subtraction), which is transitively dependent on a monotonic operation (accumulation of debits).  Hence scheduler requests will need to control the order of both credits and debits with respect to debits, but can ignore the ordering of credits independent of debits.\footnote{Note that we coupled debit with an overdraft check.  A common design pattern decouples overdraft checks---e.g. it applies them only once per day.  This introduces the potential to allow free reordering of debits and credits during a single day without affecting the non-monotonic logic.  We return to this point in the next section.}
 
-Summing up, we make two key points.  First, the CALM theorem allows us to explain and generalize the notion of conflict via non-monotonicity---and thus ACID 2.0 helps us generalize ACID.  Second, and more suggestively, compilers for new high-level languages like Bloom can pinpoint semantic conflicts in application logic, and synthesize application-specific serializability enforcement code that protects only those conflicts.
+Summing up, we make two key points.  First, the CALM theorem allows us to explain and generalize the notion of conflict via non-monotonicity---and thus ACID 2.0 helps us generalize ACID.  Second, and more suggestively, compilers for new high-level languages like Bloom can pinpoint semantic conflicts in application logic and synthesize application-specific serializability enforcement code that protects only those conflicts.
 
 \begin{comment}
  What follows is an example of a mutable key-value store ``king'',
