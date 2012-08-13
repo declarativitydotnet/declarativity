@@ -96,6 +96,13 @@ David Maier\\
 \end{abstract}
 
 \section{Introduction}
+\jmh{Background: ACID was defined in an era of uniprocessors and low-level sequential languages---simple compilers, and carefully layered monolithic software.  Focus on von Neumann read/write formal analysis and its implications for concurrency control.  ACID 2.0 was defined in an era of distributed systems and componentized services, but still programmed with relatively low-level sequential languages.  Hence focus on software design maxims and programmer enforcement of properties.}
+
+\jmh{Pivot: Basis from previous work.  In our recent work on the CALM theorem and Bloom language we demonstrated new language design and compiler technology that can inform and generate custom, application-aware custom systems infrastructure.  We can now automatically analyze program semantics and identify software subsystems that run naturally in distributed systems: wait-free parallel and replicated for fault tolerance.}
+
+\jmh{So -- what are the implications of this work on distributed systems and in particular on concurrency control?  We've argued previously that CALM analysis makes ACID 2.0 formally enforceable and actionable, and recently more familiar and programmable.  But can this data-oriented compiler technology enrich our understanding of traditional ACID transactions?  And what can we borrow from ACID transactions to inform these new language technologies?  And as we leave sequential read/write interfaces behind, perhaps it's time to embrace ``bespoke systems'': software automatically tailored to application needs.}
+
+
 Concurrency is an evergreen problem in computer systems, which has regained a
 great deal of interest in the recent era of wide-area distributed systems and
 cloud computing.  There are two scientific traditions in this area that have
@@ -166,113 +173,95 @@ discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
 \end{comment}
 
 \section{Non-Monotone Serializability}
-We begin by reconsidering the classic notion of ACID transactions and examine
-how ideas that improve concurrency in ACID 2.0 can also improve concurrency in
-the context of serializable transaction schedules.
+We begin by applying ACID 2.0 ideas to traditional ACID.  Specifically, we use the CALM theorem to enable static program analysis that can extract a range of semantically-aware serializable schedules---including schedules that would be forbidden by traditional Read/Write transaction protocols.
 
-Serializability has a declarative definition: it encompasses those interleavings
+Recall that pure serializability has a declarative definition: it encompasses all interleavings
 that produce an outcome equivalent to a serial execution of transactions.  In
-practice, the more conservative notion of \emph{conflict serializability} is
+practice, the more conservative notion of conflict serializability has typically
 used, which \emph{constrains the ordering of actions} across transactions:
 actions conflict if they access the same data item and one of them is a
-Write~\cite{Eswaran1976}.  Since an individual transaction is classically a
-sequential program, conflicts are only considered between actions across
-transactions.
+Write~\cite{Eswaran1976}.  
+% Since an individual transaction is classically a
+% sequential program, conflicts are only explicitly ordered between actions across
+% transactions.
 
-Viewed through the lens of ACID 2.0, we might say this differently.  Conflict
-serializability allows two Reads of a given object to be executed in any order
-but constrains the ordering of Writes. Why can Writes not be reordered freely?
-Logically, a Write is an atomic pair of actions: the revocation of a previous
-value and the introduction of a new value.  As noted in the literature on
-stateful logic languages~\cite{dedalus,statelog}, mutable state entails
-non-monotonic logic: the persistence of a value depends on it being
-NOT(revoked). The CALM Theorem shows that this non-monotonicity might produce
-different outcomes depending on the order in which operations are scheduled;
-hence, a concurrency control scheme is needed to constrain the allowed operation
-orders to ensure that only serializable schedules are produced.
+Viewed through the lens of ACID 2.0, we might see this more positively.  Reads are commutative, associative and idempotent, hence we can \emph{tolerate reordering of Reads}.  But what about Writes? 
+As noted in the literature on stateful logic languages~\cite{dedalus,statelog}, mutable state 
+involves non-monotonic logic: the persistence of a value depends on it being
+NOT(revoked). Logically, a Write is an atomic pair of actions: the revocation of a previous
+value (``the King is dead'') and the introduction of a new value (``long live the King!''). 
+% Non-monotonic persistence logic is ``triggered'' by the revocation, so 
+Write triggers revocation, which is negated in the persistence logic, hence \emph{Writes are non-monotonic}.
 
-To make this discussion more concrete, we first show how traditional read/write
-schedules can be encoded in a stateful logic such as Dedalus~\cite{dedalus}. We
+The CALM Theorem shows that monotonic logic is insensitive to the order of evaluation, but non-monotonic logic produces different outcomes depending on evaluation order.  Using this observation, we can generalize the notion of ``non-conflicting'' actions beyond Reads: any monotonic logic can be reordered, so transaction scheduling need only consider non-monotonic actions as conflicts.
+
+To make this discussion more concrete, we first show how traditional Read/Write
+schedules can be encoded in a stateful logic such as Dedalus~\cite{dedalus} which exposes 
+the inherent non-monotonicity. We
 then show how schedules containing only monotonic updates can be executed
 without concurrency control and yet still guarantee serializability. Finally, we
 show that schedules containing a mix of monotonic and non-monotonic updates only
 require concurrency control ``around'' the non-monotonic constructs. We refer to
-this as \emph{Non-Monotone Serializability}.
+this as \emph{Non-Monotone Serializability}---a generalization of Conflict Serializability.
 
-Consider the classic case of credit/debit ledgers. For the sake of exposition,
-we assume a single account and two transactions, \texttt{T1} and \texttt{T2}.
-For now we assume only credit operations and consider debits shortly. Using
-traditional Read and Write operations, we can model this system using Dedalus as
+Consider the classic case of credit/debit ledgers. For the sake of exposition we begin with simple ``canned'' transactions that only issue a single credit request.  Using
+traditional Read and Write operations, we can model this transaction mix using Dedalus~\cite{dedalus} as
 shown in Figure~\ref{fig:balance}.
 
 
-\begin{figure}[t]
+\begin{figure}[h]
 \begin{scriptsize}
 \lstinputlisting{code/bal.ded}
 \centering
 \vspace{-10pt}
-\caption{Credit / Debit Ledgers}
+\caption{Simple Read/Write credit transactions in logic.  Note the non-monotonic negation symbol in Line~\ref{line:neg}.}
 \label{fig:balance}
 \end{scriptsize}
 \vspace{-2pt}
 \end{figure}
 
-Note that \texttt{p(X)@t} asserts that a fact \texttt{p(X)} is true at time
-\texttt{t}; \texttt{@next} denotes the timestamp that immediately follows the
-timestamp of the body predicates. The special timestamps \texttt{T1\_R\_TIME}
-and related values denote the time at which the read and write operations are
-occur; these are chosen by the scheduler, and hence are non-deterministic. The
-conflicts in this schedule are manifest from the program syntax: negation
-($\neg$ in line~\ref{line:neg}) is non-monotonic. Hence, concurrency control is required to
-select a legal assignment of read and write timestamps.
+Dedalus models discrete sequential timesteps.
+The expression \texttt{p(X)@t} asserts that a fact \texttt{p(X)} is true at time
+\texttt{t}; the absence of a time suffix \texttt{@t} implies the current timestep.  The time suffix \texttt{@next} denotes the timestamp that immediately follows the
+current timestamp.  Line~\ref{line:neg} says that an account balance persists from one timestep (now) to the \texttt{next} unless it is revoked. The
+conflict in this program is manifest in that syntax: negation
+($\neg$ in line~\ref{line:neg}) is non-monotonic.  The negated logic \texttt{revoke\_bal} is derived from the \texttt{write} in Line~\ref{line:write_trans}, which is itself derived from the scheduler issuing a \texttt{sched\_W} in Line~\ref{line:write_req}.  A similar analysis can show that \texttt{read} requests do not affect the contents of \texttt{revoke\_bal}, but do depend upon the state of \texttt{revoke\_bal}.
+Hence, a compiler for this language---or for a more programmer-friendly language like Bloom~\cite{Alvaro2011}---can determine that scheduler requests will need to control the order of both \texttt{read}s and \texttt{write}s with respect to \texttt{write}s, but can ignore the ordering of \texttt{read}s independent of \texttt{write}s.  That is, the compiler can statically determine the conflicts in the program from syntax.
 
-We can avoid the conflicts in this schedule by making updates monotonic. In a
-credit-only system, the balance is a monotonically increasing number; hence, we
-can model the account balance as a join semilattice with a least upper bound
-(``$\sqcup$'') that takes the largest balance proposed so
-far~\cite{Conway2012}. This \emph{replaces} the previous non-monotonic
-persistence rule: rather than revoking and asserting new account balances,
-instead the balance will grow as more credit operations are received.
-\begin{quote}
-\emph{// Balance is least upper bound of proposed credits}
-bal(X)@n :- $\sqcup_{i=0}^n$ proposed\_bal(\_, X)@i.
+However the writes in this program induce what we might call ``false conflicts'': in a credit-only program, balances grow monotonically, so it should in some way be OK to reorder writes.  We can avoid these false conflicts by better exposing the monotonicity of our balance updates in application logic. We
+can model the account balance as an instance of an object class (a join semilattice) with a monotonic merge method ``$\sqcup$'' (least upper bound)~\cite{Conway2012}. Using this idea, we can replace the previous non-monotonic persistence rule: rather than revoking old account balances,
+we say simply that the balance object grows as more credit operations are merged into it\footnote{The choice of a merge method is pluggable, as long as it is associative, commutative and idempotent. Note that addition is not idempotent.  To capture typical credit ledger logic, the \texttt{proposed} values can use a custom lattice data type that pairs a nonce and an integer, and a merge function that essentially removes duplicates by nonce.  Bloom supports the registration and validation of such data types~\cite{Conway2012}.}.  We can capture this in version of Dedalus that includes a merge method, as in Figure~\ref{fig:lattice_balance}.
 
-proposed\_bal(``T1'', X + 1)@next :- bal(X)@T1\_W\_TIME.
-proposed\_bal(``T2'', X + 1)@next :- bal(X)@T2\_W\_TIME.
-\end{quote}
-Because this program contains only monotonic constructs, the CALM Theorem
-certifies that it is deterministic regardless of the timestamps that are
+\begin{figure}[h]
+\begin{scriptsize}
+\lstinputlisting[mathescape]{code/latticebal.ded}
+\centering
+\vspace{-10pt}
+\caption{Credit transactions in monotonic logic.}
+\label{fig:lattice_balance}
+\end{scriptsize}
+\vspace{-2pt}
+\end{figure}
+
+\noindent
+Because this program contains only monotonic constructs, a compiler can 
+certify that it is deterministic regardless of the timestamps that are
 assigned to the write operations; thus, it can safely be executed without
-concurrency control. Said differently, \emph{monotone logic is conflict-free}.
+concurrency control. 
+% Said differently, we have achieved \emph{compiler-cert conflict-free}.
 
-We now consider how to support debit operations that succeed only if the account
-would remain liquid: ``conflicts'' can arise between the liquidity checks of
-debits and credits. From the ACID 2.0 perspective, debits can introduce
-conflicts because they are non-monotonic: monotone operations can only cause the
-\texttt{bal} lattice to increase. Hence, we must establish ordering constraints
-for each debit with respect to preceding credits.  However, the order among
-credits remains irrelevant---the only order that matters relates to the
-non-monotone operator ``debit.'' Importantly, the non-monotonicity of debits is
-clear from the program syntax; hence, a compiler can observe the presence of a
-potentially conflicting operation, and insert the necessary
-coordination~\cite{Alvaro2011}.
+We now consider how to support non-monotonicity: debit operations that include an overdraft test. 
+Intuitively, from the CALM perspective debits would seem to introduce conflicts because they are 
+non-monotonic relative to credits: monotone operations can only cause the
+\texttt{bal} lattice to increase. However, in traditional ledgers, debits are recorded separately from credits as a monotonic list.  It is the balance calculations---and specifically, the tests for overdrafts---where non-monotonicity becomes apparent.  In the interest of space, we present pseudocode:
+\begin{quote}
+	\begin{scriptsize}
+ 	\textsf{debit account \textbf{if} (old\_balance + SUM(credits) - SUM(debits) $>$ 0)}
+	\end{scriptsize}
+\end{quote}
+Basic rules of arithmetic---easily registered with a compiler~\cite{Conway2012}---tell us that as credits and debits grow monotonically, the left-hand-side of this inequality goes up {\em and down}, and hence the truth value of the predicate can oscillate non-monotonically as well.  Much like our discussion of Figure~\ref{fig:balance}, the logic for the overdraft test contains a non-monotonic clause (arithmetic subtraction), which is transitively dependent on a monotonic operation (accumulation of debits).  Hence scheduler requests will need to control the order of both credits and debits with respect to debits, but can ignore the ordering of credits independent of debits\footnote{Note that we coupled debit with an overdraft check.  A common design pattern decouples overdraft checks---e.g. it applies them only once per day.  This introduces the potential to allow free reordering of debits and credits during a single day without affecting the non-monotonic logic.  We return to this point in the next section.}.
 
-Surprisingly, we can make debits monotonic by maintaining a separate ``debit
-ledger''; both debit and credit ledgers would then grow monotonically. However,
-checking the liquidity of an account is \emph{not} monotonic because subtracting
-one monotonically increasing number from another does not, in general, yield a
-monotonically increasing result. This design moves the coordination cost from
-debit operations to liquidity checks, at the expense of allowing some debits to
-be performed on illiquid accounts; nevertheless, similar designs are often
-employed in practice (\nrc{CITE?}).
-
-In short, we can constrain the notion of conflicting Read/Write actions to a
-language-extensible notion of non-monotone actions.  Said positively, we can
-broaden the notion of tolerating Read reordering to the one of tolerating the
-reordering of any monotone operations.  With an application-specific vocabulary
-of actions, this Non-Monotone Serializability can allow a much broader set of
-serializable schedules than Conflict Serializability of low-level Reads and
-Writes.
+Summing up, we make two key points.  First, the CALM theorem allows us to explain and generalize the notion of conflict via non-monotonicity---and thus ACID 2.0 helps us generalize ACID.  Second, and more suggestively, compilers for new high-level languages like Bloom can pinpoint semantic conflicts in application logic, and synthesize application-specific serializability enforcement code that protects only those conflicts.
 
 \begin{comment}
  What follows is an example of a mutable key-value store ``king'',
