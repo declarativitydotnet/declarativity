@@ -199,7 +199,7 @@ Line~\ref{line:neg} says that an account balance persists from one timestep (now
 conflict in this program is manifest in that syntax: negation
 ($\neg$ in line~\ref{line:neg}) is non-monotonic.  
 The negated logic \texttt{revoke\_bal} is derived from the \texttt{write} in line~\ref{line:write_trans}, 
-which is itself derived from the non-deterministic scheduling of \texttt{W} 
+which is itself derived from the non-deterministic scheduling of \texttt{write\_req} 
 in line~\ref{line:async-beg}.  A similar analysis can show that \texttt{read} requests do not affect the contents of \texttt{revoke\_bal}, but do depend upon the state of \texttt{revoke\_bal}.
 Hence, a compiler for this language---or for a more programmer-friendly language
 such as Bloom~\cite{Alvaro2011}---can determine that scheduler requests will need to control the order of both \texttt{read}s and \texttt{write}s with respect to \texttt{write}s, but can ignore the ordering of \texttt{read}s independent of \texttt{write}s.  That is, the compiler can statically determine the conflicts in the program from syntax.
