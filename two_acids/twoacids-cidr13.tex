@@ -92,12 +92,12 @@ David Maier\\
   inform crucial semantics-versus-performance design tradeoffs in modern ACID
   2.0 systems.  Finally, given this discussion of software synthesis, we look
   toward a future of custom-tailored \emph{Bespoke Systems}, in which
-  application-aware language designs and compiler analysis enable the synthesis
+  application-aware language designs and compiler analyses enable the synthesis
   of custom low-level code.
 \end{abstract}
 
 \section{Introduction}
-Concurrency is an evergreen problem in computer systems, which has regained a
+Concurrency is an evergreen problem in computer systems that has regained a
 great deal of interest in the recent era of wide-area distributed systems and
 cloud computing.  There are two scientific traditions in this area that have
 been dubbed with the mnemonic ``ACID'', and for each there is an
@@ -108,7 +108,7 @@ The original notion of ACID transactions---and its foundation in serializability
 
 Work on ACID 2.0 also has deep roots in the literature~\cite{Fischer1982}, though the acronym is recent~\cite{Helland2009}.  Most work in the area concerns itself with a modern context of distributed systems and componentized services, and attempts to address programming at a higher level of abstraction.  Specifically,  it encourages programmers to define application-specific vocabularies of \emph{actions that tolerate reordering}---that is, operations
 that produce the same final outcome regardless of the order in which they occur.  
-Unfortunately, most work on ACID 2.0 assumes programmers are still using relatively low-level sequential languages, so the lessons tend to be in the form of informal design maxims or special-purpose libraries.  Recent work on the CALM theorem showed how database theory regarding monotonicity can be used to formalize ACID 2.0 maxims~\cite{Alvaro2011,Ameloot2011,Conway2012,Hellerstein2010}, and our work on Bloom showed how language design and compiler technology can use that theory to automatically inform and generate custom, application-aware systems infrastructure in a general-purpose manner~\cite{Alvaro2011}.  
+Unfortunately, most work on ACID 2.0 assumes programmers are still using relatively low-level sequential languages, so the lessons tend to be in the form of rough design maxims or special-purpose libraries.  Recent work on the CALM theorem showed how database theory regarding monotonicity can be used to formalize ACID 2.0 maxims~\cite{Alvaro2011,Ameloot2011,Conway2012,Hellerstein2010}, and our work on Bloom showed how language design and compiler technology can use that theory to automatically inform and generate custom, application-aware systems infrastructure in a general-purpose manner~\cite{Alvaro2011}.  
 
 With the theory behind ACID 2.0 maturing and computing moving to the cloud, we believe it is time to examine theoretical and practical questions that emerge from these two ACID traditions. Can our understanding of ACID 2.0 and the CALM theorem inform the original goals of ACID transactions?  Are there lessons from ACID that can inform design and program analysis in modern distributed computing?  And given the radical change in computing platforms in the last half-century, is it not time to change our design philosophy from one that focuses on monolithic systems and von Neumann machines to one that focuses on application-aware compilation of code for the cloud?
 
