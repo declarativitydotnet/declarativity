@@ -174,19 +174,18 @@ show that schedules containing a mix of monotonic and non-monotonic updates only
 require concurrency control ``around'' the non-monotonic constructs. We refer to
 this as \emph{Non-Monotone Serializability}---a generalization of Conflict Serializability.
 
-Consider the classic case of credit/debit ledgers. For the sake of exposition we begin with simple ``canned'' transactions that only issue a single credit request.  Using
-traditional Read and Write operations, we can model this transaction mix using Dedalus~\cite{dedalus} as
-shown in Figure~\ref{fig:balance}.
-
+Consider the classic case of credit/debit ledgers. For the sake of exposition we
+begin with simple ``canned'' transactions that only issue a single credit
+request.  Using traditional Read and Write operations, we can model this
+transaction mix using Dedalus~\cite{dedalus} as shown in
+Figure~\ref{fig:balance}.
 \begin{figure}[ht]
 \begin{scriptsize}
 \lstinputlisting{code/bal.ded}
 \centering
-\vspace{-10pt}
 \caption{Simple Read/Write credit transactions in logic.  Note the non-monotonic negation symbol in line~\ref{line:neg}.}
 \label{fig:balance}
 \end{scriptsize}
-\vspace{-2pt}
 \end{figure}
 
 Dedalus models time passing in discrete sequential timesteps.
@@ -207,28 +206,29 @@ such as Bloom~\cite{Alvaro2011}---can determine that scheduler requests will nee
 However this program contains what we might call ``false conflicts'': in a credit-only program, balances grow monotonically, so it should in some way be OK to reorder these writes.  We can avoid these false conflicts by better exposing the monotonicity of our balance updates in application logic. We
 can model the account balance as an instance of an object class (a join semilattice) with a monotonic merge method ``$\sqcup$'' (least upper bound)~\cite{Conway2012}. Using this idea, we can replace the previous non-monotonic persistence rule: rather than revoking old account balances,
 we say simply that the balance object grows as more credit operations are merged into it.\footnote{The choice of a merge method is pluggable, as long as it is associative, commutative, and idempotent. Note that addition is not idempotent.  To capture typical credit ledger logic, the \texttt{proposed} values can use a custom lattice data type that pairs a nonce and an integer, and a merge function that essentially removes duplicates by nonce.  Bloom supports the registration and validation of such user-defined lattice data types~\cite{Conway2012}.}  We can capture this in a version of Dedalus that includes a merge method, as in Figure~\ref{fig:lattice_balance}.
-
 \begin{figure}[t]
 \begin{scriptsize}
 \lstinputlisting[mathescape]{code/latticebal.ded}
 \centering
-\vspace{-10pt}
 \caption{Credit transactions in monotonic logic.}
 \label{fig:lattice_balance}
 \end{scriptsize}
-\vspace{-2pt}
 \end{figure}
-
 Because this program contains only monotonic constructs, a compiler can 
 certify that it is deterministic regardless of the timestamps that are
 assigned to the write operations; thus, it can safely be executed without
 concurrency control. 
 % Said differently, we have achieved \emph{compiler-cert conflict-free}.
 
-We now consider how to support non-monotonicity: debit operations that include an overdraft test. 
-Intuitively, debits would seem to introduce conflicts because they are 
-non-monotonic relative to credits: monotone operations can only cause the
-\texttt{bal} lattice to increase. However, in traditional ledgers, debits are recorded separately from credits as a monotonic list.  It is the balance calculations---and specifically, the tests for overdrafts---where non-monotonicity becomes apparent.  We add two statements to Figure~\ref{fig:lattice_balance}:
+We now consider how to support non-monotonicity: debit operations that include
+an overdraft test.  Intuitively, debits would seem to introduce conflicts
+because they are non-monotonic relative to credits: monotone operations can only
+cause the \texttt{bal} lattice to increase. However, in traditional ledgers,
+debits are recorded separately from credits as a monotonic list.  It is the
+balance calculations---and specifically, the tests for overdrafts---where
+non-monotonicity becomes apparent.  We add two statements to
+Figure~\ref{fig:lattice_balance}:
+
 \begin{scriptsize}
 	\begin{lstlisting}[mathescape,firstnumber=7]
 proposed_deb(Acct, $\bigsqcup$(Deb)) :- sched_D(Acct, Deb, Xid)
