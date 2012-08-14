@@ -7,7 +7,9 @@ revoke_bal(Acct, Val)@next :- write(_, _, _), bal(Acct, Val). (*\label{line:writ
 bal(Acct, New)@next :- write(Acct, New, _).
 
 # Simple transaction logic with scheduler interface 
-read(Acct, Val, Xid) :- bal(Acct, Val), sched_R(Acct, Xid).
+read(Acct, Val, Xid) :- bal(Acct, Val), R(Acct, Xid).
 write(Acct, Val+Cred, Xid) :- read(Acct, Val, Xid), (*\label{line:write_req}*)
-                              sched_W(Acct, Cred, Xid). 
+                              W(Acct, Cred, Xid). 
 
+W(Acct, Cred, Xid)@async :- sched_W(Acct, Cred, Xid).(*\label{line:async-beg}*)
+R(Acct, Xid)@async :- sched_R(Acct, Xid).(*\label{line:async-end}*)
