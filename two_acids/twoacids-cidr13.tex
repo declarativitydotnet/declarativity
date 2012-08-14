@@ -279,7 +279,37 @@ inputs is required for liveness.
 
 Notice that in this worldview, the mapping of actions to transactions is a \emph{proactive} aspect of system design.  In traditional literature on ACID, we assume that transaction boundaries are given from on high by ``application logic'', and the transaction system must react by enforcing ordering constraints.  In ACID 2.0, we are explicitly interested in designing the application logic.  A key part of that design process---even if we eschew serializability---is to choose transaction boundaries to achieve the right balance of application batch granularity (e.g., how much time can elapse with an overdrawn account) and system efficiency (how often we want to invoke coordination logic to compute balances).  CALM analysis can aid in this task by exposing points of order precisely and enabling the application designer to think about rewriting programs to change partitioning in a way that allows points of order to be crossed less often (to improve throughput by reducing coordination), more often (to improve latency at the expense of more frequent coordination) and/or on smaller partitions of the data (to limit the parties who may have inputs to coordinate).  This is an interesting and important area for more detailed future work in guiding application design via compiler and performance analysis.
 
-This discussion has not yet mentioned Consistency or Isolation.  The ``C'' in ACID is a common source of confusion and tedious re-definition in discussions of transactions and distributed systems, and we will ignore it here.\footnote{Consistency was apparently added to ACID simply to make it a more entertaining acronym.  It is often defined quite loosely in the transactions literature, but one concrete definition is ``enforcement of database integrity constraints''.  This has some bearing on our discussion here of partitioning keys but will have to wait for a longer paper.  The distributed systems community tends to use the term Consistency differently, with an equally frequent disregard for formalism, but without even the justification of forming an entertaining acronym.}  With regard to Isolation, the previous section on serializability and CALM comes into play directly.  Once transaction boundaries are assigned to a program, CALM analysis can expose the non-monotonic conflicts in the program and their transitive data dependencies.  The programmer can then choose how to resolve the observable non-monotonicity.  Serializability provides a certain strong Isolation guarantee, which the programmer can choose to enforce across non-monotonic boundaries.  But the literature offers many other choices, and CALM-style dataflow analysis of a logic program can help determine the transitive effects of weaker models: by chasing logical dependencies (data derivations across tables and keys within tables) it can help the programmer understand and control how non-monotonic non-determinism can ``flow'' through a program.  This discussion is admittedly brief, but we note that (a) the various definitions of isolation should be formally translatable into the framework of non-monotonic conflicts and data dependencies from the previous section, and (b) there is a rich formal literature on chasing program dependencies that can aid in the compiler analysis~\cite{alicebook}.  Future work opportunities abound.
+\begin{comment}
+\nrc{Killed for submission copy because it seems unnecessarily provocative and
+  not central to the paper.}
+  The ``C'' in ACID is a common source of confusion and tedious re-definition in
+  discussions of transactions and distributed systems, and we will ignore it
+  here.\footnote{Consistency was apparently added to ACID simply to make it a
+    more entertaining acronym.  It is often defined quite loosely in the
+    transactions literature, but one concrete definition is ``enforcement of
+    database integrity constraints''.  This has some bearing on our discussion
+    here of partitioning keys but will have to wait for a longer paper.  The
+    distributed systems community tends to use the term Consistency differently,
+    with an equally frequent disregard for formalism, but without even the
+    justification of forming an entertaining acronym.}
+\end{comment}
+
+On the topic of Isolation (the ``I'' in ACID), the previous section on
+serializability and CALM comes into play directly.  Once transaction boundaries
+are assigned to a program, CALM analysis can expose the non-monotonic conflicts
+in the program and their transitive data dependencies.  The programmer can then
+choose how to resolve the observable non-monotonicity.  Serializability provides
+a certain strong Isolation guarantee, which the programmer can choose to enforce
+across non-monotonic boundaries.  But the literature offers many other choices,
+and CALM-style dataflow analysis of a logic program can help determine the
+transitive effects of weaker models: by chasing logical dependencies (data
+derivations across tables and keys within tables) it can help the programmer
+understand and control how non-monotonic non-determinism can ``flow'' through a
+program.  This discussion is admittedly brief, but we note that (a) the various
+definitions of isolation should be formally translatable into the framework of
+non-monotonic conflicts and data dependencies from the previous section, and (b)
+there is a rich formal literature on chasing program dependencies that can aid
+in the compiler analysis~\cite{alicebook}.  Future work opportunities abound.
 
 In short, we have argued here that (1) live distributed systems that are not pure ACID 2.0 \emph{must} consider the ``A \& D'' of traditional ACID, (2) the proactive design of ``transaction'' or ``session'' boundaries is a critical aspect of distributed systems that goes beyond ACID 2.0, and (3) compiler techniques based on the CALM theorem bear the promise of helping programmers reason about and control this design with respect to traditional ``A \& D'' as well as ``I''.  Given the state of modern computing, this is the kind of reasoning that compilers \emph{should} engage in: helping developers reason through fundamental design decisions that simultaneously involve semantics and performance.  
 
