@@ -158,7 +158,7 @@ value (``the King is dead'') and the introduction of a new value (``long live th
 % Non-monotonic persistence logic is ``triggered'' by the revocation, so 
 Write triggers revocation, which is negated in the persistence logic, hence \emph{Writes are non-monotonic}.
 
-The CALM Theorem shows that monotonic logic is insensitive to the order of evaluation, but non-monotonic logic produces different outcomes depending on evaluation order.  Using this observation, we can generalize the notion of ``non-conflicting'' actions beyond Reads: any monotonic logic can be reordered, so transaction scheduling need only consider non-monotonic actions as conflicts.
+The CALM Theorem shows that monotonic logic is insensitive to the order of evaluation, but non-monotonic logic may produce different outcomes depending on evaluation order.  Using this observation, we can generalize the notion of ``non-conflicting'' actions beyond Reads: any monotonic logic can be reordered, so transaction scheduling need only consider non-monotonic actions as conflicts.
 
 To make this discussion more concrete, we first show how traditional Read/Write
 schedules can be encoded in a stateful logic such as Dedalus~\cite{dedalus} which exposes 
@@ -172,6 +172,9 @@ this as \emph{Non-Monotone Serializability}---a generalization of Conflict Seria
 Consider the classic case of credit/debit ledgers. For the sake of exposition we begin with simple ``canned'' transactions that only issue a single credit request.  Using
 traditional Read and Write operations, we can model this transaction mix using Dedalus~\cite{dedalus} as
 shown in Figure~\ref{fig:balance}.
+\paa{though it suffices to illustrate the point, this dedalus program confuses me too, mostly because the write rule (line 11)
+does not use the value it read.  is the read() subgoal there just to enforce that the read precedes the write?  and then don't
+we need to perist the read (or sched_R)?}
 
 
 \begin{figure}[h]
@@ -187,7 +190,7 @@ shown in Figure~\ref{fig:balance}.
 
 Dedalus models discrete sequential timesteps.
 The expression \texttt{p(X)@t} asserts that a fact \texttt{p(X)} is true at time
-\texttt{t}; the absence of a time suffix \texttt{@t} implies the current timestep.  The time suffix \texttt{@next} denotes the timestamp that immediately follows the
+\texttt{t}; the absence of a time suffix \texttt{@t} implies the current timestep~\paa{but I see no literal suffixes in the example...}.  The time suffix \texttt{@next} denotes the timestamp that immediately follows the
 current timestamp.  Line~\ref{line:neg} says that an account balance persists from one timestep (now) to the \texttt{next} unless it is revoked. The
 conflict in this program is manifest in that syntax: negation
 ($\neg$ in line~\ref{line:neg}) is non-monotonic.  The negated logic \texttt{revoke\_bal} is derived from the \texttt{write} in Line~\ref{line:write_trans}, which is itself derived from the scheduler issuing a \texttt{sched\_W} in Line~\ref{line:write_req}.  A similar analysis can show that \texttt{read} requests do not affect the contents of \texttt{revoke\_bal}, but do depend upon the state of \texttt{revoke\_bal}.
