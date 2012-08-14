@@ -116,8 +116,8 @@ With the theory behind ACID 2.0 maturing and computing moving to the cloud, we b
 The basics of traditional ACID transactions are well known, but ACID 2.0 is an
 idea in evolution.  Hence we pause briefly to survey work relevant to our discussion.  The ACID 2.0
 acronym reminds us of the desired algebraic properties of a reorderable
-vocabulary: Associativity, Commutativity, and Idempotence (the D stands for
-Distributed systems).  These properties are helpful in distributed systems where
+vocabulary: Associativity, Commutativity, and Idempotence. (The D stands for
+Distributed systems.)  These properties are helpful in distributed systems where
 network delays and failures often lead to reordering and a need for
 retry. Low-level Read and Write operations clearly do not satisfy these
 properties, so work in this domain tends to suggest application-specific
@@ -135,11 +135,13 @@ The key property of semilattices is that they describe values that grow
   Theorem proved that monotonic programs have eventually consistent,
 coordination-free distributed
 implementations~\cite{Alvaro2011,Ameloot2011,Hellerstein2010}.  This translated some key maxims of the ACID 2.0 literature into a robust theory.  The Bloom language~\cite{Alvaro2011} embodies this theory in a programming language and code analysis tools.  Bloom programmers write high-level programs over collections of unordered data.  By default, the order of statements and data structures in Bloom is left unspecified by the programmer, maximizing runtime latitude for parallelism and asynchrony.  The CALM-based static program analysis identifies non-monotonic constructs; these ``points of order'' need to be controlled via a coordination protocol to ensure deterministic behavior.  In recent work combining the idea of lattice data types with CALM, we extended Bloom to support complex programs constructed out of simple lattice types composed 
-with monotone operators; CALM analysis can then check for monotonicity and points of order in a manner that takes into account the ACID 2.0 properties of the lattices and their compositions~\cite{Conway2012}.  Since this is a new result, we give familiar examples of this idea below.  However, in order to highlight the non-monotonicity in our examples, we do not use Bloom syntax; instead, we use the formal logic Dedalus~\cite{dedalus} that is the basis of Bloom.
+with monotone operators; CALM analysis can then check for monotonicity and
+points of order in a manner that takes into account the ACID 2.0 properties of
+the lattices and their compositions~\cite{Conway2012}.  Since this result is new, we give familiar examples of this idea below.  However, in order to highlight the non-monotonicity in our examples, we do not use Bloom syntax; instead, we use the formal logic Dedalus~\cite{dedalus} that is the basis of Bloom.
 
 
 \section{Non-Monotone Serializability}
-We begin by applying ACID 2.0 ideas to traditional ACID.  Specifically, we use the CALM theorem to generalize the traditional notion of conflicting actions.  We then propose compiler analysis techniques that can automatically identify high-level semantic concurrency opportunities, allowing wait-free behaviors that would be forbidden by traditional Read/Write transaction protocols.
+We begin by applying ACID 2.0 ideas to traditional ACID.  Specifically, we use the CALM theorem to generalize the traditional notion of conflicting actions.  We then propose program analysis techniques that can automatically identify high-level semantic concurrency opportunities, allowing wait-free behaviors that would be forbidden by traditional Read/Write transaction protocols.
 
 Recall that serializability has a declarative definition: it encompasses all interleavings
 that produce an outcome equivalent to a serial execution of transactions.  In
@@ -194,7 +196,8 @@ The time suffix \texttt{@next} denotes the timestamp that immediately follows th
 current timestamp.  Line~\ref{line:neg} says that an account balance persists from one timestep (now) to the \texttt{next} unless it is revoked. The
 conflict in this program is manifest in that syntax: negation
 ($\neg$ in line~\ref{line:neg}) is non-monotonic.  The negated logic \texttt{revoke\_bal} is derived from the \texttt{write} in line~\ref{line:write_trans}, which is itself derived from the scheduler issuing a \texttt{sched\_W} in line~\ref{line:write_req}.  A similar analysis can show that \texttt{read} requests do not affect the contents of \texttt{revoke\_bal}, but do depend upon the state of \texttt{revoke\_bal}.
-Hence, a compiler for this language---or for a more programmer-friendly language like Bloom~\cite{Alvaro2011}---can determine that scheduler requests will need to control the order of both \texttt{read}s and \texttt{write}s with respect to \texttt{write}s, but can ignore the ordering of \texttt{read}s independent of \texttt{write}s.  That is, the compiler can statically determine the conflicts in the program from syntax.
+Hence, a compiler for this language---or for a more programmer-friendly language
+such as Bloom~\cite{Alvaro2011}---can determine that scheduler requests will need to control the order of both \texttt{read}s and \texttt{write}s with respect to \texttt{write}s, but can ignore the ordering of \texttt{read}s independent of \texttt{write}s.  That is, the compiler can statically determine the conflicts in the program from syntax.
 
 However this program contains what we might call ``false conflicts'': in a credit-only program, balances grow monotonically, so it should in some way be OK to reorder these writes.  We can avoid these false conflicts by better exposing the monotonicity of our balance updates in application logic. We
 can model the account balance as an instance of an object class (a join semilattice) with a monotonic merge method ``$\sqcup$'' (least upper bound)~\cite{Conway2012}. Using this idea, we can replace the previous non-monotonic persistence rule: rather than revoking old account balances,
