@@ -70,7 +70,72 @@ discussion.  \paa{I am not sure I get/buy the inter vs. intra dichotomy.  it
 
 
 
+\begin{comment}
+ What follows is an example of a mutable key-value store ``king'',
+keyed by country.  We express this using the logic notation of
+Dedalus~\cite{dedalus}, which exposes the inherent non-monotonicity:
+\begin{quote}
+	\emph{// Define read: each item of the set king: }\\
+	read(C,K) :- king(C,K)\\
+	\\
+	\emph{// Define mutable persistence in logic:}\\
+	\emph{// The King lives at the next timestep if he is NOT(dead)}\\
+	king(C,K)@next :- king(C,K), $\neg$dead\_king(C,K)\\
+	\\
+	\emph{// Write: visible at subsequent timestep}\\
+	\emph{// The King is Dead, Long Live The King}\\
+	dead\_king(C,K0)@next :- king(C,K0), write(C,K1)\\
+	king(C,K1)@next :- write(C,K1)\\
+	\\
+	write(France, Charles6)@1380.\\
+	write(France, Charles7)@1422.
+\end{quote}
+The problem (or ``conflict'') with the Write-able key/value pairs king(C, X) is
+clear from the syntax: ``NOT'' ($\neg$) is the basic non-monotonic operator in
+logic.  Operationally, a Read of the current state of king must wait for the
+contents of dead\_king to be completely accounted for.\nrc{Assuming you want to
+  read the ``final''/confluent value of king, which of course is not the usual
+  assumption in ACID transactions.}
 
+By the CALM theorem, the ``coordination'' required to seal the contents of a set
+(e.g., dead\_king) is not necessary for purely monotonic logic.  Said
+differently, \emph{monotonic logic is conflict-free}.  This suggests a broader
+class of schedules that we can guarantee to be ``conflict''-serializable: those
+in which the non-monotonic conflicts are ordered the same as some serial
+schedule.  We refer to this as \emph{Non-Monotone Serializability}.
+
+As an example, consider the classic case of debit/credit ledgers.  We begin with
+the simple case in which all actions are credits. We assume that an account is
+liquid if its balance is above zero. In Bloom's lattice notation~\cite{Conway2012},
+this looks like so:
+\begin{quote}
+  \jmh{`ledger' is an lmap with key `acctId' and value an lset of [xid, amount]
+    pairs.  `balance' is a derived lmap with key `acctId' and an lmax `value'.
+    `liquid' is an lmap from `acctId' to an lbool `status'.  The monotone
+    function sum maps from [xid,amount] to `value', and the monotone function gt
+    maps from `value' to `status'. Need to give syntax and explanation, perhaps
+    in a figure if its too big a gulp inline.  I fudged: ledger is not a
+    sequence, it's a set.  That's OK for the credit-only scenario, but kinda
+    bogus.}
+\end{quote}
+In a credit-only scenario, the ledger grows monotonically as a set of credits,
+the account balances grow monotonically as integers, and account liquidity grows
+monotonically as a boolean (from false to true).  However, consider introducing
+debits that succeed only if the account would remain liquid: ``conflicts'' can
+arise between the liquidity checks of debits and credits, so we must establish
+ordering constraints for each debit with respect to preceding credits.  However,
+the order among credits remains irrelevant---the only order that matters relates
+to the non-monotone operator `debit'.  In Bloom, this non-monotonicity is again
+clear from the syntax and checkable by a parser:
+\begin{quote}
+	\jmh{debit logic including threshold test goes here}
+\end{quote}
+Note that we can be finer-grained in our assessment of conflict: there are no
+conflicts across acctIds, which can be determined via analyzing the program
+logic: the grouping of balance by acctID \emph{partitions} the ledger.  This
+partitioning is akin to the partitioning of Reads and Writes, which conflict
+only if they are on the same object.
+\end{comment}
 
 
 Distributed system designs that do not obey ACID 2.0 face a conundrum: they have liveness criteria that requires them to be responsive, but they also have sets they need to seal, but 
