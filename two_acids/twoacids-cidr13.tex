@@ -337,32 +337,18 @@ This discussion did not yet mention Consistency or Isolation.  The ``C'' in ACID
 
 In short, we have argued here that (1) live distributed systems that are not pure ACID 2.0 \emph{must} consider the ``A \& D'' of traditional ACID, (2) the proactive design of ``transaction'' or ``session'' boundaries is a key aspect of distributed systems that goes beyond ACID 2.0, and (3) compiler techniques based on the CALM theorem can help programmers reason about and control this design with respect to traditional ``A \& D'' as well as ``I''.
 
-\section{The Vision}
+\section{Bespoke Systems for the Cloud}
+Much has changed in computing since the early ACID era.  Despite various analogies regarding multicore and virtualization, EC2 really looks very little like a PDP-11 or a System/370.  One thing that has changed very little, however, has been the model of programming and the ethos behind ``Systems design'' as a mechanism for delivering software.  Most distributed infrastructure is still built in languages that are based on a von Neumann model of sequential programming over mutable storage.  Even in the new generation of cloud-based systems, design discussion still focuses on ``system architecture'' and ``API design''.  People still presume that infrastructure must be ``built to last'', and provide a relatively fixed API for a wide range of reuse.
 
+Å popular retort in recent years has been to argue (on somewhat narrower ground) that ``one size does not fit all''---at least for data management systems.  This is typically used as an argument to sell $n>1$ monolithic implementations of roughly the same functionality, to be used for different workloads.  But the idea of pushing $n$ minor variants of the same idea does not scale from the perspective of customer consumption, nor does it lead to a very wide diversity of system designs or research ideas.
 
+Our earlier discussion points to the idea of synthesizing infrastructure to suit application needs.  Or to pour a powerful solution of ACIDs on this by-now threadbare tailoring analogy, it suggests a new era of \emph{Bespoke Systems}, tailored to fit application needs.  As we illustrated above, we are gaining the technology to do interesting synthesis of custom designs for deep system internals like concurrency and coordination.  In the programming language community, Sketching and other software synthesis techniques are also gaining steam~\cite{Bodik}.  This movement suggests a radical opening of the design space via intelligent search: rather than working on the $n$th ``System Architecture'' design that chooses a particular set of tradeoffs based on dutiful manual experimentation, perhaps we can design compilers to automatically explore--and importantly, to judiciously prune---the design space \emph{en masse}, choosing equivalence classes of very different designs for a given application, and automating experiementation.  By embracing language and compiler design and eschewing system architecture, the technical community can ``uplevel'' itself and use computational tools in design.
 
-\jmh{Original notes:}  
-Application-specific ACID.  Understand ``true'' conflicts.  Highlight the need
-for ``slicing'' into ``batches''.  Guide the application toward an efficient,
-useful choice of batches and barriers.
+There is a lot of technical work required to get from the current state of affairs to this vision.  To conclude, we return to the relatively grounded material from the previous sections, and raise a number of suggestive questions:
 
-Example: slicing into totally independent batches: easy concurrency control
-across transactions (but possibly need coordination intra-transaction)
-
-Example: dependent batches -- this is really just serializability?  No -- also
-intra-transaction parallelism.
-
-\paa{the below is something to shoot holes in}
-
-Our end goal is an adaptable, application-specific embodiment of the best of both ACID traditions in a practical programming language. This language will require program analysis tools to recognize ``true'' conflicts---operations that produce different end states when reordered---and resolve them in a manner appropriate to the application.
-
-We observed a similarity between transactions in databases and sessions in distributed systems.  Both represent names for a logical grouping of actions, and mechanisms that control the visibility of these groupings can be used to ensure atomicity (these actions occur together) and isolation (I need not reason about interleavings with other actions).  When these grouping correspond to finite, continguous ranges of real time, they can be used to constructively define (potentially infinite) collections in which partitions grow, become ``sealed,'' and are henceforth immutable.  As we recall from stratified logic programming, non-monotonic operations against complete inputs produce a single model; similarly, distributed programs that constrain their non-monotonic deductions to sealed partitions are insensitive to the order in which the contents of those partitions materialized.
- 
-Similarities aside, the shopping cart sessions described in Alvaro et al fundamentally differ from general database transactions in their mutual independence: no two users update the same cart, and in this simple example, no two carts conflict in any of their operations (e.g., by changing inventory).  Hence trivial coordination---in the form of manifest shipping---was sufficient to ensure that replicas agreed, and no concurrency control was necessary.  A transactional store cannot make such an independence guarantee over transactions, which may access and mutate shared state.   It is precisely this dependency on non-monotonically updated shared state that makes serializability (a weaker correctness criterion than confluence) the ``right'' correctness criterion for transactional systems---when different orders produce different results, we require a protocol to choose which order ``wins.'' 
-
-If we write programs in the right language, detecting non-monotonicity is easy, as is extending such a language with support for programmer-guided ``sealing'' of input partitions.  Given a particular sealing attribute---for example, ``session id''---a straightforward dependency analysis can tell us whether individual seals are dependent by answering (conservatively) whether the consequences of processing one partition can affect outputs associated with another.  This whole program analysis will tell us that because we cannot prove independence of seals (transactions) a generic transactional store requires additional arbitration in the form of an ordering \emph{across} seals.  By contrast, we can prove independence of seals (sessions) for the shopping cart application---even when the cart is implemented atop a transactional kvs.  
-
-Thus we may choose the appropriate protocols ``just in time'' based upon a given composition; a transactional store exposes the abstraction of transactions, but uses an order-enforcing mechanism like locks to implement them only when the access patterns implied by the application make it necessary. The programmer is forced to provide some extra information---\emph{what} partitions are we sealing; \emph{when} do we seal them?---and in return the compiler synthesizes custom coordination to exclude bad outcomes.  
+\begin{itemize}
+	\item Uh oh, out of room, choose wisely.
+\end{itemize}
 
 %ACKNOWLEDGMENTS are optional
 % \section{Acknowledgments}
