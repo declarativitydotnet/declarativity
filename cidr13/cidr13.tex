@@ -18,6 +18,8 @@
 %\usepackage{texlive-science}
 \usepackage{comment}
 \usepackage{array,tabularx}
+\usepackage{bussproofs}
+%\usepackage{stmaryrd}
 
 %\usepackage{txfonts}
 \newcommand{\eat}[1]{}
@@ -51,12 +53,20 @@
 % and alignment of the authors under the title, and to add
 % a section for authors number 4 through n.
 
-\numberofauthors{1}
+\numberofauthors{3}
 
 \author{
 \alignauthor William R.\ Marczak\\
 \affaddr{UC Berkeley}\\
 \email{wrm@cs.berkeley.edu}
+\and
+\alignauthor Neil Conway\\
+\affaddr{UC Berkeley}\\
+\email{nrc@cs.berkeley.edu}
+\and
+\alignauthor Joseph M. Hellerstein\\
+\affaddr{UC Berkeley}\\
+\email{hellerstein@cs.berkeley.edu}
 }
 
 \toappear{}
@@ -88,6 +98,7 @@ demonstrate its applicability by considering a variety of case studies.
 \input{intro}
 \input{background}
 \input{case}
+\input{relwork}
 
 \bibliographystyle{abbrv}
 \bibliography{pods}
