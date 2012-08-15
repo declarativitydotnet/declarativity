@@ -1,26 +1,58 @@
-\section{Case Study: Quicksort}
-\label{sec:qscs}
+\section{Case Studies}
 
-\wrm{todo put this syntax in the new syntax}
+In this section, we demonstrate the applicability of our language by considering two case studies: Quicksort and Hamiltonian Path.  While both are deterministic algorithms, both are typically sped up by introducing non-determinism via randomness and parallelism.
+
+\subsection{Quicksort}
+\label{sec:qscs}
 
 Consider the problem of sorting, here defined as the problem of assigning an ordering to a set of distinct elements.
 
-Consider the structure of the traditional Quicksort algorithm: a single element called the {\em pivot} is selected from a list, and the list is divided into two sublists -- one containing the elements in the original list less than the pivot and the other containing the elements in the original sublist greater than the pivot.  The division is performed in-place in memory.  Quicksort is then recursively applied to each list.  Being a divide-and-conquer algorithm, Quicksort is naturally parallelizable.  Furthermore, quicksort's performance is contingent on the order in which pivots are selected.  Typically, one selects pivots at random, or utilizing a randomized approximation of the median.
+Consider the structure of the traditional Quicksort algorithm: a single element called the {\em pivot} is selected from a list, and the list is divided into two sublists -- a {\em left} sublist containing the elements in the original list less than the pivot and a {\em right} sublist containing the elements in the original sublist greater than the pivot.  The division is performed in-place in memory.  Quicksort is then recursively applied to each list.  Being a divide-and-conquer algorithm, Quicksort is naturally parallelizable.  Furthermore, quicksort's performance is contingent on the order in which pivots are selected.  Typically, one selects pivots at random, or utilizing a randomized approximation of the median.
 
 In traditional programming languages, there are no confluence guarantees for a version of quicksort that does either or both of parallelism and randomized pivot selection.  Our goal is to write such a version of quicksort that is provably confluent.
 
 In our first step of the case study, we consider asynchronous parallelism.  It is naturally observed that quicksort, like most divide and conquer algorithms, can perform each pivoting operation in parallel.  Divide and conquer algorithms are usually easily parallelizable as written, as there is no logical dependence between independent divisions.
 
-Consider the following code:
+Consider the following program:
+\begin{eqnarray*}
+subset &\Leftarrow& {\tt split}(subset); \\
+leftlink &\Leftarrow& {\tt max\_left\_pivot}(subset) \\
+rightlink &\Leftarrow& {\tt min\_right\_pivot}(subset)
+\end{eqnarray*}
 
+Let the commutative monoids be defined as follows:
+\begin{eqnarray*}
+subset &:& \left(\mathcal{P}(\mathbb{N} \times \{0,1\} \times \mathbb{N}), \cup, \phi\right) \\
+leftlink &:& \left(\mathcal{P}(\mathbb{N} \times \mathbb{N}), {\tt unionWith \,\,\,max}, \phi\right) \\
+rightlink &:& \left(\mathcal{P}(\mathbb{N} \times \mathbb{N}), {\tt unionWith \,\,\,min}, \phi \right)
+\end{eqnarray*}
+
+The first commutative monoid, $subset$, is over sets of triples.  The first argument, a natural number, indicates the pivot.  The second argument is $0$ to indicate left of the pivot, and $1$ to indicate right of the pivot.  The final argument, a natural number, is the element that is either to the left or right of hte pivot.
+
+We remind the reader of the meaning of the {\tt unionWith f} function---if its two operands both contain a pair with the same first argument, the resultant set contains a single pair with this first argument, whose second argument is the binary function {\tt f} applied to the two second arguments.  If only one set contains a pair with a given first argument, the resultant set contains this pair.
+
+The reader may verify that the latter two triples, $leftlink$ and $rightlink$, are commutative monoids; in fact, any triple $\left(\mathcal{P}(S_1 \times S_2), {\tt unionWith \,\,\, f}, \phi\right)$ is a commutative monoid if the following is a commutative monoid for some identity $i$: $\left(S_2, {\tt f}, i\right)$.  The $leftlink$ commutative monoid stores information about links between the maximum element of each left sublist, and the pivot.  On the other hand, $rightlinks$ stores links between the minimum element of each right sublist, and the pivot.
+
+Let the functions be defined as follows:
 \begin{alltt}
-sublist(p,'LEFT',l), sublist(p,'RIGHT',r) <- sublist(x,y,l), sublist(x,y,r), f_select_pivot(x,y,p), l < p, r > p.
-link(max<l>,p), link(p,min<r>) <- sublist(p,'LEFT',l), sublist(p,'RIGHT',r).
+split xs = map xs \$
+    \(\lambda\)x -> let p = select_pivot(x[0], x[1]) in
+        (p, x[2] < p, x[2])
+
+max\_left\_pivot xs = 
+    left lefts = filter xs (\(\lambda\)x -> x[1] == 0) in
+        map lefts \$ \(\lambda\)x -> (x[0], x[2])
+
+min\_right\_pivot xs = 
+    let rights = filter xs (\(\lambda\)y -> x[1] == 1) in
+        map rights \$ \(\lambda\)y -> (x[0], x[2])
 \end{alltt}
 
-The first rule performs splits into sublists---a ``RIGHT'' sublist that contains the elements greater than the pivot, and a ``LEFT'' sublist that contains the elements less than the pivot.  The pivot selection is based on the results of some function {\tt f\_split\_pivot}.  The second rule expresses that in the final sorted list, represented by {\tt link}, the pivot $p$'s immediate predecessor is the maximum element of the sublist of smaller elements, and $p$'s immediate successor is the minimum element of the sublist of greater elements.
+The first function splits elements into left or right subsets, depending on the result of {\tt select\_pivot}, a function that specifies the pivot choice.  The second function, for every pivot, inserts a pair whose first argument is the pivot, and whose second argument is every element of the left subset.  Recall that the definition of $leftlink$ implies that only the maximum such element is maintained for each pivot.  The third function performs a similar task for elements of the right subset.
 
-There is nothing that prohibits parallel pivot splitting -- the only prerequisite for splitting a sublist is that it exists.  In fact, one would have to write a far more complex program to prohibit pivot splitting from being done in parallel.  This is an example of where the language's default of disorderly behavior can help programmers add disorder to their programs.
+One can note that the latter two are linear functions, as they are variants of {\tt map}, which is itself a linear function.  The first function is a linear function only if {\tt select\_pivot} is deterministic.  While parallelism is admitted, randomness is not.
+
+There is nothing that prohibits parallel pivot splitting -- the only prerequisite for splitting a subset is that it exists.  In fact, one would have to write a far more complex program to prohibit pivot splitting from being done in parallel.  This is an example of where the language's default of disorderly behavior can help programmers add disorder to their programs.
 
 In the next step of our case study, we introduce disorder in order to enable random selection of pivots.  In order to achieve determinism, it must be the case that the order of selecting pivots is immaterial.
 
@@ -28,41 +60,51 @@ In particular, it is the case that permuting two pivot selections does not have 
 
 In order to enable random pivot selection in quicksort while preserving determinism, we must rewrite quicksort to introduce disorder into the pivot selection.
 
+\begin{eqnarray*}
+link &\Leftarrow& split(list, list, link, link); \\
+link &\Leftarrow& id(list)
+\end{eqnarray*}
+
+Let the commutative monoids be defined as follows:
+\begin{eqnarray*}
+link &:& \left(\mathcal{P}(\mathbb{N} \times \mathbb{N}), {\tt unionWith \,\,\, max}, \phi\right) \\
+list &:& \left(\mathcal{P}(\mathbb{N}),\cup, \phi\right) \\
+\end{eqnarray*}
+
+Let the functions be defined as follows:
 \begin{alltt}
-link(x,p) <- pivot(p), list(x), link(x,z), link(p,z), x > p;
-link(x,0) <- list(x);
+id x = x
+
+split ps ms ns = map ps \$
+    \(\lambda\)p -> filter equijoin_2_2 ms ns \$
+        \(\lambda\)(m,n) -> m[0] > p
 \end{alltt}
 
-In this case, {\tt link} is a set lattice over pairs whose operation is dependent on the value of its first argument.  If the two sets both contain a pair with the same first argument, the resultant set contains a single pair with this first argument, whose second argument is the maximum of the two second arguments.  If only one set contains a pair with a given first argument, the resultant set contains this pair.  In Haskell notation, the operation, {\tt lub}, can be written as:
-\begin{alltt}
-lub = unionWith max
-\end{alltt}
+In this case, the $link$ identifier represents the predecessor relation.  If $(x,y)$ is in $link$, then element $x$'s predecessor is element $y$.
 
-The {\tt link} identifier represents the predecessor relation.  If $(x,y)$ is in {\tt link}, then element $x$'s predecessor is element $y$.
-
-The first rule in the above code takes a set of pivots $p$ with predecessor $z$, and a set of list elements $x$ with the same predecessor $z$.  The maximum of the pivots $p$ is chosen as the predecessor for $x$, assuming $x > p$.
+The {\tt split} function above takes a set of pivots $p$ with predecessor $z$, and a set of list elements $x$ with the same predecessor $z$.  The maximum of the pivots $p$ is chosen as the predecessor for $x$, assuming $x > p$.
 
 To understand the correspondence to quicksort, imagine that for each execution of the rule, there is only a single pivot $p$, and further imagine that {\tt link(x,z)} contains all $x$ with predecessor $z$.  Then, execution of the rule corresponds to considering all elements that should be in the right sublist of $p$, and putting them in the right sublist by updating each of their predecessors to $p$.  
 
 Subsequent executions of the rule can only increase an element's predecessor, as it moves into further-right sublists.
 
-Of course, considering the pivots in “the wrong” order could establish a substantial amount of redundant information, reducing performance of the algorithm.  What if we considered the pivots in sort order?  We would establish the information that $n-1$ elements are greater than the first pivot, $n-2$ elements are greater than both the first and second pivot, $n-3$ elements are greater than the first three pivots, etc.  Overall, we would establish $O(n^2)$ information.  However, assume we consider the pivots in an order corresponding to the optimum for quicksort.  The first selection is the median, so we establish $n/2$ elements are greater than the first pivot.  The second and third are the median of both of the sublists, so we establish that $n/2$ elements are greater than either the second or third.  The fourth, fifth, sixth, and seventh are the medias of the 4 resulting sublists, and again we establish a total of $n/2$ elements are greater than either of these.  Overall, we establish $O(n log(n))$ information in this case.
+Of course, considering the pivots in ``the wrong'' order could establish a substantial amount of redundant information, reducing performance of the algorithm.  What if we considered the pivots in sort order?  We would establish the information that $n-1$ elements are greater than the first pivot, $n-2$ elements are greater than both the first and second pivot, $n-3$ elements are greater than the first three pivots, etc.  Overall, we would establish $O(n^2)$ information.  However, assume we consider the pivots in an order corresponding to the optimum for quicksort.  The first selection is the median, so we establish $n/2$ elements are greater than the first pivot.  The second and third are the median of both of the sublists, so we establish that $n/2$ elements are greater than either the second or third.  The fourth, fifth, sixth, and seventh are the medias of the 4 resulting sublists, and again we establish a total of $n/2$ elements are greater than either of these.  Overall, we establish $O(n log(n))$ information in this case.
 
 The different performance for each of these orders motivates us to induce a specific order to tune the performance of our quicksort specification.  Recall that we induce a specific order by writing an ``ordering'' program that generates a timeline.  The code below selects pivots in random order.  From the algorithmic analysis of randomized quicksort, we know that in expectation, $O(n log(n))$ information is established.
 
 \begin{alltt}
-function main:
-   for each (x) in list:
-      add ``r2 : [(x)]'' to the timeline
+for each (x) in list:
+    add ``r2 : [(x)]'' to the timeline
 
-   for each (p) in pivot in random order:
-      for each (x) in list:
-         if (z = (sorted_list[p] == sorted_list[x])) and x > p:
-            add ``r1 : [(p),(x),(x,z),(p,z)]'' to the timeline
+for each (p) in pivot in random order:
+    for each (x) in list:
+        if (z = (list[p] == list[x])) and x > p:
+            add ``r1 : [(p),(x),(x,z),(p,z)]'' to timeline
 \end{alltt}
 
+\wrm{firm up the syntax a bit?}
 
-\section{Case Study: Hamiltonian Path}
+\subsection{Case Study: Hamiltonian Path}
 
 Another example of a program that benefits from the strategic introduction of disorder is one that finds Hamiltonian paths in a graph.  A Hamiltonian path in a graph is a path that visits each of the graph's vertices exactly once.  This is a well-known NP complete problem, but there are search strategies that are fast for graphs of interest.  By exploiting the disorder (i.e., lack of logical dependency) between different paths, we can write ``ordering'' programs for various search strategies.
 
@@ -73,12 +115,35 @@ Other popular search strategies involve backtracking and pruning.
 \wrm{Whereas in quicksort, we could get away with specifying an ordering on a single relation, in the Hamiltonian path case, we need to specify an order on the link relation PER JOINED PATH.  In other words, we need to exercise advanced control over the ordering of the join.}
 
 At its core, the Hamiltonian path algorithm can be represented in algebra as a filter on an all-pairs-all-paths computation:
+\begin{eqnarray*}
+path &\Leftarrow& {\tt init\_path}(link); \\
+path &\Leftarrow& {\tt concat\_path}(link, path); \\
+hampath &\Leftarrow& {\tt ham\_path}(path);
+\end{eqnarray*}
 
+The commutative monoids:
+\begin{eqnarray*}
+link &:& \left(\mathcal{P}(\mathbb{N} \times \mathbb{N}), \cup, \phi\right) \\
+path, hampath &:& \left(\mathcal{P}(\mathbb{N} \times \mathbb{N} \times [\mathbb{N}]), \cup, \phi\right) \\
+\end{eqnarray*}
+
+The functions:
 \begin{alltt}
-path(x,y,[x,y]) <- link(x,y);
-path(x,y,x ++ s) <- link(x,z), path(z,y,s), x \(\not\in\) s;
-hpath(s) <- path(x,y,s), \(\forall x \, . \, (x \in node) \Rightarrow x \in s \);
+init_path x = (x[0], x[1], x[0]:x[1]:[])
+
+concat_path xs ys = map (filter (equijoin_2_1 xs ys) \$
+    \(\lambda\)(x,y) -> x[0] \(\not\in\) y[2]) \$
+        \(\lambda\)(x,y) -> (x[0], y[1], x[0]:y[2])
+
+hampath xs = map (filter xs \$
+    \(\lambda\)x -> \(\forall x[0] \, . \, (x[0] \in node) \Rightarrow x[0] in x[2]\))
 \end{alltt}
+
+%\begin{alltt}
+%path(x,y,[x,y]) <- link(x,y);
+%path(x,y,x ++ s) <- link(x,z), path(z,y,s), x \(\not\in\) s;
+%hpath(s) <- path(x,y,s), \(\forall x \, . \, (x \in node) \Rightarrow x \in s \);
+%\end{alltt}
 
 The ordering code for the path rotation search strategy could be written as:
 
@@ -117,3 +182,5 @@ function next_link(z,y,s)
       add ``r2: [(x,z), (z,y,s)]'' to timeline
       next_link(x,z,x ++ s)
 \end{alltt}
+
+\wrm{Add a bit of text explaining when you'd want to swap out these strategies}

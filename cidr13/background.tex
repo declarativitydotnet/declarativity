@@ -1,31 +1,55 @@
 \section{Foundation}
 \label{sec:foundation}
 
-\wrm{INTRODUCE SEALED VALUES!!}
+In this section, we formally define both the ``algebra'' and ``ordering'' languages.
+
+\subsection{Algebra}
+
+We present the algebra language by first describing its data structures, then its programming construct---the rule---and define a program in our language as a composition of data structures and rules.
+
+\subsubsection{Data Structures}
+
+The algebra language is restricted only to commutative data structures, i.e., data structures which are invariant to the ordering of updates.  The most basic structure is a commutative monoid.
 
 A {\em commutative monoid} $M = (S, *, e)$ is a set $S$ together with an associative, commutative, closed binary operator $*$.  The identity element, $e \in M$, satisfies $a*e = e*a = a$.
 
-%A {\em batch} is an ordered list of values from some {\em domain}.  A {\em domain} is a set $V$ of values together with a single {\em default value} $d \in V$.  We denote a domain by $(V,d)$.
+As we will see later, commutative monoids with an additional {\em idempotency} restriction on the binary operator are also of interest.
+
+We represent the value of a data structure changing over time using an ordered list of updates to that data structure, known as a stream.
 
 A {\em stream} $T$ over a commutative monoid $M = (S, *, e)$, denoted $T = (L, M)$ is an ordered list $L$ of elements of $S$.  The {\em value} of a stream $T$, denoted $Val(T)$ is the result obtained by left-folding over $T$ with $*$.  If $T$ has a single element $x$, then $Val(T)=x$.  If $T$ is empty, then $Val(T)=e$.  Note that it is always the case that $Val(T) \in S$ by closure of $*$.
 
+An {\em identifier} $v$ is a name that represents a stream.  The {\em domain} of identifier $v$, denoted $dom(v)$ is equal to $S$, where $M = (S, *, e)$.
+
+Identifiers play the role that variables would in a traditional programming language.
+
 \begin{example}
-Consider the stream $T = (L,M)$ where $L = [4, 5, 3, 2]$ the commutative monoid $M = (\mathbb{N}, +, 0)$ 
+Consider the stream $T = (L,M)$ where $L = [4, 5, 3, 2]$ the commutative monoid $M = (\mathbb{N}, +, 0)$.
+
+Intuitively, the stream $L$ represents the following sequence of updates to an identifier $v$, with $dom(v) = \mathbb{N}$:
+\begin{eqnarray*}
+v &=& 0\\
+v &+=& 4\\
+v &+=& 5\\
+v &+=& 3\\
+v &+=& 2\\
+\end{eqnarray*}
 Note that $Val(T) = 14$.  Consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
 \end{example}
 
-%A {\em channel} $C$ consists of a stream $T = (L, M)$. 
-An {\em identifier} $v$ is a name that represents a stream.  The {\em domain} of identifier $v$, denoted $dom(v)$ is equal to $S$, where $M = (S, *, e)$.
+Having defined the algebra language's primitive data structures, we now describe how to write programs over these data structures, using the principal programming construct of the algebra language: the rule.
 
-\subsection{Rule}
-Intuitively, a {\em rule} describes how an output identifier is derived from some set of input identifiers.  We will explain the precise operational semantics later, but the intuition is that for each combination of elements in the input streams of a rule, the rule's function is invoked, resulting in an ordered list of elements that becomes a part of the rule's output stream.  Note that a rule's output stream may also be one of its input streams.
+\subsubsection{Rule}
 
 A rule is denoted as a tuple: $$(l, v_0 \Leftarrow f_l(v_1, v_2, \dots, v_n);)$$  The first argument of the tuple, $l$, is the rule's {\em label}, which is drawn from the domain $\mathbb{N}$.  The second argument of the tuple is the rule's {\em clause}. $v_0$ is the rule's {\em head identifier} or the {\em head} of the rule, and $f_l(v_1, v_2, \dots, v_n)$ is the rule's {\em body}.  We write $f_l$ by convention, to denote the fact that $f$ is the function of the rule with label $l$.  $v_1, \dots, v_n$ are the rule's {\em body identifiers}, and $f_l$ is the rule's {\em body function} or just {\em function}.  A rule may contain multiple occurrences of the same identifier, including the case where $v_0 = v_i$ for one or more $0 \leq i \leq n$.  We denote the head identifier of rule $l$ as $head(l)$, and the set of body identifiers of rule $l$ as $bodies(l)$.
 
+Rules in our algebra language are similar to update statements in a traditional programming language.  The variable being updated is the head identifier, and the rule's function and body identifiers describe the update to be performed.
+
 The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams, as we will see later.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
 
-\subsection{Program}
-A {\em program} $\mathcal{R}$ is a set of rules.  One can also view $\mathcal{R}$ as a list of rules in label order.  For simplicity, we will usually only list the clauses of a program's rules, one per line.  If a clause $c$ appears in the $i$-th position of this list, then the program contains a rule $(i,c)$.
+\subsubsection{Program}
+
+A {\em program} $\mathcal{R}$ in our algebra language is a set of rules.  One can also view $\mathcal{R}$ as a list of rules in label order.  For simplicity, we will usually only list the clauses of a program's rules, one per line.  If a clause $c$ appears in the $i$-th position of this list, then the program contains a rule $(i,c)$.
 
 A {\em domain compatible} program is one in which $doms(v)$ contains a single element, over all rules in the program, for each identifier $v$.  In the sequel, we will assume that all programs are domain compatible, and denote the single domain of identifier $v$ as $dom(v)$.
 
@@ -56,11 +80,13 @@ An {\em input instance} or {\em instance} $\mathcal{I}$ is an ordered dictionary
 
 \subsubsection{Timeline}
 
+So far we have detailed the structure of programs, but have not yet described their meaning.  We presently give programs meaning by introducing {\em timelines}.
+
 %Assume the monoids used in $\mathcal{R}$ are $M_0 = (S_0, *_0, e_0), \dots, M_n = (S_n, *_n, e_n)$.  The {\em domain} of $\mathcal{R}$, denoted $dom(\mathcal{R})$ is defined to be $\bigcup_{i=0}^n S_i$.
 A {\em timeline} $T$ is a list of pairs of a rule label and a list of elements.  We denote the rule label at position $i$ of timeline $T$ as $r(T, i)$, and we denote by $\delta(T, i)$ the corresponding list of elements.  Element $j$ of the list of elements is denoted as $\delta(T,i)[j]$.  A {\em domain compatible} timeline $T$ is one in which the arity of $\delta(T, i)$ corresponds with the arity of $f_{r(T,i)}$ (the body function of the rule with label $r(T,i)$), and the element in $\delta(T,i)[j]$ is a member of the domain of the label in the $j$-th argument of $f_{r(T,i)}$.  In the sequel, we only consider {\em domain compatible} timelines.
 
 \begin{example}
-Assume the following $\mathcal{R}$:
+Assume the following $\mathcal{R}$, where $f_0 : \mathbb{Z}/2 \times \mathbb{Z}/2 \rightarrow \mathbb{Z}/2$:
 \begin{eqnarray*}
   s &\Leftarrow& f_0(u, v); \\
   w &\Leftarrow& f_1(s);
@@ -110,7 +136,7 @@ $$ \overline{a}[j = x] = a_1, \ldots, a_{j-1}, x, a_{j+1}, \ldots, a_{k}$$
 %We will use deltas in the definition of our canonical choice function.  In the sequel, we will only make use of domain compatible deltas $L(T,j,h,l,\overline{a}_{-j})$. In particular, for all $a_g$, where $g \neq j$, we will ensure $a_g \in dom(bodies(l)[g])$.  For the $j$-th column, we will require that $(l,j) \in B(head(r(T,h)),\mathcal{R})$.
 
 We are now ready to define the canonical choice function and give an example.  The canonical choice function $C(h, \mathcal{I})$ takes an integer $h$, and an instance $\mathcal{I}$, which is compatible with $\mathcal{R}$.  In the base case:
-$$C(0,\mathcal{I}) = [(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$$
+$$C(0,\mathcal{I}) = C_\delta(0,\mathcal{I}) =  [(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$$
 %\begin{equation*}
 %\begin{split}
 %C_\delta(h,\mathcal{I}) = & \\
@@ -164,66 +190,109 @@ T_3 & = & T_2 ++ \\
 & & 1: \{(2,3)\}, \{(3,1)\} \\
 stream(T_2,2,path) & = & [\{(1,2)\}, \{(2,3)\}, \{3,1\}]
 \end{eqnarray*}
-Continuing, it is not hard to see there exists some $n$ such that $\forall m \, . \, m \geq n \Rightarrow val(stream(T_n,n,path)) = val(stream(T_m,m,path))$, and that $val(stream(T_n,n,path))$ is the transitive closure of $link$.  Of course, a fixed point does not exist in general for all programs and inputs.
+Continuing, it is not hard to see there exists some $n$ such that $\forall m \, . \, m \geq n \Rightarrow val(stream(T_n,n,path)) = val(stream(T_m,m,path))$, and that $val(stream(T_n,n,path))$ is the transitive closure of $link$.  Of course, such a {\em fixed point} does not exist in general for all programs and inputs.
 \end{example}
+
 
 \subsubsection{Other Choice Functions}
 
-The set of {\em legal} choice functions are given based on the following generation rules.  A stream in a program may have one or more of the following generation rules:
+The canonical choice function gives a canonical deterministic interpretation to the behavior of a program over time.  However, we wish to relax the determinism condition for greater performance.  We wish to relax the condition in such a way that we may still obtain some notion of a ``deterministic result'' from the program.  Furthermore, the relaxation should allow us to retrofit our programs with randomness and parallelism.
+
+We presently define the set of {\em legal} choice functions from the canonical choice function.  A legal choice function $\mathcal{C}'(h,\mathcal{I})$ may change its behavior based on the value of $h$.  A choice function $\mathcal{C}'$ can be derived from $\mathcal{C}$ by finite application of the following rules:
 
 \begin{itemize}
-\item If a stream is {\em unreliable}, then the choice function applied to rules with the stream's identifier in the head may be the identity.
-%\item If a channel is {\em persistent unreliable}, then the choice function applied to rules with the channel's identifier in the head may be the identity. channel never joins anything with a given element.
-\item If a stream is {\em duplicating}, then the choice function must add the same elements to the timeline in the same order that $C$ does, except there may be multiple duplicate of an element in sequence.
-\item If a stream is {\em acausal}, then it must add the same elements to the timeline in the same order that $C$ does, but they need not be added to the end of the timeline.
-\item If a stream is {\em batching}, then consecutive elements may be batched.
-\item An {\em atomizing} stream allows the insertion of multiple deltas, as opposed to a single delta.
-\item A {\em re-ordering} choice function allows the list to be re-ordered.
+\item It may {\em reorder} elements.  For example, if $\mathcal{C}(x,\mathcal{I}) = [(a,[b]), (a,[c]))$, then $\mathcal{C}'(x,\mathcal{I})$ could be $[(a,[c]),(a,[b])]$.
+
+\item It may {\em batch} consecutive elements.  Considering the same $\mathcal{C}$, it could be that $\mathcal{C}'(x,\mathcal{I}) = [(a,[b +_i c])]$, where $+_i$ is the binary function associated with the domain of the first argument of rule $a$.
+
+\item It may {\em atomize} an element into finitely many other elements.  Considering the same $\mathcal{C}$, it could be that $\mathcal{C}'(x,\mathcal{I}) = [(a,[d]), (a,[e]), (a,[c])]$, where $b = d +_i e$.  In this case, we say that the element $(a,[b])$ was atomized into $(a,[d])$ and $(a,[e])$.
 \end{itemize}
 
-If a stream is not batching or atomizing, it is called {\em atomicity preserving}.  If a stream is not unreliable or persistent unreliable, it is called {\em reliable}.  If a stream is not causal, it is called {\em noncausal}.  If a stream is not duplicating, it is called {\em idempotency preserving}.  If a stream is not re-ordering, it is called {\em sequential}.
-
-%There are several properties that a choice function may obey, and some of these are mutually exclusive:
+If a stream is not batching or atomizing, it is called {\em atomicity preserving}.  If a stream is not re-ordering, it is called {\em sequential}.
 
 
+\subsubsection{Ultimate Model}
+
+A choice function describes a program's behavior over time.  We will now see how to define a notion of the {\em result} of a program.
+
+The class of programs we are most interested in here are those that terminate.  A program {\em terminates} if it only admits finite timelines for each finite input.  Note that given the definitions above, it suffices to require that for each finite input, the canonical choice function produces a finite timeline.
+
+We will henceforth consider only terminating programs. Another interesting class of systems are those whose input---and thus output---never terminates.  These are typically called {\em reactive} systems.
+
+The {\em ultimate} or {\em final} value of an identifier is its value after considering the entire timeline.  Together, the mapping from output identifiers to their ultimate values is called the {\em ultimate model}.
+
+While our language admits non-deterministic behaviors, we want it to have the property that there is always a unique ultimate model, regardless of the choice of timeline.  Before we attempt the proof, we must first introduce a restriction on the allowable functions in rules.
 
 
-Note that we have so far only explained how rules are written, not how the meaning of rules.  Note also that these definitions force the rules to be {\em well typed} in the sense that the domain of every identifier is the same as the domain associated with any argument of a function where the identifier is used, and the domain of the head identifier is the same as the function's codomain.
+\subsubsection{Multilinearity}
 
-A {\em program} is a collection of rules.  An identifier's usage in the head ... (merged somehow) An identifier's usage in the body of a rule intuitively represents some output stream.
+Let $f : S_1 \times \ldots \times S_n \rightarrow S_0$ be an $n$-ary function.  We say $f$ is {\em $n$-linear} with respect to the commutative monoids $(S_i, +_i, 0_i)$ for $i = 0, \ldots, n$ if we have:
+\begin{eqnarray*}
+& f(x_1, \ldots, x_i +_i y_i, \ldots, x_n) = \\
+& f(x_1, \ldots, x_i, \ldots, x_n) +_0 f(x_1, \ldots, y_i, \ldots, x_n)
+\end{eqnarray*}
+
+Intuitively, a multilinear function is applied to the {\em cross product} of all of its arguments.
+
+\begin{example}
+Assume the program consisting of the following rule, where $p$ is an output identifier and $q$ and $r$ are input identifiers:
+\begin{eqnarray*}
+  p &\Leftarrow& f(q, r);
+\end{eqnarray*}
+Let the input instance be $q = [1,2]$ and $r = [4,5]$.  Assume $f : \mathbb{N} \rightarrow \mathbb{N}$ is $*$ (multiplication), and $p$, $q$ and $r$ are all the commutative monoid $(\mathbb{N}, 0, +)$.  It is not hard to verify that $f$ is bilinear with respect to these commutative monoids.
+
+Consider the timeline generated by the canonical choice function: $T_1 = [(0,[1,4]), (0,[2,5]), (0,[2,4]), (0,[1,5])]$.  This results in the stream $p = [4, 10, 8, 5]$, where $val(p) = 27$.  Recall the definition of a timeline, and note that multilinearity implies that $f(1,4) + f(2,5) + f(2,4) + f(1,5) = f(3,9)$.  Thus, the ordering and batching of $p$---and thus the ordering and batching of $q$ and $r$---is immaterial.
+
+Consider another timeline generated by applying  batching, atomizing, and re-ordering: $T_2 = [(0,[3,3]), (0,[3,2]), (0,[3,4])]$.  In this case, we batch $1$ and $2$ into $3$, we atomize $5$ into $3$ and $2$, and we re-order $(0,[3,4])$ to the end of the timeline.  This results in the stream $p = [9 + 6 + 12]$.  It is the case that $val(p) = 27$ again, and this is not surprising.
+
+Any way we perform the batching, atomizing, or re-ordering of $q$ and $r$, the timeline will still contain the cross product of $q$ and $r$.  The multilinearity of $f$ and commutativity of $+$ implies that the cross product of any two streams where the first argument adds up to $3$ and the second to $9$ will produce an output ($p$) with the same value.
+\end{example}
+
+
+\subsection{Correctness criteria}
+
+Since the application of this language is to write deterministic algorithms, we must show that all programs are deterministic, or {\em confluent}.  A program is {\em confluent} if the final value of its output identifiers is a function of the final value of its input identifiers.  In other words, a program is confluent if the final value of its output identifiers is independent of the choice function.
+
+\begin{theorem}[Confluence]
+If the only choice functions we admit are those in which timeline streams are batching, atomizing, and re-ordering, and all rules' functions are multilinear, then all programs are functional.
+\end{theorem}
+
+\begin{proof}
+The proof is by contradiction.  Assume two different timelines finite $T_1$ and $T_2$, each generated from the canonical choice function by appliction of batching, atomizing, and re-ordering.  Assume some output identifier $o$ has a different value in $T_1$ than $T_2$.  This implies that the streams $S_1$ and $S_2$ for $o$ are not equal.  This implies that the value (and thus the stream) of at least one of the body identifiers $b$ is not equal between the two timelines.  If all body identifiers $b_i$ had equal values in $T_1$ and $T_2$, then the value of the output identifier $o$ would be equal, by multilinearity, and recalling the definition of the value of the stream as folding over the stream with a merge function, which is restricted to be commutative.  We repeat this process inductively down the derivation tree to the input relations.
+\end{proof}
+
+\begin{corollary}
+If we also admit duplication, then all programs whose data structures solely consist of idempotent commutative monoids are functional.
+\end{corollary}
 
 
 \subsection{Operational semantics}
 
-%Semantics 1: "`Naive"'
+We have defined the behavior and result of a program in an algebraic way, but how would such a program be executed?  We show a correspondence between an operational semantics and the previously-ellucidated algebraic semantics.
 
-%Semantics 2: Semi-naive
+\begin{figure*}
+\label{fig:opsem}
+\begin{prooftree}
+\AxiomC{$\mathcal{L} \, : \, s_0 \Leftarrow f(s_1, \ldots. s_n)$}
+\AxiomC{$\exists (i_1, \ldots, i_n) \,\, . \,\, (i_1, \ldots, i_n) \in ([0:len(t[s_1])], \ldots, [0:len(t[s_n])]) \,\, \land \,\, (i_1, \ldots, i_n) \not\in p[\mathcal{L}]$}
+\BinaryInfC{$\langle t, p \rangle \rightarrow \langle t[s_0] += f(s_1[i_1], \ldots, s_n[i_n]), p[\mathcal{L}] += (i_1, \ldots, i_n) \rangle$}
+\end{prooftree}
+\caption{Small-step operational semantics rule for algebraic language}
+\end{figure*}
 
-One can think of the operational semantics as a number of asynchronous processes.  Initially, a possible output stream is chosen for each usage of an identifier in a body.  There is an asynchronous process for each rule.  This process reads the next element from the body stream $\delta_1$ in the first argument of the body function, then executes $f(\delta_1, Val(S_i2), Val(S_i3), \dots, Val(S_in))$.  This element is added to the input stream of the head identifier ($S_i0$).  This process is repeated for the 2nd, up to nth body stream.  Finally, $f(\delta_1, \delta_2, , \delta_n)$ is executed, and the element added to $S_i0$.
+The computation of $C_\delta(h, \mathcal{I})$ can be viewed as the $h$-th step in the small-step operational semantic rule of Figure 1.
 
-%When the value of the output is eventually always the same, the program is done and the output is final.
-
-%Semantics 3: Homomorphic semi-naive
-
-\subsection{Correctness criteria}
-
-One nice correctness criterion would be for the program to be {\em functional}, meaning that the final value of the output is a function of the values of the input streams to the input schema.  In other words, different choices of output streams for streams do not affect the program.
-
-Confluence Theorem: Assuming all streams are some combination of batching, re-ordering, and atomizing, then all programs are functional.
-
-Proof: \wrm{Since all rule functions must be multilinear...}
-
-\wrm{define a lattice}
-\wrm{theorem 2 for lattice, about duplication}
-
-\subsection{Imperative language}
-
-We now describe the ``ordering'' language.  The ordering language must produce only {\em well typed} timelines.  Recall that a well typed timeline is one in which the domain of every identifier is the same as the domain associated with any argument of a function where the identifier is used, and the domain of the head identifier is the same as the function's codomain.
-
-The restriction on producing only well-typed timelines could be enforced by a simple type system.
-
-\wrm{According to the Confluence Theorem, only batching, re-ordering, and atomizing are allowed.  However, in practice, we can accept any well-typed timeline, as long as we ``double-check'' it with the evaluator.}
-
-\wrm{Describe execution/semi-naive step at end}
+We can control execution by inducing a particular choice function, or class of choice functions.  We next introduce the ``ordering'' language, which allows one to exercise control over the choice function.
 
 
+\subsection{Ordering language}
+
+Our ordering language can be any arbitrary imperative code that produces only {\em domain compatible} timelines.  Recall that a domain compatible timeline is one in which the domain of every identifier is the same as the domain associated with any argument of a function where the identifier is used.
+
+Of course, as described so far, a program in the ordering language may not necessarily encode a family of {\em legal} choice functions.  We will see later how to make a program that produces only domain compatible timelines into a legal choice function.
+
+Note that the restriction on producing only domain compatible timelines can easily be enforced by a simple type system supporting {\em sum types} (tagged unions).  Each rule in the program is represented by a different variant in the sum type.  The output of any ordering program must be a list of elements of the sum type.
+
+Given an ordering program that produces only domain compatible timelines, how do we convert it into a legal choice function?  We may have to delete ``invalid'' elements and add ``missing'' elements.  Deleting ``invalid'' elements is not a problem -- we can check every timeline element during execution to make sure that the value it references in each identifier is actually in the identifier's stream.  During this process we keep track of which combinations of elements we have seen from all streams.  At the end of this process, we simply add timeline elements for every ``missed'' combination.  If all commutative monoids are idempotent, we can simply run the canonical choice function over the timeline after we are finished executing the timeline.
+
+\wrm{expand and clarify this a bit}
