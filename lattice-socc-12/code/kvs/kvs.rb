@@ -89,9 +89,7 @@ class KvsClient
 
   # XXX: Probably not thread-safe
   def cause_repl(to)
-    sync_do {
-      kvrepl <~ [[@addr, to.ip_port]]
-    }
+    sync_do { kvrepl <~ [[@addr, to.ip_port]] }
 
     # XXX: To make it easier to provide a synchronous API, we assume that "to"
     # is local (i.e., we're passed the _instance_ of Bud we want to replicate
@@ -123,17 +121,13 @@ class QuorumKvsClient
   bloom do
     put_reqs <= kvput_response {|r| [r.reqid, Bud::SetLattice.new([r.replica_addr])]}
     w_quorum <= put_reqs {|r|
-      r.acks.size.gt_eq(@w_quorum_size).when_true {
-        [r.reqid]
-      }
+      r.acks.size.gt_eq(@w_quorum_size).when_true { [r.reqid] }
     }
 
     get_reqs <= kvget_response {|r| [r.reqid,
                                      Bud::SetLattice.new([r.replica_addr]), r.val]}
     r_quorum <= get_reqs {|r|
-      r.acks.size.gt_eq(@r_quorum_size).when_true {
-        [r.reqid, r.val]
-      }
+      r.acks.size.gt_eq(@r_quorum_size).when_true { [r.reqid, r.val] }
     }
   end
 

@@ -4,7 +4,7 @@ contain code that corresponds to the case studies presented in Sections 5 and 6,
 respectively.
 
 Note that to execute these programs, you'll need a version of Bud that has
-support for lattices; you can find this by cloning the bud git repo, and
+support for lattices. You can find this by cloning the Bud git repository and
 installing a version of Bud from the lattice-proto-v2 branch:
 
     https://github.com/bloom-lang/bud
