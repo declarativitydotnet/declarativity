@@ -5,7 +5,7 @@ In this section, we formally define both the ``algebra'' and ``ordering'' langua
 
 \subsection{Algebra}
 
-We present the algebra language by first describing its data structures, then its programming construct---the rule---and define a program in our language as a composition of data structures and rules.
+We present the algebra language by first describing its data structures, then its programming construct---the \emph{rule}---and define a program in our language as a composition of data structures and rules.
 
 \subsubsection{Data Structures}
 
@@ -34,7 +34,7 @@ v &+=& 5\\
 v &+=& 3\\
 v &+=& 2\\
 \end{eqnarray*}
-Note that $Val(T) = 14$.  Now, assume that stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T)$ is still $14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase.  We will also see later that programs in the ``Algebra'' language are invariant to this batching.  A programmer can choose to manipulate batching at will in the ``ordering'' component of the language.
+Note that $Val(T) = 14$.  Now, assume that stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T') = 14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase~\cite{Dean2004}.  We will also see later that programs in the ``Algebra'' language are invariant to this batching.  A programmer can choose to manipulate batching at will in the ``ordering'' component of the language.
 
 To round out example, consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
 \end{example}
