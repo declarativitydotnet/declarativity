@@ -13,7 +13,7 @@ The algebra language is restricted only to commutative data structures, i.e., da
 
 A {\em commutative monoid} $M = (S, *, e)$ is a set $S$ together with an associative, commutative, closed binary operator $*$.  The identity element, $e \in M$, satisfies $a*e = e*a = a$.
 
-As we will see later, commutative monoids with an additional {\em idempotency} restriction on the binary operator are also of interest.
+As we will see later, commutative monoids with an additional {\em idempotency} restriction on the binary operator are also of interest.  While a commutative monoid may be thought of as a generalization of a multiset with multiset union taking the sum of multiplicities of elements, an idempotent commutative monoid may be thought of as a generalization of a set.
 
 We represent the value of a data structure changing over time using an ordered list of updates to that data structure, known as a stream.
 
@@ -34,7 +34,9 @@ v &+=& 5\\
 v &+=& 3\\
 v &+=& 2\\
 \end{eqnarray*}
-Note that $Val(T) = 14$.  Consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
+Note that $Val(T) = 14$.  Now, assume that stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T)$ is still $14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase.  We will also see later that programs in the ``Algebra'' language are invariant to this batching.  A programmer can choose to manipulate batching at will in the ``ordering'' component of the language.
+
+To round out example, consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
 \end{example}
 
 Having defined the algebra language's primitive data structures, we now describe how to write programs over these data structures, using the principal programming construct of the algebra language: the rule.
@@ -43,9 +45,9 @@ Having defined the algebra language's primitive data structures, we now describe
 
 A rule is denoted as a tuple: $$(l, v_0 \Leftarrow f_l(v_1, v_2, \dots, v_n);)$$  The first argument of the tuple, $l$, is the rule's {\em label}, which is drawn from the domain $\mathbb{N}$.  The second argument of the tuple is the rule's {\em clause}. $v_0$ is the rule's {\em head identifier} or the {\em head} of the rule, and $f_l(v_1, v_2, \dots, v_n)$ is the rule's {\em body}.  We write $f_l$ by convention, to denote the fact that $f$ is the function of the rule with label $l$.  $v_1, \dots, v_n$ are the rule's {\em body identifiers}, and $f_l$ is the rule's {\em body function} or just {\em function}.  A rule may contain multiple occurrences of the same identifier, including the case where $v_0 = v_i$ for one or more $0 \leq i \leq n$.  We denote the head identifier of rule $l$ as $head(l)$, and the set of body identifiers of rule $l$ as $bodies(l)$.
 
-Rules in our algebra language are similar to update statements in a traditional programming language.  The variable being updated is the head identifier, and the rule's function and body identifiers describe the update to be performed.
+Rules in our algebra language are similar to update statements in a traditional programming language.  The variable being updated is the head identifier, and the rule's function and body identifiers describe the update to be performed.  Of course, all updates are necessarily commutative, given the requirement that all data structures be commutative monoids.
 
-The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams, as we will see later.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
+The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams themselves, as we will see later.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
 
 \subsubsection{Program}
 
@@ -209,6 +211,19 @@ We presently define the set of {\em legal} choice functions from the canonical c
 \end{itemize}
 
 If a stream is not batching or atomizing, it is called {\em atomicity preserving}.  If a stream is not re-ordering, it is called {\em sequential}.
+
+
+\subsubsection{Connection to Datalog Evaluation}
+
+The idea of choice functions can be viewed as a generalization of semi-naive~\ref{seminaive} evaluation in Datalog, and pipelined semi-naive~\ref{loo-sigmod06} evaluation proposed in distributed Datalog systems such as Overlog.  Indeed, one may think of Datalog as a particular instance of our ``algebra'' language, where all data structures are sets, and all rule functions are composed of only selection, projection, and join.  Furthermore, all input identifiers have fixed contents before the evaluation starts.
+
+In the semi-naive algorithm, evaluation proceeds in {\em rounds}.  The semi-naive algorithm is designed to be applied in cases where the input identifiers (so-called {\em relations} in Datalog) are fixed.  In each round, every rule is ``fired once'' on all available elements in its body streams.  New elements derived are set aside for processing in the next round.
+
+One may envision a tree whose nodes are elements of streams in the execution of an ``algebra'' program.  A link exists from node $n_1$ to node $n_2$ if the stream element represented by $n_2$ was the result of applying a function to element $n_1$.  Intuitively, semi-naive evaluation builds this graph in a breadth-first manner.
+
+Pipelined semi-naive is a relaxation of semi-naive that supports input identifiers that change over time.  Pipelined semi-naive still proceeds in rounds, though there are several key differences.  First, in each round, all rules are executed to a {\em fixed point}, a state in which further application of rules no longer changes the value of any stream.  Their language is guaranteed to reach such a state, as, unlike ours, it operates over a fixed universe of values.  Second, there is no restriction that a round be applied to {\em all} available values in streams.
+
+\wrm{Our thing is a relaxation because...  ; talk about join ordering}
 
 
 \subsubsection{Ultimate Model}
