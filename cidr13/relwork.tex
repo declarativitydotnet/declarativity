@@ -1,0 +1,14 @@
+\section{Related Work}
+\label{sec:relwork}
+
+\wrm{Neil's lattice stuff}
+\wrm{Bloom}
+Our
+``algebra'' is similar to the Bloom language for distributed systems.  In
+Bloom, programmers react to an adversarial network that may reorder messages.  In contrast, our language induces programmers to proactively insert disorder into their code.
+
+In the Bloom work, we focused on writing distributed systems, which are inherently non-deterministic by virtue of temporal non-determinism induced by communication between nodes in the system.  When specifying a distributed system, a programmer would use a static analysis to ensure that his code would be deterministic, regardless of this unavoidable non-determinism.~\cite{cidr11}
+
+In this work, we start with well-known deterministic algorithms.  Many deterministic algorithms leverage non-determinism for increased performance.  For example, when one designs an asynchronous parallel algorithm, one must reason about the effects of temporal non-determinism between tasks on the output of the program.  Similarly, when one designs a Las Vegas algorithm---a deterministic algorithm that employs randomness for a speedup---one must reason about the effects of different random choices.
+
+\wrm{Lindsey's lattice stuff}

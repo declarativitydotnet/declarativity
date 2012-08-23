@@ -1,12 +1,33 @@
 \section{Introduction}
 \label{sec:intro}
 
-In previous work, we focused on writing distributed systems, which are inherently non-deterministic by virtue of temporal non-determinism induced by communication between nodes in the system.  When specifying a distributed system, a programmer would use a static analysis to ensure that his code would be deterministic, regardless of this unavoidable non-determinism.~\cite{cidr11}
+When a programmer sets out to build a system or implement an algorithm, he or she may go through
+several iterations.  A first pass might involve establishing correct functionality, while not
+worrying about performance optimizations.  A second pass might tune the code, or configure it to
+the specific execution environment (e.g., expected inputs, topology of the computer and/or network, etc.).  If assumptions about the distribution of inputs or topology change, then further passes may
+be required to re-tune the algorithm.  Too often, performance concerns are cross-cutting; changes to
+tune performance involve significantly modifying or restructuring code.  When all is said and done,
+it is hard to be sure that modifications intended to tweak performance have not unintentionally
+interfered with program correctness or determinism.
 
-In this work, we start with well-known deterministic algorithms.  Many deterministic algorithms leverage non-determinism for increased performance.  For example, when one designs an asynchronous parallel algorithm, one must reason about the effects of temporal non-determinism between tasks on the output of the program.  Similarly, when one designs a Las Vegas algorithm---a deterministic algorithm that employs randomness for a speedup---one must reason about the effects of different random choices.
+We propose a two-part language: one part ``algebra,'' one part ``ordering.''  Our language disentangles the specification of ordering from the specification of program logic, reminiscent of Kowalski's famed ``Algorithm = Logic + Control'' formula~\cite{alc}.  A programmer first
+writes a specification of his or her program in the ``algebra'' language.  At this point, the algebra
+can be executed using a default ordering.
+Once the ``algebra'' is suitably specified to enable the ordering freedom a programmer desires, he or she can
+tune the performance by only changing the ``ordering'' code.  This pattern has the significant
+advantage that changes to the ``ordering'' code will not affect the output of the algorithm.  This
+leaves programmers free to experiment with different performance optimizations, and to re-use the
+same specification across many different input distributions or execution environments.
 
-Current tools provide little help for programmers to understand when asynchronous parallel programs, or programs that employ randomness, are deterministic.
 
-Making one's program non-deterministic leaves it underspecified.  While any ordering of task completion in a parallel algorithm, or any order of choices in a Las Vegas algorithm would yield a correct result, there is often a particular implementation that is more performant.  This pattern of non-deterministic ``holes'' in ones program lends itself to the orthogonal specification of a concrete order.
+The interface between ``algebra'' and ``ordering'' is known as a ``timeline.''  A ``timeline'' intuitively specifies a particular concrete ordering of operations.  The ``ordering'' component may be any arbitrary code that generates a legal ``timeline.''  The ``algebra'' component is a restricted language, designed to ensure that program outcomes are independent of the ``ordering.''  We provide a formal static analysis for ``confluence'' of the ``algebra'' portion---i.e., when the output of the specification of the program is independent of the particular ``timeline'' (concrete ordering) chosen~\cite{this-tr}.
 
-In this paper, we present a language that captures this separation of concerns, reminiscent of Kowalski's famed ``Algorithm = Logic + Control'' formula~\cite{alc}.  The language has an ``algebra'' component and an ``ordering'' component.  A programmer writes an order-independent specification in the ``algebra'' component, and later specifies concrete orderings using the ``ordering'' component.  The interface between ``algebra'' and ``ordering'' is known as a ``timeline.''  A ``timeline'' intuitively specifies a particular concrete ordering of operations.  The ``ordering'' component may be any arbitrary code that generates a legal ``timeline.''  The ``algebra'' component is based on the Bloom language for distributed systems, enhanced with algebraic constructs.  We provide a formal static analysis for ``confluence'' of the ``algebra'' portion---i.e., when the output of the specification of the program is independent of the particular ``timeline'' (concrete ordering) chosen.  A formal presentation of a similar analysis was absent from prior work on Bloom~\cite{this-tr}.
+
+Computer Science is full of examples where ordering is manipulated to tune performance.  These
+examples often come up in the domain of {\em space-time tradeoffs}, where the use of additional
+memory, network bandwidth, or storage is traded off against the temporal characteristics of the
+program's output.  In some cases, programmers may care about producing the entire output quickly.
+In other cases, such as on-line aggregation, a programmer may desire the speedy computation of
+{\em early returns} (partial results).  Other examples in this area include compression schemes
+(e.g., run-length encoding and Nagle's algorithm), as well as deterministic Las Vegas algorithms,
+where randomness is used to decorrelate inputs from performance characteristics.
