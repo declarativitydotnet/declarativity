@@ -56,7 +56,7 @@ A {\em program} $\mathcal{R}$ in our algebra language is a set of rules.  One ca
 A {\em domain compatible} program is one in which $doms(v)$ contains a single element, over all rules in the program, for each identifier $v$.  In the sequel, we will assume that all programs are domain compatible and denote the single domain of identifier $v$ as $dom(v)$.
 
 \begin{example}
-Assume the following program $\mathcal{R}$:
+Consider the following program $\mathcal{R}$:
 \begin{eqnarray*}
 flipflop & \Leftarrow & mod2(nums) \\
 doubled & \Leftarrow & dbl(flipflop)
@@ -85,10 +85,10 @@ An {\em input instance} or {\em instance} $\mathcal{I}$ is an ordered dictionary
 So far we have detailed the structure of programs but have not yet described their meaning.  We now give programs meaning by introducing {\em timelines}.
 
 %Assume the monoids used in $\mathcal{R}$ are $M_0 = (S_0, *_0, e_0), \dots, M_n = (S_n, *_n, e_n)$.  The {\em domain} of $\mathcal{R}$, denoted $dom(\mathcal{R})$ is defined to be $\bigcup_{i=0}^n S_i$.
-A {\em timeline} $T$ is a list of pairs of a rule label and a list of elements.  We denote the rule label at position $i$ of timeline $T$ as $r(T, i)$, and we denote by $\delta(T, i)$ the corresponding list of elements.  Element $j$ of the list of elements is denoted as $\delta(T,i)[j]$.  A {\em domain compatible} timeline $T$ is one in which the arity of $\delta(T, i)$ corresponds with the arity of $f_{r(T,i)}$ (the body function of the rule with label $r(T,i)$), and the element in $\delta(T,i)[j]$ is a member of the domain of the label in the $j$-th argument of $f_{r(T,i)}$.  In the sequel, we only consider {\em domain compatible} timelines.
+A {\em timeline} $T$ is a list of pairs of a rule label and a list of elements.  We denote the rule label at position $i$ of timeline $T$ as $r(T, i)$, and we denote by $\delta(T, i)$ the corresponding list of elements.  We use $\delta(T,i)[j]$ to denote the $j$-th element of the list.  A timeline $T$ is {\em domain compatible} if the length of $\delta(T, i)$ is equal to the arity of $f_{r(T,i)}$ (the body function of the rule with label $r(T,i)$), and $\delta(T,i)[j]$ is a member of the domain of the label in the $j$-th argument of $f_{r(T,i)}$.  In the sequel, we only consider domain compatible timelines.
 
 \begin{example}
-Assume the following $\mathcal{R}$, where $f_0 : \mathbb{Z}/2 \times \mathbb{Z}/2 \rightarrow \mathbb{Z}/2$:
+Consider the following $\mathcal{R}$, where $f_0 : \mathbb{Z}/2 \times \mathbb{Z}/2 \rightarrow \mathbb{Z}/2$:
 \begin{eqnarray*}
   s &\Leftarrow& f_0(u, v); \\
   w &\Leftarrow& f_1(s);
@@ -137,7 +137,7 @@ $$ \overline{a}[j = x] = a_1, \ldots, a_{j-1}, x, a_{j+1}, \ldots, a_{k}$$
 %\end{equation*}
 %We will use deltas in the definition of our canonical choice function.  In the sequel, we will only make use of domain compatible deltas $L(T,j,h,l,\overline{a}_{-j})$. In particular, for all $a_g$, where $g \neq j$, we will ensure $a_g \in dom(bodies(l)[g])$.  For the $j$-th column, we will require that $(l,j) \in B(head(r(T,h)),\mathcal{R})$.
 
-We are now ready to define the canonical choice function and give an example.  The canonical choice function $C(h, \mathcal{I})$ takes an integer $h$, and an instance $\mathcal{I}$, which is compatible with $\mathcal{R}$.  In the base case:
+We are now ready to define the canonical choice function and give an example.  The canonical choice function $C(h, \mathcal{I})$ takes an integer $h$ and an instance $\mathcal{I}$ which is compatible with $\mathcal{R}$.  In the base case:
 $$C(0,\mathcal{I}) = C_\delta(0,\mathcal{I}) =  [(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$$
 %\begin{equation*}
 %\begin{split}
@@ -158,7 +158,7 @@ C_\delta(h,\mathcal{I}) = & \left[ (l, \overline{a}[j =  f_{r(C(h-1,\mathcal{I})
 Then, $ C(h,\mathcal{I}) = C(h-1,\mathcal{I}) ++ C_\delta(h,\mathcal{I})$.
 Note that any timeline $C(h,\mathcal{I})$ is domain compatible with $\mathcal{R}$.
 
-This is similar to {\em semi-na\"{\i}ve evaluation} for Datalog, where, when given a delta in one relation of a rule's body, we must evaluate the rule for all possible combinations of values in the database for the other relations in the rule's body.
+This is similar to {\em semi-na\"{\i}ve evaluation} for Datalog, where, when given a delta in one relation of a rule's body, we must evaluate the rule for all possible combinations of values in the database for the other relations in the rule's body~\cite{seminaive}.
 
 \begin{example}
 Consider the following program for computing the transitive closure of a graph.
