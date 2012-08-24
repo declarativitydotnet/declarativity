@@ -34,18 +34,18 @@ v &+=& 5\\
 v &+=& 3\\
 v &+=& 2\\
 \end{eqnarray*}
-Note that $Val(T) = 14$.  Now, assume that stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T') = 14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase~\cite{Dean2004}.  We will also see later that programs in the ``Algebra'' language are invariant to this batching.  A programmer can choose to manipulate batching at will in the ``ordering'' component of the language.
+Note that $Val(T) = 14$.  Now, assume that stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T') = 14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase~\cite{Dean2004}.  We will also see later that programs in the ``algebra'' language are invariant to this batching.  Hence, the programmer can specify arbitrary batching behavior in the ``ordering'' component of the language.
 
-To round out example, consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
+To round out the example, consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
 \end{example}
 
-Having defined the algebra language's primitive data structures, we now describe how to write programs over these data structures, using the principal programming construct of the algebra language: the rule.
+Having defined the algebra language's primitive data structures, we now describe how to write programs over these data structures using the principal programming construct of the algebra language: the rule.
 
 \subsubsection{Rule}
 
 A rule is denoted as a tuple: $$(l, v_0 \Leftarrow f_l(v_1, v_2, \dots, v_n);)$$  The first argument of the tuple, $l$, is the rule's {\em label}, which is drawn from the domain $\mathbb{N}$.  The second argument of the tuple is the rule's {\em clause}. $v_0$ is the rule's {\em head identifier} or the {\em head} of the rule, and $f_l(v_1, v_2, \dots, v_n)$ is the rule's {\em body}.  We write $f_l$ by convention, to denote the fact that $f$ is the function of the rule with label $l$.  $v_1, \dots, v_n$ are the rule's {\em body identifiers}, and $f_l$ is the rule's {\em body function} or just {\em function}.  A rule may contain multiple occurrences of the same identifier, including the case where $v_0 = v_i$ for one or more $0 \leq i \leq n$.  We denote the head identifier of rule $l$ as $head(l)$, and the set of body identifiers of rule $l$ as $bodies(l)$.
 
-Rules in our algebra language are similar to update statements in a traditional programming language.  The variable being updated is the head identifier, and the rule's function and body identifiers describe the update to be performed.  Of course, all updates are necessarily commutative, given the requirement that all data structures be commutative monoids.
+Rules in our algebra language are similar to update statements in a traditional programming language.  The variable being updated is the head identifier and the rule's function and body identifiers describe the update to be performed.  Of course, all updates are necessarily commutative, given the requirement that all data structures be commutative monoids.
 
 The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams themselves, as we will see later.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
 
@@ -53,7 +53,7 @@ The notation for $f_l$ is not meant to suggest that the function operates on ent
 
 A {\em program} $\mathcal{R}$ in our algebra language is a set of rules.  One can also view $\mathcal{R}$ as a list of rules in label order.  For simplicity, we will usually only list the clauses of a program's rules, one per line.  If a clause $c$ appears in the $i$-th position of this list, then the program contains a rule $(i,c)$.
 
-A {\em domain compatible} program is one in which $doms(v)$ contains a single element, over all rules in the program, for each identifier $v$.  In the sequel, we will assume that all programs are domain compatible, and denote the single domain of identifier $v$ as $dom(v)$.
+A {\em domain compatible} program is one in which $doms(v)$ contains a single element, over all rules in the program, for each identifier $v$.  In the sequel, we will assume that all programs are domain compatible and denote the single domain of identifier $v$ as $dom(v)$.
 
 \begin{example}
 Assume the following program $\mathcal{R}$:
@@ -82,7 +82,7 @@ An {\em input instance} or {\em instance} $\mathcal{I}$ is an ordered dictionary
 
 \subsubsection{Timeline}
 
-So far we have detailed the structure of programs, but have not yet described their meaning.  We presently give programs meaning by introducing {\em timelines}.
+So far we have detailed the structure of programs but have not yet described their meaning.  We now give programs meaning by introducing {\em timelines}.
 
 %Assume the monoids used in $\mathcal{R}$ are $M_0 = (S_0, *_0, e_0), \dots, M_n = (S_n, *_n, e_n)$.  The {\em domain} of $\mathcal{R}$, denoted $dom(\mathcal{R})$ is defined to be $\bigcup_{i=0}^n S_i$.
 A {\em timeline} $T$ is a list of pairs of a rule label and a list of elements.  We denote the rule label at position $i$ of timeline $T$ as $r(T, i)$, and we denote by $\delta(T, i)$ the corresponding list of elements.  Element $j$ of the list of elements is denoted as $\delta(T,i)[j]$.  A {\em domain compatible} timeline $T$ is one in which the arity of $\delta(T, i)$ corresponds with the arity of $f_{r(T,i)}$ (the body function of the rule with label $r(T,i)$), and the element in $\delta(T,i)[j]$ is a member of the domain of the label in the $j$-th argument of $f_{r(T,i)}$.  In the sequel, we only consider {\em domain compatible} timelines.
