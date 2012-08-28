@@ -9,7 +9,7 @@ We present the algebra language by first describing its data structures, then it
 
 \subsubsection{Data Structures}
 
-The algebra language is restricted only to commutative data structures, i.e., data structures which are invariant to the ordering of updates.  The most basic structure is a commutative monoid.
+The algebra language is restricted only to commutative data structures, i.e., data structures which are invariant to the ordering of updates.  The most basic structure is a commutative monid.
 
 A {\em commutative monoid} $M = (S, *, e)$ is a set $S$ together with an associative, commutative, closed binary operator $*$.  The identity element, $e \in M$, satisfies $a*e = e*a = a$.
 
@@ -17,16 +17,18 @@ As we will see later, commutative monoids with an additional {\em idempotency} r
 
 We represent the value of a data structure changing over time using an ordered list of updates to that data structure, known as a stream.
 
-A {\em stream} $T$ over a commutative monoid $M = (S, *, e)$, denoted $T = (L, M)$ is an ordered list $L$ of elements of $S$.  The {\em value} of a stream $T$, denoted $Val(T)$ is the result obtained by left-folding over $T$ with $*$.  If $T$ has a single element $x$, then $Val(T)=x$.  If $T$ is empty, then $Val(T)=e$.  Note that it is always the case that $Val(T) \in S$ by closure of $*$.
+A {\em stream} $T$ over a commutative monoid $M = (S, *, e)$, denoted $T = (L, M)$ is an ordered list $L$ of elements of $S$.
+
+A stream is {\em sealed} if it is henceforth unchanging.  The {\em value} of a sealed stream $T$, denoted $Val(T)$ is the result obtained by left-folding over $T$ with $*$.  If $T$ has a single element $x$, then $Val(T)=x$.  If $T$ is empty, then $Val(T)=e$.  Note that it is always the case that $Val(T) \in S$ by closure of $*$.
 
 An {\em identifier} $v$ is a name that represents a stream.  The {\em domain} of identifier $v$, denoted $dom(v)$ is equal to $S$, where $M = (S, *, e)$.
 
 Identifiers play the role that variables would in a traditional programming language.
 
 \begin{example}
-Consider the stream $T = (L,M)$ where $L = [4, 5, 3, 2]$ the commutative monoid $M = (\mathbb{N}, +, 0)$.
+Consider the sealed stream $T = (L, M)$ where $L = [4, 5, 3, 2]$ the commutative monoid $M = (\mathbb{N}, +, 0)$.
 
-Intuitively, the stream $L$ represents the following sequence of updates to an identifier $v$, with $dom(v) = \mathbb{N}$:
+Intuitively, the stream $T$ represents the following sequence of updates to an identifier $v$, with $dom(v) = \mathbb{N}$:
 \begin{eqnarray*}
 v &=& 0\\
 v &+=& 4\\
@@ -34,42 +36,69 @@ v &+=& 5\\
 v &+=& 3\\
 v &+=& 2\\
 \end{eqnarray*}
-Note that $Val(T) = 14$.  Now, assume that stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T') = 14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase~\cite{Dean2004}.  We will also see later that programs in the ``algebra'' language are invariant to this batching.  Hence, the programmer can specify arbitrary batching behavior in the ``ordering'' component of the language.
+Note that $Val(T) = 14$.  Now, assume that sealed stream $T' = (L',M)$ where $L' = [9, 5]$.  Notice that $Val(T') = 14$.  In this sense, $T'$ may be thought of as being ``the same'' as $T$.  Notice that the first element of $L'$ is the result of adding the first two elements of $L$, and similarly for its second element.  We will see later that streams can be thought of as values evolving over time.  $L'$ skips some of the steps of evolution of $L$, or said another way, $L'$ is the result of applying {\em batching} or {\em intermediate summarization} in the vein of MapReduce's {\em combiner} phase~\cite{Dean2004}.  We will also see later that programs in the ``algebra'' language are invariant to this batching.  Hence, the programmer can specify arbitrary batching behavior in the ``ordering'' component of the language.
 
-To round out the example, consider the stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the stream $V = ([], M)$.  We have that $Val(V) = 0$.
+To round out the example, consider the sealed stream $U = ([1], M)$, where $M$ is as above.  We have that $Val(U) = 1$.  Consider the sealed stream $V = ([], M)$.  We have that $Val(V) = 0$.
 \end{example}
 
 Having defined the algebra language's primitive data structures, we now describe how to write programs over these data structures using the principal programming construct of the algebra language: the rule.
 
 \subsubsection{Rule}
 
-A rule is denoted as a tuple: $$(l, v_0 \Leftarrow f_l(v_1, v_2, \dots, v_n);)$$  The first argument of the tuple, $l$, is the rule's {\em label}, which is drawn from the domain $\mathbb{N}$.  The second argument of the tuple is the rule's {\em clause}. $v_0$ is the rule's {\em head identifier} or the {\em head} of the rule, and $f_l(v_1, v_2, \dots, v_n)$ is the rule's {\em body}.  We write $f_l$ by convention, to denote the fact that $f$ is the function of the rule with label $l$.  $v_1, \dots, v_n$ are the rule's {\em body identifiers}, and $f_l$ is the rule's {\em body function} or just {\em function}.  A rule may contain multiple occurrences of the same identifier, including the case where $v_0 = v_i$ for one or more $0 \leq i \leq n$.  We denote the head identifier of rule $l$ as $head(l)$, and the set of body identifiers of rule $l$ as $bodies(l)$.
+A rule is denoted as a tuple: $$(l, v_0 \Leftarrow f_l(v_1, v_2, \dots, v_n);)$$  The first argument of the tuple, $l$, is the rule's {\em label}, which is drawn from the domain $\mathbb{N}$.  The second argument of the tuple is the rule's {\em clause}. $v_0$ is the rule's {\em head identifier} or the {\em head} of the rule, and $f_l(v_1, v_2, \dots, v_n)$ is the rule's {\em body}.  We write $f_l$ by convention, to denote the fact that $f$ is the function of the rule with label $l$.  $v_1, \dots, v_n$ are the rule's {\em body identifiers}, and $f_l$ is the rule's {\em body function} or just {\em function}.  A rule may contain multiple occurrences of the same identifier, including the case where $v_0 = v_i$ for one or more $0 \leq i \leq n$.  This case is known as {\em recursion}.  We denote the head identifier of rule $l$ as $head(l)$, and the set of body identifiers of rule $l$ as $bodies(l)$.
 
 Rules in our algebra language are similar to update statements in a traditional programming language.  The variable being updated is the head identifier and the rule's function and body identifiers describe the update to be performed.  Of course, all updates are necessarily commutative, given the requirement that all data structures be commutative monoids.
 
-The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams themselves, as we will see later.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
+The notation for $f_l$ is not meant to suggest that the function operates on entire streams.  Indeed, $f_l$ operates on {\em elements} of streams, rather than directly on the streams themselves, as we will see later.  
+
+We define the notation $doms(v_i)$ by way of the rule above.  In the rule above, if we have that $f_l : S_1 \times S_2 \times \dots \times S_n \rightarrow S_0$, then we say that $S_i$ is a domain for $v_i$, denoted $S_i \in doms(v_i)$.
 
 \subsubsection{Program}
 
-A {\em program} $\mathcal{R}$ in our algebra language is a set of rules.  One can also view $\mathcal{R}$ as a list of rules in label order.  For simplicity, we will usually only list the clauses of a program's rules, one per line.  If a clause $c$ appears in the $i$-th position of this list, then the program contains a rule $(i,c)$.
+A {\em program} $\mathcal{R}$ in our algebra language is a set of rules.  One can also view $\mathcal{R}$ as a list of rule clauses in label order.  For simplicity, we will usually choose the latter representation, listing the clauses of a program's rules in label order, one per line.  If a clause $c$ appears in the $i$-th position of this list, then the program contains a rule $(i,c)$.
 
 A {\em domain compatible} program is one in which $doms(v)$ contains a single element, over all rules in the program, for each identifier $v$.  In the sequel, we will assume that all programs are domain compatible and denote the single domain of identifier $v$ as $dom(v)$.
 
 \begin{example}
-Consider the following program $\mathcal{R}$:
+\label{ex:mrcount}
+Consider the following program $\mathcal{R}$.  The program is meant to be a simple word-counting program in a MapReduce-like style:
 \begin{eqnarray*}
-flipflop & \Leftarrow & mod2(nums) \\
-doubled & \Leftarrow & dbl(flipflop)
+mapped & \Leftarrow & map(pairs) \\
+reduced & \Leftarrow & sum(mapped)
 \end{eqnarray*}
 
 Recall that this representation is equivalent to the following:
+
 \begin{equation*}
 \begin{split}
-\mathcal{R} = & \left\{(0, flipflop \Leftarrow mod2(nums);), \right. \\
-& \left. (1, doubled \Leftarrow dbl(flipflop);) \right\}
+\mathcal{R} = & \left\{(0, mapped \Leftarrow map(pairs);), \right. \\
+& \left. (1, reduced \Leftarrow sum(mapped);) \right\}
 \end{split}
 \end{equation*}
-Assume that $mod2 : \mathbb{N} \rightarrow \mathbb{Z}/2$, and $dbl : \mathbb{N} \rightarrow \mathbb{N}$.  The program is not domain compatible because $\mathbb{Z}/2, \,\, \mathbb{N} \,\, \in doms(flipflop)$.
+
+Let $pairs$, $mapped$, and $reduced$ be the commutative monoid $(\mathcal{P}(\{0,1\}^* \times \mathbb{N}), unionWith +, \phi)$.  In words, $pairs$, $mapped$, and $reduced$ are sets of tuples whose first argument is a string and second is an integer.  The way to combine two such sets is to take their union, except when an element in the first set has the same first argument as an element in the second, the combination set contains a single element for that first argument whose second argument is the sum of the two second arguments.  Said another way, $pairs$, $mapped$, and $reduced$ are multisets of strings, where the union operation takes the sum of multiplicities.  $\phi$ represents the empty set.
+
+Assume that $map, sum : \mathbb{N} \times \{0,1\}^* \rightarrow \mathbb{N} \times \{0,1\}^*$.  Let $map$ and $sum$ be the identity.
+
+Given an input ($pairs$) representing the count of words in a document, this program computes the total count for each word.  In the traditional MapReduce formulation, tuples of the form $(\text{word}, 1)$ are emitted for each ``word'' oin a scan of a document.  Assume that a scan of a document emits $(\text{foo}, 1)$, $(\text{bar}, 1)$, $(\text{foo}, 1)$.  In our example, a stream for $pairs$ that encodes this information would be: $[\{(\text{foo}, 1)\}, \{(\text{bar}, 1)\}, \{(\text{foo}, 1)\}]$.
+
+Note that both $map$ and $sum$ are the identity.  This expresses the fact that the only salient aspect of this program is {\em batching}, i.e., when to apply the merge operation ($unionWith +$).  In MapReduce, typically, the merge operation is partially applied after the map phase in what is known as the {\em combiner} phase, and is then fully applied during the reduce phase.  As we will see later, batching is entirely controlled by the ``ordering'' program.  Thus, the algebraic specification we have presented above can support merging at any stream.
+
+Also, note that this program is domain compatible, as all domains are the same.  The program would not be domain compatible, for example, if the codomain of $map$ was different from the domain of $sum$.
+
+%\begin{eqnarray*}
+%flipflop & \Leftarrow & mod2(nums) \\
+%doubled & \Leftarrow & dbl(flipflop)
+%\end{eqnarray*}
+
+%Recall that this representation is equivalent to the following:
+%\begin{equation*}
+%\begin{split}
+%\mathcal{R} = & \left\{(0, flipflop \Leftarrow mod2(nums);), \right. \\
+%& \left. (1, doubled \Leftarrow dbl(flipflop);) \right\}
+%\end{split}
+%\end{equation*}
+%Assume that $mod2 : \mathbb{N} \rightarrow \mathbb{Z}/2$, and $dbl : \mathbb{N} \rightarrow \mathbb{N}$.  The program is not domain compatible because $\mathbb{Z}/2, \,\, \mathbb{N} \,\, \in doms(flipflop)$.
 \end{example}
 
 \subsubsection{Input and output}
@@ -78,7 +107,14 @@ Every program has an associated set of {\em input identifiers} $\mathcal{R}_I$, 
 
 $$(c_v, v \Leftarrow id(v)) $$
 
-An {\em input instance} or {\em instance} $\mathcal{I}$ is an ordered dictionary, where $\mathcal{I}[v] = T$, associating an identifier $v$ with a (possibly empty) stream $T$.  An instance $\mathcal{I}$ is {\em compatible} with a program $\mathcal{R}$ if the keys in $\mathcal{I}$ match exactly the identifiers used in $\mathcal{R}$, and if $\mathcal{I}[v] = T$, then every element in $T$ is in $dom(v)$.
+Note that we are assuming an 
+
+An {\em input instance} or {\em instance} $\mathcal{I}$ is a dictionary 
+%with an ordering over its keys,
+where $\mathcal{I}[v] = T$, associating an identifier $v$ with a (possibly empty) stream $T$.  An instance $\mathcal{I}$ is {\em compatible} with a program $\mathcal{R}$ if the keys in $\mathcal{I}$ match exactly the identifiers used in $\mathcal{R}$, and if $\mathcal{I}[v] = T$, then every element in $T$ is in $dom(v)$.
+
+Given an input instance, the {\em canonical timeline} $\mathcal{T}(\mathcal{I})$ is the timeline $[(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$.  In words, for each input identifier $v$, for each element $x$ in that identifier's stream in the input instance, the canonical timeline contains an element $(c_v, [x])$.  Recall that $c_v$ is the identifier of the canonical rule for input identifier $v$.
+
 
 \subsubsection{Timeline}
 
@@ -105,7 +141,9 @@ U & = & 1 : 7 \\
 
 \subsubsection{Canonical Choice Function}
 
-A {\em choice function} takes as input an integer and a timeline, and outputs a timeline.  We now define the {\em canonical choice function} $C$ from which all other choice functions are defined.  First, some notation.  
+A {\em choice function} takes as input an integer and an input instance, and outputs a timeline.  We now define the {\em canonical choice function} $C$ from which all other choice functions are defined.
+
+First, some notation.  
 Define the stream at position $h$ of timeline $T$ for non-input identifier $v$ (i.e., $v \not\in \mathcal{R}_I$), denoted $stream(T,h,v)$, to be the results of applying $r(T,g)$ to $\delta(T,g)$, for all $0 \leq g < h$ such that $head(r(T,g)) = v$, ordered by $g$.
 %$$stream(T,h,v) = [f_{r(T,g)}(\delta(T,g)) \,\, | \,\, head(r(T,g)) = v \,\, \land \,\, 0 \leq g < h] $$
 \begin{equation*}
@@ -137,8 +175,11 @@ $$ \overline{a}[j = x] = a_1, \ldots, a_{j-1}, x, a_{j+1}, \ldots, a_{k}$$
 %\end{equation*}
 %We will use deltas in the definition of our canonical choice function.  In the sequel, we will only make use of domain compatible deltas $L(T,j,h,l,\overline{a}_{-j})$. In particular, for all $a_g$, where $g \neq j$, we will ensure $a_g \in dom(bodies(l)[g])$.  For the $j$-th column, we will require that $(l,j) \in B(head(r(T,h)),\mathcal{R})$.
 
-We are now ready to define the canonical choice function and give an example.  The canonical choice function $C(h, \mathcal{I})$ takes an integer $h$ and an instance $\mathcal{I}$ which is compatible with $\mathcal{R}$.  In the base case:
-$$C(0,\mathcal{I}) = C_\delta(0,\mathcal{I}) =  [(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$$
+We are now ready to define the canonical choice function and give an example.  The canonical choice function $C(h, \mathcal{I})$ takes an integer $h$ and an input instance $\mathcal{I}$ that is compatible with $\mathcal{R}$.
+
+In the base case, the canonical choice function is the canonical timeline of the instance:
+$$C(0,\mathcal{I}) = \mathcal{T}(\mathcal{I}).$$
+%$$C(0,\mathcal{I}) = C_\delta(0,\mathcal{I}) =  [(c_v,[x]) \, | \, v \in \mathcal{R}_I \, \land \, x \in \mathcal{I}[v]]$$
 %\begin{equation*}
 %\begin{split}
 %C_\delta(h,\mathcal{I}) = & \\
@@ -213,19 +254,6 @@ We presently define the set of {\em legal} choice functions from the canonical c
 If a stream is not batching or atomizing, it is called {\em atomicity preserving}.  If a stream is not re-ordering, it is called {\em sequential}.
 
 
-\subsubsection{Connection to Datalog Evaluation}
-
-The idea of choice functions can be viewed as a generalization of semi-naive~\cite{seminaive} evaluation in Datalog, and pipelined semi-naive~\cite{loo-sigmod06} evaluation proposed in distributed Datalog systems such as Overlog.  Indeed, one may think of Datalog as a particular instance of our ``algebra'' language where all data structures are sets, and all rule functions are composed of only selection, projection, and join.  Furthermore, all input identifiers have fixed contents before the evaluation starts.
-
-In the semi-naive algorithm, evaluation proceeds in {\em rounds}.  The semi-naive algorithm is designed to be applied in cases where the input identifiers (so-called {\em relations} in Datalog) are fixed.  In each round, every rule is ``fired once'' on all available elements in its body streams.  New elements derived are set aside for processing in the next round.
-
-One may envision a tree whose nodes are elements of streams in the execution of an ``algebra'' program.  A link exists from node $n_1$ to node $n_2$ if the stream element represented by $n_2$ was the result of applying a function to element $n_1$.  Intuitively, semi-naive evaluation builds this graph in a breadth-first manner.
-
-Pipelined semi-naive is a relaxation of semi-naive that supports input identifiers that change over time.  Pipelined semi-naive still proceeds in rounds, though there are several key differences.  First, in each round, all rules are executed to a {\em fixed point}, a state in which further application of rules no longer changes the value of any stream.  Their language is guaranteed to reach such a state, as, unlike ours, it operates over a fixed universe of values.  Second, there is no restriction that a round be applied to {\em all} available values in streams.
-
-\wrm{Our thing is a relaxation because...  ; talk about join ordering}
-
-
 \subsubsection{Ultimate Model}
 
 A choice function describes a program's behavior over time.  We will now see how to define a notion of the {\em result} of a program.
@@ -241,10 +269,10 @@ While our language admits non-deterministic behaviors, we want it to have the pr
 
 \subsubsection{Multilinearity}
 
-Let $f : S_1 \times \ldots \times S_n \rightarrow S_0$ be an $n$-ary function.  We say $f$ is {\em $n$-linear} with respect to the commutative monoids $(S_i, +_i, 0_i)$ for $i = 0, \ldots, n$ if we have:
+Let $f : S_1 \times \ldots \times S_n \rightarrow S_0$ be an $n$-ary function.  We say $f$ is {\em $n$-linear} with respect to the commutative monoids $(S_i, +_i, 0_i)$ for $i = 0, \ldots, n$ if we have, for $j = 1, \ldots, n$:
 \begin{eqnarray*}
-& f(x_1, \ldots, x_i +_i y_i, \ldots, x_n) = \\
-& f(x_1, \ldots, x_i, \ldots, x_n) +_0 f(x_1, \ldots, y_i, \ldots, x_n)
+& f(\ldots, x_{j-1}, x_j +_j y_j, x_{j+1}, \ldots,) = \\
+& f(\ldots, x_{j-1}, x_j, x_{j+1}, \ldots) +_0 f(\ldots, x_{j-1}, y_j, x_{j+1}, \ldots)
 \end{eqnarray*}
 
 Intuitively, a multilinear function is applied to the {\em cross product} of all of its arguments.
@@ -308,6 +336,17 @@ Of course, as described so far, a program in the ordering language may not neces
 
 Note that the restriction on producing only domain compatible timelines can easily be enforced by a simple type system supporting {\em sum types} (tagged unions).  Each rule in the program is represented by a different variant in the sum type.  The output of any ordering program must be a list of elements of the sum type.
 
-Given an ordering program that produces only domain compatible timelines, how do we convert it into a legal choice function?  We may have to delete ``invalid'' elements and add ``missing'' elements.  Deleting ``invalid'' elements is not a problem -- we can check every timeline element during execution to make sure that the value it references in each identifier is actually in the identifier's stream.  During this process we keep track of which combinations of elements we have seen from all streams.  At the end of this process, we simply add timeline elements for every ``missed'' combination.  If all commutative monoids are idempotent, we can simply run the canonical choice function over the timeline after we are finished executing the timeline.
+\begin{example}
+We again consider Example~\ref{ex:mrcount}.  Below, we provide a strategy that implements a {\em combiner} phase.
 
-\wrm{expand and clarify this a bit}
+\begin{alltt}
+for each (x,y) in pairs:
+    add ``r1 : [(x,y)]'' to the timeline
+
+for each x in the first argument of mapped:
+    let y = sum of 2nd args whose 1st arg = x
+    add ``r2 : [(x,y)]'' to the timeline
+\end{alltt}
+\end{example}
+
+Given an ordering program that produces only domain compatible timelines, how do we convert it into a legal choice function?  We may have to delete ``invalid'' elements and add ``missing'' elements.  Deleting ``invalid'' elements is not a problem -- we can check every timeline element during execution to make sure that the value it references in each identifier is actually in the identifier's stream.  During this process we keep track of which combinations of elements we have seen from all streams.  At the end of this process, we simply add timeline elements for every ``missed'' combination.  If all commutative monoids are idempotent, we can simply run the canonical choice function over the timeline after we are finished executing the timeline.
