@@ -11,4 +11,16 @@ In the Bloom work, we focused on writing distributed systems, which are inherent
 
 In this work, we start with well-known deterministic algorithms.  Many deterministic algorithms leverage non-determinism for increased performance.  For example, when one designs an asynchronous parallel algorithm, one must reason about the effects of temporal non-determinism between tasks on the output of the program.  Similarly, when one designs a Las Vegas algorithm---a deterministic algorithm that employs randomness for a speedup---one must reason about the effects of different random choices.
 
+\wrm{SN and PSN evaluation}
+The idea of choice functions can be viewed as a generalization of semi-naive~\cite{seminaive} evaluation in Datalog, and pipelined semi-naive~\cite{loo-sigmod06} evaluation proposed in distributed Datalog systems such as Overlog.  Indeed, one may think of Datalog as a particular instance of our ``algebra'' language where all data structures are sets, and all rule functions are composed of only selection, projection, and join.  Furthermore, all input identifiers have fixed contents before the evaluation starts.
+
+In the semi-naive algorithm, evaluation proceeds in {\em rounds}.  The semi-naive algorithm is designed to be applied in cases where the input identifiers (so-called {\em relations} in Datalog) are sealed (unchanging over time).  In each round, every rule is ``fired once'' on all available elements in its body streams.  New elements derived are set aside for processing in the next round.
+
+One may envision a tree whose nodes are elements of streams in the execution of an ``algebra'' program.  A link exists from node $n_1$ to node $n_2$ if the stream element represented by $n_2$ was the result of applying a function to element $n_1$.  Intuitively, semi-naive evaluation builds this graph in a breadth-first manner.
+
+Pipelined semi-naive is a relaxation of semi-naive that supports input identifiers that change over time.  Pipelined semi-naive still proceeds in rounds, though there are several key differences.  First, in each round, all rules are executed to a {\em fixed point}, a state in which further application of rules no longer changes the value of any stream.  Their language is guaranteed to reach such a state, as, unlike ours, it operates over a fixed universe of values.  Second, there is no restriction that a round be applied to {\em all} available values in streams.  Some subset can be chosen.  Pipelined semi-naive corresponds to local breadth-first traversal.
+
+Our canonical choice function is a relaxation of pipelined semi-naive, as we do not require application to a fixed point.  Further, we do not even require complete application of joins.
+
+
 \wrm{Lindsey's lattice stuff}

@@ -36,7 +36,7 @@ The reader may verify that the latter two triples, $leftlink$ and $rightlink$, a
 Let the functions be defined as follows:
 \begin{alltt}
 split xs = map xs \$
-    \(\lambda\)x -> let p = select_pivot(x[0], x[1]) in
+    \(\lambda\)x -> let p = select_pivot(val(xs)) in
         (p, x[2] < p, x[2])
 
 max\_left\_pivot xs = 
@@ -48,13 +48,19 @@ min\_right\_pivot xs =
         map rights \$ \(\lambda\)y -> (x[0], x[2])
 \end{alltt}
 
-The first function splits elements into left or right subsets, depending on the result of {\tt select\_pivot}, a function that specifies the pivot choice.  The second function, for every pivot, inserts a pair whose first argument is the pivot, and whose second argument is every element of the left subset.  Recall that the definition of $leftlink$ implies that only the maximum such element is maintained for each pivot.  The third function performs a similar task for elements of the right subset.
+The first function splits elements into left or right subsets, depending on the result of {\tt select\_pivot}, a function that specifies the pivot choice.  In functional and imperative languages, pivot selection operates on the whole list, represented above by the fact that {\tt select\_pivot} takes as input the {\em value} of the $subset$ stream, in particular the value of the current subset being split.  Recall that the notion of a value is only defined for a sealed stream.  This implies that $subset$ (the input to {\tt split}) must be sealed.  In particular, the $subset$ corresponding to the subset that is currently being split must be sealed.
+
+The second function, for every pivot, inserts a pair whose first argument is the pivot, and whose second argument is every element of the left subset.  Recall that the definition of $leftlink$ implies that only the maximum such element is maintained for each pivot.  The third function performs a similar task for elements of the right subset.
 
 One can note that the latter two are linear functions, as they are variants of {\tt map}, which is itself a linear function.  The first function is a linear function only if {\tt select\_pivot} is deterministic.  While parallelism is admitted, randomness is not.
 
 There is nothing that prohibits parallel pivot splitting -- the only prerequisite for splitting a subset is that it exists.  In fact, one would have to write a far more complex program to prohibit pivot splitting from being done in parallel.  This is an example of where the language's default of disorderly behavior can help programmers add disorder to their programs.
 
-In the next step of our case study, we introduce disorder in order to enable random selection of pivots.  In order to achieve determinism, it must be the case that the order of selecting pivots is immaterial.
+The only issue with the above program is that the ordering of pivot splitting is necessarily deterministic -- the order is entirely constrained by the algebraic specification, as a subset must be sealed before we can split it.  Note that there is a simple syntactic check for the necessity of such sealing in our program by the use of $val$.
+
+In an imperative programming language, one might simply change the implementation of {\tt select\_pivot}, perhaps invoking a call to $rand()$.  Recall that given the definition of our algebra language, if we modify {\tt select\_pivot}, we may change the meaning of the program.  Further, the use of randomness would break the restrictions on the algebra language (introduced to uphold the correctness criteria of confluence).
+
+Thus, the solution is to remove this syntactically-apparent sealing from our program. In the next step of our case study, we perform this removal, introducing disorder in order to enable random selection of pivots.  In order to achieve determinism, it must be the case that the order of selecting pivots is immaterial.
 
 In particular, it is the case that permuting two pivot selections does not have an effect.  Let's think about why this is the case for quicksort. In quicksort, a pivot operation establishes the information that any element $e$ that is greater than the pivot has a predecessor of at least the pivot.  Conversely, a pivot operation establishes the information that any element $e$ that is less than the pivot has a successor of at most the pivot.  No predecessor information is established for elements less than the pivot.  Thus, if two pivots are considered, the information established for those elements greater than both pivots is that the predecessor is at least the max of the two pivots.  Of course, this process of taking the maximum is order-independent.  Thus, the order of pivot consideration doesn't matter.
 
@@ -163,8 +169,8 @@ next_link(z,y,s)
          copy s into t
          truncate t before x
          iterate through s up to x:
-            let a be the current element from s in the iteration
-            let b be the previous element from s in the iteration
+            let a be current elt from s in iteration
+            let b be previous elt from s in iteration
             t := a ++ t
             add ``r2: [(a,b), (b,y,t)]'' to timeline
          next_link(p,y,t)
