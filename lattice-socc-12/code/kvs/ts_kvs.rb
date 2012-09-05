@@ -65,26 +65,26 @@ class TestPair < MiniTest::Unit::TestCase
     i.p3 <+ pair(set(1, 2), set(7, 8, 9))
     i.tick
     first, last = unwrap_pair(i, :p1)
-    assert_equal([1, 2, 3], first.sort)
-    assert_equal([4, 5, 6], last.sort)
+    assert_equal([1, 2, 3].to_set, first)
+    assert_equal([4, 5, 6].to_set, last)
 
     i.p2 <+ pair(set(4), set(4, 25))
     i.tick
     first, last = unwrap_pair(i, :p1)
-    assert_equal([1, 2, 3, 4], first.sort)
-    assert_equal([4, 5, 6, 25], last.sort)
+    assert_equal([1, 2, 3, 4].to_set, first)
+    assert_equal([4, 5, 6, 25].to_set, last)
 
     i.p3 <+ pair(set(1, 2, 3, 4, 5), set(10))
     i.tick
     first, last = unwrap_pair(i, :p1)
-    assert_equal([1, 2, 3, 4, 5], first.sort)
-    assert_equal([10], last.sort)
+    assert_equal([1, 2, 3, 4, 5].to_set, first)
+    assert_equal([10].to_set, last)
 
     i.p3 <+ pair(set(1, 2, 3, 4, 5, 6), set())
     i.tick
     first, last = unwrap_pair(i, :p1)
-    assert_equal([1, 2, 3, 4, 5, 6], first.sort)
-    assert_equal([], last.sort)
+    assert_equal([1, 2, 3, 4, 5, 6].to_set, first)
+    assert_equal(Set.new, last)
   end
 
   def test_pair_vc
@@ -95,7 +95,7 @@ class TestPair < MiniTest::Unit::TestCase
     first, last = unwrap_pair(i, :p1)
     first_plain = unwrap_map(first)
     assert_equal({"k" => 1}, first_plain)
-    assert_equal([20], last.sort)
+    assert_equal([20].to_set, last)
 
     i.p2 <+ pair(map("l" => max(2)), set(21, 22))
     i.p3 <+ pair(map("j" => max(3)), set(23))
@@ -103,14 +103,14 @@ class TestPair < MiniTest::Unit::TestCase
     first, last = unwrap_pair(i, :p1)
     first_plain = unwrap_map(first)
     assert_equal([["j", 3], ["k", 1], ["l", 2]], first_plain.sort)
-    assert_equal([20, 21, 22, 23], last.sort)
+    assert_equal([20, 21, 22, 23].to_set, last)
 
     i.p2 <+ pair(map("k" => max(1), "l" => max(2), "j" => max(4)), set(9, 99))
     i.tick
     first, last = unwrap_pair(i, :p1)
     first_plain = unwrap_map(first)
     assert_equal([["j", 4], ["k", 1], ["l", 2]], first_plain.sort)
-    assert_equal([9, 99], last.sort)
+    assert_equal([9, 99].to_set, last)
   end
 end
 
@@ -156,28 +156,28 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     c.write('foo', pair(new_vc, set(5)))
     res = c.read('foo')
     assert_equal({c.ip_port => 1}, unwrap_map(res.fst.reveal))
-    assert_equal([5], res.snd.reveal)
+    assert_equal([5].to_set, res.snd.reveal)
 
     new_vc = bump_vc(map, c2.ip_port)
     c2.write('foo', pair(new_vc, set(3)))
     c2_res = c2.read('foo')
     assert_equal({c.ip_port => 1, c2.ip_port => 1},
                  unwrap_map(c2_res.fst.reveal))
-    assert_equal([3,5], c2_res.snd.reveal.sort)
+    assert_equal([3,5].to_set, c2_res.snd.reveal)
 
     new_vc = bump_vc(res.fst, c.ip_port)
     c.write('foo', pair(new_vc, set(7)))
     res = c.read('foo')
     assert_equal({c.ip_port => 2, c2.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([3,5,7], res.snd.reveal.sort)
+    assert_equal([3,5,7].to_set, res.snd.reveal)
 
     new_vc = bump_vc(res.fst, c.ip_port)
     c.write('foo', pair(new_vc, set(9)))
     res = c.read('foo')
     assert_equal({c.ip_port => 3, c2.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([9], res.snd.reveal.sort)
+    assert_equal([9].to_set, res.snd.reveal)
 
     [c, c2, r].each {|n| n.stop_bg}
   end
@@ -193,43 +193,43 @@ class TestMergeMapKvs < MiniTest::Unit::TestCase
     c0.write('foo', pair(new_vc, set(4)))
     res = c0.read('foo')
     assert_equal({c0.ip_port => 1}, unwrap_map(res.fst.reveal))
-    assert_equal([4], res.snd.reveal)
+    assert_equal([4].to_set, res.snd.reveal)
 
     c0.cause_repl(nodes[1])
     res = c1.read('foo')
     assert_equal({c0.ip_port => 1}, unwrap_map(res.fst.reveal))
-    assert_equal([4], res.snd.reveal)
+    assert_equal([4].to_set, res.snd.reveal)
 
     new_vc = bump_vc(res.fst, c1.ip_port)
     c1.write('foo', pair(new_vc, set(12)))
     res = c1.read('foo')
     assert_equal({c0.ip_port => 1, c1.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([12], res.snd.reveal)
+    assert_equal([12].to_set, res.snd.reveal)
 
     new_vc = bump_vc(map, c2.ip_port)
     c2.write('foo', pair(new_vc, set(13)))
     res = c2.read('foo')
     assert_equal({c2.ip_port => 1}, unwrap_map(res.fst.reveal))
-    assert_equal([13], res.snd.reveal)
+    assert_equal([13].to_set, res.snd.reveal)
 
     c1.cause_repl(nodes[2])
     res = c2.read('foo')
     assert_equal({c0.ip_port => 1, c1.ip_port => 1, c2.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([12,13], res.snd.reveal.sort)
+    assert_equal([12,13].to_set, res.snd.reveal)
 
     c2.cause_repl(nodes[1])
     res = c1.read('foo')
     assert_equal({c0.ip_port => 1, c1.ip_port => 1, c2.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([12,13], res.snd.reveal.sort)
+    assert_equal([12,13].to_set, res.snd.reveal)
 
     c1.cause_repl(nodes[0])
     res = c0.read('foo')
     assert_equal({c0.ip_port => 1, c1.ip_port => 1, c2.ip_port => 1},
                  unwrap_map(res.fst.reveal))
-    assert_equal([12,13], res.snd.reveal.sort)
+    assert_equal([12,13].to_set, res.snd.reveal)
 
     (nodes + clients).each {|n| n.stop_bg}
   end

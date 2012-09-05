@@ -87,14 +87,19 @@ class KvsClient
     raise
   end
 
+  # XXX: To make it easier to provide a synchronous API, we assume that "to" is
+  # local (i.e., we're passed the _instance_ of Bud we want to replicate to, not
+  # just its address).
   # XXX: Probably not thread-safe
   def cause_repl(to)
+    q = Queue.new
+    cb = to.register_callback(:repl_propagate) do |t|
+      q.push true
+    end
     sync_do { kvrepl <~ [[@addr, to.ip_port]] }
 
-    # XXX: To make it easier to provide a synchronous API, we assume that "to"
-    # is local (i.e., we're passed the _instance_ of Bud we want to replicate
-    # to, not just its address).
-    to.delta(:repl_propagate)
+    q.pop
+    to.unregister_callback(cb)
   end
 
   private
