@@ -131,7 +131,7 @@ our design is similar to that used by Amazon Dynamo~\cite{DeCandia2007}.
 Each replica associates keys with
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
 (VC) captures the causal relationship between different versions of a
-record~\cite{Fidge1988,Mattern1989,DeCandia2007}. Clients get and put
+record~\cite{DeCandia2007,Fidge1988,Mattern1989}. Clients get and put
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
 updates a value it has previously read, the client increments its own position
 in the VC and includes the updated vector clock $V_U$ with its \emph{put}
