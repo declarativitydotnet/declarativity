@@ -1,0 +1,168 @@
+Delivered-To: neil.conway@gmail.com
+Received: by 10.216.181.211 with SMTP id l61csp5828wem;
+        Tue, 4 Sep 2012 17:41:32 -0700 (PDT)
+Received: by 10.68.138.169 with SMTP id qr9mr49794430pbb.27.1346805691421;
+        Tue, 04 Sep 2012 17:41:31 -0700 (PDT)
+Return-Path: <smh22@cl.cam.ac.uk>
+Received: from cm05fe.IST.Berkeley.EDU (cm05fe.IST.Berkeley.EDU. [169.229.218.146])
+        by mx.google.com with ESMTPS id pp2si208086pbc.346.2012.09.04.17.41.30
+        (version=TLSv1/SSLv3 cipher=OTHER);
+        Tue, 04 Sep 2012 17:41:31 -0700 (PDT)
+Received-SPF: neutral (google.com: 169.229.218.146 is neither permitted nor denied by best guess record for domain of smh22@cl.cam.ac.uk) client-ip=169.229.218.146;
+Authentication-Results: mx.google.com; spf=neutral (google.com: 169.229.218.146 is neither permitted nor denied by best guess record for domain of smh22@cl.cam.ac.uk) smtp.mail=smh22@cl.cam.ac.uk
+Received: from mta1.cl.cam.ac.uk ([128.232.25.21])
+	by cm05fe.ist.berkeley.edu with esmtps (TLSv1:AES256-SHA:256)
+	(Exim 4.76)
+	(envelope-from <smh22@cl.cam.ac.uk>)
+	id 1T93gN-0000MD-IJ
+	for nrc@cs.berkeley.edu; Tue, 04 Sep 2012 17:41:30 -0700
+Received: from svr-smh22-socc12.cl.cam.ac.uk ([128.232.98.161])
+	by mta1.cl.cam.ac.uk with esmtp (Exim 4.63)
+	(envelope-from <smh22@cl.cam.ac.uk>)
+	id 1T93gG-0004fx-7Y; Wed, 05 Sep 2012 01:41:20 +0100
+Received: from svr-smh22-socc12.cl.cam.ac.uk (localhost [127.0.0.1])
+	by svr-smh22-socc12.cl.cam.ac.uk (8.14.4/8.14.4/Debian-2ubuntu2) with ESMTP id q850kHWb027513;
+	Wed, 5 Sep 2012 01:46:17 +0100
+Received: (from www-data@localhost)
+	by svr-smh22-socc12.cl.cam.ac.uk (8.14.4/8.14.4/Submit) id q850kHhH027512;
+	Wed, 5 Sep 2012 01:46:17 +0100
+Date: Wed, 5 Sep 2012 01:46:17 +0100
+Message-Id: <201209050046.q850kHhH027512@svr-smh22-socc12.cl.cam.ac.uk>
+X-Authentication-Warning: svr-smh22-socc12.cl.cam.ac.uk: www-data set sender to smh22@cl.cam.ac.uk using -f
+To: Neil Conway <nrc@cs.berkeley.edu>
+Subject: [SOCC 2012] Accepted paper #17 "Logic and Lattices for
+ Distributed..."
+X-PHP-Originating-Script: 500:mailtemplate.inc
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Cc: socc12programchairs@googlegroups.com
+Reply-To: socc12programchairs@googlegroups.com
+From: steven.hand@cl.cam.ac.uk
+X-Ucb-Scan-Signature: 70e24d12ce31288004bfae3f33d4de16d0e04d4e
+X-Ucb-Spam: Gauge=IIIIIII, Probability=7%, Report='RP_MATCHES_RCVD -0.207'
+X-Ucb-Notice: This message has been processed by a spam tagging system.
+
+Dear Neil Conway,
+
+The ACM Symposium on Cloud Computing 2012 (SOCC 2012) program committee is
+delighted to inform you that your paper #17 has been accepted to appear as
+a full paper in the conference.
+
+       Title: Logic and Lattices for Distributed Programming
+     Authors: Neil Conway (UC Berkeley)
+              William R. Marczak (UC Berkeley)
+              Peter Alvaro (UC Berkeley)
+              Joseph M. Hellerstein (UC Berkeley)
+              David Maier (Portland State University)
+  Paper site: http://submissions-socc12.cl.cam.ac.uk/paper.php/17?cap=017ak9L3g3zi_EM
+
+Your paper was one of 25 accepted papers (21 full, 4 short) out of a total
+of 163 submissions.  Congratulations!
+
+
+
+Reviews of your paper are appended to this email.  The submissions site
+also has the paper's reviews as well as more information about review
+scores.
+
+Mike Carey and Steven Hand
+SoCC'12 PC Co-Chairs
+
+===========================================================================
+                           SOCC 2012 Review #17A
+                Updated Thursday 12 Jul 2012 2:29:45pm BST
+---------------------------------------------------------------------------
+         Paper #17: Logic and Lattices for Distributed Programming
+---------------------------------------------------------------------------
+
+                      Overall merit: 4. Accept
+                 Reviewer expertise: 1. No familiarity
+
+                         ===== Paper summary =====
+
+The paper is an extension over prior work of the authors and demonstrates an improved approach for tackling guaranteed eventual consistency in distributed programs. 
+In a prior paper, the authors introduced Bloom, a language that uses the CALM (Convergent Modules and Monotonic Logic) theorem to analyse programs for their convergence behaviour based on their monotonicity. While Bloom can automatically tell if a given program is guaranteed to converge, it also limits the programmer in its expressiveness. In particular, Bloom can only guarantee convergence for a given set of operators (selection, projection, join) on set data types. While there are more expressive programming models for convergent programs in the form of Conflict-Free Replicated Data Types (CRDT), they rely on the programmer guaranteeing certain properties, which makes them unsuitable for larger programs.
+In this paper, the authors try to merge the worlds of CALM and CRDT by presenting how to run CALM analysis over lattices (arbitrary types that have a commutative, associative, idempotent merge function. CRDTs are based on lattice theory). The authors present BloomL, an extension of Bloom that supports lattice programming and allows an automatic CALM analysis on those programs. This tackles both the artificial restriction of Bloom to sets and the high programming complexity of using CRDTs.
+The authors give details about how they integrated lattice support into the Bloom runtime and provide two case studies that demonstrate the usefulnes of their approach.
+
+The work presented in this paper seems relevant to me, since it tackles a well-known problem (guaranteeing consistency in distributed programs). The approach seems theoretically well-founded and the author's claism seem sound. While I found the introduction a bit confusing (probably due to missing prior knowledge), overall the paper is structured and written well. I especially liked the two case studies, as they gave a nice example of applications for this technology.
+
+I feel unable to meaningfully asses the novelty of the paper, as my knowledge about existing research in the field of eventually consistent programming models is very limited.
+
+                      ===== Comments for author =====
+
+1) You use the abbreviation "CALM" in the abstract without introducing what it stands for. Please add the full name of CALM before using the abbreviation.
+2) In my opinion, the formal definition of a lattice comes a bit late in the paper. I had a somewhat hard time following your thoughs without this definition. Maybe you should move 3.1 to the Background chapter?
+3) I think it would be intersting to highlight how you perform CALM analysis over lattice programs, as this seems to be the main contribution of this paper. You quickly brush over some details in 3.2.2 and 3.6, it might be worth to extend this and make it "more visible".
+4) Chapter 4.3 seems superfluous: You only list the volume of the required code changes. This could also be done in one or two sentences in the beginning of chapter 4.
+
+===========================================================================
+                           SOCC 2012 Review #17B
+                 Updated Monday 23 Jul 2012 10:20:38pm BST
+---------------------------------------------------------------------------
+         Paper #17: Logic and Lattices for Distributed Programming
+---------------------------------------------------------------------------
+
+                      Overall merit: 4. Accept
+                 Reviewer expertise: 3. Knowledgeable
+
+                         ===== Paper summary =====
+
+This paper describes Bloom^L, which is an extension of the Bloom logic programming language (from the same authors) to support coordination-free distributed programming over data structures that form a lattice and operations that are either morphisms or monotone functions. The original Bloom work was based on the CALM theorem, which proves that logically monotonic programs (the canonical example being Datalog programs) will eventually converge to a correct result without distributed coordination (e.g. two-phase locking). Like Datalog, Bloom is a set-based language, where the notion of monotonicity is captured by an evaluation strategy that only ever adds elements to a set (modulo stratified negation, where elements may be removed from sets, but there is a well-defined topological order in which strata of the program can be evaluated to a unique fixpoint). The principal contribution of this paper is the observation that the properties of sets that allow Bloom/Datalog to be analysed for logical monotonicity are general properties of elements in a bounded join semilattice.
+
+The use of lattices in this context is appropriate for several operations, for example counting the elements a monotonic set, that are intuitively monotonic, but do not fit the set-based framework of existing logic languages, because incrementing the count corresponds to retracting the old count and introducing the new count. Using the provided lattices, it is possible to compute algorithms such as (weakly) connected components and all-pairs shortest paths without coordination, which (in principle) would be more efficient than using existing MapReduce- or BSP/Pregel-style systems.
+
+The paper introduces seven built-in lattices and a host of monotonic constructs (morphisms and monotone functions) that can be used to compose lattice elements into a larger program. To define a new lattice, the programmer must specify a lattice constructor, a merge (least upper bound/join) function and a collection of functions annotated as morphisms or monotone functions. The annotations can then be used by the Bloom^L runtime to ascertain the logical monotonicity of a Bloom^L program.
+
+Bloom^L and a form of semi-naive evaluation for Bloom^L programs has been implemented. A single performance experiment shows that, for a transitive closure program, the performance for Bloom^L using semi-naive evaluation on the set lattice is approximately the same as using Bloom with native collections. The authors also present a variety of case studies (a simple key-value store, a versioned key-value store using vector clocks, and a replicated versioned key-value store using quorum reads/writes; also an online shopping cart application that uses a lattice to represent the "checkoutedness" of a session), but do not evaluate their performance.
+
+                      ===== Comments for author =====
+
+This is very nice work, and I particularly like the attention to composability that the authors paid when adding support for general lattices to Bloom. This appears to be an attractive language not just for writing the types of online services that the authors discuss here, but also for writing a wide range distributed data-parallel computations that would be much more efficient than the corresponding BSP implementation. It is a pity that the authors did not attempt a more serious performance evaluation (the single graph in the implementation section conveys almost no useful information, and merely surprises me that the authors are not "dogfooding" their lattice implementation by using it to implement Bloom collections), though perhaps not surprising because the Ruby-based DSL is probably not optimized for high per-element performance.
+
+My main concern with this work is that the paper does not do a good job of distinguishing itself from Zaniolo and Wang's LDL++ system, which provides a similar (though not identical) construct for defining logically-monotonic aggregation functions. The core contribution of both papers is very similar, but the language constructs and example applications are quite different. This could possibly be resolved by bringing the comparison much earlier in the paper, rather than hiding it away at the end of the related work. In particular, it should be possible to argue why the Bloom^L language is a more tasteful choice than the Datalog extensions in LDL++, rather than dismissing it with orthogonal points about distribution, asynchrony and order-sensitivity.
+
+The paper focuses solely on monotonic programs, though Bloom^L provides a non-monotonic construct for accessing and hence arbitrarily manipulating the value of a lattice element. I would be interested to read more about the behavior of the system when executing non-monotonic programs, and what classes of applications (a) are logically monotonic/coordination-free, and (b) could usefully combine Bloom^L's lattice support with some non-monotonic operators. The paper currently gives the impression that non-monotonic programs are second-class, and it would be better to either give a justification for this or spend time discussing non-monotonic operation.
+
+===========================================================================
+                           SOCC 2012 Review #17C
+                 Updated Friday 27 Jul 2012 11:57:32pm BST
+---------------------------------------------------------------------------
+         Paper #17: Logic and Lattices for Distributed Programming
+---------------------------------------------------------------------------
+
+                      Overall merit: 4. Accept
+                 Reviewer expertise: 3. Knowledgeable
+
+                         ===== Paper summary =====
+
+Bloom is a logic-based language for distributed programming.  It descends from Overlog through Dedalus, and incorporates time and state mutations through time.   This paper introduces lattice types to Bloom, creating Bloom_L.  It loosely follows the presentation in the recent CIDR paper [1] on CALM analysis for eventual consistency properties, with similar goals and case study examples.
+
+What is new is the use of lattice types to represent the state tables.   State tables are persistent sets that take on a sequence of values as the program executes: each state change is a result of an application of a Bloom statement or rule and involves a merge operation.   A Bloom_L program can declare that a state table is a lattice type, and enforce it through the type system.   A lattice is a set type whose merge operations and values follow a lattice structure.
+
+The core observation in Bloom_L is that lattices capture nicely the notion of eventual consistency or 'confluence'.   Conforming updates and merges are monotonic in that they progress "upwards" in the partial order of versions.  Vector clocks are one example.  Interestingly there are others.   Table 3 is the meat of the paper. 
+
+As a result of adding lattices to Bloom, properties of eventual consistency (confluence) can be checked and proven, following the CALM idea.   Using lattice types expands the set of programs that may be checked by CALM analysis.
+
+                      ===== Comments for author =====
+
+I view SOCC as a good forum for this kind of work, but some might disagree: this draft is not particularly accessible.  Part of the problem is that the project is simultaneously trying to build more powerful platforms and also put distributed programming on strong model-theoretic foundations, and the authors are not entirely successful at separating the two for readers mostly interested in the former. 
+
+The paper presupposes a substantial familiarity with datalog and related concepts (e.g., stratified, aggregation, monotonic logic, etc.) and Overlog family concepts and (ugh) syntax.   For example, hello world in Figure 1 is not readable for the uninitiated.   The core concepts of lattice/monotone/morphism are abstract concepts from abstract algebra, a course that many of us skipped. 
+
+The argument in favor is that this stuff brings a huge amount of power for the next generation of platforms, and the community should learn it now.   And the paper is mostly self-contained: it presents the information the reader really needs to know to understand the points.  That's no easy feat.
+
+Even so, this draft is a little premature in some respects.   The presentation of concepts follows a, uh, sort of a partial order.   The Case Study examples exhibit program fragments, but the authors offer no suggestion that they can actually execute them.  The only performance results in the paper are in Figure 5, which says that lattices don't slow down the evaluation (inference) procedure relative to the predecess
+or (Bloom/Bud) for one synthetic example.  Then the last paragraph of 4.2 takes it back.
+
+The intro and related work make some claims about validating correctness of entire programs based on compositions of lattice types, but the paper doesn't really deliver on this claim.  (Though I accept that they're probably on the right path.) 
+ 
+The shopping cart example isn't entirely convincing.  How can merge be monotonic if shopping cart has a neg operator to remove an item?  Or does it?   It is not clear how removal of an item is captured.  It feels like some obfuscation here.
+
+The intro talks about various examples that are difficult for CALM unless lattices are used: counters, timestamps etc.  This point doesn't quite come to closure.
+
+It is known that vector clocks (cuts) have a lattice structure, going back to the original formulation in the Mattern paper (which perhaps could be cited).  Vector clocks are a familiar basis for write ordering in asynchronous replicated systems (cf Bayou and Section 5.2.)    Discussing this relationship earlier might help to make the concept of a lattice more accessible early on.
+
+
+
+
