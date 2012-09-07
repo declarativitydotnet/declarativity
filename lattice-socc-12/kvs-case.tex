@@ -150,7 +150,7 @@ consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
 Vector clocks are a well-known mechanism for recording the causal relationships
-between events~\cite{Fidge1988,Lamport1978}. A vector clock is a map from node
+between events~\cite{Fidge1988,Lamport1978,Mattern1989}. A vector clock is a map from node
 identifiers to logical clocks. Let $V_e$ denote the vector clock for event $e$;
 let $V_e(n)$ denote the logical clock associated with node $n$ in $V_e$. If $V_e
 < V_{e'}$, $e$ causally precedes $e'$, where

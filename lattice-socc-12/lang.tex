@@ -254,7 +254,7 @@ statement.\footnote{Observe that an ``else'' clause would test for an upper
   bound on the final lattice value, which is a non-monotonic property!}
 
 The collection-like lattices support familiar operations such as union,
-intersection and testing for the presence of an element in the collection. The
+intersection, and testing for the presence of an element in the collection. The
 \texttt{project} morphism takes a code block and forms a new collection by
 applying the code block to each element of the input collection. Elements for
 which the code block returns \texttt{nil} are omitted from the output
@@ -286,7 +286,6 @@ class Bud::SetLattice < Bud::Lattice
   wrapper_name :lset (*\label{line:lset-wrapper-name}*)
 
   def initialize(x=[])
-    # Input validation removed for brevity
     @v = x.uniq # Remove duplicates from input
   end
 
@@ -319,9 +318,8 @@ behavior. To define a new lattice, a developer creates a Ruby class that meets a
 certain API contract. Figure~\ref{fig:lattice-lset} shows a simple
 implementation of the \texttt{lset} lattice using a Ruby array for
 storage.\footnote{We omit a few \texttt{lset} methods for brevity. While we use
-  an array for simplicity, this is inefficient (e.g., duplicate elimination
-  requires linear time). The built-in \texttt{lset} uses a hash-based set data
-  type.}
+  an array for simplicity, this is inefficient (e.g., eliminating duplicates is
+  expensive). The built-in \texttt{lset} uses a hash-based set data type.}
 
 A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
