@@ -12,7 +12,7 @@
 \usepackage[protrusion=true,expansion=true]{microtype}
 \usepackage{paralist}
 \usepackage{comment}
-\usepackage[letterpaper,hidelinks]{hyperref}
+\usepackage[hidelinks]{hyperref}
 
 \frenchspacing
 
@@ -47,6 +47,8 @@ escapeinside={(*}{*)}
 }
 
 \def\lang{Bloom$^L$\xspace}
+\def\mytitle{Logic and Lattices for Distributed Programming}
+\hypersetup{pdftitle={\mytitle}}
 
 % \newcommand{\nrc}[1]{{\textcolor{magenta}{#1 -- nrc}}}
 % \newcommand{\paa}[1]{{\textcolor{blue}{[[#1 -- paa]]}}}
@@ -57,7 +59,13 @@ escapeinside={(*}{*)}
 
 \begin{document}
 
-\title{Logic and Lattices for Distributed Programming}
+\conferenceinfo{SOCC'12,} {October 14-17, 2012, San Jose, CA USA} 
+\CopyrightYear{2012}
+\crdata{978-1-4503-1761-0/12/10}
+\clubpenalty=10000
+\widowpenalty=10000
+
+\title{\mytitle}
 
 \numberofauthors{5}
 
@@ -115,6 +123,15 @@ David Maier\\
   and show how \lang encourages the safe composition of small, easy-to-analyze
   lattices into larger programs.
 \end{abstract}
+
+% A category with the (minimum) three required fields
+\category{H.4}{Information Systems Applications}{Miscellaneous}
+%A category including the fourth, optional field follows...
+\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
+
+\terms{Design, Languages}
+
+\keywords{Distributed programming, eventual consistency}
 
 \input{intro}
 \input{background}
