@@ -33,7 +33,6 @@ In this section, we review the Bloom programming language and the CALM program
 analysis.  We highlight a simple distributed program for which the CALM analysis
 over sets yields unsatisfactory results.
 
-\newpage
 \subsection{Bloom}
 \label{sec:bg-bloom}
 
@@ -212,7 +211,7 @@ consistent ordering is agreed upon at each of the program's points of order.
 Coordination protocols incur additional latency and reduce availability in the
 event of network partitions, so in this paper we focus on coordination-free
 designs---that is, monotonic programs.
-\newpage
+
 \subsubsection{Limitations of set monotonicity}
 The original formulation of the CALM theorem considered only programs that
 compute more facts over time---that is, programs whose \emph{sets} grow
