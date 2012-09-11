@@ -420,11 +420,11 @@ element as a column:
     t1 <= t2 {|t| [t.x, cnt]}
 \end{verbatim}
 where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
-lattice, and the key of \texttt{t1} is its first column. Note that
-\texttt{cnt} might change over the course of a single timestep (specifically,
-\texttt{cnt} can move ``upward'' according to the lattice's partial
-order). This might result in multiple tuples \texttt{t1} tuples that differ only
-in the second column, which would violate \texttt{t1}'s key.
+lattice, and the key of \texttt{t1} is its first column. Note that \texttt{cnt}
+might change over the course of a single timestep (specifically, \texttt{cnt}
+can increase according to the lattice's partial order). This might result in
+multiple \texttt{t1} tuples that differ only in the second column, which would
+violate \texttt{t1}'s key.
 
 To resolve this situation, \lang allows multiple facts to be derived that differ
 only in their embedded lattice values; those facts are merged into a single fact

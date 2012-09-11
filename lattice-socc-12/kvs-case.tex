@@ -4,13 +4,17 @@ The next two sections contain case studies that show how \lang can be used to
 build correct distributed programs. Both case studies are monotonic: that is,
 both programs consist of monotone functions applied to lattices. As a result,
 the \lang compiler can verify that both of them are eventually consistent
-without any need for coordination.\footnote{Full code listings for these case
+without any need for coordination.\footnote{Complete code listings for these case
   studies are available at \mbox{\small
     \url{http://db.cs.berkeley.edu/bloom-lattice}}.}
 
-In the first case study, we show that a distributed, eventually consistent key-value store can be
-\emph{composed} via a series of monotonic mappings between simple lattices. This example highlights the way that \lang overcomes the ``scope dilemma'' of CRDTs: by
-composing a complex program from simple lattices (mostly \lang built-ins), we can feel confident that individual lattices are correct, while CALM analysis finishes the job of verifying whole-program correctness.
+In the first case study, we show that a distributed, eventually consistent
+key-value store can be \emph{composed} via a series of monotonic mappings
+between simple lattices. This example highlights the way that \lang overcomes
+the ``scope dilemma'' of CRDTs: by composing a complex program from simple
+lattices (mostly \lang built-ins), we can feel confident that individual
+lattices are correct, while CALM analysis finishes the job of verifying
+whole-program correctness.
 
 %  This
 % demonstrates that \lang's built-in lattices are useful and yields a very concise
@@ -72,18 +76,17 @@ end
 \label{fig:kvs-replica}
 \end{figure}
 
-% duplicate introduction of KVS acronym -- remove?
 A key-value store (KVS) provides a lookup service that allows client
-applications to retrieve the \emph{value} associated with a given \emph{key}. In
-a typical KVS, key-value pairs are replicated on multiple server replicas for
-redundancy and the key space is partitioned in some fashion to improve aggregate
-storage and throughput. \emph{Eventual consistency} is a common correctness
-criterion: after all client updates have reached all storage nodes, all the
-replicas of a key-value pair will converge to the same final
+applications to store and retrieve the \emph{value} associated with a given
+\emph{key}. In a typical KVS, key-value pairs are replicated on multiple storage
+nodes for redundancy and the key space is partitioned in some fashion to improve
+aggregate storage and throughput. \emph{Eventual consistency} is a common
+correctness criterion: after all client updates have reached all storage nodes,
+all the replicas of a key-value pair will converge to the same final
 state~\cite{Terry1995,vogels}.
 
 Figure~\ref{fig:kvs-interface} shows a simple KVS interface in \lang. Client
-applications submit \emph{get(key)} and \emph{put(key, val)} operations by
+applications initiate \emph{get(key)} and \emph{put(key, val)} operations by
 inserting into the \texttt{kvget} and \texttt{kvput} channels, respectively;
 server replicas return responses via the \texttt{kvget\_resp} and
 \texttt{kvput\_resp} channels.
@@ -125,13 +128,13 @@ The basic KVS design is sufficient for applications that want to store
 monotonically increasing values, such as session logs or increasing counters. To
 allow storage of values that change in arbitrary ways, we now consider how to
 support \emph{object versions}. This is a classic technique for recognizing and resolving
-mutual inconsistency between members of a distributed system~\cite{Parker1983};
-our design is similar to that used by Amazon Dynamo~\cite{DeCandia2007}.
+mutual inconsistency between members of a distributed system~\cite{Parker1983}.
+Our design is similar to that used by Amazon Dynamo~\cite{DeCandia2007}.
 
 Each replica associates keys with
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
 (VC) captures the causal relationship between different versions of a
-record~\cite{DeCandia2007,Fidge1988,Mattern1989}. Clients get and put
+record~\cite{Fidge1988,Mattern1989}. Clients get and put
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
 updates a value it has previously read, the client increments its own position
 in the VC and includes the updated vector clock $V_U$ with its \emph{put}
@@ -150,7 +153,7 @@ consider how to support vector clocks and version-value pairs using \lang.
 
 \subsubsection{Vector Clocks}
 Vector clocks are a well-known mechanism for recording the causal relationships
-between events~\cite{Fidge1988,Lamport1978,Mattern1989}. A vector clock is a map from node
+between events~\cite{Fidge1988,Mattern1989}. A vector clock is a map from node
 identifiers to logical clocks. Let $V_e$ denote the vector clock for event $e$;
 let $V_e(n)$ denote the logical clock associated with node $n$ in $V_e$. If $V_e
 < V_{e'}$, $e$ causally precedes $e'$, where
@@ -180,7 +183,7 @@ suggests a natural least upper bound for \texttt{lpair}:
     \end{array} \right. 
 \end{displaymath}
 This implements the desired semantics: given two candidate values for a key, the
-candidate with the strictly greater version number should be preferred. When the
+candidate with the strictly greater version should be preferred. When the
 two versions are incomparable, a new \texttt{lpair} should be formed by merging
 both elements of the input pairs with one another. In the case of the KVS,
 \emph{fst} is a vector clock, while \emph{snd} is the user's data; the least
@@ -195,7 +198,7 @@ new versions are received), the \emph{snd} may not (a newer version might
 contain a ``smaller'' \emph{snd}). Again, this is the desired behavior.
 
 \subsubsection{Discussion}
-Figure~\ref{fig:kvs-vc-lattices} shows the lattices used in the KVS with object
+Figure~\ref{fig:kvs-vc-lattices} shows the lattices used in a KVS with object
 versioning. Surprisingly, adding support for object versioning did not require
 \emph{any} changes to the KVS replica code! Instead, clients simply store
 \texttt{lpair} values containing a vector clock as the first element and
@@ -204,10 +207,10 @@ replica merges these \texttt{lpair} values into an \texttt{lmap} as usual; the
 merge function of \texttt{lpair} handles conflict resolution in the appropriate
 manner. Moreover, by composing the KVS from a collection of simple lattices, we
 found it easy to reason about the behavior of the system. For example,
-convincing ourselves that the KVS replicas will eventually converge only
-required checking that the individual \texttt{lmap}, \texttt{lmax}, and
-\texttt{lpair} lattices satisfy the lattice properties, rather than analyzing
-the behavior of the system as a whole.
+convincing ourselves that KVS replicas will eventually converge only required
+checking that the individual \texttt{lmap}, \texttt{lmax}, and \texttt{lpair}
+lattices satisfy the lattice properties, rather than analyzing the behavior of
+the system as a whole.
 
 Our design compares favorably to traditional implementations of object
 versioning and vector clocks. For example, the implementation of vector clocks
@@ -229,7 +232,7 @@ smaller values of $R$ and $W$ if eventual consistency is sufficient. This scheme
 allows users to vary $R$ and $W$ on a per-operation basis, depending on their
 consistency and durability requirements.
 
-To support this feature, we can use the \lang quorum voting pattern first
+To support this feature, we can use the \lang quorum voting pattern
 introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
 systems, the KVS client accumulates \texttt{kvput\_resp} messages into an
 \texttt{lset}. Testing for quorum can be done in a monotonic fashion by mapping
