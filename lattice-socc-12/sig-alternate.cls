@@ -1,14 +1,10 @@
-% SIG-ALTERNATE.CLS - VERSION 2.4
+% SIG-ALTERNATE.CLS - VERSION 2.5
 % "COMPATIBLE" WITH THE "ACM_PROC_ARTICLE-SP.CLS" V3.2SP
-% Gerald Murray - April 22nd. 2009
+% Gerald Murray - May 23rd 2012
 %
 % ---- Start of 'updates'  ----
-%
-% Updated 10pt version to conform to advertised formatting requirements
-% (leading 11.9pt -> 12.0pt, textheight 660pt -> 666pt) - Dec 9 2009
-% Geoff Voelker
-%
-% Changed $5 fee to $10 - Gerry
+% Changed $10 fee to $15 -- May 2012  --  Gerry
+% Changed $5 fee to $10 --  April 2009 -- Gerry
 % April 22nd. 2009 - Fixed 'Natbib' incompatibility problem - Gerry
 % April 22nd. 2009 - Fixed 'Babel' incompatibility problem - Gerry
 % April 22nd. 2009 - Inserted various bug-fixes and improvements - Gerry
@@ -25,10 +21,6 @@
 %
 % Patch for accenting in conference name/location. Gerry May 3rd. 2007
 % Rule widths changed to .5, author count (>6) fixed, roll-back for Type 3 problem. Gerry March 20th. 2007
-%
-% Changes made to enable easier reviewing by fixing font size to 10pt - Jan. 3th. 2007
-% Anja Feldmann
-%
 % Changes made to 'modernize' the fontnames but esp. for MikTeX users V2.4/2.5 - Nov. 30th. 2006
 % Updated the \email definition to allow for its use inside of 'shared affiliations' - Nov. 30th. 2006
 % Fixed the 'section number depth value' - Nov. 30th. 2006
@@ -50,9 +42,9 @@
 %
 % ---- End of 'updates' ----
 %
-\def\fileversion{v2.4-10pt}          % for ACM's tracking purposes
-\def\filedate{April 22, 2009}    % Gerry Murray's tracking data
-\def\docdate {Wednesday 22nd. April 2009} % Gerry Murray (with deltas to doc}
+\def\fileversion{v2.5}          % for ACM's tracking purposes
+\def\filedate{May 23, 2012}    % Gerry Murray's tracking data
+\def\docdate {Wednesday 23rd. May 2012} % Gerry Murray (with deltas to doc}
 \usepackage{epsfig}
 \usepackage{amssymb}
 \usepackage{amsmath}
@@ -121,7 +113,7 @@
 %%% You may turn this hackery off via the -e option:
 %%%     dvips -e 0 foo.dvi >foo.ps
 %%%
-\typeout{Document Class 'sig-alternate' <22nd. April '09>.  Modified by G.K.M. Tobin/Gerry Murray}
+\typeout{Document Class 'sig-alternate' <23rd. May '12>.  Modified by G.K.M. Tobin/Gerry Murray}
 \typeout{Based in part upon document Style `acmconf' <22 May 89>. Hacked 4/91 by}
 \typeout{shivers@cs.cmu.edu, 4/93 by theobald@cs.mcgill.ca}
 \typeout{Excerpts were taken from (Journal Style) 'esub2acm.cls'.}
@@ -198,7 +190,7 @@
                          % notes.
 
 \parskip 0pt plus 1pt            % Extra vertical space between paragraphs.
-\parindent 10pt  % GM July 2000 / was 0pt - width of paragraph indentation. %% Adjusted for 10pt
+\parindent 9pt  % GM July 2000 / was 0pt - width of paragraph indentation.
 \partopsep 2pt plus 1pt minus 1pt% Extra vertical space, in addition to
                                  % \parskip and \topsep, added when user
                                  % leaves blank line before environment.
@@ -212,8 +204,8 @@
 \@itempenalty     -\@lowpenalty % Between list items.
 
 %\@namedef{ds@10pt}{\@latexerr{The `10pt' option is not allowed in the `acmconf'
-%\@namedef{ds@10pt}{\ClassError{The `10pt' option is not allowed in the `acmconf'	% January 2008
-%  document style.}\@eha} %% Adjusted for 10pt
+\@namedef{ds@10pt}{\ClassError{The `10pt' option is not allowed in the `acmconf'	% January 2008
+  document style.}\@eha}
 %\@namedef{ds@11pt}{\@latexerr{The `11pt' option is not allowed in the `acmconf'
 \@namedef{ds@11pt}{\ClassError{The `11pt' option is not allowed in the `acmconf'	% January 2008
   document style.}\@eha}
@@ -227,13 +219,13 @@
 \normallineskip 2pt
 \def\baselinestretch{1}
 
-\abovedisplayskip 10pt plus2pt minus4.5pt% %% Adjusted for 10pt
+\abovedisplayskip 9pt plus2pt minus4.5pt%
 \belowdisplayskip \abovedisplayskip
 \abovedisplayshortskip  \z@ plus3pt%
 \belowdisplayshortskip  5.4pt plus3pt minus3pt%
 \let\@listi\@listI     % Setting of \@listi added 9 Jun 87
 
-\def\small{\@setsize\small{9.2pt}\viiipt\@viiipt %% Adjusted for 10pt
+\def\small{\@setsize\small{9pt}\viiipt\@viiipt
 \abovedisplayskip 7.6pt plus 3pt minus 4pt%
 \belowdisplayskip \abovedisplayskip
 \abovedisplayshortskip \z@ plus2pt%
@@ -242,7 +234,7 @@
 \topsep 4pt plus 2pt minus 2pt\parsep 2pt plus 1pt minus 1pt
 \itemsep \parsep}}
 
-\def\footnotesize{\@setsize\footnotesize{10pt}\ixpt\@ixpt %% Adjusted for 10pt
+\def\footnotesize{\@setsize\footnotesize{9pt}\ixpt\@ixpt
 \abovedisplayskip 6.4pt plus 2pt minus 4pt%
 \belowdisplayskip \abovedisplayskip
 \abovedisplayshortskip \z@ plus 1pt%
@@ -306,10 +298,10 @@
 %\newfont{\affaddr}{arial at 10pt} % was arialr originally - now is arial
 %\newfont{\affaddrit}{ariali at 10pt} %13 Jan 00 gkmt
 %\newfont{\eaddfnt}{arial at 12pt} % was arialr originally - now is arial
-%\newfont{\ixpt}{times at 10pt} % was timenrr originally - now is times %% Adjusted for 10pt
+%\newfont{\ixpt}{times at 9pt} % was timenrr originally - now is times
 %\newfont{\confname}{timesi at 8pt} % was timenrri - now is timesi
 %\newfont{\crnotice}{times at 8pt} % was timenrr originally - now is times
-%\newfont{\ninept}{times at 10pt} % was timenrr originally - now is times %% Adjusted for 10pt
+%\newfont{\ninept}{times at 9pt} % was timenrr originally - now is times
 
 % *********************************************
 %  -- End of block A --
@@ -333,10 +325,10 @@
 \newfont{\affaddr}{phvr8t at 10pt}
 \newfont{\affaddrit}{phvro8t at 10pt} % GM 2/4/2000
 \newfont{\eaddfnt}{phvr8t at 12pt}
-\newfont{\ixpt}{ptmr8t at 10pt}  %% Adjusted for 10pt
+\newfont{\ixpt}{ptmr8t at 9pt}
 \newfont{\confname}{ptmri8t at 8pt}
 \newfont{\crnotice}{ptmr8t at 8pt}
-\newfont{\ninept}{ptmr8t at 10pt} %% Adjusted for 10pt
+\newfont{\ninept}{ptmr8t at 9pt}
 % +++++++++++++++++++++++++++++++++++++++++++++
 % -- End of block B --
 
@@ -606,8 +598,7 @@
  \let\maketitle\relax
  \let\@maketitle\relax
  \gdef\@thanks{}\gdef\@author{}\gdef\@title{}\gdef\@subtitle{}\let\thanks\relax
-% \@copyrightspace %% Adjusted for 10pt submission format
-}
+ \@copyrightspace}
 
 %% CHANGES ON NEXT LINES
 \newif\if@ll % to record which version of LaTeX is in use
@@ -619,7 +610,7 @@
 
 \if@ll
   \NeedsTeXFormat{LaTeX2e}
-  \ProvidesClass{sig-alternate} [2009/04/22 - V2.4 - based on acmproc.cls V1.3 <Nov. 30 '99>]
+  \ProvidesClass{sig-alternate} [2012/05/23 - V2.5 - based on acmproc.cls V1.3 <Nov. 30 '99>]
   \RequirePackage{latexsym}% QUERY: are these two really needed?
   \let\dooptions\ProcessOptions
 \else
@@ -673,8 +664,7 @@
 % to change {cmr} to {times} above. (Not recommended)
   \renewcommand{\@ptsize}{}
   \renewcommand{\normalsize}{%
-%    \@setfontsize\normalsize\@ixpt{10.5\p@}%\ninept%
-    \@setfontsize\normalsize\@xpt{12\p@}%\tenpt% %% Adjusted for 10pt
+    \@setfontsize\normalsize\@ixpt{10.5\p@}%\ninept%
     \abovedisplayskip 6\p@ \@plus2\p@ \@minus\p@
     \belowdisplayskip \abovedisplayskip
     \abovedisplayshortskip 6\p@ \@minus 3\p@
@@ -682,9 +672,8 @@
     \let\@listi\@listI
   }
 \else
-  \def\@normalsize{%changed next to 9 from 10 %% Adjusted for 10pt
-%    \@setsize\normalsize{10\p@}\ixpt\@ixpt
-    \@setsize\normalsize{10\p@}\xpt\@xpt %% Adjusted for 10pt
+  \def\@normalsize{%changed next to 9 from 10
+    \@setsize\normalsize{9\p@}\ixpt\@ixpt
    \abovedisplayskip 6\p@ \@plus2\p@ \@minus\p@
     \belowdisplayskip \abovedisplayskip
     \abovedisplayshortskip 6\p@ \@minus 3\p@
@@ -798,8 +787,7 @@
    \color@endgroup} %g}
 \fi
 \setcounter{footnote}{0}
-%\section*{ABSTRACT}\normalsize%\ninept
-\section*{ABSTRACT}\ninept%\ninept %% Adjusted for 10pt
+\section*{ABSTRACT}\normalsize%\ninept
 }
 
 \def\endabstract{\if@twocolumn\else\endquotation\fi}
@@ -848,21 +836,21 @@
 %%% displacement to offset the space allocated for a non-existent
 %%% caption).
 %%%
-%\newtoks\copyrightnotice  %% Adjusted for 10pt submission format
-%\def\ftype@copyrightbox{8}
-%\def\@copyrightspace{
-%\@float{copyrightbox}[b]
-%\begin{center}
-%\setlength{\unitlength}{1pc}
-%\begin{picture}(20,6) %Space for copyright notice
-%\put(0,-0.95){\crnotice{\@toappear}}
-%\end{picture}
-%\end{center}
-%\end@float}
+\newtoks\copyrightnotice
+\def\ftype@copyrightbox{8}
+\def\@copyrightspace{
+\@float{copyrightbox}[b]
+\begin{center}
+\setlength{\unitlength}{1pc}
+\begin{picture}(20,6) %Space for copyright notice
+\put(0,-0.95){\crnotice{\@toappear}}
+\end{picture}
+\end{center}
+\end@float}
 
 \def\@toappear{} % Default setting blank - commands below change this.
-%\long\def\toappear#1{\def\@toappear{\parbox[b]{20pc}{\baselineskip 9pt#1}}}
-%\def\toappearbox#1{\def\@toappear{\raisebox{5pt}{\framebox[20pc]{\parbox[b]{19pc}{#1}}}}}
+\long\def\toappear#1{\def\@toappear{\parbox[b]{20pc}{\baselineskip 9pt#1}}}
+\def\toappearbox#1{\def\@toappear{\raisebox{5pt}{\framebox[20pc]{\parbox[b]{19pc}{#1}}}}}
 
 \newtoks\conf
 \newtoks\confinfo
@@ -1325,7 +1313,7 @@
          \leftmargin\labelwidth
          \advance\leftmargin\labelsep
          \advance\leftmargin\bibindent
-         \parsep=0pt\itemsep=0pt % GM July 2000  %% Adjusted for 10pt
+         \parsep=0pt\itemsep=1pt % GM July 2000
          \itemindent -\bibindent
          \listparindent \itemindent
          \usecounter{enumi}
@@ -1386,19 +1374,19 @@
 \def\titlenote{\@ifnextchar[\@xtitlenote{\stepcounter\@mpfn
 \global\advance\titlenotecount by 1
 \ifnum\titlenotecount=1
-    \raisebox{10pt}{$\ast$}  %% Adjusted for 10pt
+    \raisebox{9pt}{$\ast$}
 \fi
 \ifnum\titlenotecount=2
-    \raisebox{10pt}{$\dagger$}  %% Adjusted for 10pt
+    \raisebox{9pt}{$\dagger$}
 \fi
 \ifnum\titlenotecount=3
-    \raisebox{10pt}{$\ddagger$}  %% Adjusted for 10pt
+    \raisebox{9pt}{$\ddagger$}
 \fi
 \ifnum\titlenotecount=4
-\raisebox{10pt}{$\S$}  %% Adjusted for 10pt
+\raisebox{9pt}{$\S$}
 \fi
 \ifnum\titlenotecount=5
-\raisebox{10pt}{$\P$}  %% Adjusted for 10pt
+\raisebox{9pt}{$\P$}
 \fi
          \@titlenotetext
 }}
@@ -1424,10 +1412,10 @@
 \baselineskip=11pt
 \let\thepage\relax % For NO page numbers - GM Nov. 30th. 1999 and July 2000
 \def\setpagenumber#1{\global\setcounter{page}{#1}}
-\pagenumbering{arabic}  % Arabic page numbers GM July 2000    %% Adjusted for 10pt submission
+%\pagenumbering{arabic}  % Arabic page numbers GM July 2000
 \twocolumn             % Double column.
 \flushbottom           % Even bottom -- alas, does not balance columns at end of document
-%\pagestyle{plain}     %% Adjusted for 10pt
+\pagestyle{plain}
 
 % Need Copyright Year and Copyright Data to be user definable (in .tex file).
 % Gerry Nov. 30th. 1999
@@ -1442,9 +1430,9 @@
 %
 \global\boilerplate={Permission to make digital or hard copies of all or part of this work for personal or classroom use is granted without fee provided that copies are not made or distributed for profit or commercial advantage and that copies bear this notice and the full citation on the first page.  To copy otherwise, to republish, to post on servers or to redistribute to lists, requires prior specific permission and/or a fee.}
 \newtoks\copyrightetc
-\global\copyrightetc{Copyright \the\copyrtyr\ ACM \the\acmcopyr\ ...\$10.00}
-%\toappear{\the\boilerplate\par    %% Adjusted for 10pt
-%{\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.}
+\global\copyrightetc{Copyright \the\copyrtyr\ ACM \the\acmcopyr\ ...\$15.00} % Gerry changed to 15 May 2012
+\toappear{\the\boilerplate\par
+{\confname{\the\conf}} \the\confinfo\par \the\copyrightetc.}
 %\DeclareFixedFont{\altcrnotice}{OT1}{tmr}{m}{n}{8}  % << patch needed for accenting e.g. Montreal - Gerry, May 2007
 %\DeclareFixedFont{\altconfname}{OT1}{tmr}{m}{it}{8}  % << patch needed for accenting in italicized confname - Gerry, May 2007
 %
