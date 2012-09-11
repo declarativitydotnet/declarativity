@@ -1,12 +1,12 @@
-NAME=socc-onscreen socc-print
+NAME=socc17-onscreen socc17-print
 USE_PDFLATEX=1
 
 # Common LaTeX source files
 TEXSRCS=intro.tex lang.tex relwork.tex cart-case.tex kvs-case.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex
 BIBTEXSRCS=socc.bib
 
-socc-onscreen_TEXSRCS=socc-onscreen.tex
-socc-print_TEXSRCS=socc-print.tex
+socc-onscreen_TEXSRCS=socc17-onscreen.tex
+socc-print_TEXSRCS=socc17-print.tex
 
 OTHER_PDF=$(wildcard fig/*.pdf)
 OTHER+=$(OTHER_PDF)
