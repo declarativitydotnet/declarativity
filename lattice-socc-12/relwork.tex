@@ -73,15 +73,18 @@ eventually reach a consistent state
 \vspace{0.5em}\noindent
 \textbf{Principled eventual consistency:} Shapiro et al.\ recently proposed
 \emph{Conflict-free Replicated Data Types} (CRDTs), a principled approach to
-designing eventually consistent data values~\cite{Shapiro2011b}. Shapiro et al.\
-provide a formal model for convergence based on join semilattices and a catalog
-of practical CRDT designs~\cite{Shapiro2011a}. CRDTs and \lang lattice types
-often use similar design patterns to achieve coordination-free
-convergence. Unlike \lang, the CRDT approach considers the correctness of
-replicated values in isolation. This allows CRDTs to be more easily adapted into
-standalone libraries (e.g., Statebox~\cite{statebox}). However, the narrow focus
-of CRDTs means that, even if a CRDT is correct, application state may remain
-inconsistent (Section~\ref{sec:intro}).
+designing eventually consistent data values~\cite{Shapiro2011b}. There are two
+kinds of CRDTs: ``operation-based'' types (called CmRDTs) and ``state-based''
+types (called CvRDTs). CvRDTs must be semilattices, but the two CRDT variants
+are equivalently expressive. Shapiro et al.\ provide a formal model for replica
+convergence and describe a catalog of practical CRDT
+designs~\cite{Shapiro2011a}. CRDTs and \lang lattice types often use similar
+design patterns to achieve coordination-free convergence. Unlike \lang, the CRDT
+approach considers the correctness of replicated values in isolation. This
+allows CRDTs to be more easily adapted into standalone libraries (e.g.,
+Statebox~\cite{statebox}). However, the narrow focus of CRDTs means that, even
+if a CRDT is correct, application state may remain inconsistent
+(Section~\ref{sec:intro}).
 
 Burckhardt et al.\ advocate using \emph{revision diagrams} to simplify the
 design of eventually consistent distributed programs~\cite{Burckhardt2012a}. A
@@ -92,7 +95,7 @@ if $b$ is a descendent of the revision that forked $a$; this constraint ensures
 that revision graphs are semilattices. Note that this use of lattices differs
 from \lang: whereas we constrain how data values can change, Burckhardt et al.\
 constrain how replicas can synchronize their states. Another difference is that
-Burckhardt et al.\ allow nondeterministic outcomes, whereas we focus on
+Burckhardt et al.\ allow non-deterministic outcomes, whereas we focus on
 confluence. In subsequent work, Burckhardt et al.\ have also proposed using
 abstract data types to encapsulate distributed state~\cite{Burckhardt2012b},
 although it is unclear whether their language allows user-defined types.
