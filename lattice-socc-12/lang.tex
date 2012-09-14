@@ -185,7 +185,7 @@ require that the lhs and rhs refer to a lattice of the same type.
 
 \lang does not support deletion (\verb|<-| operator) for lattices. Lattices do
 not directly support asynchronous communication (via the \verb|<~| operator) but
-lattice elements can be embedded into tuples that appear in channels
+lattice elements can be embedded into facts that appear in channels
 (Section~\ref{sec:lattice-embedding}).
 
 \subsubsection{Lattice methods}
@@ -206,9 +206,9 @@ distinguishes between methods that are monotone and a subset of monotone methods
 that are \emph{morphisms}. Section~\ref{sec:lattice-defn} defines the properties
 that a morphism must satisfy, but the intuition is that a morphism on lattice
 $T$ can be distributed over $T$'s least upper bound. For example, the
-\texttt{size} method provided by the \texttt{lset} lattice is not a morphism. To
-see why, consider two elements of the \texttt{lset} lattice, $\{1,2\}$ and
-$\{2,3\}$.  \texttt{size} is not a morphism because $size(\{1,2\}
+\texttt{size} method of the \texttt{lset} lattice is not a morphism. To see why,
+consider two elements of the \texttt{lset} lattice, $\{1,2\}$ and $\{2,3\}$.
+The \texttt{size} method is not a morphism because $size(\{1,2\}
 \sqcup_{\mathtt{lset}} \{2,3\}) \ne size(\{1,2\}) \sqcup_{\mathtt{lmax}}
 size(\{2,3\})$. Morphisms can be evaluated more efficiently than monotone
 methods, as we discuss in Section~\ref{sec:lattice-eval-strat}.
@@ -225,10 +225,10 @@ be augmented with coordination to ensure consistent results.
 
 Every lattice defines a non-monotonic \texttt{reveal} method that returns a
 representation of the lattice element as a plain Ruby value. For example, the
-\texttt{reveal} method on an \texttt{lset} lattice returns a Ruby array
-containing the contents of the set. This method is non-monotonic because once the
-underlying Ruby value has been extracted from the set, \lang cannot ensure that
-subsequent code uses the value in a monotonic fashion.
+\texttt{reveal} method on an \texttt{lmax} lattice returns a Ruby integer. This
+method is non-monotonic because once the underlying Ruby value has been
+extracted from the lattice, \lang cannot ensure that subsequent code uses the
+value in a monotonic fashion.
 
 \subsection{Built-in lattices}
 \label{sec:lattice-built-ins}
@@ -274,9 +274,8 @@ The \texttt{lpset} lattice is an example of how \lang can be used to encode
 domain-specific knowledge about an application. If the developer knows that a
 set will only contain non-negative numbers, the sum of those numbers increases
 monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
-\texttt{lpset}.%  Inserting a negative value (or a non-number) into an
-% \texttt{lpset} results in a Ruby exception.
-% Explain why sum is a monotone function?
+\texttt{lpset}; in contrast, taking the sum of the elements of an \texttt{lset}
+is non-monotonic in general.
 
 \subsection{User-defined lattices}
 \begin{figure}[t]
@@ -406,15 +405,15 @@ referenced by the lhs.
 
 \subsubsection{Collections with embedded lattice values}
 \label{sec:lattice-embedding}
-\lang allows lattice elements to be used as columns of tuples in Bloom
+\lang allows lattice elements to be used as columns of facts in Bloom
 collections. This feature allows \lang programs to use a mixture of Bloom-style
 relational operators and lattice method invocations, depending on which is more
 convenient. Bloom also provides several collection types with special semantics
-(e.g., channels, durable storage); allowing lattice elements to be embedded into
-collections avoids the need to create a redundant set of facilities for
-lattices.
+(e.g., network communication, durable storage); allowing lattice elements to be
+embedded into collections avoids the need to create a redundant set of
+facilities for lattices.
 
-Consider a simple \lang statement that derives tuples with an embedded lattice
+Consider a simple \lang statement that derives facts with an embedded lattice
 element as a column:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, cnt]}
@@ -423,7 +422,7 @@ where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
 lattice, and the key of \texttt{t1} is its first column. Note that \texttt{cnt}
 might change over the course of a single timestep (specifically, \texttt{cnt}
 can increase according to the lattice's partial order). This might result in
-multiple \texttt{t1} tuples that differ only in the second column, which would
+multiple \texttt{t1} facts that differ only in the second column, which would
 violate \texttt{t1}'s key.
 
 To resolve this situation, \lang allows multiple facts to be derived that differ
