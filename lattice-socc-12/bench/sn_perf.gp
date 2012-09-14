@@ -9,5 +9,5 @@ set style line 3 lt rgb "#5060D0" lw 2 pt 2
 set style line 4 lt rgb "#F25900" lw 2 pt 9
 
 plot "bench/bloom.summary" using ($3/1000):4 title "Bloom" w lp ls 1, \
-     "bench/seminaive-lat.summary" using ($3/1000):4 title "Lattice (S-Naive)" w lp ls 2, \
+     "bench/seminaive-lat.summary" using ($3/1000):4 title "Lattice (Semi-Naive)" w lp ls 2, \
      "bench/naive-lat.summary" using ($3/1000):4 title "Lattice (Naive)" w lp ls 3
