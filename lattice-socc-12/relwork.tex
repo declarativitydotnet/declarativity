@@ -82,9 +82,19 @@ Statebox~\cite{statebox}). However, the narrow focus of CRDTs means that, even
 if a CRDT is correct, application state may remain inconsistent
 (Section~\ref{sec:intro}).
 
-Burckhardt et al.\ have recently proposed another principled approach to
-eventually consistent programming based on \emph{revision
-  diagrams}~\cite{Burckhardt2012a,Burckhardt2012b}. \nrc{FINISH ME}
+Burckhardt et al.\ advocate using \emph{revision diagrams} to simplify the
+design of eventually consistent distributed programs~\cite{Burckhardt2012a}. A
+revision represents a logical replica of system state; revisions can be forked
+and joined, which represents creating new (logical) replicas and merging
+replicas together, respectively. Revision $a$ can only be joined to revision $b$
+if $b$ is a descendent of the revision that forked $a$; this constraint ensures
+that revision graphs are lattices. Note that this use of lattices differs from
+\lang: whereas we constrain how data values can change, Burckhardt et al.\
+constrain how replicas can synchronize. Another difference is that Burckhardt et
+al.\ allow nondeterministic outcomes, whereas we focus on confluence. In
+subsequent work, Burckhardt et al.\ have also proposed using abstract data types
+to encapsulate distributed state~\cite{Burckhardt2012b}, although it is unclear
+whether their language allows user-defined types.
 
 % . A major difference between \lang and CRDTs is that Shapiro et
 % al.\ focus on the design of replicated data types in isolation, whereas we
