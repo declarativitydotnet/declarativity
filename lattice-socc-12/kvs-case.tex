@@ -101,7 +101,7 @@ request, a new \emph{key} $\to$ \emph{val} \texttt{lmap} is created and merged
 into \texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
 already contains a value for the given key, the two values will be merged
 together using the value lattice's merge function (see
-Section~\ref{sec:lattice-built-ins} for details). Note that we use the \lang
+Section~\ref{sec:lattice-built-ins} for details). Observe that we use the \lang
 features described in Section~\ref{sec:bloom-interop} to allow traditional Bloom
 collections (e.g., channels) and lattices (e.g., the \texttt{kv\_store} lattice)
 to be used by the same program. Note also that \texttt{ip\_port} is a built-in
@@ -133,18 +133,18 @@ Our design is similar to that used by Amazon Dynamo~\cite{DeCandia2007}.
 
 Each replica associates keys with
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
-(VC) captures the causal relationship between different versions of a
-record~\cite{Fidge1988,Mattern1989}. Clients get and put
+captures the causal relationship between different versions of a
+record~\cite{Fidge1988,Mattern1989}. Clients store and retrieve
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
 updates a value it has previously read, the client increments its own position
-in the VC and includes the updated vector clock $V_U$ with its \emph{put}
-operation. Upon receiving an update, the server compares $V_U$ with the VC of
-the server's version of the record ($V_S$). If $V_U > V_S$, the server replaces
-the stored record with the client's update. If $V_S > V_U$, the update is
-ignored (this situation might arise due to duplication and reordering of
-messages by the network). If $V_U$ and $V_S$ are incomparable, the two versions
-are concurrent, so a client-supplied reconciliation function is used to resolve
-the conflict.
+in the vector clock and includes the updated vector clock $V_U$ with its
+\emph{put} operation. Upon receiving an update, the server compares $V_U$ with
+the vector clock of the server's version of the record ($V_S$). If $V_U > V_S$,
+the server replaces the stored record with the client's update. If $V_S > V_U$,
+the update is ignored (this situation might arise due to duplication and
+reordering of messages by the network). If $V_U$ and $V_S$ are incomparable, the
+two versions are concurrent, so a client-supplied reconciliation function is
+used to resolve the conflict.
 
 From a \lang perspective, each replica still stores a monotonically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
@@ -201,7 +201,7 @@ contain a ``smaller'' \emph{snd}). Again, this is the desired behavior.
 \subsubsection{Discussion}
 Figure~\ref{fig:kvs-vc-lattices} shows the lattices used in a KVS with object
 versioning. Surprisingly, adding support for object versioning did not require
-\emph{any} changes to the KVS replica code! Instead, clients simply store
+\emph{any} changes to the KVS replica code. Instead, clients simply store
 \texttt{lpair} values containing a vector clock as the first element and
 increment their position in the vector clock when submitting updates. The KVS
 replica merges these \texttt{lpair} values into an \texttt{lmap} as usual; the
