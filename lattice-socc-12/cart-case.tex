@@ -71,11 +71,11 @@ module MonotoneReplica
     sessions <= action_msg do |m|
       c = LCart.new({m.reqid => [ACTION, m.item, m.cnt]}) (*\label{line:cart-action-op}*)
       { m.session => c }
-    }
+    end
     sessions <= checkout_msg do |m|
       c = LCart.new({m.reqid => [CHECKOUT, m.lbound, m.addr]}) (*\label{line:cart-checkout-op}*)
       { m.session => c }
-    }
+    end
 
     response_msg <~ sessions do |session, c| (*\label{line:cart-response-start}*)
       c.is_complete.when_true {
