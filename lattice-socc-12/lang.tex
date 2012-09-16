@@ -325,8 +325,8 @@ behavior. To define a new lattice, a developer creates a Ruby class that meets a
 certain API contract. Figure~\ref{fig:lattice-lset} shows a simple
 implementation of the \texttt{lset} lattice using a Ruby array for
 storage.\footnote{We omit a few \texttt{lset} methods for brevity. While we use
-  an array for simplicity, this is inefficient (e.g., eliminating duplicates is
-  expensive). The built-in \texttt{lset} uses a hash-based set data type.}
+  an array for simplicity, this is inefficient (e.g., duplicate elimination is
+  expensive). The built-in \texttt{lset} implementation uses a hash-based set data type.}
 
 A lattice class must inherit from the built-in \texttt{Bud::Lattice} class and
 must also define two methods:
@@ -349,7 +349,7 @@ can be seen in lines~\ref{line:lset-morph-begin}--\ref{line:lset-morph-end} and
 \ref{line:lset-monotone-begin}--\ref{line:lset-monotone-end} of
 Figure~\ref{fig:lattice-lset}, respectively. Note that lattice elements are
 \emph{immutable}---that is, lattice methods (including \texttt{merge} methods)
-must return new values, rather than destructively modifying any of their inputs.
+must return new values, rather than modifying any of their inputs.
 % explain why?
 
 %  (e.g., \texttt{merge} functions construct a new lattice element
@@ -381,7 +381,7 @@ must return new values, rather than destructively modifying any of their inputs.
 % programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
 
 % XXX: awkward placement for this paragraph
-Custom lattices must define a keyword that can be used in \lang state
+A lattice definition must specify a keyword that can be used in \lang state
 blocks. This is done using the \texttt{wrapper\_name} class method. For example,
 line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} means that
 ``\texttt{lset :foo}'' in a state block will introduce an identifier
