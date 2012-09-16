@@ -2,7 +2,7 @@ NAME=socc17-onscreen socc17-print
 USE_PDFLATEX=1
 
 # Common LaTeX source files
-TEXSRCS=intro.tex lang.tex relwork.tex cart-case.tex kvs-case.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex
+TEXSRCS=intro.tex lang.tex relwork.tex cart-case.tex kvs-case.tex conclusion.tex acks.tex background.tex discussion.tex impl.tex socc.tex
 BIBTEXSRCS=socc.bib
 
 socc-onscreen_TEXSRCS=socc17-onscreen.tex
