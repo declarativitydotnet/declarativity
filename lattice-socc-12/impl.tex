@@ -11,8 +11,8 @@ with relatively few changes.
 \subsection{Semi-naive evaluation}
 \label{sec:lattice-eval-strat}
 \emph{Naive} evaluation is a simple but inefficient approach to evaluating
-recursive Datalog programs. Evaluation proceeds in ``rounds.'' In each round, all
-the rules in the program are evaluated over the entire database, including all
+recursive Datalog programs. Evaluation proceeds in rounds. In each round,
+every rule in the program is evaluated over the entire database, including all
 derivations made in previous rounds. This process stops when a round makes no
 new derivations. Naive evaluation is inefficient because it makes many redundant
 derivations: once a fact has been derived in round $i$, it is rederived in every
@@ -22,9 +22,8 @@ round $>i$.
 redundant derivations~\cite{Balbin1987}. Let $\Delta_0$ represent the initial
 database state. In the first round, all the rules are evaluated over $\Delta_0$;
 let $\Delta_1$ represent the new facts derived in this round. In the second
-round, we only need to compute derivations that are dependent on $\Delta_1$
-because everything that can be derived purely from $\Delta_0$ has already been
-computed.
+round, we only need to compute derivations that depend on $\Delta_1$ because
+everything that can be derived purely from $\Delta_0$ has already been computed.
 
 A similar evaluation strategy works for \lang statements that use lattice
 morphisms. For a given lattice identifier $l$, let $\Delta_l^0$ represent the
