@@ -260,6 +260,21 @@ applying the code block to each element of the input collection. Elements for
 which the code block returns \texttt{nil} are omitted from the output
 collection, which allows \texttt{project} to be used as a filter.
 
+The \texttt{lbag} lattice demonstrates how \lang can support multisets. Note
+that the \texttt{lbag} merge function takes the maximum of the multiplicities of
+an element that appears in both input lattices. Although this is the standard
+definition of multiset union, some applications might find summing the element
+multiplicities to be more useful. However, this behavior would not be a valid
+least upper bound (because it is not idempotent). Instead, applications that
+need to compute the multiset sum can use the \texttt{+} morphism.
+
+The \texttt{lpset} lattice is an example of how \lang can be used to encode
+domain-specific knowledge about an application. If the developer knows that a
+set will only contain non-negative numbers, the sum of those numbers increases
+monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
+\texttt{lpset}; in contrast, taking the sum of the elements of an \texttt{lset}
+is non-monotonic in general.
+
 The \texttt{lmap} lattice associates keys with values. Keys are immutable Ruby
 objects and values are lattice elements. For example, a web application could
 use an \texttt{lmap} to associate session IDs with an \texttt{lset} containing
@@ -269,13 +284,6 @@ corresponding values are merged using the appropriate lattice merge
 function. Note that the \texttt{at(v)} morphism returns the lattice element
 associated with key \texttt{v} (or $\bot$ if the \texttt{lmap} does not contain
 \texttt{v}).
-
-The \texttt{lpset} lattice is an example of how \lang can be used to encode
-domain-specific knowledge about an application. If the developer knows that a
-set will only contain non-negative numbers, the sum of those numbers increases
-monotonically as the set grows. Hence, \texttt{sum} is a monotone function of
-\texttt{lpset}; in contrast, taking the sum of the elements of an \texttt{lset}
-is non-monotonic in general.
 
 \subsection{User-defined lattices}
 \begin{figure}[t]
