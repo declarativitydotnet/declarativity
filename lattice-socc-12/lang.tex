@@ -19,8 +19,9 @@ traditional Bloom collections in Section~\ref{sec:bloom-interop}.
 \label{sec:lattice-defn}
 A \emph{bounded join semilattice} is a triple $\langle S, \sqcup, \bot\rangle$,
 where $S$ is a set, $\sqcup$ is a binary operator
-(called ``join'' or ``least upper bound''), and $\bot \in S$. The operator
-$\sqcup$ is associative, commutative, and idempotent. The $\sqcup$ operator induces a partial order $\leq_S$ on the elements of $S$: $x \leq_S y$ if $x \sqcup y = y$.
+(called ``join'' or ``least upper bound''), and $\bot$ is an element of $S$
+(called ``bottom''). The $\sqcup$ operator
+is associative, commutative, and idempotent. The $\sqcup$ operator induces a partial order $\leq_S$ on the elements of $S$: $x \leq_S y$ if $x \sqcup y = y$.
 % 
 % For all $x, y \in S$, $x
 % \sqcup y = z$, where $x \leq_S z, y \leq_S z$, and there is no $z' \ne z \in S$
