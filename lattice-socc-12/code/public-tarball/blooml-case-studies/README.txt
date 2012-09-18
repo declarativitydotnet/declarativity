@@ -8,3 +8,7 @@ support for lattices. You can find this by cloning the Bud git repository and
 installing a version of Bud from the lattice-proto-v2 branch:
 
     https://github.com/bloom-lang/bud
+
+To run the unit tests included with this tarball:
+
+    cd test; ruby all_tests.rb
