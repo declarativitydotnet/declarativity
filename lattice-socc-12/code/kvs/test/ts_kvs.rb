@@ -1,9 +1,5 @@
-require 'rubygems'
-gem 'minitest'  # Use the rubygems version of MT, not builtin (if on 1.9)
-require 'minitest/autorun'
-
-require './kvs'
-require './lpair'
+require './test_common'
+require 'kvs/kvs'
 
 class SimplePair
   include Bud
