@@ -75,10 +75,10 @@ eventually reach a consistent state
 \emph{Conflict-free Replicated Data Types} (CRDTs), a framework for designing
 eventually consistent data values~\cite{Shapiro2011a,Shapiro2011b}. There are
 two kinds of CRDTs: ``operation-based'' types (called \emph{CmRDTs}) and
-``state-based'' types (called \emph{CvRDTs}). \lang is most closely related to CvRDTs
-(the state of a CvRDT replica must be a semilattice), although the two CRDT
-variants are equivalently expressive. Shapiro et al.\ provide a formal model for
-replica convergence and detail a catalog of practical CRDT designs. CRDTs and
+``state-based'' types (called \emph{CvRDTs}). \lang is most closely related to
+CvRDTs (the state of a CvRDT replica must be a semilattice), although the two
+CRDT variants are equivalently expressive. Shapiro et al.\ provide a formal
+model for replica convergence and a catalog of practical CRDT designs. CRDTs and
 \lang lattice types often use similar design patterns to achieve
 coordination-free convergence. Unlike \lang, the CRDT approach considers the
 correctness of replicated values in isolation. This allows CRDTs to be more
