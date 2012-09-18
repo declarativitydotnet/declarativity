@@ -3,9 +3,14 @@
 %Distributed programming has become an essential and commonplace task,
 %but most developers still find it challenging to write correct distributed
 %programs. 
-As cloud computing becomes increasingly common, the inherent difficulties of distributed systems---asynchrony,
-concurrency, and partial failure---affect a growing segment of the developer community.
-Traditionally, transactions and other forms of strong consistency encapsulated these problems at the data management layer.  But in recent years there has been interest in achieving application-level consistency criteria without incurring the latency and availability costs of strongly consistent storage~\cite{Birman2009,Helland2009}.
+As cloud computing becomes increasingly common, the inherent difficulties of
+distributed programming---asynchrony, concurrency, and partial failure---affect
+a growing segment of the developer community.  Traditionally, transactions and
+other forms of strong consistency encapsulated these problems at the data
+management layer.  But in recent years there has been interest in achieving
+application-level consistency criteria without incurring the latency and
+availability costs of strongly consistent storage~\cite{Birman2009,Helland2009}.
+
 % % remind reviewers that it's a database problem. can remove if accepted! 
 % % Much of the discussion about distributed programming today revolves around data
 % % management, and the tradeoffs between transactions and weak
@@ -24,9 +29,9 @@ Traditionally, transactions and other forms of strong consistency encapsulated t
 % performance and operational overhead~\cite{Birman2009,Helland2009}. As a result,
 % there has been increased interest in techniques for achieving correct program
 % behavior without requiring coordination.  
-Two different frameworks for these
-techniques have received significant attention in recent research:
-\emph{Convergent Modules} and \emph{Monotonic Logic}.
+Two different frameworks for these techniques have received significant
+attention in recent research: \emph{Convergent Modules} and \emph{Monotonic
+  Logic}.
 
 % The coordination protocols that provide strong consistency are widely believed
 % to raise unacceptable challenges in performance and operational overhead for
@@ -42,14 +47,19 @@ techniques have received significant attention in recent research:
 modules whose public methods provide certain guarantees regarding message
 reordering and retry. For example, Statebox is an open-source library that
 merges conflicting updates to data items in a key-value store; the user of the
-library need only register commutative, associative, idempotent merge
-functions~\cite{statebox}. This approach has roots in research in
-databases and systems~\cite{Farrag1989,Garcia-Molina1983,Helland2009,O'Neil1986,Terry1995} as well as
-groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a formalism
-for these approaches called \emph{Conflict-Free Replicated Data Types} (CRDTs),
-which casts these ideas into the algebraic framework of \emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
+library need only register ``merge functions'' that are commutative,
+associative, and idempotent~\cite{statebox}. This approach has roots in database
+and systems research~\cite{Farrag1989,Garcia-Molina1983,Helland2009,O'Neil1986,Terry1995} as
+well as groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a
+formalism for these approaches called \emph{Conflict-Free Replicated Data Types}
+(CRDTs), which casts these ideas into the algebraic framework of
+\emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
 
-CRDTs present two main problems: (a) the programmer bears responsibility for ensuring lattice properties for their methods (commutativity, associativity, idempotence), and (b) CRDTs only provide guarantees for individual data objects, not for application logic in general. As an example of this second point, consider the following:
+CRDTs present two main problems: (a) the programmer bears responsibility for
+ensuring lattice properties for their methods (commutativity, associativity,
+idempotence), and (b) CRDTs only provide guarantees for individual data objects,
+not for application logic in general. As an example of this second point,
+consider the following:
 
 \vspace{-0.25em}
 \begin{example}
