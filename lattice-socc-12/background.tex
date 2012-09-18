@@ -128,6 +128,7 @@ rhs at some non-deterministic future timestep. \\
 \caption{Bloom operators.}
 \label{tbl:bloom-ops}
 \end{table}
+
 \ifbool{socc-print-version}{\pagebreak}{}
 \subsubsection{Statements}
 
@@ -147,10 +148,13 @@ lines~\ref{line:spaths-join-start}--\ref{line:spaths-join-end} perform a join
 between \texttt{link} and \texttt{path} using the join predicate
 \verb+link.to = path.from+ followed by a projection to four attributes, and
 line~\ref{line:spaths-group} shows grouping and aggregation. Bloom statements
-appear in one or more \texttt{bloom} blocks.% A Bloom program can also
-% include a \texttt{bootstrap} block, which contains statements that are evaluated
-% only once when a Bloom instance starts executing. \texttt{bootstrap} blocks are
-% typically used for initialization or configuration data.
+appear in one or more \texttt{bloom} blocks, which group together semantically
+related statements to aid readability.
+
+% A Bloom program can also include a \texttt{bootstrap} block, which contains
+% statements that are evaluated only once when a Bloom instance starts
+% executing. \texttt{bootstrap} blocks are typically used for initialization or
+% configuration data.
 
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
