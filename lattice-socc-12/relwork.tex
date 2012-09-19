@@ -127,12 +127,15 @@ although it is unclear whether their language allows user-defined types.
 \textbf{Parallel programming:} Lattices have also been applied to parallel
 programming languages. Kuper and Newton recently proposed
 $\lambda_{\textsf{par}}$, a deterministic parallel variant of the untyped
-$\lambda$-calculus~\cite{Kuper2012}. They focus on ensuring deterministic
-program outcomes in the face of concurrent reads and writes to shared
-state. Hence, $\lambda_{\textsf{par}}$ allows only monotonically increasing
-writes to shared variables. They support restricted reads by introducing a
-notion of \emph{query sets}; these bear some resemblance to the threshold tests
-supported by \lang.
+$\lambda$-calculus~\cite{Kuper2012}. Their approach guarantees deterministic
+program outcomes in the face of concurrent reads and writes to shared state by
+restricting reads and allowing only monotonically increasing writes to shared
+variables.  Restricted reads in $\lambda_{\textsf{par}}$ are expressed by
+supplying a \emph{query set} of lattice elements; a read either blocks or
+returns a unique element from the query set that is smaller than or equal to the
+current value of the shared variable (according to the lattice's partial
+order). This approach to restricting reads is somewhat similar to the use of
+threshold tests in \lang.
 
 \vspace{0.5em}\noindent
 \textbf{Non-monotonicity in deductive databases:} Adding non-monotonic operators
