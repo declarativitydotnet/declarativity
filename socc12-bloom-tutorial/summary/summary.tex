@@ -116,11 +116,15 @@ extend the example programs we present.
   strong consistency protocols.
 \item
   Introduce and compare recent research proposals to simplify distributed
-  programming without strong consistency.
+  programming without strong consistency.  Present abstract design patterns
+  for working with eventually consistent systems.
 \item
   Focus on the CRDT and Bloom/CALM approaches to distributed
   consistency, and show how lattices and monotone functions can be used to build
   provably consistent implementations of well-known distributed infrastructure.
+  Provide concrete examples of CvRDTs (convergent distributed datatypes)
+  including sets, counters and graphs, and illustrate how these data structures
+  maintain the guarantee of eventual consistency.
 \item
   Discuss the CALM Theorem, which sheds light on \emph{why} certain programs
   require distributed coordination and why others do not.  Characterize the
@@ -130,10 +134,19 @@ extend the example programs we present.
   Introduce the Bloom programming language and related tools for visualization,
   debugging, and systematic testing of distributed programs.
 \item
+  As a running example, implement a family of key-value store implementations
+  with various consistency guarantees in Bloom.  Aided by static analysis tools,
+  contrast the nondeterministic executions of overwrite-based stores with 
+  stores whose values are constrained to be lattices, and hence are convergent
+  in either the value or the data item version domain.  Illustrate the use of 
+  lattice compositions to implement quorum replication, which can be 
+  parameterized to enforce strong or eventual consistency.
+\item
   Highlight open problems and research challenges in the area of principled
   eventual consistency.
 \end{enumerate}
 
+\begin{comment}
 \section{Outline}
 
 \begin{itemize}
@@ -215,6 +228,10 @@ extend the example programs we present.
     Open research problems
   \end{itemize}
 \end{itemize}
+\end{comment}
+
+\section{Conclusion}
+
 
 \bibliographystyle{abbrv}
 \bibliography{summary}
