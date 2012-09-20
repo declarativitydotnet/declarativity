@@ -1,9 +1,12 @@
-NAME=cover proposal
+NAME=bloom-tutorial-onscreen bloom-tutorial-print
 USE_PDFLATEX=1
 
-proposal_TEXSRCS=proposal.tex
-proposal_BIBTEXSRCS=proposal.bib
-cover_TEXSRCS=cover.tex
+# Common LaTeX source files
+TEXSRCS=summary.tex
+BIBTEXSRCS=summary.bib
+
+bloom-tutorial-onscreen_TEXSRCS=bloom-tutorial-onscreen.tex
+bloom-tutorial-print_TEXSRCS=bloom-tutorial-print.tex
 
 OTHER_PDF=$(wildcard fig/*.pdf)
 OTHER+=$(OTHER_PDF)
