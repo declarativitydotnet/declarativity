@@ -1,4 +1,4 @@
-\ifbool{socc-print-version}{\pagebreak}{}
+% \ifbool{socc-print-version}{\pagebreak}{}
 \section{Implementation}
 \label{sec:impl}
 
@@ -9,7 +9,7 @@ and is competitive with the traditional set-oriented semi-naive evaluation
 scheme in Bud. We also describe how we extended Bud to support \lang
 with relatively few changes.
 
-\subsection{Semi-naive evaluation}
+\subsection{Evaluation Strategy}
 \label{sec:lattice-eval-strat}
 \emph{Naive} evaluation is a simple but inefficient approach to evaluating
 recursive Datalog programs. Evaluation proceeds in rounds. In each round,
@@ -63,7 +63,7 @@ total value.
 % $i-1$; otherwise, $f$ would have been derived earlier. Hence, we can rewrite the
 % program to evaluate
 
-\subsection{Performance validation}
+\subsection{Performance Validation}
 \label{sec:lattice-perf}
 
 \begin{figure}[t]
@@ -107,7 +107,7 @@ contrast, Bloom collections are modified in-place. We plan to improve the
 lattice code to avoid copies when it can determine that in-place updates are
 safe.
 
-\subsection{Modifying Bud}
+\subsection{Discussion}
 We were able to extend Bud to support \lang with relatively minor changes. Bud
 initially had about 7200 lines of Ruby source code (LOC). The core lattice
 features (the \texttt{Bud::Lattice} base class and the mapping from identifiers

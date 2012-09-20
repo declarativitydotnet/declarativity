@@ -121,7 +121,7 @@ original CALM analysis.
 The CALM theorem obviates any scoping concerns for convergent monotonic logic, but it presents a \textbf{type dilemma}. Sets are the only data type amenable to CALM analysis, but the programmer may have a more natural representation of a monotonically growing phenomenon. For example, a monotonic counter is more naturally represented as a growing integer than a growing set. This dilemma leads either to false negatives in CALM analysis and over-use of coordination, or to idiosyncratic set-based implementations that can be hard to read and maintain.
 
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
-\subsection{\lang: Logic and Lattices}
+\subsection{\lang: Logic And Lattices}
 % The strengths and weaknesses of these two approaches appear
 % complementary. CRDTs provide synchronization-free consistent objects, but
 % cannot guarantee whole-program consistency. Bloom's CALM analysis guarantees

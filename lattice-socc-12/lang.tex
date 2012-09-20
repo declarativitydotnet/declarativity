@@ -48,7 +48,7 @@ g(b)$. Intuitively, $g$ maps elements of $X$ to elements of $Y$ in a way that
 preserves the lattice properties.  Note that morphisms are monotone functions
 but the converse is not true in general.
 
-\subsection{Language concepts}
+\subsection{Language Constructs}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
@@ -163,7 +163,7 @@ b$ & \texttt{when\_true(\&blk)} $\to$ \texttt{v} & \\
 \end{table*}
 
 
-\subsubsection{Statements in \lang}
+\subsubsection{Statements In \lang}
 Statements take the same form in both Bloom and \lang: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
     $<$expression$>$}}\\ \noindent
@@ -189,7 +189,7 @@ not directly support asynchronous communication (via the \verb|<~| operator) but
 lattice elements can be embedded into facts that appear in channels
 (Section~\ref{sec:lattice-embedding}).
 
-\subsubsection{Lattice methods}
+\subsubsection{Lattice Methods}
 \lang statements compute values over lattices by invoking methods on lattice
 elements. Just as a subset of the relational algebra is monotonic, some lattice
 methods are monotone functions (as defined in Section~\ref{sec:lattice-defn}). A
@@ -198,9 +198,9 @@ invoked grows (according to the lattice's partial order), the value returned by
 the method will grow (according to the return value's lattice type). For
 example, the \texttt{size} method provided by the \texttt{lset} lattice is
 monotone because as more elements are added to the set, the size of the set
-increases. From a CRDT perspective, a lattice's monotone methods constitute a
-``safe'' interface of operations that can be invoked in a distributed setting
-without risk of inconsistency.
+increases. Intuitively, a lattice's monotone methods constitute a ``safe''
+interface of operations that can be invoked in a distributed setting without
+risk of inconsistency.
 
 A lattice method's signature indicates its monotonicity properties. \lang
 distinguishes between methods that are monotone and a subset of monotone methods
@@ -231,7 +231,7 @@ method is non-monotonic because once the underlying Ruby value has been
 extracted from the lattice, \lang cannot ensure that subsequent code uses the
 value in a monotonic fashion.
 
-\subsection{Built-in lattices}
+\subsection{Built-in Lattices}
 \label{sec:lattice-built-ins}
 
 Table~\ref{tbl:built-in-lattices} lists the lattices included with \lang. The
@@ -252,7 +252,7 @@ takes a Ruby block; if the \texttt{lbool} element has the value \texttt{true},
 line~\ref{line:quorum-when-true} in
 Figure~\ref{fig:lattice-quorum}. \texttt{when\_true} is similar to an ``if''
 statement.\footnote{Observe that an ``else'' clause would test for an upper
-  bound on the final lattice value, which is a non-monotonic property!}
+  bound on the final lattice value, which is a non-monotonic property.}
 
 The collection-like lattices support familiar operations such as union,
 intersection, and testing for the presence of an element in the collection. The
@@ -286,7 +286,7 @@ function. Note that the \texttt{at(v)} morphism returns the lattice element
 associated with key \texttt{v} (or $\bot$ if the \texttt{lmap} does not contain
 \texttt{v}).
 
-\subsection{User-defined lattices}
+\subsection{User-defined Lattices}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}[deletekeywords={lset}]
@@ -335,13 +335,13 @@ must also define two methods:
 \item \texttt{initialize(i)}: given a Ruby object $i$, this method constructs a
   new lattice element that ``wraps'' $i$ (this is the standard Ruby syntax for
   defining a constructor). If $i$ is \texttt{nil} (the null reference), this
-  method returns $\bot$, the least element of the lattice.
+  method returns $\bot$.
 
 \item \texttt{merge(e)}: given a lattice element $e$, this method returns the
-  least upper bound of \emph{self} and \emph{e}. This method must satisfy the
-  algebraic properties of least upper bound as summarized in
-  Section~\ref{sec:lattice-defn}---in particular, it must be commutative,
-  associative, and idempotent. Note that \emph{e} and \emph{self} must be
+  least upper bound of \emph{e} and \emph{self}. The programmer must ensure that
+  this method satisfies the algebraic properties of least upper bound---in
+  particular, it must be commutative, associative, and idempotent
+  (Section~\ref{sec:lattice-defn}). Note that \emph{e} and \emph{self} must be
   instances of the same class.
 \end{compactitem}
 Lattices can also define any number of monotone functions, morphisms, and
@@ -359,7 +359,6 @@ must return new values, rather than modifying any of their inputs.
 % common practice for immutable data structures in functional programming
 % languages~\cite{Okasaki1999}. % XXX: not the right place for this?
 
-
 % Because lattice methods can contain arbitrary Ruby code, the lattice developer
 % should be careful to ensure that lattice methods satisfy the appropriate
 % algebraic properties. For example, implementing a lattice method might require
@@ -375,12 +374,6 @@ must return new values, rather than modifying any of their inputs.
 % supported. The developer of a lattice implementation should check for invalid
 % inputs and signal errors by raising a Ruby exception.
 
-% Lattice elements are \emph{immutable} (e.g., \texttt{merge} functions construct
-% a new lattice element rather than destructively modifying one of their
-% inputs). Efficient lattice implementations will often \emph{share structure} on merge
-% operations, as is common practice for immutable data structures in functional
-% programming languages~\cite{Okasaki1999}. % XXX: not the right place for this?
-
 % XXX: awkward placement for this paragraph
 A lattice definition must specify a keyword that can be used in \lang state
 blocks. This is done using the \texttt{wrapper\_name} class method. For example,
@@ -388,12 +381,12 @@ line~\ref{line:lset-wrapper-name} of Figure~\ref{fig:lattice-lset} means that
 ``\texttt{lset :foo}'' in a state block will introduce an identifier
 \texttt{foo} that is associated with an instance of \texttt{Bud::SetLattice}.
 
-\subsection{Integration with set-oriented logic}
+\subsection{Integration With Set-oriented Logic}
 \label{sec:bloom-interop}
 \lang provides two features to ease integration of lattice-based code with Bloom
 rules that use set-oriented collections.
 
-\subsubsection{Converting collections into lattices}
+\subsubsection{Converting Collections Into Lattices}
 % XXX: this ignores the fact that Bloom collections consist of sets of tuples,
 % whereas implicit fold works for sets of singleton values
 This feature enables an intuitive syntax for merging the contents of a
@@ -407,14 +400,14 @@ method. In our experience, this is usually the behavior intended by the user.
 
 For example, line~\ref{line:quorum-set-accum} of Figure~\ref{fig:lattice-quorum}
 contains a Bloom collection on the rhs and an \texttt{lset} lattice on the
-lhs. This statement is implemented by constructing a singleton \texttt{lset} for
+lhs. This statement is evaluated by constructing a singleton \texttt{lset} for
 each fact in the rhs collection and then merging the sets together. The
 resulting \texttt{lset} is then merged with the \texttt{votes} lattice
 referenced by the lhs.
 
-\subsubsection{Collections with embedded lattice values}
+\subsubsection{Embedding Lattice Values In Collections}
 \label{sec:lattice-embedding}
-\lang allows lattice elements to be used as columns of facts in Bloom
+\lang allows lattice elements to be used as column values of facts in Bloom
 collections. This feature allows \lang programs to use a mixture of Bloom-style
 relational operators and lattice method invocations, depending on which is more
 convenient. Bloom also provides several collection types with special semantics
@@ -427,12 +420,12 @@ element as a column:
 \begin{verbatim}
     t1 <= t2 {|t| [t.x, cnt]}
 \end{verbatim}
-where \texttt{t1} and \texttt{t2} are Bloom collections, \texttt{cnt} is a
-lattice, and the key of \texttt{t1} is its first column. Note that \texttt{cnt}
-might change over the course of a single timestep (specifically, \texttt{cnt}
-can increase according to the lattice's partial order). This might result in
-multiple \texttt{t1} facts that differ only in the second column, which would
-violate \texttt{t1}'s key.
+where \texttt{t1} and \texttt{t2} are collections, \texttt{cnt} is a lattice,
+and the key of \texttt{t1} is its first column. Note that \texttt{cnt} might
+change over the course of a single timestep (specifically, \texttt{cnt} can
+increase according to the lattice's partial order). This might result in
+deriving multiple \texttt{t1} facts that differ only in the second column, which
+would violate \texttt{t1}'s key.
 
 To resolve this situation, \lang allows multiple facts to be derived that differ
 only in their embedded lattice values; those facts are merged into a single fact
@@ -481,9 +474,19 @@ lattice elements cannot be used as keys in Bloom collections.%  It might be
 % annotation is not specified, lattice elements embedded in Bloom collections
 % cannot change; it is up to the programmer to avoid key constraint violations.
 
-\subsection{Confluence in \lang}
+\subsection{CALM Analysis For Lattices}
 \label{sec:calmL}
 
+As discussed in Section~\ref{sec:bg-calm}, CALM-based program analysis
+determines whether a program is order-sensitive by looking for ``points of
+order''---locations where an asynchronously computed value is consumed by a
+non-monotonic operator. \lang simply expands the set of monotonic operations
+that a program can contain; hence, we did not need to make any fundamental
+changes to our program analysis. Instead, we simply replaced the hard-coded list
+of monotonic operations with a list of the monotonic methods defined by the
+lattices used by the current program.
+
+\subsubsection{Confluence In \lang}
 We now describe how the notion of \emph{confluence} (invariance to message
 reordering) can be generalized from Bloom to \lang programs. In recent work, we
 provided a model-theoretic characterization of confluence for programs written

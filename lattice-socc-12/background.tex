@@ -59,7 +59,7 @@ program represented as an annotated Ruby class. A small amount of imperative
 Ruby code is needed to instantiate the Bloom program and begin executing it;
 more details are available on the Bloom language website~\cite{bloom}.
 
-\subsubsection{Data model}
+\subsubsection{Data Model}
 \begin{table}[t]
 \centering
 \begin{tabular}{|l|p{2.32in}|}
@@ -175,16 +175,16 @@ require that programs be \emph{syntactically stratified}~\cite{Apt1988}: cycles
 through negation or aggregation are not allowed (unless they contain a deferred
 or asynchronous operator)~\cite{dedalus}.
 
-\subsection{CALM analysis}
+\subsection{CALM Analysis}
 \label{sec:bg-calm}
 
 Work on deductive databases has long drawn a distinction between
 \emph{monotonic} and \emph{non-monotonic} logic programs. Intuitively, a
-monotonic program only computes more information over time---it will never
-``retract'' a previous conclusion in the face of additional evidence.  In Bloom
+monotonic program only computes more information over time---it never
+``retracts'' a previous conclusion in the face of new evidence.  In Bloom
 (and Datalog), a simple conservative test for monotonicity is based on program
-syntax: selection, projection, and join are monotonic, while aggregation and
-negation are not.
+syntax: selection, projection, and join are monotonic, while aggregation,
+negation and deletion are not.
 
 The CALM theorem connects the theory of monotonic logic with the practical
 problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  All
@@ -193,12 +193,12 @@ given input, all program executions result in the same final state regardless of
 network non-determinism~\cite{Ameloot2011,dedalus-confluence}.  Hence, monotonic
 logic is a useful building block for loosely consistent distributed programming.
 
-According to the CALM theorem, distributed inconsistency may only occur at
-\emph{points of order}: program locations where the output of an asynchronously
-derived value is consumed by a non-monotonic operator~\cite{Alvaro2011}.  This
-is because asynchronous messaging results in non-deterministic arrival order,
-and non-monotonic operators may produce different conclusions when evaluated
-over different subsets of their inputs.  For example, consider a Bloom program
+According to the CALM theorem, distributed inconsistency may only occur at a
+\emph{point of order}: a program location where an asynchronously derived value
+is consumed by a non-monotonic operator~\cite{Alvaro2011}.  This is because
+asynchronous messaging results in non-deterministic arrival order, and
+non-monotonic operators may produce different conclusions when evaluated over
+different subsets of their inputs.  For example, consider a Bloom program
 consisting of a pair of collections $A$ and $B$ (both fed by asynchronous
 channels) and a rule that sends a message whenever an element of $A$ arrives
 that is not in $B$.  This program is non-monotonic and exhibits non-confluent
@@ -213,14 +213,14 @@ Otherwise, programs are flagged as potentially inconsistent.  To achieve
 consistency, the programmer either needs to rewrite their program to avoid the
 use of non-monotonicity or introduce a coordination protocol to ensure that a
 consistent ordering is agreed upon at each of the program's points of order.
-Coordination protocols incur additional latency and reduce availability in the
-event of network partitions, so in this paper we focus on coordination-free
+Coordination protocols increase latency and reduce availability in the event of
+network partitions, so in this paper we focus on coordination-free
 designs---that is, monotonic programs.
 
-\subsubsection{Limitations of set monotonicity}
+\subsubsection{Limitations Of Set Monotonicity}
 The original formulation of the CALM theorem considered only programs that
 compute more facts over time---that is, programs whose \emph{sets} grow
-monotonically. Many distributed protocols make progress over time, but their
+monotonically. Many distributed protocols make progress over time but their
 notion of ``progress'' is often difficult to represent as a growing set of
 facts. For example, consider the Bloom program in
 Figure~\ref{fig:bloom-nm-quorum}. This program receives votes from one or more
