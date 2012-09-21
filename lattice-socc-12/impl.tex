@@ -5,7 +5,7 @@
 In this section, we describe how to evaluate \lang programs. First, we
 generalize semi-naive evaluation to support lattices. We validate that our
 implementation of semi-naive evaluation results in significant performance gains
-and is competitive with the traditional set-oriented semi-naive evaluation
+and is competitive with the traditional set-only semi-naive evaluation
 scheme in Bud. We also describe how we extended Bud to support \lang
 with relatively few changes.
 
@@ -104,7 +104,7 @@ suspect this is because the lattice implementation copies more data than Bloom
 does for this benchmark. Lattice elements are immutable, so the \texttt{lset}
 merge function allocates a new object to hold the result of the merge. In
 contrast, Bloom collections are modified in-place. We plan to improve the
-lattice code to avoid copies when it can determine that in-place updates are
+lattice runtime to avoid copies when it can determine that in-place updates are
 safe.
 
 \subsection{Discussion}
@@ -117,6 +117,6 @@ enable semi-naive evaluation required 100 LOC. Modifying Bud's collection
 classes to support merging of embedded lattice values required adding or
 modifying about 125 LOC. The built-in lattice classes constituted an additional
 300 LOC. In total, adding support for \lang required less than 900 lines of
-added or modified code, and took about two person-months of engineering time.% This
-% experience suggests that support for lattices can be added to an existing
-% Datalog engine in a relatively straightforward manner.
+added or modified code, and took about two person-months of engineering
+time. This experience suggests that support for lattices can be added to an
+existing Datalog engine in a relatively straightforward manner.
