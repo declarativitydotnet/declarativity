@@ -484,27 +484,29 @@ non-monotonic operator. \lang simply expands the set of monotonic operations
 that a program can contain; hence, we did not need to make any fundamental
 changes to our program analysis. Instead, we simply replaced the hard-coded list
 of monotonic operations with a list of the monotonic methods defined by the
-lattices used by the current program.
+lattices used by the current program. In Sections~\ref{sec:kvs} and
+\ref{sec:carts}, we show how CALM analysis can be applied to several \lang programs.
 
-\subsubsection{Confluence In \lang}
-We now describe how the notion of \emph{confluence} (invariance to message
-reordering) can be generalized from Bloom to \lang programs. In recent work, we
-provided a model-theoretic characterization of confluence for programs written
-in Dedalus, the formal language on which Bloom is based~\cite{dedalus-confluence}. 
-These results apply directly to Bloom, whose semantics are grounded in those of
-Dedalus.  The result of a distributed computation performed in Bloom may be
-viewed as the set of \emph{ultimate models} or eventual states of the program,
-given a fixed input and sufficient time for messages to be delivered.  If a
-program has exactly one ultimate model for every input, we say that it is
-confluent: all message delivery orders result in the same eventual state.
+CALM analysis is grounded in a model-theoretic characterization of
+confluence~\cite{dedalus-confluence}. This work was done in the context of
+Dedalus, the formal language on which Bloom is based~\cite{dedalus}.  These
+results apply directly to Bloom, whose semantics are grounded in those of
+Dedalus. Developing a model theory for \lang programs is out of scope for this
+paper.
 
-To reason about confluence in \lang, we first observe that lattices are
-guaranteed to have inflationary behavior over time: a lattice value only
-increases.  Hence if we include lattices in the output of an otherwise confluent
-\lang program, they will not increase the number of ultimate models.  It is not
-enough, however, that this local property of lattice objects holds: we must also
-show that anything a \lang program \emph{does} with a lattice value is
-monotonic.  Monotone lattice functions provide a mechanism for reasoning about
-composition of lattices or between lattices and collections.  By including
-monotone lattice functions among the ``safe,'' monotonic constructs provided by
-the Bloom language, we can easily extend our CALM analysis to \lang.
+% The result of a distributed computation performed in Bloom may be
+% viewed as the set of \emph{ultimate models} or eventual states of the program,
+% given a fixed input and sufficient time for messages to be delivered.  If a
+% program has exactly one ultimate model for every input, we say that it is
+% confluent: all message delivery orders result in the same eventual state.
+
+% To reason about confluence in \lang, we first observe that lattices are
+% guaranteed to have inflationary behavior over time: a lattice value only
+% increases.  Hence if we include lattices in the output of an otherwise confluent
+% \lang program, they will not increase the number of ultimate models.  It is not
+% enough, however, that this local property of lattice objects holds: we must also
+% show that anything a \lang program \emph{does} with a lattice value is
+% monotonic.  Monotone lattice functions provide a mechanism for reasoning about
+% composition of lattices or between lattices and collections.  By including
+% monotone lattice functions among the ``safe,'' monotonic constructs provided by
+% the Bloom language, we can easily extend our CALM analysis to \lang.
