@@ -34,10 +34,13 @@ we use the term ``lattice'' to mean ``bounded join semilattice'' in the rest of
 this paper. We use the informal term ``merge function'' to mean ``least upper
 bound.''
 
-A \emph{monotone function} from poset $S$ to poset $T$ is a function $f: S \to
-T$ such that $\forall a,b \in S: a \leq_S b \Rightarrow f(a) \leq_T f(b)$. That
-is, $f$ maps elements of $S$ to elements of $T$ in a manner that respects the
-partial orders of both posets.
+A \emph{monotone function} a function $f: S \to T$ such that $S,T$ are partially
+ordered sets (posets), and $\forall a,b \in S: a \leq_S b \Rightarrow f(a)
+\leq_T f(b)$. That is, $f$ maps elements of $S$ to elements of $T$ in a manner
+that respects the partial orders of both posets.\footnote{To simplify the
+  presentation, these definitions assume that monotone functions and morphisms
+  are unary. \lang supports monotone functions and morphisms with any number of
+  arguments.}
 
 % XXX: mention that morphisms must be distributive with respect to the lub of
 % their domain, whereas monotone functions don't need to be?
@@ -97,7 +100,7 @@ Figure~\ref{fig:lattice-quorum} declares an identifier \texttt{votes} that is
 mapped to an element of the \texttt{lset} lattice. As more votes are received,
 the lattice element associated with the \texttt{votes} identifier changes (it
 moves ``upward'' in the \texttt{lset} lattice). When a lattice identifier is
-declared, it is initially bound to the value $\bot$, the smallest element in the
+declared, it is initially bound to $\bot$, the smallest element in the
 lattice. For example, an \texttt{lset} lattice initially contains the empty set.
 
 \begin{table*}[t]\small
