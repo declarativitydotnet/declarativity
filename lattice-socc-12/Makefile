@@ -27,7 +27,7 @@ fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) $(EXP_SUMMARY)
 	gnuplot -e "set output \"$@\"" $<
 
 # Generate tarball containing public code listings
-PUBLIC_SRC=$(wildcard code/public-tarball/**/*)
+PUBLIC_SRC=$(wildcard code/public-tarball/blooml-case-studies/**/*)
 blooml-case-studies.tar.gz: $(PUBLIC_SRC)
 	tar czf $@ -C code/public-tarball blooml-case-studies
 
