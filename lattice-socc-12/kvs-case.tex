@@ -163,7 +163,7 @@ In \lang, a vector clock can be represented as an \texttt{lmap} that maps node
 identifiers to \texttt{lmax} values. Each \texttt{lmax} represents the logical
 clock of a single node; this is appropriate because the logical clock value
 associated with a given node will only increase over time. The merge function
-provided by \texttt{lmap} achieves the desired semantics---that is, the default
+provided by \texttt{lmap} achieves the desired semantics---that is, the built-in
 least upper bound for an \texttt{lmap} that contains \texttt{lmax} values is
 consistent with the partial order given above.\footnote{The observation that
   vector time has a lattice structure was first made by

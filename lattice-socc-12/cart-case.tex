@@ -129,12 +129,12 @@ represents the state of a single shopping cart. An \texttt{lcart} contains a set
 of client operations. Each operation has a unique ID; operation IDs are assigned
 by the client in increasing numeric order without gaps. An \texttt{lcart}
 contains two kinds of operations, \emph{actions} and \emph{checkouts}. An action
-describes the addition or removal of an item from the cart. An \texttt{lcart}
-contains at most one checkout operation---the checkout specifies the smallest
-operation ID that must be reflected in the result of the checkout, along with
-the address where the checkout response should be sent. The \texttt{lcart} merge
-function takes the union of the operations in both input carts (operation IDs
-ensure idempotence). In Figure~\ref{fig:monotone-cart},
+describes the addition or removal of $k$ copies of an item from the cart. An
+\texttt{lcart} contains at most one checkout operation---the checkout specifies
+the smallest operation ID that must be reflected in the result of the checkout,
+along with the address where the checkout response should be sent. The
+\texttt{lcart} merge function takes the union of the operations in both input
+carts (operation IDs ensure idempotence). In Figure~\ref{fig:monotone-cart},
 lines~\ref{line:cart-action-op} and \ref{line:cart-checkout-op} construct
 \texttt{lcart} elements that contain a single action or checkout operation,
 respectively. These singleton carts are then merged with the previous
