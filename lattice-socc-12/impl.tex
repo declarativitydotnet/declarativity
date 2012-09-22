@@ -1,4 +1,3 @@
-% \ifbool{socc-print-version}{\pagebreak}{}
 \section{Implementation}
 \label{sec:impl}
 
@@ -103,16 +102,19 @@ lattice runtime to avoid copies when it can determine that in-place updates are
 safe.
 
 \subsection{Discussion}
-We were able to extend Bud to support \lang with relatively minor changes. Bud
-initially had about 7200 lines of Ruby source code (LOC). The core lattice
-features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
-to lattice elements) required about 300 LOC. Modifying Bud's fixpoint logic to
-include lattices required only 10 LOC, while the program rewriting required to
-enable semi-naive evaluation required 100 LOC. Modifying Bud's collection
-classes to support merging of embedded lattice values required adding or
-modifying about 125 LOC. Extending CALM analysis to include lattices required
-modifying about 10 LOC. The built-in lattice classes constituted an additional
-300 LOC. In total, adding support for \lang required less than 900 lines of
-added or modified code, and took about two person-months of engineering
-time. This experience suggests that support for lattices can be added to an
-existing Datalog engine in a relatively straightforward manner.
+When designing \lang, we chose to extend the original Bloom language rather than
+inventing a new language from scratch. This design philosophy also applied to our
+language implementation: we found we were able to to extend Bud to support \lang
+with relatively minor changes. Bud initially had about 7200 lines of Ruby source
+code (LOC). The core lattice features (the \texttt{Bud::Lattice} base class and
+the mapping from identifiers to lattice elements) required about 300
+LOC. Modifying Bud's fixpoint logic to include lattices required only 10 LOC,
+while the program rewriting required to enable semi-naive evaluation required
+100 LOC. Modifying Bud's collection classes to support merging of embedded
+lattice values required adding or modifying about 125 LOC. Extending CALM
+analysis to include lattices required modifying about 10 LOC. The built-in
+lattice classes constituted an additional 300 LOC. In total, adding support for
+\lang required less than 900 lines of added or modified code, and took about two
+person-months of engineering time. This experience suggests that support for
+lattices can be added to an existing Datalog engine in a relatively
+straightforward manner.
