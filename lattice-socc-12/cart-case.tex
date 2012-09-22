@@ -61,9 +61,9 @@ paper~\cite{DeCandia2007}.
 module CartProtocol
   state do
     channel :action_msg,
-      [:@server, :session, :reqid] => [:item, :cnt]
+      [:@server, :session, :op_id] => [:item, :cnt]
     channel :checkout_msg,
-      [:@server, :session, :reqid] => [:lbound, :addr]
+      [:@server, :session, :op_id] => [:lbound, :addr]
     channel :response_msg,
       [:@client, :session] => [:summary]
   end
@@ -76,17 +76,17 @@ module MonotoneReplica
 
   bloom do
     sessions <= action_msg do |m|
-      c = LCart.new({m.reqid => [ACTION, m.item, m.cnt]}) (*\label{line:cart-action-op}*)
+      c = LCart.new({m.op_id => [ACTION, m.item, m.cnt]}) (*\label{line:cart-action-op}*)
       { m.session => c }
     end
     sessions <= checkout_msg do |m|
-      c = LCart.new({m.reqid => [CHECKOUT, m.lbound, m.addr]}) (*\label{line:cart-checkout-op}*)
+      c = LCart.new({m.op_id => [CHECKOUT, m.lbound, m.addr]}) (*\label{line:cart-checkout-op}*)
       { m.session => c }
     end
 
-    response_msg <~ sessions do |session, c| (*\label{line:cart-response-start}*)
-      c.is_complete.when_true {
-        [c.checkout_addr, session, c.summary]
+    response_msg <~ sessions do |session, cart| (*\label{line:cart-response-start}*)
+      cart.is_complete.when_true {
+        [cart.checkout_addr, session, cart.summary]
       }
     end (*\label{line:cart-response-end}*)
   end

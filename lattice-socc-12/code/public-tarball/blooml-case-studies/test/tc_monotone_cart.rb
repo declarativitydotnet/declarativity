@@ -9,15 +9,15 @@ class LocalCartLattice
   state do
     lcart :c
     lbool :done
-    scratch :add_t, [:req] => [:item, :cnt]
-    scratch :del_t, [:req] => [:item, :cnt]
-    scratch :do_checkout, [:req] => [:lbound]
+    scratch :add_t, [:op_id] => [:item, :cnt]
+    scratch :del_t, [:op_id] => [:item, :cnt]
+    scratch :do_checkout, [:op_id] => [:lbound]
   end
 
   bloom do
-    c <= add_t {|t| { t.req => [ACTION_OP, t.item,  t.cnt] } }
-    c <= del_t {|t| { t.req => [ACTION_OP, t.item, -t.cnt] } }
-    c <= do_checkout {|t| { t.req => [CHECKOUT_OP, t.lbound, ip_port] } }
+    c <= add_t {|t| { t.op_id => [ACTION_OP, t.item,  t.cnt] } }
+    c <= del_t {|t| { t.op_id => [ACTION_OP, t.item, -t.cnt] } }
+    c <= do_checkout {|t| { t.op_id => [CHECKOUT_OP, t.lbound, ip_port] } }
     done <= c.is_complete
   end
 end
@@ -132,6 +132,10 @@ end
 class TestMonotoneCart < MiniTest::Unit::TestCase
   def test_monotone_simple
     s = MReplicaProgram.new
+    %w[action_msg checkout_msg response_msg sessions].each do |r|
+      assert_equal(0, s.collection_stratum(r))
+    end
+
     c = MClientProgram.new
     [c, s].each {|n| n.run_bg}
 
@@ -149,8 +153,7 @@ class TestMonotoneCart < MiniTest::Unit::TestCase
 
     c.sync_callback(:do_action, [[10, 3, 'beer', -1]], :response_msg)
     c.sync_do {
-      assert_equal([[c.ip_port, s.ip_port, 10,
-                     [['vodka', 4]]]], c.response_log.to_a)
+      assert_equal([[c.ip_port, 10, [['vodka', 4]]]], c.response_log.to_a)
     }
 
     [c, s].each {|n| n.stop}
@@ -169,8 +172,7 @@ class TestMonotoneCart < MiniTest::Unit::TestCase
 
     c.sync_callback(:do_checkout, [[11, 9, 8]], :response_msg)
     c.sync_do {
-      assert_equal([[c.ip_port, s.ip_port, 11,
-                     [['coffee', 2]]]], c.response_log.to_a)
+      assert_equal([[c.ip_port, 11, [['coffee', 2]]]], c.response_log.to_a)
     }
 
     c.sync_do {
@@ -178,8 +180,8 @@ class TestMonotoneCart < MiniTest::Unit::TestCase
     }
     c.sync_callback(:do_action, [[12, 1, 'rye', 1]], :response_msg)
     c.sync_do {
-      assert_equal([[c.ip_port, s.ip_port, 11, [['coffee', 2]]],
-                    [c.ip_port, s.ip_port, 12, [['gin', 3], ['rye', 1]]]],
+      assert_equal([[c.ip_port, 11, [['coffee', 2]]],
+                    [c.ip_port, 12, [['gin', 3], ['rye', 1]]]],
                    c.response_log.to_a.sort)
     }
 
