@@ -51,38 +51,35 @@ library need only register ``merge functions'' that are commutative,
 associative, and idempotent~\cite{statebox}. This approach has roots in database
 and systems research~\cite{Farrag1989,Garcia-Molina1983,Helland2009,O'Neil1986,Terry1995} as
 well as groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a
-formalism for these approaches called \emph{Conflict-Free Replicated Data Types}
-(CRDTs), which casts these ideas into the algebraic framework of
-\emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.\footnote{There are two
-  kinds of CRDTs: ``state-based'' types called CmRDTs and ``operation-based''
-  types called CvRDTs. Only CmRDTs are based on semilattices, although CmRDTs
-  and CvRDTs are equivalently expressive~\cite{Shapiro2011a}.}
+formalism for these approaches called \emph{Convergent Replicated Data Types}
+(CvRDTs), which casts these ideas into the algebraic framework of
+\emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
 
-CRDTs present two main problems: (a) the programmer bears responsibility for
+CvRDTs present two main problems: (a) the programmer bears responsibility for
 ensuring lattice properties for their methods (commutativity, associativity,
-idempotence), and (b) CRDTs only provide guarantees for individual data objects,
-not for application logic in general. As an example of this second point,
-consider the following:
+idempotence), and (b) CvRDTs only provide guarantees for individual data
+objects, not for application logic in general. As an example of this second
+point, consider the following:
 
 \vspace{-0.25em}
 \begin{example}
-A replicated, fault-tolerant courseware application assigns students into study teams.  It uses two \emph{set} CRDTs: one for \emph{Students} and another for \emph{Teams}.  The application reads a version of \emph{Students} and inserts the derived element $<$\emph{Alice,Bob}$>$ into \emph{Teams}. Concurrently, \emph{Bob} is removed from
-\emph{Students} by another application replica. The use of CRDTs ensures that all replicas will
+A replicated, fault-tolerant courseware application assigns students into study teams.  It uses two \emph{set} CvRDTs: one for \emph{Students} and another for \emph{Teams}.  The application reads a version of \emph{Students} and inserts the derived element $<$\emph{Alice,Bob}$>$ into \emph{Teams}. Concurrently, \emph{Bob} is removed from
+\emph{Students} by another application replica. The use of CvRDTs ensures that all replicas will
 eventually agree that \emph{Bob} is absent from \emph{Students}, but this is not enough: application-level state
 is inconsistent unless the derived values in \emph{Teams} are updated consistently to reflect \emph{Bob}'s
-removal.  This is outside the scope of CRDT guarantees.
+removal.  This is outside the scope of CvRDT guarantees.
 \end{example}
 
 \vspace{-.25em}
 Taken together, the problems with Convergent Modules present a {\bf scope
   dilemma}: a small module (e.g., a set) makes lattice properties easy to
-inspect and test, but provides only simple semantic guarantees. Large CRDTs
+inspect and test, but provides only simple semantic guarantees. Large CvRDTs
 (e.g., an eventually consistent shopping cart) provide higher-level application
 guarantees but require the programmer to ensure lattice properties hold for a
 complex module, resulting in software that is difficult to test, maintain, and
 trust.
 % 
-% Although the CRDT maintains its own invariants, the programmer
+% Although the CvRDT maintains its own invariants, the programmer
 % still bears the burden of ensuring the consistency semantics of the
 % program as a whole.
 
@@ -126,27 +123,27 @@ The CALM theorem obviates any scoping concerns for convergent monotonic logic, b
 % \jmh{A problem with the above trading examples are that we don't return to them ever again. At minimum, we should flag that we return to the constructs they use: replicated mutable set, counters and threshold tests.}
 \subsection{\lang: Logic And Lattices}
 % The strengths and weaknesses of these two approaches appear
-% complementary. CRDTs provide synchronization-free consistent objects, but
+% complementary. CvRDTs provide synchronization-free consistent objects, but
 % cannot guarantee whole-program consistency. Bloom's CALM analysis guarantees
 % whole-program consistency but is unable to verify a number of natural
 % coordination-free mechanisms.
 We address the two dilemmas above with \emph{\lang,} an extension to Bloom that
-incorporates a semilattice construct similar to CRDTs.  We present this construct in detail below, but the intuition is that \lang programs can be defined over arbitrary types---not just sets---as long as they have commutative, associative, idempotent \emph{merge functions} (``least upper bound'') for pairs of items.  Such a merge function defines a partial order  for its type. This
+incorporates a semilattice construct similar to CvRDTs.  We present this construct in detail below, but the intuition is that \lang programs can be defined over arbitrary types---not just sets---as long as they have commutative, associative, idempotent \emph{merge functions} (``least upper bound'') for pairs of items.  Such a merge function defines a partial order  for its type. This
 generalizes Bloom (and traditional Datalog), which assumes a fixed merge
 function (set union) and partial order (set containment).
 
 % Relate user-defined merge functions to merge functions in other contexts?
 % (e.g., key-value store, COPS, Piccolo)
 
-\lang provides three main improvements in the state of the art of both Bloom and CRDTs:  
+\lang provides three main improvements in the state of the art of both Bloom and CvRDTs:  
 \begin{enumerate}
 \item \lang solves the type dilemma of logic programming: CALM analysis in \lang is able to 
  assess monotonicity for arbitrary lattices, making it significantly more liberal in its ability to test for confluence.  \lang can validate the coordination-free use of
   common constructs like timestamps and sequence numbers.
 
-\item {\lang} solves the scope dilemma of CRDTs by providing monotonicity-preserving mappings between lattices via
+\item {\lang} solves the scope dilemma of CvRDTs by providing monotonicity-preserving mappings between lattices via
   \emph{morphisms} and \emph{monotone functions}, as described below.  By using such mappings, the
-  per-component monotonicity guarantees offered by CRDTs can be extended across
+  per-component monotonicity guarantees offered by CvRDTs can be extended across
   multiple items of lattice type.  This capability is key to the CALM
   analysis described above.  It is also useful for
   establishing the monotonicity of sub-programs even when the whole program is
