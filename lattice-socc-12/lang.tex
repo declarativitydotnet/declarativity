@@ -3,10 +3,9 @@
 
 This section introduces \lang, an extension to Bloom that allows monotonic
 programs to be written using arbitrary lattices. We begin by reviewing the
-algebraic properties of lattices used in CRDTs and note the applicability of
-monotone functions and morphisms in that context. We then introduce the basic
-concepts of \lang and detail the built-in lattices provided by the language. We
-also show how users can define their own lattice types.
+algebraic properties of lattices, monotone functions, and morphisms. We then
+introduce the basic concepts of \lang and detail the built-in lattices provided
+by the language. We also show how users can define their own lattice types.
 
 % is this the right place for this?
 When designing \lang, we decided to extend Bloom to include support for lattices
@@ -166,7 +165,7 @@ b$ & \texttt{when\_true(\&blk)} $\to$ \texttt{v} & \\
 \end{table*}
 
 
-\subsubsection{Statements In \lang}
+\subsubsection{Statements}
 Statements take the same form in both Bloom and \lang: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
     $<$expression$>$}}\\ \noindent
