@@ -170,11 +170,32 @@ K\"{o}stler et al.\ use subsumption to add semantic knowledge to graph traversal
 and heuristic search programs, but do not propose a general-purpose programming
 framework.
 
-Zaniolo and Wang identify a class of ``monotone aggregates'' as part of their
-work on supporting advanced user-defined aggregates in the $\mathcal{LDL}$++
-system~\cite{Zaniolo1999}. Like us, they observe that monotone aggregates can
-easily be supported without stratification in a Datalog system based on
-semi-naive fixpoint. Their characterization of monotone aggregates is different
-than ours, and they do not consider asynchrony or distribution.  In fact,
-supporting order-dependent aggregates is an explicit goal of their work, whereas
-we seek to ensure that programs are confluent in the face of message reordering.
+The approach of Zaniolo and Wang~\cite{Zaniolo1999} to aggregates in
+$\mathcal{LDL}$++ is quite distinct from that of Ross and Sagiv, and, hence,
+from ours. Zaniolo and Wang do not use a lattice as the target domain for an
+aggregate or other kind of merge function. Rather, they achieve a kind of
+monotonicity by having an aggregate compute a series of partial results, rather
+than a single final result. With their formulation, a program computing an
+average would be judged monotone, where it would not for us. There are several
+reasons their treatment is not suitable for our purposes. For one, they point
+out that their programs are not monotone with the inclusion of a predicate for a
+final result. They do show examples where the partials alone suffice, for
+example, where the result of an increasing aggregate, such as sum, is compared
+to an upper bound. However, we see no machinery that would automatically
+distinguish such a use from an unsafe one, say with average. Further, their use
+of the \texttt{choice()} construct to assign an order to a set so an aggregate
+function can iterate over it poses two problems for us. One is that they allow
+different orders to yield different aggregate results; this does not fit with
+our goal of confluence. More problematic is that in a distributed computation,
+\texttt{choice()} would require communication to obtain a consistent order at
+different nodes, which goes against our desire for different sites to arrive at
+the same answer without coordination.
+
+% Zaniolo and Wang identify a class of ``monotone aggregates'' as part of their
+% work on supporting advanced user-defined aggregates in the $\mathcal{LDL}$++
+% system~\cite{Zaniolo1999}. Like us, they observe that monotone aggregates can
+% easily be supported without stratification in a Datalog system based on
+% semi-naive fixpoint. Their characterization of monotone aggregates is different
+% than ours, and they do not consider asynchrony or distribution.  In fact,
+% supporting order-dependent aggregates is an explicit goal of their work, whereas
+% we seek to ensure that programs are confluent in the face of message reordering.
