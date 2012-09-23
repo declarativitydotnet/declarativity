@@ -53,7 +53,10 @@ and systems research~\cite{Farrag1989,Garcia-Molina1983,Helland2009,O'Neil1986,T
 well as groupware~\cite{Ellis1989,Sun1998}.  Shapiro et al.\ recently proposed a
 formalism for these approaches called \emph{Conflict-Free Replicated Data Types}
 (CRDTs), which casts these ideas into the algebraic framework of
-\emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.
+\emph{semilattices}~\cite{Shapiro2011a,Shapiro2011b}.\footnote{There are two
+  kinds of CRDTs: ``state-based'' types called CmRDTs and ``operation-based''
+  types called CvRDTs. Only CmRDTs are based on semilattices, although CmRDTs
+  and CvRDTs are equivalently expressive~\cite{Shapiro2011a}.}
 
 CRDTs present two main problems: (a) the programmer bears responsibility for
 ensuring lattice properties for their methods (commutativity, associativity,
