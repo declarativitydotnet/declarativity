@@ -79,4 +79,9 @@ module DistributedTwoPSetOne
   include GSetProto
   include AbstractMutableDistributedGSet
   import TwoPSetOne => :gs
+
+  # a distributed 2PSet is convergent -- eventually reads will return the "true" contents
+  # but not confluent -- reads return different values in different executions.
+  # this highlights a the ``scope dilemma'' -- we either need to say that GSets in general are confluent
+  # as long as we never read them, or analyze HOW we use the values we read from them.
 end
