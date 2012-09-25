@@ -1,7 +1,7 @@
 \section{Case Study: Key-Value Store}
 \label{sec:kvs}
 The next two sections contain case studies that show how \lang can be used to
-build correct distributed programs.\footnote{Complete code listings for these
+build practical distributed programs.\footnote{Complete code listings for these
   case studies are available at \mbox{\small
     \url{http://db.cs.berkeley.edu/bloom-lattice}}.} Both case studies are
 monotonic: that is, both programs consist of monotone functions applied to
@@ -78,29 +78,28 @@ end
 
 A key-value store (KVS) provides a lookup service that allows client
 applications to store and retrieve the \emph{value} associated with a given
-\emph{key}. In a typical KVS, key-value pairs are replicated on multiple storage
-nodes for redundancy and the key space is partitioned in some fashion to improve
-aggregate storage and throughput. \emph{Eventual consistency} is a common
-correctness criterion: after all client updates have reached all storage nodes,
-all the replicas of a key-value pair will converge to the same final
-state~\cite{Terry1995,vogels}.
+\emph{key}. Key-value pairs are typically replicated on multiple storage nodes
+for redundancy and the key space is partitioned to improve aggregate storage and
+throughput. \emph{Eventual consistency} is a common correctness criterion: after
+all client updates have reached all storage nodes, all the replicas of a
+key-value pair will converge to the same final state~\cite{Terry1995,vogels}.
 
 Figure~\ref{fig:kvs-interface} shows a simple KVS interface in \lang. Client
 applications initiate \emph{get(key)} and \emph{put(key, val)} operations by
-inserting into the \texttt{kvget} and \texttt{kvput} channels, respectively;
-server replicas return responses via the \texttt{kvget\_resp} and
+inserting facts into the \texttt{kvget} and \texttt{kvput} channels,
+respectively; server replicas return responses via the \texttt{kvget\_resp} and
 \texttt{kvput\_resp} channels.
 
 Figure~\ref{fig:kvs-replica} contains the \lang code for a KVS server
 replica. An \texttt{lmap} lattice is used to maintain the mapping between keys
 and values (line~\ref{line:kvs-map-ddl}). Since the values in an \texttt{lmap}
 lattice must themselves be lattice elements, for now we assume that clients only
-want to store and retrieve lattice values; we discuss how to support arbitrary
-values in Section~\ref{sec:kvs-versions}. To handle a \emph{put(key, val)}
-request, a new \emph{key} $\to$ \emph{val} \texttt{lmap} is created and merged
-into \texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If \texttt{kv\_store}
-already contains a value for the given key, the two values will be merged
-together using the value lattice's merge function (see
+want to store and retrieve monotonically increasing lattice values; we discuss
+how to lift this restriction in Section~\ref{sec:kvs-versions}. To handle a
+\emph{put(key, val)} request, a new \emph{key} $\to$ \emph{val} \texttt{lmap} is
+created and merged into \texttt{kv\_store} (line~\ref{line:kvs-put-merge}). If
+\texttt{kv\_store} already contains a value for the given key, the two values
+will be merged together using the value lattice's merge function (see
 Section~\ref{sec:lattice-built-ins} for details). Observe that we use the \lang
 features described in Section~\ref{sec:bloom-interop} to allow traditional Bloom
 collections (e.g., channels) and lattices (e.g., the \texttt{kv\_store} lattice)
@@ -125,13 +124,13 @@ considerable flexibility in how replicas propagate updates.
 \end{figure}
 
 The basic KVS design is sufficient for applications that want to store
-monotonically increasing values, such as session logs or increasing counters. To
+monotonically increasing values such as session logs or increasing counters. To
 allow storage of values that change in arbitrary ways, we now consider how to
 support \emph{object versions}. This is a classic technique for recognizing and resolving
 mutual inconsistency between members of a distributed system~\cite{Parker1983}.
 Our design is similar to that used by Amazon Dynamo~\cite{DeCandia2007}.
 
-Each replica associates keys with
+Each replica associates keys with sets of
 $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. The vector clock
 captures the causal relationship between different versions of a
 record~\cite{Fidge1988,Mattern1989}. Clients store and retrieve
@@ -139,17 +138,28 @@ $\langle\textit{vector-clock},\textit{value}\rangle$ pairs. When a client
 updates a value it has previously read, the client increments its own position
 in the vector clock and includes the updated vector clock $V_U$ with its
 \emph{put} operation. Upon receiving an update, the server compares $V_U$ with
-the vector clock of the server's version of the record ($V_S$). If $V_U > V_S$,
-the server replaces the stored record with the client's update. If $V_S > V_U$,
-the update is ignored (this situation might arise due to duplication and
-reordering of messages by the network). If $V_U$ and $V_S$ are incomparable, the
-two versions are concurrent, so a client-supplied reconciliation function is
-used to resolve the conflict.
+the set of vector clocks associated with the updated key. For each such vector
+clock $V_S$, the server considers three cases:
+\begin{compactenum}
+\item $V_U > V_S$: the client's update happens-after $V_S$, so $V_S$ is replaced
+  with $V_U$.
+\item $V_U < V_S$: the client's update happens-before $V_S$, so $V_S$ is
+  retained.\footnote{This situation might arise due to duplication and
+    reordering of messages by the network.}
+\item $V_U$ and $V_S$ are incomparable: the two versions are concurrent, so
+  both $V_U$ and $V_S$ are retained.
+\end{compactenum}
+By applying these rules, each replica retains a set of mutually concurrent
+versions for each key. To handle a \emph{get} operation, the server returns a
+single $\langle\textit{vector-clock},\textit{value}\rangle$ pair by merging
+together the vector clocks and using a user-supplied reconciliation function to
+merge together the conflicting values, as described below. We call the set of
+incomparable version-value pairs a \emph{dominating set}.
 
-From a \lang perspective, each replica still stores a monotonically increasing
+From a CALM perspective, each replica still stores a monotonically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
 a replica increases over time, rather than the associated value. Hence, we now
-consider how to support vector clocks and version-value pairs using \lang.
+consider how to support vector clocks and dominating sets using \lang.
 
 \subsubsection{Vector Clocks}
 A vector clock is a map from node identifiers to logical clocks. Let $V_e$
@@ -169,49 +179,49 @@ consistent with the partial order given above.\footnote{The observation that
   vector time has a lattice structure was first made by
   Mattern~\cite{Mattern1989}.}
 
-\subsubsection{Version-Value Pairs}
-We now turn to representing $\langle\textit{vector-clock},\textit{value}\rangle$
-pairs. To do this, we define a new lattice \texttt{lpair} that ``wraps'' two
-lattice elements; we use \emph{fst} and \emph{snd} to refer to the first and
-second elements of an \texttt{lpair}, respectively. The discussion above
-suggests a natural least upper bound for \texttt{lpair}:
-\begin{displaymath}
-  A \sqcup B = \left\{
-    \begin{array}{l l}
-      A & \textrm{if } A.\textit{fst} > B.\textit{fst} \\
-      B & \textrm{if } A.\textit{fst} < B.\textit{fst} \\
-      \langle A.\textit{fst} \sqcup B.\textit{fst}, A.\textit{snd} \sqcup B.\textit{snd}\rangle & \textrm{otherwise} \\
-    \end{array} \right. 
-\end{displaymath}
-This implements the desired semantics: given two candidate values for a key, the
-candidate with the strictly greater version should be preferred. When the
-two versions are incomparable, a new \texttt{lpair} should be formed by merging
-both elements of the input pairs with one another. In the case of the KVS,
-\emph{fst} is a vector clock, while \emph{snd} is the user's data; the least
-upper bound of the \emph{snd} lattice corresponds to a user-defined merge
-function.\footnote{If the user stores a value that does not have a natural merge
-  function, similar systems typically provide a default merge function that
-  collects conflicting updates into a set for eventual manual resolution by the
-  user. Such a strategy could easily be implemented monotonically with \lang.}
+\subsubsection{Dominating Sets}
+We use a custom lattice type \texttt{ldom} to represent a dominating set. As
+discussed above, a dominating set is a set of
+$\langle\textit{version},\textit{value}\rangle$ pairs; both elements of the pair
+are themselves represented as lattice values. In the KVS, the version lattice is
+a vector clock (that is, an \texttt{lmap} containing \texttt{lmax} values); the
+value lattice is whatever value the user wants to store in the KVS.\footnote{If
+  the user stores a value that does not have a natural merge function, similar
+  systems typically provide a default merge function that collects conflicting
+  updates into a set for eventual manual resolution by the user. Such a strategy
+  corresponds to using \texttt{lset} as the value lattice in \lang.}
 
-Note that while the \emph{fst} of a given \texttt{lpair} increases over time (as
-new versions are received), the \emph{snd} may not (a newer version might
-contain a ``smaller'' \emph{snd}). Again, this is the desired behavior.
+The discussion above suggests a natural merge function for \texttt{ldom}: given
+two input \texttt{ldom} elements $e$ and $e'$, the merge function retains all
+``dominating'' pairs. For example, a
+$\langle\textit{version},\textit{value}\rangle$ pair in $e$ is included in the
+result of the merge unless there is a pair in $e'$ whose version is strictly
+greater.
+
+The \texttt{ldom} lattice provides two functions, \texttt{version} and
+\texttt{value}, that return the least upper bound of the concurrent versions or
+values, respectively. In the KVS, the \texttt{value} function corresponds to
+reconciling conflicting updates, whereas the \texttt{version} returns the vector
+clock associated with the reconciled value. Note that while the \texttt{version}
+of a given \texttt{ldom} increases over time (as new versions are observed), the
+\texttt{value} does not; hence, \texttt{version} is a monotone function but
+\texttt{value} is not. Since the goal of object versioning is to allow values in
+the KVS to change in non-monotonic ways, this is the expected behavior.
 
 \subsubsection{Discussion}
 Figure~\ref{fig:kvs-vc-lattices} shows the lattices used in a KVS with object
 versioning. Surprisingly, adding support for object versioning did not require
 \emph{any} changes to the KVS replica code. Instead, clients simply store
-\texttt{lpair} values containing a vector clock as the first element and
-increment their position in the vector clock when submitting updates. The KVS
-replica merges these \texttt{lpair} values into an \texttt{lmap} as usual; the
-merge function of \texttt{lpair} handles conflict resolution in the appropriate
-manner. Moreover, by composing the KVS from a collection of simple lattices, we
-found it easy to reason about the behavior of the system. For example,
-convincing ourselves that KVS replicas will eventually converge only required
-checking that the individual \texttt{lmap}, \texttt{lmax}, and \texttt{lpair}
-lattices satisfy the lattice properties, rather than analyzing the behavior of
-the system as a whole.
+\texttt{ldom} values containing a single
+$\langle\textit{vector-clock},\textit{value}\rangle$ pair, incrementing their
+position in the vector clock as described above. The KVS replica merges these
+\texttt{ldom} values into an \texttt{lmap} as usual; the merge function of
+\texttt{ldom} handles conflict resolution in the appropriate manner. Moreover,
+by composing the KVS from a collection of simple lattices, we found it easy to
+reason about the behavior of the system. For example, convincing ourselves that
+KVS replicas will eventually converge only required checking that the individual
+\texttt{lmap}, \texttt{lmax}, and \texttt{ldom} lattices satisfy the lattice
+properties, rather than analyzing the behavior of the system as a whole.
 
 Our design compares favorably to traditional implementations of object
 versioning and vector clocks. For example, the implementation of vector clocks
@@ -219,8 +229,8 @@ alone in the Voldemort KVS requires 216 lines of Java, not including whitespace
 or comments~\cite{voldemort-vector-clock}. In \lang, vector clocks follow
 directly from the composition of the \texttt{lmap} and \texttt{lmax} lattices
 and the \emph{entire KVS} requires less than 100 lines of Ruby and \lang code,
-including the client library. The \texttt{lpair} lattice requires an additional
-30 lines of Ruby but is completely generic, and could be included as a built-in
+including the client library. The \texttt{ldom} lattice requires an additional
+50 lines of Ruby but is completely generic, and could be included as a built-in
 lattice.
 
 \subsection{Quorum Reads and Writes}
@@ -246,5 +256,5 @@ together the $R$ versions of the record it receives. This follows naturally from
 the discussion in Section~\ref{sec:kvs-versions}: the client simply takes the
 least upper bound of the values it receives, which produces the expected
 behavior. The client can optionally write the merged value back to the KVS
-(so-called ``read repair''~\cite{DeCandia2007}); note that the \texttt{lpair}
+(so-called ``read repair''~\cite{DeCandia2007}); note that the \texttt{ldom}
 merge method also updates the record's vector clock appropriately.
