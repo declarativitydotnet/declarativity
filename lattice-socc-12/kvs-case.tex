@@ -227,7 +227,7 @@ Our design compares favorably to traditional implementations of object
 versioning and vector clocks. For example, the implementation of vector clocks
 alone in the Voldemort KVS requires 216 lines of Java, not including whitespace
 or comments~\cite{voldemort-vector-clock}. In \lang, vector clocks follow
-directly from the composition of the \texttt{lmap} and \texttt{lmax} lattices
+directly from the composition of the \texttt{lmap} and \texttt{lmax} lattices,
 and the \emph{entire KVS} requires less than 100 lines of Ruby and \lang code,
 including the client library. The \texttt{ldom} lattice requires an additional
 50 lines of Ruby but is completely generic, and could be included as a built-in
