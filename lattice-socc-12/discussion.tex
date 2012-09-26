@@ -19,10 +19,10 @@ implementing lattices, which would make formal verification of correctness an
 easier task.
 
 Eventually consistent designs often consume more resources over time, requiring
-periodic garbage collection to restore efficiency~\cite{Shapiro2011a}. Such
-garbage collection protocols are typically application-specific and can be
-tricky to implement correctly. We are investigating ways in which \lang could
-assist programmers in writing distributed garbage collection schemes. For
+periodic ``garbage collection'' to restore efficiency~\cite{Shapiro2011a}. Such
+distributed garbage collection protocols are typically application-specific and
+can be tricky to implement correctly. We are investigating ways in which \lang
+could assist programmers in writing correct garbage collection schemes. For
 example, a compiler analysis could verify that the garbage collection protocol
 does not change observable program behavior. Garbage collection might also have
 a natural representation in lattice-theoretic terms. For example, a common
