@@ -17,22 +17,6 @@ aggregation~\cite{Alvaro2011}; by using custom lattice types, we enable the
 \lang CALM analysis to verify that our revised design is eventually consistent
 without need for coordination.
 
-%  we focus on the way that \lang enables us to overcome the ``type
-% dilemma'' of Bloom, by demonstrating the use of custom lattice types.  Our
-% previous implementation of this case study in Bloom called for coordination due
-% to apparently-nonmonotonic grouping and aggregation~\cite{Alvaro2011}; by using
-% custom lattice types in the implementation here, we enable the \lang CALM
-% analysis to verify eventual consistency without any coordination.
-
-% This feature of \lang allows developers to
-% encode notions of ``forward progress'' for data types that are suited to the application.
-% 
-% ; as we will
-% see, this allows more programs to be shown to be monotonic. Presenting monotonic
-% implementations in \lang is equivalent to showing that the use of aggregation in
-% these protocols is ``safe'' and produces consistent results without needing
-% additional coordination.
-
 In this case study, we consider a simple e-commerce system in which clients
 interact with a shopping cart service by adding and removing items over the
 course of a shopping session (Figure~\ref{fig:cart-system-arch}). The cart
@@ -45,12 +29,6 @@ payment processor to complete the e-commerce transaction. This case study is
 based on the cart system from Alvaro et al.~\cite{Alvaro2011}, which was in turn
 inspired by the discussion of replicated shopping carts in the Dynamo
 paper~\cite{DeCandia2007}.
-
-% Alvaro et al.\ discuss two different designs: a ``disorderly'' version in which
-% the cart state is represented as a set of operations (allowing monotonic
-% accumulation of adds and removes) and a ``destructive'' version in which the
-% cart state is managed by a key-value store, which requires a non-monotonic
-% update on each cart action.
 
 \subsection{Monotonic Checkout}
 \label{sec:monotone-checkout}

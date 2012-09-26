@@ -27,9 +27,9 @@ timestep; the third phase is devoted to carrying them out.
 
 The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
 embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
-program represented as an annotated Ruby class. A small amount of imperative
-Ruby code is needed to instantiate the Bloom program and begin executing it;
-more details are available on the Bloom language website~\cite{bloom}.
+program represented as an annotated Ruby class. A small amount of Ruby code is
+needed to instantiate the Bloom program and begin executing it; more details are
+available on the Bloom language website~\cite{bloom}.
 
 % XXX: should this be a distributed example?
 \begin{figure}[t]
@@ -73,20 +73,17 @@ collection named \texttt{link} with three columns, two of which form the
 collection's key. Ruby is a dynamically typed language, so keys and values in
 Bud can hold arbitrary Ruby objects.
 
-Bloom provides five collection types to represent different kinds of state
+Bloom provides several collection types to represent different kinds of state
 (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent data: if
 a fact appears in a table, it remains in the table in future timesteps (unless
 it is explicitly removed). A \texttt{scratch} contains transient data---the
 content of scratch collections is emptied at the start of each
 timestep. Scratches are akin to SQL views: they are often useful as a way to
 name intermediate results or as a ``macro'' construct to enable code reuse. A
-\texttt{channel} enables communication between Bloom instances. The schema of a
+\texttt{channel} allows communication between Bloom instances. The schema of a
 channel has a distinguished \emph{location specifier} column (prefixed with
-``\texttt{@}''); when a fact is derived for a channel collection, it appears in
-the database of the Bloom instance at the address given by the location
-specifier. The \texttt{periodic} and \texttt{interface} collection types do not
-arise in our discussion in this paper; the interested reader is referred to the
-Bloom website~\cite{bloom}.
+``\texttt{@}''). When a fact is derived for a channel collection, it is sent to
+the remote Bloom instance at the address given by the location specifier.
 
 \subsubsection{Statements}
 Each Bloom statement has one or more input collections and a single output
@@ -108,11 +105,6 @@ line~\ref{line:spaths-group} shows grouping and aggregation. Bloom statements
 appear in one or more \texttt{bloom} blocks, which group together semantically
 related statements to aid readability.
 
-% A Bloom program can also include a \texttt{bootstrap} block, which contains
-% statements that are evaluated only once when a Bloom instance starts
-% executing. \texttt{bootstrap} blocks are typically used for initialization or
-% configuration data.
-
 Bloom provides several operators that determine \emph{when} the rhs will be
 merged into the lhs (Table~\ref{tbl:bloom-ops}). The \verb|<=| operator performs
 standard logical deduction: that is, the lhs and rhs are true at the same
@@ -133,8 +125,6 @@ asynchronous messaging.
 \texttt{scratch} & Transient storage.\\
 \texttt{channel} & Asynchronous communication. A fact derived into a \texttt{channel} appears in the
 database of a remote Bloom instance at a non-deterministic future time.\\
-\texttt{periodic} & Interface to the system clock.\\
-\texttt{interface} & Interface point between software modules.\\
 \hline
 \end{tabular}
 \caption{Bloom collection types.}
@@ -168,8 +158,7 @@ collection, either directly or indirectly. As in Datalog, certain constraints
 must be adopted to ensure that programs with recursive statements have a
 sensible interpretation. For deductive statements (\verb+<=+ operator), we
 require that programs be \emph{syntactically stratified}~\cite{Apt1988}: cycles
-through negation or aggregation are not allowed (unless they contain a deferred
-or asynchronous operator)~\cite{dedalus}.
+through negation or aggregation are not allowed~\cite{dedalus}.
 
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
