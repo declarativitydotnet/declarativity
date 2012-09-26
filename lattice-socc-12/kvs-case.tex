@@ -192,8 +192,8 @@ value lattice is whatever value the user wants to store in the KVS.\footnote{If
   corresponds to using \texttt{lset} as the value lattice in \lang.}
 
 The discussion above suggests a natural merge function for \texttt{ldom}: given
-two input \texttt{ldom} elements $e$ and $e'$, the merge function retains all
-``dominating'' pairs. For example, a
+two input \texttt{ldom} elements $e$ and $e'$, the merge function omits all
+``dominated'' pairs. For example, a
 $\langle\textit{version},\textit{value}\rangle$ pair in $e$ is included in the
 result of the merge unless there is a pair in $e'$ whose version is strictly
 greater.
@@ -205,8 +205,8 @@ reconciling conflicting updates, whereas \texttt{version} returns the vector
 clock associated with the reconciled value. Note that while the \texttt{version}
 of a given \texttt{ldom} increases over time (as new versions are observed), the
 \texttt{value} does not; hence, \texttt{version} is a monotone function but
-\texttt{value} is not. Since the goal of object versioning is to allow values in
-the KVS to change in non-monotonic ways, this is the expected behavior.
+\texttt{value} is not. Since the goal of object versioning is to allow values to
+change in non-monotonic ways, this is the expected behavior.
 
 \subsubsection{Discussion}
 Figure~\ref{fig:kvs-vc-lattices} shows the lattices used in a KVS with object
@@ -251,10 +251,10 @@ the \texttt{lset} to an \texttt{lmax} (using the \texttt{size} method) and then
 performing a threshold test using \texttt{gt\_eq} on \texttt{lmax}. As expected,
 this is monotonic: once quorum has been reached, it will never be retracted.
 
-Quorum reads work in a similar fashion, except that the client must also merge
-together the $R$ versions of the record it receives. This follows naturally from
-the discussion in Section~\ref{sec:kvs-versions}: the client simply takes the
-least upper bound of the values it receives, which produces the expected
-behavior. The client can optionally write the merged value back to the KVS
-(so-called ``read repair''~\cite{DeCandia2007}); note that the \texttt{ldom}
-merge method also updates the record's vector clock appropriately.
+Quorum reads work similarly except that the client must also merge together the
+$R$ versions of the record it receives. This follows naturally from the
+discussion in Section~\ref{sec:kvs-versions}: the client simply takes the least
+upper bound of the values it receives, which produces the expected behavior. The
+client can optionally write the merged value back to the KVS (so-called ``read
+repair''~\cite{DeCandia2007}); note that the \texttt{ldom} merge method also
+updates the record's vector clock appropriately.

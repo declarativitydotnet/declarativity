@@ -14,6 +14,7 @@ compatible with Bloom and was implemented with relatively minor changes to the
 Bud runtime. We describe how code written using lattices can interoperate with
 traditional Bloom collections in Section~\ref{sec:bloom-interop}.
 
+\ifbool{socc-print-version}{\pagebreak}{}
 \subsection{Definitions}
 \label{sec:lattice-defn}
 A \emph{bounded join semilattice} is a triple $\langle S, \sqcup, \bot\rangle$,
@@ -34,7 +35,7 @@ this paper. We use the informal term ``merge function'' to mean ``least upper
 bound.''
 
 A \emph{monotone function} is a function $f: S \to T$ such that $S,T$ are
-partially ordered sets (posets), and $\forall a,b \in S: a \leq_S b \Rightarrow
+partially ordered sets (posets) and $\forall a,b \in S: a \leq_S b \Rightarrow
 f(a) \leq_T f(b)$. That is, $f$ maps elements of $S$ to elements of $T$ in a
 manner that respects the partial orders of both posets.\footnote{To simplify the
   presentation, these definitions assume that monotone functions and morphisms
