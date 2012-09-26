@@ -22,16 +22,16 @@ Eventually consistent designs often consume more resources over time, requiring
 periodic ``garbage collection'' to restore efficiency~\cite{Shapiro2011a}. Such
 distributed garbage collection protocols are typically application-specific and
 can be tricky to implement correctly. We are investigating ways in which \lang
-could assist programmers in writing correct garbage collection schemes. For
-example, a compiler analysis could verify that the garbage collection protocol
-does not change observable program behavior. Garbage collection might also have
-a natural representation in lattice-theoretic terms. For example, a common
-property is that once an operation has been applied by all replicas, information
-required to commute that operation with concurrent operations can be
-discarded. In lattice-theoretic terms, this could be represented by observing
-that, for a fixed set of replicas, the greatest lower bound of a lattice among
-the replicas increases monotonically; lattice elements that fall below the
-common greatest lower bound could be represented more efficiently.
+could assist programmers in writing garbage collection schemes. For example, a
+compiler analysis could verify that the garbage collection protocol does not
+change observable program behavior. Garbage collection might also have a natural
+representation in lattice-theoretic terms. For example, a common property is
+that once an operation has been applied by all replicas, information required to
+commute that operation with concurrent operations can be discarded. In
+lattice-theoretic terms, this could be represented by observing that, for a
+fixed set of replicas, the greatest lower bound of a lattice among the replicas
+increases monotonically; lattice elements that fall below the common greatest
+lower bound could be represented more efficiently.
 
 In this paper, we have focused on programming with monotonically increasing
 values. In fact, many distributed programs feature values that increase
