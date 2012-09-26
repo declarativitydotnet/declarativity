@@ -201,7 +201,7 @@ greater.
 The \texttt{ldom} lattice provides two functions, \texttt{version} and
 \texttt{value}, that return the least upper bound of the concurrent versions or
 values, respectively. In the KVS, the \texttt{value} function corresponds to
-reconciling conflicting updates, whereas the \texttt{version} returns the vector
+reconciling conflicting updates, whereas \texttt{version} returns the vector
 clock associated with the reconciled value. Note that while the \texttt{version}
 of a given \texttt{ldom} increases over time (as new versions are observed), the
 \texttt{value} does not; hence, \texttt{version} is a monotone function but

@@ -1,3 +1,4 @@
+\ifbool{socc-print-version}{\pagebreak}{}
 \section{Discussion and Future Work}
 \label{sec:discussion}
 A key aspect of \lang is that it enables the \emph{composition} of consistent
@@ -17,17 +18,46 @@ for Bloom~\cite{Alvaro2012}. We also plan to explore a restricted DSL for
 implementing lattices, which would make formal verification of correctness an
 easier task.
 
-Every join semilattice includes $\bot$, a distinguished ``smallest element.'' A
-natural extension is to consider providing \emph{bounded lattices} that also
-contain $\top$, a ``greatest element.'' Such a value is already supported by
-\texttt{lbool} ($\top = \mathtt{true}$), in addition to the \texttt{lcart}
-lattice discussed in Section~\ref{sec:monotone-checkout}. $\top$ behaves
-differently than other lattice elements: because it is immutable, any function
-can safely be applied to it (whether monotone or not), without risking
-inconsistency. Since the merge function for $\top$ will always yield $\top$,
-this might also allow a more efficient representation.  For example, in a
-complete \texttt{lcart}, we need only store the ``summarized'' cart state, not
-the log of client operations.
+Eventually consistent designs often consume more resources over time, requiring
+periodic garbage collection to restore efficiency~\cite{Shapiro2011a}. Such
+garbage collection protocols are typically application-specific and can be
+tricky to implement correctly. We are investigating ways in which \lang could
+assist programmers in writing distributed garbage collection schemes. For
+example, a compiler analysis could verify that the garbage collection protocol
+does not change observable program behavior. Garbage collection might also have
+a natural representation using lattices. For example, a common property is that
+once an operation has been applied by all replicas, information required to
+commute that operation with concurrent operations can be discarded. In
+lattice-theoretic terms, this could be represented by observing that, for a
+fixed set of replicas, the greatest lower bound of a lattice among the replicas
+increases monotonically.
+
+In this paper, we have focused on programming with monotonically increasing
+values. In fact, many distributed programs feature values that increase
+monotonically for a period but then become immutable. For example, the
+\texttt{lcart} lattice described in Section~\ref{sec:carts} accumulates updates
+but then eventually stops changing. Once a value is immutable, any function can
+safely be applied to it (whether monotone or not) without risking
+inconsistency. As the \texttt{lcart} (and \texttt{lbool}) lattices demonstrate,
+it is possible to represent such values using \lang, but we suspect that
+supporting immutability more directly might be useful. For example, a compiler
+analysis that can prove that a value is immutable in a certain situation would
+allow non-monotonic functions to safely be applied to it. Immutable values might
+also allow a more efficient representation: for example, a complete
+\texttt{lcart} need only store the ``summarized'' cart state, not the log of
+client operations.
+
+% Every join semilattice includes $\bot$, a distinguished ``smallest element.'' A
+% natural extension is to consider providing \emph{bounded lattices} that also
+% contain $\top$, a ``greatest element.'' Such a value is already supported by
+% \texttt{lbool} ($\top = \mathtt{true}$), in addition to the \texttt{lcart}
+% lattice discussed in Section~\ref{sec:monotone-checkout}. $\top$ behaves
+% differently than other lattice elements: because it is immutable, any function
+% can safely be applied to it (whether monotone or not), without risking
+% inconsistency. Since the merge function for $\top$ will always yield $\top$,
+% this might also allow a more efficient representation.  For example, in a
+% complete \texttt{lcart}, we need only store the ``summarized'' cart state, not
+% the log of client operations.
 % We are investigating how \lang could be enhanced to provide special support
 % for bounded lattices with $\top$ values.
 
