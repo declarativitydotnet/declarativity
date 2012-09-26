@@ -1,6 +1,36 @@
 \section{Background}
 \label{sec:background}
 
+In this section, we review the Bloom programming language and the CALM program
+analysis.  We present a simple program for which the CALM analysis over sets
+yields unsatisfactory results.
+
+\subsection{Bloom}
+\label{sec:bg-bloom}
+
+Bloom programs are bundles of declarative \emph{statements} about collections of
+\emph{facts} (tuples). An \emph{instance} of a Bloom program performs
+computation by evaluating its statements over the contents of its local
+database. Instances communicate via asynchronous messaging.
+
+An instance of a Bloom program proceeds through a series of \emph{timesteps},
+each containing three phases.\footnote{There is a precise declarative semantics
+  for Bloom~\cite{dedalus-semantics,dedalus}, but we describe the language
+  operationally for the sake of exposition.} In the first phase, inbound events
+(e.g., network messages) are received and represented as facts in
+collections. In the second phase, the program's statements are evaluated over
+local state to compute all the additional facts that can be derived from the
+current collection contents. In some cases (described below), a derived fact is
+intended to achieve a ``side effect,'' such as modifying local state or sending
+a network message.  These effects are deferred during the second phase of the
+timestep; the third phase is devoted to carrying them out.
+
+The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
+embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
+program represented as an annotated Ruby class. A small amount of imperative
+Ruby code is needed to instantiate the Bloom program and begin executing it;
+more details are available on the Bloom language website~\cite{bloom}.
+
 % XXX: should this be a distributed example?
 \begin{figure}[t]
 \begin{scriptsize}
@@ -29,55 +59,7 @@ end
 \label{fig:bloom-spaths}
 \end{figure}
 
-In this section, we review the Bloom programming language and the CALM program
-analysis.  We present a simple program for which the CALM analysis over sets
-yields unsatisfactory results.
-
-\subsection{Bloom}
-\label{sec:bg-bloom}
-
-Bloom programs are bundles of declarative \emph{statements} about collections of
-\emph{facts} (tuples). An \emph{instance} of a Bloom program performs
-computation by evaluating its statements over the contents of its local
-database. Instances communicate via asynchronous messaging, as described below.
-
-An instance of a Bloom program proceeds through a series of \emph{timesteps},
-each containing three phases.\footnote{There is a precise declarative semantics
-  for Bloom~\cite{dedalus-semantics,dedalus}, but we describe the language
-  operationally for the sake of exposition.} In the first phase, inbound events
-(e.g., network messages) are received and represented as facts in
-collections. In the second phase, the program's statements are evaluated over
-local state to compute all the additional facts that can be derived from the
-current collection contents. In some cases (described below), a derived fact is
-intended to achieve a ``side effect,'' such as modifying local state or sending
-a network message.  These effects are deferred during the second phase of the
-timestep; the third phase is devoted to carrying them out.
-
-The initial implementation of Bloom, called \emph{Bud}, allows Bloom logic to be
-embedded inside a Ruby program. Figure~\ref{fig:bloom-spaths} shows a Bloom
-program represented as an annotated Ruby class. A small amount of imperative
-Ruby code is needed to instantiate the Bloom program and begin executing it;
-more details are available on the Bloom language website~\cite{bloom}.
-
 \subsubsection{Data Model}
-\begin{table}[t]
-\centering
-\begin{tabular}{|l|p{2.32in}|}
-\hline
-\textbf{Name} & \textbf{Behavior }\\
-\hline
-\texttt{table} & Persistent storage.\\
-\texttt{scratch} & Transient storage.\\
-\texttt{channel} & Asynchronous communication. A fact derived into a \texttt{channel} appears in the
-database of a remote Bloom instance at a non-deterministic future time.\\
-\texttt{periodic} & Interface to the system clock.\\
-\texttt{interface} & Interface point between software modules.\\
-\hline
-\end{tabular}
-\caption{Bloom collection types.}
-\label{tbl:bloom-collections}
-\end{table}
-
 The Bloom data model is based on \emph{collections}.  A collection is an
 unordered set of \emph{facts}, akin to a relation in Datalog. The Bud prototype
 adopts the Ruby type system rather than inventing its own; hence, a fact in Bud
@@ -93,12 +75,12 @@ Bud can hold arbitrary Ruby objects.
 
 Bloom provides five collection types to represent different kinds of state
 (Table~\ref{tbl:bloom-collections}). A \texttt{table} stores persistent data: if
-a fact appears in a table, it remains in the table in future timesteps (unless it
-is explicitly removed). A \texttt{scratch} contains transient data---the content
-of scratch collections is emptied at the start of each timestep. Scratches are
-akin to SQL views: they are often useful as a way to name intermediate results
-or as a ``macro'' construct to enable code reuse. The \texttt{channel}
-collection type enables communication between Bloom instances. The schema of a
+a fact appears in a table, it remains in the table in future timesteps (unless
+it is explicitly removed). A \texttt{scratch} contains transient data---the
+content of scratch collections is emptied at the start of each
+timestep. Scratches are akin to SQL views: they are often useful as a way to
+name intermediate results or as a ``macro'' construct to enable code reuse. A
+\texttt{channel} enables communication between Bloom instances. The schema of a
 channel has a distinguished \emph{location specifier} column (prefixed with
 ``\texttt{@}''); when a fact is derived for a channel collection, it appears in
 the database of the Bloom instance at the address given by the location
@@ -106,32 +88,7 @@ specifier. The \texttt{periodic} and \texttt{interface} collection types do not
 arise in our discussion in this paper; the interested reader is referred to the
 Bloom website~\cite{bloom}.
 
-\begin{table}[t]
-\centering
-\begin{tabular}{|c|l|p{1.85in}|}
-\hline
-\textbf{Op} & \textbf{Name} & \textbf{Meaning} \\
-\hline
-\verb|<=| & \emph{merge} & lhs includes the content of rhs in the
-current timestep. \\
-\hline
-\verb|<+| & \emph{deferred merge} & lhs will include the content of rhs in the
-next timestep. \\
-\hline
-\verb|<-| & \emph{deferred delete} & lhs will not include the content of rhs
-in the next timestep. \\
-\hline
-\verb|<~| & \emph{async merge} & (Remote) lhs will include the content of the
-rhs at some non-deterministic future timestep. \\
-\hline
-\end{tabular}
-\caption{Bloom operators.}
-\label{tbl:bloom-ops}
-\end{table}
-
-\ifbool{socc-print-version}{\pagebreak}{}
 \subsubsection{Statements}
-
 Each Bloom statement has one or more input collections and a single output
 collection.  A statement takes the form: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$collection-identifier$>$ $<$op$>$
@@ -165,6 +122,45 @@ timestep. The \verb+<~+ operator specifies that the rhs will be merged into the
 lhs collection at some non-deterministic future time. The lhs of a statement
 that uses \verb+<~+ must be a channel; the \verb+<~+ operator captures
 asynchronous messaging.
+
+\begin{table}[t]
+\centering
+\begin{tabular}{|l|p{2.32in}|}
+\hline
+\textbf{Name} & \textbf{Behavior }\\
+\hline
+\texttt{table} & Persistent storage.\\
+\texttt{scratch} & Transient storage.\\
+\texttt{channel} & Asynchronous communication. A fact derived into a \texttt{channel} appears in the
+database of a remote Bloom instance at a non-deterministic future time.\\
+\texttt{periodic} & Interface to the system clock.\\
+\texttt{interface} & Interface point between software modules.\\
+\hline
+\end{tabular}
+\caption{Bloom collection types.}
+\label{tbl:bloom-collections}
+\end{table}
+\begin{table}
+\begin{tabular}{|c|l|p{1.85in}|}
+\hline
+\textbf{Op} & \textbf{Name} & \textbf{Meaning} \\
+\hline
+\verb|<=| & \emph{merge} & lhs includes the content of rhs in the
+current timestep. \\
+\hline
+\verb|<+| & \emph{deferred merge} & lhs will include the content of rhs in the
+next timestep. \\
+\hline
+\verb|<-| & \emph{deferred delete} & lhs will not include the content of rhs
+in the next timestep. \\
+\hline
+\verb|<~| & \emph{async merge} & (Remote) lhs will include the content of the
+rhs at some non-deterministic future timestep. \\
+\hline
+\end{tabular}
+\caption{Bloom operators.}
+\label{tbl:bloom-ops}
+\end{table}
 
 % XXX: does this need to be said?
 Bloom allows recursion---i.e., the rhs of a statement can reference the lhs
