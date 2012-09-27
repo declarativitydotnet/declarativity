@@ -40,12 +40,13 @@ monotonically for a period but then become immutable. For example, the
 but then eventually stops changing. Once a value is immutable, any function can
 safely be applied to it (whether monotone or not) without risking
 inconsistency. The \texttt{lcart} (and \texttt{lbool}) lattices demonstrate that
-it is possible to represent such values using \lang, but we suspect that
-supporting immutability more directly might be useful. For example, a compiler
-analysis that can prove that a value is immutable in a certain situation would
-allow non-monotonic functions to safely be applied to it. Some immutable values
-can also be represented more efficiently: for example, a complete \texttt{lcart}
-need only store the ``summarized'' cart state, not the log of client operations.
+\lang can represent such ``monotonic-then-immutable'' values, but we suspect
+that supporting immutability more directly might be useful. For example, a
+compiler analysis that can prove that a value is immutable in a certain
+situation would allow non-monotonic functions to safely be applied to it. Some
+immutable values can also be represented more efficiently: for example, a
+complete \texttt{lcart} need only store the ``summarized'' cart state, not the
+log of client operations.
 
 % Every join semilattice includes $\bot$, a distinguished ``smallest element.'' A
 % natural extension is to consider providing \emph{bounded lattices} that also
