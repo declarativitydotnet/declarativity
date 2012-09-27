@@ -13,8 +13,8 @@ program can be composed via monotonic mappings between simple lattice types. In
 this section, we describe how \lang overcomes the ``type dilemma'' of Bloom. In
 prior work, we introduced a case study in Bloom that seemed to require
 coordination because of the use of distributed aggregation~\cite{Alvaro2011}. By
-using custom lattice types, we enable the \lang CALM analysis to verify that our
-revised design is eventually consistent without need for coordination.
+using custom lattice types, the \lang CALM analysis can verify that our revised
+design is eventually consistent without need for coordination.
 
 Figure~\ref{fig:cart-system-arch} depicts a simple e-commerce system in which
 clients interact with a shopping cart service by adding and removing items over
@@ -75,9 +75,8 @@ end
 \label{fig:monotone-cart}
 \end{figure}
 
-% For both the ``disorderly'' and ``destructive'' designs, 
 Alvaro et al.\ argue that processing a checkout request is non-monotonic because
-it requires aggregating over an asynchronously computed data set---in general,
+it requires aggregation over an asynchronously computed data set---in general,
 coordination might be required to ensure that all inputs have been received
 before the checkout response can be returned to the client. However, observe
 that the client knows exactly which add and remove operations should be
