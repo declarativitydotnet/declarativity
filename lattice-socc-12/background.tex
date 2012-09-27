@@ -14,9 +14,9 @@ computation by evaluating its statements over the contents of its local
 database. Instances communicate via asynchronous messaging.
 
 An instance of a Bloom program proceeds through a series of \emph{timesteps},
-each containing three phases.\footnote{There is a precise declarative semantics
-  for Bloom~\cite{dedalus-semantics,dedalus}, but we describe the language
-  operationally for the sake of exposition.} In the first phase, inbound events
+each containing three phases.\footnote{There is a declarative semantics for
+  Bloom~\cite{dedalus-semantics,dedalus}, but for the sake of exposition we
+  describe the language operationally here.} In the first phase, inbound events
 (e.g., network messages) are received and represented as facts in
 collections. In the second phase, the program's statements are evaluated over
 local state to compute all the additional facts that can be derived from the
