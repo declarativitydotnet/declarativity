@@ -136,8 +136,8 @@ order). This approach to restricting reads is somewhat similar to the use of
 threshold tests in \lang.
 
 \vspace{0.5em}\noindent
-\textbf{Non-monotonicity in deductive databases:} Adding non-monotonic operators
-to Datalog increases the expressiveness of the language but introduces
+\textbf{Extending monotonicity in deductive databases:} Adding non-monotonic
+operators to Datalog increases the expressiveness of the language but introduces
 significant complexities: unrestricted use of non-monotonicity would allow
 programs that imply logical contradictions (e.g., ``$p$ if $\lnot p$''). A
 simple solution is to disallow recursion through aggregation or negation, which
@@ -158,15 +158,29 @@ to a single ``cost'' argument in certain predicates, do not allow user-defined
 lattices, and do not propose a framework for arbitrary lattices to be composed
 safely.
 
-K\"{o}stler et al.\ consider Datalog extended with subsumption relations, which
-allows the user to indicate that certain deductions should be ``preferred'' over
-others~\cite{Kostler1995}. These preferences must form a lattice; K\"{o}stler et
-al.\ then propose a model-theoretic semantics and evaluation scheme based on the
-lattice's partial order. Like Ross and Sagiv, this work shares some technical
-similarities with this paper, but differs in its goals and problem domain:
-K\"{o}stler et al.\ use subsumption to add semantic knowledge to graph traversal
-and heuristic search programs, but do not propose a general-purpose programming
-framework.
+K\"{o}stler et al.\ investigate deduction in the presence of a partial ordering
+of ground atoms, as might be induced by a lattice ordering on predicate
+columns~\cite{Kostler1995}. They focus on reduced interpretations and models,
+where any atom dominated by another atoms is discarded (unless it belongs to an
+unbounded maximal chain). One divergence between their approach and ours is that
+reduced models need not satisfy the key dependencies we employ, because a pair
+of atoms that agree on a key need not have a common least upper bound.
+K\"{o}stler et al.\ construct a complete lattice over equivalence classes of
+reduced interpretations. However, the least upper bound of a set of models in
+this lattice may be infinite, even if each of those models is finite. We suspect
+our approach and theirs may be isomorphic when the monotone ordering on atoms
+is induced by lattice-valued columns, where the lattices have no infinite
+chains. However, we have not rigorously established this relationship yet.
+
+% K\"{o}stler et al.\ consider Datalog extended with subsumption relations, which
+% allows the user to indicate that certain deductions should be ``preferred'' over
+% others~\cite{Kostler1995}. These preferences must form a lattice; K\"{o}stler et
+% al.\ then propose a model-theoretic semantics and evaluation scheme based on the
+% lattice's partial order. Like Ross and Sagiv, this work shares some technical
+% similarities with this paper, but differs in its goals and problem domain:
+% K\"{o}stler et al.\ use subsumption to add semantic knowledge to graph traversal
+% and heuristic search programs, but do not propose a general-purpose programming
+% framework.
 
 The approach of Zaniolo and Wang~\cite{Zaniolo1999} to aggregates in
 $\mathcal{LDL}$++ is quite distinct from that of Ross and Sagiv, and, hence,

@@ -11,19 +11,18 @@
 In the previous section, we showed how a complete, consistent distributed
 program can be composed via monotonic mappings between simple lattice types. In
 this section, we describe how \lang overcomes the ``type dilemma'' of Bloom. In
-prior work, we introduced a case study in Bloom that required the use of
-coordination because of apparently-nonmonotonic grouping and
-aggregation~\cite{Alvaro2011}; by using custom lattice types, we enable the
-\lang CALM analysis to verify that our revised design is eventually consistent
-without need for coordination.
+prior work, we introduced a case study in Bloom that seemed to require
+coordination because of the use of distributed aggregation~\cite{Alvaro2011}. By
+using custom lattice types, we enable the \lang CALM analysis to verify that our
+revised design is eventually consistent without need for coordination.
 
-In this case study, we consider a simple e-commerce system in which clients
-interact with a shopping cart service by adding and removing items over the
-course of a shopping session (Figure~\ref{fig:cart-system-arch}). The cart
-service is replicated to improve fault tolerance; client requests can be routed
-to any server replica. Eventually, a client submits a ``checkout'' operation, at
-which point the cumulative effect of their shopping session should be summarized
-and returned to the client. In a practical system, the result of the checkout
+Figure~\ref{fig:cart-system-arch} depicts a simple e-commerce system in which
+clients interact with a shopping cart service by adding and removing items over
+the course of a shopping session. The cart service is replicated to improve
+fault tolerance; client requests can be routed to any server
+replica. Eventually, a client submits a ``checkout'' operation, at which point
+the cumulative effect of their shopping session should be summarized and
+returned to the client. In a practical system, the result of the checkout
 operation might be presented to the client for confirmation or submitted to a
 payment processor to complete the e-commerce transaction. This case study is
 based on the cart system from Alvaro et al.~\cite{Alvaro2011}, which was in turn
@@ -142,16 +141,16 @@ indicates a logic error in the program.
 % lattice API described in Section~\ref{sec:lattice-api}.
 
 \subsection{Discussion}
-This design is feasible because a single client has complete knowledge of the
+This design is possible because a single client has complete knowledge of the
 shopping actions in its associated session. Hence, there is no need for
 additional distributed coordination---the server replicas accumulate knowledge
 but do not contribute new information themselves. If multiple clients could
-operate on a single shopping cart, some form of coordination between the clients
+operate on a single shopping cart, some form of coordination between clients
 would be needed to ensure a consistent checkout result.
 
 Note that the threshold test for completeness is a crucial part of this
 design. Until a cart is complete, its content changes in a ``non-monotonic''
-fashion as items are added and removed. However, those non-monotonic changes are
+fashion as items are added and removed. However, these non-monotonic changes are
 hidden inside the \texttt{lcart} type and are not directly visible to
 clients. Clients can only observe the cart's state once the cart is complete; at
 that point, the cart state is immutable and hence will not change in a

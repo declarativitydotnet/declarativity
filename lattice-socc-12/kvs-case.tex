@@ -108,9 +108,9 @@ function that returns the IP address and port number of the current Bud
 instance.
 
 The state of two replicas can be synchronized by simply exchanging their
-\texttt{kv\_store} maps; the \texttt{lmap} merge function will automatically
-resolve all conflicting updates made to the same key. This property allows
-considerable flexibility in how replicas propagate updates.
+\texttt{kv\_store} maps; the \texttt{lmap} merge function automatically resolves
+conflicting updates made to the same key. This property allows considerable
+flexibility in how replicas propagate updates.
 % TODO: (1) finish repl discussion (composition, replication strat) (2) partitioning
 
 \subsection{Object Versioning}
