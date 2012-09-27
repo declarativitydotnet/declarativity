@@ -100,11 +100,11 @@ David Maier\\
   consistency criteria without the latency and availability costs of strongly
   consistent storage infrastructure. A standard technique is to adopt a
   vocabulary of commutative operations; this avoids the risk of inconsistency
-  due to message reordering.  A more powerful approach was recently captured by
-  the \emph{CALM theorem}, which proves that logically monotonic programs are
+  due to message reordering.  Another approach was recently captured by the
+  \emph{CALM theorem}, which proves that logically monotonic programs are
   guaranteed to be eventually consistent.  In logic languages such as Bloom,
-  CALM analysis can automatically verify that program modules achieve
-  consistency without coordination.
+  CALM analysis can automatically verify that programs achieve consistency
+  without coordination.
 
   In this paper we present \lang, an extension to Bloom that takes inspiration
   from both of these traditions.  
