@@ -98,30 +98,28 @@ David Maier\\
 \begin{abstract}
   In recent years there has been interest in achieving application-level
   consistency criteria without the latency and availability costs of strongly
-  consistent storage infrastructure. A standard technique
-  %, found in designs such
-  % as Bayou, Escrow Transactions, and CRDTs, 
-  is to adopt a vocabulary of
-  commutative operations; this avoids the risk of inconsistency due to message
-  reordering.  A more powerful approach was recently captured by the \emph{CALM
-    theorem}, which proves that logically monotonic programs are guaranteed to
-  be eventually consistent. 
-  In logic languages such as Bloom, CALM analysis can automatically verify that program modules achieve consistency without coordination.
+  consistent storage infrastructure. A standard technique is to adopt a
+  vocabulary of commutative operations; this avoids the risk of inconsistency
+  due to message reordering.  A more powerful approach was recently captured by
+  the \emph{CALM theorem}, which proves that logically monotonic programs are
+  guaranteed to be eventually consistent.  In logic languages such as Bloom,
+  CALM analysis can automatically verify that program modules achieve
+  consistency without coordination.
 
   In this paper we present \lang, an extension to Bloom that takes inspiration
-  from both these traditions.  
+  from both of these traditions.  
   % Drawing on systems that use commutative
   %   operations, \lang guarantees convergence for user-defined objects by adopting
   %   the notion of extensible \emph{lattice} data types: classes with a commutative
   %   and associative merge function.  
-  \lang generalizes Bloom to support lattices
-  and extends the power of CALM analysis to whole programs containing arbitrary
-  lattices. We show how the Bloom interpreter can be generalized to support
-  efficient evaluation of lattice-based code using well-known strategies from
-  logic programming.  Finally, we use \lang to develop several practical
-  distributed programs, including a key-value store similar to Amazon Dynamo,
-  and show how \lang encourages the safe composition of small, easy-to-analyze
-  lattices into larger programs.
+  \lang generalizes Bloom to support lattices and extends the power of CALM
+  analysis to whole programs containing arbitrary lattices. We show how the
+  Bloom interpreter can be generalized to support efficient evaluation of
+  lattice-based code using well-known strategies from logic programming.
+  Finally, we use \lang to develop several practical distributed programs,
+  including a key-value store similar to Amazon Dynamo, and show how \lang
+  encourages the safe composition of small, easy-to-analyze lattices into larger
+  programs.
 \end{abstract}
 
 \category{D.3.2}{Language Classifications}{Concurrent, distributed, and parallel
