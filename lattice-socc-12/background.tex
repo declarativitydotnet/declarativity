@@ -160,6 +160,7 @@ sensible interpretation. For deductive statements (\verb+<=+ operator), we
 require that programs be \emph{syntactically stratified}~\cite{Apt1988}: cycles
 through negation or aggregation are not allowed~\cite{dedalus}.
 
+\ifbool{socc-print-version}{\pagebreak}{}
 \subsection{CALM Analysis}
 \label{sec:bg-calm}
 
@@ -169,7 +170,7 @@ monotonic program only computes more information over time---it never
 ``retracts'' a previous conclusion in the face of new evidence.  In Bloom
 (and Datalog), a simple conservative test for monotonicity is based on program
 syntax: selection, projection, and join are monotonic, while aggregation,
-negation and deletion are not.
+negation, and deletion are not.
 
 The CALM theorem connects the theory of monotonic logic with the practical
 problem of distributed consistency~\cite{Alvaro2011,Hellerstein2010}.  All

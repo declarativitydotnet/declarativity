@@ -156,16 +156,16 @@ together the vector clocks and using a user-supplied reconciliation function to
 merge together the conflicting values, as described below. We call the set of
 incomparable version-value pairs a \emph{dominating set}.
 
-From a CALM perspective, each replica still stores a monotonically increasing
+From a \lang perspective, each replica still stores a monotonically increasing
 value---the only difference is that in this scheme, the \emph{version} stored by
 a replica increases over time, rather than the associated value. Hence, we now
 consider how to support vector clocks and dominating sets using \lang.
 
 \subsubsection{Vector Clocks}
-A vector clock is a map from node identifiers to logical clocks. Let $V_e$
-denote the vector clock for event $e$; let $V_e(n)$ denote the logical clock
-associated with node $n$ in $V_e$. If $V_e < V_{e'}$, $e$ causally precedes
-$e'$, where
+A vector clock is a map from node identifiers to logical
+clocks~\cite{Fidge1988,Mattern1989}. Let $V_e$ denote the vector clock for event
+$e$; let $V_e(n)$ denote the logical clock associated with node $n$ in $V_e$. If
+$V_e < V_{e'}$, $e$ causally precedes $e'$, where
 \begin{displaymath}
 V_e < V_{e'} \equiv \forall x [ V_e(x) \leq V_{e'}(x) ] \land \exists y [ V_e(y) < V_{e'}(y) ]  
 \end{displaymath}
@@ -219,7 +219,7 @@ position in the vector clock as described above. The KVS replica merges these
 by composing the KVS from a collection of simple lattices, we found it easy to
 reason about the behavior of the system. For example, convincing ourselves that
 KVS replicas will eventually converge only required checking that the individual
-\texttt{lmap}, \texttt{lmax}, and \texttt{ldom} lattices satisfy the lattice
+\texttt{ldom}, \texttt{lmap}, and \texttt{lmax} lattices satisfy the lattice
 properties, rather than analyzing the behavior of the system as a whole.
 
 Our design compares favorably to traditional implementations of object
@@ -240,7 +240,7 @@ nodes in a KVS with $N$ replicas, the user can set $R + W > N$ to achieve
 behavior equivalent to a quorum replication system~\cite{Gifford1979}, or use
 smaller values of $R$ and $W$ if eventual consistency is sufficient. This scheme
 allows users to vary $R$ and $W$ on a per-operation basis, depending on their
-consistency and durability requirements.
+consistency, durability, and latency requirements.
 
 To support this feature, we can use the \lang quorum voting pattern
 introduced in Figure~\ref{fig:lattice-quorum}. After sending a write to $W$
