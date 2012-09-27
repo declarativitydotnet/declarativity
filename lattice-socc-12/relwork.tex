@@ -145,18 +145,39 @@ admits only the class of ``stratified programs''~\cite{Apt1988}. Many attempts
 have been made to assign a semantics to larger classes of programs
 (e.g.,~\cite{Gelfond1988,Ross1990,VanGelder1991}).
 
-% XXX: cite Van Gelder's "foundations of agg" paper
-The observation that many uses of aggregation and negation have a ``monotonic''
-flavor has been made before. Ross and Sagiv study a class of programs that
-include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model-theoretic
-semantics for this class of programs that is similar to our semantics for \lang
-in Section~\ref{sec:lang}. Our work differs from Ross and Sagiv's in several
-respects: most notably, they use lattices as a way to characterize classes of
-Datalog programs, whereas we propose \lang as a practical programming
-language. Accordingly, Ross and Sagiv restrict the usage of monotone aggregates
-to a single ``cost'' argument in certain predicates, do not allow user-defined
-lattices, and do not propose a framework for arbitrary lattices to be composed
-safely.
+The prior work most in the spirit of \lang is by Ross and Sagiv on monotonic
+aggregation~\cite{Ross1992}. Their framework is broader than the term
+``aggregation'' would suggest. They actually look generally at monotone
+functions between partially ordered domains, which conceptually includes our
+lattice least upper bounds, monotone functions and homomorphisms (though they do
+not make those distinctions). They extend the notion of monotone programs to
+include ``growth'' by substituting a larger element in an atom for a smaller
+one. As we do, they require the lattice-valued columns to be functionally
+dependent on the other attributes in a predicate. One of their main results is
+that if the target domain of a monotone function is a complete lattice, then a
+program that uses such a function has a unique least fixpoint. While \lang has
+much in common with Ross and Sagiv, there are several differences. They want to
+expand the collection of monotone programs but did not consider the setting of
+confluence of distributed programs, which is our focus. In particular, they do
+not exploit the idempotence of least upper bound (since their source domain need
+not be a lattice), which is importance to us, since it gives confluence with
+``at-least-once'' message delivery. Also, they do not single out, as we do,
+monotone functions that are actually lattice homomorphisms. Hence they do not
+realize the evaluation flexibility we get from such functions. Finally, they do
+not propose a practical programming language or a framework that allows
+user-defined lattices to be composed safely.
+
+% The observation that many uses of aggregation and negation have a ``monotonic''
+% flavor has been made before. Ross and Sagiv study a class of programs that
+% include ``monotonic'' aggregates~\cite{Ross1992}. They propose a model-theoretic
+% semantics for this class of programs that is similar to our semantics for \lang
+% in Section~\ref{sec:lang}. Our work differs from Ross and Sagiv's in several
+% respects: most notably, they use lattices as a way to characterize classes of
+% Datalog programs, whereas we propose \lang as a practical programming
+% language. Accordingly, Ross and Sagiv restrict the usage of monotone aggregates
+% to a single ``cost'' argument in certain predicates, do not allow user-defined
+% lattices, and do not propose a framework for arbitrary lattices to be composed
+% safely.
 
 K\"{o}stler et al.\ investigate deduction in the presence of a partial ordering
 of ground atoms, as might be induced by a lattice ordering on predicate
