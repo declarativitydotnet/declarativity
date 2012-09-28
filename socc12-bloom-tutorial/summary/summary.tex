@@ -145,108 +145,19 @@ to extend the example programs we present.
   compositions to implement quorum replication, which can be parameterized to
   enforce strong or eventual consistency.
 \item
+  Nonmonotonicity cannot always be avoided.  Discuss recent and future work on mitigating
+the problems that can arise in nonmonotonic distributed systems.  Show how CALM analysis
+can be used to identify program locations at which coordination can be added by the programmer
+or synthesized by the runtime.  Discuss approached that tolelated and attempt to correct
+inconsistencies using delayed coordination, compensatory actions or ``apologies.''  
+Present constructive strategies
+for ``sealing'' (or making immutable) certain partitions of the program input, to prevent
+subsequent nonmontonic operations from producing inconsistent states.
+
+\item
   Highlight open problems and research challenges in the area of principled
   eventual consistency.
 \end{enumerate}
-
-\begin{comment}
-\section{Outline}
-
-\begin{itemize}
-\item
-  The current landscape of distributed programming
-  \begin{itemize}
-  \item
-    CAP and partition tolerance~\cite{Brewer2012,Brewer2000}
-  \item
-    Design patterns for working with eventual consistency
-  \end{itemize}
-\item
-  CRDTs: lattices for convergent replicated values
-  \begin{itemize}
-  \item
-    Example CRDTs: sets, counters, graphs
-  \end{itemize}
-\item
-  Composing lattices using \blooml
-  \begin{itemize}
-  \item
-    Monotone functions and homomorphisms
-  \item
-    CALM Theorem
-  \item
-    Bloom and \blooml
-    \begin{itemize}
-    \item
-      Syntax, semantics
-    \item
-      Visualization and debugging tools
-    \end{itemize}
-  \item
-    Example programs: shopping cart, simple key-value store, vector clocks,
-    quorum replication
-  \end{itemize}
-\item
-  Dealing with non-monotonicity
-  \begin{itemize}
-  \item
-    Strong coordination: two-phase commit or Paxos in Bloom
-    \begin{itemize}
-    \item
-      Automatic coordination synthesis
-    \end{itemize}
-  \item
-    Weak coordination: applying lattices to distributed garbage collection
-  \item
-    Apologies and compensation logic~\cite{Garcia-Molina1987,Helland2009,Korth1990}
-  \end{itemize}
-\item
-  Complete example system: key-value store
-  \begin{itemize}
-  \item
-    Version 1: non-monotonic updates
-  \item
-    Version 2: monotonic updates using a \texttt{map} lattice, quorum
-    replication
-  \item
-    Version 3: monotonic updates using lattices to implement version vectors
-    (per Dynamo~\cite{DeCandia2007}).
-  \item
-    Version 4: distributed locking, multi-key atomic updates
-  \end{itemize}
-\item
-  Distributed testing
-  \begin{itemize}
-  \item
-    BloomUnit
-  \item
-    Applying CALM to enhance systematic testing
-  \end{itemize}
-\item
-  Summary and conclusion
-  \begin{itemize}
-  \item
-    State of the art in principled eventual consistency
-  \item
-    Open research problems
-  \end{itemize}
-\end{itemize}
-\end{comment}
-
-\section{Conclusion}
-
-In this tutorial we focus predominantly on monotonic programs, demonstrating that 
-it is possible to express
-surprisingly complicated systems without recourse to nonmonotonic constructs.
-Like side-effects in functional programming languages, however, nonmonotonicity 
-cannot always be avoided in practical programs.  To conclude the tutorial,
-we will discuss our recent and future work on mitigating the problems that arise when
-distributed systems are partly nonmonotonic.  We will discuss the use of CALM analysis to
-identify program locations at which coordination can be added or synthesized.  
-We will also discuss approaches that tolerate and attempt to correct inconsistencies
-using delayed coordination, compensations or ``apologies.''  We will present constructive strategies
-for ``sealing'' (or making immutable) certain partitions of the program input, to prevent
-subsequent nonmontonic operations from producing inconsistent states.
 
 
 \bibliographystyle{abbrv}
