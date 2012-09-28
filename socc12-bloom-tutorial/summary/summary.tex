@@ -10,8 +10,7 @@
 \usepackage[protrusion=true,expansion=true]{microtype}
 \usepackage{paralist}
 \usepackage{comment}
-%\usepackage[hidelinks]{hyperref}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 
 \def\blooml{Bloom$^L$\xspace}
 
@@ -146,24 +145,24 @@ to extend the example programs we present.
   compositions to implement quorum replication, which can be parameterized to
   enforce strong or eventual consistency.
 \item
-  Nonmonotonicity cannot always be avoided.  Discuss recent and future work on mitigating
-the problems that can arise in nonmonotonic distributed systems.  Show how CALM analysis
-can be used to identify program locations at which coordination can be added by the programmer
-or synthesized by the runtime.  Discuss approaches that tolerate and attempt to correct
-inconsistencies using delayed coordination, compensatory actions or ``apologies.''  
-Present constructive strategies
-for ``sealing'' (or making immutable) certain partitions of the program input to prevent
-subsequent nonmonotonic operations from producing inconsistent states.
-
+  Non-monotonicity cannot always be avoided.  Discuss recent and future work on
+  mitigating the problems that can arise in non-monotonic distributed programs.
+  Show how CALM analysis can be used to identify program locations at which
+  coordination can be added by the programmer or synthesized by the runtime.
+  Discuss approaches to tolerate and correct distributed inconsistency such as
+  delayed coordination, compensations, or ``apologies.''  Present constructive
+  strategies for ``sealing'' (or making immutable) certain partitions of the
+  program input to prevent subsequent non-monotonic operations from producing
+  inconsistent states.
 \item
   Highlight open problems and research challenges in the area of principled
   eventual consistency.
 \end{enumerate}
 
 \section{Materials}
-
-The tutorial materials can be found at \url{http://db.cs.berkeley.edu/socc12_consistency_tutorial}.
-
+Additional information about the tutorial can be found at
+\ifbool{socc-print-version}{\linebreak}{}
+\url{http://db.cs.berkeley.edu/socc12_consistency_tutorial}.
 
 \bibliographystyle{abbrv}
 \bibliography{summary}
