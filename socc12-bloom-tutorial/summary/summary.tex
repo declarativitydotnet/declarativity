@@ -11,6 +11,7 @@
 \usepackage{paralist}
 \usepackage{comment}
 %\usepackage[hidelinks]{hyperref}
+\usepackage{hyperref}
 
 \def\blooml{Bloom$^L$\xspace}
 
@@ -114,7 +115,7 @@ to extend the example programs we present.
 \item
   Discuss the particular challenges and benefits associated with programming
   over systems that provide only eventual
-  consistency~\cite{DeCandia2007,Terry1995,vogels}, rather than the stronger
+  consistency~\cite{DeCandia2007,Terry1995,vogels} rather than the stronger
   guarantees provided by traditional distributed transactional systems.
   Summarize the motivations behind the current trend away from widespread use of
   strong consistency protocols at scale.
@@ -140,7 +141,7 @@ to extend the example programs we present.
   As a running example, implement a family of key-value store designs with
   various consistency guarantees in Bloom.  Aided by static analysis tools,
   contrast the nondeterministic executions of overwrite-based stores with stores
-  whose values are constrained to be lattices, and hence are convergent in
+  whose values are constrained to be lattices and hence are convergent in
   either the value or version domain.  Illustrate the use of lattice
   compositions to implement quorum replication, which can be parameterized to
   enforce strong or eventual consistency.
@@ -148,16 +149,20 @@ to extend the example programs we present.
   Nonmonotonicity cannot always be avoided.  Discuss recent and future work on mitigating
 the problems that can arise in nonmonotonic distributed systems.  Show how CALM analysis
 can be used to identify program locations at which coordination can be added by the programmer
-or synthesized by the runtime.  Discuss approached that tolelated and attempt to correct
+or synthesized by the runtime.  Discuss approaches that tolerate and attempt to correct
 inconsistencies using delayed coordination, compensatory actions or ``apologies.''  
 Present constructive strategies
-for ``sealing'' (or making immutable) certain partitions of the program input, to prevent
-subsequent nonmontonic operations from producing inconsistent states.
+for ``sealing'' (or making immutable) certain partitions of the program input to prevent
+subsequent nonmonotonic operations from producing inconsistent states.
 
 \item
   Highlight open problems and research challenges in the area of principled
   eventual consistency.
 \end{enumerate}
+
+\section{Materials}
+
+The tutorial materials can be found at \url{http://db.cs.berkeley.edu/socc12_consistency_tutorial}.
 
 
 \bibliographystyle{abbrv}
