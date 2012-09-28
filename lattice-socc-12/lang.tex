@@ -164,7 +164,7 @@ b$ & \texttt{when\_true(\&blk)} $\to$ \texttt{v} & \\
 \end{center}
 \end{table*}
 
-
+\ifbool{socc-print-version}{\pagebreak}{}
 \subsubsection{Statements}
 Statements take the same form in both Bloom and \lang: \\ \noindent
 \mbox{\hspace{0.25in}\emph{$<$identifier$>$ $<$op$>$
@@ -233,6 +233,7 @@ method is non-monotonic because once the underlying Ruby value has been
 extracted from the lattice, \lang cannot ensure that subsequent code uses the
 value in a monotonic fashion.
 
+\ifbool{socc-print-version}{\pagebreak}{}
 \subsection{Built-in Lattices}
 \label{sec:lattice-built-ins}
 
@@ -407,6 +408,7 @@ each fact in the rhs collection and then merging the sets together. The
 resulting \texttt{lset} is then merged with the \texttt{votes} lattice
 referenced by the lhs.
 
+\ifbool{socc-print-version}{\pagebreak}{}
 \subsubsection{Embedding Lattice Values In Collections}
 \label{sec:lattice-embedding}
 \lang allows lattice elements to be used as column values of facts in Bloom

@@ -214,9 +214,9 @@ versioning. Surprisingly, adding support for object versioning did not require
 \texttt{ldom} values containing a single
 $\langle\textit{vector-clock},\textit{value}\rangle$ pair, incrementing their
 position in the vector clock as described above. The KVS replica merges these
-\texttt{ldom} values into an \texttt{lmap} as usual; the merge function of
-\texttt{ldom} handles conflict resolution in the appropriate manner. Moreover,
-by composing the KVS from a collection of simple lattices, we found it easy to
+\texttt{ldom} values into an \texttt{lmap} as usual; the \texttt{ldom} merge
+function handles conflict resolution in the appropriate manner. Moreover, by
+composing the KVS from a collection of simple lattices, we found it easy to
 reason about the behavior of the system. For example, convincing ourselves that
 KVS replicas will eventually converge only required checking that the individual
 \texttt{ldom}, \texttt{lmap}, and \texttt{lmax} lattices satisfy the lattice
