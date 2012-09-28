@@ -6,7 +6,7 @@ build practical distributed programs.\footnote{Complete code listings for these
     \url{http://db.cs.berkeley.edu/bloom-lattice}}.} Both case studies are
 monotonic: that is, both programs consist of monotone functions applied to
 lattices. As a result, the \lang compiler can verify that both of them are
-eventually consistent without any need for coordination.
+eventually consistent.
 
 In the first case study, we show that a distributed, eventually consistent
 key-value store can be \emph{composed} via a series of monotonic mappings
@@ -14,7 +14,7 @@ between simple lattices. This example shows how \lang overcomes
 the ``scope dilemma'' of CvRDTs: by composing a complex program from simple
 lattices (mostly \lang built-ins), we can feel confident that individual
 lattices are correct, while CALM analysis finishes the job of verifying
-whole-program correctness.
+whole-program consistency.
 
 %  This
 % demonstrates that \lang's built-in lattices are useful and yields a very concise
@@ -53,7 +53,7 @@ end
 \caption{Key-value store interface.}
 \label{fig:kvs-interface}
 \end{figure}
-
+\vspace{-4pt}
 \begin{figure}[t]
 \begin{scriptsize}
 \begin{lstlisting}
