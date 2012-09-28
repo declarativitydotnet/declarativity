@@ -69,7 +69,10 @@ lattices can be used to achieve consistency without coordination, we will then
 discuss how lattices can be composed using \emph{monotone functions} to form
 more complex applications~\cite{Conway2012}. We will connect this work to the tradition of logic programming from the database community~\cite{AliceBook}, and to our work on the
 \emph{CALM Theorem}, which characterizes the need for distributed coordination to 
-ensure consistency at application level~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. Finally,
+ensure consistency at application level~\cite{Alvaro2011,Ameloot2011,Hellerstein2010,dedalus-confluence}. 
+
+\begin{comment}
+Finally,
 we will discuss several design options for supporting non-monotonic operations:
 \begin{compactenum}[(a)]
 \item introducing coordination at appropriate program locations identified by
@@ -81,6 +84,7 @@ after-the-fact ``apology'' or compensation logic~\cite{Garcia-Molina1987,Helland
 \end{compactenum}
 We will conclude by summarizing the state of the art and highlighting open
 problems and challenges in the field.
+\end{comment}
 
 Throughout the tutorial, we will use \emph{Bloom}, a language for distributed
 programming that we have developed at Berkeley~\cite{bloom-website}. We will
@@ -230,6 +234,19 @@ to extend the example programs we present.
 \end{comment}
 
 \section{Conclusion}
+
+In this tutorial we focus predominantly on monotonic programs, demonstrating that 
+it is possible to express
+surprisingly complicated systems without recourse to nonmonotonic constructs.
+Like side-effects in functional programming languages, however, nonmonotonicity 
+cannot always be avoided in practical programs.  To conclude the tutorial,
+we will discuss our recent and future work on mitigating the problems that arise when
+distributed systems are partly nonmonotonic.  We will discuss the use of CALM analysis to
+identify program locations at which coordination can be added or synthesized.  
+We will also discuss approaches that tolerate and attempt to correct inconsistencies
+using delayed coordination, compensations or ``apologies.''  We will present constructive strategies
+for ``sealing'' (or making immutable) certain partitions of the program input, to prevent
+subsequent nonmontonic operations from producing inconsistent states.
 
 
 \bibliographystyle{abbrv}
