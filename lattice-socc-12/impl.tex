@@ -106,16 +106,31 @@ safe.
 When designing \lang, we chose to extend the original Bloom language rather than
 inventing a new language from scratch. This design philosophy also applied to our
 language implementation: we found we were able to to extend Bud to support \lang
-with relatively minor changes. Bud initially had about 7200 lines of Ruby source
-code (LOC). The core lattice features (the \texttt{Bud::Lattice} base class and
-the mapping from identifiers to lattice elements) required about 300
-LOC. Modifying Bud's fixpoint logic to include lattices required only 10 LOC,
-while the program rewriting required to enable semi-naive evaluation required
-100 LOC. Modifying Bud's collection classes to support merging of embedded
-lattice values required adding or modifying about 125 LOC. Extending CALM
-analysis to include lattices required modifying about 10 LOC. The built-in
-lattice classes constituted an additional 300 LOC. In total, adding support for
-\lang required less than 900 lines of added or modified code, and took about two
-person-months of engineering time. This experience suggests that support for
-lattices can be added to an existing Datalog engine in a relatively
-straightforward manner.
+with relatively minor changes.
+
+Bud initially had about 7300 lines of Ruby source code (LOC). Adding support for
+\lang required less than 1000 lines of added or modified code; moreover, most of
+these changes were cleanly separated from the core Bud code. For example, the
+built-in lattice types constituted 300 LOC and support for lattice-based query
+plan elements required 250 LOC. In contrast, we had to make no changes to Bud's
+core fixpoint loop and extending CALM analysis to support lattices required
+modifying only 10 LOC. This experience suggests that support for lattices can be
+added to an existing Datalog engine in a relatively straightforward manner.
+
+%  300
+% LOC were needed for the built-in lattice types and 200 LOC were required to
+% provide
+
+%  The core lattice
+% features (the \texttt{Bud::Lattice} base class and the mapping from identifiers
+% to lattice elements) required about 300 LOC; an additional 200 LOC was needed to
+% implement lattice-based query plan elements. Notably, no changes were required
+% to Bud's core fixpoint loop, while the program rewriting required to enable
+% semi-naive evaluation only required 50 LOC.  Modifying Bud's collection classes
+% to support merging of embedded lattice values required adding or modifying about
+% 125 LOC. Extending CALM analysis to include lattices required modifying about 10
+% LOC. The built-in lattice classes constituted an additional 300 LOC. In total,
+% adding support for \lang required less than 1000 lines of added or modified
+% code and took about three person-months of engineering time. This experience
+% suggests that support for lattices can be added to an existing Datalog engine in
+% a relatively straightforward manner.
