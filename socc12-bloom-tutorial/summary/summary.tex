@@ -93,16 +93,16 @@ their programs, reason about the need for coordination across software component
 individual monotonic components into larger programs, and employ Bloom's
 built-in tools for systematic distributed testing~\cite{Alvaro2012}.
 
-The tutorial will be \emph{interactive}, in that simple installation
-instructions for the Bloom runtime will be provided and attendees will be given
-the complete source code for all example programs. During the tutorial, we plan
-to use the Bloom runtime to execute example programs, use the the built-in Bloom
-analysis tools to understand program behavior, and iteratively refine programs
-as appropriate. Attendees will have the option to run the tools themselves,
+The tutorial will be \emph{interactive}, in that installation instructions for
+the Bloom runtime will be provided and attendees will be given the complete
+source code for all example programs. During the tutorial, we plan to use the
+Bloom runtime to execute example programs, use the the built-in Bloom analysis
+tools to understand program behavior, and iteratively refine programs as
+appropriate. Attendees will have the option to run the tools themselves,
 although participation int this manner will not be mandatory. Note that for time
 reasons we do not expect attendees to develop Bloom programs from scratch during
-the tutorial, although several ``homework'' assignments will be made available to
-extend the example programs we present.
+the tutorial, although several ``homework'' assignments will be made available
+to extend the example programs we present.
 
 \section{Objectives and Outcomes}
 
@@ -113,18 +113,17 @@ extend the example programs we present.
   consistency~\cite{DeCandia2007,Terry1995,vogels}, rather than the stronger
   guarantees provided by traditional distributed transactional systems.
   Summarize the motivations behind the current trend away from widespread use of
-  strong consistency protocols.
+  strong consistency protocols at scale.
 \item
   Introduce and compare recent research proposals to simplify distributed
   programming without strong consistency.  Present abstract design patterns
   for working with eventually consistent systems.
 \item
-  Focus on the CRDT and Bloom/CALM approaches to distributed
-  consistency, and show how lattices and monotone functions can be used to build
-  provably consistent implementations of well-known distributed infrastructure.
-  Provide concrete examples of CvRDTs (convergent distributed datatypes)
-  including sets, counters and graphs, and illustrate how these data structures
-  maintain the guarantee of eventual consistency.
+  Focus on the CRDT and CALM approaches to distributed consistency, and show how
+  lattices and monotone functions can be used to build provably convergent
+  implementations of well-known distributed infrastructure.  Provide concrete
+  examples of CvRDTs including sets, counters, and graphs, and illustrate how
+  these data structures achieve eventual consistency.
 \item
   Discuss the CALM Theorem, which sheds light on \emph{why} certain programs
   require distributed coordination and why others do not.  Characterize the
@@ -134,13 +133,13 @@ extend the example programs we present.
   Introduce the Bloom programming language and related tools for visualization,
   debugging, and systematic testing of distributed programs.
 \item
-  As a running example, implement a family of key-value store implementations
-  with various consistency guarantees in Bloom.  Aided by static analysis tools,
-  contrast the nondeterministic executions of overwrite-based stores with 
-  stores whose values are constrained to be lattices, and hence are convergent
-  in either the value or the data item version domain.  Illustrate the use of 
-  lattice compositions to implement quorum replication, which can be 
-  parameterized to enforce strong or eventual consistency.
+  As a running example, implement a family of key-value store designs with
+  various consistency guarantees in Bloom.  Aided by static analysis tools,
+  contrast the nondeterministic executions of overwrite-based stores with stores
+  whose values are constrained to be lattices, and hence are convergent in
+  either the value or version domain.  Illustrate the use of lattice
+  compositions to implement quorum replication, which can be parameterized to
+  enforce strong or eventual consistency.
 \item
   Highlight open problems and research challenges in the area of principled
   eventual consistency.
