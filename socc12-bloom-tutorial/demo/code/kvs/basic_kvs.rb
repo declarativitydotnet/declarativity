@@ -51,7 +51,7 @@ module ReplicatedKVS
   bloom :puts do
     # if I am the master, multicast store requests
     mcast_send <= kvput do |k|
-      unless member.include? [k.client]
+      unless member.include? [k.client_addr]
         [k.reqid, ["put", [@addy, k.key, k.reqid, k.value]]]
       end
     end
@@ -72,7 +72,7 @@ module ReplicatedKVS
 
   bloom :dels do
     mcast_send <= kvdel do |k|
-      unless member.include? [k.client]
+      unless member.include? [k.client_addr]
         [k.reqid, ["del", [@addy, k.key, k.reqid]]]
       end
     end

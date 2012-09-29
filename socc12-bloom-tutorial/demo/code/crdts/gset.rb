@@ -70,7 +70,7 @@ module TwoPSetOne
 
   bloom do
     adds.add_val <= add_val
-    dels.del_val <= del_val
+    dels.add_val <= del_val
     read_vals <= adds.read_vals.notin(dels.read_vals, :value => :value)
   end
 end
