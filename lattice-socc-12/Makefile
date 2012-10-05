@@ -26,9 +26,14 @@ EXP_SUMMARY=$(wildcard bench/*.summary)
 fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) $(EXP_SUMMARY)
 	gnuplot -e "set output \"$@\"" $<
 
-# Generate tarball containing public code listings
-PUBLIC_SRC=$(wildcard code/public-tarball/blooml-case-studies/**/*)
-blooml-case-studies.tar.gz: $(PUBLIC_SRC)
-	tar czf $@ -C code/public-tarball blooml-case-studies
+.PHONY: public-tgz socc-case-studies.tar.gz
 
-public-tgz: blooml-case-studies.tar.gz
+# Generate tarball containing public code listings
+socc-case-studies:
+	git clone https://github.com/neilconway/socc-case-studies.git
+
+socc-case-studies.tar.gz: socc-case-studies
+	cd $< && git pull
+	cd $< && git archive -o "../$@" --prefix "$</" master
+
+public-tgz: socc-case-studies.tar.gz
