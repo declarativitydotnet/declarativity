@@ -26,7 +26,7 @@ EXP_SUMMARY=$(wildcard bench/*.summary)
 fig/sn_perf.pdf: bench/sn_perf.gp $(EXP_DATA) $(EXP_SUMMARY)
 	gnuplot -e "set output \"$@\"" $<
 
-.PHONY: public-tgz socc-case-studies.tar.gz
+.PHONY: upload-tgz public-tgz socc-case-studies.tar.gz
 
 # Generate tarball containing public code listings
 socc-case-studies:
@@ -37,3 +37,6 @@ socc-case-studies.tar.gz: socc-case-studies
 	cd $< && git archive -o "../$@" --prefix "$</" master
 
 public-tgz: socc-case-studies.tar.gz
+
+upload-tgz: public-tgz
+	scp socc-case-studies.tar.gz nrc@db.cs.berkeley.edu:/project/cs/db/a/www/domains/db/data/bloom-lattice/socc-case-studies.tar.gz
