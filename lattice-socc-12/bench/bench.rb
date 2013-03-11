@@ -6,15 +6,18 @@ require "bud"
 class AllPathsL
   include Bud
 
+  LinkTuple = Struct.new(:from, :to, :cost)
+  PathTuple = Struct.new(:from, :to, :cost)
+
   state do
-    lhset :link
-    lhset :path
+    lset :link
+    lset :path
   end
 
   bloom do
     path <= link
-    path <= path.eqjoin(link, 1, 0) do |p,l|
-      [p[0], l[1], p[2] + l[2]]
+    path <= path.eqjoin(link, :to => :from) do |p,l|
+      PathTuple.new(p.from, l.to, p.cost + l.cost)
     end
   end
 end
@@ -60,8 +63,10 @@ def gen_link_data(num_nodes)
 end
 
 def lattice_bench(data, use_naive=false)
+  data = data.map {|t| AllPathsL::LinkTuple.new(*t)}
+  puts "data: #{data.inspect}"
   l = AllPathsL.new(:disable_lattice_semi_naive => use_naive)
-  l.link <+ [data]
+  l.link <+ data
   t = Benchmark.realtime do
     l.tick
   end
